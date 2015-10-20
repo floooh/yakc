@@ -1,12 +1,4 @@
 //------------------------------------------------------------------------------
-//  mem_test.cc
+// dummy.cc
+// This just exists to tell cmake that this is a C++ lib.
 //------------------------------------------------------------------------------
-#include "core/mem.h"
-#include "UnitTest++/src/UnitTest++.h
-
-using namespace yakc;
-
-TEST(mem) {
-
-}
-

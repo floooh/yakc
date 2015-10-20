@@ -2,7 +2,7 @@
 //  cpu_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "core/cpu.h"
+#include "yakc/cpu.h"
 
 using namespace yakc;
 

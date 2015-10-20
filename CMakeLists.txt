@@ -11,8 +11,9 @@ include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
 
 fips_setup()
 fips_project(yakc)
-fips_add_subdirectory(src/core)
-fips_add_subdirectory(src/test)
+fips_include_directories(.)
+fips_add_subdirectory(yakc)
+fips_add_subdirectory(test)
 fips_finish()
 
 
