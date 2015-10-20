@@ -38,13 +38,13 @@ public:
         YAKC_ASSERT(nullptr == this->banks[bank_index].ptr);
         this->banks[bank_index].ptr = ptr;
         this->banks[bank_index].type = t;
-    };
+    }
     /// unmap a memory bank
     void unmap(int bank_index) {
         YAKC_ASSERT((bank_index >= 0) && (bank_index < num_banks));
         this->banks[bank_index].ptr = nullptr;
         this->banks[bank_index].type = type::none;
-    };
+    }
     /// read a byte at cpu address
     ubyte read_ubyte(address addr) const {
         const auto& bank = this->banks[addr >> bank::shift];
@@ -54,7 +54,7 @@ public:
         else {
             return 0;
         }
-    };
+    }
     /// read a word at cpu address
     uword read_uword(address addr) const {
         ubyte l = this->read_ubyte(addr);
