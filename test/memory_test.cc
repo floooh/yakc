@@ -9,11 +9,11 @@ using namespace yakc;
 TEST(memory) {
 
     memory mem;
-    CHECK(mem.read_ubyte(0x0000) == 0);
-    CHECK(mem.read_ubyte(0xFFFF) == 0);
-    CHECK(mem.read_ubyte(0x4567) == 0);
-    CHECK(mem.read_uword(0x0000) == 0);
-    CHECK(mem.read_uword(0XFFFF) == 0);
+    CHECK(mem.r8(0x0000) == 0);
+    CHECK(mem.r8(0xFFFF) == 0);
+    CHECK(mem.r8(0x4567) == 0);
+    CHECK(mem.r8(0x0000) == 0);
+    CHECK(mem.r8(0XFFFF) == 0);
 
     // 2 ram banks and one rom bank
     ubyte ram0[memory::bank::size];
@@ -27,32 +27,66 @@ TEST(memory) {
     mem.map(1, ram1, sizeof(ram0), memory::type::ram);
     mem.map(3, rom, sizeof(rom), memory::type::rom);
 
-    CHECK(mem.read_ubyte(0x0000) == 1);
-    CHECK(mem.read_ubyte(0x0001) == 1);
-    CHECK(mem.read_ubyte(0x1000) == 1);
-    CHECK(mem.read_ubyte(0x3FFF) == 1);
-    CHECK(mem.read_ubyte(0x4000) == 2);
-    CHECK(mem.read_ubyte(0x4100) == 2);
-    CHECK(mem.read_ubyte(0x7FFF) == 2);
-    CHECK(mem.read_ubyte(0x8000) == 0); // 0x8000 .. 0xBFFF unmapped!
-    CHECK(mem.read_ubyte(0xBFFF) == 0);
-    CHECK(mem.read_ubyte(0xC000) == 3); // rom
-    CHECK(mem.read_ubyte(0xC002) == 3);
-    CHECK(mem.read_ubyte(0xFFFF) == 3);
+    CHECK(mem.r8(0x0000) == 1);
+    CHECK(mem.r8(0x0001) == 1);
+    CHECK(mem.r8(0x1000) == 1);
+    CHECK(mem.r8(0x3FFF) == 1);
+    CHECK(mem.r8(0x4000) == 2);
+    CHECK(mem.r8(0x4100) == 2);
+    CHECK(mem.r8(0x7FFF) == 2);
+    CHECK(mem.r8(0x8000) == 0); // 0x8000 .. 0xBFFF unmapped!
+    CHECK(mem.r8(0xBFFF) == 0);
+    CHECK(mem.r8(0xC000) == 3); // rom
+    CHECK(mem.r8(0xC002) == 3);
+    CHECK(mem.r8(0xFFFF) == 3);
+    CHECK(mem.r16(0x0000) == 0x0101);
+    CHECK(mem.r16(0x0001) == 0x0101);
+    CHECK(mem.r16(0x3FFF) == 0x0201);
+    CHECK(mem.r16(0x4000) == 0x0202);
+    CHECK(mem.r16(0x4101) == 0x0202);
+    CHECK(mem.r16(0x7FFF) == 0x0002);
+    CHECK(mem.r16(0x8000) == 0x0000);
+    CHECK(mem.r16(0x8203) == 0x0000);
+    CHECK(mem.r16(0xBFFE) == 0x0000);
+    CHECK(mem.r16(0xBFFF) == 0x0300);
+    CHECK(mem.r16(0xC000) == 0x0303);
+    CHECK(mem.r16(0xDEF0) == 0x0303);
+    CHECK(mem.r16(0xFFFF) == 0x0103);
 
-    CHECK(mem.read_uword(0x0000) == 0x0101);
-    CHECK(mem.read_uword(0x0001) == 0x0101);
-    CHECK(mem.read_uword(0x3FFF) == 0x0201);
-    CHECK(mem.read_uword(0x4000) == 0x0202);
-    CHECK(mem.read_uword(0x4101) == 0x0202);
-    CHECK(mem.read_uword(0x7FFF) == 0x0002);
-    CHECK(mem.read_uword(0x8000) == 0x0000);
-    CHECK(mem.read_uword(0x8203) == 0x0000);
-    CHECK(mem.read_uword(0xBFFE) == 0x0000);
-    CHECK(mem.read_uword(0xBFFF) == 0x0300);
+    mem.w8(0x0000, 5);
+    CHECK(mem.r8(0x0000) == 5);
+    CHECK(mem.r16(0x0000) == 0x0105);
+    CHECK(mem.r16(0xFFFF) == 0x0503);
+    mem.w8(0x0001, 6);
+    CHECK(mem.r8(0x0001) == 6);
+    CHECK(mem.r16(0x0000) == 0x0605);
+    mem.w16(0x0002, 0x0708);
+    CHECK(mem.r16(0x0002) == 0x0708);
+    CHECK(mem.r8(0x0002) == 8);
+    CHECK(mem.r8(0x0003) == 7);
+    mem.w16(0x3FFF, 0xE10A);
+    CHECK(mem.r16(0x3FFF) == 0xE10A);
+    CHECK(mem.r8(0x3FFF) == 0x0A);
+    CHECK(mem.r8(0x4000) == 0xE1);
 
-    CHECK(mem.read_uword(0xC000) == 0x0303);
-    CHECK(mem.read_uword(0xDEF0) == 0x0303);
-    CHECK(mem.read_uword(0xFFFF) == 0x0103);
+    // try writing to (partially) unmapped memory
+    mem.w16(0x7FFF, 0xAABB);
+    CHECK(mem.r16(0x7FFF) == 0x00BB);
+    CHECK(mem.r8(0x7FFF) == 0xBB);
+    CHECK(mem.r8(0x8000) == 0);
+    mem.w16(0x8100, 0x1234);
+    CHECK(mem.r16(0x8100) == 0);
+    mem.w8(0x8050, 7);
+    CHECK(mem.r8(0x8050) == 0);
+
+    // try writing to ROM
+    mem.w8(0xC000, 0x21);
+    CHECK(mem.r8(0xC000) == 3);
+    mem.w16(0xBFFF, 0x3456);
+    CHECK(mem.r16(0xBFFF) == 0x0300);
+    CHECK(mem.r8(0xBFFF) == 0x00);
+    CHECK(mem.r8(0xC000) == 0x03);
+    mem.w8(0xFFFF, 34);
+    CHECK(mem.r8(0xFFFF) == 3);
 }
 
