@@ -18,30 +18,30 @@ TEST(cpu) {
 
     // check initial reset
     cpu.reset();
-    CHECK(0 == cpu.state.pc);
-    CHECK(0 == cpu.state.im);
-    CHECK(!cpu.state.iff1);
-    CHECK(!cpu.state.iff2);
-    CHECK(0 == cpu.state.i);
-    CHECK(0 == cpu.state.r);
+    CHECK(0 == cpu.state.PC);
+    CHECK(0 == cpu.state.IM);
+    CHECK(!cpu.state.IFF1);
+    CHECK(!cpu.state.IFF2);
+    CHECK(0 == cpu.state.I);
+    CHECK(0 == cpu.state.R);
 
     /// run a few nops and check PC and T state counter
-    cpu.exec();
-    CHECK(1 == cpu.state.pc);
-    CHECK(4 == cpu.state.t);
-    cpu.exec();
-    CHECK(2 == cpu.state.pc);
-    CHECK(8 == cpu.state.t);
+    cpu.step();
+    CHECK(1 == cpu.state.PC);
+    CHECK(4 == cpu.state.T);
+    cpu.step();
+    CHECK(2 == cpu.state.PC);
+    CHECK(8 == cpu.state.T);
 
     /// LD BC,0x1234
-    const ubyte f = cpu.state.f;
+    const ubyte f = cpu.state.F;
     ram0[2] = 0x01; ram0[3] = 0x34; ram0[4] = 0x12;
-    cpu.exec();
-    CHECK(5 == cpu.state.pc);
-    CHECK(18 == cpu.state.t);
-    CHECK(0x1234 == cpu.state.bc);
-    CHECK(0x12 == cpu.state.b);
-    CHECK(0x34 == cpu.state.c);
-    CHECK(f == cpu.state.f);        // does not modify flags
+    cpu.step();
+    CHECK(5 == cpu.state.PC);
+    CHECK(18 == cpu.state.T);
+    CHECK(0x1234 == cpu.state.BC);
+    CHECK(0x12 == cpu.state.B);
+    CHECK(0x34 == cpu.state.C);
+    CHECK(f == cpu.state.F);        // does not modify flags
 }
 

@@ -10,32 +10,6 @@
 
 namespace yakc {
 
-#define READ8(addr) this->mem->r8(addr)
-#define WRITE8(addr, b) this->mem->w8(addr,b)
-#define READ16(addr) this->mem->r16(addr)
-#define WRITE16(addr) this->mem->w16(addr)
-#define F this->state.f
-#define A this->state.a
-#define AF this->state.af
-#define C this->state.c
-#define B this->state.b
-#define BC this->state.bc
-#define E this->state.e
-#define D this->state.d
-#define DE this->state.de
-#define L this->state.l
-#define H this->state.h
-#define HL this->state.hl
-#define PC this->state.pc
-#define IM this->state.im
-#define IFF1 this->state.iff1
-#define IFF2 this->state.iff2
-#define I this->state.i
-#define R this->state.r
-#define T_ADD(x) this->state.t+=x
-#define SZHV_INC(x) this->szhv_inc(x)
-
-
 class z80 {
 public:
 
@@ -55,45 +29,45 @@ public:
     struct cpu_state {
         /// main register set
         union {
-            struct { ubyte f, a; };
-            uword af;
+            struct { ubyte F, A; };
+            uword AF;
         };
         union {
-            struct { ubyte c, b; };
-            uword bc;
+            struct { ubyte C, B; };
+            uword BC;
         };
         union {
-            struct { ubyte e, d; };
-            uword de;
+            struct { ubyte E, D; };
+            uword DE;
         };
         union {
-            struct { ubyte l, h; };
-            uword hl;
+            struct { ubyte L, H; };
+            uword HL;
         };
 
         /// shadow register set
-        uword af_;
-        uword bc_;
-        uword de_;
-        uword hl_;
+        uword AF_;
+        uword BC_;
+        uword DE_;
+        uword HL_;
 
         /// special registers
-        ubyte i;
-        ubyte r;
-        uword ix;
-        uword iy;
-        uword sp;
-        uword pc;
+        ubyte I;
+        ubyte R;
+        uword IX;
+        uword IY;
+        uword SP;
+        uword PC;
 
         /// CPU is in HALT state
-        bool halt;
+        bool HALT;
         /// the interrupt-enable flip-flops
-        bool iff1;
-        bool iff2;
+        bool IFF1;
+        bool IFF2;
         /// the interrupt mode (0, 1 or 2)
-        ubyte im;
+        ubyte IM;
         /// current T cycle counter
-        unsigned int t;
+        unsigned int T;
     } state;
 
     /// pointer to memory map
@@ -112,12 +86,12 @@ public:
     }
     /// perform a reset (RESET pin triggered)
     void reset() {
-        PC = 0;
-        IM = 0;
-        IFF1 = false;
-        IFF2 = false;
-        I = 0;
-        R = 0;
+        state.PC = 0;
+        state.IM = 0;
+        state.IFF1 = false;
+        state.IFF2 = false;
+        state.I = 0;
+        state.R = 0;
     }
     /// update flags, add or adc w/o carry set (taken from MAME's z80)
     void szhvc_add(int oldval, int newval) {
@@ -127,7 +101,7 @@ public:
         if ((newval & 0x0f) < (oldval & 0x0f)) f |= HF;
         if (newval < oldval) f |= CF;
         if ((val^oldval^0x80) & (val^newval) & 0x80) f |= VF;
-        F = f;
+        state.F = f;
     }
 
     /// update flags, adc with carry set (taken from MAME's z80)
@@ -138,7 +112,7 @@ public:
         if ((newval & 0x0f) <= (oldval & 0x0f)) f |= HF;
         if (newval <= oldval) f |= CF;
         if ((val^oldval^0x80) & (val^newval) & 0x80) f |= VF;
-        F = f;
+        state.F = f;
     }
 
     /// update flags, cp, sub or sbc w/o carry set (taken from MAME's z80)
@@ -149,7 +123,7 @@ public:
         if ((newval & 0x0f) > (oldval & 0x0f)) f |= HF;
         if (newval > oldval) f |= CF;
         if ((val^oldval) & (oldval^newval) & 0x80) f |= VF;
-        F = f;
+        state.F = f;
     }
 
     /// update flags, sbc with carry set
@@ -160,7 +134,7 @@ public:
         if ((newval & 0x0f) >= (oldval & 0x0f)) f |= HF;
         if (newval >= oldval) f |= CF;
         if ((val^oldval) & (oldval^newval) & 0x80) f |= VF;
-        F = f;
+        state.F = f;
     }
 
     /// update flags, increment 8-bit reg
@@ -169,45 +143,12 @@ public:
         f |= (val & (YF | XF)); /* undocumented flag bits 5+3 */
         if (val == 0x80) f |= VF;
         if ((val & 0x0f) == 0x00) f |= HF;
-        F = (F & CF) | f;
+        state.F = (state.F & CF) | f;
     }
 
     /// execute a single instruction and update machine state
-    void exec() {
-        // fetch first instruction byte
-        ubyte i0 = READ8(PC++);
-        switch (i0) {
-            //# NOP
-            case 0x00:
-                T_ADD(4);
-                break;
-            //# LD BC,nn
-            case 0x01:
-                C = READ8(PC++);
-                B = READ8(PC++);
-                T_ADD(10);
-                break;
-            //# LD (BC),A
-            case 0x02:
-                WRITE8(BC, A);
-                T_ADD(7);
-                break;
-            //# INC BC
-            case 0x03:
-                BC++;
-                T_ADD(6);
-                break;
-            //# INC B
-            case 0x04:
-                B++;
-                SZHV_INC(B);
-                T_ADD(4);
-                break;
-            default:
-                YAKC_ASSERT(false);
-                break;
-        }
-    }
+    void step();
 };
 
 } // namespace yakc
+#include "opcodes.h"
