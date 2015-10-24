@@ -84,6 +84,12 @@ public:
         std::memset(&this->state, 0, sizeof(this->state));
         this->mem = mem_;
     }
+    /// helper method to swap 2 16-bit registers
+    static void swap16(uword& r0, uword& r1) {
+        uword tmp = r0;
+        r0 = r1;
+        r1 = tmp;
+    }
     /// perform a reset (RESET pin triggered)
     void reset() {
         state.PC = 0;
