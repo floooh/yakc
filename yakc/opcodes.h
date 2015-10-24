@@ -6,25 +6,25 @@ namespace yakc {
 inline void z80::step() {
     int d;
     uword u16tmp;
-    switch (mem->r8(state.PC++)) {
+    switch (mem.r8(state.PC++)) {
     case 0x0:
         // NOP
         state.T += 4;
         break;
     case 0x1:
         // LD BC,nn
-        state.BC = mem->r16(state.PC);
+        state.BC = mem.r16(state.PC);
         state.PC += 2;
         state.T += 10;
         break;
     case 0x2:
         // LD (BC),A
-        mem->w8(state.BC, state.A);
+        mem.w8(state.BC, state.A);
         state.T += 7;
         break;
     case 0x6:
         // LD B,n
-        state.B = mem->r8(state.PC++);
+        state.B = mem.r8(state.PC++);
         state.T += 7;
         break;
     case 0x8:
@@ -34,94 +34,94 @@ inline void z80::step() {
         break;
     case 0xa:
         // LD A,(BC)
-        state.A = mem->r8(state.BC);
+        state.A = mem.r8(state.BC);
         state.T += 7;
         break;
     case 0xe:
         // LD C,n
-        state.C = mem->r8(state.PC++);
+        state.C = mem.r8(state.PC++);
         state.T += 7;
         break;
     case 0x11:
         // LD DE,nn
-        state.DE = mem->r16(state.PC);
+        state.DE = mem.r16(state.PC);
         state.PC += 2;
         state.T += 10;
         break;
     case 0x12:
         // LD (DE),A
-        mem->w8(state.DE, state.A);
+        mem.w8(state.DE, state.A);
         state.T += 7;
         break;
     case 0x16:
         // LD D,n
-        state.D = mem->r8(state.PC++);
+        state.D = mem.r8(state.PC++);
         state.T += 7;
         break;
     case 0x1a:
         // LD A,(DE)
-        state.A = mem->r8(state.DE);
+        state.A = mem.r8(state.DE);
         state.T += 7;
         break;
     case 0x1e:
         // LD E,n
-        state.E = mem->r8(state.PC++);
+        state.E = mem.r8(state.PC++);
         state.T += 7;
         break;
     case 0x21:
         // LD HL,nn
-        state.HL = mem->r16(state.PC);
+        state.HL = mem.r16(state.PC);
         state.PC += 2;
         state.T += 10;
         break;
     case 0x22:
         // LD (nn),HL
-        mem->w16(mem->r16(state.PC), state.HL);
+        mem.w16(mem.r16(state.PC), state.HL);
         state.PC += 2;
         state.T += 16;
         break;
     case 0x26:
         // LD H,n
-        state.H = mem->r8(state.PC++);
+        state.H = mem.r8(state.PC++);
         state.T += 7;
         break;
     case 0x2a:
         // LD HL,(nn)
-        state.HL = mem->r16(mem->r16(state.PC));
+        state.HL = mem.r16(mem.r16(state.PC));
         state.PC += 2;
         state.T += 16;
         break;
     case 0x2e:
         // LD L,n
-        state.L = mem->r8(state.PC++);
+        state.L = mem.r8(state.PC++);
         state.T += 7;
         break;
     case 0x31:
         // LD SP,nn
-        state.SP = mem->r16(state.PC);
+        state.SP = mem.r16(state.PC);
         state.PC += 2;
         state.T += 10;
         break;
     case 0x32:
         // LD (nn),A
-        mem->w8(mem->r16(state.PC), state.A);
+        mem.w8(mem.r16(state.PC), state.A);
         state.PC += 2;
         state.T += 13;
         break;
     case 0x36:
         // LD (HL),n
-        mem->w8(state.HL, mem->r8(state.PC++));
+        mem.w8(state.HL, mem.r8(state.PC++));
         state.T += 10;
         break;
     case 0x3a:
         // LD A,(nn)
-        state.A = mem->r8(mem->r16(state.PC));
+        state.A = mem.r8(mem.r16(state.PC));
         state.PC += 2;
         state.T += 13;
         break;
     case 0x3e:
         // LD A,n
-        state.A = mem->r8(state.PC++);
+        state.A = mem.r8(state.PC++);
         state.T += 7;
         break;
     case 0x40:
@@ -156,7 +156,7 @@ inline void z80::step() {
         break;
     case 0x46:
         // LD B,(HL)
-        state.B = mem->r8(state.HL);
+        state.B = mem.r8(state.HL);
         state.T += 7;
         break;
     case 0x47:
@@ -196,7 +196,7 @@ inline void z80::step() {
         break;
     case 0x4e:
         // LD C,(HL)
-        state.C = mem->r8(state.HL);
+        state.C = mem.r8(state.HL);
         state.T += 7;
         break;
     case 0x4f:
@@ -236,7 +236,7 @@ inline void z80::step() {
         break;
     case 0x56:
         // LD D,(HL)
-        state.D = mem->r8(state.HL);
+        state.D = mem.r8(state.HL);
         state.T += 7;
         break;
     case 0x57:
@@ -276,7 +276,7 @@ inline void z80::step() {
         break;
     case 0x5e:
         // LD E,(HL)
-        state.E = mem->r8(state.HL);
+        state.E = mem.r8(state.HL);
         state.T += 7;
         break;
     case 0x5f:
@@ -316,7 +316,7 @@ inline void z80::step() {
         break;
     case 0x66:
         // LD H,(HL)
-        state.H = mem->r8(state.HL);
+        state.H = mem.r8(state.HL);
         state.T += 7;
         break;
     case 0x67:
@@ -356,7 +356,7 @@ inline void z80::step() {
         break;
     case 0x6e:
         // LD L,(HL)
-        state.L = mem->r8(state.HL);
+        state.L = mem.r8(state.HL);
         state.T += 7;
         break;
     case 0x6f:
@@ -366,37 +366,37 @@ inline void z80::step() {
         break;
     case 0x70:
         // LD (HL),B
-        mem->w8(state.HL, state.B);
+        mem.w8(state.HL, state.B);
         state.T += 7;
         break;
     case 0x71:
         // LD (HL),C
-        mem->w8(state.HL, state.C);
+        mem.w8(state.HL, state.C);
         state.T += 7;
         break;
     case 0x72:
         // LD (HL),D
-        mem->w8(state.HL, state.D);
+        mem.w8(state.HL, state.D);
         state.T += 7;
         break;
     case 0x73:
         // LD (HL),E
-        mem->w8(state.HL, state.E);
+        mem.w8(state.HL, state.E);
         state.T += 7;
         break;
     case 0x74:
         // LD (HL),H
-        mem->w8(state.HL, state.H);
+        mem.w8(state.HL, state.H);
         state.T += 7;
         break;
     case 0x75:
         // LD (HL),L
-        mem->w8(state.HL, state.L);
+        mem.w8(state.HL, state.L);
         state.T += 7;
         break;
     case 0x77:
         // LD (HL),A
-        mem->w8(state.HL, state.A);
+        mem.w8(state.HL, state.A);
         state.T += 7;
         break;
     case 0x78:
@@ -431,7 +431,7 @@ inline void z80::step() {
         break;
     case 0x7e:
         // LD A,(HL)
-        state.A = mem->r8(state.HL);
+        state.A = mem.r8(state.HL);
         state.T += 7;
         break;
     case 0x7f:
@@ -441,26 +441,26 @@ inline void z80::step() {
         break;
     case 0xc1:
         // POP BC
-        state.BC = mem->r16(state.SP);
+        state.BC = mem.r16(state.SP);
         state.SP += 2;
         state.T += 10;
         break;
     case 0xc5:
         // PUSH BC
         state.SP -= 2;
-        mem->w16(state.SP, state.BC);
+        mem.w16(state.SP, state.BC);
         state.T += 11;
         break;
     case 0xd1:
         // POP DE
-        state.DE = mem->r16(state.SP);
+        state.DE = mem.r16(state.SP);
         state.SP += 2;
         state.T += 10;
         break;
     case 0xd5:
         // PUSH DE
         state.SP -= 2;
-        mem->w16(state.SP, state.DE);
+        mem.w16(state.SP, state.DE);
         state.T += 11;
         break;
     case 0xd8:
@@ -471,126 +471,126 @@ inline void z80::step() {
         state.T += 4;
         break;
     case 0xdd:
-        switch (mem->r8(state.PC++)) {
+        switch (mem.r8(state.PC++)) {
         case 0x21:
             // LD IX,nn
-            state.IX = mem->r16(state.PC);
+            state.IX = mem.r16(state.PC);
             state.PC += 2;
             state.T += 14;
             break;
         case 0x22:
             // LD (nn),IX
-            mem->w16(mem->r16(state.PC), state.IX);
+            mem.w16(mem.r16(state.PC), state.IX);
             state.PC += 2;
             state.T += 20;
             break;
         case 0x2a:
             // LD IX,(nn)
-            state.IX = mem->r16(mem->r16(state.PC));
+            state.IX = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
         case 0x36:
             // LD (IX+d),n
-            d = mem->r8(state.PC++);
-            mem->w8(state.IX + d, mem->r8(state.PC++));
+            d = mem.r8(state.PC++);
+            mem.w8(state.IX + d, mem.r8(state.PC++));
             state.T += 19;
             break;
         case 0x46:
             // LD B,(IX+d)
-            d = mem->r8(state.PC++);
-            state.B = mem->r8(state.IX + d);
+            d = mem.r8(state.PC++);
+            state.B = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x4e:
             // LD C,(IX+d)
-            d = mem->r8(state.PC++);
-            state.C = mem->r8(state.IX + d);
+            d = mem.r8(state.PC++);
+            state.C = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x56:
             // LD D,(IX+d)
-            d = mem->r8(state.PC++);
-            state.D = mem->r8(state.IX + d);
+            d = mem.r8(state.PC++);
+            state.D = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x5e:
             // LD E,(IX+d)
-            d = mem->r8(state.PC++);
-            state.E = mem->r8(state.IX + d);
+            d = mem.r8(state.PC++);
+            state.E = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0xe1:
             // POP IX
-            state.IX = mem->r16(state.SP);
+            state.IX = mem.r16(state.SP);
             state.SP += 2;
             state.T += 14;
             break;
         case 0xe3:
             // EX (SP),IX
-            u16tmp = mem->r16(state.SP);
-            mem->w16(state.SP, state.IX);
+            u16tmp = mem.r16(state.SP);
+            mem.w16(state.SP, state.IX);
             state.IX = u16tmp;
             state.T += 23;
             break;
         case 0xe5:
             // PUSH IX
             state.SP -= 2;
-            mem->w16(state.SP, state.IX);
+            mem.w16(state.SP, state.IX);
             state.T += 15;
             break;
         case 0x66:
             // LD H,(IX+d)
-            d = mem->r8(state.PC++);
-            state.H = mem->r8(state.IX + d);
+            d = mem.r8(state.PC++);
+            state.H = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x6e:
             // LD L,(IX+d)
-            d = mem->r8(state.PC++);
-            state.L = mem->r8(state.IX + d);
+            d = mem.r8(state.PC++);
+            state.L = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x70:
             // LD (IX+d),B
-            d = mem->r8(state.PC++);
-            mem->w8(state.IX + d, state.B);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IX + d, state.B);
             state.T += 19;
             break;
         case 0x71:
             // LD (IX+d),C
-            d = mem->r8(state.PC++);
-            mem->w8(state.IX + d, state.C);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IX + d, state.C);
             state.T += 19;
             break;
         case 0x72:
             // LD (IX+d),D
-            d = mem->r8(state.PC++);
-            mem->w8(state.IX + d, state.D);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IX + d, state.D);
             state.T += 19;
             break;
         case 0x73:
             // LD (IX+d),E
-            d = mem->r8(state.PC++);
-            mem->w8(state.IX + d, state.E);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IX + d, state.E);
             state.T += 19;
             break;
         case 0x74:
             // LD (IX+d),H
-            d = mem->r8(state.PC++);
-            mem->w8(state.IX + d, state.H);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IX + d, state.H);
             state.T += 19;
             break;
         case 0x75:
             // LD (IX+d),L
-            d = mem->r8(state.PC++);
-            mem->w8(state.IX + d, state.L);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IX + d, state.L);
             state.T += 19;
             break;
         case 0x77:
             // LD (IX+d),A
-            d = mem->r8(state.PC++);
-            mem->w8(state.IX + d, state.A);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IX + d, state.A);
             state.T += 19;
             break;
         case 0xf9:
@@ -600,8 +600,8 @@ inline void z80::step() {
             break;
         case 0x7e:
             // LD A,(IX+d)
-            d = mem->r8(state.PC++);
-            state.A = mem->r8(state.IX + d);
+            d = mem.r8(state.PC++);
+            state.A = mem.r8(state.IX + d);
             state.T += 19;
             break;
         default:
@@ -610,21 +610,21 @@ inline void z80::step() {
         break;
     case 0xe1:
         // POP HL
-        state.HL = mem->r16(state.SP);
+        state.HL = mem.r16(state.SP);
         state.SP += 2;
         state.T += 10;
         break;
     case 0xe3:
         // EX (SP),HL
-        u16tmp = mem->r16(state.SP);
-        mem->w16(state.SP, state.HL);
+        u16tmp = mem.r16(state.SP);
+        mem.w16(state.SP, state.HL);
         state.HL = u16tmp;
         state.T += 19;
         break;
     case 0xe5:
         // PUSH HL
         state.SP -= 2;
-        mem->w16(state.SP, state.HL);
+        mem.w16(state.SP, state.HL);
         state.T += 11;
         break;
     case 0xeb:
@@ -633,16 +633,16 @@ inline void z80::step() {
         state.T += 4;
         break;
     case 0xed:
-        switch (mem->r8(state.PC++)) {
+        switch (mem.r8(state.PC++)) {
         case 0x43:
             // LD (nn),BC
-            mem->w16(mem->r16(state.PC), state.BC);
+            mem.w16(mem.r16(state.PC), state.BC);
             state.PC += 2;
             state.T += 20;
             break;
         case 0x4b:
             // LD BC,(nn)
-            state.BC = mem->r16(mem->r16(state.PC));
+            state.BC = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
@@ -653,7 +653,7 @@ inline void z80::step() {
             break;
         case 0x6b:
             // LD HL,(nn)
-            state.HL = mem->r16(mem->r16(state.PC));
+            state.HL = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
@@ -664,31 +664,31 @@ inline void z80::step() {
             break;
         case 0x63:
             // LD (nn),HL
-            mem->w16(mem->r16(state.PC), state.HL);
+            mem.w16(mem.r16(state.PC), state.HL);
             state.PC += 2;
             state.T += 20;
             break;
         case 0x73:
             // LD (nn),SP
-            mem->w16(mem->r16(state.PC), state.SP);
+            mem.w16(mem.r16(state.PC), state.SP);
             state.PC += 2;
             state.T += 20;
             break;
         case 0x7b:
             // LD SP,(nn)
-            state.SP = mem->r16(mem->r16(state.PC));
+            state.SP = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
         case 0x53:
             // LD (nn),DE
-            mem->w16(mem->r16(state.PC), state.DE);
+            mem.w16(mem.r16(state.PC), state.DE);
             state.PC += 2;
             state.T += 20;
             break;
         case 0x5b:
             // LD DE,(nn)
-            state.DE = mem->r16(mem->r16(state.PC));
+            state.DE = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
@@ -698,14 +698,14 @@ inline void z80::step() {
         break;
     case 0xf1:
         // POP AF
-        state.AF = mem->r16(state.SP);
+        state.AF = mem.r16(state.SP);
         state.SP += 2;
         state.T += 10;
         break;
     case 0xf5:
         // PUSH AF
         state.SP -= 2;
-        mem->w16(state.SP, state.AF);
+        mem.w16(state.SP, state.AF);
         state.T += 11;
         break;
     case 0xf9:
@@ -714,126 +714,126 @@ inline void z80::step() {
         state.T += 6;
         break;
     case 0xfd:
-        switch (mem->r8(state.PC++)) {
+        switch (mem.r8(state.PC++)) {
         case 0x21:
             // LD IY,nn
-            state.IY = mem->r16(state.PC);
+            state.IY = mem.r16(state.PC);
             state.PC += 2;
             state.T += 14;
             break;
         case 0x22:
             // LD (nn),IY
-            mem->w16(mem->r16(state.PC), state.IY);
+            mem.w16(mem.r16(state.PC), state.IY);
             state.PC += 2;
             state.T += 20;
             break;
         case 0x2a:
             // LD IY,(nn)
-            state.IY = mem->r16(mem->r16(state.PC));
+            state.IY = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
         case 0x36:
             // LD (IY+d),n
-            d = mem->r8(state.PC++);
-            mem->w8(state.IY + d, mem->r8(state.PC++));
+            d = mem.r8(state.PC++);
+            mem.w8(state.IY + d, mem.r8(state.PC++));
             state.T += 19;
             break;
         case 0x46:
             // LD B,(IY+d)
-            d = mem->r8(state.PC++);
-            state.B = mem->r8(state.IY + d);
+            d = mem.r8(state.PC++);
+            state.B = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x4e:
             // LD C,(IY+d)
-            d = mem->r8(state.PC++);
-            state.C = mem->r8(state.IY + d);
+            d = mem.r8(state.PC++);
+            state.C = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x56:
             // LD D,(IY+d)
-            d = mem->r8(state.PC++);
-            state.D = mem->r8(state.IY + d);
+            d = mem.r8(state.PC++);
+            state.D = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x5e:
             // LD E,(IY+d)
-            d = mem->r8(state.PC++);
-            state.E = mem->r8(state.IY + d);
+            d = mem.r8(state.PC++);
+            state.E = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0xe1:
             // POP IY
-            state.IY = mem->r16(state.SP);
+            state.IY = mem.r16(state.SP);
             state.SP += 2;
             state.T += 14;
             break;
         case 0xe3:
             // EX (SP),IY
-            u16tmp = mem->r16(state.SP);
-            mem->w16(state.SP, state.IY);
+            u16tmp = mem.r16(state.SP);
+            mem.w16(state.SP, state.IY);
             state.IY = u16tmp;
             state.T += 23;
             break;
         case 0xe5:
             // PUSH IY
             state.SP -= 2;
-            mem->w16(state.SP, state.IY);
+            mem.w16(state.SP, state.IY);
             state.T += 15;
             break;
         case 0x66:
             // LD H,(IY+d)
-            d = mem->r8(state.PC++);
-            state.H = mem->r8(state.IY + d);
+            d = mem.r8(state.PC++);
+            state.H = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x6e:
             // LD L,(IY+d)
-            d = mem->r8(state.PC++);
-            state.L = mem->r8(state.IY + d);
+            d = mem.r8(state.PC++);
+            state.L = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x70:
             // LD (IY+d),B
-            d = mem->r8(state.PC++);
-            mem->w8(state.IY + d, state.B);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IY + d, state.B);
             state.T += 19;
             break;
         case 0x71:
             // LD (IY+d),C
-            d = mem->r8(state.PC++);
-            mem->w8(state.IY + d, state.C);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IY + d, state.C);
             state.T += 19;
             break;
         case 0x72:
             // LD (IY+d),D
-            d = mem->r8(state.PC++);
-            mem->w8(state.IY + d, state.D);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IY + d, state.D);
             state.T += 19;
             break;
         case 0x73:
             // LD (IY+d),E
-            d = mem->r8(state.PC++);
-            mem->w8(state.IY + d, state.E);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IY + d, state.E);
             state.T += 19;
             break;
         case 0x74:
             // LD (IY+d),H
-            d = mem->r8(state.PC++);
-            mem->w8(state.IY + d, state.H);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IY + d, state.H);
             state.T += 19;
             break;
         case 0x75:
             // LD (IY+d),L
-            d = mem->r8(state.PC++);
-            mem->w8(state.IY + d, state.L);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IY + d, state.L);
             state.T += 19;
             break;
         case 0x77:
             // LD (IY+d),A
-            d = mem->r8(state.PC++);
-            mem->w8(state.IY + d, state.A);
+            d = mem.r8(state.PC++);
+            mem.w8(state.IY + d, state.A);
             state.T += 19;
             break;
         case 0xf9:
@@ -843,8 +843,8 @@ inline void z80::step() {
             break;
         case 0x7e:
             // LD A,(IY+d)
-            d = mem->r8(state.PC++);
-            state.A = mem->r8(state.IY + d);
+            d = mem.r8(state.PC++);
+            state.A = mem.r8(state.IY + d);
             state.T += 19;
             break;
         default:

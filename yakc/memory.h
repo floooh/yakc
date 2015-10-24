@@ -74,6 +74,12 @@ public:
         this->w8(addr, w & 0xFF);
         this->w8(addr + 1, (w>>8));
     }
+    /// write a byte range
+    void write(address addr, ubyte* src, int num) const {
+        for (int i = 0; i < num; i++) {
+            this->w8(addr++, src[i]);
+        }
+    }
 };
 
 } // namespace yakc

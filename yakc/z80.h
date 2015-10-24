@@ -71,18 +71,11 @@ public:
     } state;
 
     /// pointer to memory map
-    memory* mem;
+    memory mem;
 
     /// constructor
     z80() {
         std::memset(&this->state, 0, sizeof(this->state));
-        this->mem = nullptr;
-    }
-    /// initialize the cpu
-    void init(memory* mem_) {
-        YAKC_ASSERT(mem_);
-        std::memset(&this->state, 0, sizeof(this->state));
-        this->mem = mem_;
     }
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1) {

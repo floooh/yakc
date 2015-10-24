@@ -88,5 +88,18 @@ TEST(memory) {
     CHECK(mem.r8(0xC000) == 0x03);
     mem.w8(0xFFFF, 34);
     CHECK(mem.r8(0xFFFF) == 3);
+
+    // write a range of bytes
+    ubyte bytes[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    mem.write(0, bytes, sizeof(bytes));
+    CHECK(mem.r8(0x0000) == 1);
+    CHECK(mem.r8(0x0001) == 2);
+    CHECK(mem.r8(0x0002) == 3);
+    CHECK(mem.r8(0x0003) == 4);
+    CHECK(mem.r8(0x0004) == 5);
+    CHECK(mem.r8(0x0005) == 6);
+    CHECK(mem.r8(0x0006) == 7);
+    CHECK(mem.r8(0x0007) == 8);
+
 }
 

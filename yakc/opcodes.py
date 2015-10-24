@@ -96,7 +96,7 @@ def LD_r_n(ops) :
     for r in r8 :
         op = 0b00000110 | r.bits<<3
         src = ['// LD {},n'.format(r.name)]
-        src.append('state.{} = mem->r8(state.PC++);'.format(r.name))
+        src.append('state.{} = mem.r8(state.PC++);'.format(r.name))
         src = inc_tstates(src, 7)
         ops = add_op(ops, op, src)
     return ops
@@ -110,7 +110,7 @@ def LD_r_iHL(ops) :
     for r in r8 :
         op = 0b01000110 | r.bits<<3
         src = ['// LD {},(HL)'.format(r.name)]
-        src.append('state.{} = mem->r8(state.HL);'.format(r.name))
+        src.append('state.{} = mem.r8(state.HL);'.format(r.name))
         src = inc_tstates(src, 7)
         ops = add_op(ops, op, src)
     return ops
@@ -123,7 +123,7 @@ def LD_A_iBC(ops) :
     '''
     op = 0b00001010
     src = ['// LD A,(BC)']
-    src.append('state.A = mem->r8(state.BC);')
+    src.append('state.A = mem.r8(state.BC);')
     src = inc_tstates(src, 7)
     ops = add_op(ops, op, src)
     return ops
@@ -136,7 +136,7 @@ def LD_iBC_A(ops) :
     ''' 
     op = 0b00000010
     src = ['// LD (BC),A']
-    src.append('mem->w8(state.BC, state.A);')
+    src.append('mem.w8(state.BC, state.A);')
     src = inc_tstates(src, 7)
     ops = add_op(ops, op, src)
     return ops
@@ -149,7 +149,7 @@ def LD_A_iDE(ops) :
     '''
     op = 0b00011010
     src = ['// LD A,(DE)']
-    src.append('state.A = mem->r8(state.DE);')
+    src.append('state.A = mem.r8(state.DE);')
     src = inc_tstates(src, 7)
     ops = add_op(ops, op, src)
     return ops
@@ -162,7 +162,7 @@ def LD_iDE_A(ops) :
     '''
     op = 0b00010010
     src = ['// LD (DE),A']
-    src.append('mem->w8(state.DE, state.A);')
+    src.append('mem.w8(state.DE, state.A);')
     src = inc_tstates(src, 7)
     ops = add_op(ops, op, src)
     return ops
@@ -175,7 +175,7 @@ def LD_A_inn(ops) :
     '''
     op = 0b00111010
     src = ['// LD A,(nn)']
-    src.append('state.A = mem->r8(mem->r16(state.PC));')
+    src.append('state.A = mem.r8(mem.r16(state.PC));')
     src.append('state.PC += 2;')
     src = inc_tstates(src, 13)
     ops = add_op(ops, op, src)
@@ -189,7 +189,7 @@ def LD_inn_A(ops) :
     '''
     op = 0b00110010
     src = ['// LD (nn),A']
-    src.append('mem->w8(mem->r16(state.PC), state.A);')
+    src.append('mem.w8(mem.r16(state.PC), state.A);')
     src.append('state.PC += 2;')
     src = inc_tstates(src, 13)
     ops = add_op(ops, op, src)
@@ -204,7 +204,7 @@ def LD_iHL_r(ops) :
     for r in r8 :
         op = 0b01110000 | r.bits
         src = ['// LD (HL),{}'.format(r.name)]
-        src.append('mem->w8(state.HL, state.{});'.format(r.name))
+        src.append('mem.w8(state.HL, state.{});'.format(r.name))
         src = inc_tstates(src, 7)
         ops = add_op(ops, op, src)
     return ops
@@ -217,7 +217,7 @@ def LD_iHL_n(ops) :
     '''
     op = 0b00110110
     src = ['// LD (HL),n']
-    src.append('mem->w8(state.HL, mem->r8(state.PC++));')
+    src.append('mem.w8(state.HL, mem.r8(state.PC++));')
     src = inc_tstates(src, 10)
     ops = add_op(ops, op, src)
     return ops
@@ -257,7 +257,7 @@ def LD_dd_nn(ops) :
     for r in r16sp :
         op = 0b00000001 | r.bits<<4
         src = ['// LD {},nn'.format(r.name)]
-        src.append('state.{} = mem->r16(state.PC);'.format(r.name))
+        src.append('state.{} = mem.r16(state.PC);'.format(r.name))
         src.append('state.PC += 2;')
         src = inc_tstates(src, 10)
         ops = add_op(ops, op, src)
@@ -271,7 +271,7 @@ def LD_HL_inn(ops) :
     '''
     op = 0b00101010
     src = ['// LD HL,(nn)']
-    src.append('state.HL = mem->r16(mem->r16(state.PC));')
+    src.append('state.HL = mem.r16(mem.r16(state.PC));')
     src.append('state.PC += 2;')
     src = inc_tstates(src, 16)
     ops = add_op(ops, op, src)
@@ -285,7 +285,7 @@ def LD_inn_HL(ops) :
     '''
     op = 0b00100010
     src = ['// LD (nn),HL']
-    src.append('mem->w16(mem->r16(state.PC), state.HL);')
+    src.append('mem.w16(mem.r16(state.PC), state.HL);')
     src.append('state.PC += 2;')
     src = inc_tstates(src, 16)
     ops = add_op(ops, op, src)
@@ -300,7 +300,7 @@ def LD_dd_inn(ops) :
     for r in r16sp :
         op = 0b01001011 | r.bits<<4
         src = ['// LD {},(nn)'.format(r.name)]
-        src.append('state.{} = mem->r16(mem->r16(state.PC));'.format(r.name))
+        src.append('state.{} = mem.r16(mem.r16(state.PC));'.format(r.name))
         src.append('state.PC += 2;')
         src = inc_tstates(src, 20)
         ops = add_op(ops, op, src)
@@ -315,7 +315,7 @@ def LD_inn_dd(ops) :
     for r in r16sp :
         op = 0b01000011 | r.bits<<4
         src = ['// LD (nn),{}'.format(r.name)]
-        src.append('mem->w16(mem->r16(state.PC), state.{});'.format(r.name))
+        src.append('mem.w16(mem.r16(state.PC), state.{});'.format(r.name))
         src.append('state.PC += 2;')
         src = inc_tstates(src, 20)
         ops = add_op(ops, op, src)
@@ -344,7 +344,7 @@ def PUSH_qq(ops) :
         op = 0b11000101 | r.bits<<4
         src = ['// PUSH {}'.format(r.name)]
         src.append('state.SP -= 2;')
-        src.append('mem->w16(state.SP, state.{});'.format(r.name))
+        src.append('mem.w16(state.SP, state.{});'.format(r.name))
         src = inc_tstates(src, 11)
         ops = add_op(ops, op, src)
     return ops
@@ -358,7 +358,7 @@ def POP_qq(ops) :
     for r in r16af :
         op = 0b11000001 | r.bits<<4
         src = ['// POP {}'.format(r.name)]
-        src.append('state.{} = mem->r16(state.SP);'.format(r.name))
+        src.append('state.{} = mem.r16(state.SP);'.format(r.name))
         src.append('state.SP += 2;')
         src = inc_tstates(src, 10)
         ops = add_op(ops, op, src)
@@ -373,7 +373,7 @@ def PUSH_IXY(ops, xname) :
     op = 0b11100101
     src = ['// PUSH {}'.format(xname)]
     src.append('state.SP -= 2;')
-    src.append('mem->w16(state.SP, state.{});'.format(xname))
+    src.append('mem.w16(state.SP, state.{});'.format(xname))
     src = inc_tstates(src, 15)
     ops = add_op(ops, op, src)
     return ops
@@ -386,7 +386,7 @@ def POP_IXY(ops, xname) :
     '''
     op = 0b11100001
     src = ['// POP {}'.format(xname)]
-    src.append('state.{} = mem->r16(state.SP);'.format(xname))
+    src.append('state.{} = mem.r16(state.SP);'.format(xname))
     src.append('state.SP += 2;')
     src = inc_tstates(src, 14)
     ops = add_op(ops, op, src)
@@ -401,8 +401,8 @@ def LD_r_iIXY_d(ops, xname) :
     for r in r8 :
         op = 0b01000110 | r.bits<<3
         src = ['// LD {},({}+d)'.format(r.name, xname)]
-        src.append('d = mem->r8(state.PC++);')
-        src.append('state.{} = mem->r8(state.{} + d);'.format(r.name, xname))
+        src.append('d = mem.r8(state.PC++);')
+        src.append('state.{} = mem.r8(state.{} + d);'.format(r.name, xname))
         src = inc_tstates(src, 19)
         ops = add_op(ops, op, src)
     return ops
@@ -415,8 +415,8 @@ def LD_iIXY_d_n(ops, xname) :
     '''
     op = 0b00110110
     src = ['// LD ({}+d),n'.format(xname)]
-    src.append('d = mem->r8(state.PC++);')
-    src.append('mem->w8(state.{} + d, mem->r8(state.PC++));'.format(xname))
+    src.append('d = mem.r8(state.PC++);')
+    src.append('mem.w8(state.{} + d, mem.r8(state.PC++));'.format(xname))
     src = inc_tstates(src, 19)
     ops = add_op(ops, op, src)
     return ops
@@ -430,8 +430,8 @@ def LD_iIXY_d_r(ops, xname) :
     for r in r8 :
         op = 0b01110000 | r.bits
         src = ['// LD ({}+d),{}'.format(xname, r.name)]
-        src.append('d = mem->r8(state.PC++);')
-        src.append('mem->w8(state.{} + d, state.{});'.format(xname, r.name))
+        src.append('d = mem.r8(state.PC++);')
+        src.append('mem.w8(state.{} + d, state.{});'.format(xname, r.name))
         src = inc_tstates(src, 19)
         ops = add_op(ops, op, src)
     return ops
@@ -444,7 +444,7 @@ def LD_IXY_nn(ops, xname) :
     '''
     op = 0b00100001
     src = ['// LD {},nn'.format(xname)]
-    src.append('state.{} = mem->r16(state.PC);'.format(xname))
+    src.append('state.{} = mem.r16(state.PC);'.format(xname))
     src.append('state.PC += 2;')
     src = inc_tstates(src, 14)
     ops = add_op(ops, op, src)
@@ -458,7 +458,7 @@ def LD_IXY_inn(ops, xname) :
     '''
     op = 0b00101010
     src = ['// LD {},(nn)'.format(xname)]
-    src.append('state.{} = mem->r16(mem->r16(state.PC));'.format(xname))
+    src.append('state.{} = mem.r16(mem.r16(state.PC));'.format(xname))
     src.append('state.PC += 2;')
     src = inc_tstates(src, 20)
     ops = add_op(ops, op, src)
@@ -472,7 +472,7 @@ def LD_inn_IXY(ops, xname) :
     '''
     op = 0b00100010
     src = ['// LD (nn),{}'.format(xname)]
-    src.append('mem->w16(mem->r16(state.PC), state.{});'.format(xname))
+    src.append('mem.w16(mem.r16(state.PC), state.{});'.format(xname))
     src.append('state.PC += 2;')
     src = inc_tstates(src, 20)
     ops = add_op(ops, op, src)
@@ -540,8 +540,8 @@ def EX_iSP_HLIXY(ops, xname) :
     '''
     op = 0b11100011
     src = ['// EX (SP),{}'.format(xname)]
-    src.append('u16tmp = mem->r16(state.SP);')
-    src.append('mem->w16(state.SP, state.{});'.format(xname))
+    src.append('u16tmp = mem.r16(state.SP);')
+    src.append('mem.w16(state.SP, state.{});'.format(xname))
     src.append('state.{} = u16tmp;'.format(xname))
     if xname == 'HL':
         src = inc_tstates(src, 19)
@@ -647,12 +647,12 @@ def gen_source(f, ops, dd_ops, fd_ops, ed_ops) :
     f.write('inline void z80::step() {\n')
     f.write('    int d;\n')
     f.write('    uword u16tmp;\n')
-    f.write('    switch (mem->r8(state.PC++)) {\n')
+    f.write('    switch (mem.r8(state.PC++)) {\n')
     for op in ops :
         f.write('    case {}:\n'.format(hex(op)))
         if op == 0xDD :
             # write DD prefix instructions
-            f.write('        switch (mem->r8(state.PC++)) {\n')
+            f.write('        switch (mem.r8(state.PC++)) {\n')
             for dd_op in dd_ops :
                 f.write('        case {}:\n'.format(hex(dd_op)))
                 for line in dd_ops[dd_op] :
@@ -663,7 +663,7 @@ def gen_source(f, ops, dd_ops, fd_ops, ed_ops) :
             f.write('        }\n')
         elif op == 0xED :
             # write ED prefix instructions
-            f.write('        switch (mem->r8(state.PC++)) {\n')
+            f.write('        switch (mem.r8(state.PC++)) {\n')
             for ed_op in ed_ops :
                 f.write('        case {}:\n'.format(hex(ed_op)))
                 for line in ed_ops[ed_op] :
@@ -674,7 +674,7 @@ def gen_source(f, ops, dd_ops, fd_ops, ed_ops) :
             f.write('        }\n')
         elif op == 0xFD :
             # write FD prefix instructions
-            f.write('        switch (mem->r8(state.PC++)) {\n')
+            f.write('        switch (mem.r8(state.PC++)) {\n')
             for fd_op in fd_ops :
                 f.write('        case {}:\n'.format(hex(fd_op)))
                 for line in fd_ops[fd_op] :
