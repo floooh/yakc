@@ -523,7 +523,7 @@ def EXX(ops) :
     EXX
     T-states: 4
     '''
-    op = 0b11011000
+    op = 0b11011001
     src = ['// EXX']
     src.append('swap16(state.BC, state.BC_);')
     src.append('swap16(state.DE, state.DE_);')

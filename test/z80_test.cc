@@ -642,6 +642,60 @@ TEST(PUSH_POP_qqIXY) {
     cpu.step(); CHECK(0xEF00 == cpu.state.IY); CHECK(0x0100 == cpu.state.SP); CHECK(217 == cpu.state.T);
 }
 
+// EX DE,HL
+// EX AF,AF'
+// EXX
+// EX (SP),HL
+// EX (SP),IX
+// EX (SP),IY
+TEST(EX) {
+    z80 cpu;
+    ubyte ram0[memory::bank::size] = { 0 };
+    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
+
+    ubyte prog[] = {
+        0x21, 0x34, 0x12,   // LD HL,0x1234
+        0x11, 0x78, 0x56,   // LD DE,0x5678
+        0xEB,               // EX DE,HL
+        0x3E, 0x11,         // LD A,0x11
+        0x08,               // EX AF,AF'
+        0x3E, 0x22,         // LD A,0x22
+        0x08,               // EX AF,AF'
+        0x01, 0xBC, 0x9A,   // LD BC,0x9ABC
+        0xD9,               // EXX
+        0x21, 0x11, 0x11,   // LD HL,0x1111
+        0x11, 0x22, 0x22,   // LD DE,0x2222
+        0x01, 0x33, 0x33,   // LD BC,0x3333
+        0xD9,               // EXX
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    cpu.step(); CHECK(0x1234 == cpu.state.HL); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.DE); CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.DE); CHECK(0x5678 == cpu.state.HL); CHECK(24 == cpu.state.T);
+    cpu.step(); CHECK(0x1100 == cpu.state.AF); CHECK(0x0000 == cpu.state.AF_); CHECK(31 == cpu.state.T);
+    cpu.step(); CHECK(0x0000 == cpu.state.AF); CHECK(0x1100 == cpu.state.AF_); CHECK(35 == cpu.state.T);
+    cpu.step(); CHECK(0x2200 == cpu.state.AF); CHECK(0x1100 == cpu.state.AF_); CHECK(42 == cpu.state.T);
+    cpu.step(); CHECK(0x1100 == cpu.state.AF); CHECK(0x2200 == cpu.state.AF_); CHECK(46 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.state.BC); CHECK(56 == cpu.state.T);
+    cpu.step();
+    CHECK(0x0000 == cpu.state.HL); CHECK(0x5678 == cpu.state.HL_);
+    CHECK(0x0000 == cpu.state.DE); CHECK(0x1234 == cpu.state.DE_);
+    CHECK(0x0000 == cpu.state.BC); CHECK(0x9ABC == cpu.state.BC_);
+    CHECK(60 == cpu.state.T);
+    cpu.step(); CHECK(0x1111 == cpu.state.HL); CHECK(70 == cpu.state.T);
+    cpu.step(); CHECK(0x2222 == cpu.state.DE); CHECK(80 == cpu.state.T);
+    cpu.step(); CHECK(0x3333 == cpu.state.BC); CHECK(90 == cpu.state.T);
+    cpu.step();
+    CHECK(0x5678 == cpu.state.HL); CHECK(0x1111 == cpu.state.HL_);
+    CHECK(0x1234 == cpu.state.DE); CHECK(0x2222 == cpu.state.DE_);
+    CHECK(0x9ABC == cpu.state.BC); CHECK(0x3333 == cpu.state.BC_);
+    CHECK(94 == cpu.state.T);
+
+
+
+}
+
 TEST(cpu) {
 
     // setup CPU with a 16 kByte RAM bank at 0x0000

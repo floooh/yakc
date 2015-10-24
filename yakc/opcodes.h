@@ -463,7 +463,7 @@ inline void z80::step() {
         mem.w16(state.SP, state.DE);
         state.T += 11;
         break;
-    case 0xd8:
+    case 0xd9:
         // EXX
         swap16(state.BC, state.BC_);
         swap16(state.DE, state.DE_);
