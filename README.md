@@ -5,7 +5,7 @@ Goals:
 - small and portable emulator core in a simple C++
 - emulator core has hooks for keyboard-input, audio/video-output, load/save blocks of memory
 - Oryol as input/video/audio wrapper (https://github.com/floooh/oryol)
-- imgui as simple debugger overlay (view and edit registers, memory, asm/disasm)
+- imgui (https://github.com/ocornut/imgui) as simple debugger overlay (view and edit registers, memory, asm/disasm)
 - emulate KC85/3 and KC85/4
 - small and fast enough to feel good on browser and mobile 
 
