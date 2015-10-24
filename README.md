@@ -11,7 +11,7 @@ Goals:
 
 Non-Goals:
 - no complete hardware emulation ('display needling', I/O ports, modules, analog cassette interface, ...)
-- not emulation of the tricky serial keyboard hardware
+- no emulation of the tricky serial keyboard hardware
 
 Potential goals:
 - CPU/memory state recording to allow rewind/replay in debugger (that would be cool!)
