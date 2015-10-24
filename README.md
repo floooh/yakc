@@ -1,5 +1,5 @@
 # yakc
-Yet another KC emulator
+Yet another KC emulator (WTF is a 'KC': https://en.wikipedia.org/wiki/KC_85)
 
 Goals:
 - small and portable emulator core in a simple C++
