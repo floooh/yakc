@@ -401,7 +401,7 @@ def LD_r_iIXY_d(ops, xname) :
     for r in r8 :
         op = 0b01000110 | r.bits<<3
         src = ['// LD {},({}+d)'.format(r.name, xname)]
-        src.append('d = mem.r8(state.PC++);')
+        src.append('d = mem.rs8(state.PC++);')
         src.append('state.{} = mem.r8(state.{} + d);'.format(r.name, xname))
         src = inc_tstates(src, 19)
         ops = add_op(ops, op, src)
@@ -415,7 +415,7 @@ def LD_iIXY_d_n(ops, xname) :
     '''
     op = 0b00110110
     src = ['// LD ({}+d),n'.format(xname)]
-    src.append('d = mem.r8(state.PC++);')
+    src.append('d = mem.rs8(state.PC++);')
     src.append('mem.w8(state.{} + d, mem.r8(state.PC++));'.format(xname))
     src = inc_tstates(src, 19)
     ops = add_op(ops, op, src)
@@ -430,7 +430,7 @@ def LD_iIXY_d_r(ops, xname) :
     for r in r8 :
         op = 0b01110000 | r.bits
         src = ['// LD ({}+d),{}'.format(xname, r.name)]
-        src.append('d = mem.r8(state.PC++);')
+        src.append('d = mem.rs8(state.PC++);')
         src.append('mem.w8(state.{} + d, state.{});'.format(xname, r.name))
         src = inc_tstates(src, 19)
         ops = add_op(ops, op, src)

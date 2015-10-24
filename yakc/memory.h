@@ -55,6 +55,10 @@ public:
             return 0;
         }
     }
+    /// read a signed byte at cpu address
+    byte rs8(address addr) const {
+        return (char) this->r8(addr);
+    }
     /// read a word at cpu address
     uword r16(address addr) const {
         ubyte l = this->r8(addr);

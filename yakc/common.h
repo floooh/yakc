@@ -13,7 +13,9 @@
 namespace yakc {
 
 typedef unsigned char ubyte;
+typedef char byte;
 typedef unsigned short uword;
+typedef short word;
 typedef unsigned short address;
 
 }

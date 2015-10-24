@@ -492,31 +492,31 @@ inline void z80::step() {
             break;
         case 0x36:
             // LD (IX+d),n
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, mem.r8(state.PC++));
             state.T += 19;
             break;
         case 0x46:
             // LD B,(IX+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.B = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x4e:
             // LD C,(IX+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.C = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x56:
             // LD D,(IX+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.D = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x5e:
             // LD E,(IX+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.E = mem.r8(state.IX + d);
             state.T += 19;
             break;
@@ -541,55 +541,55 @@ inline void z80::step() {
             break;
         case 0x66:
             // LD H,(IX+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.H = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x6e:
             // LD L,(IX+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.L = mem.r8(state.IX + d);
             state.T += 19;
             break;
         case 0x70:
             // LD (IX+d),B
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, state.B);
             state.T += 19;
             break;
         case 0x71:
             // LD (IX+d),C
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, state.C);
             state.T += 19;
             break;
         case 0x72:
             // LD (IX+d),D
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, state.D);
             state.T += 19;
             break;
         case 0x73:
             // LD (IX+d),E
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, state.E);
             state.T += 19;
             break;
         case 0x74:
             // LD (IX+d),H
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, state.H);
             state.T += 19;
             break;
         case 0x75:
             // LD (IX+d),L
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, state.L);
             state.T += 19;
             break;
         case 0x77:
             // LD (IX+d),A
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, state.A);
             state.T += 19;
             break;
@@ -600,7 +600,7 @@ inline void z80::step() {
             break;
         case 0x7e:
             // LD A,(IX+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.A = mem.r8(state.IX + d);
             state.T += 19;
             break;
@@ -735,31 +735,31 @@ inline void z80::step() {
             break;
         case 0x36:
             // LD (IY+d),n
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, mem.r8(state.PC++));
             state.T += 19;
             break;
         case 0x46:
             // LD B,(IY+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.B = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x4e:
             // LD C,(IY+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.C = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x56:
             // LD D,(IY+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.D = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x5e:
             // LD E,(IY+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.E = mem.r8(state.IY + d);
             state.T += 19;
             break;
@@ -784,55 +784,55 @@ inline void z80::step() {
             break;
         case 0x66:
             // LD H,(IY+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.H = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x6e:
             // LD L,(IY+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.L = mem.r8(state.IY + d);
             state.T += 19;
             break;
         case 0x70:
             // LD (IY+d),B
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, state.B);
             state.T += 19;
             break;
         case 0x71:
             // LD (IY+d),C
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, state.C);
             state.T += 19;
             break;
         case 0x72:
             // LD (IY+d),D
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, state.D);
             state.T += 19;
             break;
         case 0x73:
             // LD (IY+d),E
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, state.E);
             state.T += 19;
             break;
         case 0x74:
             // LD (IY+d),H
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, state.H);
             state.T += 19;
             break;
         case 0x75:
             // LD (IY+d),L
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, state.L);
             state.T += 19;
             break;
         case 0x77:
             // LD (IY+d),A
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, state.A);
             state.T += 19;
             break;
@@ -843,7 +843,7 @@ inline void z80::step() {
             break;
         case 0x7e:
             // LD A,(IY+d)
-            d = mem.r8(state.PC++);
+            d = mem.rs8(state.PC++);
             state.A = mem.r8(state.IY + d);
             state.T += 19;
             break;
