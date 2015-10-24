@@ -7,7 +7,8 @@
 using namespace yakc;
 
 // LD r,s
-TEST(LD_r_s) {
+// LD r,n
+TEST(LD_r_sn) {
     z80 cpu;
     ubyte ram0[memory::bank::size] = { 0 };
     cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
@@ -654,19 +655,26 @@ TEST(EX) {
     cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
 
     ubyte prog[] = {
-        0x21, 0x34, 0x12,   // LD HL,0x1234
-        0x11, 0x78, 0x56,   // LD DE,0x5678
-        0xEB,               // EX DE,HL
-        0x3E, 0x11,         // LD A,0x11
-        0x08,               // EX AF,AF'
-        0x3E, 0x22,         // LD A,0x22
-        0x08,               // EX AF,AF'
-        0x01, 0xBC, 0x9A,   // LD BC,0x9ABC
-        0xD9,               // EXX
-        0x21, 0x11, 0x11,   // LD HL,0x1111
-        0x11, 0x22, 0x22,   // LD DE,0x2222
-        0x01, 0x33, 0x33,   // LD BC,0x3333
-        0xD9,               // EXX
+        0x21, 0x34, 0x12,       // LD HL,0x1234
+        0x11, 0x78, 0x56,       // LD DE,0x5678
+        0xEB,                   // EX DE,HL
+        0x3E, 0x11,             // LD A,0x11
+        0x08,                   // EX AF,AF'
+        0x3E, 0x22,             // LD A,0x22
+        0x08,                   // EX AF,AF'
+        0x01, 0xBC, 0x9A,       // LD BC,0x9ABC
+        0xD9,                   // EXX
+        0x21, 0x11, 0x11,       // LD HL,0x1111
+        0x11, 0x22, 0x22,       // LD DE,0x2222
+        0x01, 0x33, 0x33,       // LD BC,0x3333
+        0xD9,                   // EXX
+        0x31, 0x00, 0x01,       // LD SP,0x0100
+        0xD5,                   // PUSH DE
+        0xE3,                   // EX (SP),HL
+        0xDD, 0x21, 0x99, 0x88, // LD IX,0x8899
+        0xDD, 0xE3,             // EX (SP),IX
+        0xFD, 0x21, 0x77, 0x66, // LD IY,0x6677
+        0xFD, 0xE3,             // EX (SP),IY
     };
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
@@ -691,9 +699,13 @@ TEST(EX) {
     CHECK(0x1234 == cpu.state.DE); CHECK(0x2222 == cpu.state.DE_);
     CHECK(0x9ABC == cpu.state.BC); CHECK(0x3333 == cpu.state.BC_);
     CHECK(94 == cpu.state.T);
-
-
-
+    cpu.step(); CHECK(0x0100 == cpu.state.SP); CHECK(104 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.mem.r16(0x00FE)); CHECK(115 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.HL); CHECK(0x5678 == cpu.mem.r16(0x00FE)); CHECK(134 == cpu.state.T);
+    cpu.step(); CHECK(0x8899 == cpu.state.IX); CHECK(148 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.IX); CHECK(0x8899 == cpu.mem.r16(0x00FE)); CHECK(171 == cpu.state.T);
+    cpu.step(); CHECK(0x6677 == cpu.state.IY); CHECK(185 == cpu.state.T);
+    cpu.step(); CHECK(0x8899 == cpu.state.IY); CHECK(0x6677 == cpu.mem.r16(0x00FE)); CHECK(208 == cpu.state.T);
 }
 
 TEST(cpu) {
