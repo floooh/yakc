@@ -673,6 +673,20 @@ def SUB_A_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def SBC_A_r(ops) :
+    '''
+    SBC A,r
+    T-states: 4
+    '''
+    for r in r8:
+        op = 0b10011000 | r.bits
+        src = ['// SBC A,{}'.format(r.name)]
+        src.append('state.A = sbc8(state.A, state.{});'.format(r.name))
+        src = inc_tstates(src, 4)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def SUB_A_n(ops) :
     '''
     SUB A,n
@@ -682,6 +696,73 @@ def SUB_A_n(ops) :
     src = ['// SUB A,n']
     src.append('state.A = sub8(state.A, mem.r8(state.PC++));')
     src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SBC_A_n(ops) :
+    '''
+    SBC A,n
+    T-states: 7
+    '''
+    op = 0b11011110
+    src = ['// SBC A,n']
+    src.append('state.A = sbc8(state.A, mem.r8(state.PC++));')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SUB_A_iHL(ops) :
+    '''
+    SUB A,(HL)
+    T-states: 7
+    '''
+    op = 0b10010110
+    src = ['// SUB A,(HL)']
+    src.append('state.A = sub8(state.A, mem.r8(state.HL));')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SBC_A_iHL(ops) :
+    '''
+    SBC A,(HL)
+    T-states: 7
+    '''
+    op = 0b10011110
+    src = ['// SBC A,(HL)']
+    src.append('state.A = sbc8(state.A, mem.r8(state.HL));')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SUB_A_iIXY_d(ops, xname) :
+    '''
+    SUB A,([IX|IY]+d)
+    T-states: 19
+    '''
+    op = 0b10010110
+    src = ['// SUB A,({}+d)'.format(xname)]
+    src.append('d = mem.rs8(state.PC++);')
+    src.append('state.A = sub8(state.A, mem.r8(state.{} + d));'.format(xname))
+    src = inc_tstates(src, 19)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SBC_A_iIXY_d(ops, xname) :
+    '''
+    SBC A,([IX|IY]+d)
+    T-states: 19
+    '''
+    op = 0b10011110
+    src = ['// SBC A,({}+d)'.format(xname)]
+    src.append('d = mem.rs8(state.PC++);')
+    src.append('state.A = sbc8(state.A, mem.r8(state.{} + d));'.format(xname))
+    src = inc_tstates(src, 19)
     ops = add_op(ops, op, src)
     return ops
 
@@ -721,6 +802,10 @@ def gen_opcodes() :
     ops = ADC_A_iHL(ops)
     ops = SUB_A_r(ops)
     ops = SUB_A_n(ops)
+    ops = SUB_A_iHL(ops)
+    ops = SBC_A_r(ops)
+    ops = SBC_A_n(ops)
+    ops = SBC_A_iHL(ops)
     ops[0xDD] = []
     ops[0xFD] = []
     ops[0xED] = []
@@ -745,6 +830,8 @@ def gen_dd_opcodes() :
     dd_ops = EX_iSP_HLIXY(dd_ops, 'IX')
     dd_ops = ADD_A_iIXY_d(dd_ops, 'IX')
     dd_ops = ADC_A_iIXY_d(dd_ops, 'IX')
+    dd_ops = SUB_A_iIXY_d(dd_ops, 'IX')
+    dd_ops = SBC_A_iIXY_d(dd_ops, 'IX')
     return dd_ops
 
 #-------------------------------------------------------------------------------
@@ -765,6 +852,8 @@ def gen_fd_opcodes() :
     fd_ops = EX_iSP_HLIXY(fd_ops, 'IY')
     fd_ops = ADD_A_iIXY_d(fd_ops, 'IY')
     fd_ops = ADC_A_iIXY_d(fd_ops, 'IY')
+    fd_ops = SUB_A_iIXY_d(fd_ops, 'IY')
+    fd_ops = SBC_A_iIXY_d(fd_ops, 'IY')
     return fd_ops
 
 #-------------------------------------------------------------------------------

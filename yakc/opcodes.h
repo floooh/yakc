@@ -549,9 +549,54 @@ inline void z80::step() {
         state.A = sub8(state.A, state.L);
         state.T += 4;
         break;
+    case 0x96:
+        // SUB A,(HL)
+        state.A = sub8(state.A, mem.r8(state.HL));
+        state.T += 7;
+        break;
     case 0x97:
         // SUB A,A
         state.A = sub8(state.A, state.A);
+        state.T += 4;
+        break;
+    case 0x98:
+        // SBC A,B
+        state.A = sbc8(state.A, state.B);
+        state.T += 4;
+        break;
+    case 0x99:
+        // SBC A,C
+        state.A = sbc8(state.A, state.C);
+        state.T += 4;
+        break;
+    case 0x9a:
+        // SBC A,D
+        state.A = sbc8(state.A, state.D);
+        state.T += 4;
+        break;
+    case 0x9b:
+        // SBC A,E
+        state.A = sbc8(state.A, state.E);
+        state.T += 4;
+        break;
+    case 0x9c:
+        // SBC A,H
+        state.A = sbc8(state.A, state.H);
+        state.T += 4;
+        break;
+    case 0x9d:
+        // SBC A,L
+        state.A = sbc8(state.A, state.L);
+        state.T += 4;
+        break;
+    case 0x9e:
+        // SBC A,(HL)
+        state.A = sbc8(state.A, mem.r8(state.HL));
+        state.T += 7;
+        break;
+    case 0x9f:
+        // SBC A,A
+        state.A = sbc8(state.A, state.A);
         state.T += 4;
         break;
     case 0xc1:
@@ -722,6 +767,18 @@ inline void z80::step() {
             state.A = adc8(state.A, mem.r8(state.IX + d));
             state.T += 19;
             break;
+        case 0x96:
+            // SUB A,(IX+d)
+            d = mem.rs8(state.PC++);
+            state.A = sub8(state.A, mem.r8(state.IX + d));
+            state.T += 19;
+            break;
+        case 0x9e:
+            // SBC A,(IX+d)
+            d = mem.rs8(state.PC++);
+            state.A = sbc8(state.A, mem.r8(state.IX + d));
+            state.T += 19;
+            break;
         case 0xe1:
             // POP IX
             state.IX = mem.r16(state.SP);
@@ -749,6 +806,11 @@ inline void z80::step() {
         default:
              YAKC_ASSERT(false);
         }
+        break;
+    case 0xde:
+        // SBC A,n
+        state.A = sbc8(state.A, mem.r8(state.PC++));
+        state.T += 7;
         break;
     case 0xe1:
         // POP HL
@@ -975,6 +1037,18 @@ inline void z80::step() {
             // ADC A,(IY+d)
             d = mem.rs8(state.PC++);
             state.A = adc8(state.A, mem.r8(state.IY + d));
+            state.T += 19;
+            break;
+        case 0x96:
+            // SUB A,(IY+d)
+            d = mem.rs8(state.PC++);
+            state.A = sub8(state.A, mem.r8(state.IY + d));
+            state.T += 19;
+            break;
+        case 0x9e:
+            // SBC A,(IY+d)
+            d = mem.rs8(state.PC++);
+            state.A = sbc8(state.A, mem.r8(state.IY + d));
             state.T += 19;
             break;
         case 0xe1:

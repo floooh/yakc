@@ -111,13 +111,18 @@ public:
     }
     /// perform an adc, return result and update flags
     ubyte adc8(ubyte acc, ubyte add) {
-        int r = int(acc) + int(add) + ((state.F & CF) ? 1 : 0);
-        ubyte f = r ? ((r & 0x80) ? SF : 0) : ZF;
-        if (r > 0xFF) f |= CF;
-        if ((r & 0xF) < (acc & 0xF)) f |= HF;
-        if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
-        state.F = f;
-        return (ubyte)r;
+        if (state.F & CF) {
+            int r = int(acc) + int(add) + 1;
+            ubyte f = r ? ((r & 0x80) ? SF : 0) : ZF;
+            if (r > 0xFF) f |= CF;
+            if ((r & 0xF) <= (acc & 0xF)) f |= HF;
+            if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+            state.F = f;
+            return (ubyte)r;
+        }
+        else {
+            return add8(acc, add);
+        }
     }
     /// perform a sub, return result, and update flags
     ubyte sub8(ubyte acc, ubyte sub) {
@@ -129,7 +134,21 @@ public:
         state.F = f;
         return (ubyte)r;
     }
-
+    /// perform an sbc, return result and update flags
+    ubyte sbc8(ubyte acc, ubyte sub) {
+        if (state.F & CF) {
+            int r = int(acc) - int(sub) - 1;
+            ubyte f = NF | (r ? ((r & 0x80) ? SF : 0) : ZF);
+            if (r < 0) f |= CF;
+            if ((r & 0xF) >= (acc & 0xF)) f |= HF;
+            if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+            state.F = f;
+            return (ubyte)r;
+        }
+        else {
+            return sub8(acc, sub);
+        }
+    }
     /// compute flags for add or adc w/o carry set (taken from MAME's z80)
     /*
     ubyte szhvc_add(int oldval, int newval) {
