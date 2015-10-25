@@ -18,6 +18,7 @@ public:
         CF = (1<<0),        // carry flag
         NF = (1<<1),        // add/subtract
         VF = (1<<2),        // parity/overflow
+        PF = VF,            // parity/overflow
         XF = (1<<3),        // undocumented bit 3
         HF = (1<<4),        // half-carry
         YF = (1<<5),        // undocumented bit 5
@@ -149,6 +150,23 @@ public:
             return sub8(acc, sub);
         }
     }
+    /// get the SF|ZF|PF flags for a value
+    static ubyte szp(ubyte val) {
+        int p = 0;
+        if (val & (1<<0)) p++;
+        if (val & (1<<1)) p++;
+        if (val & (1<<2)) p++;
+        if (val & (1<<3)) p++;
+        if (val & (1<<4)) p++;
+        if (val & (1<<5)) p++;
+        if (val & (1<<6)) p++;
+        if (val & (1<<7)) p++;
+        ubyte f = val ? val & SF : ZF;
+        f |= (val | (YF|XF));   // undocumented flag bits 3 and 5
+        f |= p & 1 ? 0 : PF;
+        return f;
+    }
+
     /// compute flags for add or adc w/o carry set (taken from MAME's z80)
     /*
     ubyte szhvc_add(int oldval, int newval) {

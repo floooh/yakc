@@ -599,6 +599,54 @@ inline void z80::step() {
         state.A = sbc8(state.A, state.A);
         state.T += 4;
         break;
+    case 0xa0:
+        // AND A,B
+        state.A &= state.B;
+        state.F = szp(state.A)|HF;
+        state.T += 4;
+        break;
+    case 0xa1:
+        // AND A,C
+        state.A &= state.C;
+        state.F = szp(state.A)|HF;
+        state.T += 4;
+        break;
+    case 0xa2:
+        // AND A,D
+        state.A &= state.D;
+        state.F = szp(state.A)|HF;
+        state.T += 4;
+        break;
+    case 0xa3:
+        // AND A,E
+        state.A &= state.E;
+        state.F = szp(state.A)|HF;
+        state.T += 4;
+        break;
+    case 0xa4:
+        // AND A,H
+        state.A &= state.H;
+        state.F = szp(state.A)|HF;
+        state.T += 4;
+        break;
+    case 0xa5:
+        // AND A,L
+        state.A &= state.L;
+        state.F = szp(state.A)|HF;
+        state.T += 4;
+        break;
+    case 0xa6:
+        // AND A,(HL)
+        state.A &= mem.r8(state.HL);
+        state.F = szp(state.A)|HF;
+        state.T += 7;
+        break;
+    case 0xa7:
+        // AND A,A
+        state.A &= state.A;
+        state.F = szp(state.A)|HF;
+        state.T += 4;
+        break;
     case 0xc1:
         // POP BC
         state.BC = mem.r16(state.SP);
@@ -779,6 +827,13 @@ inline void z80::step() {
             state.A = sbc8(state.A, mem.r8(state.IX + d));
             state.T += 19;
             break;
+        case 0xa6:
+            // AND A,(IX+d)
+            d = mem.rs8(state.PC++);
+            state.A &= mem.r8(state.IX + d);
+            state.F = szp(state.A)|HF;
+            state.T += 19;
+            break;
         case 0xe1:
             // POP IX
             state.IX = mem.r16(state.SP);
@@ -830,6 +885,12 @@ inline void z80::step() {
         state.SP -= 2;
         mem.w16(state.SP, state.HL);
         state.T += 11;
+        break;
+    case 0xe6:
+        // AND A,n
+        state.A &= mem.r8(state.PC++);
+        state.F = szp(state.A)|HF;
+        state.T += 7;
         break;
     case 0xeb:
         // EX DE,HL
@@ -1049,6 +1110,13 @@ inline void z80::step() {
             // SBC A,(IY+d)
             d = mem.rs8(state.PC++);
             state.A = sbc8(state.A, mem.r8(state.IY + d));
+            state.T += 19;
+            break;
+        case 0xa6:
+            // AND A,(IY+d)
+            d = mem.rs8(state.PC++);
+            state.A &= mem.r8(state.IY + d);
+            state.F = szp(state.A)|HF;
             state.T += 19;
             break;
         case 0xe1:

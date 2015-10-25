@@ -767,6 +767,64 @@ def SBC_A_iIXY_d(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
+def AND_A_r(ops) :
+    '''
+    AND A,r
+    T-states: 4
+    '''
+    for r in r8:
+        op = 0b10100000 | r.bits
+        src = ['// AND A,{}'.format(r.name)]
+        src.append('state.A &= state.{};'.format(r.name))
+        src.append('state.F = szp(state.A)|HF;')
+        src = inc_tstates(src, 4)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def AND_A_n(ops) :
+    '''
+    AND A,n
+    T-states: 7
+    '''
+    op = 0b11100110
+    src = ['// AND A,n']
+    src.append('state.A &= mem.r8(state.PC++);')
+    src.append('state.F = szp(state.A)|HF;')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def AND_A_iHL(ops) :
+    '''
+    AND A,(HL)
+    T-states: 7
+    '''
+    op = 0b10100110
+    src = ['// AND A,(HL)']
+    src.append('state.A &= mem.r8(state.HL);')
+    src.append('state.F = szp(state.A)|HF;')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def AND_A_iIXY_d(ops, xname) :
+    '''
+    AND A,([IX|IY]+d)
+    T-states: 10
+    '''
+    op = 0b10100110
+    src = ['// AND A,({}+d)'.format(xname)]
+    src.append('d = mem.rs8(state.PC++);')
+    src.append('state.A &= mem.r8(state.{} + d);'.format(xname))
+    src.append('state.F = szp(state.A)|HF;')
+    src = inc_tstates(src, 19)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -806,6 +864,9 @@ def gen_opcodes() :
     ops = SBC_A_r(ops)
     ops = SBC_A_n(ops)
     ops = SBC_A_iHL(ops)
+    ops = AND_A_r(ops)
+    ops = AND_A_n(ops)
+    ops = AND_A_iHL(ops)
     ops[0xDD] = []
     ops[0xFD] = []
     ops[0xED] = []
@@ -832,6 +893,7 @@ def gen_dd_opcodes() :
     dd_ops = ADC_A_iIXY_d(dd_ops, 'IX')
     dd_ops = SUB_A_iIXY_d(dd_ops, 'IX')
     dd_ops = SBC_A_iIXY_d(dd_ops, 'IX')
+    dd_ops = AND_A_iIXY_d(dd_ops, 'IX')
     return dd_ops
 
 #-------------------------------------------------------------------------------
@@ -854,6 +916,7 @@ def gen_fd_opcodes() :
     fd_ops = ADC_A_iIXY_d(fd_ops, 'IY')
     fd_ops = SUB_A_iIXY_d(fd_ops, 'IY')
     fd_ops = SBC_A_iIXY_d(fd_ops, 'IY')
+    fd_ops = AND_A_iIXY_d(fd_ops, 'IY')
     return fd_ops
 
 #-------------------------------------------------------------------------------
