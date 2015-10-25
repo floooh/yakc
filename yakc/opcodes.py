@@ -659,6 +659,33 @@ def ADC_A_iIXY_d(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
+def SUB_A_r(ops) :
+    '''
+    SUB A,r
+    T-states: 4
+    '''
+    for r in r8:
+        op = 0b10010000 | r.bits
+        src = ['// SUB A,{}'.format(r.name)]
+        src.append('state.A = sub8(state.A, state.{});'.format(r.name))
+        src = inc_tstates(src, 4)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SUB_A_n(ops) :
+    '''
+    SUB A,n
+    T-states: 7
+    '''
+    op = 0b11010110
+    src = ['// SUB A,n']
+    src.append('state.A = sub8(state.A, mem.r8(state.PC++));')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -692,6 +719,8 @@ def gen_opcodes() :
     ops = ADC_A_r(ops)
     ops = ADC_A_n(ops)
     ops = ADC_A_iHL(ops)
+    ops = SUB_A_r(ops)
+    ops = SUB_A_n(ops)
     ops[0xDD] = []
     ops[0xFD] = []
     ops[0xED] = []

@@ -109,7 +109,6 @@ public:
         state.F = f;
         return (ubyte)r;
     }
-
     /// perform an adc, return result and update flags
     ubyte adc8(ubyte acc, ubyte add) {
         int r = int(acc) + int(add) + ((state.F & CF) ? 1 : 0);
@@ -117,6 +116,16 @@ public:
         if (r > 0xFF) f |= CF;
         if ((r & 0xF) < (acc & 0xF)) f |= HF;
         if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+        state.F = f;
+        return (ubyte)r;
+    }
+    /// perform a sub, return result, and update flags
+    ubyte sub8(ubyte acc, ubyte sub) {
+        int r = int(acc) - int(sub);
+        ubyte f = NF | (r ? ((r & 0x80) ? SF : 0) : ZF);
+        if (r < 0) f |= CF;
+        if ((r & 0xF) > (acc & 0xF)) f |= HF;
+        if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
         state.F = f;
         return (ubyte)r;
     }

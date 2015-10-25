@@ -519,6 +519,41 @@ inline void z80::step() {
         state.A = adc8(state.A, state.A);
         state.T += 4;
         break;
+    case 0x90:
+        // SUB A,B
+        state.A = sub8(state.A, state.B);
+        state.T += 4;
+        break;
+    case 0x91:
+        // SUB A,C
+        state.A = sub8(state.A, state.C);
+        state.T += 4;
+        break;
+    case 0x92:
+        // SUB A,D
+        state.A = sub8(state.A, state.D);
+        state.T += 4;
+        break;
+    case 0x93:
+        // SUB A,E
+        state.A = sub8(state.A, state.E);
+        state.T += 4;
+        break;
+    case 0x94:
+        // SUB A,H
+        state.A = sub8(state.A, state.H);
+        state.T += 4;
+        break;
+    case 0x95:
+        // SUB A,L
+        state.A = sub8(state.A, state.L);
+        state.T += 4;
+        break;
+    case 0x97:
+        // SUB A,A
+        state.A = sub8(state.A, state.A);
+        state.T += 4;
+        break;
     case 0xc1:
         // POP BC
         state.BC = mem.r16(state.SP);
@@ -552,6 +587,11 @@ inline void z80::step() {
         state.SP -= 2;
         mem.w16(state.SP, state.DE);
         state.T += 11;
+        break;
+    case 0xd6:
+        // SUB A,n
+        state.A = sub8(state.A, mem.r8(state.PC++));
+        state.T += 7;
         break;
     case 0xd9:
         // EXX
