@@ -648,45 +648,51 @@ def gen_source(f, ops, dd_ops, fd_ops, ed_ops) :
     f.write('    int d;\n')
     f.write('    uword u16tmp;\n')
     f.write('    switch (mem.r8(state.PC++)) {\n')
-    for op in ops :
-        f.write('    case {}:\n'.format(hex(op)))
-        if op == 0xDD :
-            # write DD prefix instructions
-            f.write('        switch (mem.r8(state.PC++)) {\n')
-            for dd_op in dd_ops :
-                f.write('        case {}:\n'.format(hex(dd_op)))
-                for line in dd_ops[dd_op] :
-                    f.write('            {}\n'.format(line))
-                f.write('            break;\n')
-            f.write('        default:\n')
-            f.write('             YAKC_ASSERT(false);\n')
-            f.write('        }\n')
-        elif op == 0xED :
-            # write ED prefix instructions
-            f.write('        switch (mem.r8(state.PC++)) {\n')
-            for ed_op in ed_ops :
-                f.write('        case {}:\n'.format(hex(ed_op)))
-                for line in ed_ops[ed_op] :
-                    f.write('            {}\n'.format(line))
-                f.write('            break;\n')
-            f.write('        default:\n')
-            f.write('            YAKC_ASSERT(false);\n')
-            f.write('        }\n')
-        elif op == 0xFD :
-            # write FD prefix instructions
-            f.write('        switch (mem.r8(state.PC++)) {\n')
-            for fd_op in fd_ops :
-                f.write('        case {}:\n'.format(hex(fd_op)))
-                for line in fd_ops[fd_op] :
-                    f.write('            {}\n'.format(line))
-                f.write('            break;\n')
-            f.write('        default:\n')
-            f.write('            YAKC_ASSERT(false);\n')
-            f.write('        }\n')
-        else :
-            for line in ops[op] :
-                f.write('        {}\n'.format(line))
-        f.write('        break;\n')
+    
+    # generate the switch case in sorted order
+    for op in range(0,256) :
+        if op in ops :
+            f.write('    case {}:\n'.format(hex(op)))
+            if op == 0xDD :
+                # write DD prefix instructions
+                f.write('        switch (mem.r8(state.PC++)) {\n')
+                for dd_op in range(0,256) :
+                    if dd_op in dd_ops :
+                        f.write('        case {}:\n'.format(hex(dd_op)))
+                        for line in dd_ops[dd_op] :
+                            f.write('            {}\n'.format(line))
+                        f.write('            break;\n')
+                f.write('        default:\n')
+                f.write('             YAKC_ASSERT(false);\n')
+                f.write('        }\n')
+            elif op == 0xED :
+                # write ED prefix instructions
+                f.write('        switch (mem.r8(state.PC++)) {\n')
+                for ed_op in range(0,256) :
+                    if ed_op in ed_ops :
+                        f.write('        case {}:\n'.format(hex(ed_op)))
+                        for line in ed_ops[ed_op] :
+                            f.write('            {}\n'.format(line))
+                        f.write('            break;\n')
+                f.write('        default:\n')
+                f.write('            YAKC_ASSERT(false);\n')
+                f.write('        }\n')
+            elif op == 0xFD :
+                # write FD prefix instructions
+                f.write('        switch (mem.r8(state.PC++)) {\n')
+                for fd_op in range(0,256) :
+                    if fd_op in fd_ops :
+                        f.write('        case {}:\n'.format(hex(fd_op)))
+                        for line in fd_ops[fd_op] :
+                            f.write('            {}\n'.format(line))
+                        f.write('            break;\n')
+                f.write('        default:\n')
+                f.write('            YAKC_ASSERT(false);\n')
+                f.write('        }\n')
+            else :
+                for line in ops[op] :
+                    f.write('        {}\n'.format(line))
+            f.write('        break;\n')
     f.write('    default:\n')
     f.write('       YAKC_ASSERT(false);\n')
     f.write('    }\n')

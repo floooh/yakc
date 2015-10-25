@@ -520,25 +520,6 @@ inline void z80::step() {
             state.E = mem.r8(state.IX + d);
             state.T += 19;
             break;
-        case 0xe1:
-            // POP IX
-            state.IX = mem.r16(state.SP);
-            state.SP += 2;
-            state.T += 14;
-            break;
-        case 0xe3:
-            // EX (SP),IX
-            u16tmp = mem.r16(state.SP);
-            mem.w16(state.SP, state.IX);
-            state.IX = u16tmp;
-            state.T += 23;
-            break;
-        case 0xe5:
-            // PUSH IX
-            state.SP -= 2;
-            mem.w16(state.SP, state.IX);
-            state.T += 15;
-            break;
         case 0x66:
             // LD H,(IX+d)
             d = mem.rs8(state.PC++);
@@ -593,16 +574,35 @@ inline void z80::step() {
             mem.w8(state.IX + d, state.A);
             state.T += 19;
             break;
-        case 0xf9:
-            // LD SP,IX
-            state.SP = state.IX;
-            state.T += 10;
-            break;
         case 0x7e:
             // LD A,(IX+d)
             d = mem.rs8(state.PC++);
             state.A = mem.r8(state.IX + d);
             state.T += 19;
+            break;
+        case 0xe1:
+            // POP IX
+            state.IX = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 14;
+            break;
+        case 0xe3:
+            // EX (SP),IX
+            u16tmp = mem.r16(state.SP);
+            mem.w16(state.SP, state.IX);
+            state.IX = u16tmp;
+            state.T += 23;
+            break;
+        case 0xe5:
+            // PUSH IX
+            state.SP -= 2;
+            mem.w16(state.SP, state.IX);
+            state.T += 15;
+            break;
+        case 0xf9:
+            // LD SP,IX
+            state.SP = state.IX;
+            state.T += 10;
             break;
         default:
              YAKC_ASSERT(false);
@@ -640,20 +640,14 @@ inline void z80::step() {
             state.PC += 2;
             state.T += 20;
             break;
-        case 0x4b:
-            // LD BC,(nn)
-            state.BC = mem.r16(mem.r16(state.PC));
-            state.PC += 2;
-            state.T += 20;
-            break;
         case 0x47:
             // LD I,A
             state.I = state.A;
             state.T += 9;
             break;
-        case 0x6b:
-            // LD HL,(nn)
-            state.HL = mem.r16(mem.r16(state.PC));
+        case 0x4b:
+            // LD BC,(nn)
+            state.BC = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
@@ -662,9 +656,27 @@ inline void z80::step() {
             state.R = state.A;
             state.T += 9;
             break;
+        case 0x53:
+            // LD (nn),DE
+            mem.w16(mem.r16(state.PC), state.DE);
+            state.PC += 2;
+            state.T += 20;
+            break;
+        case 0x5b:
+            // LD DE,(nn)
+            state.DE = mem.r16(mem.r16(state.PC));
+            state.PC += 2;
+            state.T += 20;
+            break;
         case 0x63:
             // LD (nn),HL
             mem.w16(mem.r16(state.PC), state.HL);
+            state.PC += 2;
+            state.T += 20;
+            break;
+        case 0x6b:
+            // LD HL,(nn)
+            state.HL = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
@@ -677,18 +689,6 @@ inline void z80::step() {
         case 0x7b:
             // LD SP,(nn)
             state.SP = mem.r16(mem.r16(state.PC));
-            state.PC += 2;
-            state.T += 20;
-            break;
-        case 0x53:
-            // LD (nn),DE
-            mem.w16(mem.r16(state.PC), state.DE);
-            state.PC += 2;
-            state.T += 20;
-            break;
-        case 0x5b:
-            // LD DE,(nn)
-            state.DE = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
             break;
@@ -763,25 +763,6 @@ inline void z80::step() {
             state.E = mem.r8(state.IY + d);
             state.T += 19;
             break;
-        case 0xe1:
-            // POP IY
-            state.IY = mem.r16(state.SP);
-            state.SP += 2;
-            state.T += 14;
-            break;
-        case 0xe3:
-            // EX (SP),IY
-            u16tmp = mem.r16(state.SP);
-            mem.w16(state.SP, state.IY);
-            state.IY = u16tmp;
-            state.T += 23;
-            break;
-        case 0xe5:
-            // PUSH IY
-            state.SP -= 2;
-            mem.w16(state.SP, state.IY);
-            state.T += 15;
-            break;
         case 0x66:
             // LD H,(IY+d)
             d = mem.rs8(state.PC++);
@@ -836,16 +817,35 @@ inline void z80::step() {
             mem.w8(state.IY + d, state.A);
             state.T += 19;
             break;
-        case 0xf9:
-            // LD SP,IY
-            state.SP = state.IY;
-            state.T += 10;
-            break;
         case 0x7e:
             // LD A,(IY+d)
             d = mem.rs8(state.PC++);
             state.A = mem.r8(state.IY + d);
             state.T += 19;
+            break;
+        case 0xe1:
+            // POP IY
+            state.IY = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 14;
+            break;
+        case 0xe3:
+            // EX (SP),IY
+            u16tmp = mem.r16(state.SP);
+            mem.w16(state.SP, state.IY);
+            state.IY = u16tmp;
+            state.T += 23;
+            break;
+        case 0xe5:
+            // PUSH IY
+            state.SP -= 2;
+            mem.w16(state.SP, state.IY);
+            state.T += 15;
+            break;
+        case 0xf9:
+            // LD SP,IY
+            state.SP = state.IY;
+            state.T += 10;
             break;
         default:
             YAKC_ASSERT(false);
