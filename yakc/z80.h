@@ -4,7 +4,7 @@
     @class yakc::z80
     @brief the Z80 (or rather U880) cpu
 */
-#include <cstring>
+#include <string.h>
 #include "yakc/common.h"
 #include "yakc/memory.h"
 
@@ -75,7 +75,7 @@ public:
 
     /// constructor
     z80() {
-        std::memset(&this->state, 0, sizeof(this->state));
+        memset(&this->state, 0, sizeof(this->state));
     }
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1) {

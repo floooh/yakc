@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/memory.h"
+#include <string.h>
 
 using namespace yakc;
 
@@ -19,9 +20,9 @@ TEST(memory) {
     ubyte ram0[memory::bank::size];
     ubyte ram1[memory::bank::size];
     ubyte rom[memory::bank::size];
-    std::memset(ram0, 1, sizeof(ram0));
-    std::memset(ram1, 2, sizeof(ram1));
-    std::memset(rom, 3, sizeof(rom));
+    memset(ram0, 1, sizeof(ram0));
+    memset(ram1, 2, sizeof(ram1));
+    memset(rom, 3, sizeof(rom));
 
     mem.map(0, ram0, sizeof(ram0), memory::type::ram);
     mem.map(1, ram1, sizeof(ram0), memory::type::ram);
