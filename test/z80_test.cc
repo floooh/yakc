@@ -923,8 +923,8 @@ TEST(SUB_a_iHLIXY_d) {
         0xFD, 0x21, 0x03, 0x10, // LD IY,0x1003
         0x3E, 0x00,             // LD A,0x00
         0x96,                   // SUB A,(HL)
-        0xDD, 0x96, 0x01,       // ADD A,(IX+1)
-        0xFD, 0x96, 0xFE,       // ADD A,(IY-2)
+        0xDD, 0x96, 0x01,       // SUB A,(IX+1)
+        0xFD, 0x96, 0xFE,       // SUB A,(IY-2)
     };
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
@@ -977,6 +977,37 @@ TEST(SBC_A_r) {
     cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(77 == cpu.state.T);
     cpu.step(); CHECK(0xFB == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF)); CHECK(84 == cpu.state.T);
     cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(91 == cpu.state.T);
+}
+
+// SBC A,(HL)
+// SBC A,(IX+d)
+// SBC A,(IY+d)
+TEST(SBC_a_iHLIXY_d) {
+    z80 cpu;
+    ubyte ram0[memory::bank::size] = { 0 };
+    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
+
+    ubyte data[] = { 0x41, 0x61, 0x81 };
+    cpu.mem.write(0x1000, data, sizeof(data));
+
+    ubyte prog[] = {
+        0x21, 0x00, 0x10,       // LD HL,0x1000
+        0xDD, 0x21, 0x00, 0x10, // LD IX,0x1000
+        0xFD, 0x21, 0x03, 0x10, // LD IY,0x1003
+        0x3E, 0x00,             // LD A,0x00
+        0x9E,                   // SBC A,(HL)
+        0xDD, 0x9E, 0x01,       // SBC A,(IX+1)
+        0xFD, 0x9E, 0xFE,       // SBC A,(IY-2)
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(24 == cpu.state.T);
+    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(38 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(45 == cpu.state.T);
+    cpu.step(); CHECK(0xBF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(52 == cpu.state.T);
+    cpu.step(); CHECK(0x5D == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::NF)); CHECK(71 == cpu.state.T);
+    cpu.step(); CHECK(0xFC == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(90 == cpu.state.T);
 }
 
 TEST(cpu) {
