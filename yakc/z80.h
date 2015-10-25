@@ -18,9 +18,9 @@ public:
         CF = (1<<0),        // carry flag
         NF = (1<<1),        // add/subtract
         VF = (1<<2),        // parity/overflow
-        YF = (1<<3),        // undocumented bit 3
+        XF = (1<<3),        // undocumented bit 3
         HF = (1<<4),        // half-carry
-        XF = (1<<5),        // undocumented bit 5
+        YF = (1<<5),        // undocumented bit 5
         ZF = (1<<6),        // zero flag
         SF = (1<<7),        // sign flag
     };
@@ -92,58 +92,97 @@ public:
         state.I = 0;
         state.R = 0;
     }
-    /// update flags, add or adc w/o carry set (taken from MAME's z80)
-    void szhvc_add(int oldval, int newval) {
+    /// helper to test expected flag bitmask
+    bool test_flags(ubyte expected) const {
+        // mask out undocumented flags
+        ubyte undoc = ~(XF|YF);
+        return (state.F & undoc) == expected;
+    }
+
+    /// perform an add, return result, and update flags
+    ubyte add8(ubyte acc, ubyte add) {
+        int r = int(acc) + int(add);
+        ubyte f = (r & 0xFF) ? ((r & 0x80) ? SF : 0) : ZF;
+        if (r > 0xFF) f |= CF;
+        if ((r & 0xF) < (acc & 0xF)) f |= HF;
+        if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+        state.F = f;
+        return (ubyte)r;
+    }
+
+    /// perform an adc, return result and update flags
+    ubyte adc8(ubyte acc, ubyte add) {
+        int r = int(acc) + int(add) + ((state.F & CF) ? 1 : 0);
+        ubyte f = r ? ((r & 0x80) ? SF : 0) : ZF;
+        if (r > 0xFF) f |= CF;
+        if ((r & 0xF) < (acc & 0xF)) f |= HF;
+        if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+        state.F = f;
+        return (ubyte)r;
+    }
+
+    /// compute flags for add or adc w/o carry set (taken from MAME's z80)
+    /*
+    ubyte szhvc_add(int oldval, int newval) {
         int val = newval - oldval;
         ubyte f = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
-        f |= (newval & (YF | XF)); /* undocumented flag bits 5+3 */
+        f |= (newval & (YF | XF));
         if ((newval & 0x0f) < (oldval & 0x0f)) f |= HF;
         if (newval < oldval) f |= CF;
         if ((val^oldval^0x80) & (val^newval) & 0x80) f |= VF;
-        state.F = f;
+        return f;
     }
+    */
 
-    /// update flags, adc with carry set (taken from MAME's z80)
-    void szhvc_adc(int oldval, int newval) {
+    /// compute flags for adc with carry set (taken from MAME's z80)
+    /*
+    ubyte szhvc_adc(int oldval, int newval) {
         int val = newval - oldval;
         ubyte f = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
-        f |= (newval & (YF | XF)); /* undocumented flag bits 5+3 */
+        f |= (newval & (YF | XF));
         if ((newval & 0x0f) <= (oldval & 0x0f)) f |= HF;
         if (newval <= oldval) f |= CF;
         if ((val^oldval^0x80) & (val^newval) & 0x80) f |= VF;
-        state.F = f;
+        return f;
     }
+    */
 
-    /// update flags, cp, sub or sbc w/o carry set (taken from MAME's z80)
-    void szhvc_sub(int oldval, int newval) {
+    /// compute flags for cp, sub or sbc w/o carry set (taken from MAME's z80)
+    /*
+    ubyte szhvc_sub(int oldval, int newval) {
         int val = newval - oldval;
         ubyte f = NF | ((newval) ? ((newval & 0x80) ? SF : 0) : ZF);
-        f |= (newval & (YF | XF)); /* undocumented flag bits 5+3 */
+        f |= (newval & (YF | XF));
         if ((newval & 0x0f) > (oldval & 0x0f)) f |= HF;
         if (newval > oldval) f |= CF;
         if ((val^oldval) & (oldval^newval) & 0x80) f |= VF;
-        state.F = f;
+        return f;
     }
+    */
 
-    /// update flags, sbc with carry set
+    /// compute flags for sbc with carry set
+    /*
     void szhvc_sbc(int oldval, int newval) {
         int val = oldval - newval - 1;
         ubyte f = NF | ((newval) ? ((newval & 0x80) ? SF : 0) : ZF);
-        f |= (newval & (YF | XF)); /* undocumented flag bits 5+3 */
+        f |= (newval & (YF | XF));
         if ((newval & 0x0f) >= (oldval & 0x0f)) f |= HF;
         if (newval >= oldval) f |= CF;
         if ((val^oldval) & (oldval^newval) & 0x80) f |= VF;
         state.F = f;
     }
+    */
 
-    /// update flags, increment 8-bit reg
-    void szhv_inc(int val) {
+    /// compute flags for increment 8-bit reg
+    /*
+    ubyte szhv_inc(int val, ubyte prev_flags) {
         ubyte f = val ? val & SF : ZF;
-        f |= (val & (YF | XF)); /* undocumented flag bits 5+3 */
+        f |= (val & (YF | XF));
         if (val == 0x80) f |= VF;
         if ((val & 0x0f) == 0x00) f |= HF;
-        state.F = (state.F & CF) | f;
+        return (prev_flags & CF) | f;
     }
+    */
 
     /// execute a single instruction and update machine state
     void step();

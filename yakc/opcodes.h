@@ -439,6 +439,86 @@ inline void z80::step() {
         state.A = state.A;
         state.T += 4;
         break;
+    case 0x80:
+        // ADD A,B
+        state.A = add8(state.A, state.B);
+        state.T += 4;
+        break;
+    case 0x81:
+        // ADD A,C
+        state.A = add8(state.A, state.C);
+        state.T += 4;
+        break;
+    case 0x82:
+        // ADD A,D
+        state.A = add8(state.A, state.D);
+        state.T += 4;
+        break;
+    case 0x83:
+        // ADD A,E
+        state.A = add8(state.A, state.E);
+        state.T += 4;
+        break;
+    case 0x84:
+        // ADD A,H
+        state.A = add8(state.A, state.H);
+        state.T += 4;
+        break;
+    case 0x85:
+        // ADD A,L
+        state.A = add8(state.A, state.L);
+        state.T += 4;
+        break;
+    case 0x86:
+        // ADD A,(HL)
+        state.A = add8(state.A, mem.r8(state.HL));
+        state.T += 7;
+        break;
+    case 0x87:
+        // ADD A,A
+        state.A = add8(state.A, state.A);
+        state.T += 4;
+        break;
+    case 0x88:
+        // ADC A,B
+        state.A = adc8(state.A, state.B);
+        state.T += 4;
+        break;
+    case 0x89:
+        // ADC A,C
+        state.A = adc8(state.A, state.C);
+        state.T += 4;
+        break;
+    case 0x8a:
+        // ADC A,D
+        state.A = adc8(state.A, state.D);
+        state.T += 4;
+        break;
+    case 0x8b:
+        // ADC A,E
+        state.A = adc8(state.A, state.E);
+        state.T += 4;
+        break;
+    case 0x8c:
+        // ADC A,H
+        state.A = adc8(state.A, state.H);
+        state.T += 4;
+        break;
+    case 0x8d:
+        // ADC A,L
+        state.A = adc8(state.A, state.L);
+        state.T += 4;
+        break;
+    case 0x8e:
+        // ADC A,(HL)
+        state.A = adc8(state.A, mem.r8(state.HL));
+        state.T += 7;
+        break;
+    case 0x8f:
+        // ADC A,A
+        state.A = adc8(state.A, state.A);
+        state.T += 4;
+        break;
     case 0xc1:
         // POP BC
         state.BC = mem.r16(state.SP);
@@ -450,6 +530,16 @@ inline void z80::step() {
         state.SP -= 2;
         mem.w16(state.SP, state.BC);
         state.T += 11;
+        break;
+    case 0xc6:
+        // ADD A,n
+        state.A = add8(state.A, mem.r8(state.PC++));
+        state.T += 7;
+        break;
+    case 0xce:
+        // ADC A,n
+        state.A = adc8(state.A, mem.r8(state.PC++));
+        state.T += 7;
         break;
     case 0xd1:
         // POP DE
@@ -578,6 +668,18 @@ inline void z80::step() {
             // LD A,(IX+d)
             d = mem.rs8(state.PC++);
             state.A = mem.r8(state.IX + d);
+            state.T += 19;
+            break;
+        case 0x86:
+            // ADD A,(IX+d)
+            d = mem.rs8(state.PC++);
+            state.A = add8(state.A, mem.r8(state.IX + d));
+            state.T += 19;
+            break;
+        case 0x8e:
+            // ADC A,(IX+d)
+            d = mem.rs8(state.PC++);
+            state.A = adc8(state.A, mem.r8(state.IX + d));
             state.T += 19;
             break;
         case 0xe1:
@@ -821,6 +923,18 @@ inline void z80::step() {
             // LD A,(IY+d)
             d = mem.rs8(state.PC++);
             state.A = mem.r8(state.IY + d);
+            state.T += 19;
+            break;
+        case 0x86:
+            // ADD A,(IY+d)
+            d = mem.rs8(state.PC++);
+            state.A = add8(state.A, mem.r8(state.IY + d));
+            state.T += 19;
+            break;
+        case 0x8e:
+            // ADC A,(IY+d)
+            d = mem.rs8(state.PC++);
+            state.A = adc8(state.A, mem.r8(state.IY + d));
             state.T += 19;
             break;
         case 0xe1:

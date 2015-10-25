@@ -551,6 +551,114 @@ def EX_iSP_HLIXY(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
+def ADD_A_r(ops) :
+    '''
+    ADD A,r
+    T-states: 4
+    '''
+    for r in r8 :
+        op = 0b10000000 | r.bits
+        src = ['// ADD A,{}'.format(r.name)]
+        src.append('state.A = add8(state.A, state.{});'.format(r.name))
+        src = inc_tstates(src, 4)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def ADC_A_r(ops) :
+    '''
+    ADC A,r
+    T-states: 4
+    '''
+    for r in r8 :
+        op = 0b10001000 | r.bits
+        src = ['// ADC A,{}'.format(r.name)]
+        src.append('state.A = adc8(state.A, state.{});'.format(r.name))
+        src = inc_tstates(src, 4)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def ADD_A_n(ops) :
+    '''
+    ADD A,n
+    T-states: 7
+    '''
+    op = 0b11000110
+    src = ['// ADD A,n']
+    src.append('state.A = add8(state.A, mem.r8(state.PC++));')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def ADC_A_n(ops) :
+    '''
+    ADC A,n
+    T-states: 7
+    '''
+    op = 0b11001110
+    src = ['// ADC A,n']
+    src.append('state.A = adc8(state.A, mem.r8(state.PC++));')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def ADD_A_iHL(ops) :
+    '''
+    ADD A,(HL)
+    T-states: 7
+    '''
+    op = 0b10000110
+    src = ['// ADD A,(HL)']
+    src.append('state.A = add8(state.A, mem.r8(state.HL));')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def ADC_A_iHL(ops) :
+    '''
+    ADC A,(HL)
+    T-states: 7
+    '''
+    op = 0b10001110
+    src = ['// ADC A,(HL)']
+    src.append('state.A = adc8(state.A, mem.r8(state.HL));')
+    src = inc_tstates(src, 7)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def ADD_A_iIXY_d(ops, xname) :
+    '''
+    ADD A,([IX|IY]+d)
+    T-states: 19
+    '''
+    op = 0b10000110
+    src = ['// ADD A,({}+d)'.format(xname)]
+    src.append('d = mem.rs8(state.PC++);')
+    src.append('state.A = add8(state.A, mem.r8(state.{} + d));'.format(xname))
+    src = inc_tstates(src, 19)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def ADC_A_iIXY_d(ops, xname) :
+    '''
+    ADC A,([IX|IY]+d)
+    T-states: 19
+    '''
+    op = 0b10001110
+    src = ['// ADC A,({}+d)'.format(xname)]
+    src.append('d = mem.rs8(state.PC++);')
+    src.append('state.A = adc8(state.A, mem.r8(state.{} + d));'.format(xname))
+    src = inc_tstates(src, 19)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -578,6 +686,12 @@ def gen_opcodes() :
     ops = EX_AF_AFx(ops)
     ops = EXX(ops)
     ops = EX_iSP_HLIXY(ops, 'HL')
+    ops = ADD_A_r(ops)
+    ops = ADD_A_n(ops)
+    ops = ADD_A_iHL(ops)
+    ops = ADC_A_r(ops)
+    ops = ADC_A_n(ops)
+    ops = ADC_A_iHL(ops)
     ops[0xDD] = []
     ops[0xFD] = []
     ops[0xED] = []
@@ -600,6 +714,8 @@ def gen_dd_opcodes() :
     dd_ops = PUSH_IXY(dd_ops, 'IX')
     dd_ops = POP_IXY(dd_ops, 'IX')
     dd_ops = EX_iSP_HLIXY(dd_ops, 'IX')
+    dd_ops = ADD_A_iIXY_d(dd_ops, 'IX')
+    dd_ops = ADC_A_iIXY_d(dd_ops, 'IX')
     return dd_ops
 
 #-------------------------------------------------------------------------------
@@ -618,6 +734,8 @@ def gen_fd_opcodes() :
     fd_ops = PUSH_IXY(fd_ops, 'IY')
     fd_ops = POP_IXY(fd_ops, 'IY')
     fd_ops = EX_iSP_HLIXY(fd_ops, 'IY')
+    fd_ops = ADD_A_iIXY_d(fd_ops, 'IY')
+    fd_ops = ADC_A_iIXY_d(fd_ops, 'IY')
     return fd_ops
 
 #-------------------------------------------------------------------------------
