@@ -520,42 +520,42 @@ inline void z80::step() {
         state.T += 4;
         break;
     case 0x90:
-        // SUB A,B
+        // SUB B
         state.A = sub8(state.A, state.B);
         state.T += 4;
         break;
     case 0x91:
-        // SUB A,C
+        // SUB C
         state.A = sub8(state.A, state.C);
         state.T += 4;
         break;
     case 0x92:
-        // SUB A,D
+        // SUB D
         state.A = sub8(state.A, state.D);
         state.T += 4;
         break;
     case 0x93:
-        // SUB A,E
+        // SUB E
         state.A = sub8(state.A, state.E);
         state.T += 4;
         break;
     case 0x94:
-        // SUB A,H
+        // SUB H
         state.A = sub8(state.A, state.H);
         state.T += 4;
         break;
     case 0x95:
-        // SUB A,L
+        // SUB L
         state.A = sub8(state.A, state.L);
         state.T += 4;
         break;
     case 0x96:
-        // SUB A,(HL)
+        // SUB (HL)
         state.A = sub8(state.A, mem.r8(state.HL));
         state.T += 7;
         break;
     case 0x97:
-        // SUB A,A
+        // SUB A
         state.A = sub8(state.A, state.A);
         state.T += 4;
         break;
@@ -600,51 +600,147 @@ inline void z80::step() {
         state.T += 4;
         break;
     case 0xa0:
-        // AND A,B
+        // AND B
         state.A &= state.B;
         state.F = szp(state.A)|HF;
         state.T += 4;
         break;
     case 0xa1:
-        // AND A,C
+        // AND C
         state.A &= state.C;
         state.F = szp(state.A)|HF;
         state.T += 4;
         break;
     case 0xa2:
-        // AND A,D
+        // AND D
         state.A &= state.D;
         state.F = szp(state.A)|HF;
         state.T += 4;
         break;
     case 0xa3:
-        // AND A,E
+        // AND E
         state.A &= state.E;
         state.F = szp(state.A)|HF;
         state.T += 4;
         break;
     case 0xa4:
-        // AND A,H
+        // AND H
         state.A &= state.H;
         state.F = szp(state.A)|HF;
         state.T += 4;
         break;
     case 0xa5:
-        // AND A,L
+        // AND L
         state.A &= state.L;
         state.F = szp(state.A)|HF;
         state.T += 4;
         break;
     case 0xa6:
-        // AND A,(HL)
+        // AND (HL)
         state.A &= mem.r8(state.HL);
         state.F = szp(state.A)|HF;
         state.T += 7;
         break;
     case 0xa7:
-        // AND A,A
+        // AND A
         state.A &= state.A;
         state.F = szp(state.A)|HF;
+        state.T += 4;
+        break;
+    case 0xa8:
+        // XOR B
+        state.A ^= state.B;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xa9:
+        // XOR C
+        state.A ^= state.C;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xaa:
+        // XOR D
+        state.A ^= state.D;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xab:
+        // XOR E
+        state.A ^= state.E;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xac:
+        // XOR H
+        state.A ^= state.H;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xad:
+        // XOR L
+        state.A ^= state.L;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xae:
+        // XOR (HL)
+        state.A ^= mem.r8(state.HL);
+        state.F = szp(state.A);
+        state.T += 7;
+        break;
+    case 0xaf:
+        // XOR A
+        state.A ^= state.A;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xb0:
+        // OR B
+        state.A |= state.B;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xb1:
+        // OR C
+        state.A |= state.C;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xb2:
+        // OR D
+        state.A |= state.D;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xb3:
+        // OR E
+        state.A |= state.E;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xb4:
+        // OR H
+        state.A |= state.H;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xb5:
+        // OR L
+        state.A |= state.L;
+        state.F = szp(state.A);
+        state.T += 4;
+        break;
+    case 0xb6:
+        // OR (HL)
+        state.A |= mem.r8(state.HL);
+        state.F = szp(state.A);
+        state.T += 7;
+        break;
+    case 0xb7:
+        // OR A
+        state.A |= state.A;
+        state.F = szp(state.A);
         state.T += 4;
         break;
     case 0xc1:
@@ -682,7 +778,7 @@ inline void z80::step() {
         state.T += 11;
         break;
     case 0xd6:
-        // SUB A,n
+        // SUB n
         state.A = sub8(state.A, mem.r8(state.PC++));
         state.T += 7;
         break;
@@ -816,7 +912,7 @@ inline void z80::step() {
             state.T += 19;
             break;
         case 0x96:
-            // SUB A,(IX+d)
+            // SUB (IX+d)
             d = mem.rs8(state.PC++);
             state.A = sub8(state.A, mem.r8(state.IX + d));
             state.T += 19;
@@ -828,10 +924,24 @@ inline void z80::step() {
             state.T += 19;
             break;
         case 0xa6:
-            // AND A,(IX+d)
+            // AND (IX+d)
             d = mem.rs8(state.PC++);
             state.A &= mem.r8(state.IX + d);
             state.F = szp(state.A)|HF;
+            state.T += 19;
+            break;
+        case 0xae:
+            // XOR (IX+d)
+            d = mem.rs8(state.PC++);
+            state.A ^= mem.r8(state.IX + d);
+            state.F = szp(state.A);
+            state.T += 19;
+            break;
+        case 0xb6:
+            // OR (IX+d)
+            d = mem.rs8(state.PC++);
+            state.A |= mem.r8(state.IX + d);
+            state.F = szp(state.A);
             state.T += 19;
             break;
         case 0xe1:
@@ -887,7 +997,7 @@ inline void z80::step() {
         state.T += 11;
         break;
     case 0xe6:
-        // AND A,n
+        // AND n
         state.A &= mem.r8(state.PC++);
         state.F = szp(state.A)|HF;
         state.T += 7;
@@ -961,6 +1071,12 @@ inline void z80::step() {
             YAKC_ASSERT(false);
         }
         break;
+    case 0xee:
+        // XOR n
+        state.A ^= mem.r8(state.PC++);
+        state.F = szp(state.A);
+        state.T += 7;
+        break;
     case 0xf1:
         // POP AF
         state.AF = mem.r16(state.SP);
@@ -972,6 +1088,12 @@ inline void z80::step() {
         state.SP -= 2;
         mem.w16(state.SP, state.AF);
         state.T += 11;
+        break;
+    case 0xf6:
+        // OR n
+        state.A |= mem.r8(state.PC++);
+        state.F = szp(state.A);
+        state.T += 7;
         break;
     case 0xf9:
         // LD SP,HL
@@ -1101,7 +1223,7 @@ inline void z80::step() {
             state.T += 19;
             break;
         case 0x96:
-            // SUB A,(IY+d)
+            // SUB (IY+d)
             d = mem.rs8(state.PC++);
             state.A = sub8(state.A, mem.r8(state.IY + d));
             state.T += 19;
@@ -1113,10 +1235,24 @@ inline void z80::step() {
             state.T += 19;
             break;
         case 0xa6:
-            // AND A,(IY+d)
+            // AND (IY+d)
             d = mem.rs8(state.PC++);
             state.A &= mem.r8(state.IY + d);
             state.F = szp(state.A)|HF;
+            state.T += 19;
+            break;
+        case 0xae:
+            // XOR (IY+d)
+            d = mem.rs8(state.PC++);
+            state.A ^= mem.r8(state.IY + d);
+            state.F = szp(state.A);
+            state.T += 19;
+            break;
+        case 0xb6:
+            // OR (IY+d)
+            d = mem.rs8(state.PC++);
+            state.A |= mem.r8(state.IY + d);
+            state.F = szp(state.A);
             state.T += 19;
             break;
         case 0xe1:

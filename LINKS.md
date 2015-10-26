@@ -7,4 +7,4 @@ Some useful links:
 * affected flags: http://www.z80.info/z80href.txt
 * instructions sorted by byte code: http://www.z80.info/disz80.txt
 * MAME z80.c: https://github.com/mamedev/mame/blob/master/src/devices/cpu/z80/z80.c
-
+* code snippets (good as tests?): http://map.grauw.nl/sources/external/z80bits.html

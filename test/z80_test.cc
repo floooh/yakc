@@ -6,13 +6,18 @@
 
 using namespace yakc;
 
+ubyte ram0[memory::bank::size];
+z80 init_z80() {
+    z80 cpu;
+    memset(ram0, 0, sizeof(ram0));
+    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
+    return cpu;
+}
+
 // LD r,s
 // LD r,n
 TEST(LD_r_sn) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x3E, 0x12,     // LD A,0x12
         0x47,           // LD B,A
@@ -144,10 +149,7 @@ TEST(LD_r_sn) {
 
 // LD r,(HL)
 TEST(LD_r_iHL) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x21, 0x00, 0x10,   // LD HL,0x1000
         0x3E, 0x33,         // LD A,0x33
@@ -182,10 +184,7 @@ TEST(LD_r_iHL) {
 
 // LD r,([IX|IY] + d)
 TEST(LD_r_IXY_d) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte data[] = {
         1, 2, 3, 4, 5, 6, 7, 8
     };
@@ -232,10 +231,7 @@ TEST(LD_r_IXY_d) {
 
 // LD (HL),r
 TEST(LD_iHL_r) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x21, 0x00, 0x10,   // LD HL,0x1000
         0x3E, 0x12,         // LD A,0x12
@@ -270,10 +266,7 @@ TEST(LD_iHL_r) {
 
 // LD (IX|IY + d),r
 TEST(LD_iIXY_d_r) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0xDD, 0x21, 0x03, 0x10,     // LD IX,0x1003
         0x3E, 0x12,                 // LD A,0x12
@@ -343,10 +336,7 @@ TEST(LD_iIXY_d_r) {
 
 // LD (HL),n
 TEST(LD_iHL_n) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x21, 0x00, 0x20,   // LD HL,0x2000
         0x36, 0x33,         // LD (HL),0x33
@@ -363,10 +353,7 @@ TEST(LD_iHL_n) {
 
 // LD ([IX|IY] + d),n
 TEST(LD_iIXY_d_n) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0xDD, 0x21, 0x00, 0x20,     // LD IX,0x2000
         0xDD, 0x36, 0x02, 0x33,     // LD (IX+2),0x33
@@ -389,10 +376,7 @@ TEST(LD_iIXY_d_n) {
 // LD A,(DE)
 // LD A,(nn)
 TEST(LD_A_iBCDEnn) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte data[] = {
         0x11, 0x22, 0x33
     };
@@ -418,10 +402,7 @@ TEST(LD_A_iBCDEnn) {
 // LD (DE),A
 // LD (nn),A
 TEST(LD_iBCDEnn_A) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x01, 0x00, 0x10,   // LD BC,0x1000
         0x11, 0x01, 0x10,   // LD DE,0x1001
@@ -443,10 +424,7 @@ TEST(LD_iBCDEnn_A) {
 // LD I,A
 // LD R,A
 TEST(LD_IR_A) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x3E, 0x45,     // LD A,0x45
         0xED, 0x47,     // LD I,A
@@ -463,10 +441,7 @@ TEST(LD_IR_A) {
 // LD IX,nn
 // LD IY,nn
 TEST(LD_ddIXY_nn) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x01, 0x34, 0x12,       // LD BC,0x1234
         0x11, 0x78, 0x56,       // LD DE,0x5678
@@ -490,10 +465,7 @@ TEST(LD_ddIXY_nn) {
 // LD IX,(nn)
 // LD IY,(nn)
 TEST(LD_HLddIXY_inn) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte data[] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
     };
@@ -524,10 +496,7 @@ TEST(LD_HLddIXY_inn) {
 // LD (nn),IX
 // LD (nn),IY
 TEST(LD_inn_HLDDIXY) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x21, 0x01, 0x02,           // LD HL,0x0201
         0x22, 0x00, 0x10,           // LD (0x1000),HL
@@ -566,10 +535,7 @@ TEST(LD_inn_HLDDIXY) {
 // LD SP,IX
 // LD SP,IY
 TEST(LD_SP_HLIXY) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x21, 0x34, 0x12,           // LD HL,0x1234
         0xDD, 0x21, 0x78, 0x56,     // LD IX,0x5678
@@ -595,10 +561,7 @@ TEST(LD_SP_HLIXY) {
 // POP IX
 // POP IY
 TEST(PUSH_POP_qqIXY) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x01, 0x34, 0x12,       // LD BC,0x1234
         0x11, 0x78, 0x56,       // LD DE,0x5678
@@ -650,10 +613,7 @@ TEST(PUSH_POP_qqIXY) {
 // EX (SP),IX
 // EX (SP),IY
 TEST(EX) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x21, 0x34, 0x12,       // LD HL,0x1234
         0x11, 0x78, 0x56,       // LD DE,0x5678
@@ -711,10 +671,7 @@ TEST(EX) {
 // ADD A,r
 // ADD A,n
 TEST(ADD_A_r) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x3E, 0x0F,     // LD A,0x0F
         0x87,           // ADD A,A
@@ -758,10 +715,7 @@ TEST(ADD_A_r) {
 // ADD A,(IX+d)
 // ADD A,(IY+d)
 TEST(ADD_a_iHLIXY_d) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte data[] = { 0x41, 0x61, 0x81 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
@@ -788,10 +742,7 @@ TEST(ADD_a_iHLIXY_d) {
 // ADC A,r
 // ADC A,n
 TEST(ADC_a_r) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x3E, 0x00,         // LD A,0x00
         0x06, 0x41,         // LD B,0x41
@@ -832,10 +783,7 @@ TEST(ADC_a_r) {
 // ADC A,(IX+d)
 // ADC A,(IY+d)
 TEST(ADC_a_iHLIXY_d) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte data[] = { 0x41, 0x61, 0x81, 0x2 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
@@ -864,10 +812,7 @@ TEST(ADC_a_iHLIXY_d) {
 // SUB A,r
 // SUB A,n
 TEST(SUB_A_r) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x3E, 0x04,     // LD A,0x04
         0x06, 0x01,     // LD B,0x01
@@ -910,10 +855,7 @@ TEST(SUB_A_r) {
 // SUB A,(IX+d)
 // SUB A,(IY+d)
 TEST(SUB_a_iHLIXY_d) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte data[] = { 0x41, 0x61, 0x81 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
@@ -940,10 +882,7 @@ TEST(SUB_a_iHLIXY_d) {
 // SBC A,r
 // SBC A,n
 TEST(SBC_A_r) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
-
+    z80 cpu = init_z80();
     ubyte prog[] = {
         0x3E, 0x04,     // LD A,0x04
         0x06, 0x01,     // LD B,0x01
@@ -983,9 +922,7 @@ TEST(SBC_A_r) {
 // SBC A,(IX+d)
 // SBC A,(IY+d)
 TEST(SBC_a_iHLIXY_d) {
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
+    z80 cpu = init_z80();
 
     ubyte data[] = { 0x41, 0x61, 0x81 };
     cpu.mem.write(0x1000, data, sizeof(data));
@@ -1010,12 +947,203 @@ TEST(SBC_a_iHLIXY_d) {
     cpu.step(); CHECK(0xFC == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(90 == cpu.state.T);
 }
 
+// OR r
+// OR n
+TEST(OR_r) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x97,           // SUB A
+        0x06, 0x01,     // LD B,0x01
+        0x0E, 0x02,     // LD C,0x02
+        0x16, 0x04,     // LD D,0x04
+        0x1E, 0x08,     // LD E,0x08
+        0x26, 0x10,     // LD H,0x10
+        0x2E, 0x20,     // LD L,0x20
+        0xB7,           // OR A
+        0xB0,           // OR B
+        0xB1,           // OR C
+        0xB2,           // OR D
+        0xB3,           // OR E
+        0xB4,           // OR H
+        0xB5,           // OR L
+        0xF6, 0x40,     // OR 0x40
+        0xF6, 0x80,     // OR 0x80
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    // skip loads
+    for (int i = 0; i < 7; i++) {
+        cpu.step();
+    }
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(50 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(54 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(58 == cpu.state.T);
+    cpu.step(); CHECK(0x07 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(62 == cpu.state.T);
+    cpu.step(); CHECK(0x0F == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(66 == cpu.state.T);
+    cpu.step(); CHECK(0x1F == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(70 == cpu.state.T);
+    cpu.step(); CHECK(0x3F == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(74 == cpu.state.T);
+    cpu.step(); CHECK(0x7F == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(81 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(88 == cpu.state.T);
+}
+
+// XOR r
+// XOR n
+TEST(XOR_r) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x97,           // SUB A
+        0x06, 0x01,     // LD B,0x01
+        0x0E, 0x03,     // LD C,0x03
+        0x16, 0x07,     // LD D,0x07
+        0x1E, 0x0F,     // LD E,0x0F
+        0x26, 0x1F,     // LD H,0x1F
+        0x2E, 0x3F,     // LD L,0x3F
+        0xAF,           // XOR A
+        0xA8,           // XOR B
+        0xA9,           // XOR C
+        0xAA,           // XOR D
+        0xAB,           // XOR E
+        0xAC,           // XOR H
+        0xAD,           // XOR L
+        0xEE, 0x7F,     // XOR 0x7F
+        0xEE, 0xFF,     // XOR 0xFF
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    // skip loads
+    for (int i = 0; i < 7; i++) {
+        cpu.step();
+    }
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(50 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(54 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(58 == cpu.state.T);
+    cpu.step(); CHECK(0x05 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(62 == cpu.state.T);
+    cpu.step(); CHECK(0x0A == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(66 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(70 == cpu.state.T);
+    cpu.step(); CHECK(0x2A == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(74 == cpu.state.T);
+    cpu.step(); CHECK(0x55 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(81 == cpu.state.T);
+    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(88 == cpu.state.T);
+}
+
+// OR (HL)
+// OR (IX+d)
+// OR (IY+d)
+// XOR (HL)
+// XOR (IX+d)
+// XOR (IY+d)
+TEST(OR_XOR_iHLIXY_d) {
+    z80 cpu = init_z80();
+
+    ubyte data[] = { 0x41, 0x62, 0x84 };
+    cpu.mem.write(0x1000, data, sizeof(data));
+    ubyte prog[] = {
+        0x21, 0x00, 0x10,           // LD HL,0x1000
+        0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1000
+        0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
+        0xB6,                       // OR (HL)
+        0xDD, 0xB6, 0x01,           // OR (IX+1)
+        0xFD, 0xB6, 0xFF,           // OR (IY-1)
+        0xAE,                       // XOR (HL)
+        0xDD, 0xAE, 0x01,           // XOR (IX+1)
+        0xFD, 0xAE, 0xFF,           // XOR (IY-1)
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    // skip loads
+    cpu.step(); cpu.step(); cpu.step();
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(45 == cpu.state.T);
+    cpu.step(); CHECK(0x63 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(64 == cpu.state.T);
+    cpu.step(); CHECK(0xE7 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(83 == cpu.state.T);
+    cpu.step(); CHECK(0xA6 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(90 == cpu.state.T);
+    cpu.step(); CHECK(0xC4 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(109 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(128 == cpu.state.T);
+}
+
+// AND r
+// AND n
+TEST(AND_rn) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x3E, 0xFF,             // LD A,0xFF
+        0x06, 0x01,             // LD B,0x01
+        0x0E, 0x03,             // LD C,0x02
+        0x16, 0x04,             // LD D,0x04
+        0x1E, 0x08,             // LD E,0x08
+        0x26, 0x10,             // LD H,0x10
+        0x2E, 0x20,             // LD L,0x20
+        0xA0,                   // AND B
+        0xF6, 0xFF,             // OR 0xFF
+        0xA1,                   // AND C
+        0xF6, 0xFF,             // OR 0xFF
+        0xA2,                   // AND D
+        0xF6, 0xFF,             // OR 0xFF
+        0xA3,                   // AND E
+        0xF6, 0xFF,             // OR 0xFF
+        0xA4,                   // AND H
+        0xF6, 0xFF,             // OR 0xFF
+        0xA5,                   // AND L
+        0xF6, 0xFF,             // OR 0xFF
+        0xE6, 0x40,             // AND 0x40
+        0xF6, 0xFF,             // OR 0xFF
+        0xE6, 0xAA,             // AND 0xAA
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    // skip loads
+    for (int i = 0; i < 7; i++) {
+        cpu.step();
+    }
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(53 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(60 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::PF)); CHECK(64 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(71 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(75 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(82 == cpu.state.T);
+    cpu.step(); CHECK(0x08 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(86 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(93 == cpu.state.T);
+    cpu.step(); CHECK(0x10 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(97 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(104 == cpu.state.T);
+    cpu.step(); CHECK(0x20 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(108 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(115 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(122 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(129 == cpu.state.T);
+    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(136 == cpu.state.T);
+}
+
+// AND (HL)
+// AND (IX+d)
+// AND (IY+d)
+TEST(AND_iHLIXY_d) {
+    z80 cpu = init_z80();
+
+    ubyte data[] = { 0xFE, 0xAA, 0x99 };
+    cpu.mem.write(0x1000, data, sizeof(data));
+    ubyte prog[] = {
+        0x21, 0x00, 0x10,           // LD HL,0x1000
+        0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1000
+        0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
+        0x3E, 0xFF,                 // LD A,0xFF
+        0xA6,                       // AND (HL)
+        0xDD, 0xA6, 0x01,           // AND (IX+1)
+        0xFD, 0xA6, 0xFF,           // AND (IX-1)
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    // skip loads
+    cpu.step(); cpu.step(); cpu.step(); cpu.step();
+    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF)); CHECK(52 == cpu.state.T);
+    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(71 == cpu.state.T);
+    cpu.step(); CHECK(0x88 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(90 == cpu.state.T);
+}
+
+
 TEST(cpu) {
 
     // setup CPU with a 16 kByte RAM bank at 0x0000
-    z80 cpu;
-    ubyte ram0[memory::bank::size] = { 0 };
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
+    z80 cpu = init_z80();
 
     // check initial reset
     cpu.reset();

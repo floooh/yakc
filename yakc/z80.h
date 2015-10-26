@@ -162,7 +162,7 @@ public:
         if (val & (1<<6)) p++;
         if (val & (1<<7)) p++;
         ubyte f = val ? val & SF : ZF;
-        f |= (val | (YF|XF));   // undocumented flag bits 3 and 5
+        f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
         f |= p & 1 ? 0 : PF;
         return f;
     }
