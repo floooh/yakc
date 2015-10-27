@@ -1076,6 +1076,60 @@ def DEC_iIXY_d(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
+def INC_ss(ops) :
+    '''
+    INC ss
+    T-states: 6
+    '''
+    for r in r16sp :
+        op = 0b00000011 | r.bits<<4
+        src = ['// INC {}'.format(r.name)]
+        src.append('state.{}++;'.format(r.name))
+        src = inc_tstates(src, 6)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def DEC_ss(ops) :
+    '''
+    DEC ss
+    T-states: 6
+    '''
+    for r in r16sp :
+        op = 0b00001011 | r.bits<<4
+        src = ['// DEC {}'.format(r.name)]
+        src.append('state.{}--;'.format(r.name))
+        src = inc_tstates(src, 6)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def INC_IXY(ops, xname) :
+    '''
+    INC [IX|IY]
+    T-states: 10
+    '''
+    op = 0b00100011
+    src = ['// INC {}'.format(xname)]
+    src.append('state.{}++;'.format(xname))
+    src = inc_tstates(src, 10)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def DEC_IXY(ops, xname) :
+    '''
+    DEC [IX|IY]
+    T-states: 10
+    '''
+    op = 0b00101011
+    src = ['// DEC {}'.format(xname)]
+    src.append('state.{}--;'.format(xname))
+    src = inc_tstates(src, 10)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1131,6 +1185,8 @@ def gen_opcodes() :
     ops = INC_iHL(ops)
     ops = DEC_r(ops)
     ops = DEC_iHL(ops)
+    ops = INC_ss(ops)
+    ops = DEC_ss(ops)
     ops[0xDD] = []
     ops[0xFD] = []
     ops[0xED] = []
@@ -1163,6 +1219,8 @@ def gen_dd_opcodes() :
     dd_ops = XOR_iIXY_d(dd_ops, 'IX')
     dd_ops = INC_iIXY_d(dd_ops, 'IX')
     dd_ops = DEC_iIXY_d(dd_ops, 'IX')
+    dd_ops = INC_IXY(dd_ops, 'IX')
+    dd_ops = DEC_IXY(dd_ops, 'IX')
     return dd_ops
 
 #-------------------------------------------------------------------------------
@@ -1191,6 +1249,8 @@ def gen_fd_opcodes() :
     fd_ops = XOR_iIXY_d(fd_ops, 'IY')
     fd_ops = INC_iIXY_d(fd_ops, 'IY')
     fd_ops = DEC_iIXY_d(fd_ops, 'IY')
+    fd_ops = INC_IXY(fd_ops, 'IY')
+    fd_ops = DEC_IXY(fd_ops, 'IY')
     return fd_ops
 
 #-------------------------------------------------------------------------------

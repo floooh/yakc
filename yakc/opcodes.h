@@ -22,6 +22,11 @@ inline void z80::step() {
         mem.w8(state.BC, state.A);
         state.T += 7;
         break;
+    case 0x3:
+        // INC BC
+        state.BC++;
+        state.T += 6;
+        break;
     case 0x4:
         // INC B
         state.B = inc8(state.B);
@@ -46,6 +51,11 @@ inline void z80::step() {
         // LD A,(BC)
         state.A = mem.r8(state.BC);
         state.T += 7;
+        break;
+    case 0xb:
+        // DEC BC
+        state.BC--;
+        state.T += 6;
         break;
     case 0xc:
         // INC C
@@ -73,6 +83,11 @@ inline void z80::step() {
         mem.w8(state.DE, state.A);
         state.T += 7;
         break;
+    case 0x13:
+        // INC DE
+        state.DE++;
+        state.T += 6;
+        break;
     case 0x14:
         // INC D
         state.D = inc8(state.D);
@@ -92,6 +107,11 @@ inline void z80::step() {
         // LD A,(DE)
         state.A = mem.r8(state.DE);
         state.T += 7;
+        break;
+    case 0x1b:
+        // DEC DE
+        state.DE--;
+        state.T += 6;
         break;
     case 0x1c:
         // INC E
@@ -120,6 +140,11 @@ inline void z80::step() {
         state.PC += 2;
         state.T += 16;
         break;
+    case 0x23:
+        // INC HL
+        state.HL++;
+        state.T += 6;
+        break;
     case 0x24:
         // INC H
         state.H = inc8(state.H);
@@ -140,6 +165,11 @@ inline void z80::step() {
         state.HL = mem.r16(mem.r16(state.PC));
         state.PC += 2;
         state.T += 16;
+        break;
+    case 0x2b:
+        // DEC HL
+        state.HL--;
+        state.T += 6;
         break;
     case 0x2c:
         // INC L
@@ -168,6 +198,11 @@ inline void z80::step() {
         state.PC += 2;
         state.T += 13;
         break;
+    case 0x33:
+        // INC SP
+        state.SP++;
+        state.T += 6;
+        break;
     case 0x34:
         // INC (HL)
         mem.w8(state.HL, inc8(mem.r8(state.HL)));
@@ -188,6 +223,11 @@ inline void z80::step() {
         state.A = mem.r8(mem.r16(state.PC));
         state.PC += 2;
         state.T += 13;
+        break;
+    case 0x3b:
+        // DEC SP
+        state.SP--;
+        state.T += 6;
         break;
     case 0x3c:
         // INC A
@@ -923,11 +963,21 @@ inline void z80::step() {
             state.PC += 2;
             state.T += 20;
             break;
+        case 0x23:
+            // INC IX
+            state.IX++;
+            state.T += 10;
+            break;
         case 0x2a:
             // LD IX,(nn)
             state.IX = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
+            break;
+        case 0x2b:
+            // DEC IX
+            state.IX--;
+            state.T += 10;
             break;
         case 0x34:
             // INC (IX+d)
@@ -1252,11 +1302,21 @@ inline void z80::step() {
             state.PC += 2;
             state.T += 20;
             break;
+        case 0x23:
+            // INC IY
+            state.IY++;
+            state.T += 10;
+            break;
         case 0x2a:
             // LD IY,(nn)
             state.IY = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
+            break;
+        case 0x2b:
+            // DEC IY
+            state.IY--;
+            state.T += 10;
             break;
         case 0x34:
             // INC (IY+d)
