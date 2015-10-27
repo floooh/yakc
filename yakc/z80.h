@@ -150,6 +150,24 @@ public:
             return sub8(acc, sub);
         }
     }
+    /// perform an 8-bit inc and set flags
+    ubyte inc8(ubyte val) {
+        ubyte r = val + 1;
+        ubyte f = (r ? ((r & 0x80) ? SF : 0) : ZF);
+        if ((r & 0xF) == 0) f |= HF;
+        if (r == 0x80) f |= VF;
+        state.F = f | (state.F & CF);
+        return r;
+    }
+    /// perform an 8-bit dec and set flags
+    ubyte dec8(ubyte val) {
+        ubyte r = val - 1;
+        ubyte f = NF | (r ? ((r & 0x80) ? SF : 0) : ZF);
+        if ((r & 0xF) == 0xF) f |= HF;
+        if (r == 0x7F) f |= VF;
+        state.F = f | (state.F & CF);
+        return r;
+    }
     /// get the SF|ZF|PF flags for a value
     static ubyte szp(ubyte val) {
         int p = 0;

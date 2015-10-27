@@ -22,6 +22,16 @@ inline void z80::step() {
         mem.w8(state.BC, state.A);
         state.T += 7;
         break;
+    case 0x4:
+        // INC B
+        state.B = inc8(state.B);
+        state.T += 4;
+        break;
+    case 0x5:
+        // DEC B
+        state.B = dec8(state.B);
+        state.T += 4;
+        break;
     case 0x6:
         // LD B,n
         state.B = mem.r8(state.PC++);
@@ -36,6 +46,16 @@ inline void z80::step() {
         // LD A,(BC)
         state.A = mem.r8(state.BC);
         state.T += 7;
+        break;
+    case 0xc:
+        // INC C
+        state.C = inc8(state.C);
+        state.T += 4;
+        break;
+    case 0xd:
+        // DEC C
+        state.C = dec8(state.C);
+        state.T += 4;
         break;
     case 0xe:
         // LD C,n
@@ -53,6 +73,16 @@ inline void z80::step() {
         mem.w8(state.DE, state.A);
         state.T += 7;
         break;
+    case 0x14:
+        // INC D
+        state.D = inc8(state.D);
+        state.T += 4;
+        break;
+    case 0x15:
+        // DEC D
+        state.D = dec8(state.D);
+        state.T += 4;
+        break;
     case 0x16:
         // LD D,n
         state.D = mem.r8(state.PC++);
@@ -62,6 +92,16 @@ inline void z80::step() {
         // LD A,(DE)
         state.A = mem.r8(state.DE);
         state.T += 7;
+        break;
+    case 0x1c:
+        // INC E
+        state.E = inc8(state.E);
+        state.T += 4;
+        break;
+    case 0x1d:
+        // DEC E
+        state.E = dec8(state.E);
+        state.T += 4;
         break;
     case 0x1e:
         // LD E,n
@@ -80,6 +120,16 @@ inline void z80::step() {
         state.PC += 2;
         state.T += 16;
         break;
+    case 0x24:
+        // INC H
+        state.H = inc8(state.H);
+        state.T += 4;
+        break;
+    case 0x25:
+        // DEC H
+        state.H = dec8(state.H);
+        state.T += 4;
+        break;
     case 0x26:
         // LD H,n
         state.H = mem.r8(state.PC++);
@@ -90,6 +140,16 @@ inline void z80::step() {
         state.HL = mem.r16(mem.r16(state.PC));
         state.PC += 2;
         state.T += 16;
+        break;
+    case 0x2c:
+        // INC L
+        state.L = inc8(state.L);
+        state.T += 4;
+        break;
+    case 0x2d:
+        // DEC L
+        state.L = dec8(state.L);
+        state.T += 4;
         break;
     case 0x2e:
         // LD L,n
@@ -108,6 +168,16 @@ inline void z80::step() {
         state.PC += 2;
         state.T += 13;
         break;
+    case 0x34:
+        // INC (HL)
+        mem.w8(state.HL, inc8(mem.r8(state.HL)));
+        state.T += 11;
+        break;
+    case 0x35:
+        // DEC (HL)
+        mem.w8(state.HL, dec8(mem.r8(state.HL)));
+        state.T += 11;
+        break;
     case 0x36:
         // LD (HL),n
         mem.w8(state.HL, mem.r8(state.PC++));
@@ -118,6 +188,16 @@ inline void z80::step() {
         state.A = mem.r8(mem.r16(state.PC));
         state.PC += 2;
         state.T += 13;
+        break;
+    case 0x3c:
+        // INC A
+        state.A = inc8(state.A);
+        state.T += 4;
+        break;
+    case 0x3d:
+        // DEC A
+        state.A = dec8(state.A);
+        state.T += 4;
         break;
     case 0x3e:
         // LD A,n
@@ -849,6 +929,18 @@ inline void z80::step() {
             state.PC += 2;
             state.T += 20;
             break;
+        case 0x34:
+            // INC (IX+d)
+            d = mem.rs8(state.PC++);
+            mem.w8(state.IX+d, inc8(mem.r8(state.IX+d)));
+            state.T += 23;
+            break;
+        case 0x35:
+            // DEC (IX+d)
+            d = mem.rs8(state.PC++);
+            mem.w8(state.IX+d, dec8(mem.r8(state.IX+d)));
+            state.T += 23;
+            break;
         case 0x36:
             // LD (IX+d),n
             d = mem.rs8(state.PC++);
@@ -1165,6 +1257,18 @@ inline void z80::step() {
             state.IY = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
+            break;
+        case 0x34:
+            // INC (IY+d)
+            d = mem.rs8(state.PC++);
+            mem.w8(state.IY+d, inc8(mem.r8(state.IY+d)));
+            state.T += 23;
+            break;
+        case 0x35:
+            // DEC (IY+d)
+            d = mem.rs8(state.PC++);
+            mem.w8(state.IY+d, dec8(mem.r8(state.IY+d)));
+            state.T += 23;
             break;
         case 0x36:
             // LD (IY+d),n

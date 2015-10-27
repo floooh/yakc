@@ -994,6 +994,88 @@ def XOR_iIXY_d(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
+def INC_r(ops) :
+    '''
+    INC r
+    T-states: 4
+    '''
+    for r in r8 :
+        op = 0b00000100 | r.bits<<3
+        src = ['// INC {}'.format(r.name)]
+        src.append('state.{} = inc8(state.{});'.format(r.name, r.name))
+        src = inc_tstates(src, 4)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def DEC_r(ops) :
+    '''
+    DEC r
+    T-states: 4
+    '''
+    for r in r8 :
+        op = 0b00000101 | r.bits<<3
+        src = ['// DEC {}'.format(r.name)]
+        src.append('state.{} = dec8(state.{});'.format(r.name, r.name))
+        src = inc_tstates(src, 4)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def INC_iHL(ops) :
+    '''
+    INC (HL)
+    T-states: 11
+    '''
+    op = 0b00110100
+    src = ['// INC (HL)']
+    src.append('mem.w8(state.HL, inc8(mem.r8(state.HL)));')
+    src = inc_tstates(src, 11)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def DEC_iHL(ops) :
+    '''
+    DEC (HL)
+    T-states: 11
+    '''
+    op = 0b00110101
+    src = ['// DEC (HL)']
+    src.append('mem.w8(state.HL, dec8(mem.r8(state.HL)));')
+    src = inc_tstates(src, 11)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def INC_iIXY_d(ops, xname) :
+    '''
+    INC ([IX|IY]+d)
+    T-states: 23
+    '''
+    op = 0b00110100
+    src = ['// INC ({}+d)'.format(xname)]
+    src.append('d = mem.rs8(state.PC++);')
+    src.append('mem.w8(state.{}+d, inc8(mem.r8(state.{}+d)));'.format(xname, xname))
+    src = inc_tstates(src, 23)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def DEC_iIXY_d(ops, xname) :
+    '''
+    DEC ([IX|IY]+d)
+    T-states: 23
+    '''
+    op = 0b00110101
+    src = ['// DEC ({}+d)'.format(xname)]
+    src.append('d = mem.rs8(state.PC++);')
+    src.append('mem.w8(state.{}+d, dec8(mem.r8(state.{}+d)));'.format(xname, xname))
+    src = inc_tstates(src, 23)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1045,6 +1127,10 @@ def gen_opcodes() :
     ops = XOR_r(ops)
     ops = XOR_n(ops)
     ops = XOR_iHL(ops)
+    ops = INC_r(ops)
+    ops = INC_iHL(ops)
+    ops = DEC_r(ops)
+    ops = DEC_iHL(ops)
     ops[0xDD] = []
     ops[0xFD] = []
     ops[0xED] = []
@@ -1075,6 +1161,8 @@ def gen_dd_opcodes() :
     dd_ops = AND_iIXY_d(dd_ops, 'IX')
     dd_ops = OR_iIXY_d(dd_ops, 'IX')
     dd_ops = XOR_iIXY_d(dd_ops, 'IX')
+    dd_ops = INC_iIXY_d(dd_ops, 'IX')
+    dd_ops = DEC_iIXY_d(dd_ops, 'IX')
     return dd_ops
 
 #-------------------------------------------------------------------------------
@@ -1101,6 +1189,8 @@ def gen_fd_opcodes() :
     fd_ops = AND_iIXY_d(fd_ops, 'IY')
     fd_ops = OR_iIXY_d(fd_ops, 'IY')
     fd_ops = XOR_iIXY_d(fd_ops, 'IY')
+    fd_ops = INC_iIXY_d(fd_ops, 'IY')
+    fd_ops = DEC_iIXY_d(fd_ops, 'IY')
     return fd_ops
 
 #-------------------------------------------------------------------------------
