@@ -743,6 +743,46 @@ inline void z80::step() {
         state.F = szp(state.A);
         state.T += 4;
         break;
+    case 0xb8:
+        // CP B
+        sub8(state.A, state.B);
+        state.T += 4;
+        break;
+    case 0xb9:
+        // CP C
+        sub8(state.A, state.C);
+        state.T += 4;
+        break;
+    case 0xba:
+        // CP D
+        sub8(state.A, state.D);
+        state.T += 4;
+        break;
+    case 0xbb:
+        // CP E
+        sub8(state.A, state.E);
+        state.T += 4;
+        break;
+    case 0xbc:
+        // CP H
+        sub8(state.A, state.H);
+        state.T += 4;
+        break;
+    case 0xbd:
+        // CP L
+        sub8(state.A, state.L);
+        state.T += 4;
+        break;
+    case 0xbe:
+        // CP (HL)
+        sub8(state.A, mem.r8(state.HL));
+        state.T += 7;
+        break;
+    case 0xbf:
+        // CP A
+        sub8(state.A, state.A);
+        state.T += 4;
+        break;
     case 0xc1:
         // POP BC
         state.BC = mem.r16(state.SP);
@@ -942,6 +982,12 @@ inline void z80::step() {
             d = mem.rs8(state.PC++);
             state.A |= mem.r8(state.IX + d);
             state.F = szp(state.A);
+            state.T += 19;
+            break;
+        case 0xbe:
+            // CP (IX+d)
+            d = mem.rs8(state.PC++);
+            sub8(state.A, mem.r8(state.IX + d));
             state.T += 19;
             break;
         case 0xe1:
@@ -1255,6 +1301,12 @@ inline void z80::step() {
             state.F = szp(state.A);
             state.T += 19;
             break;
+        case 0xbe:
+            // CP (IY+d)
+            d = mem.rs8(state.PC++);
+            sub8(state.A, mem.r8(state.IY + d));
+            state.T += 19;
+            break;
         case 0xe1:
             // POP IY
             state.IY = mem.r16(state.SP);
@@ -1282,6 +1334,11 @@ inline void z80::step() {
         default:
             YAKC_ASSERT(false);
         }
+        break;
+    case 0xfe:
+        // CP n
+        sub8(state.A, mem.r8(state.PC++));
+        state.T += 7;
         break;
     default:
        YAKC_ASSERT(false);

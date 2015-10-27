@@ -851,6 +851,46 @@ TEST(SUB_A_r) {
     cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(91 == cpu.state.T);
 }
 
+// CP A,r
+// CP A,n
+TEST(CP_A_r) {
+    z80 cpu = init_z80();
+    ubyte prog[] = {
+        0x3E, 0x04,     // LD A,0x04
+        0x06, 0x05,     // LD B,0x05
+        0x0E, 0x03,     // LD C,0x03
+        0x16, 0xff,     // LD D,0xff
+        0x1E, 0xaa,     // LD E,0xaa
+        0x26, 0x80,     // LD H,0x80
+        0x2E, 0x7f,     // LD L,0x7f
+        0xBF,           // CP A
+        0xB8,           // CP B
+        0xB9,           // CP C
+        0xBA,           // CP D
+        0xBB,           // CP E
+        0xBC,           // CP H
+        0xBD,           // CP L
+        0xFE, 0x04,     // CP 0x04
+    };
+    cpu.mem.write(0x000, prog, sizeof(prog));
+
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x05 == cpu.state.B); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.C); CHECK(21 == cpu.state.T);
+    cpu.step(); CHECK(0xff == cpu.state.D); CHECK(28 == cpu.state.T);
+    cpu.step(); CHECK(0xaa == cpu.state.E); CHECK(35 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.H); CHECK(42 == cpu.state.T);
+    cpu.step(); CHECK(0x7f == cpu.state.L); CHECK(49 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(53 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(57 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(61 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF|z80::CF)); CHECK(65 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF|z80::CF)); CHECK(69 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF|z80::NF|z80::CF)); CHECK(73 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(77 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(84 == cpu.state.T);
+}
+
 // SUB A,(HL)
 // SUB A,(IX+d)
 // SUB A,(IY+d)
@@ -877,6 +917,34 @@ TEST(SUB_a_iHLIXY_d) {
     cpu.step(); CHECK(0xBF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(52 == cpu.state.T);
     cpu.step(); CHECK(0x5E == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::NF)); CHECK(71 == cpu.state.T);
     cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(90 == cpu.state.T);
+}
+
+// SUB A,(HL)
+// SUB A,(IX+d)
+// SUB A,(IY+d)
+TEST(CP_a_iHLIXY_d) {
+    z80 cpu = init_z80();
+    ubyte data[] = { 0x41, 0x61, 0x22 };
+    cpu.mem.write(0x1000, data, sizeof(data));
+
+    ubyte prog[] = {
+        0x21, 0x00, 0x10,       // LD HL,0x1000
+        0xDD, 0x21, 0x00, 0x10, // LD IX,0x1000
+        0xFD, 0x21, 0x03, 0x10, // LD IY,0x1003
+        0x3E, 0x41,             // LD A,0x41
+        0xBE,                   // CP (HL)
+        0xDD, 0xBE, 0x01,       // CP (IX+1)
+        0xFD, 0xBE, 0xFF,       // CP (IY-1)
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(24 == cpu.state.T);
+    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(38 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(45 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(52 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(71 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(90 == cpu.state.T);
 }
 
 // SBC A,r
