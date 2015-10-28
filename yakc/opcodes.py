@@ -1130,6 +1130,85 @@ def DEC_IXY(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
+def RLCA(ops) :
+    '''
+    RLCA
+    T-state: 4
+    '''
+    op = 0b00000111
+    src = ['// RLCA']
+    src.append('state.A = rlc8(state.A, false);')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RLA(ops) :
+    '''
+    RLA
+    T-states: 4
+    '''
+    op = 0b00010111
+    src = ['// RLA']
+    src.append('state.A = rl8(state.A, false);')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RRCA(ops) :
+    '''
+    RRCA
+    T-states: 4
+    '''
+    op = 0b00001111
+    src = ['// RRCA']
+    src.append('state.A = rrc8(state.A, false);')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RRA(ops) :
+    '''
+    RRA
+    T-states: 4
+    '''
+    op = 0b00011111
+    src = ['// RRA']
+    src.append('state.A = rr8(state.A, false);')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RLC_r(ops) :
+    '''
+    RLC r
+    T-states: 8
+    '''
+    for r in r8 :
+        op = 0b00000000 | r.bits
+        src = ['// RLC {}'.format(r.name)]
+        src.append('state.{} = rlc8(state.{}, true);'.format(r.name, r.name))
+        src = inc_tstates(src, 8)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RLC_iHL(ops) :
+    '''
+    RLC (HL)
+    T-states: 15
+    '''
+    op = 0b00000110
+    src = ['// RLC (HL)']
+    src.append('mem.w8(state.HL, rlc8(mem.r8(state.HL), true));')
+    src = inc_tstates(src, 15)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1187,11 +1266,26 @@ def gen_opcodes() :
     ops = DEC_iHL(ops)
     ops = INC_ss(ops)
     ops = DEC_ss(ops)
+    ops = RLCA(ops)
+    ops = RLA(ops)
+    ops = RRCA(ops)
+    ops = RRA(ops)
+    ops[0xCB] = []
     ops[0xDD] = []
     ops[0xFD] = []
     ops[0xED] = []
 
     return ops
+
+#-------------------------------------------------------------------------------
+def gen_cb_opcodes() :
+    '''
+    Generate the CB-lead-byte opcode table
+    '''
+    cb_ops = {}
+    cb_ops = RLC_r(cb_ops)
+    cb_ops = RLC_iHL(cb_ops)
+    return cb_ops
 
 #-------------------------------------------------------------------------------
 def gen_dd_opcodes() :
@@ -1266,7 +1360,7 @@ def gen_ed_opcodes() :
     return ed_ops
 
 #-------------------------------------------------------------------------------
-def gen_source(f, ops, dd_ops, fd_ops, ed_ops) :
+def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
     '''
     Generate the source code from opcode table.
     '''
@@ -1286,7 +1380,19 @@ def gen_source(f, ops, dd_ops, fd_ops, ed_ops) :
     for op in range(0,256) :
         if op in ops :
             f.write('    case {}:\n'.format(hex(op)))
-            if op == 0xDD :
+            if op == 0xCB :
+                # write CB prefix instrucions
+                f.write('        switch (mem.r8(state.PC++)) {\n')
+                for cb_op in range(0,256) :
+                    if cb_op in cb_ops :
+                        f.write('        case {}:\n'.format(hex(cb_op)))
+                        for line in cb_ops[cb_op] :
+                            f.write('            {}\n'.format(line))
+                        f.write('            break;\n')
+                f.write('        default:\n')
+                f.write('             YAKC_ASSERT(false);\n')
+                f.write('        }\n')
+            elif op == 0xDD :
                 # write DD prefix instructions
                 f.write('        switch (mem.r8(state.PC++)) {\n')
                 for dd_op in range(0,256) :
@@ -1336,10 +1442,11 @@ def gen_source(f, ops, dd_ops, fd_ops, ed_ops) :
 def generate(input, out_src, out_hdr) :
     if genutil.isDirty(Version, [input], [out_hdr]) :
         ops = gen_opcodes()
+        cb_ops = gen_cb_opcodes()
         dd_ops = gen_dd_opcodes()
         fd_ops = gen_fd_opcodes()
         ed_ops = gen_ed_opcodes()
         with open(out_hdr, 'w') as f:
-            gen_source(f, ops, dd_ops, fd_ops, ed_ops)
+            gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops)
 
 

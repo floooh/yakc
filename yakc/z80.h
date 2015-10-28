@@ -184,70 +184,54 @@ public:
         f |= p & 1 ? 0 : PF;
         return f;
     }
-
-    /// compute flags for add or adc w/o carry set (taken from MAME's z80)
-    /*
-    ubyte szhvc_add(int oldval, int newval) {
-        int val = newval - oldval;
-        ubyte f = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
-        f |= (newval & (YF | XF));
-        if ((newval & 0x0f) < (oldval & 0x0f)) f |= HF;
-        if (newval < oldval) f |= CF;
-        if ((val^oldval^0x80) & (val^newval) & 0x80) f |= VF;
-        return f;
+    /// rotate left, copy sign bit into CF,
+    ubyte rlc8(ubyte val, bool flags_szp) {
+        ubyte r = val<<1|val>>7;
+        ubyte f = (val & 0x80) ? CF : 0;
+        if (flags_szp) {
+            state.F = f | szp(r);
+        }
+        else {
+            state.F = f | (state.F & (SF|ZF|PF));
+        }
+        return r;
     }
-    */
-
-    /// compute flags for adc with carry set (taken from MAME's z80)
-    /*
-    ubyte szhvc_adc(int oldval, int newval) {
-        int val = newval - oldval;
-        ubyte f = (newval) ? ((newval & 0x80) ? SF : 0) : ZF;
-        f |= (newval & (YF | XF));
-        if ((newval & 0x0f) <= (oldval & 0x0f)) f |= HF;
-        if (newval <= oldval) f |= CF;
-        if ((val^oldval^0x80) & (val^newval) & 0x80) f |= VF;
-        return f;
+    /// rotate right, copy bit 0 into CF
+    ubyte rrc8(ubyte val, bool flags_szp) {
+        ubyte r = val>>1|val<<7;
+        ubyte f = (val & 0x01) ? CF : 0;
+        if (flags_szp) {
+            state.F = f | szp(r);
+        }
+        else {
+            state.F = f | (state.F & (SF|ZF|PF));
+        }
+        return r;
     }
-    */
-
-    /// compute flags for cp, sub or sbc w/o carry set (taken from MAME's z80)
-    /*
-    ubyte szhvc_sub(int oldval, int newval) {
-        int val = newval - oldval;
-        ubyte f = NF | ((newval) ? ((newval & 0x80) ? SF : 0) : ZF);
-        f |= (newval & (YF | XF));
-        if ((newval & 0x0f) > (oldval & 0x0f)) f |= HF;
-        if (newval > oldval) f |= CF;
-        if ((val^oldval) & (oldval^newval) & 0x80) f |= VF;
-        return f;
+    /// rotate left through carry bit
+    ubyte rl8(ubyte val, bool flags_szp) {
+        ubyte r = val<<1 | ((state.F & CF) ? 0x01:0x00);
+        ubyte f = val & 0x80 ? CF : 0;
+        if (flags_szp) {
+            state.F = f | szp(r);
+        }
+        else {
+            state.F = f | (state.F & (SF|ZF|PF));
+        }
+        return r;
     }
-    */
-
-    /// compute flags for sbc with carry set
-    /*
-    void szhvc_sbc(int oldval, int newval) {
-        int val = oldval - newval - 1;
-        ubyte f = NF | ((newval) ? ((newval & 0x80) ? SF : 0) : ZF);
-        f |= (newval & (YF | XF));
-        if ((newval & 0x0f) >= (oldval & 0x0f)) f |= HF;
-        if (newval >= oldval) f |= CF;
-        if ((val^oldval) & (oldval^newval) & 0x80) f |= VF;
-        state.F = f;
+    /// rotate right through carry bit
+    ubyte rr8(ubyte val, bool flags_szp) {
+        ubyte r = val>>1 | ((state.F & CF) ? 0x80:0x00);
+        ubyte f = val & 0x01 ? CF : 0;
+        if (flags_szp) {
+            state.F = f | szp(r);
+        }
+        else {
+            state.F = f | (state.F & (SF|ZF|PF));
+        }
+        return r;
     }
-    */
-
-    /// compute flags for increment 8-bit reg
-    /*
-    ubyte szhv_inc(int val, ubyte prev_flags) {
-        ubyte f = val ? val & SF : ZF;
-        f |= (val & (YF | XF));
-        if (val == 0x80) f |= VF;
-        if ((val & 0x0f) == 0x00) f |= HF;
-        return (prev_flags & CF) | f;
-    }
-    */
-
     /// execute a single instruction and update machine state
     void step();
 };

@@ -42,6 +42,11 @@ inline void z80::step() {
         state.B = mem.r8(state.PC++);
         state.T += 7;
         break;
+    case 0x7:
+        // RLCA
+        state.A = rlc8(state.A, false);
+        state.T += 4;
+        break;
     case 0x8:
         // EX AF,AF'
         swap16(state.AF, state.AF_);
@@ -71,6 +76,11 @@ inline void z80::step() {
         // LD C,n
         state.C = mem.r8(state.PC++);
         state.T += 7;
+        break;
+    case 0xf:
+        // RRCA
+        state.A = rrc8(state.A, false);
+        state.T += 4;
         break;
     case 0x11:
         // LD DE,nn
@@ -103,6 +113,11 @@ inline void z80::step() {
         state.D = mem.r8(state.PC++);
         state.T += 7;
         break;
+    case 0x17:
+        // RLA
+        state.A = rl8(state.A, false);
+        state.T += 4;
+        break;
     case 0x1a:
         // LD A,(DE)
         state.A = mem.r8(state.DE);
@@ -127,6 +142,11 @@ inline void z80::step() {
         // LD E,n
         state.E = mem.r8(state.PC++);
         state.T += 7;
+        break;
+    case 0x1f:
+        // RRA
+        state.A = rr8(state.A, false);
+        state.T += 4;
         break;
     case 0x21:
         // LD HL,nn
@@ -919,6 +939,52 @@ inline void z80::step() {
         // ADD A,n
         state.A = add8(state.A, mem.r8(state.PC++));
         state.T += 7;
+        break;
+    case 0xcb:
+        switch (mem.r8(state.PC++)) {
+        case 0x0:
+            // RLC B
+            state.B = rlc8(state.B, true);
+            state.T += 8;
+            break;
+        case 0x1:
+            // RLC C
+            state.C = rlc8(state.C, true);
+            state.T += 8;
+            break;
+        case 0x2:
+            // RLC D
+            state.D = rlc8(state.D, true);
+            state.T += 8;
+            break;
+        case 0x3:
+            // RLC E
+            state.E = rlc8(state.E, true);
+            state.T += 8;
+            break;
+        case 0x4:
+            // RLC H
+            state.H = rlc8(state.H, true);
+            state.T += 8;
+            break;
+        case 0x5:
+            // RLC L
+            state.L = rlc8(state.L, true);
+            state.T += 8;
+            break;
+        case 0x6:
+            // RLC (HL)
+            mem.w8(state.HL, rlc8(mem.r8(state.HL), true));
+            state.T += 15;
+            break;
+        case 0x7:
+            // RLC A
+            state.A = rlc8(state.A, true);
+            state.T += 8;
+            break;
+        default:
+             YAKC_ASSERT(false);
+        }
         break;
     case 0xce:
         // ADC A,n
