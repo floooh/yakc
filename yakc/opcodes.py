@@ -1196,6 +1196,20 @@ def RLC_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def RRC_r(ops) :
+    '''
+    RRC r
+    T-states: 8
+    '''
+    for r in r8 :
+        op = 0b00001000 | r.bits
+        src = ['// RRC {}'.format(r.name)]
+        src.append('state.{} = rrc8(state.{}, true);'.format(r.name, r.name))
+        src = inc_tstates(src, 8)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def RLC_iHL(ops) :
     '''
     RLC (HL)
@@ -1204,6 +1218,73 @@ def RLC_iHL(ops) :
     op = 0b00000110
     src = ['// RLC (HL)']
     src.append('mem.w8(state.HL, rlc8(mem.r8(state.HL), true));')
+    src = inc_tstates(src, 15)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RRC_iHL(ops) :
+    '''
+    RRC (HL)
+    T-states: 15
+    '''
+    op = 0b00001110
+    src = ['// RRC (HL)']
+    src.append('mem.w8(state.HL, rrc8(mem.r8(state.HL), true));')
+    src = inc_tstates(src, 15)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RL_r(ops) :
+    '''
+    RL r
+    T-states: 8
+    '''
+    for r in r8 :
+        op = 0b00010000 | r.bits
+        src = ['// RL {}'.format(r.name)]
+        src.append('state.{} = rl8(state.{}, true);'.format(r.name, r.name))
+        src = inc_tstates(src, 8)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RR_r(ops) :
+    '''
+    RR r
+    T-states: 8
+    '''
+    for r in r8 :
+        op = 0b00011000 | r.bits
+        src = ['// RR {}'.format(r.name)]
+        src.append('state.{} = rr8(state.{}, true);'.format(r.name, r.name))
+        src = inc_tstates(src, 8)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RL_iHL(ops) :
+    '''
+    RL (HL)
+    T-states: 15
+    '''
+    op = 0b00010110
+    src = ['// RL (HL)']
+    src.append('mem.w8(state.HL, rl8(mem.r8(state.HL), true));')
+    src = inc_tstates(src, 15)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RR_iHL(ops) :
+    '''
+    RR (HL)
+    T-states: 15
+    '''
+    op = 0b00011110
+    src = ['// RR (HL)']
+    src.append('mem.w8(state.HL, rr8(mem.r8(state.HL), true));')
     src = inc_tstates(src, 15)
     ops = add_op(ops, op, src)
     return ops
@@ -1285,6 +1366,12 @@ def gen_cb_opcodes() :
     cb_ops = {}
     cb_ops = RLC_r(cb_ops)
     cb_ops = RLC_iHL(cb_ops)
+    cb_ops = RRC_r(cb_ops)
+    cb_ops = RRC_iHL(cb_ops)
+    cb_ops = RL_r(cb_ops)
+    cb_ops = RL_iHL(cb_ops)
+    cb_ops = RR_r(cb_ops)
+    cb_ops = RR_iHL(cb_ops)
     return cb_ops
 
 #-------------------------------------------------------------------------------

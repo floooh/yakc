@@ -982,6 +982,126 @@ inline void z80::step() {
             state.A = rlc8(state.A, true);
             state.T += 8;
             break;
+        case 0x8:
+            // RRC B
+            state.B = rrc8(state.B, true);
+            state.T += 8;
+            break;
+        case 0x9:
+            // RRC C
+            state.C = rrc8(state.C, true);
+            state.T += 8;
+            break;
+        case 0xa:
+            // RRC D
+            state.D = rrc8(state.D, true);
+            state.T += 8;
+            break;
+        case 0xb:
+            // RRC E
+            state.E = rrc8(state.E, true);
+            state.T += 8;
+            break;
+        case 0xc:
+            // RRC H
+            state.H = rrc8(state.H, true);
+            state.T += 8;
+            break;
+        case 0xd:
+            // RRC L
+            state.L = rrc8(state.L, true);
+            state.T += 8;
+            break;
+        case 0xe:
+            // RRC (HL)
+            mem.w8(state.HL, rrc8(mem.r8(state.HL), true));
+            state.T += 15;
+            break;
+        case 0xf:
+            // RRC A
+            state.A = rrc8(state.A, true);
+            state.T += 8;
+            break;
+        case 0x10:
+            // RL B
+            state.B = rl8(state.B, true);
+            state.T += 8;
+            break;
+        case 0x11:
+            // RL C
+            state.C = rl8(state.C, true);
+            state.T += 8;
+            break;
+        case 0x12:
+            // RL D
+            state.D = rl8(state.D, true);
+            state.T += 8;
+            break;
+        case 0x13:
+            // RL E
+            state.E = rl8(state.E, true);
+            state.T += 8;
+            break;
+        case 0x14:
+            // RL H
+            state.H = rl8(state.H, true);
+            state.T += 8;
+            break;
+        case 0x15:
+            // RL L
+            state.L = rl8(state.L, true);
+            state.T += 8;
+            break;
+        case 0x16:
+            // RL (HL)
+            mem.w8(state.HL, rl8(mem.r8(state.HL), true));
+            state.T += 15;
+            break;
+        case 0x17:
+            // RL A
+            state.A = rl8(state.A, true);
+            state.T += 8;
+            break;
+        case 0x18:
+            // RR B
+            state.B = rr8(state.B, true);
+            state.T += 8;
+            break;
+        case 0x19:
+            // RR C
+            state.C = rr8(state.C, true);
+            state.T += 8;
+            break;
+        case 0x1a:
+            // RR D
+            state.D = rr8(state.D, true);
+            state.T += 8;
+            break;
+        case 0x1b:
+            // RR E
+            state.E = rr8(state.E, true);
+            state.T += 8;
+            break;
+        case 0x1c:
+            // RR H
+            state.H = rr8(state.H, true);
+            state.T += 8;
+            break;
+        case 0x1d:
+            // RR L
+            state.L = rr8(state.L, true);
+            state.T += 8;
+            break;
+        case 0x1e:
+            // RR (HL)
+            mem.w8(state.HL, rr8(mem.r8(state.HL), true));
+            state.T += 15;
+            break;
+        case 0x1f:
+            // RR A
+            state.A = rr8(state.A, true);
+            state.T += 8;
+            break;
         default:
              YAKC_ASSERT(false);
         }
