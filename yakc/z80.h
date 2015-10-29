@@ -71,7 +71,7 @@ public:
         unsigned int T;
     } state;
 
-    /// pointer to memory map
+    // memory map
     memory mem;
 
     /// constructor
@@ -232,6 +232,42 @@ public:
         }
         return r;
     }
+    /// special handling for the FD/DD CB bit opcodes
+    void dd_fd_cb(ubyte lead) {
+        int d = mem.rs8(state.PC++);
+        uword addr;
+        if (lead == 0xDD) {
+            addr = state.IX + d;
+        }
+        else {
+            addr = state.IY + d;
+        }
+        ubyte op = mem.r8(state.PC++);
+        switch (op) {
+            // RLC ([IX|IY]+d)
+            case 0x06:
+                mem.w8(addr, rlc8(mem.r8(addr), true));
+                break;
+            // RRC ([IX|IY]+d)
+            case 0x0E:
+                mem.w8(addr, rrc8(mem.r8(addr), true));
+                break;
+            // RL ([IX|IY]+d)
+            case 0x16:
+                mem.w8(addr, rl8(mem.r8(addr), true));
+                break;
+            // RR ([IX|IY]+d)
+            case 0x1E:
+                mem.w8(addr, rr8(mem.r8(addr), true));
+                break;
+            // unknown opcode
+            default:
+                YAKC_ASSERT(false);
+                break;
+        }
+        state.T += 23;
+    }
+
     /// execute a single instruction and update machine state
     void step();
 };

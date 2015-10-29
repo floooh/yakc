@@ -1290,6 +1290,25 @@ def RR_iHL(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def DD_FD_CB(ops, lead_byte) :
+    '''
+    RLC ([IX|IY]+d)
+    RRC ([IX|IY]+d)
+    RL ([IX|IY]+d)
+    RR ([IX|IY]+d)
+    T-states: 23
+    '''
+    op = 0xCB;
+    src = []
+    src.append('// RLC ([IX|IY]+d)')
+    src.append('// RRC ([IX|IY]+d)')
+    src.append('// RL ([IX|IY]+d)')
+    src.append('// RR ([IX|IY]+d)')
+    src.append('dd_fd_cb({});'.format(hex(lead_byte)))
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1402,6 +1421,7 @@ def gen_dd_opcodes() :
     dd_ops = DEC_iIXY_d(dd_ops, 'IX')
     dd_ops = INC_IXY(dd_ops, 'IX')
     dd_ops = DEC_IXY(dd_ops, 'IX')
+    dd_ops = DD_FD_CB(dd_ops, 0xDD)
     return dd_ops
 
 #-------------------------------------------------------------------------------
@@ -1432,6 +1452,7 @@ def gen_fd_opcodes() :
     fd_ops = DEC_iIXY_d(fd_ops, 'IY')
     fd_ops = INC_IXY(fd_ops, 'IY')
     fd_ops = DEC_IXY(fd_ops, 'IY')
+    fd_ops = DD_FD_CB(fd_ops, 0xFD)
     return fd_ops
 
 #-------------------------------------------------------------------------------

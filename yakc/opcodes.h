@@ -1318,6 +1318,13 @@ inline void z80::step() {
             sub8(state.A, mem.r8(state.IX + d));
             state.T += 19;
             break;
+        case 0xcb:
+            // RLC ([IX|IY]+d)
+            // RRC ([IX|IY]+d)
+            // RL ([IX|IY]+d)
+            // RR ([IX|IY]+d)
+            dd_fd_cb(0xdd);
+            break;
         case 0xe1:
             // POP IX
             state.IX = mem.r16(state.SP);
@@ -1656,6 +1663,13 @@ inline void z80::step() {
             d = mem.rs8(state.PC++);
             sub8(state.A, mem.r8(state.IY + d));
             state.T += 19;
+            break;
+        case 0xcb:
+            // RLC ([IX|IY]+d)
+            // RRC ([IX|IY]+d)
+            // RL ([IX|IY]+d)
+            // RR ([IX|IY]+d)
+            dd_fd_cb(0xfd);
             break;
         case 0xe1:
             // POP IY
