@@ -232,6 +232,28 @@ public:
         }
         return r;
     }
+    /// shift left into carry bit and update flags
+    ubyte sla8(ubyte val) {
+        ubyte r = val<<1;
+        ubyte f = val & 0x80 ? CF : 0;
+        state.F = f | szp(r);
+        return r;
+    }
+    /// shift right into carry bit, preserve sign, update flags
+    ubyte sra8(ubyte val) {
+        ubyte r = (val>>1) | (val & 0x80);
+        ubyte f = val & 0x01 ? CF : 0;
+        state.F = f | szp(r);
+        return r;
+    }
+    /// shift right into carry bit, update flags
+    ubyte srl8(ubyte val) {
+        ubyte r = val>>1;
+        ubyte f = val & 0x01 ? CF : 0;
+        state.F = f | szp(r);
+        return r;
+    }
+
     /// special handling for the FD/DD CB bit opcodes
     void dd_fd_cb(ubyte lead) {
         int d = mem.rs8(state.PC++);
@@ -259,6 +281,18 @@ public:
             // RR ([IX|IY]+d)
             case 0x1E:
                 mem.w8(addr, rr8(mem.r8(addr), true));
+                break;
+            // SLA ([IX|IY]+d)
+            case 0x26:
+                mem.w8(addr, sla8(mem.r8(addr)));
+                break;
+            // SRA ([IX|IY]+d)
+            case 0x2E:
+                mem.w8(addr, sra8(mem.r8(addr)));
+                break;
+            // SRL ([IX|IY]+d)
+            case 0x3E:
+                mem.w8(addr, srl8(mem.r8(addr)));
                 break;
             // unknown opcode
             default:

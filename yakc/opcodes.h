@@ -1102,6 +1102,126 @@ inline void z80::step() {
             state.A = rr8(state.A, true);
             state.T += 8;
             break;
+        case 0x20:
+            // SLA B
+            state.B = sla8(state.B);
+            state.T += 8;
+            break;
+        case 0x21:
+            // SLA C
+            state.C = sla8(state.C);
+            state.T += 8;
+            break;
+        case 0x22:
+            // SLA D
+            state.D = sla8(state.D);
+            state.T += 8;
+            break;
+        case 0x23:
+            // SLA E
+            state.E = sla8(state.E);
+            state.T += 8;
+            break;
+        case 0x24:
+            // SLA H
+            state.H = sla8(state.H);
+            state.T += 8;
+            break;
+        case 0x25:
+            // SLA L
+            state.L = sla8(state.L);
+            state.T += 8;
+            break;
+        case 0x26:
+            // SLA (HL)
+            mem.w8(state.HL, sla8(mem.r8(state.HL)));
+            state.T += 15;
+            break;
+        case 0x27:
+            // SLA A
+            state.A = sla8(state.A);
+            state.T += 8;
+            break;
+        case 0x28:
+            // SRA B
+            state.B = sra8(state.B);
+            state.T += 8;
+            break;
+        case 0x29:
+            // SRA C
+            state.C = sra8(state.C);
+            state.T += 8;
+            break;
+        case 0x2a:
+            // SRA D
+            state.D = sra8(state.D);
+            state.T += 8;
+            break;
+        case 0x2b:
+            // SRA E
+            state.E = sra8(state.E);
+            state.T += 8;
+            break;
+        case 0x2c:
+            // SRA H
+            state.H = sra8(state.H);
+            state.T += 8;
+            break;
+        case 0x2d:
+            // SRA L
+            state.L = sra8(state.L);
+            state.T += 8;
+            break;
+        case 0x2e:
+            // SRA (HL)
+            mem.w8(state.HL, sra8(mem.r8(state.HL)));
+            state.T += 15;
+            break;
+        case 0x2f:
+            // SRA A
+            state.A = sra8(state.A);
+            state.T += 8;
+            break;
+        case 0x38:
+            // SRL B
+            state.B = srl8(state.B);
+            state.T += 8;
+            break;
+        case 0x39:
+            // SRL C
+            state.C = srl8(state.C);
+            state.T += 8;
+            break;
+        case 0x3a:
+            // SRL D
+            state.D = srl8(state.D);
+            state.T += 8;
+            break;
+        case 0x3b:
+            // SRL E
+            state.E = srl8(state.E);
+            state.T += 8;
+            break;
+        case 0x3c:
+            // SRL H
+            state.H = srl8(state.H);
+            state.T += 8;
+            break;
+        case 0x3d:
+            // SRL L
+            state.L = srl8(state.L);
+            state.T += 8;
+            break;
+        case 0x3e:
+            // SRL (HL)
+            mem.w8(state.HL, srl8(mem.r8(state.HL)));
+            state.T += 15;
+            break;
+        case 0x3f:
+            // SRL A
+            state.A = srl8(state.A);
+            state.T += 8;
+            break;
         default:
              YAKC_ASSERT(false);
         }

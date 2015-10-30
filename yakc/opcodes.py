@@ -3,13 +3,6 @@
 #   Code generator script for Z80 instructions.
 #-------------------------------------------------------------------------------
 
-# TODO:
-#   LD A,I
-#   LD A,R
-#       Check the flags set by these instructions (esp P, required 
-#       interrupt-requested state-bit
-#
-
 Version = 1
 
 from collections import namedtuple
@@ -1290,6 +1283,87 @@ def RR_iHL(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def SLA_r(ops) :
+    '''
+    SLA r
+    T-states: 8
+    '''
+    for r in r8 :
+        op = 0b00100000 | r.bits
+        src = ['// SLA {}'.format(r.name)]
+        src.append('state.{} = sla8(state.{});'.format(r.name, r.name))
+        src = inc_tstates(src, 8)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SRA_r(ops) :
+    '''
+    SRA r
+    T-states: 8
+    '''
+    for r in r8 :
+        op = 0b00101000 | r.bits
+        src = ['// SRA {}'.format(r.name)]
+        src.append('state.{} = sra8(state.{});'.format(r.name, r.name))
+        src = inc_tstates(src, 8)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SRL_r(ops) :
+    '''
+    SRL r
+    T-states: 8
+    '''
+    for r in r8 :
+        op = 0b00111000 | r.bits
+        src = ['// SRL {}'.format(r.name)]
+        src.append('state.{} = srl8(state.{});'.format(r.name, r.name))
+        src = inc_tstates(src, 8)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SLA_iHL(ops) :
+    '''
+    SLA (HL)
+    T-states: 15
+    '''
+    op = 0b00100110
+    src = ['// SLA (HL)']
+    src.append('mem.w8(state.HL, sla8(mem.r8(state.HL)));')
+    src = inc_tstates(src, 15)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SRA_iHL(ops) :
+    '''
+    SRA (HL)
+    T-states: 15
+    '''
+    op = 0b00101110
+    src = ['// SRA (HL)']
+    src.append('mem.w8(state.HL, sra8(mem.r8(state.HL)));')
+    src = inc_tstates(src, 15)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SRL_iHL(ops) :
+    '''
+    SRL (HL)
+    T-states: 15
+    '''
+    op = 0b00111110
+    src = ['// SRL (HL)']
+    src.append('mem.w8(state.HL, srl8(mem.r8(state.HL)));')
+    src = inc_tstates(src, 15)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def DD_FD_CB(ops, lead_byte) :
     '''
     RLC ([IX|IY]+d)
@@ -1391,6 +1465,12 @@ def gen_cb_opcodes() :
     cb_ops = RL_iHL(cb_ops)
     cb_ops = RR_r(cb_ops)
     cb_ops = RR_iHL(cb_ops)
+    cb_ops = SLA_r(cb_ops)
+    cb_ops = SLA_iHL(cb_ops)
+    cb_ops = SRA_r(cb_ops)
+    cb_ops = SRA_iHL(cb_ops)
+    cb_ops = SRL_r(cb_ops)
+    cb_ops = SRL_iHL(cb_ops)
     return cb_ops
 
 #-------------------------------------------------------------------------------
