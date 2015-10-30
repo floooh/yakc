@@ -1712,6 +1712,48 @@ TEST(SRL_iHLIXY_d) {
     cpu.step(); CHECK(0x55 == cpu.state.A); CHECK(144 == cpu.state.T);
 }
 
+TEST(RLD_RRD) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x3E, 0x12,         // LD A,0x12
+        0x21, 0x00, 0x10,   // LD HL,0x1000
+        0x36, 0x34,         // LD (HL),0x34
+        0xED, 0x67,         // RRD
+        0xED, 0x6F,         // RLD
+        0x7E,               // LD A,(HL)
+        0x3E, 0xFE,         // LD A,0xFE
+        0x36, 0x00,         // LD (HL),0x00
+        0xED, 0x6F,         // RLD
+        0xED, 0x67,         // RRD
+        0x7E,               // LD A,(HL)
+        0x3E, 0x01,         // LD A,0x01
+        0x36, 0x00,         // LD (HL),0x00
+        0xED, 0x6F,         // RLD
+        0xED, 0x67,         // RRD
+        0x7E
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    cpu.step(); CHECK(0x12 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(17 == cpu.state.T);
+    cpu.step(); CHECK(0x34 == cpu.mem.r8(0x1000)); CHECK(27 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.A); CHECK(0x23 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::PF)); CHECK(45 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.A); CHECK(0x34 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::PF)); CHECK(63 == cpu.state.T);
+    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(70 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(77 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(87 == cpu.state.T);
+    cpu.step(); CHECK(0xF0 == cpu.state.A); CHECK(0x0E == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(105 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF)); CHECK(123 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(130 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(137 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(147 == cpu.state.T);
+    cpu.state.F |= z80::CF;
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(0x01 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(165 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::CF)); CHECK(183 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(190 == cpu.state.T);
+}
+
 TEST(cpu) {
 
     // setup CPU with a 16 kByte RAM bank at 0x0000

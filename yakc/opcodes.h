@@ -1550,11 +1550,21 @@ inline void z80::step() {
             state.PC += 2;
             state.T += 20;
             break;
+        case 0x67:
+            // RRD
+            rrd();
+            state.T += 18;
+            break;
         case 0x6b:
             // LD HL,(nn)
             state.HL = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
+            break;
+        case 0x6f:
+            // RLD
+            rld();
+            state.T += 18;
             break;
         case 0x73:
             // LD (nn),SP

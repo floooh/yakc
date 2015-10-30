@@ -1364,6 +1364,32 @@ def SRL_iHL(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def RLD(ops) :
+    '''
+    RLD
+    T-states: 18
+    '''
+    op = 0b01101111
+    src = ['// RLD']
+    src.append('rld();')
+    src = inc_tstates(src, 18)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RRD(ops) :
+    '''
+    RRD
+    T-states: 18
+    '''
+    op = 0b01100111
+    src = ['// RRD']
+    src.append('rrd();')
+    src = inc_tstates(src, 18)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def DD_FD_CB(ops, lead_byte) :
     '''
     RLC ([IX|IY]+d)
@@ -1545,6 +1571,8 @@ def gen_ed_opcodes() :
     ed_ops = LD_R_A(ed_ops)
     ed_ops = LD_dd_inn(ed_ops)
     ed_ops = LD_inn_dd(ed_ops)
+    ed_ops = RLD(ed_ops)
+    ed_ops = RRD(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------

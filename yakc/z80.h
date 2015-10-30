@@ -253,6 +253,24 @@ public:
         state.F = f | szp(r);
         return r;
     }
+    /// implements the RLD instruction
+    void rld() {
+        ubyte x = mem.r8(state.HL);
+        ubyte tmp = state.A & 0xF;              // store A low nibble
+        state.A = (state.A & 0xF0) | (x>>4);    // move (HL) high nibble into A low nibble
+        x = (x<<4) | tmp;   // move (HL) low to high nibble, move A low nibble to (HL) low nibble
+        mem.w8(state.HL, x);
+        state.F = szp(state.A) | (state.F & CF);
+    }
+    /// implements the RRD instruction
+    void rrd() {
+        ubyte x = mem.r8(state.HL);
+        ubyte tmp = state.A & 0xF;                  // store A low nibble
+        state.A = (state.A & 0xF0) | (x & 0x0F);    // move (HL) low nibble to A low nibble
+        x = (x >> 4) | (tmp << 4);  // move A low nibble to (HL) high nibble, and (HL) high nibble to (HL) low nibble
+        mem.w8(state.HL, x);
+        state.F = szp(state.A) | (state.F & CF);
+    }
 
     /// special handling for the FD/DD CB bit opcodes
     void dd_fd_cb(ubyte lead) {
