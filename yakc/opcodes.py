@@ -1390,13 +1390,97 @@ def RRD(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def BIT_b_r(ops) :
+    '''
+    BIT b,r
+    T-states: 8
+    '''
+    for b in range(0,8) :
+        for r in r8 :
+            op = 0b01000000 | b<<3 | r.bits
+            src = ['// BIT {},{}'.format(b, r.name)]
+            src.append('bit(state.{}, (1<<{}));'.format(r.name, b))
+            src = inc_tstates(src, 8)
+            ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def BIT_b_iHL(ops) :
+    '''
+    BIT b,(HL)
+    T-states: 12
+    '''
+    for b in range(0,8) :
+        op = 0b01000110 | b<<3
+        src = ['// BIT {},(HL)'.format(b)]
+        src.append('bit(mem.r8(state.HL), (1<<{}));'.format(b))
+        src = inc_tstates(src, 12)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SET_b_r(ops) :
+    '''
+    SET b,r
+    T-states: 8
+    '''
+    for b in range(0,8) :
+        for r in r8 :
+            op = 0b11000000 | b<<3 | r.bits
+            src = ['// SET {},{}'.format(b, r.name)]
+            src.append('state.{} |= (1<<{});'.format(r.name, b))
+            src = inc_tstates(src, 8)
+            ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SET_b_iHL(ops) :
+    '''
+    SET b,(HL)
+    T-states: 15
+    '''
+    for b in range(0, 8) :
+        op = 0b11000110 | b<<3
+        src = ['// SET {},(HL)'.format(b)]
+        src.append('mem.w8(state.HL, mem.r8(state.HL)|(1<<{}));'.format(b))
+        src = inc_tstates(src, 15)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RES_b_r(ops) :
+    '''
+    RES b,r
+    T-states: 8
+    '''
+    for b in range(0, 8) :
+        for r in r8 :
+            op = 0b10000000 | b<<3 | r.bits
+            src = ['// RES {},{}'.format(b, r.name)]
+            src.append('state.{} &= ~(1<<{});'.format(r.name, b))
+            src = inc_tstates(src, 8)
+            ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RES_b_iHL(ops) :
+    '''
+    RES b,(HL)
+    T-states: 15
+    '''
+    for b in range(0, 8) :
+        op = 0b10000110 | b<<3
+        src = ['// RES {},(HL)'.format(b)]
+        src.append('mem.w8(state.HL, mem.r8(state.HL)|(1<<{}));'.format(b))
+        src = inc_tstates(src, 15)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def DD_FD_CB(ops, lead_byte) :
     '''
-    RLC ([IX|IY]+d)
-    RRC ([IX|IY]+d)
-    RL ([IX|IY]+d)
-    RR ([IX|IY]+d)
-    T-states: 23
+    RLC, RRC, RL, RR, SLA, SRA, SRL, BIT, SET, RES for ([IX|IY]+d)
+    T-states: 23, 20
     '''
     op = 0xCB;
     src = []
@@ -1404,6 +1488,12 @@ def DD_FD_CB(ops, lead_byte) :
     src.append('// RRC ([IX|IY]+d)')
     src.append('// RL ([IX|IY]+d)')
     src.append('// RR ([IX|IY]+d)')
+    src.append('// SLA ([IX|IY]+d)')
+    src.append('// SRA ([IX|IY]+d)')
+    src.append('// SRL ([IX|IY]+d)')
+    src.append('// BIT b,([IX|IY]+d')
+    src.append('// SET b,([IX|IY]+d')
+    src.append('// RES b,([IX|IY]+d')
     src.append('dd_fd_cb({});'.format(hex(lead_byte)))
     ops = add_op(ops, op, src)
     return ops
@@ -1497,6 +1587,12 @@ def gen_cb_opcodes() :
     cb_ops = SRA_iHL(cb_ops)
     cb_ops = SRL_r(cb_ops)
     cb_ops = SRL_iHL(cb_ops)
+    cb_ops = BIT_b_r(cb_ops)
+    cb_ops = BIT_b_iHL(cb_ops)
+    cb_ops = SET_b_r(cb_ops)
+    cb_ops = SET_b_iHL(cb_ops)
+    cb_ops = RES_b_r(cb_ops)
+    cb_ops = RES_b_iHL(cb_ops)
     return cb_ops
 
 #-------------------------------------------------------------------------------
