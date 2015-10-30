@@ -9,4 +9,5 @@ Some useful links:
 * MAME z80.c: https://github.com/mamedev/mame/blob/master/src/devices/cpu/z80/z80.c
 * code snippets (good as tests?): http://map.grauw.nl/sources/external/z80bits.html
 * 'homecomputer ddr' (german): http://hc-ddr.hucki.net/wiki/doku.php/z1013:handbuecher
+* undocumented behaviour (very useful!): http://www.z80.info/z80undoc3.txt
 
