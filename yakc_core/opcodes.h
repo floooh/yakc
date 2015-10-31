@@ -534,6 +534,11 @@ inline void z80::step() {
         mem.w8(state.HL, state.L);
         state.T += 7;
         break;
+    case 0x76:
+        // HALT
+        state.PC--;
+        state.T += 4;
+        break;
     case 0x77:
         // LD (HL),A
         mem.w8(state.HL, state.A);

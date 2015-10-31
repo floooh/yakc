@@ -66,6 +66,19 @@ def NOP(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def HALT(ops) :
+    '''
+    HALT
+    T-states: 4
+    '''
+    op = 0b01110110
+    src = ['// HALT']
+    src.append('state.PC--;')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def LD_r_s(ops) :
     '''
     LD r,s
@@ -1505,6 +1518,7 @@ def gen_opcodes() :
     '''
     ops = {}
     ops = NOP(ops)
+    ops = HALT(ops)
     ops = LD_r_s(ops)
     ops = LD_r_n(ops)
     ops = LD_r_iHL(ops)

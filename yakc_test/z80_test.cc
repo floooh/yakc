@@ -1754,6 +1754,19 @@ TEST(RLD_RRD) {
     cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(190 == cpu.state.T);
 }
 
+TEST(HALT) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x76,           // HALT
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    cpu.step(); CHECK(0x0000 == cpu.state.PC); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0000 == cpu.state.PC); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x0000 == cpu.state.PC); CHECK(12 == cpu.state.T);
+}
+
 TEST(cpu) {
 
     // setup CPU with a 16 kByte RAM bank at 0x0000
