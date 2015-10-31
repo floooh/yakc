@@ -21,8 +21,8 @@ public:
 
     Id drawState;
     kc85 kc;
-    ui ui;
-    draw draw;
+    class ui ui;
+    class draw draw;
 };
 OryolMain(YakcApp);
 
