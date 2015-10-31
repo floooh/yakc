@@ -28,11 +28,11 @@ script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips set config linux-make-unittest; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips clean all; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips build; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips make test; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips run Test; fi
 
   # OSX
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips set config osx-xcode-unittest; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips clean all; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips make ALL_BUILD; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips make RUN_TESTS; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips run Test; fi
 
