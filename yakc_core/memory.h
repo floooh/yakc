@@ -4,7 +4,7 @@
     @class yakc::memory
     @brief memory load/store operations
 */
-#include "yakc/common.h"
+#include "yakc_core/common.h"
 
 namespace yakc {
 

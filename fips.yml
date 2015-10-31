@@ -3,6 +3,6 @@
 #
 ---
 imports:
-    fips-unittestpp:
-        git: https://github.com/floooh/fips-unittestpp.git
+    oryol:
+        git: https://github.com/floooh/oryol.git
 

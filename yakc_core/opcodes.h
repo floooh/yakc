@@ -1,7 +1,7 @@
 #pragma once
 // #version:1
 // machine generated, do not edit!
-#include "yakc/common.h"
+#include "yakc_core/common.h"
 namespace yakc {
 inline void z80::step() {
     int d;

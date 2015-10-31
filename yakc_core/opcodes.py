@@ -1681,7 +1681,7 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
     f.write('#pragma once\n')
     f.write('// #version:{}\n'.format(Version))
     f.write('// machine generated, do not edit!\n')
-    f.write('#include "yakc/common.h"\n')
+    f.write('#include "yakc_core/common.h"\n')
     f.write('namespace yakc {\n')
     f.write('inline void z80::step() {\n')
     f.write('    int d;\n')

@@ -5,8 +5,8 @@
     @brief the Z80 (or rather U880) cpu
 */
 #include <string.h>
-#include "yakc/common.h"
-#include "yakc/memory.h"
+#include "yakc_core/common.h"
+#include "yakc_core/memory.h"
 
 namespace yakc {
 

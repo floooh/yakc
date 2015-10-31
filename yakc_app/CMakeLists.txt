@@ -1,0 +1,5 @@
+fips_begin_app(yakc_app windowed)
+    fips_files(main.cc ui.cc ui.h draw.cc draw.h)
+    oryol_shader(shaders.shd)
+    fips_deps(Gfx Input IMUI yakc_core)
+fips_end_app()
