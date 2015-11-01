@@ -5,7 +5,9 @@
     @brief imgui-based debugger UI
 */
 #include "kc85_oryol.h"
+#include "ui_window.h"
 #include "Time/TimePoint.h"
+#include "Core/Containers/Array.h"
 
 class ui {
 public:
@@ -17,19 +19,9 @@ public:
     void discard();
     /// do one frame
     void onframe(yakc::kc85& kc);
+    /// open a window
+    void open(const yakc::kc85& kc, Oryol::Ptr<window> window);
 private:
-    /// read register value into text edit buffer
-    void reg_to_buf(const yakc::kc85& kc, yakc::z80::reg r);
-    /// write updated register back to cpu state
-    void buf_to_reg(yakc::kc85& kc, yakc::z80::reg r) const;
-    /// read all register values into their text edit buffers
-    void regs_to_buf(const yakc::kc85& kc);
-    /// the cpu-status window
-    void cpu(yakc::kc85& kc);
-
     Oryol::TimePoint curTime;
-    bool show_cpu;
-    bool kc_paused;
-    static const int buf_size = 5;
-    char buf[yakc::z80::reg::num][buf_size];
+    Oryol::Array<Oryol::Ptr<window>> windows;
 };

@@ -31,6 +31,7 @@ public:
         AF, BC, DE, HL,
         AF_,BC_, DE_, HL_,
         I, R, IX, IY, SP, PC,
+        IM,
         num
     };
 
@@ -105,6 +106,7 @@ public:
             case L:     state.L = v; break;
             case I:     state.I = v; break;
             case R:     state.R = v; break;
+            case IM:    state.IM = v; break;
             default:    YAKC_ASSERT(false); break;
         }
     }
@@ -121,7 +123,10 @@ public:
             case L:     return state.L;
             case I:     return state.I;
             case R:     return state.R;
-            default:    YAKC_ASSERT(false); break;
+            case IM:    return state.IM;
+            default:
+                YAKC_ASSERT(false);
+                return 0;
         }
     }
     /// set a 16-bit register value by enum (slow)
@@ -139,7 +144,7 @@ public:
             case IY:    state.IY = v; break;
             case SP:    state.SP = v; break;
             case PC:    state.PC = v; break;
-            default:    YAKC_ASSERT(false); break;
+            default:    YAKC_ASSERT(false);
         }
     }
     /// get a 16-bit register value by enum (slow)
@@ -157,7 +162,9 @@ public:
             case IY:    return state.IY;
             case SP:    return state.SP;
             case PC:    return state.PC;
-            default:    YAKC_ASSERT(false); break;
+            default:
+                YAKC_ASSERT(false);
+                return 0;
         }
     }
     /// get a string-name for a register
@@ -185,6 +192,7 @@ public:
             case IY: return "IY";
             case SP: return "SP";
             case PC: return "PC";
+            case IM: return "IM";
             default: return "?";
         }
     }
