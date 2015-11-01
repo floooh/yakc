@@ -9,6 +9,7 @@
 #include "IMUI/IMUI.h"
 #include "Time/Clock.h"
 #include "Input/Input.h"
+#include "Core/String/StringBuilder.h"
 
 using namespace Oryol;
 using namespace yakc;
@@ -25,8 +26,7 @@ ui::setup(kc85& kc) {
 
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowRounding = 0.0f;
-    style.Alpha = 1.0f;
-    style.WindowFillAlphaDefault = 1.0f;
+    style.Alpha = 0.75f;
     style.WindowTitleAlign = ImGuiAlign_Center;
     style.Colors[ImGuiCol_WindowBg] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
 
@@ -52,7 +52,7 @@ ui::onframe(kc85& kc) {
     IMUI::NewFrame(Clock::LapTime(this->curTime));
 
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("Computer")) {
+        if (ImGui::BeginMenu(kc.model() == kc85::kc_model::kc85_3 ? "KC85/3":"KC85/4")) {
             if (ImGui::MenuItem("Power Cycle...")) {
                 // FIXME
             }
@@ -68,11 +68,19 @@ ui::onframe(kc85& kc) {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Debugger")) {
-            if (ImGui::MenuItem("CPU...")) {
+            if (ImGui::MenuItem("CPU State...")) {
                 this->open(kc, cpu_window::Create());
             }
-            if (ImGui::MenuItem("Memory...")) {
-                this->open(kc, mem_window::Create());
+            StringBuilder strBuilder;
+            for (int i = 0; i < memory::num_banks; i++) {
+                if (kc.cpu.mem.get_bank_ptr(i)) {
+                    strBuilder.Format(32, "Memory Bank %d...", i);
+                    if (ImGui::MenuItem(strBuilder.GetString().AsCStr())) {
+                        auto win = mem_window::Create();
+                        win->memory_bank_index = i;
+                        this->open(kc, win);
+                    }
+                }
             }
             if (ImGui::MenuItem("Assembler...")) {
                 // FIXME

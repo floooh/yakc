@@ -45,6 +45,16 @@ public:
         this->banks[bank_index].ptr = nullptr;
         this->banks[bank_index].writable = false;
     }
+    /// get physical start address of memory bank (can be 0!)
+    ubyte* get_bank_ptr(int bank_index) const {
+        YAKC_ASSERT((bank_index >= 0) && (bank_index < num_banks));
+        return this->banks[bank_index].ptr;
+    }
+    /// get writable flag of bank at index
+    bool is_bank_writable(int bank_index) const {
+        YAKC_ASSERT((bank_index >= 0) && (bank_index < num_banks));
+        return this->banks[bank_index].writable;
+    }
     /// read a byte at cpu address
     ubyte r8(address addr) const {
         const auto& bank = this->banks[addr >> bank::shift];
