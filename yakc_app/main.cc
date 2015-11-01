@@ -40,6 +40,7 @@ YakcApp::OnInit() {
     Input::Setup();
     Input::BeginCaptureText();
     this->kc.switchon(kc85::kc_model::kc85_3);
+    this->kc.pause(true);
     this->ui.setup(this->kc);
 
     // a little test prog so we can actually see something
@@ -54,6 +55,7 @@ YakcApp::OnInit() {
         0x36, 0xAA
     };
     this->kc.cpu.mem.write(0x0200, prog, sizeof(prog));
+    this->kc.cpu.state.PC = 0x200;
 
     // setup the renderer
     this->draw.setup(gfxSetup);
