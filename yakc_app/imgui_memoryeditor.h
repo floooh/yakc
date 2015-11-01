@@ -20,6 +20,7 @@
 //   memory_editor.Draw("Memory Editor", mem_block, mem_block_size, (size_t)mem_block);     // run
 //
 // TODO: better resizing policy (ImGui doesn't have flexible window resizing constraints yet)
+#include <stdio.h>
 
 struct MemoryEditor
 {
@@ -119,7 +120,7 @@ struct MemoryEditor
                         if (DataEditingTakeFocus)
                         {
                             ImGui::SetKeyboardFocusHere();
-                            sprintf(AddrInput, "%0*lX", addr_digits_count, base_display_addr+addr);
+                            sprintf(AddrInput, "%0*lX", addr_digits_count, (unsigned long)base_display_addr+addr);
                             sprintf(DataInput, "%02X", mem_data[addr]);
                         }
                         ImGui::PushItemWidth(ImGui::CalcTextSize("FF").x);
