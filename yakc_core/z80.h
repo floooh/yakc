@@ -14,7 +14,7 @@ class z80 {
 public:
 
     /// flag bits
-    enum {
+    enum flag {
         CF = (1<<0),        // carry flag
         NF = (1<<1),        // add/subtract
         VF = (1<<2),        // parity/overflow
@@ -24,6 +24,14 @@ public:
         YF = (1<<5),        // undocumented bit 5
         ZF = (1<<6),        // zero flag
         SF = (1<<7),        // sign flag
+    };
+    /// register enum for set_reg/get_reg methods
+    enum reg {
+        A=0, F, B, C, D, E, H, L,
+        AF, BC, DE, HL,
+        AF_,BC_, DE_, HL_,
+        I, R, IX, IY, SP, PC,
+        num
     };
 
     /// the cpu state
@@ -83,6 +91,102 @@ public:
         uword tmp = r0;
         r0 = r1;
         r1 = tmp;
+    }
+    /// set an 8-bit register value by enum (slow)
+    void set8(reg r, ubyte v) {
+        switch (r) {
+            case A:     state.A = v; break;
+            case F:     state.F = v; break;
+            case B:     state.B = v; break;
+            case C:     state.C = v; break;
+            case D:     state.D = v; break;
+            case E:     state.E = v; break;
+            case H:     state.H = v; break;
+            case L:     state.L = v; break;
+            case I:     state.I = v; break;
+            case R:     state.R = v; break;
+            default:    YAKC_ASSERT(false); break;
+        }
+    }
+    /// get an 8-bit register value by enum (slow)
+    ubyte get8(reg r) const {
+        switch (r) {
+            case A:     return state.A;
+            case F:     return state.F;
+            case B:     return state.B;
+            case C:     return state.C;
+            case D:     return state.D;
+            case E:     return state.E;
+            case H:     return state.H;
+            case L:     return state.L;
+            case I:     return state.I;
+            case R:     return state.R;
+            default:    YAKC_ASSERT(false); break;
+        }
+    }
+    /// set a 16-bit register value by enum (slow)
+    void set16(reg r, uword v) {
+        switch (r) {
+            case AF:    state.AF = v; break;
+            case BC:    state.BC = v; break;
+            case DE:    state.DE = v; break;
+            case HL:    state.HL = v; break;
+            case AF_:   state.AF_ = v; break;
+            case BC_:   state.BC_ = v; break;
+            case DE_:   state.DE_ = v; break;
+            case HL_:   state.HL_ = v; break;
+            case IX:    state.IX = v; break;
+            case IY:    state.IY = v; break;
+            case SP:    state.SP = v; break;
+            case PC:    state.PC = v; break;
+            default:    YAKC_ASSERT(false); break;
+        }
+    }
+    /// get a 16-bit register value by enum (slow)
+    uword get16(reg r) const {
+        switch (r) {
+            case AF:    return state.AF;
+            case BC:    return state.BC;
+            case DE:    return state.DE;
+            case HL:    return state.HL;
+            case AF_:   return state.AF_;
+            case BC_:   return state.BC_;
+            case DE_:   return state.DE_;
+            case HL_:   return state.HL_;
+            case IX:    return state.IX;
+            case IY:    return state.IY;
+            case SP:    return state.SP;
+            case PC:    return state.PC;
+            default:    YAKC_ASSERT(false); break;
+        }
+    }
+    /// get a string-name for a register
+    static const char* reg_name(reg r) {
+        switch (r) {
+            case A: return "A";
+            case F: return "F";
+            case B: return "B";
+            case C: return "C";
+            case D: return "D";
+            case E: return "E";
+            case H: return "H";
+            case L: return "L";
+            case AF: return "AF";
+            case BC: return "BC";
+            case DE: return "DE";
+            case HL: return "HL";
+            case AF_: return "AF'";
+            case BC_: return "BC'";
+            case DE_: return "DE'";
+            case HL_: return "HL'";
+            case I: return "I";
+            case R: return "R";
+            case IX: return "IX";
+            case IY: return "IY";
+            case SP: return "SP";
+            case PC: return "PC";
+            default: return "?";
+        }
     }
     /// perform a reset (RESET pin triggered)
     void reset() {

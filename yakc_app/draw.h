@@ -5,7 +5,7 @@
     @brief render the KC video memory via Oryol Gfx module
 */
 #include "Gfx/Gfx.h"
-#include "yakc_core/kc85.h"
+#include "kc85_oryol.h"
 #include "shaders.h"
 
 class draw {

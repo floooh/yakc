@@ -6,7 +6,7 @@
 #include "Core/App.h"
 #include "Gfx/Gfx.h"
 #include "Input/Input.h"
-#include "yakc_core/kc85.h"
+#include "kc85_oryol.h"
 #include "ui.h"
 #include "draw.h"
 

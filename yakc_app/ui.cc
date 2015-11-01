@@ -2,6 +2,7 @@
 //  ui.cc
 //------------------------------------------------------------------------------
 #include "ui.h"
+#include "util.h"
 #include "Core/Containers/StaticArray.h"
 #include "IMUI/IMUI.h"
 #include "Time/Clock.h"
@@ -9,6 +10,12 @@
 
 using namespace Oryol;
 using namespace yakc;
+
+static const z80::reg regs16[] = {
+    z80::AF, z80::BC, z80::DE, z80::HL,
+    z80::AF_, z80::BC_, z80::DE_, z80::HL_,
+    z80::IX, z80::IY, z80::SP, z80::PC
+};
 
 //------------------------------------------------------------------------------
 ui::ui() :
@@ -41,103 +48,24 @@ ui::onframe(kc85& kc) {
 }
 
 //------------------------------------------------------------------------------
-char
-ui::nibble_to_str(ubyte n) {
-    return "0123456789ABCDEF"[n & 0xF];
-}
-
-//------------------------------------------------------------------------------
-void
-ui::ubyte_to_str(ubyte b, char* buf, int buf_size) {
-    o_assert(buf_size >= 3);
-    buf[0] = nibble_to_str(b>>4);
-    buf[1] = nibble_to_str(b);
-    buf[2] = 0;
-}
-
-//------------------------------------------------------------------------------
-void
-ui::uword_to_str(uword w, char* buf, int buf_size) {
-    o_assert(buf_size >= 5);
-    ubyte_to_str(w>>8, buf, buf_size); buf+=2; buf_size-=2;
-    ubyte_to_str(w, buf, buf_size);
-}
-
-//------------------------------------------------------------------------------
-uword
-ui::parse_uword(const char* str, uword old_val) {
-    // parse 4 hex characters into a
-    uword res = 0;
-    for (int i = 0; i < 4; i++) {
-        int shift = (3-i)*4;
-        char c = str[i];
-        if ((c >= '0') && (c <= '9')) {
-            res |= (c-'0') << shift;
-        }
-        else if ((c >= 'A') && (c <= 'F')) {
-            res |= ((c-'A')+10) << shift;
-        }
-        else {
-            // failure
-            return old_val;
-        }
-    }
-    return res;
-}
-
-//------------------------------------------------------------------------------
 void
 ui::regs_to_buf(const kc85& kc) {
-    for (int i = 0; i < reg16::num; i++) {
-        this->reg_to_buf(kc, (reg16::r16)i);
+    for (z80::reg r : regs16) {
+        this->reg_to_buf(kc, r);
     }
 }
 
 //------------------------------------------------------------------------------
 void
-ui::reg_to_buf(const kc85& kc, reg16::r16 r) {
+ui::reg_to_buf(const kc85& kc, z80::reg r) {
     // read cpu state to text buffers
-    const auto& regs = kc.cpu.state;
-    uword val = 0;
-    switch (r) {
-        case reg16::AF: val = regs.AF; break;
-        case reg16::BC: val = regs.BC; break;
-        case reg16::DE: val = regs.DE; break;
-        case reg16::HL: val = regs.HL; break;
-        case reg16::AF_: val = regs.AF_; break;
-        case reg16::BC_: val = regs.BC_; break;
-        case reg16::DE_: val = regs.DE_; break;
-        case reg16::HL_: val = regs.HL_; break;
-        case reg16::IX: val = regs.IX; break;
-        case reg16::IY: val = regs.IY; break;
-        case reg16::SP: val = regs.SP; break;
-        case reg16::PC: val = regs.PC; break;
-        default: break;
-    }
-    uword_to_str(val, this->r16[r].buf, reg16::buf_size);
+    util::uword_to_str(kc.cpu.get16(r), this->buf[r], buf_size);
 }
 
 //------------------------------------------------------------------------------
 void
-ui::buf_to_reg(kc85& kc, reg16::r16 r) const {
-    auto& regs = kc.cpu.state;
-    uword* val = &regs.AF;
-    switch (r) {
-        case reg16::AF: val = &regs.AF; break;
-        case reg16::BC: val = &regs.BC; break;
-        case reg16::DE: val = &regs.DE; break;
-        case reg16::HL: val = &regs.HL; break;
-        case reg16::AF_: val = &regs.AF_; break;
-        case reg16::BC_: val = &regs.BC_; break;
-        case reg16::DE_: val = &regs.DE_; break;
-        case reg16::HL_: val = &regs.HL_; break;
-        case reg16::IX: val = &regs.IX; break;
-        case reg16::IY: val = &regs.IY; break;
-        case reg16::SP: val = &regs.SP; break;
-        case reg16::PC: val = &regs.PC; break;
-        default: break;
-    }
-    *val = parse_uword(this->r16[r].buf, *val);
+ui::buf_to_reg(kc85& kc, z80::reg r) const {
+    kc.cpu.set16(r, util::parse_uword(this->buf[r], kc.cpu.get16(r)));
 }
 
 //------------------------------------------------------------------------------
@@ -149,9 +77,8 @@ ui::cpu(kc85& kc) {
     // 16-bit registers
     ImGui::PushItemWidth(32);
     int editFlags = ImGuiInputTextFlags_CharsHexadecimal|ImGuiInputTextFlags_CharsUppercase|ImGuiInputTextFlags_EnterReturnsTrue;
-    for (int i = 0; i < reg16::num; i++) {
-        const reg16::r16 r = (reg16::r16) i;
-        if (ImGui::InputText(reg16::name(r), this->r16[r].buf, reg16::buf_size, editFlags)) {
+    for (z80::reg r : regs16) {
+        if (ImGui::InputText(z80::reg_name(r), this->buf[r], buf_size, editFlags)) {
             this->buf_to_reg(kc, r);
         }
         else {
