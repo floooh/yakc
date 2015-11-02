@@ -6,7 +6,7 @@ namespace yakc {
 inline void z80::step() {
     int d;
     uword u16tmp;
-    switch (state.R++,mem.r8(state.PC++)) {
+    switch (fetch_op()) {
     case 0x0:
         // NOP
         state.T += 4;
@@ -946,7 +946,7 @@ inline void z80::step() {
         state.T += 7;
         break;
     case 0xcb:
-        switch (state.R++,mem.r8(state.PC++)) {
+        switch (fetch_op()) {
         case 0x0:
             // RLC B
             state.B = rlc8(state.B, true);
@@ -2221,7 +2221,7 @@ inline void z80::step() {
         state.T += 4;
         break;
     case 0xdd:
-        switch (state.R++,mem.r8(state.PC++)) {
+        switch (fetch_op()) {
         case 0x21:
             // LD IX,nn
             state.IX = mem.r16(state.PC);
@@ -2480,7 +2480,7 @@ inline void z80::step() {
         state.T += 4;
         break;
     case 0xed:
-        switch (state.R++,mem.r8(state.PC++)) {
+        switch (fetch_op()) {
         case 0x43:
             // LD (nn),BC
             mem.w16(mem.r16(state.PC), state.BC);
@@ -2595,7 +2595,7 @@ inline void z80::step() {
         state.T += 6;
         break;
     case 0xfd:
-        switch (state.R++,mem.r8(state.PC++)) {
+        switch (fetch_op()) {
         case 0x21:
             // LD IY,nn
             state.IY = mem.r16(state.PC);

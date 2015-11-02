@@ -212,6 +212,12 @@ public:
         return (state.F & undoc) == expected;
     }
 
+    /// fetch an opcode byte and increment R register
+    ubyte fetch_op() {
+        state.R = (state.R + 1) & 0x7F;
+        return mem.r8(state.PC++);
+    }
+
     /// perform an add, return result, and update flags
     ubyte add8(ubyte acc, ubyte add) {
         int r = int(acc) + int(add);
