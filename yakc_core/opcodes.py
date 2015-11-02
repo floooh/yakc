@@ -1565,6 +1565,30 @@ def LDIR(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def LDD(ops) :
+    '''
+    LDD
+    T-states: 16
+    '''
+    op = 0b10101000
+    src = ['// LDD']
+    src.append('ldd();')
+    src = inc_tstates(src, 16)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def LDDR(ops) :
+    '''
+    LDDR
+    T-states: 21/16
+    '''
+    op = 0b10111000
+    src = ['// LDDR']
+    src.append('state.T += lddr();')
+    ops = add_op(ops, op, src)
+    return ops
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1740,6 +1764,8 @@ def gen_ed_opcodes() :
     ed_ops = RRD(ed_ops)
     ed_ops = LDI(ed_ops)
     ed_ops = LDIR(ed_ops)
+    ed_ops = LDD(ed_ops)
+    ed_ops = LDDR(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------

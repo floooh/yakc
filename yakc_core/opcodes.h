@@ -2566,9 +2566,18 @@ inline void z80::step() {
             ldi();
             state.T += 16;
             break;
+        case 0xa8:
+            // LDD
+            ldd();
+            state.T += 16;
+            break;
         case 0xb0:
             // LDIR
             state.T += ldir();
+            break;
+        case 0xb8:
+            // LDDR
+            state.T += lddr();
             break;
         default:
             YAKC_ASSERT(false);
