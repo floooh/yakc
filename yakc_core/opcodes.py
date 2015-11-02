@@ -1540,6 +1540,31 @@ def DD_FD_CB(ops, lead_byte) :
     return ops
 
 #-------------------------------------------------------------------------------
+def LDI(ops) :
+    '''
+    LDI
+    T-states: 16
+    '''
+    op = 0b10100000
+    src = ['// LDI']
+    src.append('ldi();')
+    src = inc_tstates(src, 16)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def LDIR(ops) :
+    '''
+    LDIR
+    T-states: 21/16
+    '''
+    op = 0b10110000
+    src = ['// LDIR']
+    src.append('state.T += ldir();')
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1713,6 +1738,8 @@ def gen_ed_opcodes() :
     ed_ops = LD_inn_dd(ed_ops)
     ed_ops = RLD(ed_ops)
     ed_ops = RRD(ed_ops)
+    ed_ops = LDI(ed_ops)
+    ed_ops = LDIR(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------

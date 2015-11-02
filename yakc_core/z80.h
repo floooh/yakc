@@ -286,6 +286,34 @@ public:
         state.F = f | (state.F & CF);
         return r;
     }
+    /// implement the LDI instruction
+    void ldi() {
+        ubyte val = mem.r8(state.HL);
+        mem.w8(state.DE, val);
+        val += state.A;
+        ubyte f = state.F & (SF|ZF|CF);
+        if (val & 0x02) f |= YF;
+        if (val & 0x08) f |= XF;
+        state.HL++;
+        state.DE++;
+        state.BC--;
+        if (state.BC) {
+            f |= VF;
+        }
+        state.F = f;
+    }
+    /// implement the LDIR instruction, return number of T-states
+    int ldir() {
+        ldi();
+        if (state.BC != 0) {
+            state.PC -= 2;
+            return 21;
+        }
+        else {
+            return 16;
+        }
+    }
+
     /// get the SF|ZF|PF flags for a value
     static ubyte szp(ubyte val) {
         int p = 0;
