@@ -935,6 +935,11 @@ inline void z80::step() {
         state.SP += 2;
         state.T += 10;
         break;
+    case 0xc3:
+        // JP nn
+        state.PC = mem.r16(state.PC);
+        state.T += 10;
+        break;
     case 0xc5:
         // PUSH BC
         state.SP -= 2;

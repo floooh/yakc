@@ -1588,6 +1588,20 @@ def LDDR(ops) :
     src.append('state.T += lddr();')
     ops = add_op(ops, op, src)
     return ops
+
+#-------------------------------------------------------------------------------
+def JP_nn(ops) :
+    '''
+    JP nn
+    T-states: 10
+    '''
+    op = 0b11000011
+    src = ['// JP nn']
+    src.append('state.PC = mem.r16(state.PC);')
+    src = inc_tstates(src, 10)
+    ops = add_op(ops, op, src)
+    return ops
+
 #-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
@@ -1651,6 +1665,7 @@ def gen_opcodes() :
     ops = RLA(ops)
     ops = RRCA(ops)
     ops = RRA(ops)
+    ops = JP_nn(ops)
     ops[0xCB] = []
     ops[0xDD] = []
     ops[0xFD] = []

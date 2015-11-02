@@ -26,7 +26,8 @@ ui::setup(kc85& kc) {
 
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowRounding = 0.0f;
-    style.Alpha = 0.95f;
+    style.Alpha = 1.0f;
+    style.WindowFillAlphaDefault = 1.0f;
     style.WindowTitleAlign = ImGuiAlign_Center;
     style.Colors[ImGuiCol_WindowBg] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
 
