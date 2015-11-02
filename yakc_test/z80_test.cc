@@ -14,6 +14,27 @@ z80 init_z80() {
     return cpu;
 }
 
+// LD A,R
+// LD A,I
+TEST(LD_A_RI) {
+    z80 cpu = init_z80();
+    cpu.state.IFF1 = true;
+    cpu.state.IFF2 = true;
+    cpu.state.R = 0x34;
+    cpu.state.I = 0x1;
+    cpu.state.F = z80::CF;
+    ubyte prog[] {
+        0xED, 0x57,         // LD A,I
+        0x97,               // SUB A
+        0xED, 0x5F,         // LD A,R
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(9 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(13 == cpu.state.T);
+    cpu.step(); CHECK(0x34 == cpu.state.R); CHECK(cpu.test_flags(z80::PF)); CHECK(22 == cpu.state.T);
+}
+
 // LD r,s
 // LD r,n
 TEST(LD_r_sn) {

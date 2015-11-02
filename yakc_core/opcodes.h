@@ -2509,11 +2509,23 @@ inline void z80::step() {
             state.PC += 2;
             state.T += 20;
             break;
+        case 0x57:
+            // LD A,I
+            state.A = state.I;
+            state.F = sziff2(state.I,state.IFF2)|(state.F&CF);
+            state.T += 9;
+            break;
         case 0x5b:
             // LD DE,(nn)
             state.DE = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
+            break;
+        case 0x5f:
+            // LD A,R
+            state.A = state.R;
+            state.F = sziff2(state.R,state.IFF2)|(state.F&CF);
+            state.T += 9;
             break;
         case 0x63:
             // LD (nn),HL

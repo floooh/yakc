@@ -296,6 +296,13 @@ public:
         f |= p & 1 ? 0 : PF;
         return f;
     }
+    /// get flags for the LD A,I and LD A,R instructions
+    static ubyte sziff2(ubyte val, bool iff2) {
+        ubyte f = val ? val & SF : ZF;
+        f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
+        if (iff2) f |= PF;
+        return f;
+    }
     /// rotate left, copy sign bit into CF,
     ubyte rlc8(ubyte val, bool flags_szp) {
         ubyte r = val<<1|val>>7;

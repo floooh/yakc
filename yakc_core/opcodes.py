@@ -229,6 +229,20 @@ def LD_iHL_n(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def LD_A_I(ops) :
+    '''
+    LD A,I
+    T-states: 9
+    '''
+    op = 0b01010111
+    src = ['// LD A,I']
+    src.append('state.A = state.I;')
+    src.append('state.F = sziff2(state.I,state.IFF2)|(state.F&CF);')
+    src = inc_tstates(src, 9)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def LD_I_A(ops) :
     '''
     LD I,A
@@ -237,6 +251,20 @@ def LD_I_A(ops) :
     op = 0b01000111
     src = ['// LD I,A']
     src.append('state.I = state.A;')
+    src = inc_tstates(src, 9)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def LD_A_R(ops) :
+    '''
+    LD A,R
+    T-states: 9
+    '''
+    op = 0b01011111
+    src = ['// LD A,R']
+    src.append('state.A = state.R;')
+    src.append('state.F = sziff2(state.R,state.IFF2)|(state.F&CF);')
     src = inc_tstates(src, 9)
     ops = add_op(ops, op, src)
     return ops
@@ -1677,7 +1705,9 @@ def gen_ed_opcodes() :
     Generate the ED-lead-byte opcode table.
     '''
     ed_ops = {}
+    ed_ops = LD_A_I(ed_ops)
     ed_ops = LD_I_A(ed_ops)
+    ed_ops = LD_A_R(ed_ops)
     ed_ops = LD_R_A(ed_ops)
     ed_ops = LD_dd_inn(ed_ops)
     ed_ops = LD_inn_dd(ed_ops)
