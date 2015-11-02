@@ -32,7 +32,7 @@ TEST(LD_A_RI) {
 
     cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(9 == cpu.state.T);
     cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(13 == cpu.state.T);
-    cpu.step(); CHECK(0x34 == cpu.state.R); CHECK(cpu.test_flags(z80::PF)); CHECK(22 == cpu.state.T);
+    cpu.step(); CHECK(0x39 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(22 == cpu.state.T);
 }
 
 // LD r,s

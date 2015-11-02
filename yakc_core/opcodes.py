@@ -1730,7 +1730,7 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
     f.write('inline void z80::step() {\n')
     f.write('    int d;\n')
     f.write('    uword u16tmp;\n')
-    f.write('    switch (mem.r8(state.PC++)) {\n')
+    f.write('    switch (state.R++,mem.r8(state.PC++)) {\n')
     
     # generate the switch case in sorted order
     for op in range(0,256) :
@@ -1738,7 +1738,7 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
             f.write('    case {}:\n'.format(hex(op)))
             if op == 0xCB :
                 # write CB prefix instrucions
-                f.write('        switch (mem.r8(state.PC++)) {\n')
+                f.write('        switch (state.R++,mem.r8(state.PC++)) {\n')
                 for cb_op in range(0,256) :
                     if cb_op in cb_ops :
                         f.write('        case {}:\n'.format(hex(cb_op)))
@@ -1750,7 +1750,7 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
                 f.write('        }\n')
             elif op == 0xDD :
                 # write DD prefix instructions
-                f.write('        switch (mem.r8(state.PC++)) {\n')
+                f.write('        switch (state.R++,mem.r8(state.PC++)) {\n')
                 for dd_op in range(0,256) :
                     if dd_op in dd_ops :
                         f.write('        case {}:\n'.format(hex(dd_op)))
@@ -1762,7 +1762,7 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
                 f.write('        }\n')
             elif op == 0xED :
                 # write ED prefix instructions
-                f.write('        switch (mem.r8(state.PC++)) {\n')
+                f.write('        switch (state.R++,mem.r8(state.PC++)) {\n')
                 for ed_op in range(0,256) :
                     if ed_op in ed_ops :
                         f.write('        case {}:\n'.format(hex(ed_op)))
@@ -1774,7 +1774,7 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
                 f.write('        }\n')
             elif op == 0xFD :
                 # write FD prefix instructions
-                f.write('        switch (mem.r8(state.PC++)) {\n')
+                f.write('        switch (state.R++,mem.r8(state.PC++)) {\n')
                 for fd_op in range(0,256) :
                     if fd_op in fd_ops :
                         f.write('        case {}:\n'.format(hex(fd_op)))
