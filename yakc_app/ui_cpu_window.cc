@@ -79,6 +79,14 @@ cpu_window::draw(kc85& kc) {
         // T-counter:
         ImGui::Text("T-states: %d", kc.cpu.state.T);
 
+        // current or invalid opcode
+        if (kc.cpu.state.INV) {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid Opcode: 0x%02X", kc.cpu.mem.r8(kc.cpu.state.PC));
+        }
+        else {
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Next Opcode: 0x%02X", kc.cpu.mem.r8(kc.cpu.state.PC));
+        }
+
         /// FIXME: IFF, HALT, ...
         bool kc_paused = kc.paused();
         if (ImGui::Checkbox("Paused", &kc_paused)) {

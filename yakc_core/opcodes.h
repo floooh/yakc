@@ -6,6 +6,7 @@ namespace yakc {
 inline void z80::step() {
     int d;
     uword u16tmp;
+    state.INV = false;
     switch (fetch_op()) {
     case 0x0:
         // NOP
@@ -2188,7 +2189,8 @@ inline void z80::step() {
             state.T += 8;
             break;
         default:
-             YAKC_ASSERT(false);
+            invalid_opcode(2);
+            break;
         }
         break;
     case 0xce:
@@ -2441,7 +2443,8 @@ inline void z80::step() {
             state.T += 10;
             break;
         default:
-             YAKC_ASSERT(false);
+            invalid_opcode(2);
+            break;
         }
         break;
     case 0xde:
@@ -2580,7 +2583,8 @@ inline void z80::step() {
             state.T += lddr();
             break;
         default:
-            YAKC_ASSERT(false);
+            invalid_opcode(2);
+            break;
         }
         break;
     case 0xee:
@@ -2833,7 +2837,8 @@ inline void z80::step() {
             state.T += 10;
             break;
         default:
-            YAKC_ASSERT(false);
+            invalid_opcode(2);
+            break;
         }
         break;
     case 0xfe:
@@ -2842,7 +2847,8 @@ inline void z80::step() {
         state.T += 7;
         break;
     default:
-       YAKC_ASSERT(false);
+       invalid_opcode(1);
+       break;
     }
 }
 } // namespace yakc

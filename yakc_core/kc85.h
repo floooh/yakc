@@ -74,8 +74,13 @@ public:
     }
     /// process one frame
     void onframe(int micro_secs) {
+        // at 1.75 MHz:
+        // per micro-second, 1750000 / 1000000 T-states are executed
+        // thus: num T-states to execute is (micro_secs * 17500000) / 1000000)
+        // or: (micro_secs * 175) / 100
         if (!this->is_paused) {
-            // FIXME
+            unsigned int num_tstates = (micro_secs * 175) / 100;
+            this->cpu.run(num_tstates);
         }
     }
     /// pause/continue execution

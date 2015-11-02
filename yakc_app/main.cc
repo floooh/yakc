@@ -45,14 +45,28 @@ YakcApp::OnInit() {
 
     // a little test prog so we can actually see something
     ubyte prog[] = {
-        0x21, 0x00, 0xA8,
-        0x36, 0x11,         // red on black
-        0x23,
-        0x36, 0x11,
-        0x21, 0x00, 0x80,
-        0x36, 0xAA,             // stripes
-        0x23,
-        0x36, 0xAA
+        // clear color memory
+        0x21, 0x00, 0xA8,   // LD HL,0xA800
+        0x11, 0x01, 0xA8,   // LD DE,0xA800
+        0x01, 0xFF, 0x0B,   // LD BC,0x0A00
+        0x36, 0x22,         // LD (HL),0x11
+        0xED, 0xB0,         // LDIR
+
+        // clear video memory
+        0x21, 0x00, 0x80,   // LD HL,0x8000
+        0x11, 0x01, 0x80,   // LD DE,0x8001
+        0x01, 0xFF, 0x27,   // LD BC,0x2800
+        0x36, 0x22,         // LD (HL),0x22
+        0xED, 0xB0,         // LDIR
+
+        // clear video memory
+        0x21, 0x00, 0x80,   // LD HL,0x8000
+        0x11, 0x01, 0x80,   // LD DE,0x8001
+        0x01, 0xFF, 0x27,   // LD BC,0x2800
+        0x36, 0xFF,         // LD (HL),0x22
+        0xED, 0xB0,         // LDIR
+
+        0xC9
     };
     this->kc.cpu.mem.write(0x0200, prog, sizeof(prog));
     this->kc.cpu.state.PC = 0x200;
@@ -67,6 +81,8 @@ YakcApp::OnInit() {
 AppState::Code
 YakcApp::OnRunning() {
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.5f,0.5f,0.5f,1.0f)));
+    int micro_secs = 1000000 / 60;
+    this->kc.onframe(micro_secs);
     this->draw.render(this->kc);
     this->ui.onframe(this->kc);
     Gfx::CommitFrame();

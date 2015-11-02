@@ -1783,6 +1783,7 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
     f.write('inline void z80::step() {\n')
     f.write('    int d;\n')
     f.write('    uword u16tmp;\n')
+    f.write('    state.INV = false;\n')
     f.write('    switch (fetch_op()) {\n')
     
     # generate the switch case in sorted order
@@ -1799,7 +1800,8 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
                             f.write('            {}\n'.format(line))
                         f.write('            break;\n')
                 f.write('        default:\n')
-                f.write('             YAKC_ASSERT(false);\n')
+                f.write('            invalid_opcode(2);\n')
+                f.write('            break;\n')
                 f.write('        }\n')
             elif op == 0xDD :
                 # write DD prefix instructions
@@ -1811,7 +1813,8 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
                             f.write('            {}\n'.format(line))
                         f.write('            break;\n')
                 f.write('        default:\n')
-                f.write('             YAKC_ASSERT(false);\n')
+                f.write('            invalid_opcode(2);\n')
+                f.write('            break;\n')
                 f.write('        }\n')
             elif op == 0xED :
                 # write ED prefix instructions
@@ -1823,7 +1826,8 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
                             f.write('            {}\n'.format(line))
                         f.write('            break;\n')
                 f.write('        default:\n')
-                f.write('            YAKC_ASSERT(false);\n')
+                f.write('            invalid_opcode(2);\n')
+                f.write('            break;\n')
                 f.write('        }\n')
             elif op == 0xFD :
                 # write FD prefix instructions
@@ -1835,14 +1839,16 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
                             f.write('            {}\n'.format(line))
                         f.write('            break;\n')
                 f.write('        default:\n')
-                f.write('            YAKC_ASSERT(false);\n')
+                f.write('            invalid_opcode(2);\n')
+                f.write('            break;\n')
                 f.write('        }\n')
             else :
                 for line in ops[op] :
                     f.write('        {}\n'.format(line))
             f.write('        break;\n')
     f.write('    default:\n')
-    f.write('       YAKC_ASSERT(false);\n')
+    f.write('       invalid_opcode(1);\n')
+    f.write('       break;\n')
     f.write('    }\n')
     f.write('}\n')
     f.write('} // namespace yakc\n')

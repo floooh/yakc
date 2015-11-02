@@ -74,6 +74,8 @@ public:
         /// the interrupt-enable flip-flops
         bool IFF1;
         bool IFF2;
+        /// invalid or unknown instruction has been encountered
+        bool INV;
         /// the interrupt mode (0, 1 or 2)
         ubyte IM;
         /// current T cycle counter
@@ -86,6 +88,31 @@ public:
     /// constructor
     z80() {
         memset(&this->state, 0, sizeof(this->state));
+    }
+    /// perform a reset (RESET pin triggered)
+    void reset() {
+        state.PC = 0;
+        state.IM = 0;
+        state.IFF1 = false;
+        state.IFF2 = false;
+        state.I = 0;
+        state.R = 0;
+    }
+    /// called when invalid opcode has been hit
+    void invalid_opcode(uword opsize) {
+        state.INV = true;
+        state.PC -= opsize;     // stuck on invalid opcode
+        state.T  += 4;          // fantasy value
+    }
+    /// execute a single instruction and update machine state
+    void step();
+    /// run for at least 't' T-states, returns number of actually executed T-states
+    unsigned int run(unsigned int t) {
+        state.T = 0;
+        while (state.T < t) {
+            step();
+        }
+        return state.T;
     }
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1) {
@@ -195,15 +222,6 @@ public:
             case IM: return "IM";
             default: return "?";
         }
-    }
-    /// perform a reset (RESET pin triggered)
-    void reset() {
-        state.PC = 0;
-        state.IM = 0;
-        state.IFF1 = false;
-        state.IFF2 = false;
-        state.I = 0;
-        state.R = 0;
     }
     /// helper to test expected flag bitmask
     bool test_flags(ubyte expected) const {
@@ -549,9 +567,6 @@ public:
                 break;
         }
     }
-
-    /// execute a single instruction and update machine state
-    void step();
 };
 
 } // namespace
