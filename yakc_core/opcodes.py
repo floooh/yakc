@@ -1640,6 +1640,46 @@ def CPDR(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def DAA(ops) :
+    '''
+    DAA
+    T-states: 4
+    '''
+    op = 0b00100111
+    src = ['// DAA']
+    src.append('daa();')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def CPL(ops) :
+    '''
+    CPL
+    T-states: 4
+    '''
+    op = 0b00101111
+    src = ['// CPL']
+    src.append('state.A ^= 0xFF;')
+    src.append('state.F = (state.F&(SF|ZF|PF|CF)) | HF | NF | (state.A&(YF|XF));')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def NEG(ops) :
+    '''
+    NEG
+    T-states: 8
+    '''
+    op = 0b01000100
+    src = ['// NEG']
+    src.append('state.A = sub8(0, state.A);')
+    src = inc_tstates(src, 8)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def JP_nn(ops) :
     '''
     JP nn
@@ -1715,6 +1755,8 @@ def gen_opcodes() :
     ops = RLA(ops)
     ops = RRCA(ops)
     ops = RRA(ops)
+    ops = DAA(ops)
+    ops = CPL(ops)
     ops = JP_nn(ops)
     ops[0xCB] = []
     ops[0xDD] = []
@@ -1835,6 +1877,7 @@ def gen_ed_opcodes() :
     ed_ops = CPIR(ed_ops)
     ed_ops = CPD(ed_ops)
     ed_ops = CPDR(ed_ops)
+    ed_ops = NEG(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------

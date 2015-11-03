@@ -425,6 +425,32 @@ public:
         f |= p & 1 ? 0 : PF;
         return f;
     }
+    /// implement the DAA instruction
+    void daa() {
+        // from MAME and http://www.z80.info/zip/z80-documented.pdf
+        ubyte val = state.A;
+        if (state.F & NF) {
+            if (((state.A & 0xF) > 0x9) || (state.F & HF)) {
+                val -= 0x06;
+            }
+            if ((state.A > 0x99) || (state.F & CF)) {
+                val -= 0x60;
+            }
+        }
+        else {
+            if (((state.A & 0xF) > 0x9) || (state.F & HF)) {
+                val += 0x06;
+            }
+            if ((state.A > 0x99) || (state.F & CF)) {
+                val += 0x60;
+            }
+        }
+        state.F &= CF|NF;
+        state.F |= (state.A > 0x99) ? CF:0;
+        state.F |= (state.A^val) & HF;
+        state.F |= szp(val);
+        state.A = val;
+    }
     /// get flags for the LD A,I and LD A,R instructions
     static ubyte sziff2(ubyte val, bool iff2) {
         ubyte f = val ? val & SF : ZF;
