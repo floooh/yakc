@@ -358,6 +358,56 @@ public:
             return 16;
         }
     }
+    /// implement the CPI instruction
+    void cpi() {
+        int r = int(state.A) - int(mem.r8(state.HL));
+        ubyte f = NF | (state.F & CF) | (r ? ((r & 0x80) ? SF : 0) : ZF);
+        if ((r & 0xF) >= (state.A & 0xF)) f |= HF;
+        if (r & 0x02) f |= YF;
+        if (r & 0x08) f |= XF;
+        state.HL++;
+        state.BC--;
+        if (state.BC) {
+            f |= VF;
+        }
+        state.F = f;
+    }
+    /// implement the CPIR instruction, return number of T-states
+    int cpir() {
+        cpi();
+        if ((state.BC != 0) && !(state.F & ZF)) {
+            state.PC -= 2;
+            return 21;
+        }
+        else {
+            return 16;
+        }
+    }
+    /// implement the CPD instruction
+    void cpd() {
+        int r = int(state.A) - int(mem.r8(state.HL));
+        ubyte f = NF | (state.F & CF) | (r ? ((r & 0x80) ? SF : 0) : ZF);
+        if ((r & 0xF) >= (state.A & 0xF)) f |= HF;
+        if (r & 0x02) f |= YF;
+        if (r & 0x08) f |= XF;
+        state.HL--;
+        state.BC--;
+        if (state.BC) {
+            f |= VF;
+        }
+        state.F = f;
+    }
+    /// implement the CPDR instruction, return number of T-states
+    int cpdr() {
+        cpd();
+        if ((state.BC != 0) && !(state.F & ZF)) {
+            state.PC -= 2;
+            return 21;
+        }
+        else {
+            return 16;
+        }
+    }
 
     /// get the SF|ZF|PF flags for a value
     static ubyte szp(ubyte val) {

@@ -1590,6 +1590,56 @@ def LDDR(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def CPI(ops) :
+    '''
+    CPI
+    T-states: 16
+    '''
+    op = 0b10100001
+    src = ['// CPI']
+    src.append('cpi();')
+    src = inc_tstates(src, 16)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def CPIR(ops) :
+    '''
+    CPIR
+    T-states: 21/16
+    '''
+    op = 0b10110001
+    src = ['// CPIR']
+    src.append('state.T += cpir();')
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def CPD(ops) :
+    '''
+    CPD
+    T-states: 16
+    '''
+    op = 0b10101001
+    src = ['// CPD']
+    src.append('cpd();')
+    src = inc_tstates(src, 16)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def CPDR(ops) :
+    '''
+    CPDR
+    T-states: 21/16
+    '''
+    op = 0b10111001
+    src = ['// CPDR']
+    src.append('state.T += cpdr();')
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def JP_nn(ops) :
     '''
     JP nn
@@ -1781,6 +1831,10 @@ def gen_ed_opcodes() :
     ed_ops = LDIR(ed_ops)
     ed_ops = LDD(ed_ops)
     ed_ops = LDDR(ed_ops)
+    ed_ops = CPI(ed_ops)
+    ed_ops = CPIR(ed_ops)
+    ed_ops = CPD(ed_ops)
+    ed_ops = CPDR(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------

@@ -2574,18 +2574,36 @@ inline void z80::step() {
             ldi();
             state.T += 16;
             break;
+        case 0xa1:
+            // CPI
+            cpi();
+            state.T += 16;
+            break;
         case 0xa8:
             // LDD
             ldd();
+            state.T += 16;
+            break;
+        case 0xa9:
+            // CPD
+            cpd();
             state.T += 16;
             break;
         case 0xb0:
             // LDIR
             state.T += ldir();
             break;
+        case 0xb1:
+            // CPIR
+            state.T += cpir();
+            break;
         case 0xb8:
             // LDDR
             state.T += lddr();
+            break;
+        case 0xb9:
+            // CPDR
+            state.T += cpdr();
             break;
         default:
             invalid_opcode(2);
