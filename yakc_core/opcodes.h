@@ -250,6 +250,11 @@ inline void z80::step() {
         mem.w8(state.HL, mem.r8(state.PC++));
         state.T += 10;
         break;
+    case 0x37:
+        // SCF
+        state.F = (state.F&(SF|ZF|YF|XF|PF))|CF|(state.A&(YF|XF));
+        state.T += 4;
+        break;
     case 0x3a:
         // LD A,(nn)
         state.A = mem.r8(mem.r16(state.PC));
@@ -275,6 +280,11 @@ inline void z80::step() {
         // LD A,n
         state.A = mem.r8(state.PC++);
         state.T += 7;
+        break;
+    case 0x3f:
+        // CCF
+        state.F = ((state.F&(SF|ZF|YF|XF|PF|CF))|((state.F&CF)<<4)|(state.A&(YF|XF)))^CF;
+        state.T += 4;
         break;
     case 0x40:
         // LD B,B

@@ -1680,6 +1680,32 @@ def NEG(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def CCF(ops) :
+    '''
+    CCF
+    T-states: 4
+    '''
+    op = 0b00111111
+    src = ['// CCF']
+    src.append('state.F = ((state.F&(SF|ZF|YF|XF|PF|CF))|((state.F&CF)<<4)|(state.A&(YF|XF)))^CF;')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SCF(ops) :
+    '''
+    SCF
+    T-states: 4
+    '''
+    op = 0b00110111
+    src = ['// SCF']
+    src.append('state.F = (state.F&(SF|ZF|YF|XF|PF))|CF|(state.A&(YF|XF));')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def JP_nn(ops) :
     '''
     JP nn
@@ -1757,6 +1783,8 @@ def gen_opcodes() :
     ops = RRA(ops)
     ops = DAA(ops)
     ops = CPL(ops)
+    ops = CCF(ops)
+    ops = SCF(ops)
     ops = JP_nn(ops)
     ops[0xCB] = []
     ops[0xDD] = []
