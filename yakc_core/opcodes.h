@@ -154,6 +154,17 @@ inline void z80::step() {
         state.A = rr8(state.A, false);
         state.T += 4;
         break;
+    case 0x20:
+        // JR NZ,e
+        if (!(state.F & ZF)) {
+            state.PC += mem.rs8(state.PC++);
+            state.T += 12;
+        }
+        else {
+            state.PC++;
+            state.T += 7;
+        }
+        break;
     case 0x21:
         // LD HL,nn
         state.HL = mem.r16(state.PC);
@@ -191,6 +202,17 @@ inline void z80::step() {
         daa();
         state.T += 4;
         break;
+    case 0x28:
+        // JR Z,e
+        if (state.F & ZF) {
+            state.PC += mem.rs8(state.PC++);
+            state.T += 12;
+        }
+        else {
+            state.PC++;
+            state.T += 7;
+        }
+        break;
     case 0x2a:
         // LD HL,(nn)
         state.HL = mem.r16(mem.r16(state.PC));
@@ -222,6 +244,17 @@ inline void z80::step() {
         state.A ^= 0xFF;
         state.F = (state.F&(SF|ZF|PF|CF)) | HF | NF | (state.A&(YF|XF));
         state.T += 4;
+        break;
+    case 0x30:
+        // JR NC,e
+        if (!(state.F & CF)) {
+            state.PC += mem.rs8(state.PC++);
+            state.T += 12;
+        }
+        else {
+            state.PC++;
+            state.T += 7;
+        }
         break;
     case 0x31:
         // LD SP,nn
@@ -259,6 +292,17 @@ inline void z80::step() {
         // SCF
         state.F = (state.F&(SF|ZF|YF|XF|PF))|CF|(state.A&(YF|XF));
         state.T += 4;
+        break;
+    case 0x38:
+        // JR C,e
+        if (state.F & CF) {
+            state.PC += mem.rs8(state.PC++);
+            state.T += 12;
+        }
+        else {
+            state.PC++;
+            state.T += 7;
+        }
         break;
     case 0x3a:
         // LD A,(nn)

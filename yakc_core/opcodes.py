@@ -1797,6 +1797,35 @@ def JR_e(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def JR_cc_e(ops) :
+    '''
+    JR C,e
+    JR NC,e
+    JR Z,e
+    JR NZ,e
+    T-state: 12/7
+    '''
+    CC = namedtuple('CC', 'op name test')
+    cc = [
+        CC(0x38, 'C',  'state.F & CF'),
+        CC(0x30, 'NC', '!(state.F & CF)'),
+        CC(0x28, 'Z',  'state.F & ZF'),
+        CC(0x20, 'NZ', '!(state.F & ZF)')
+    ]
+    for c in cc :
+        src = ['// JR {},e'.format(c.name)]
+        src.append('if ({}) {{'.format(c.test))
+        src.append('    state.PC += mem.rs8(state.PC++);')
+        src.append('    state.T += 12;')
+        src.append('}')
+        src.append('else {')
+        src.append('    state.PC++;')
+        src.append('    state.T += 7;')
+        src.append('}')
+        ops = add_op(ops, c.op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def JP_iHL(ops) :
     '''
     JP (HL)
@@ -1891,8 +1920,9 @@ def gen_opcodes() :
     ops = SCF(ops)
     ops = JP_nn(ops)
     ops = JP_cc_nn(ops)
-    ops = JR_e(ops)
     ops = JP_iHL(ops)
+    ops = JR_e(ops)
+    ops = JR_cc_e(ops)
     ops = DI(ops)
     ops = EI(ops)
     ops[0xCB] = []
