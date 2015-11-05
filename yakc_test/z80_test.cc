@@ -2317,6 +2317,40 @@ TEST(JP_cc_nn) {
     cpu.step(); CHECK(0x022D == cpu.state.PC); CHECK(122 == cpu.state.T);
 }
 
+TEST(JP_JR) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x21, 0x16, 0x02,           //      LD HL,l3
+        0xDD, 0x21, 0x19, 0x02,     //      LD IX,l4
+        0xFD, 0x21, 0x21, 0x02,     //      LD IY,l5
+        0xC3, 0x14, 0x02,           //      JP l0
+        0x18, 0x04,                 // l1:  JR l2
+        0x18, 0xFC,                 // l0:  JR l1
+        0xDD, 0xE9,                 // l3:  JP (IX)
+        0xE9,                       // l2:  JP (HL)
+        0xFD, 0xE9,                 // l4:  JP (IY)
+        0x18, 0x06,                 // l6:  JR l7
+        0x00, 0x00, 0x00, 0x00,     //      4x NOP
+        0x18, 0xF8,                 // l5:  JR l6
+        0x00                        // l7:  NOP
+    };
+    cpu.mem.write(0x0204, prog, sizeof(prog));
+    cpu.state.PC = 0x0204;
+
+    cpu.step(); CHECK(0x0216 == cpu.state.HL); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0219 == cpu.state.IX); CHECK(24 == cpu.state.T);
+    cpu.step(); CHECK(0x0221 == cpu.state.IY); CHECK(38 == cpu.state.T);
+    cpu.step(); CHECK(0x0214 == cpu.state.PC); CHECK(48 == cpu.state.T);
+    cpu.step(); CHECK(0x0212 == cpu.state.PC); CHECK(60 == cpu.state.T);
+    cpu.step(); CHECK(0x0218 == cpu.state.PC); CHECK(72 == cpu.state.T);
+    cpu.step(); CHECK(0x0216 == cpu.state.PC); CHECK(76 == cpu.state.T);
+    cpu.step(); CHECK(0x0219 == cpu.state.PC); CHECK(84 == cpu.state.T);
+    cpu.step(); CHECK(0x0221 == cpu.state.PC); CHECK(92 == cpu.state.T);
+    cpu.step(); CHECK(0x021B == cpu.state.PC); CHECK(104 == cpu.state.T);
+    cpu.step(); CHECK(0x0223 == cpu.state.PC); CHECK(116 == cpu.state.T);
+}
+
 TEST(cpu) {
 
     // setup CPU with a 16 kByte RAM bank at 0x0000

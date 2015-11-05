@@ -119,6 +119,11 @@ inline void z80::step() {
         state.A = rl8(state.A, false);
         state.T += 4;
         break;
+    case 0x18:
+        // JR e
+        state.PC += mem.rs8(state.PC++);
+        state.T += 12;
+        break;
     case 0x1a:
         // LD A,(DE)
         state.A = mem.r8(state.DE);
@@ -2483,6 +2488,11 @@ inline void z80::step() {
             mem.w16(state.SP, state.IX);
             state.T += 15;
             break;
+        case 0xe9:
+            // JP (IX)
+            state.PC = state.IX;
+            state.T += 8;
+            break;
         case 0xf9:
             // LD SP,IX
             state.SP = state.IX;
@@ -2527,6 +2537,11 @@ inline void z80::step() {
         state.A &= mem.r8(state.PC++);
         state.F = szp(state.A)|HF;
         state.T += 7;
+        break;
+    case 0xe9:
+        // JP (HL)
+        state.PC = state.HL;
+        state.T += 4;
         break;
     case 0xea:
         // JP PE,nn
@@ -2944,6 +2959,11 @@ inline void z80::step() {
             state.SP -= 2;
             mem.w16(state.SP, state.IY);
             state.T += 15;
+            break;
+        case 0xe9:
+            // JP (IY)
+            state.PC = state.IY;
+            state.T += 8;
             break;
         case 0xf9:
             // LD SP,IY

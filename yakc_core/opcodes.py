@@ -36,19 +36,6 @@ r16af = [
     R(0b11, 'AF')
 ]
 
-# conditional jump conditions
-CC = namedtuple('CC', 'bits name test')
-cc = [
-    CC(0b000, 'NZ', '(!(state.F & ZF))'),
-    CC(0b001, 'Z',  '(state.F & ZF)'),
-    CC(0b010, 'NC', '(!(state.F & CF))'),
-    CC(0b011, 'C',  '(state.F & CF)'),
-    CC(0b100, 'PO', '(!(state.F & PF))'),
-    CC(0b101, 'PE', '(state.F & PF)'),
-    CC(0b110, 'P',  '(!(state.F & NF))'),
-    CC(0b111, 'M',  '(state.F & NF)')
-] 
-
 #-------------------------------------------------------------------------------
 def add_op(ops, op, src) :
     '''
@@ -1777,12 +1764,62 @@ def JP_cc_nn(ops) :
     JP cc,nn
     T-states: 10
     '''
+    CC = namedtuple('CC', 'bits name test')
+    cc = [
+        CC(0b000, 'NZ', '(!(state.F & ZF))'),
+        CC(0b001, 'Z',  '(state.F & ZF)'),
+        CC(0b010, 'NC', '(!(state.F & CF))'),
+        CC(0b011, 'C',  '(state.F & CF)'),
+        CC(0b100, 'PO', '(!(state.F & PF))'),
+        CC(0b101, 'PE', '(state.F & PF)'),
+        CC(0b110, 'P',  '(!(state.F & NF))'),
+        CC(0b111, 'M',  '(state.F & NF)')
+    ] 
     for c in cc :
         op = 0b11000010 | c.bits<<3
         src = ['// JP {},nn'.format(c.name)]
         src.append('state.PC = {} ? mem.r16(state.PC) : state.PC+2;'.format(c.test))
         src = inc_tstates(src, 10)
         ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def JR_e(ops) :
+    '''
+    JR e
+    T-states: 12
+    '''
+    op = 0b00011000
+    src = ['// JR e']
+    src.append('state.PC += mem.rs8(state.PC++);')
+    src = inc_tstates(src, 12)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def JP_iHL(ops) :
+    '''
+    JP (HL)
+    T-states: 4
+    '''
+    op = 0b11101001
+    src = ['// JP (HL)']
+    src.append('state.PC = state.HL;')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def JP_iIXY(ops, xname) :
+    '''
+    JP ([IX|IY])
+    T-states: 8
+    '''
+    op = 0b11101001
+    src = ['// JP ({})'.format(xname)]
+    src.append('state.PC = state.{};'.format(xname))
+    src = inc_tstates(src, 8)
+    ops = add_op(ops, op, src)
     return ops
 
 #-------------------------------------------------------------------------------
@@ -1854,6 +1891,8 @@ def gen_opcodes() :
     ops = SCF(ops)
     ops = JP_nn(ops)
     ops = JP_cc_nn(ops)
+    ops = JR_e(ops)
+    ops = JP_iHL(ops)
     ops = DI(ops)
     ops = EI(ops)
     ops[0xCB] = []
@@ -1919,6 +1958,7 @@ def gen_dd_opcodes() :
     dd_ops = DEC_iIXY_d(dd_ops, 'IX')
     dd_ops = INC_IXY(dd_ops, 'IX')
     dd_ops = DEC_IXY(dd_ops, 'IX')
+    dd_ops = JP_iIXY(dd_ops, 'IX')
     dd_ops = DD_FD_CB(dd_ops, 0xDD)
     return dd_ops
 
@@ -1950,6 +1990,7 @@ def gen_fd_opcodes() :
     fd_ops = DEC_iIXY_d(fd_ops, 'IY')
     fd_ops = INC_IXY(fd_ops, 'IY')
     fd_ops = DEC_IXY(fd_ops, 'IY')
+    fd_ops = JP_iIXY(fd_ops, 'IY')
     fd_ops = DD_FD_CB(fd_ops, 0xFD)
     return fd_ops
 
