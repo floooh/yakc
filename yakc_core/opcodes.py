@@ -79,6 +79,46 @@ def HALT(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def DI(ops) :
+    '''
+    DI
+    T-states: 4
+    '''
+    op = 0b11110011
+    src = ['// DI']
+    src.append('state.IFF1 = state.IFF2 = false;')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def EI(ops) :
+    '''
+    EI
+    T-states: 4
+    '''
+    op = 0b11111011
+    src = ['// EI']
+    src.append('state.IFF1 = state.IFF2 = true;')
+    src = inc_tstates(src, 4)
+    ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def IM(ops) :
+    '''
+    IM 0,1,2
+    T-states: 8
+    '''
+    for im in {(0,0b01000110),(1,0b01010110),(2,0b01011110)} :
+        op = im[1]
+        src = ['// IM {}'.format(im[0])]
+        src.append('state.IM = {};'.format(im[0]))
+        src = inc_tstates(src, 8)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def LD_r_s(ops) :
     '''
     LD r,s
@@ -1786,6 +1826,8 @@ def gen_opcodes() :
     ops = CCF(ops)
     ops = SCF(ops)
     ops = JP_nn(ops)
+    ops = DI(ops)
+    ops = EI(ops)
     ops[0xCB] = []
     ops[0xDD] = []
     ops[0xFD] = []
@@ -1906,6 +1948,7 @@ def gen_ed_opcodes() :
     ed_ops = CPD(ed_ops)
     ed_ops = CPDR(ed_ops)
     ed_ops = NEG(ed_ops)
+    ed_ops = IM(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------

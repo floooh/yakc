@@ -2521,6 +2521,11 @@ inline void z80::step() {
             state.A = sub8(0, state.A);
             state.T += 8;
             break;
+        case 0x46:
+            // IM 0
+            state.IM = 0;
+            state.T += 8;
+            break;
         case 0x47:
             // LD I,A
             state.I = state.A;
@@ -2543,6 +2548,11 @@ inline void z80::step() {
             state.PC += 2;
             state.T += 20;
             break;
+        case 0x56:
+            // IM 1
+            state.IM = 1;
+            state.T += 8;
+            break;
         case 0x57:
             // LD A,I
             state.A = state.I;
@@ -2554,6 +2564,11 @@ inline void z80::step() {
             state.DE = mem.r16(mem.r16(state.PC));
             state.PC += 2;
             state.T += 20;
+            break;
+        case 0x5e:
+            // IM 2
+            state.IM = 2;
+            state.T += 8;
             break;
         case 0x5f:
             // LD A,R
@@ -2648,6 +2663,11 @@ inline void z80::step() {
         state.SP += 2;
         state.T += 10;
         break;
+    case 0xf3:
+        // DI
+        state.IFF1 = state.IFF2 = false;
+        state.T += 4;
+        break;
     case 0xf5:
         // PUSH AF
         state.SP -= 2;
@@ -2664,6 +2684,11 @@ inline void z80::step() {
         // LD SP,HL
         state.SP = state.HL;
         state.T += 6;
+        break;
+    case 0xfb:
+        // EI
+        state.IFF1 = state.IFF2 = true;
+        state.T += 4;
         break;
     case 0xfd:
         switch (fetch_op()) {
