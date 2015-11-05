@@ -956,6 +956,11 @@ inline void z80::step() {
         state.SP += 2;
         state.T += 10;
         break;
+    case 0xc2:
+        // JP NZ,nn
+        state.PC = (!(state.F & ZF)) ? mem.r16(state.PC) : state.PC+2;
+        state.T += 10;
+        break;
     case 0xc3:
         // JP nn
         state.PC = mem.r16(state.PC);
@@ -971,6 +976,11 @@ inline void z80::step() {
         // ADD A,n
         state.A = add8(state.A, mem.r8(state.PC++));
         state.T += 7;
+        break;
+    case 0xca:
+        // JP Z,nn
+        state.PC = (state.F & ZF) ? mem.r16(state.PC) : state.PC+2;
+        state.T += 10;
         break;
     case 0xcb:
         switch (fetch_op()) {
@@ -2230,6 +2240,11 @@ inline void z80::step() {
         state.SP += 2;
         state.T += 10;
         break;
+    case 0xd2:
+        // JP NC,nn
+        state.PC = (!(state.F & CF)) ? mem.r16(state.PC) : state.PC+2;
+        state.T += 10;
+        break;
     case 0xd5:
         // PUSH DE
         state.SP -= 2;
@@ -2247,6 +2262,11 @@ inline void z80::step() {
         swap16(state.DE, state.DE_);
         swap16(state.HL, state.HL_);
         state.T += 4;
+        break;
+    case 0xda:
+        // JP C,nn
+        state.PC = (state.F & CF) ? mem.r16(state.PC) : state.PC+2;
+        state.T += 10;
         break;
     case 0xdd:
         switch (fetch_op()) {
@@ -2484,6 +2504,11 @@ inline void z80::step() {
         state.SP += 2;
         state.T += 10;
         break;
+    case 0xe2:
+        // JP PO,nn
+        state.PC = (!(state.F & PF)) ? mem.r16(state.PC) : state.PC+2;
+        state.T += 10;
+        break;
     case 0xe3:
         // EX (SP),HL
         u16tmp = mem.r16(state.SP);
@@ -2502,6 +2527,11 @@ inline void z80::step() {
         state.A &= mem.r8(state.PC++);
         state.F = szp(state.A)|HF;
         state.T += 7;
+        break;
+    case 0xea:
+        // JP PE,nn
+        state.PC = (state.F & PF) ? mem.r16(state.PC) : state.PC+2;
+        state.T += 10;
         break;
     case 0xeb:
         // EX DE,HL
@@ -2663,6 +2693,11 @@ inline void z80::step() {
         state.SP += 2;
         state.T += 10;
         break;
+    case 0xf2:
+        // JP P,nn
+        state.PC = (!(state.F & NF)) ? mem.r16(state.PC) : state.PC+2;
+        state.T += 10;
+        break;
     case 0xf3:
         // DI
         state.IFF1 = state.IFF2 = false;
@@ -2684,6 +2719,11 @@ inline void z80::step() {
         // LD SP,HL
         state.SP = state.HL;
         state.T += 6;
+        break;
+    case 0xfa:
+        // JP M,nn
+        state.PC = (state.F & NF) ? mem.r16(state.PC) : state.PC+2;
+        state.T += 10;
         break;
     case 0xfb:
         // EI

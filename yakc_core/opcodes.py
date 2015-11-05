@@ -9,7 +9,7 @@ from collections import namedtuple
 import genutil
 
 # 8-bit register bit masks
-R = namedtuple('R8', 'bits name')
+R = namedtuple('REG', 'bits name')
 r8 = [
     R(0b000, 'B'), 
     R(0b001, 'C'),
@@ -35,6 +35,19 @@ r16af = [
     R(0b10, 'HL'),
     R(0b11, 'AF')
 ]
+
+# conditional jump conditions
+CC = namedtuple('CC', 'bits name test')
+cc = [
+    CC(0b000, 'NZ', '(!(state.F & ZF))'),
+    CC(0b001, 'Z',  '(state.F & ZF)'),
+    CC(0b010, 'NC', '(!(state.F & CF))'),
+    CC(0b011, 'C',  '(state.F & CF)'),
+    CC(0b100, 'PO', '(!(state.F & PF))'),
+    CC(0b101, 'PE', '(state.F & PF)'),
+    CC(0b110, 'P',  '(!(state.F & NF))'),
+    CC(0b111, 'M',  '(state.F & NF)')
+] 
 
 #-------------------------------------------------------------------------------
 def add_op(ops, op, src) :
@@ -1759,6 +1772,20 @@ def JP_nn(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def JP_cc_nn(ops) :
+    '''
+    JP cc,nn
+    T-states: 10
+    '''
+    for c in cc :
+        op = 0b11000010 | c.bits<<3
+        src = ['// JP {},nn'.format(c.name)]
+        src.append('state.PC = {} ? mem.r16(state.PC) : state.PC+2;'.format(c.test))
+        src = inc_tstates(src, 10)
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1826,6 +1853,7 @@ def gen_opcodes() :
     ops = CCF(ops)
     ops = SCF(ops)
     ops = JP_nn(ops)
+    ops = JP_cc_nn(ops)
     ops = DI(ops)
     ops = EI(ops)
     ops[0xCB] = []
