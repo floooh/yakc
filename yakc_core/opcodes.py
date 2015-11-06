@@ -1778,6 +1778,38 @@ def CALL_cc_nn(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def RET(ops) :
+    '''
+    RET
+    T-states: 10
+    '''
+    src = ['// RET',
+        'state.PC = mem.r16(state.SP);',
+        'state.SP += 2;',
+        t(10)]
+    return add_op(ops, 0xC9, src)
+
+#-------------------------------------------------------------------------------
+def RET_cc(ops) :
+    '''
+    RET cc
+    T-states: 11/5
+    '''
+    for c in cc :
+        op = 0b11000000 | c.bits<<3
+        src = ['// RET {}'.format(c.name),
+            'if ({}) {{'.format(c.test),
+            '    state.PC = mem.r16(state.SP);',
+            '    state.SP += 2;',
+            '    state.T += 11;',
+            '}',
+            'else {',
+            '    state.T += 5;',
+            '}']
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1852,6 +1884,8 @@ def gen_opcodes() :
     ops = DJNZ_e(ops)
     ops = CALL_nn(ops)
     ops = CALL_cc_nn(ops)
+    ops = RET(ops)
+    ops = RET_cc(ops)
     ops = DI(ops)
     ops = EI(ops)
     ops[0xCB] = []

@@ -2406,6 +2406,101 @@ TEST(DJNZ) {
     cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(0x020A == cpu.state.PC); CHECK(57 == cpu.state.T);
 }
 
+TEST(CALL_RET) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0xCD, 0x0A, 0x02,       //      CALL l0
+        0xCD, 0x0A, 0x02,       //      CALL l0
+        0xC9,                   // l0:  RET
+    };
+    cpu.mem.write(0x0204, prog, sizeof(prog));
+    cpu.state.SP = 0x0100;
+    cpu.state.PC = 0x0204;
+
+    cpu.step();
+    CHECK(0x020A == cpu.state.PC);
+    CHECK(0x00FE == cpu.state.SP);
+    CHECK(0x0207 == cpu.mem.r16(0x00FE));
+    CHECK(17 == cpu.state.T);
+
+    cpu.step();
+    CHECK(0x0207 == cpu.state.PC);
+    CHECK(0x0100 == cpu.state.SP);
+    CHECK(27 == cpu.state.T);
+
+    cpu.step();
+    CHECK(0x020A == cpu.state.PC);
+    CHECK(0x00FE == cpu.state.SP);
+    CHECK(0x020A == cpu.mem.r16(0x00FE));
+    CHECK(44 == cpu.state.T);
+
+    cpu.step();
+    CHECK(0x020A == cpu.state.PC);
+    CHECK(0x0100 == cpu.state.SP);
+    CHECK(54 == cpu.state.T);
+}
+
+TEST(CALL_RET_cc) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x97,               //      SUB A
+        0xC4, 0x29, 0x02,   //      CALL NZ,l0
+        0xCC, 0x29, 0x02,   //      CALL Z,l0
+        0xC6, 0x01,         //      ADD A,0x01
+        0xCC, 0x2B, 0x02,   //      CALL Z,l1
+        0xC4, 0x2B, 0x02,   //      CALL NZ,l1
+        0x07,               //      RLCA
+        0xEC, 0x2D, 0x02,   //      CALL PE,l2
+        0xE4, 0x2D, 0x02,   //      CALL PO,l2
+        0xD6, 0x03,         //      SUB 0x03
+        0xF4, 0x2F, 0x02,   //      CALL P,l3
+        0xFC, 0x2F, 0x02,   //      CALL M,l3
+        0xD4, 0x31, 0x02,   //      CALL NC,l4
+        0xDC, 0x31, 0x02,   //      CALL C,l4
+        0xC9,               //      RET
+        0xC0,               // l0:  RET NZ
+        0xC8,               //      RET Z
+        0xC8,               // l1:  RET Z
+        0xC0,               //      RET NZ
+        0xE8,               // l2:  RET PE
+        0xE0,               //      RET PO
+        0xF0,               // l3:  RET P
+        0xF8,               //      RET M
+        0xD0,               // l4:  RET NC
+        0xD8,               //      RET C
+    };
+    cpu.mem.write(0x0204, prog, sizeof(prog));
+    cpu.state.PC = 0x0204;
+    cpu.state.SP = 0x0100;
+
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0208 == cpu.state.PC); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x0229 == cpu.state.PC); CHECK(31 == cpu.state.T);
+    cpu.step(); CHECK(0x022A == cpu.state.PC); CHECK(36 == cpu.state.T);
+    cpu.step(); CHECK(0x020B == cpu.state.PC); CHECK(47 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(54 == cpu.state.T);
+    cpu.step(); CHECK(0x0210 == cpu.state.PC); CHECK(64 == cpu.state.T);
+    cpu.step(); CHECK(0x022B == cpu.state.PC); CHECK(81 == cpu.state.T);
+    cpu.step(); CHECK(0x022C == cpu.state.PC); CHECK(86 == cpu.state.T);
+    cpu.step(); CHECK(0x0213 == cpu.state.PC); CHECK(97 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(101 == cpu.state.T);
+    cpu.step(); CHECK(0x0217 == cpu.state.PC); CHECK(111 == cpu.state.T);
+    cpu.step(); CHECK(0x022D == cpu.state.PC); CHECK(128 == cpu.state.T);
+    cpu.step(); CHECK(0x022E == cpu.state.PC); CHECK(133 == cpu.state.T);
+    cpu.step(); CHECK(0x021A == cpu.state.PC); CHECK(144 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(151 == cpu.state.T);
+    cpu.step(); CHECK(0x021F == cpu.state.PC); CHECK(161 == cpu.state.T);
+    cpu.step(); CHECK(0x022F == cpu.state.PC); CHECK(178 == cpu.state.T);
+    cpu.step(); CHECK(0x0230 == cpu.state.PC); CHECK(183 == cpu.state.T);
+    cpu.step(); CHECK(0x0222 == cpu.state.PC); CHECK(194 == cpu.state.T);
+    cpu.step(); CHECK(0x0225 == cpu.state.PC); CHECK(204 == cpu.state.T);
+    cpu.step(); CHECK(0x0231 == cpu.state.PC); CHECK(221 == cpu.state.T);
+    cpu.step(); CHECK(0x0232 == cpu.state.PC); CHECK(226 == cpu.state.T);
+    cpu.step(); CHECK(0x0228 == cpu.state.PC); CHECK(237 == cpu.state.T);
+}
+
 TEST(cpu) {
 
     // setup CPU with a 16 kByte RAM bank at 0x0000

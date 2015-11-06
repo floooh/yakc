@@ -1010,6 +1010,17 @@ inline void z80::step() {
         sub8(state.A, state.A);
         state.T += 4;
         break;
+    case 0xc0:
+        // RET NZ
+        if ((!(state.F & ZF))) {
+            state.PC = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 11;
+        }
+        else {
+            state.T += 5;
+        }
+        break;
     case 0xc1:
         // POP BC
         state.BC = mem.r16(state.SP);
@@ -1049,6 +1060,23 @@ inline void z80::step() {
         // ADD A,n
         state.A = add8(state.A, mem.r8(state.PC++));
         state.T += 7;
+        break;
+    case 0xc8:
+        // RET Z
+        if ((state.F & ZF)) {
+            state.PC = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 11;
+        }
+        else {
+            state.T += 5;
+        }
+        break;
+    case 0xc9:
+        // RET
+        state.PC = mem.r16(state.SP);
+        state.SP += 2;
+        state.T += 10;
         break;
     case 0xca:
         // JP Z,nn
@@ -2327,6 +2355,17 @@ inline void z80::step() {
         state.A = adc8(state.A, mem.r8(state.PC++));
         state.T += 7;
         break;
+    case 0xd0:
+        // RET NC
+        if ((!(state.F & CF))) {
+            state.PC = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 11;
+        }
+        else {
+            state.T += 5;
+        }
+        break;
     case 0xd1:
         // POP DE
         state.DE = mem.r16(state.SP);
@@ -2361,6 +2400,17 @@ inline void z80::step() {
         // SUB n
         state.A = sub8(state.A, mem.r8(state.PC++));
         state.T += 7;
+        break;
+    case 0xd8:
+        // RET C
+        if ((state.F & CF)) {
+            state.PC = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 11;
+        }
+        else {
+            state.T += 5;
+        }
         break;
     case 0xd9:
         // EXX
@@ -2622,6 +2672,17 @@ inline void z80::step() {
         state.A = sbc8(state.A, mem.r8(state.PC++));
         state.T += 7;
         break;
+    case 0xe0:
+        // RET PO
+        if ((!(state.F & PF))) {
+            state.PC = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 11;
+        }
+        else {
+            state.T += 5;
+        }
+        break;
     case 0xe1:
         // POP HL
         state.HL = mem.r16(state.SP);
@@ -2664,6 +2725,17 @@ inline void z80::step() {
         state.A &= mem.r8(state.PC++);
         state.F = szp(state.A)|HF;
         state.T += 7;
+        break;
+    case 0xe8:
+        // RET PE
+        if ((state.F & PF)) {
+            state.PC = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 11;
+        }
+        else {
+            state.T += 5;
+        }
         break;
     case 0xe9:
         // JP (HL)
@@ -2842,6 +2914,17 @@ inline void z80::step() {
         state.F = szp(state.A);
         state.T += 7;
         break;
+    case 0xf0:
+        // RET P
+        if ((!(state.F & NF))) {
+            state.PC = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 11;
+        }
+        else {
+            state.T += 5;
+        }
+        break;
     case 0xf1:
         // POP AF
         state.AF = mem.r16(state.SP);
@@ -2882,6 +2965,17 @@ inline void z80::step() {
         state.A |= mem.r8(state.PC++);
         state.F = szp(state.A);
         state.T += 7;
+        break;
+    case 0xf8:
+        // RET M
+        if ((state.F & NF)) {
+            state.PC = mem.r16(state.SP);
+            state.SP += 2;
+            state.T += 11;
+        }
+        else {
+            state.T += 5;
+        }
         break;
     case 0xf9:
         // LD SP,HL
