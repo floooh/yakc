@@ -2383,6 +2383,29 @@ TEST(JR_cc_e) {
     cpu.step(); CHECK(0x0218 == cpu.state.PC); CHECK(75 == cpu.state.T);
 }
 
+TEST(DJNZ) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x06, 0x03,         //      LD B,0x03
+        0x97,               //      SUB A
+        0x3C,               // l0:  INC A
+        0x10, 0xFD,         //      DJNZ l0
+        0x00,               //      NOP
+    };
+    cpu.mem.write(0x0204, prog, sizeof(prog));
+    cpu.state.PC = 0x0204;
+
+    cpu.step(); CHECK(0x03 == cpu.state.B); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.B); CHECK(0x0207 == cpu.state.PC); CHECK(28 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(32 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.B); CHECK(0x0207 == cpu.state.PC); CHECK(45 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(49 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(0x020A == cpu.state.PC); CHECK(57 == cpu.state.T);
+}
+
 TEST(cpu) {
 
     // setup CPU with a 16 kByte RAM bank at 0x0000

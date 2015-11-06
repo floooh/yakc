@@ -83,6 +83,17 @@ inline void z80::step() {
         state.A = rrc8(state.A, false);
         state.T += 4;
         break;
+    case 0x10:
+        // DJNZ e
+        if (--state.B > 0) {
+            state.PC += mem.rs8(state.PC++);
+            state.T += 13;
+        }
+        else {
+            state.PC++;
+            state.T += 8;
+        }
+        break;
     case 0x11:
         // LD DE,nn
         state.DE = mem.r16(state.PC);
@@ -1014,6 +1025,19 @@ inline void z80::step() {
         // JP nn
         state.PC = mem.r16(state.PC);
         state.T += 10;
+        break;
+    case 0xc4:
+        // CALL NZ,nn
+        if ((!(state.F & ZF))) {
+            state.SP -= 2;
+            mem.w16(state.SP, state.PC+2);
+            state.PC = mem.r16(state.PC);
+            state.T += 17;
+        }
+        else {
+            state.PC += 2;
+            state.T += 10;
+        }
         break;
     case 0xc5:
         // PUSH BC
@@ -2278,6 +2302,26 @@ inline void z80::step() {
             break;
         }
         break;
+    case 0xcc:
+        // CALL Z,nn
+        if ((state.F & ZF)) {
+            state.SP -= 2;
+            mem.w16(state.SP, state.PC+2);
+            state.PC = mem.r16(state.PC);
+            state.T += 17;
+        }
+        else {
+            state.PC += 2;
+            state.T += 10;
+        }
+        break;
+    case 0xcd:
+        // CALL nn
+        state.SP -= 2;
+        mem.w16(state.SP, state.PC+2);
+        state.PC = mem.r16(state.PC);
+        state.T += 17;
+        break;
     case 0xce:
         // ADC A,n
         state.A = adc8(state.A, mem.r8(state.PC++));
@@ -2293,6 +2337,19 @@ inline void z80::step() {
         // JP NC,nn
         state.PC = (!(state.F & CF)) ? mem.r16(state.PC) : state.PC+2;
         state.T += 10;
+        break;
+    case 0xd4:
+        // CALL NC,nn
+        if ((!(state.F & CF))) {
+            state.SP -= 2;
+            mem.w16(state.SP, state.PC+2);
+            state.PC = mem.r16(state.PC);
+            state.T += 17;
+        }
+        else {
+            state.PC += 2;
+            state.T += 10;
+        }
         break;
     case 0xd5:
         // PUSH DE
@@ -2316,6 +2373,19 @@ inline void z80::step() {
         // JP C,nn
         state.PC = (state.F & CF) ? mem.r16(state.PC) : state.PC+2;
         state.T += 10;
+        break;
+    case 0xdc:
+        // CALL C,nn
+        if ((state.F & CF)) {
+            state.SP -= 2;
+            mem.w16(state.SP, state.PC+2);
+            state.PC = mem.r16(state.PC);
+            state.T += 17;
+        }
+        else {
+            state.PC += 2;
+            state.T += 10;
+        }
         break;
     case 0xdd:
         switch (fetch_op()) {
@@ -2570,6 +2640,19 @@ inline void z80::step() {
         state.HL = u16tmp;
         state.T += 19;
         break;
+    case 0xe4:
+        // CALL PO,nn
+        if ((!(state.F & PF))) {
+            state.SP -= 2;
+            mem.w16(state.SP, state.PC+2);
+            state.PC = mem.r16(state.PC);
+            state.T += 17;
+        }
+        else {
+            state.PC += 2;
+            state.T += 10;
+        }
+        break;
     case 0xe5:
         // PUSH HL
         state.SP -= 2;
@@ -2596,6 +2679,19 @@ inline void z80::step() {
         // EX DE,HL
         swap16(state.DE, state.HL);
         state.T += 4;
+        break;
+    case 0xec:
+        // CALL PE,nn
+        if ((state.F & PF)) {
+            state.SP -= 2;
+            mem.w16(state.SP, state.PC+2);
+            state.PC = mem.r16(state.PC);
+            state.T += 17;
+        }
+        else {
+            state.PC += 2;
+            state.T += 10;
+        }
         break;
     case 0xed:
         switch (fetch_op()) {
@@ -2762,6 +2858,19 @@ inline void z80::step() {
         state.IFF1 = state.IFF2 = false;
         state.T += 4;
         break;
+    case 0xf4:
+        // CALL P,nn
+        if ((!(state.F & NF))) {
+            state.SP -= 2;
+            mem.w16(state.SP, state.PC+2);
+            state.PC = mem.r16(state.PC);
+            state.T += 17;
+        }
+        else {
+            state.PC += 2;
+            state.T += 10;
+        }
+        break;
     case 0xf5:
         // PUSH AF
         state.SP -= 2;
@@ -2788,6 +2897,19 @@ inline void z80::step() {
         // EI
         state.IFF1 = state.IFF2 = true;
         state.T += 4;
+        break;
+    case 0xfc:
+        // CALL M,nn
+        if ((state.F & NF)) {
+            state.SP -= 2;
+            mem.w16(state.SP, state.PC+2);
+            state.PC = mem.r16(state.PC);
+            state.T += 17;
+        }
+        else {
+            state.PC += 2;
+            state.T += 10;
+        }
         break;
     case 0xfd:
         switch (fetch_op()) {

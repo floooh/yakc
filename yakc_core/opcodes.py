@@ -36,6 +36,18 @@ r16af = [
     R(0b11, 'AF')
 ]
 
+CC = namedtuple('CC', 'bits name test')
+cc = [
+    CC(0b000, 'NZ', '(!(state.F & ZF))'),
+    CC(0b001, 'Z',  '(state.F & ZF)'),
+    CC(0b010, 'NC', '(!(state.F & CF))'),
+    CC(0b011, 'C',  '(state.F & CF)'),
+    CC(0b100, 'PO', '(!(state.F & PF))'),
+    CC(0b101, 'PE', '(state.F & PF)'),
+    CC(0b110, 'P',  '(!(state.F & NF))'),
+    CC(0b111, 'M',  '(state.F & NF)')
+] 
+
 #-------------------------------------------------------------------------------
 def add_op(ops, op, src) :
     '''
@@ -49,9 +61,8 @@ def add_op(ops, op, src) :
     return ops
 
 #-------------------------------------------------------------------------------
-def inc_tstates(src, num) :
-    src.append('state.T += {};'.format(num))
-    return src
+def t(num) :
+    return 'state.T += {};'.format(num)
 
 #-------------------------------------------------------------------------------
 def NOP(ops) :
@@ -59,11 +70,10 @@ def NOP(ops) :
     NOP
     T-states: 4
     ''' 
-    op = 0b00000000
-    src = ['// NOP']
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// NOP',
+        t(4)]
+    return add_op(ops, 0x00, src)
 
 #-------------------------------------------------------------------------------
 def HALT(ops) :
@@ -71,12 +81,11 @@ def HALT(ops) :
     HALT
     T-states: 4
     '''
-    op = 0b01110110
-    src = ['// HALT']
-    src.append('state.PC--;')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// HALT',
+        'state.PC--;',
+        t(4)]
+    return add_op(ops, 0x76, src)
 
 #-------------------------------------------------------------------------------
 def DI(ops) :
@@ -85,11 +94,12 @@ def DI(ops) :
     T-states: 4
     '''
     op = 0b11110011
-    src = ['// DI']
-    src.append('state.IFF1 = state.IFF2 = false;')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// DI',
+        'state.IFF1 = state.IFF2 = false;',
+        t(4)
+    ]
+    return add_op(ops, 0xF3, src)
 
 #-------------------------------------------------------------------------------
 def EI(ops) :
@@ -97,12 +107,12 @@ def EI(ops) :
     EI
     T-states: 4
     '''
-    op = 0b11111011
-    src = ['// EI']
-    src.append('state.IFF1 = state.IFF2 = true;')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// EI',
+        'state.IFF1 = state.IFF2 = true;',
+        t(4)
+    ]
+    return add_op(ops, 0xFB, src)
 
 #-------------------------------------------------------------------------------
 def IM(ops) :
@@ -110,12 +120,12 @@ def IM(ops) :
     IM 0,1,2
     T-states: 8
     '''
-    for im in {(0,0b01000110),(1,0b01010110),(2,0b01011110)} :
-        op = im[1]
-        src = ['// IM {}'.format(im[0])]
-        src.append('state.IM = {};'.format(im[0]))
-        src = inc_tstates(src, 8)
-        ops = add_op(ops, op, src)
+    for im in {(0,0x46),(1,0x56),(2,0x5E)} :
+        src = [
+            '// IM {}'.format(im[0]),
+            'state.IM = {};'.format(im[0]),
+            t(8)]
+        ops = add_op(ops, im[1], src)
     return ops
 
 #-------------------------------------------------------------------------------
@@ -127,9 +137,10 @@ def LD_r_s(ops) :
     for r in r8 :
         for s in r8 :
             op = 0b01000000 | r.bits<<3 | s.bits
-            src = ['// LD {},{}'.format(r.name, s.name)]
-            src.append('state.{} = state.{};'.format(r.name, s.name))
-            src = inc_tstates(src, 4)
+            src = [
+                '// LD {},{}'.format(r.name, s.name),
+                'state.{} = state.{};'.format(r.name, s.name),
+                t(4)]
             ops = add_op(ops, op, src)
     return ops
 
@@ -141,9 +152,10 @@ def LD_r_n(ops) :
     '''
     for r in r8 :
         op = 0b00000110 | r.bits<<3
-        src = ['// LD {},n'.format(r.name)]
-        src.append('state.{} = mem.r8(state.PC++);'.format(r.name))
-        src = inc_tstates(src, 7)
+        src = [
+            '// LD {},n'.format(r.name),
+            'state.{} = mem.r8(state.PC++);'.format(r.name),
+            t(7)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -155,9 +167,10 @@ def LD_r_iHL(ops) :
     '''
     for r in r8 :
         op = 0b01000110 | r.bits<<3
-        src = ['// LD {},(HL)'.format(r.name)]
-        src.append('state.{} = mem.r8(state.HL);'.format(r.name))
-        src = inc_tstates(src, 7)
+        src = [
+            '// LD {},(HL)'.format(r.name),
+            'state.{} = mem.r8(state.HL);'.format(r.name),
+            t(7)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -167,12 +180,11 @@ def LD_A_iBC(ops) :
     LD A,(BC)
     T-states: 7
     '''
-    op = 0b00001010
-    src = ['// LD A,(BC)']
-    src.append('state.A = mem.r8(state.BC);')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD A,(BC)',
+        'state.A = mem.r8(state.BC);',
+        t(7)]
+    return add_op(ops, 0x0A, src)
 
 #-------------------------------------------------------------------------------
 def LD_iBC_A(ops) :
@@ -180,12 +192,11 @@ def LD_iBC_A(ops) :
     LD (BC),A
     T-states: 7
     ''' 
-    op = 0b00000010
-    src = ['// LD (BC),A']
-    src.append('mem.w8(state.BC, state.A);')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD (BC),A',
+        'mem.w8(state.BC, state.A);',
+        t(7)]
+    return add_op(ops, 0x02, src)
 
 #-------------------------------------------------------------------------------
 def LD_A_iDE(ops) :
@@ -193,12 +204,11 @@ def LD_A_iDE(ops) :
     LD A,(DE)
     T-states: 7
     '''
-    op = 0b00011010
-    src = ['// LD A,(DE)']
-    src.append('state.A = mem.r8(state.DE);')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD A,(DE)',
+        'state.A = mem.r8(state.DE);',
+        t(7)]
+    return add_op(ops, 0x1A, src)
 
 #-------------------------------------------------------------------------------
 def LD_iDE_A(ops) :
@@ -206,12 +216,11 @@ def LD_iDE_A(ops) :
     LD (DE),A
     T-states: 7
     '''
-    op = 0b00010010
-    src = ['// LD (DE),A']
-    src.append('mem.w8(state.DE, state.A);')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD (DE),A',
+        'mem.w8(state.DE, state.A);',
+        t(7)]
+    return add_op(ops, 0x12, src)
 
 #-------------------------------------------------------------------------------
 def LD_A_inn(ops) :
@@ -219,13 +228,12 @@ def LD_A_inn(ops) :
     LD A,(nn)
     T-states: 13
     '''
-    op = 0b00111010
-    src = ['// LD A,(nn)']
-    src.append('state.A = mem.r8(mem.r16(state.PC));')
-    src.append('state.PC += 2;')
-    src = inc_tstates(src, 13)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD A,(nn)',
+        'state.A = mem.r8(mem.r16(state.PC));',
+        'state.PC += 2;',
+        t(13)]
+    return add_op(ops, 0x3A, src)
 
 #-------------------------------------------------------------------------------
 def LD_inn_A(ops) :
@@ -233,13 +241,12 @@ def LD_inn_A(ops) :
     LD (nn),A
     T-states: 13
     '''
-    op = 0b00110010
-    src = ['// LD (nn),A']
-    src.append('mem.w8(mem.r16(state.PC), state.A);')
-    src.append('state.PC += 2;')
-    src = inc_tstates(src, 13)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD (nn),A',
+        'mem.w8(mem.r16(state.PC), state.A);',
+        'state.PC += 2;',
+        t(13)]
+    return add_op(ops, 0x32, src)
 
 #-------------------------------------------------------------------------------
 def LD_iHL_r(ops) :
@@ -249,9 +256,10 @@ def LD_iHL_r(ops) :
     '''
     for r in r8 :
         op = 0b01110000 | r.bits
-        src = ['// LD (HL),{}'.format(r.name)]
-        src.append('mem.w8(state.HL, state.{});'.format(r.name))
-        src = inc_tstates(src, 7)
+        src = [
+            '// LD (HL),{}'.format(r.name),
+            'mem.w8(state.HL, state.{});'.format(r.name),
+            t(7)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -261,12 +269,11 @@ def LD_iHL_n(ops) :
     LD (HL),n
     T-states: 10
     '''
-    op = 0b00110110
-    src = ['// LD (HL),n']
-    src.append('mem.w8(state.HL, mem.r8(state.PC++));')
-    src = inc_tstates(src, 10)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD (HL),n',
+        'mem.w8(state.HL, mem.r8(state.PC++));',
+        t(10)]
+    return add_op(ops, 0x36, src)
 
 #-------------------------------------------------------------------------------
 def LD_A_I(ops) :
@@ -274,13 +281,12 @@ def LD_A_I(ops) :
     LD A,I
     T-states: 9
     '''
-    op = 0b01010111
-    src = ['// LD A,I']
-    src.append('state.A = state.I;')
-    src.append('state.F = sziff2(state.I,state.IFF2)|(state.F&CF);')
-    src = inc_tstates(src, 9)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD A,I',
+        'state.A = state.I;',
+        'state.F = sziff2(state.I,state.IFF2)|(state.F&CF);',
+        t(9)]
+    return add_op(ops, 0x57, src)
 
 #-------------------------------------------------------------------------------
 def LD_I_A(ops) :
@@ -288,12 +294,11 @@ def LD_I_A(ops) :
     LD I,A
     T-states: 9
     '''
-    op = 0b01000111
-    src = ['// LD I,A']
-    src.append('state.I = state.A;')
-    src = inc_tstates(src, 9)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD I,A',
+        'state.I = state.A;',
+        t(9)]
+    return add_op(ops, 0x47, src)
 
 #-------------------------------------------------------------------------------
 def LD_A_R(ops) :
@@ -301,13 +306,12 @@ def LD_A_R(ops) :
     LD A,R
     T-states: 9
     '''
-    op = 0b01011111
-    src = ['// LD A,R']
-    src.append('state.A = state.R;')
-    src.append('state.F = sziff2(state.R,state.IFF2)|(state.F&CF);')
-    src = inc_tstates(src, 9)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD A,R',
+        'state.A = state.R;',
+        'state.F = sziff2(state.R,state.IFF2)|(state.F&CF);',
+        t(9)]
+    return add_op(ops, 0x5F, src)
 
 #-------------------------------------------------------------------------------
 def LD_R_A(ops) :
@@ -315,12 +319,11 @@ def LD_R_A(ops) :
     LD R,A
     T-states: 9
     '''
-    op = 0b01001111
-    src = ['// LD R,A']
-    src.append('state.R = state.A;')
-    src = inc_tstates(src, 9)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD R,A',
+        'state.R = state.A;',
+        t(9)]
+    return add_op(ops, 0x4F, src)
 
 #-------------------------------------------------------------------------------
 def LD_dd_nn(ops) :
@@ -330,10 +333,11 @@ def LD_dd_nn(ops) :
     '''
     for r in r16sp :
         op = 0b00000001 | r.bits<<4
-        src = ['// LD {},nn'.format(r.name)]
-        src.append('state.{} = mem.r16(state.PC);'.format(r.name))
-        src.append('state.PC += 2;')
-        src = inc_tstates(src, 10)
+        src = [
+            '// LD {},nn'.format(r.name),
+            'state.{} = mem.r16(state.PC);'.format(r.name),
+            'state.PC += 2;',
+            t(10)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -343,13 +347,12 @@ def LD_HL_inn(ops) :
     LD HL,(nn)
     T-states: 16
     '''
-    op = 0b00101010
-    src = ['// LD HL,(nn)']
-    src.append('state.HL = mem.r16(mem.r16(state.PC));')
-    src.append('state.PC += 2;')
-    src = inc_tstates(src, 16)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD HL,(nn)',
+        'state.HL = mem.r16(mem.r16(state.PC));',
+        'state.PC += 2;',
+        t(16)]
+    return add_op(ops, 0x2A, src)
 
 #-------------------------------------------------------------------------------
 def LD_inn_HL(ops) :
@@ -357,13 +360,12 @@ def LD_inn_HL(ops) :
     LD (nn),HL
     T-states: 16
     '''
-    op = 0b00100010
-    src = ['// LD (nn),HL']
-    src.append('mem.w16(mem.r16(state.PC), state.HL);')
-    src.append('state.PC += 2;')
-    src = inc_tstates(src, 16)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD (nn),HL',
+        'mem.w16(mem.r16(state.PC), state.HL);',
+        'state.PC += 2;',
+        t(16)]
+    return add_op(ops, 0x22, src)
 
 #-------------------------------------------------------------------------------
 def LD_dd_inn(ops) :
@@ -373,10 +375,11 @@ def LD_dd_inn(ops) :
     '''
     for r in r16sp :
         op = 0b01001011 | r.bits<<4
-        src = ['// LD {},(nn)'.format(r.name)]
-        src.append('state.{} = mem.r16(mem.r16(state.PC));'.format(r.name))
-        src.append('state.PC += 2;')
-        src = inc_tstates(src, 20)
+        src = [
+            '// LD {},(nn)'.format(r.name),
+            'state.{} = mem.r16(mem.r16(state.PC));'.format(r.name),
+            'state.PC += 2;',
+            t(20)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -388,10 +391,11 @@ def LD_inn_dd(ops) :
     '''
     for r in r16sp :
         op = 0b01000011 | r.bits<<4
-        src = ['// LD (nn),{}'.format(r.name)]
-        src.append('mem.w16(mem.r16(state.PC), state.{});'.format(r.name))
-        src.append('state.PC += 2;')
-        src = inc_tstates(src, 20)
+        src = [
+            '// LD (nn),{}'.format(r.name),
+            'mem.w16(mem.r16(state.PC), state.{});'.format(r.name),
+            'state.PC += 2;',
+            t(20)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -401,12 +405,11 @@ def LD_SP_HL(ops) :
     LD SP,HL
     T-states: 6
     '''
-    op = 0b11111001
-    src = ['// LD SP,HL']
-    src.append('state.SP = state.HL;')
-    inc_tstates(src, 6)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD SP,HL',
+        'state.SP = state.HL;',
+        t(6)]
+    return add_op(ops, 0xF9, src)
 
 #-------------------------------------------------------------------------------
 def PUSH_qq(ops) :
@@ -416,10 +419,11 @@ def PUSH_qq(ops) :
     '''
     for r in r16af :
         op = 0b11000101 | r.bits<<4
-        src = ['// PUSH {}'.format(r.name)]
-        src.append('state.SP -= 2;')
-        src.append('mem.w16(state.SP, state.{});'.format(r.name))
-        src = inc_tstates(src, 11)
+        src = [
+            '// PUSH {}'.format(r.name),
+            'state.SP -= 2;',
+            'mem.w16(state.SP, state.{});'.format(r.name),
+            t(11)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -431,10 +435,11 @@ def POP_qq(ops) :
     '''
     for r in r16af :
         op = 0b11000001 | r.bits<<4
-        src = ['// POP {}'.format(r.name)]
-        src.append('state.{} = mem.r16(state.SP);'.format(r.name))
-        src.append('state.SP += 2;')
-        src = inc_tstates(src, 10)
+        src = [
+            '// POP {}'.format(r.name),
+            'state.{} = mem.r16(state.SP);'.format(r.name),
+            'state.SP += 2;',
+            t(10)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -444,13 +449,12 @@ def PUSH_IXY(ops, xname) :
     PUSH [IX|IY]
     T-states: 15
     '''
-    op = 0b11100101
-    src = ['// PUSH {}'.format(xname)]
-    src.append('state.SP -= 2;')
-    src.append('mem.w16(state.SP, state.{});'.format(xname))
-    src = inc_tstates(src, 15)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// PUSH {}'.format(xname),
+        'state.SP -= 2;',
+        'mem.w16(state.SP, state.{});'.format(xname),
+        t(15)]
+    return add_op(ops, 0xE5, src)
 
 #-------------------------------------------------------------------------------
 def POP_IXY(ops, xname) :
@@ -458,13 +462,12 @@ def POP_IXY(ops, xname) :
     POP [IX|IY]
     T-states: 14
     '''
-    op = 0b11100001
-    src = ['// POP {}'.format(xname)]
-    src.append('state.{} = mem.r16(state.SP);'.format(xname))
-    src.append('state.SP += 2;')
-    src = inc_tstates(src, 14)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// POP {}'.format(xname),
+        'state.{} = mem.r16(state.SP);'.format(xname),
+        'state.SP += 2;',
+        t(14)]
+    return add_op(ops, 0xE1, src)
 
 #-------------------------------------------------------------------------------
 def LD_r_iIXY_d(ops, xname) :
@@ -474,10 +477,11 @@ def LD_r_iIXY_d(ops, xname) :
     '''
     for r in r8 :
         op = 0b01000110 | r.bits<<3
-        src = ['// LD {},({}+d)'.format(r.name, xname)]
-        src.append('d = mem.rs8(state.PC++);')
-        src.append('state.{} = mem.r8(state.{} + d);'.format(r.name, xname))
-        src = inc_tstates(src, 19)
+        src = [
+            '// LD {},({}+d)'.format(r.name, xname),
+            'd = mem.rs8(state.PC++);',
+            'state.{} = mem.r8(state.{} + d);'.format(r.name, xname),
+            t(19)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -487,13 +491,12 @@ def LD_iIXY_d_n(ops, xname) :
     LD ([IX|IY]+d),n
     T-states: 19
     '''
-    op = 0b00110110
-    src = ['// LD ({}+d),n'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('mem.w8(state.{} + d, mem.r8(state.PC++));'.format(xname))
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD ({}+d),n'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'mem.w8(state.{} + d, mem.r8(state.PC++));'.format(xname),
+        t(19)]
+    return add_op(ops, 0x36, src)
 
 #-------------------------------------------------------------------------------
 def LD_iIXY_d_r(ops, xname) :
@@ -503,10 +506,11 @@ def LD_iIXY_d_r(ops, xname) :
     '''
     for r in r8 :
         op = 0b01110000 | r.bits
-        src = ['// LD ({}+d),{}'.format(xname, r.name)]
-        src.append('d = mem.rs8(state.PC++);')
-        src.append('mem.w8(state.{} + d, state.{});'.format(xname, r.name))
-        src = inc_tstates(src, 19)
+        src = [
+            '// LD ({}+d),{}'.format(xname, r.name),
+            'd = mem.rs8(state.PC++);',
+            'mem.w8(state.{} + d, state.{});'.format(xname, r.name),
+            t(19)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -516,13 +520,12 @@ def LD_IXY_nn(ops, xname) :
     LD [IX|IY],nn
     T-states: 14
     '''
-    op = 0b00100001
-    src = ['// LD {},nn'.format(xname)]
-    src.append('state.{} = mem.r16(state.PC);'.format(xname))
-    src.append('state.PC += 2;')
-    src = inc_tstates(src, 14)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD {},nn'.format(xname),
+        'state.{} = mem.r16(state.PC);'.format(xname),
+        'state.PC += 2;',
+        t(14)]
+    return add_op(ops, 0x21, src)
 
 #-------------------------------------------------------------------------------
 def LD_IXY_inn(ops, xname) :
@@ -530,13 +533,12 @@ def LD_IXY_inn(ops, xname) :
     LD [IX|IY],(nn)
     T-states: 20
     '''
-    op = 0b00101010
-    src = ['// LD {},(nn)'.format(xname)]
-    src.append('state.{} = mem.r16(mem.r16(state.PC));'.format(xname))
-    src.append('state.PC += 2;')
-    src = inc_tstates(src, 20)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD {},(nn)'.format(xname),
+        'state.{} = mem.r16(mem.r16(state.PC));'.format(xname),
+        'state.PC += 2;',
+        t(20)]
+    return add_op(ops, 0x2A, src)
 
 #-------------------------------------------------------------------------------
 def LD_inn_IXY(ops, xname) :
@@ -544,13 +546,12 @@ def LD_inn_IXY(ops, xname) :
     LD (nn),[IX|IY]
     T-states: 20
     '''
-    op = 0b00100010
-    src = ['// LD (nn),{}'.format(xname)]
-    src.append('mem.w16(mem.r16(state.PC), state.{});'.format(xname))
-    src.append('state.PC += 2;')
-    src = inc_tstates(src, 20)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD (nn),{}'.format(xname),
+        'mem.w16(mem.r16(state.PC), state.{});'.format(xname),
+        'state.PC += 2;',
+        t(20)]
+    return add_op(ops, 0x22, src)
 
 #-------------------------------------------------------------------------------
 def LD_SP_IXY(ops, xname) :
@@ -558,12 +559,11 @@ def LD_SP_IXY(ops, xname) :
     LD SP,[IX|IY]
     T-states: 10
     '''
-    op = 0b11111001
-    src = ['// LD SP,{}'.format(xname)]
-    src.append('state.SP = state.{};'.format(xname))
-    src = inc_tstates(src, 10)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// LD SP,{}'.format(xname),
+        'state.SP = state.{};'.format(xname),
+        t(10)]
+    return add_op(ops, 0xF9, src)
 
 #-------------------------------------------------------------------------------
 def EX_DE_HL(ops) :
@@ -571,12 +571,11 @@ def EX_DE_HL(ops) :
     EX DE,HL
     T-states: 4
     '''
-    op = 0b11101011
-    src = ['// EX DE,HL']
-    src.append('swap16(state.DE, state.HL);')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// EX DE,HL',
+        'swap16(state.DE, state.HL);',
+        t(4)]
+    return add_op(ops, 0xEB, src)
 
 #-------------------------------------------------------------------------------
 def EX_AF_AFx(ops) :
@@ -584,12 +583,11 @@ def EX_AF_AFx(ops) :
     EX AF,AF'
     T-states: 4
     '''
-    op = 0b00001000
-    src = ["// EX AF,AF'"]
-    src.append('swap16(state.AF, state.AF_);')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        "// EX AF,AF'",
+        'swap16(state.AF, state.AF_);',
+        t(4)]
+    return add_op(ops, 0x08, src)
 
 #-------------------------------------------------------------------------------
 def EXX(ops) :
@@ -597,14 +595,13 @@ def EXX(ops) :
     EXX
     T-states: 4
     '''
-    op = 0b11011001
-    src = ['// EXX']
-    src.append('swap16(state.BC, state.BC_);')
-    src.append('swap16(state.DE, state.DE_);')
-    src.append('swap16(state.HL, state.HL_);')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// EXX',
+        'swap16(state.BC, state.BC_);',
+        'swap16(state.DE, state.DE_);',
+        'swap16(state.HL, state.HL_);',
+        t(4)]
+    return add_op(ops, 0xD9, src)
 
 #-------------------------------------------------------------------------------
 def EX_iSP_HLIXY(ops, xname) :
@@ -612,17 +609,13 @@ def EX_iSP_HLIXY(ops, xname) :
     EX (SP),[HL|IX|IY]
     T-states: 19 or 23
     '''
-    op = 0b11100011
-    src = ['// EX (SP),{}'.format(xname)]
-    src.append('u16tmp = mem.r16(state.SP);')
-    src.append('mem.w16(state.SP, state.{});'.format(xname))
-    src.append('state.{} = u16tmp;'.format(xname))
-    if xname == 'HL':
-        src = inc_tstates(src, 19)
-    else :
-        src = inc_tstates(src, 23)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// EX (SP),{}'.format(xname),
+        'u16tmp = mem.r16(state.SP);',
+        'mem.w16(state.SP, state.{});'.format(xname),
+        'state.{} = u16tmp;'.format(xname),
+        t(19) if xname == 'HL' else t(23)]
+    return add_op(ops, 0xE3, src)
 
 #-------------------------------------------------------------------------------
 def ADD_A_r(ops) :
@@ -632,9 +625,10 @@ def ADD_A_r(ops) :
     '''
     for r in r8 :
         op = 0b10000000 | r.bits
-        src = ['// ADD A,{}'.format(r.name)]
-        src.append('state.A = add8(state.A, state.{});'.format(r.name))
-        src = inc_tstates(src, 4)
+        src = [
+            '// ADD A,{}'.format(r.name),
+            'state.A = add8(state.A, state.{});'.format(r.name),
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -646,9 +640,10 @@ def ADC_A_r(ops) :
     '''
     for r in r8 :
         op = 0b10001000 | r.bits
-        src = ['// ADC A,{}'.format(r.name)]
-        src.append('state.A = adc8(state.A, state.{});'.format(r.name))
-        src = inc_tstates(src, 4)
+        src = [
+            '// ADC A,{}'.format(r.name),
+            'state.A = adc8(state.A, state.{});'.format(r.name),
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -658,12 +653,11 @@ def ADD_A_n(ops) :
     ADD A,n
     T-states: 7
     '''
-    op = 0b11000110
-    src = ['// ADD A,n']
-    src.append('state.A = add8(state.A, mem.r8(state.PC++));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// ADD A,n',
+        'state.A = add8(state.A, mem.r8(state.PC++));',
+        t(7)]
+    return add_op(ops, 0xC6, src)
 
 #-------------------------------------------------------------------------------
 def ADC_A_n(ops) :
@@ -671,12 +665,11 @@ def ADC_A_n(ops) :
     ADC A,n
     T-states: 7
     '''
-    op = 0b11001110
-    src = ['// ADC A,n']
-    src.append('state.A = adc8(state.A, mem.r8(state.PC++));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// ADC A,n',
+        'state.A = adc8(state.A, mem.r8(state.PC++));',
+        t(7)]
+    return add_op(ops, 0xCE, src)
 
 #-------------------------------------------------------------------------------
 def ADD_A_iHL(ops) :
@@ -684,12 +677,11 @@ def ADD_A_iHL(ops) :
     ADD A,(HL)
     T-states: 7
     '''
-    op = 0b10000110
-    src = ['// ADD A,(HL)']
-    src.append('state.A = add8(state.A, mem.r8(state.HL));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// ADD A,(HL)',
+        'state.A = add8(state.A, mem.r8(state.HL));',
+        t(7)]
+    return add_op(ops, 0x86, src)
 
 #-------------------------------------------------------------------------------
 def ADC_A_iHL(ops) :
@@ -697,12 +689,11 @@ def ADC_A_iHL(ops) :
     ADC A,(HL)
     T-states: 7
     '''
-    op = 0b10001110
-    src = ['// ADC A,(HL)']
-    src.append('state.A = adc8(state.A, mem.r8(state.HL));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// ADC A,(HL)',
+        'state.A = adc8(state.A, mem.r8(state.HL));',
+        t(7)]
+    return add_op(ops, 0x8E, src)
 
 #-------------------------------------------------------------------------------
 def ADD_A_iIXY_d(ops, xname) :
@@ -710,13 +701,12 @@ def ADD_A_iIXY_d(ops, xname) :
     ADD A,([IX|IY]+d)
     T-states: 19
     '''
-    op = 0b10000110
-    src = ['// ADD A,({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('state.A = add8(state.A, mem.r8(state.{} + d));'.format(xname))
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// ADD A,({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'state.A = add8(state.A, mem.r8(state.{} + d));'.format(xname),
+        t(19)]
+    return add_op(ops, 0x86, src)
 
 #-------------------------------------------------------------------------------
 def ADC_A_iIXY_d(ops, xname) :
@@ -724,13 +714,12 @@ def ADC_A_iIXY_d(ops, xname) :
     ADC A,([IX|IY]+d)
     T-states: 19
     '''
-    op = 0b10001110
-    src = ['// ADC A,({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('state.A = adc8(state.A, mem.r8(state.{} + d));'.format(xname))
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// ADC A,({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'state.A = adc8(state.A, mem.r8(state.{} + d));'.format(xname),
+        t(19)]
+    return add_op(ops, 0x8E, src)
 
 #-------------------------------------------------------------------------------
 def SUB_r(ops) :
@@ -740,9 +729,10 @@ def SUB_r(ops) :
     '''
     for r in r8:
         op = 0b10010000 | r.bits
-        src = ['// SUB {}'.format(r.name)]
-        src.append('state.A = sub8(state.A, state.{});'.format(r.name))
-        src = inc_tstates(src, 4)
+        src = [
+            '// SUB {}'.format(r.name),
+            'state.A = sub8(state.A, state.{});'.format(r.name),
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -754,9 +744,10 @@ def CP_r(ops) :
     '''
     for r in r8:
         op = 0b10111000 | r.bits
-        src = ['// CP {}'.format(r.name)]
-        src.append('sub8(state.A, state.{});'.format(r.name))
-        src = inc_tstates(src, 4)
+        src = [
+            '// CP {}'.format(r.name),
+            'sub8(state.A, state.{});'.format(r.name),
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -768,9 +759,10 @@ def SBC_A_r(ops) :
     '''
     for r in r8:
         op = 0b10011000 | r.bits
-        src = ['// SBC A,{}'.format(r.name)]
-        src.append('state.A = sbc8(state.A, state.{});'.format(r.name))
-        src = inc_tstates(src, 4)
+        src = [
+            '// SBC A,{}'.format(r.name),
+            'state.A = sbc8(state.A, state.{});'.format(r.name),
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -780,12 +772,11 @@ def SUB_n(ops) :
     SUB n
     T-states: 7
     '''
-    op = 0b11010110
-    src = ['// SUB n']
-    src.append('state.A = sub8(state.A, mem.r8(state.PC++));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// SUB n',
+        'state.A = sub8(state.A, mem.r8(state.PC++));',
+        t(7)]
+    return add_op(ops, 0xD6, src)
 
 #-------------------------------------------------------------------------------
 def CP_n(ops) :
@@ -793,12 +784,11 @@ def CP_n(ops) :
     CP n
     T-states: 7
     '''
-    op = 0b11111110
-    src = ['// CP n']
-    src.append('sub8(state.A, mem.r8(state.PC++));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// CP n',
+        'sub8(state.A, mem.r8(state.PC++));',
+        t(7)]
+    return add_op(ops, 0xFE, src)
 
 #-------------------------------------------------------------------------------
 def SBC_A_n(ops) :
@@ -806,12 +796,11 @@ def SBC_A_n(ops) :
     SBC A,n
     T-states: 7
     '''
-    op = 0b11011110
-    src = ['// SBC A,n']
-    src.append('state.A = sbc8(state.A, mem.r8(state.PC++));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// SBC A,n',
+        'state.A = sbc8(state.A, mem.r8(state.PC++));',
+        t(7)]
+    return add_op(ops, 0xDE, src)
 
 #-------------------------------------------------------------------------------
 def SUB_iHL(ops) :
@@ -819,12 +808,11 @@ def SUB_iHL(ops) :
     SUB (HL)
     T-states: 7
     '''
-    op = 0b10010110
-    src = ['// SUB (HL)']
-    src.append('state.A = sub8(state.A, mem.r8(state.HL));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// SUB (HL)',
+        'state.A = sub8(state.A, mem.r8(state.HL));',
+        t(7)]
+    return add_op(ops, 0x96, src)
 
 #-------------------------------------------------------------------------------
 def CP_iHL(ops) :
@@ -832,12 +820,11 @@ def CP_iHL(ops) :
     CP (HL)
     T-states: 7
     '''
-    op = 0b10111110
-    src = ['// CP (HL)']
-    src.append('sub8(state.A, mem.r8(state.HL));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// CP (HL)',
+        'sub8(state.A, mem.r8(state.HL));',
+        t(7)]
+    return add_op(ops, 0xBE, src)
 
 #-------------------------------------------------------------------------------
 def SBC_A_iHL(ops) :
@@ -845,12 +832,11 @@ def SBC_A_iHL(ops) :
     SBC A,(HL)
     T-states: 7
     '''
-    op = 0b10011110
-    src = ['// SBC A,(HL)']
-    src.append('state.A = sbc8(state.A, mem.r8(state.HL));')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// SBC A,(HL)',
+        'state.A = sbc8(state.A, mem.r8(state.HL));',
+        t(7)]
+    return add_op(ops, 0x9E, src)
 
 #-------------------------------------------------------------------------------
 def SUB_iIXY_d(ops, xname) :
@@ -858,13 +844,12 @@ def SUB_iIXY_d(ops, xname) :
     SUB ([IX|IY]+d)
     T-states: 19
     '''
-    op = 0b10010110
-    src = ['// SUB ({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('state.A = sub8(state.A, mem.r8(state.{} + d));'.format(xname))
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// SUB ({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'state.A = sub8(state.A, mem.r8(state.{} + d));'.format(xname),
+        t(19)]
+    return add_op(ops, 0x96, src)
 
 #-------------------------------------------------------------------------------
 def CP_iIXY_d(ops, xname) :
@@ -872,13 +857,12 @@ def CP_iIXY_d(ops, xname) :
     CP ([IX|IY]+d)
     T-states: 19
     '''
-    op = 0b10111110
-    src = ['// CP ({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('sub8(state.A, mem.r8(state.{} + d));'.format(xname))
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// CP ({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'sub8(state.A, mem.r8(state.{} + d));'.format(xname),
+        t(19)]
+    return add_op(ops, 0xBE, src)
 
 #-------------------------------------------------------------------------------
 def SBC_A_iIXY_d(ops, xname) :
@@ -886,13 +870,12 @@ def SBC_A_iIXY_d(ops, xname) :
     SBC A,([IX|IY]+d)
     T-states: 19
     '''
-    op = 0b10011110
-    src = ['// SBC A,({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('state.A = sbc8(state.A, mem.r8(state.{} + d));'.format(xname))
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// SBC A,({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'state.A = sbc8(state.A, mem.r8(state.{} + d));'.format(xname),
+        t(19)]
+    return add_op(ops, 0x9E, src)
 
 #-------------------------------------------------------------------------------
 def AND_r(ops) :
@@ -902,10 +885,11 @@ def AND_r(ops) :
     '''
     for r in r8:
         op = 0b10100000 | r.bits
-        src = ['// AND {}'.format(r.name)]
-        src.append('state.A &= state.{};'.format(r.name))
-        src.append('state.F = szp(state.A)|HF;')
-        src = inc_tstates(src, 4)
+        src = [
+            '// AND {}'.format(r.name),
+            'state.A &= state.{};'.format(r.name),
+            'state.F = szp(state.A)|HF;',
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -917,10 +901,11 @@ def OR_r(ops) :
     '''
     for r in r8:
         op = 0b10110000 | r.bits
-        src = ['// OR {}'.format(r.name)]
-        src.append('state.A |= state.{};'.format(r.name))
-        src.append('state.F = szp(state.A);')
-        src = inc_tstates(src, 4)
+        src = [
+            '// OR {}'.format(r.name),
+            'state.A |= state.{};'.format(r.name),
+            'state.F = szp(state.A);',
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -932,10 +917,11 @@ def XOR_r(ops) :
     '''
     for r in r8:
         op = 0b10101000 | r.bits
-        src = ['// XOR {}'.format(r.name)]
-        src.append('state.A ^= state.{};'.format(r.name))
-        src.append('state.F = szp(state.A);')
-        src = inc_tstates(src, 4)
+        src = [
+            '// XOR {}'.format(r.name),
+            'state.A ^= state.{};'.format(r.name),
+            'state.F = szp(state.A);',
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 #-------------------------------------------------------------------------------
@@ -945,12 +931,12 @@ def AND_n(ops) :
     T-states: 7
     '''
     op = 0b11100110
-    src = ['// AND n']
-    src.append('state.A &= mem.r8(state.PC++);')
-    src.append('state.F = szp(state.A)|HF;')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// AND n',
+        'state.A &= mem.r8(state.PC++);',
+        'state.F = szp(state.A)|HF;',
+        t(7)]
+    return add_op(ops, 0xE6, src)
 
 #-------------------------------------------------------------------------------
 def OR_n(ops) :
@@ -958,13 +944,12 @@ def OR_n(ops) :
     OR n
     T-states: 7
     '''
-    op = 0b11110110
-    src = ['// OR n']
-    src.append('state.A |= mem.r8(state.PC++);')
-    src.append('state.F = szp(state.A);')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// OR n',
+        'state.A |= mem.r8(state.PC++);',
+        'state.F = szp(state.A);',
+        t(7)]
+    return add_op(ops, 0xF6, src)
 
 #-------------------------------------------------------------------------------
 def XOR_n(ops) :
@@ -972,13 +957,12 @@ def XOR_n(ops) :
     XOR n
     T-states: 7
     '''
-    op = 0b11101110
-    src = ['// XOR n']
-    src.append('state.A ^= mem.r8(state.PC++);')
-    src.append('state.F = szp(state.A);')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// XOR n',
+        'state.A ^= mem.r8(state.PC++);',
+        'state.F = szp(state.A);',
+        t(7)]
+    return add_op(ops, 0xEE, src)
 
 #-------------------------------------------------------------------------------
 def AND_iHL(ops) :
@@ -986,13 +970,12 @@ def AND_iHL(ops) :
     AND (HL)
     T-states: 7
     '''
-    op = 0b10100110
-    src = ['// AND (HL)']
-    src.append('state.A &= mem.r8(state.HL);')
-    src.append('state.F = szp(state.A)|HF;')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// AND (HL)',
+        'state.A &= mem.r8(state.HL);',
+        'state.F = szp(state.A)|HF;',
+        t(7)]
+    return add_op(ops, 0xA6, src)
 
 #-------------------------------------------------------------------------------
 def OR_iHL(ops) :
@@ -1000,13 +983,12 @@ def OR_iHL(ops) :
     OR (HL)
     T-states: 7
     '''
-    op = 0b10110110
-    src = ['// OR (HL)']
-    src.append('state.A |= mem.r8(state.HL);')
-    src.append('state.F = szp(state.A);')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// OR (HL)',
+        'state.A |= mem.r8(state.HL);',
+        'state.F = szp(state.A);',
+        t(7)]
+    return add_op(ops, 0xB6, src)
 
 #-------------------------------------------------------------------------------
 def XOR_iHL(ops) :
@@ -1014,13 +996,12 @@ def XOR_iHL(ops) :
     XOR (HL)
     T-states: 7
     '''
-    op = 0b10101110
-    src = ['// XOR (HL)']
-    src.append('state.A ^= mem.r8(state.HL);')
-    src.append('state.F = szp(state.A);')
-    src = inc_tstates(src, 7)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// XOR (HL)',
+        'state.A ^= mem.r8(state.HL);',
+        'state.F = szp(state.A);',
+        t(7)]
+    return add_op(ops, 0xAE, src)
 
 #-------------------------------------------------------------------------------
 def AND_iIXY_d(ops, xname) :
@@ -1028,14 +1009,13 @@ def AND_iIXY_d(ops, xname) :
     AND ([IX|IY]+d)
     T-states: 19
     '''
-    op = 0b10100110
-    src = ['// AND ({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('state.A &= mem.r8(state.{} + d);'.format(xname))
-    src.append('state.F = szp(state.A)|HF;')
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// AND ({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'state.A &= mem.r8(state.{} + d);'.format(xname),
+        'state.F = szp(state.A)|HF;',
+        t(19)]
+    return add_op(ops, 0xA6, src)
 
 #-------------------------------------------------------------------------------
 def OR_iIXY_d(ops, xname) :
@@ -1043,14 +1023,13 @@ def OR_iIXY_d(ops, xname) :
     OR ([IX|IY]+d)
     T-states: 19
     '''
-    op = 0b10110110
-    src = ['// OR ({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('state.A |= mem.r8(state.{} + d);'.format(xname))
-    src.append('state.F = szp(state.A);')
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// OR ({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'state.A |= mem.r8(state.{} + d);'.format(xname),
+        'state.F = szp(state.A);',
+        t(19)]
+    return add_op(ops, 0xB6, src)
 
 #-------------------------------------------------------------------------------
 def XOR_iIXY_d(ops, xname) :
@@ -1058,14 +1037,13 @@ def XOR_iIXY_d(ops, xname) :
     XOR ([IX|IY]+d)
     T-states: 19
     '''
-    op = 0b10101110
-    src = ['// XOR ({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('state.A ^= mem.r8(state.{} + d);'.format(xname))
-    src.append('state.F = szp(state.A);')
-    src = inc_tstates(src, 19)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// XOR ({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'state.A ^= mem.r8(state.{} + d);'.format(xname),
+        'state.F = szp(state.A);',
+        t(19)]
+    return add_op(ops, 0xAE, src)
 
 #-------------------------------------------------------------------------------
 def INC_r(ops) :
@@ -1075,9 +1053,10 @@ def INC_r(ops) :
     '''
     for r in r8 :
         op = 0b00000100 | r.bits<<3
-        src = ['// INC {}'.format(r.name)]
-        src.append('state.{} = inc8(state.{});'.format(r.name, r.name))
-        src = inc_tstates(src, 4)
+        src = [
+            '// INC {}'.format(r.name),
+            'state.{} = inc8(state.{});'.format(r.name, r.name),
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1089,9 +1068,10 @@ def DEC_r(ops) :
     '''
     for r in r8 :
         op = 0b00000101 | r.bits<<3
-        src = ['// DEC {}'.format(r.name)]
-        src.append('state.{} = dec8(state.{});'.format(r.name, r.name))
-        src = inc_tstates(src, 4)
+        src = [
+            '// DEC {}'.format(r.name),
+            'state.{} = dec8(state.{});'.format(r.name, r.name),
+            t(4)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1101,12 +1081,11 @@ def INC_iHL(ops) :
     INC (HL)
     T-states: 11
     '''
-    op = 0b00110100
-    src = ['// INC (HL)']
-    src.append('mem.w8(state.HL, inc8(mem.r8(state.HL)));')
-    src = inc_tstates(src, 11)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// INC (HL)',
+        'mem.w8(state.HL, inc8(mem.r8(state.HL)));',
+        t(11)]
+    return add_op(ops, 0x34, src)
 
 #-------------------------------------------------------------------------------
 def DEC_iHL(ops) :
@@ -1114,12 +1093,11 @@ def DEC_iHL(ops) :
     DEC (HL)
     T-states: 11
     '''
-    op = 0b00110101
-    src = ['// DEC (HL)']
-    src.append('mem.w8(state.HL, dec8(mem.r8(state.HL)));')
-    src = inc_tstates(src, 11)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// DEC (HL)',
+        'mem.w8(state.HL, dec8(mem.r8(state.HL)));',
+        t(11)]
+    return add_op(ops, 0x35, src)
 
 #-------------------------------------------------------------------------------
 def INC_iIXY_d(ops, xname) :
@@ -1127,13 +1105,12 @@ def INC_iIXY_d(ops, xname) :
     INC ([IX|IY]+d)
     T-states: 23
     '''
-    op = 0b00110100
-    src = ['// INC ({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('mem.w8(state.{}+d, inc8(mem.r8(state.{}+d)));'.format(xname, xname))
-    src = inc_tstates(src, 23)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// INC ({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'mem.w8(state.{}+d, inc8(mem.r8(state.{}+d)));'.format(xname, xname),
+        t(23)]
+    return add_op(ops, 0x34, src)
 
 #-------------------------------------------------------------------------------
 def DEC_iIXY_d(ops, xname) :
@@ -1141,13 +1118,12 @@ def DEC_iIXY_d(ops, xname) :
     DEC ([IX|IY]+d)
     T-states: 23
     '''
-    op = 0b00110101
-    src = ['// DEC ({}+d)'.format(xname)]
-    src.append('d = mem.rs8(state.PC++);')
-    src.append('mem.w8(state.{}+d, dec8(mem.r8(state.{}+d)));'.format(xname, xname))
-    src = inc_tstates(src, 23)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// DEC ({}+d)'.format(xname),
+        'd = mem.rs8(state.PC++);',
+        'mem.w8(state.{}+d, dec8(mem.r8(state.{}+d)));'.format(xname, xname),
+        t(23)]
+    return add_op(ops, 0x35, src)
 
 #-------------------------------------------------------------------------------
 def INC_ss(ops) :
@@ -1157,9 +1133,10 @@ def INC_ss(ops) :
     '''
     for r in r16sp :
         op = 0b00000011 | r.bits<<4
-        src = ['// INC {}'.format(r.name)]
-        src.append('state.{}++;'.format(r.name))
-        src = inc_tstates(src, 6)
+        src = [
+            '// INC {}'.format(r.name),
+            'state.{}++;'.format(r.name),
+            t(6)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1171,9 +1148,10 @@ def DEC_ss(ops) :
     '''
     for r in r16sp :
         op = 0b00001011 | r.bits<<4
-        src = ['// DEC {}'.format(r.name)]
-        src.append('state.{}--;'.format(r.name))
-        src = inc_tstates(src, 6)
+        src = [
+            '// DEC {}'.format(r.name),
+            'state.{}--;'.format(r.name),
+            t(6)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1183,12 +1161,11 @@ def INC_IXY(ops, xname) :
     INC [IX|IY]
     T-states: 10
     '''
-    op = 0b00100011
-    src = ['// INC {}'.format(xname)]
-    src.append('state.{}++;'.format(xname))
-    src = inc_tstates(src, 10)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// INC {}'.format(xname),
+        'state.{}++;'.format(xname),
+        t(10)]
+    return add_op(ops, 0x23, src)
 
 #-------------------------------------------------------------------------------
 def DEC_IXY(ops, xname) :
@@ -1196,12 +1173,11 @@ def DEC_IXY(ops, xname) :
     DEC [IX|IY]
     T-states: 10
     '''
-    op = 0b00101011
-    src = ['// DEC {}'.format(xname)]
-    src.append('state.{}--;'.format(xname))
-    src = inc_tstates(src, 10)
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// DEC {}'.format(xname),
+        'state.{}--;'.format(xname),
+        t(10)]
+    return add_op(ops, 0x2B, src)
 
 #-------------------------------------------------------------------------------
 def RLCA(ops) :
@@ -1209,12 +1185,8 @@ def RLCA(ops) :
     RLCA
     T-state: 4
     '''
-    op = 0b00000111
-    src = ['// RLCA']
-    src.append('state.A = rlc8(state.A, false);')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RLCA', 'state.A = rlc8(state.A, false);', t(4)]
+    return add_op(ops, 0x07, src)
 
 #-------------------------------------------------------------------------------
 def RLA(ops) :
@@ -1222,12 +1194,8 @@ def RLA(ops) :
     RLA
     T-states: 4
     '''
-    op = 0b00010111
-    src = ['// RLA']
-    src.append('state.A = rl8(state.A, false);')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RLA', 'state.A = rl8(state.A, false);', t(4)]
+    return add_op(ops, 0x17, src)
 
 #-------------------------------------------------------------------------------
 def RRCA(ops) :
@@ -1235,12 +1203,8 @@ def RRCA(ops) :
     RRCA
     T-states: 4
     '''
-    op = 0b00001111
-    src = ['// RRCA']
-    src.append('state.A = rrc8(state.A, false);')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RRCA', 'state.A = rrc8(state.A, false);', t(4)]
+    return add_op(ops, 0x0F, src)
 
 #-------------------------------------------------------------------------------
 def RRA(ops) :
@@ -1248,12 +1212,8 @@ def RRA(ops) :
     RRA
     T-states: 4
     '''
-    op = 0b00011111
-    src = ['// RRA']
-    src.append('state.A = rr8(state.A, false);')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RRA', 'state.A = rr8(state.A, false);', t(4)]
+    return add_op(ops, 0x1F, src)
 
 #-------------------------------------------------------------------------------
 def RLC_r(ops) :
@@ -1263,9 +1223,9 @@ def RLC_r(ops) :
     '''
     for r in r8 :
         op = 0b00000000 | r.bits
-        src = ['// RLC {}'.format(r.name)]
-        src.append('state.{} = rlc8(state.{}, true);'.format(r.name, r.name))
-        src = inc_tstates(src, 8)
+        src = ['// RLC {}'.format(r.name),
+            'state.{} = rlc8(state.{}, true);'.format(r.name, r.name),
+            t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1277,9 +1237,9 @@ def RRC_r(ops) :
     '''
     for r in r8 :
         op = 0b00001000 | r.bits
-        src = ['// RRC {}'.format(r.name)]
-        src.append('state.{} = rrc8(state.{}, true);'.format(r.name, r.name))
-        src = inc_tstates(src, 8)
+        src = ['// RRC {}'.format(r.name),
+            'state.{} = rrc8(state.{}, true);'.format(r.name, r.name),
+            t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1289,12 +1249,10 @@ def RLC_iHL(ops) :
     RLC (HL)
     T-states: 15
     '''
-    op = 0b00000110
-    src = ['// RLC (HL)']
-    src.append('mem.w8(state.HL, rlc8(mem.r8(state.HL), true));')
-    src = inc_tstates(src, 15)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RLC (HL)',
+        'mem.w8(state.HL, rlc8(mem.r8(state.HL), true));',
+        t(15)]
+    return add_op(ops, 0x06, src)
 
 #-------------------------------------------------------------------------------
 def RRC_iHL(ops) :
@@ -1302,12 +1260,10 @@ def RRC_iHL(ops) :
     RRC (HL)
     T-states: 15
     '''
-    op = 0b00001110
-    src = ['// RRC (HL)']
-    src.append('mem.w8(state.HL, rrc8(mem.r8(state.HL), true));')
-    src = inc_tstates(src, 15)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RRC (HL)',
+        'mem.w8(state.HL, rrc8(mem.r8(state.HL), true));',
+        t(15)]
+    return add_op(ops, 0x0E, src)
 
 #-------------------------------------------------------------------------------
 def RL_r(ops) :
@@ -1317,9 +1273,9 @@ def RL_r(ops) :
     '''
     for r in r8 :
         op = 0b00010000 | r.bits
-        src = ['// RL {}'.format(r.name)]
-        src.append('state.{} = rl8(state.{}, true);'.format(r.name, r.name))
-        src = inc_tstates(src, 8)
+        src = ['// RL {}'.format(r.name),
+            'state.{} = rl8(state.{}, true);'.format(r.name, r.name),
+            t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1331,9 +1287,9 @@ def RR_r(ops) :
     '''
     for r in r8 :
         op = 0b00011000 | r.bits
-        src = ['// RR {}'.format(r.name)]
-        src.append('state.{} = rr8(state.{}, true);'.format(r.name, r.name))
-        src = inc_tstates(src, 8)
+        src = ['// RR {}'.format(r.name),
+            'state.{} = rr8(state.{}, true);'.format(r.name, r.name),
+            t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1343,12 +1299,10 @@ def RL_iHL(ops) :
     RL (HL)
     T-states: 15
     '''
-    op = 0b00010110
-    src = ['// RL (HL)']
-    src.append('mem.w8(state.HL, rl8(mem.r8(state.HL), true));')
-    src = inc_tstates(src, 15)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RL (HL)',
+        'mem.w8(state.HL, rl8(mem.r8(state.HL), true));',
+        t(15)]
+    return add_op(ops, 0x16, src)
 
 #-------------------------------------------------------------------------------
 def RR_iHL(ops) :
@@ -1356,12 +1310,10 @@ def RR_iHL(ops) :
     RR (HL)
     T-states: 15
     '''
-    op = 0b00011110
-    src = ['// RR (HL)']
-    src.append('mem.w8(state.HL, rr8(mem.r8(state.HL), true));')
-    src = inc_tstates(src, 15)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RR (HL)',
+        'mem.w8(state.HL, rr8(mem.r8(state.HL), true));',
+        t(15)]
+    return add_op(ops, 0x1E, src)
 
 #-------------------------------------------------------------------------------
 def SLA_r(ops) :
@@ -1371,9 +1323,9 @@ def SLA_r(ops) :
     '''
     for r in r8 :
         op = 0b00100000 | r.bits
-        src = ['// SLA {}'.format(r.name)]
-        src.append('state.{} = sla8(state.{});'.format(r.name, r.name))
-        src = inc_tstates(src, 8)
+        src = ['// SLA {}'.format(r.name),
+        'state.{} = sla8(state.{});'.format(r.name, r.name),
+        t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1385,9 +1337,9 @@ def SRA_r(ops) :
     '''
     for r in r8 :
         op = 0b00101000 | r.bits
-        src = ['// SRA {}'.format(r.name)]
-        src.append('state.{} = sra8(state.{});'.format(r.name, r.name))
-        src = inc_tstates(src, 8)
+        src = ['// SRA {}'.format(r.name),
+        'state.{} = sra8(state.{});'.format(r.name, r.name),
+        t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1399,9 +1351,9 @@ def SRL_r(ops) :
     '''
     for r in r8 :
         op = 0b00111000 | r.bits
-        src = ['// SRL {}'.format(r.name)]
-        src.append('state.{} = srl8(state.{});'.format(r.name, r.name))
-        src = inc_tstates(src, 8)
+        src = ['// SRL {}'.format(r.name),
+        'state.{} = srl8(state.{});'.format(r.name, r.name),
+        t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1411,12 +1363,10 @@ def SLA_iHL(ops) :
     SLA (HL)
     T-states: 15
     '''
-    op = 0b00100110
-    src = ['// SLA (HL)']
-    src.append('mem.w8(state.HL, sla8(mem.r8(state.HL)));')
-    src = inc_tstates(src, 15)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// SLA (HL)',
+        'mem.w8(state.HL, sla8(mem.r8(state.HL)));',
+        t(15)]
+    return add_op(ops, 0x26, src)
 
 #-------------------------------------------------------------------------------
 def SRA_iHL(ops) :
@@ -1424,12 +1374,10 @@ def SRA_iHL(ops) :
     SRA (HL)
     T-states: 15
     '''
-    op = 0b00101110
-    src = ['// SRA (HL)']
-    src.append('mem.w8(state.HL, sra8(mem.r8(state.HL)));')
-    src = inc_tstates(src, 15)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// SRA (HL)',
+        'mem.w8(state.HL, sra8(mem.r8(state.HL)));',
+        t(15)]
+    return add_op(ops, 0x2E, src)
 
 #-------------------------------------------------------------------------------
 def SRL_iHL(ops) :
@@ -1438,11 +1386,10 @@ def SRL_iHL(ops) :
     T-states: 15
     '''
     op = 0b00111110
-    src = ['// SRL (HL)']
-    src.append('mem.w8(state.HL, srl8(mem.r8(state.HL)));')
-    src = inc_tstates(src, 15)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// SRL (HL)',
+        'mem.w8(state.HL, srl8(mem.r8(state.HL)));',
+        t(15)]
+    return add_op(ops, 0x3E, src)
 
 #-------------------------------------------------------------------------------
 def RLD(ops) :
@@ -1450,12 +1397,8 @@ def RLD(ops) :
     RLD
     T-states: 18
     '''
-    op = 0b01101111
-    src = ['// RLD']
-    src.append('rld();')
-    src = inc_tstates(src, 18)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RLD', 'rld();', t(18)]
+    return add_op(ops, 0x6F, src)
 
 #-------------------------------------------------------------------------------
 def RRD(ops) :
@@ -1463,12 +1406,8 @@ def RRD(ops) :
     RRD
     T-states: 18
     '''
-    op = 0b01100111
-    src = ['// RRD']
-    src.append('rrd();')
-    src = inc_tstates(src, 18)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// RRD', 'rrd();', t(18)]
+    return add_op(ops, 0x67, src)
 
 #-------------------------------------------------------------------------------
 def BIT_b_r(ops) :
@@ -1479,9 +1418,9 @@ def BIT_b_r(ops) :
     for b in range(0,8) :
         for r in r8 :
             op = 0b01000000 | b<<3 | r.bits
-            src = ['// BIT {},{}'.format(b, r.name)]
-            src.append('bit(state.{}, (1<<{}));'.format(r.name, b))
-            src = inc_tstates(src, 8)
+            src = ['// BIT {},{}'.format(b, r.name),
+                'bit(state.{}, (1<<{}));'.format(r.name, b),
+                t(8)]
             ops = add_op(ops, op, src)
     return ops
 
@@ -1493,9 +1432,9 @@ def BIT_b_iHL(ops) :
     '''
     for b in range(0,8) :
         op = 0b01000110 | b<<3
-        src = ['// BIT {},(HL)'.format(b)]
-        src.append('bit(mem.r8(state.HL), (1<<{}));'.format(b))
-        src = inc_tstates(src, 12)
+        src = ['// BIT {},(HL)'.format(b),
+            'bit(mem.r8(state.HL), (1<<{}));'.format(b),
+            t(12)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1508,9 +1447,9 @@ def SET_b_r(ops) :
     for b in range(0,8) :
         for r in r8 :
             op = 0b11000000 | b<<3 | r.bits
-            src = ['// SET {},{}'.format(b, r.name)]
-            src.append('state.{} |= (1<<{});'.format(r.name, b))
-            src = inc_tstates(src, 8)
+            src = ['// SET {},{}'.format(b, r.name),
+                'state.{} |= (1<<{});'.format(r.name, b),
+                t(8)]
             ops = add_op(ops, op, src)
     return ops
 
@@ -1522,9 +1461,9 @@ def SET_b_iHL(ops) :
     '''
     for b in range(0, 8) :
         op = 0b11000110 | b<<3
-        src = ['// SET {},(HL)'.format(b)]
-        src.append('mem.w8(state.HL, mem.r8(state.HL)|(1<<{}));'.format(b))
-        src = inc_tstates(src, 15)
+        src = ['// SET {},(HL)'.format(b),
+            'mem.w8(state.HL, mem.r8(state.HL)|(1<<{}));'.format(b),
+            t(15)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1537,9 +1476,9 @@ def RES_b_r(ops) :
     for b in range(0, 8) :
         for r in r8 :
             op = 0b10000000 | b<<3 | r.bits
-            src = ['// RES {},{}'.format(b, r.name)]
-            src.append('state.{} &= ~(1<<{});'.format(r.name, b))
-            src = inc_tstates(src, 8)
+            src = ['// RES {},{}'.format(b, r.name),
+                'state.{} &= ~(1<<{});'.format(r.name, b),
+                t(8)]
             ops = add_op(ops, op, src)
     return ops
 
@@ -1551,9 +1490,9 @@ def RES_b_iHL(ops) :
     '''
     for b in range(0, 8) :
         op = 0b10000110 | b<<3
-        src = ['// RES {},(HL)'.format(b)]
-        src.append('mem.w8(state.HL, mem.r8(state.HL)|(1<<{}));'.format(b))
-        src = inc_tstates(src, 15)
+        src = ['// RES {},(HL)'.format(b),
+            'mem.w8(state.HL, mem.r8(state.HL)|(1<<{}));'.format(b),
+            t(15)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1563,21 +1502,19 @@ def DD_FD_CB(ops, lead_byte) :
     RLC, RRC, RL, RR, SLA, SRA, SRL, BIT, SET, RES for ([IX|IY]+d)
     T-states: 23, 20
     '''
-    op = 0xCB;
-    src = []
-    src.append('// RLC ([IX|IY]+d)')
-    src.append('// RRC ([IX|IY]+d)')
-    src.append('// RL ([IX|IY]+d)')
-    src.append('// RR ([IX|IY]+d)')
-    src.append('// SLA ([IX|IY]+d)')
-    src.append('// SRA ([IX|IY]+d)')
-    src.append('// SRL ([IX|IY]+d)')
-    src.append('// BIT b,([IX|IY]+d')
-    src.append('// SET b,([IX|IY]+d')
-    src.append('// RES b,([IX|IY]+d')
-    src.append('dd_fd_cb({});'.format(hex(lead_byte)))
-    ops = add_op(ops, op, src)
-    return ops
+    src = [
+        '// RLC ([IX|IY]+d)',
+        '// RRC ([IX|IY]+d)',
+        '// RL ([IX|IY]+d)',
+        '// RR ([IX|IY]+d)',
+        '// SLA ([IX|IY]+d)',
+        '// SRA ([IX|IY]+d)',
+        '// SRL ([IX|IY]+d)',
+        '// BIT b,([IX|IY]+d',
+        '// SET b,([IX|IY]+d',
+        '// RES b,([IX|IY]+d',
+        'dd_fd_cb({});'.format(hex(lead_byte))]
+    return add_op(ops, 0xCB, src)
 
 #-------------------------------------------------------------------------------
 def LDI(ops) :
@@ -1585,12 +1522,8 @@ def LDI(ops) :
     LDI
     T-states: 16
     '''
-    op = 0b10100000
-    src = ['// LDI']
-    src.append('ldi();')
-    src = inc_tstates(src, 16)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// LDI', 'ldi();', t(16)]
+    return add_op(ops, 0xA0, src)
 
 #-------------------------------------------------------------------------------
 def LDIR(ops) :
@@ -1598,11 +1531,8 @@ def LDIR(ops) :
     LDIR
     T-states: 21/16
     '''
-    op = 0b10110000
-    src = ['// LDIR']
-    src.append('state.T += ldir();')
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// LDIR', 'state.T += ldir();']
+    return add_op(ops, 0xB0, src)
 
 #-------------------------------------------------------------------------------
 def LDD(ops) :
@@ -1610,12 +1540,8 @@ def LDD(ops) :
     LDD
     T-states: 16
     '''
-    op = 0b10101000
-    src = ['// LDD']
-    src.append('ldd();')
-    src = inc_tstates(src, 16)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// LDD', 'ldd();', t(16)]
+    return add_op(ops, 0xA8, src)
 
 #-------------------------------------------------------------------------------
 def LDDR(ops) :
@@ -1623,11 +1549,8 @@ def LDDR(ops) :
     LDDR
     T-states: 21/16
     '''
-    op = 0b10111000
-    src = ['// LDDR']
-    src.append('state.T += lddr();')
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// LDDR', 'state.T += lddr();']
+    return add_op(ops, 0xB8, src)
 
 #-------------------------------------------------------------------------------
 def CPI(ops) :
@@ -1635,12 +1558,8 @@ def CPI(ops) :
     CPI
     T-states: 16
     '''
-    op = 0b10100001
-    src = ['// CPI']
-    src.append('cpi();')
-    src = inc_tstates(src, 16)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// CPI', 'cpi();', t(16)]
+    return add_op(ops, 0xA1, src)
 
 #-------------------------------------------------------------------------------
 def CPIR(ops) :
@@ -1648,11 +1567,8 @@ def CPIR(ops) :
     CPIR
     T-states: 21/16
     '''
-    op = 0b10110001
-    src = ['// CPIR']
-    src.append('state.T += cpir();')
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// CPIR', 'state.T += cpir();']
+    return add_op(ops, 0xB1, src)
 
 #-------------------------------------------------------------------------------
 def CPD(ops) :
@@ -1660,12 +1576,8 @@ def CPD(ops) :
     CPD
     T-states: 16
     '''
-    op = 0b10101001
-    src = ['// CPD']
-    src.append('cpd();')
-    src = inc_tstates(src, 16)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// CPD', 'cpd();', t(16)]
+    return add_op(ops, 0xA9, src)
 
 #-------------------------------------------------------------------------------
 def CPDR(ops) :
@@ -1673,11 +1585,8 @@ def CPDR(ops) :
     CPDR
     T-states: 21/16
     '''
-    op = 0b10111001
-    src = ['// CPDR']
-    src.append('state.T += cpdr();')
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// CPDR', 'state.T += cpdr();']
+    return add_op(ops, 0xB9, src)
 
 #-------------------------------------------------------------------------------
 def DAA(ops) :
@@ -1685,12 +1594,8 @@ def DAA(ops) :
     DAA
     T-states: 4
     '''
-    op = 0b00100111
-    src = ['// DAA']
-    src.append('daa();')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// DAA', 'daa();', t(4)]
+    return add_op(ops, 0x27, src)
 
 #-------------------------------------------------------------------------------
 def CPL(ops) :
@@ -1698,13 +1603,11 @@ def CPL(ops) :
     CPL
     T-states: 4
     '''
-    op = 0b00101111
-    src = ['// CPL']
-    src.append('state.A ^= 0xFF;')
-    src.append('state.F = (state.F&(SF|ZF|PF|CF)) | HF | NF | (state.A&(YF|XF));')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// CPL',
+        'state.A ^= 0xFF;',
+        'state.F = (state.F&(SF|ZF|PF|CF)) | HF | NF | (state.A&(YF|XF));',
+        t(4)]
+    return add_op(ops, 0x2F, src)
 
 #-------------------------------------------------------------------------------
 def NEG(ops) :
@@ -1712,12 +1615,8 @@ def NEG(ops) :
     NEG
     T-states: 8
     '''
-    op = 0b01000100
-    src = ['// NEG']
-    src.append('state.A = sub8(0, state.A);')
-    src = inc_tstates(src, 8)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// NEG', 'state.A = sub8(0, state.A);', t(8)]
+    return add_op(ops, 0x44, src)
 
 #-------------------------------------------------------------------------------
 def CCF(ops) :
@@ -1725,12 +1624,10 @@ def CCF(ops) :
     CCF
     T-states: 4
     '''
-    op = 0b00111111
-    src = ['// CCF']
-    src.append('state.F = ((state.F&(SF|ZF|YF|XF|PF|CF))|((state.F&CF)<<4)|(state.A&(YF|XF)))^CF;')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// CCF',
+        'state.F = ((state.F&(SF|ZF|YF|XF|PF|CF))|((state.F&CF)<<4)|(state.A&(YF|XF)))^CF;',
+        t(4)]
+    return add_op(ops, 0x3F, src)
 
 #-------------------------------------------------------------------------------
 def SCF(ops) :
@@ -1738,12 +1635,10 @@ def SCF(ops) :
     SCF
     T-states: 4
     '''
-    op = 0b00110111
-    src = ['// SCF']
-    src.append('state.F = (state.F&(SF|ZF|YF|XF|PF))|CF|(state.A&(YF|XF));')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// SCF',
+        'state.F = (state.F&(SF|ZF|YF|XF|PF))|CF|(state.A&(YF|XF));',
+        t(4)]
+    return add_op(ops, 0x37, src)
 
 #-------------------------------------------------------------------------------
 def JP_nn(ops) :
@@ -1751,12 +1646,10 @@ def JP_nn(ops) :
     JP nn
     T-states: 10
     '''
-    op = 0b11000011
-    src = ['// JP nn']
-    src.append('state.PC = mem.r16(state.PC);')
-    src = inc_tstates(src, 10)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// JP nn',
+        'state.PC = mem.r16(state.PC);',
+        t(10)]
+    return add_op(ops, 0xC3, src)
 
 #-------------------------------------------------------------------------------
 def JP_cc_nn(ops) :
@@ -1764,22 +1657,12 @@ def JP_cc_nn(ops) :
     JP cc,nn
     T-states: 10
     '''
-    CC = namedtuple('CC', 'bits name test')
-    cc = [
-        CC(0b000, 'NZ', '(!(state.F & ZF))'),
-        CC(0b001, 'Z',  '(state.F & ZF)'),
-        CC(0b010, 'NC', '(!(state.F & CF))'),
-        CC(0b011, 'C',  '(state.F & CF)'),
-        CC(0b100, 'PO', '(!(state.F & PF))'),
-        CC(0b101, 'PE', '(state.F & PF)'),
-        CC(0b110, 'P',  '(!(state.F & NF))'),
-        CC(0b111, 'M',  '(state.F & NF)')
-    ] 
     for c in cc :
         op = 0b11000010 | c.bits<<3
-        src = ['// JP {},nn'.format(c.name)]
-        src.append('state.PC = {} ? mem.r16(state.PC) : state.PC+2;'.format(c.test))
-        src = inc_tstates(src, 10)
+        src = [
+            '// JP {},nn'.format(c.name),
+            'state.PC = {} ? mem.r16(state.PC) : state.PC+2;'.format(c.test),
+            t(10)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -1789,12 +1672,8 @@ def JR_e(ops) :
     JR e
     T-states: 12
     '''
-    op = 0b00011000
-    src = ['// JR e']
-    src.append('state.PC += mem.rs8(state.PC++);')
-    src = inc_tstates(src, 12)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// JR e', 'state.PC += mem.rs8(state.PC++);', t(12)]
+    return add_op(ops, 0x18, src)
 
 #-------------------------------------------------------------------------------
 def JR_cc_e(ops) :
@@ -1813,15 +1692,15 @@ def JR_cc_e(ops) :
         CC(0x20, 'NZ', '!(state.F & ZF)')
     ]
     for c in cc :
-        src = ['// JR {},e'.format(c.name)]
-        src.append('if ({}) {{'.format(c.test))
-        src.append('    state.PC += mem.rs8(state.PC++);')
-        src.append('    state.T += 12;')
-        src.append('}')
-        src.append('else {')
-        src.append('    state.PC++;')
-        src.append('    state.T += 7;')
-        src.append('}')
+        src = ['// JR {},e'.format(c.name),
+            'if ({}) {{'.format(c.test),
+            '    state.PC += mem.rs8(state.PC++);',
+            '    state.T += 12;',
+            '}',
+            'else {',
+            '    state.PC++;',
+            '    state.T += 7;',
+            '}']
         ops = add_op(ops, c.op, src)
     return ops
 
@@ -1831,12 +1710,8 @@ def JP_iHL(ops) :
     JP (HL)
     T-states: 4
     '''
-    op = 0b11101001
-    src = ['// JP (HL)']
-    src.append('state.PC = state.HL;')
-    src = inc_tstates(src, 4)
-    ops = add_op(ops, op, src)
-    return ops
+    src = ['// JP (HL)', 'state.PC = state.HL;', t(4)]
+    return add_op(ops, 0xE9, src)
 
 #-------------------------------------------------------------------------------
 def JP_iIXY(ops, xname) :
@@ -1844,11 +1719,62 @@ def JP_iIXY(ops, xname) :
     JP ([IX|IY])
     T-states: 8
     '''
-    op = 0b11101001
-    src = ['// JP ({})'.format(xname)]
-    src.append('state.PC = state.{};'.format(xname))
-    src = inc_tstates(src, 8)
-    ops = add_op(ops, op, src)
+    src = ['// JP ({})'.format(xname), 'state.PC = state.{};'.format(xname), t(8)]
+    return add_op(ops, 0xE9, src)
+
+#-------------------------------------------------------------------------------
+def DJNZ_e(ops) :
+    '''
+    DJNZ e
+    T-states: 13/8
+    '''
+    src = [
+        '// DJNZ e',
+        'if (--state.B > 0) {',
+        '    state.PC += mem.rs8(state.PC++);',
+        '    state.T += 13;',
+        '}',
+        'else {',
+        '    state.PC++;',
+        '    state.T += 8;',
+        '}']
+    return add_op(ops, 0x10, src)
+
+#-------------------------------------------------------------------------------
+def CALL_nn(ops) :
+    '''
+    CALL nn
+    T-states: 17
+    '''
+    src = [
+        '// CALL nn',
+        'state.SP -= 2;',
+        'mem.w16(state.SP, state.PC+2);',
+        'state.PC = mem.r16(state.PC);',
+        t(17)]
+    ops = add_op(ops, 0xCD, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def CALL_cc_nn(ops) :
+    '''
+    CALL cc,nn
+    T-states: 17,10
+    '''
+    for c in cc :
+        op = 0b11000100 | c.bits<<3
+        src = ['// CALL {},nn'.format(c.name),
+            'if ({}) {{'.format(c.test),
+            '    state.SP -= 2;',
+            '    mem.w16(state.SP, state.PC+2);',
+            '    state.PC = mem.r16(state.PC);',
+            '    state.T += 17;',
+            '}',
+            'else {',
+            '    state.PC += 2;',
+            '    state.T += 10;',
+            '}']
+        ops = add_op(ops, op, src)
     return ops
 
 #-------------------------------------------------------------------------------
@@ -1923,6 +1849,9 @@ def gen_opcodes() :
     ops = JP_iHL(ops)
     ops = JR_e(ops)
     ops = JR_cc_e(ops)
+    ops = DJNZ_e(ops)
+    ops = CALL_nn(ops)
+    ops = CALL_cc_nn(ops)
     ops = DI(ops)
     ops = EI(ops)
     ops[0xCB] = []
