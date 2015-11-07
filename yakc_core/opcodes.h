@@ -53,6 +53,11 @@ inline void z80::step() {
         swap16(state.AF, state.AF_);
         state.T += 4;
         break;
+    case 0x9:
+        // ADD HL,BC
+        state.HL = add16(state.HL, state.BC);
+        state.T += 11;
+        break;
     case 0xa:
         // LD A,(BC)
         state.A = mem.r8(state.BC);
@@ -134,6 +139,11 @@ inline void z80::step() {
         // JR e
         state.PC += mem.rs8(state.PC++);
         state.T += 12;
+        break;
+    case 0x19:
+        // ADD HL,DE
+        state.HL = add16(state.HL, state.DE);
+        state.T += 11;
         break;
     case 0x1a:
         // LD A,(DE)
@@ -223,6 +233,11 @@ inline void z80::step() {
             state.PC++;
             state.T += 7;
         }
+        break;
+    case 0x29:
+        // ADD HL,HL
+        state.HL = add16(state.HL, state.HL);
+        state.T += 11;
         break;
     case 0x2a:
         // LD HL,(nn)
@@ -314,6 +329,11 @@ inline void z80::step() {
             state.PC++;
             state.T += 7;
         }
+        break;
+    case 0x39:
+        // ADD HL,SP
+        state.HL = add16(state.HL, state.SP);
+        state.T += 11;
         break;
     case 0x3a:
         // LD A,(nn)
@@ -2449,6 +2469,16 @@ inline void z80::step() {
         break;
     case 0xdd:
         switch (fetch_op()) {
+        case 0x9:
+            // ADD IX,BC
+            state.IX = add16(state.IX, state.BC);
+            state.T += 15;
+            break;
+        case 0x19:
+            // ADD IX,DE
+            state.IX = add16(state.IX, state.DE);
+            state.T += 15;
+            break;
         case 0x21:
             // LD IX,nn
             state.IX = mem.r16(state.PC);
@@ -2465,6 +2495,11 @@ inline void z80::step() {
             // INC IX
             state.IX++;
             state.T += 10;
+            break;
+        case 0x29:
+            // ADD IX,IX
+            state.IX = add16(state.IX, state.IX);
+            state.T += 15;
             break;
         case 0x2a:
             // LD IX,(nn)
@@ -2494,6 +2529,11 @@ inline void z80::step() {
             d = mem.rs8(state.PC++);
             mem.w8(state.IX + d, mem.r8(state.PC++));
             state.T += 19;
+            break;
+        case 0x39:
+            // ADD IX,SP
+            state.IX = add16(state.IX, state.SP);
+            state.T += 15;
             break;
         case 0x46:
             // LD B,(IX+d)
@@ -2788,6 +2828,11 @@ inline void z80::step() {
             out(state.BC, state.B);
             state.T += 12;
             break;
+        case 0x42:
+            // SBC HL,BC
+            state.HL = sbc16(state.HL, state.BC);
+            state.T += 15;
+            break;
         case 0x43:
             // LD (nn),BC
             mem.w16(mem.r16(state.PC), state.BC);
@@ -2820,6 +2865,11 @@ inline void z80::step() {
             out(state.BC, state.C);
             state.T += 12;
             break;
+        case 0x4a:
+            // ADC HL,BC
+            state.HL = adc16(state.HL, state.BC);
+            state.T += 15;
+            break;
         case 0x4b:
             // LD BC,(nn)
             state.BC = mem.r16(mem.r16(state.PC));
@@ -2841,6 +2891,11 @@ inline void z80::step() {
             // OUT (C),D
             out(state.BC, state.D);
             state.T += 12;
+            break;
+        case 0x52:
+            // SBC HL,DE
+            state.HL = sbc16(state.HL, state.DE);
+            state.T += 15;
             break;
         case 0x53:
             // LD (nn),DE
@@ -2870,6 +2925,11 @@ inline void z80::step() {
             out(state.BC, state.E);
             state.T += 12;
             break;
+        case 0x5a:
+            // ADC HL,DE
+            state.HL = adc16(state.HL, state.DE);
+            state.T += 15;
+            break;
         case 0x5b:
             // LD DE,(nn)
             state.DE = mem.r16(mem.r16(state.PC));
@@ -2898,6 +2958,11 @@ inline void z80::step() {
             out(state.BC, state.H);
             state.T += 12;
             break;
+        case 0x62:
+            // SBC HL,HL
+            state.HL = sbc16(state.HL, state.HL);
+            state.T += 15;
+            break;
         case 0x63:
             // LD (nn),HL
             mem.w16(mem.r16(state.PC), state.HL);
@@ -2920,6 +2985,11 @@ inline void z80::step() {
             out(state.BC, state.L);
             state.T += 12;
             break;
+        case 0x6a:
+            // ADC HL,HL
+            state.HL = adc16(state.HL, state.HL);
+            state.T += 15;
+            break;
         case 0x6b:
             // LD HL,(nn)
             state.HL = mem.r16(mem.r16(state.PC));
@@ -2930,6 +3000,11 @@ inline void z80::step() {
             // RLD
             rld();
             state.T += 18;
+            break;
+        case 0x72:
+            // SBC HL,SP
+            state.HL = sbc16(state.HL, state.SP);
+            state.T += 15;
             break;
         case 0x73:
             // LD (nn),SP
@@ -2947,6 +3022,11 @@ inline void z80::step() {
             // OUT (C),A
             out(state.BC, state.A);
             state.T += 12;
+            break;
+        case 0x7a:
+            // ADC HL,SP
+            state.HL = adc16(state.HL, state.SP);
+            state.T += 15;
             break;
         case 0x7b:
             // LD SP,(nn)
@@ -3130,6 +3210,16 @@ inline void z80::step() {
         break;
     case 0xfd:
         switch (fetch_op()) {
+        case 0x9:
+            // ADD IY,BC
+            state.IY = add16(state.IY, state.BC);
+            state.T += 15;
+            break;
+        case 0x19:
+            // ADD IY,DE
+            state.IY = add16(state.IY, state.DE);
+            state.T += 15;
+            break;
         case 0x21:
             // LD IY,nn
             state.IY = mem.r16(state.PC);
@@ -3146,6 +3236,11 @@ inline void z80::step() {
             // INC IY
             state.IY++;
             state.T += 10;
+            break;
+        case 0x29:
+            // ADD IY,IY
+            state.IY = add16(state.IY, state.IY);
+            state.T += 15;
             break;
         case 0x2a:
             // LD IY,(nn)
@@ -3175,6 +3270,11 @@ inline void z80::step() {
             d = mem.rs8(state.PC++);
             mem.w8(state.IY + d, mem.r8(state.PC++));
             state.T += 19;
+            break;
+        case 0x39:
+            // ADD IY,SP
+            state.IY = add16(state.IY, state.SP);
+            state.T += 15;
             break;
         case 0x46:
             // LD B,(IY+d)

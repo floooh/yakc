@@ -273,7 +273,7 @@ public:
         return mem.r8(state.PC++);
     }
 
-    /// perform an add, return result, and update flags
+    /// perform an 8-bit add, return result, and update flags
     ubyte add8(ubyte acc, ubyte add) {
         int r = int(acc) + int(add);
         ubyte f = (r & 0xFF) ? ((r & 0x80) ? SF : 0) : ZF;
@@ -283,7 +283,7 @@ public:
         state.F = f;
         return (ubyte)r;
     }
-    /// perform an adc, return result and update flags
+    /// perform an 8-bit adc, return result and update flags
     ubyte adc8(ubyte acc, ubyte add) {
         if (state.F & CF) {
             int r = int(acc) + int(add) + 1;
@@ -298,7 +298,7 @@ public:
             return add8(acc, add);
         }
     }
-    /// perform a sub, return result, and update flags
+    /// perform an 8-bit sub, return result, and update flags
     ubyte sub8(ubyte acc, ubyte sub) {
         int r = int(acc) - int(sub);
         ubyte f = NF | (r ? ((r & 0x80) ? SF : 0) : ZF);
@@ -308,7 +308,7 @@ public:
         state.F = f;
         return (ubyte)r;
     }
-    /// perform an sbc, return result and update flags
+    /// perform an 8-bit sbc, return result and update flags
     ubyte sbc8(ubyte acc, ubyte sub) {
         if (state.F & CF) {
             int r = int(acc) - int(sub) - 1;
@@ -341,6 +341,38 @@ public:
         state.F = f | (state.F & CF);
         return r;
     }
+    /// perform an 16-bit add, update flags and return result
+    uword add16(uword acc, uword val) {
+        unsigned int res = acc + val;
+        // flag computation taken from MAME
+        state.F = (state.F & (SF|ZF|VF)) |
+                  (((acc^res^val)>>8)&HF)|
+                  ((res>>16) & CF) | ((res >> 8) & (YF|XF));
+        return (uword)res;
+    }
+    /// perform an 16-bit adc, update flags and return result
+    uword adc16(uword acc, uword val) {
+        unsigned int res = acc + val + (state.F & CF);
+        // flag computation taken from MAME
+        state.F = (((acc^res^val)>>8)&HF) |
+                  ((res>>16)&CF) |
+                  ((res>>8)&(SF|YF|XF)) |
+                  ((res & 0xFFFF) ? 0 : ZF) |
+                  (((val^acc^0x8000) & (val^res)&0x8000)>>13);
+        return res;
+    }
+    /// perform an 16-bit sbc, update flags and return result
+    uword sbc16(uword acc, uword val) {
+        unsigned int res = acc - val - (state.F & CF);
+        // flag computation taken from MAME
+        state.F = (((acc^res^val)>>8)&HF) | NF |
+                  ((res>>16)&CF) |
+                  ((res>>8) & (SF|YF|XF)) |
+                  ((res & 0xFFFF) ? 0 : ZF) |
+                  (((val^acc) & (acc^res)&0x8000)>>13);
+        return res;
+    }
+
     /// implement the LDI instruction
     void ldi() {
         ubyte val = mem.r8(state.HL);

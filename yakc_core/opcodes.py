@@ -36,6 +36,22 @@ r16af = [
     R(0b11, 'AF')
 ]
 
+# 16-bit register bit masks with IX/IY instead of HL
+r16ixy = {
+    'IX': [
+        R(0b00, 'BC'),
+        R(0b01, 'DE'),
+        R(0b10, 'IX'),
+        R(0b11, 'SP'),
+    ],
+    'IY': [
+        R(0b00, 'BC'),
+        R(0b01, 'DE'),
+        R(0b10, 'IY'),
+        R(0b11, 'SP'),
+    ],
+}
+
 CC = namedtuple('CC', 'bits name test')
 cc = [
     CC(0b000, 'NZ', '(!(state.F & ZF))'),
@@ -1929,6 +1945,62 @@ def OTDR(ops) :
     return add_op(ops, 0xBB, src)
 
 #-------------------------------------------------------------------------------
+def ADD_HL_ss(ops) :
+    '''
+    ADD HL,ss
+    T-states: 11
+    '''
+    for r in r16sp :
+        op = 0b00001001 | r.bits<<4
+        src = ['// ADD HL,{}'.format(r.name),
+            'state.HL = add16(state.HL, state.{});'.format(r.name),
+            t(11)]
+        ops = add_op(ops, op, src)
+    return ops
+   
+#-------------------------------------------------------------------------------
+def ADC_HL_ss(ops) :
+    '''
+    ADC HL,ss
+    T-states: 15
+    '''
+    for r in r16sp :
+        op = 0b01001010 | r.bits<<4
+        src = ['// ADC HL,{}'.format(r.name),
+            'state.HL = adc16(state.HL, state.{});'.format(r.name),
+            t(15)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def SBC_HL_ss(ops) :
+    '''
+    SBC HL,ss
+    T-states: 15
+    '''
+    for r in r16sp :
+        op = 0b01000010 | r.bits<<4
+        src = ['// SBC HL,{}'.format(r.name),
+            'state.HL = sbc16(state.HL, state.{});'.format(r.name),
+            t(15)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def ADD_IXY_pp(ops, xname) :
+    '''
+    ADD [IX|IY],pp
+    T-states: 15
+    '''
+    for r in r16ixy[xname] :
+        op = 0b00001001 | r.bits<<4
+        src = ['// ADD {},{}'.format(xname, r.name),
+            'state.{} = add16(state.{}, state.{});'.format(xname, xname, r.name),
+            t(15)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -2009,6 +2081,7 @@ def gen_opcodes() :
     ops = EI(ops)
     ops = IN_A_in(ops)
     ops = OUT_in_A(ops)
+    ops = ADD_HL_ss(ops)
     ops[0xCB] = []
     ops[0xDD] = []
     ops[0xFD] = []
@@ -2073,6 +2146,7 @@ def gen_dd_opcodes() :
     dd_ops = INC_IXY(dd_ops, 'IX')
     dd_ops = DEC_IXY(dd_ops, 'IX')
     dd_ops = JP_iIXY(dd_ops, 'IX')
+    dd_ops = ADD_IXY_pp(dd_ops, 'IX')
     dd_ops = DD_FD_CB(dd_ops, 0xDD)
     return dd_ops
 
@@ -2105,6 +2179,7 @@ def gen_fd_opcodes() :
     fd_ops = INC_IXY(fd_ops, 'IY')
     fd_ops = DEC_IXY(fd_ops, 'IY')
     fd_ops = JP_iIXY(fd_ops, 'IY')
+    fd_ops = ADD_IXY_pp(fd_ops, 'IY')
     fd_ops = DD_FD_CB(fd_ops, 0xFD)
     return fd_ops
 
@@ -2142,6 +2217,8 @@ def gen_ed_opcodes() :
     ed_ops = OTIR(ed_ops)
     ed_ops = OUTD(ed_ops)
     ed_ops = OTDR(ed_ops)
+    ed_ops = ADC_HL_ss(ed_ops)
+    ed_ops = SBC_HL_ss(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------

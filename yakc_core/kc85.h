@@ -6,6 +6,7 @@
 */
 #include "z80.h"
 #include "roms.h"
+#include <stdio.h>
 
 namespace yakc {
 
@@ -42,6 +43,15 @@ public:
         memset(this->irm1, 0, sizeof(this->irm1));
         memset(this->rom0, 0, sizeof(this->rom0));
     }
+    /// the z80 out callback
+    static void out_cb(void* userdata, uword port, ubyte val) {
+        printf("out 0x%04X: 0x%02X\n", port, val);
+    }
+    /// the z80 in callback
+    static ubyte in_cb(void* userdata, uword port) {
+        printf("in 0x%04X\n", port);
+        return 0;
+    }
     /// power-on the device
     void switchon(kc_model m) {
         YAKC_ASSERT(kc_model::none != m);
@@ -59,6 +69,7 @@ public:
             this->cpu.mem.map(0, this->ram0, sizeof(this->ram0), memory::type::ram);
             this->cpu.mem.map(2, this->irm0, sizeof(this->irm0), memory::type::ram);
             this->cpu.mem.map(3, this->rom0, sizeof(this->rom0), memory::type::rom);
+            this->cpu.set_inout_handlers(in_cb, out_cb, this);
         }
         this->cpu.reset();
 
