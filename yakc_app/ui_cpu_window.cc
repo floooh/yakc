@@ -79,16 +79,22 @@ cpu_window::draw(kc85& kc) {
         // T-counter:
         ImGui::Text("T-states: %d", kc.cpu.state.T);
 
+        // IFF1 and IFF2
+        const ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
+        const ImVec4 green(0.0f, 1.0f, 0.0f, 1.0f);
+        ImGui::TextColored(kc.cpu.state.IFF1 ? green:red, "IFF1"); ImGui::SameLine();
+        ImGui::TextColored(kc.cpu.state.IFF2 ? green:red, "IFF2");
+
         // current or invalid opcode
         if (kc.cpu.state.INV) {
-            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid Opcode: 0x%02X 0x%02X 0x%02X 0x%02X",
+            ImGui::TextColored(red, "Invalid Opcode: 0x%02X 0x%02X 0x%02X 0x%02X",
                 kc.cpu.mem.r8(kc.cpu.state.PC),
                 kc.cpu.mem.r8(kc.cpu.state.PC+1),
                 kc.cpu.mem.r8(kc.cpu.state.PC+2),
                 kc.cpu.mem.r8(kc.cpu.state.PC+3));
         }
         else {
-            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Next Opcode: 0x%02X 0x%02X 0x%02X 0x%02X",
+            ImGui::TextColored(green, "Next Opcode: 0x%02X 0x%02X 0x%02X 0x%02X",
             kc.cpu.mem.r8(kc.cpu.state.PC),
             kc.cpu.mem.r8(kc.cpu.state.PC+1),
             kc.cpu.mem.r8(kc.cpu.state.PC+2),
