@@ -44,6 +44,7 @@ YakcApp::OnInit() {
     this->ui.setup(this->kc);
 
     // a little test prog so we can actually see something
+    /*
     ubyte prog[] = {
         // clear color memory
         0x21, 0x00, 0xA8,   // LD HL,0xA800
@@ -67,6 +68,7 @@ YakcApp::OnInit() {
     };
     this->kc.cpu.mem.write(0x0200, prog, sizeof(prog));
     this->kc.cpu.state.PC = 0x200;
+    */
 
     // setup the renderer
     this->draw.setup(gfxSetup);

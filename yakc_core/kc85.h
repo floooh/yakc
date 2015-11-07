@@ -5,6 +5,7 @@
     @brief wrapper class for the entire KC85/3 or KC85/4 system
 */
 #include "z80.h"
+#include "roms.h"
 
 namespace yakc {
 
@@ -49,11 +50,20 @@ public:
         this->on = true;
 
         if (kc_model::kc85_3 == m) {
+            // copy ROM content
+            YAKC_ASSERT(8192 == sizeof(rom_basic_c0));
+            YAKC_ASSERT(8192 == sizeof(rom_caos31));
+            memcpy(this->rom0, rom_basic_c0, sizeof(rom_basic_c0));
+            memcpy(this->rom0 + sizeof(rom_basic_c0), rom_caos31, sizeof(rom_caos31));
+
             this->cpu.mem.map(0, this->ram0, sizeof(this->ram0), memory::type::ram);
             this->cpu.mem.map(2, this->irm0, sizeof(this->irm0), memory::type::ram);
             this->cpu.mem.map(3, this->rom0, sizeof(this->rom0), memory::type::rom);
         }
         this->cpu.reset();
+
+        // execution on switch-on starts at 0xF000
+        this->cpu.state.PC = 0xF000;
     }
     /// power-off the device
     void switchoff() {
