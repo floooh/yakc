@@ -2377,6 +2377,11 @@ inline void z80::step() {
         state.PC = (!(state.F & CF)) ? mem.r16(state.PC) : state.PC+2;
         state.T += 10;
         break;
+    case 0xd3:
+        // OUT (n),A
+        out((state.A<<8)|mem.r8(state.PC++),state.A);
+        state.T += 11;
+        break;
     case 0xd4:
         // CALL NC,nn
         if ((!(state.F & CF))) {
@@ -2778,6 +2783,11 @@ inline void z80::step() {
             state.F = szp(state.B)|(state.F&CF);
             state.T += 12;
             break;
+        case 0x41:
+            // OUT (C),B
+            out(state.BC, state.B);
+            state.T += 12;
+            break;
         case 0x43:
             // LD (nn),BC
             mem.w16(mem.r16(state.PC), state.BC);
@@ -2805,6 +2815,11 @@ inline void z80::step() {
             state.F = szp(state.C)|(state.F&CF);
             state.T += 12;
             break;
+        case 0x49:
+            // OUT (C),C
+            out(state.BC, state.C);
+            state.T += 12;
+            break;
         case 0x4b:
             // LD BC,(nn)
             state.BC = mem.r16(mem.r16(state.PC));
@@ -2820,6 +2835,11 @@ inline void z80::step() {
             // IN D,(C)
             state.D = in(state.BC);
             state.F = szp(state.D)|(state.F&CF);
+            state.T += 12;
+            break;
+        case 0x51:
+            // OUT (C),D
+            out(state.BC, state.D);
             state.T += 12;
             break;
         case 0x53:
@@ -2845,6 +2865,11 @@ inline void z80::step() {
             state.F = szp(state.E)|(state.F&CF);
             state.T += 12;
             break;
+        case 0x59:
+            // OUT (C),E
+            out(state.BC, state.E);
+            state.T += 12;
+            break;
         case 0x5b:
             // LD DE,(nn)
             state.DE = mem.r16(mem.r16(state.PC));
@@ -2868,6 +2893,11 @@ inline void z80::step() {
             state.F = szp(state.H)|(state.F&CF);
             state.T += 12;
             break;
+        case 0x61:
+            // OUT (C),H
+            out(state.BC, state.H);
+            state.T += 12;
+            break;
         case 0x63:
             // LD (nn),HL
             mem.w16(mem.r16(state.PC), state.HL);
@@ -2883,6 +2913,11 @@ inline void z80::step() {
             // IN L,(C)
             state.L = in(state.BC);
             state.F = szp(state.L)|(state.F&CF);
+            state.T += 12;
+            break;
+        case 0x69:
+            // OUT (C),L
+            out(state.BC, state.L);
             state.T += 12;
             break;
         case 0x6b:
@@ -2906,6 +2941,11 @@ inline void z80::step() {
             // IN A,(C)
             state.A = in(state.BC);
             state.F = szp(state.A)|(state.F&CF);
+            state.T += 12;
+            break;
+        case 0x79:
+            // OUT (C),A
+            out(state.BC, state.A);
             state.T += 12;
             break;
         case 0x7b:

@@ -12,8 +12,11 @@ ubyte in_func(void* userdata, uword port) {
     return (port & 0xFF) * 2;
 }
 
+static uword out_port = 0;
+static ubyte out_byte = 0xFF;
 void out_func(void* userdata, uword port, ubyte val) {
-
+    out_port = port;
+    out_byte = val;
 }
 
 z80 init_z80() {
@@ -2604,6 +2607,41 @@ TEST(INIR_INDR) {
     CHECK(0x06 == cpu.mem.r8(0x1001));
     CHECK(cpu.state.F & z80::ZF);
     CHECK(146 == cpu.state.T);
+}
+
+TEST(OUT) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x3E, 0x01,         // LD A,0x01
+        0xD3, 0x01,         // OUT (0x01),A
+        0xD3, 0x02,         // OUT (0x02),A
+        0x01, 0x34, 0x12,   // LD BC,0x1234
+        0x11, 0x78, 0x56,   // LD DE,0x5678
+        0x21, 0xCD, 0xAB,   // LD HL,0xABCD
+        0xED, 0x79,         // OUT (C),A
+        0xED, 0x41,         // OUT (C),B
+        0xED, 0x49,         // OUT (C),C
+        0xED, 0x51,         // OUT (C),D
+        0xED, 0x59,         // OUT (C),E
+        0xED, 0x61,         // OUT (C),H
+        0xED, 0x69,         // OUT (C),L
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0101 == out_port); CHECK(0x01 == out_byte); CHECK(18 == cpu.state.T);
+    cpu.step(); CHECK(0x0102 == out_port); CHECK(0x01 == out_byte); CHECK(29 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.BC); CHECK(39 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.DE); CHECK(49 == cpu.state.T);
+    cpu.step(); CHECK(0xABCD == cpu.state.HL); CHECK(59 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x01 == out_byte); CHECK(71 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x12 == out_byte); CHECK(83 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x34 == out_byte); CHECK(95 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x56 == out_byte); CHECK(107 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x78 == out_byte); CHECK(119 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0xAB == out_byte); CHECK(131 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0xCD == out_byte); CHECK(143 == cpu.state.T);
 }
 
 TEST(cpu) {

@@ -1870,6 +1870,29 @@ def INDR(ops) :
     return add_op(ops, 0xBA, src)
 
 #-------------------------------------------------------------------------------
+def OUT_in_A(ops) :
+    '''
+    OUT (n),A
+    T-states: 11
+    '''
+    src = ['// OUT (n),A', 'out((state.A<<8)|mem.r8(state.PC++),state.A);', t(11)]
+    return add_op(ops, 0xD3, src)
+
+#-------------------------------------------------------------------------------
+def OUT_iC_r(ops) :
+    '''
+    OUT (C),r
+    T-states: 12
+    '''
+    for r in r8 :
+        op = 0b01000001 | r.bits<<3
+        src = ['// OUT (C),{}'.format(r.name),
+            'out(state.BC, state.{});'.format(r.name),
+            t(12)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1949,6 +1972,7 @@ def gen_opcodes() :
     ops = DI(ops)
     ops = EI(ops)
     ops = IN_A_in(ops)
+    ops = OUT_in_A(ops)
     ops[0xCB] = []
     ops[0xDD] = []
     ops[0xFD] = []
@@ -2077,6 +2101,7 @@ def gen_ed_opcodes() :
     ed_ops = INIR(ed_ops)
     ed_ops = IND(ed_ops)
     ed_ops = INDR(ed_ops)
+    ed_ops = OUT_iC_r(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------
