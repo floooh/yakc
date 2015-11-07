@@ -40,35 +40,7 @@ YakcApp::OnInit() {
     Input::Setup();
     Input::BeginCaptureText();
     this->kc.switchon(kc85::kc_model::kc85_3);
-    this->kc.pause(true);
     this->ui.setup(this->kc);
-
-    // a little test prog so we can actually see something
-    /*
-    ubyte prog[] = {
-        // clear color memory
-        0x21, 0x00, 0xA8,   // LD HL,0xA800
-        0x11, 0x01, 0xA8,   // LD DE,0xA800
-        0x01, 0xFF, 0x0B,   // LD BC,0x0A00
-        0x36, 0x22,         // LD (HL),0x11
-        0xED, 0xB0,         // LDIR
-
-        // clear video memory
-        0x3E, 0x01,         // LD A,0x01
-
-        0x21, 0x00, 0x80,   // LD HL,0x8000
-        0x11, 0x01, 0x80,   // LD DE,0x8001
-        0x01, 0xFF, 0x27,   // LD BC,0x2800
-        0x77,               // LD (HL),A
-        0xED, 0xB0,         // LDIR
-
-        // rotate clear-value and loop to clear vid mem
-        0x07,               // RLCA
-        0xC3, 0x0F, 0x02,   // JP 0x020F
-    };
-    this->kc.cpu.mem.write(0x0200, prog, sizeof(prog));
-    this->kc.cpu.state.PC = 0x200;
-    */
 
     // setup the renderer
     this->draw.setup(gfxSetup);

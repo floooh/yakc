@@ -55,15 +55,16 @@ ui::onframe(kc85& kc) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(kc.model() == kc85::kc_model::kc85_3 ? "KC85/3":"KC85/4")) {
             if (ImGui::MenuItem("Power Cycle...")) {
+                kc.switchoff();
+                kc.switchon(kc.model());
+            }
+            if (ImGui::MenuItem("Reset... (TODO)")) {
                 // FIXME
             }
-            if (ImGui::MenuItem("Reset...")) {
+            if (ImGui::MenuItem("Reboot to KC85/3... (TODO)")) {
                 // FIXME
             }
-            if (ImGui::MenuItem("Reboot to KC85/3...")) {
-                // FIXME
-            }
-            if (ImGui::MenuItem("Reboot to KC85/4...")) {
+            if (ImGui::MenuItem("Reboot to KC85/4... (TODO)")) {
                 // FIXME
             }
             ImGui::EndMenu();
@@ -74,8 +75,11 @@ ui::onframe(kc85& kc) {
             }
             StringBuilder strBuilder;
             for (int i = 0; i < memory::num_banks; i++) {
+                static const char* bank_names[memory::num_banks] = {
+                    "RAM0", "RAM1", "IRM", "ROM"
+                };
                 if (kc.cpu.mem.get_bank_ptr(i)) {
-                    strBuilder.Format(32, "Memory Bank %d...", i);
+                    strBuilder.Format(32, "Memory %s...", bank_names[i]);
                     if (ImGui::MenuItem(strBuilder.GetString().AsCStr())) {
                         auto win = mem_window::Create();
                         win->memory_bank_index = i;
@@ -83,7 +87,7 @@ ui::onframe(kc85& kc) {
                     }
                 }
             }
-            if (ImGui::MenuItem("Assembler...")) {
+            if (ImGui::MenuItem("Disassembler... (TODO)")) {
                 // FIXME
             }
             ImGui::EndMenu();

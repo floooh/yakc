@@ -91,6 +91,9 @@ public:
     /// power-off the device
     void switchoff() {
         YAKC_ASSERT(this->on);
+        for (int i = 0; i < memory::num_banks; i++) {
+            this->cpu.mem.unmap(i);
+        }
         this->on = false;
     }
     /// return true if device is switched on
