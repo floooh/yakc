@@ -462,6 +462,55 @@ public:
         f |= p & 1 ? 0 : PF;
         return f;
     }
+    /// return flags for ini/ind instruction
+    ubyte ini_ind_flags(ubyte io_val, int c_add) {
+        // NOTE: most INI flag settings are undocumented in the official
+        // docs, so this is taken from MAME, there's also more
+        // information here: http://www.z80.info/z80undoc3.txt
+        ubyte f = state.B ? state.B & SF : ZF;
+        if (io_val & SF) f |= NF;
+        unsigned int t = (unsigned int)((state.C+c_add)&0xFF) + (unsigned int)io_val;
+        if (t & 0x100) f |= HF|CF;
+        f |= szp(ubyte(t & 0x07)^state.B) & PF;
+        return f;
+    }
+
+    /// implement the INI instruction
+    void ini() {
+        ubyte io_val = in(state.BC);
+        state.B--;
+        mem.w8(state.HL++, io_val);
+        state.F = ini_ind_flags(io_val, +1);
+    }
+    /// implement the INIR instruction, return number of T-states
+    int inir() {
+        ini();
+        if (state.B != 0) {
+            state.PC -= 2;
+            return 21;
+        }
+        else {
+            return 16;
+        }
+    }
+    /// implement the IND instruction
+    void ind() {
+        ubyte io_val = in(state.BC);
+        state.B--;
+        mem.w8(state.HL--, io_val);
+        state.F = ini_ind_flags(io_val, -1);
+    }
+    /// implement the INDR instruction, return number of T-states
+    int indr() {
+        ind();
+        if (state.B != 0) {
+            state.PC -= 2;
+            return 21;
+        }
+        else {
+            return 16;
+        }
+    }
     /// implement the DAA instruction
     void daa() {
         // from MAME and http://www.z80.info/zip/z80-documented.pdf

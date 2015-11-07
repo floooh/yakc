@@ -1834,6 +1834,42 @@ def IN_r_iC(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def INI(ops) :
+    '''
+    INI
+    T-states: 16
+    '''
+    src = ['// INI', 'ini();', t(16)]
+    return add_op(ops, 0xA2, src)
+
+#-------------------------------------------------------------------------------
+def INIR(ops) :
+    '''
+    INIR
+    T-states: 21/16
+    '''
+    src = ['// INIR', 'state.T += inir();']
+    return add_op(ops, 0xB2, src)
+
+#-------------------------------------------------------------------------------
+def IND(ops) :
+    '''
+    IND
+    T-states: 16
+    '''
+    src = ['// IND', 'ind();', t(16)]
+    return add_op(ops, 0xAA, src)
+
+#-------------------------------------------------------------------------------
+def INDR(ops) :
+    '''
+    INDR
+    T-states: 21/16
+    '''
+    src = ['// INDR', 'state.T += indr();']
+    return add_op(ops, 0xBA, src)
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -2037,6 +2073,10 @@ def gen_ed_opcodes() :
     ed_ops = NEG(ed_ops)
     ed_ops = IM(ed_ops)
     ed_ops = IN_r_iC(ed_ops)
+    ed_ops = INI(ed_ops)
+    ed_ops = INIR(ed_ops)
+    ed_ops = IND(ed_ops)
+    ed_ops = INDR(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------
