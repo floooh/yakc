@@ -1893,6 +1893,42 @@ def OUT_iC_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def OUTI(ops) :
+    '''
+    OUTI
+    T-states: 16
+    '''
+    src = ['// OUTI', 'outi();', t(16)]
+    return add_op(ops, 0xA3, src)
+
+#-------------------------------------------------------------------------------
+def OTIR(ops) :
+    '''
+    OTIR
+    T-state: 21/16
+    '''
+    src = ['// OTIR', 'state.T += otir();']
+    return add_op(ops, 0xB3, src)
+
+#-------------------------------------------------------------------------------
+def OUTD(ops) :
+    '''
+    OUTD
+    T-states: 16
+    '''
+    src = ['// OUTD', 'outd();', t(16)]
+    return add_op(ops, 0xAB, src)
+
+#-------------------------------------------------------------------------------
+def OTDR(ops) :
+    '''
+    OTDR
+    T-states: 21/16
+    '''
+    src = ['// OTDR', 'state.T += otdr();']
+    return add_op(ops, 0xBB, src)
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -2102,6 +2138,10 @@ def gen_ed_opcodes() :
     ed_ops = IND(ed_ops)
     ed_ops = INDR(ed_ops)
     ed_ops = OUT_iC_r(ed_ops)
+    ed_ops = OUTI(ed_ops)
+    ed_ops = OTIR(ed_ops)
+    ed_ops = OUTD(ed_ops)
+    ed_ops = OTDR(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------

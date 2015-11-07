@@ -474,7 +474,6 @@ public:
         f |= szp(ubyte(t & 0x07)^state.B) & PF;
         return f;
     }
-
     /// implement the INI instruction
     void ini() {
         ubyte io_val = in(state.BC);
@@ -503,6 +502,54 @@ public:
     /// implement the INDR instruction, return number of T-states
     int indr() {
         ind();
+        if (state.B != 0) {
+            state.PC -= 2;
+            return 21;
+        }
+        else {
+            return 16;
+        }
+    }
+    /// return flags for outi/outd instruction
+    ubyte outi_outd_flags(ubyte io_val) {
+        // NOTE: most OUTI flag settings are undocumented in the official
+        // docs, so this is taken from MAME, there's also more
+        // information here: http://www.z80.info/z80undoc3.txt
+        ubyte f = state.B ? state.B & SF : ZF;
+        if (io_val & SF) f |= NF;
+        unsigned int t = (unsigned int)state.L + (unsigned int)io_val;
+        if (t & 0x100) f |= HF|CF;
+        f |= szp(ubyte(t & 0x07)^state.B) & PF;
+        return f;
+    }
+    /// implement the OUTI instruction
+    void outi() {
+        ubyte io_val = mem.r8(state.HL++);
+        state.B--;
+        out(state.BC, io_val);
+        state.F = outi_outd_flags(io_val);
+    }
+    /// implement the OTIR instructor, return number of T-states
+    int otir() {
+        outi();
+        if (state.B != 0) {
+            state.PC -= 2;
+            return 21;
+        }
+        else {
+            return 16;
+        }
+    }
+    /// implment the OUTD instruction
+    void outd() {
+        ubyte io_val = mem.r8(state.HL--);
+        state.B--;
+        out(state.BC, io_val);
+        state.F = outi_outd_flags(io_val);
+    }
+    /// implement the OTDR instruction, return number of T-states
+    int otdr() {
+        outd();
         if (state.B != 0) {
             state.PC -= 2;
             return 21;

@@ -2969,6 +2969,11 @@ inline void z80::step() {
             ini();
             state.T += 16;
             break;
+        case 0xa3:
+            // OUTI
+            outi();
+            state.T += 16;
+            break;
         case 0xa8:
             // LDD
             ldd();
@@ -2984,6 +2989,11 @@ inline void z80::step() {
             ind();
             state.T += 16;
             break;
+        case 0xab:
+            // OUTD
+            outd();
+            state.T += 16;
+            break;
         case 0xb0:
             // LDIR
             state.T += ldir();
@@ -2996,6 +3006,10 @@ inline void z80::step() {
             // INIR
             state.T += inir();
             break;
+        case 0xb3:
+            // OTIR
+            state.T += otir();
+            break;
         case 0xb8:
             // LDDR
             state.T += lddr();
@@ -3007,6 +3021,10 @@ inline void z80::step() {
         case 0xba:
             // INDR
             state.T += indr();
+            break;
+        case 0xbb:
+            // OTDR
+            state.T += otdr();
             break;
         default:
             invalid_opcode(2);
