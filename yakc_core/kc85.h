@@ -6,6 +6,7 @@
 */
 #include "z80.h"
 #include "roms.h"
+#include <stdlib.h>
 #include <stdio.h>
 
 namespace yakc {
@@ -35,13 +36,9 @@ public:
 
     /// constructor
     kc85():
-        cur_model(kc_model::none),
-        is_paused(false) {
-        memset(this->ram0, 0, sizeof(this->ram0));
-        memset(this->ram1, 0, sizeof(this->ram1));
-        memset(this->irm0, 0, sizeof(this->irm0));
-        memset(this->irm1, 0, sizeof(this->irm1));
-        memset(this->rom0, 0, sizeof(this->rom0));
+    cur_model(kc_model::none),
+    is_paused(false) {
+        // empty
     }
     /// the z80 out callback
     static void out_cb(void* userdata, uword port, ubyte val) {
@@ -51,6 +48,15 @@ public:
     static ubyte in_cb(void* userdata, uword port) {
         printf("in 0x%04X\n", port);
         return 0;
+    }
+    /// fill memory region with noise
+    static void fill_noise(void* ptr, int num_bytes) {
+        YAKC_ASSERT((num_bytes & 0x03) == 0);
+        unsigned int* uptr = (unsigned int*)ptr;
+        int num_uints = num_bytes>>2;
+        for (int i = 0; i < num_uints; i++) {
+            *uptr++ = rand();
+        }
     }
     /// power-on the device
     void switchon(kc_model m) {
@@ -63,8 +69,14 @@ public:
             // copy ROM content
             YAKC_ASSERT(8192 == sizeof(rom_basic_c0));
             YAKC_ASSERT(8192 == sizeof(rom_caos31));
+
+            // copy the ROM content
             memcpy(this->rom0, rom_basic_c0, sizeof(rom_basic_c0));
             memcpy(this->rom0 + sizeof(rom_basic_c0), rom_caos31, sizeof(rom_caos31));
+
+            // fill RAM banks with noise
+            fill_noise(this->ram0, sizeof(this->ram0));
+            fill_noise(this->irm0, sizeof(this->irm0));
 
             this->cpu.mem.map(0, this->ram0, sizeof(this->ram0), memory::type::ram);
             this->cpu.mem.map(2, this->irm0, sizeof(this->irm0), memory::type::ram);
