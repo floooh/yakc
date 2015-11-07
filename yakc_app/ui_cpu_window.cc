@@ -81,10 +81,18 @@ cpu_window::draw(kc85& kc) {
 
         // current or invalid opcode
         if (kc.cpu.state.INV) {
-            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid Opcode: 0x%02X", kc.cpu.mem.r8(kc.cpu.state.PC));
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid Opcode: 0x%02X 0x%02X 0x%02X 0x%02X",
+                kc.cpu.mem.r8(kc.cpu.state.PC),
+                kc.cpu.mem.r8(kc.cpu.state.PC+1),
+                kc.cpu.mem.r8(kc.cpu.state.PC+2),
+                kc.cpu.mem.r8(kc.cpu.state.PC+3));
         }
         else {
-            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Next Opcode: 0x%02X", kc.cpu.mem.r8(kc.cpu.state.PC));
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Next Opcode: 0x%02X 0x%02X 0x%02X 0x%02X",
+            kc.cpu.mem.r8(kc.cpu.state.PC),
+            kc.cpu.mem.r8(kc.cpu.state.PC+1),
+            kc.cpu.mem.r8(kc.cpu.state.PC+2),
+            kc.cpu.mem.r8(kc.cpu.state.PC+3));
         }
 
         /// FIXME: IFF, HALT, ...
