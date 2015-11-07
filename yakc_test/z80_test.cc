@@ -7,10 +7,20 @@
 using namespace yakc;
 
 ubyte ram0[memory::bank::size];
+
+ubyte in_func(void* userdata, uword port) {
+    return (port & 0xFF) * 2;
+}
+
+void out_func(void* userdata, uword port, ubyte val) {
+
+}
+
 z80 init_z80() {
     z80 cpu;
     memset(ram0, 0, sizeof(ram0));
     cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
+    cpu.set_inout_handlers(in_func, out_func, nullptr);
     return cpu;
 }
 
@@ -2499,6 +2509,46 @@ TEST(CALL_RET_cc) {
     cpu.step(); CHECK(0x0231 == cpu.state.PC); CHECK(221 == cpu.state.T);
     cpu.step(); CHECK(0x0232 == cpu.state.PC); CHECK(226 == cpu.state.T);
     cpu.step(); CHECK(0x0228 == cpu.state.PC); CHECK(237 == cpu.state.T);
+}
+
+TEST(IN) {
+    z80 cpu = init_z80();
+
+    ubyte prog[] = {
+        0x3E, 0x01,         // LD A,0x01
+        0xDB, 0x03,         // IN A,(0x03)
+        0xDB, 0x04,         // IN A,(0x04)
+        0x01, 0x02, 0x02,   // LD BC,0x0202
+        0xED, 0x78,         // IN A,(C)
+        0x01, 0xFF, 0x05,   // LD BC,0x05FF
+        0xED, 0x50,         // IN D,(C)
+        0x01, 0x05, 0x05,   // LD BC,0x0505
+        0xED, 0x58,         // IN E,(C)
+        0x01, 0x06, 0x01,   // LD BC,0x0106
+        0xED, 0x60,         // IN H,(C)
+        0x01, 0x00, 0x10,   // LD BC,0x0000
+        0xED, 0x68,         // IN L,(C)
+        0xED, 0x40,         // IN B,(C)
+        0xED, 0x48,         // IN C,(B)
+    };
+    cpu.mem.write(0x0000, prog, sizeof(prog));
+    cpu.state.F = z80::HF|z80::CF;
+
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x06 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(18 == cpu.state.T);
+    cpu.step(); CHECK(0x08 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(29 == cpu.state.T);
+    cpu.step(); CHECK(0x0202 == cpu.state.BC); CHECK(39 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(51 == cpu.state.T);
+    cpu.step(); CHECK(0x05FF == cpu.state.BC); CHECK(61 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(73 == cpu.state.T);
+    cpu.step(); CHECK(0x0505 == cpu.state.BC); CHECK(83 == cpu.state.T);
+    cpu.step(); CHECK(0x0A == cpu.state.E);CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(95 == cpu.state.T);
+    cpu.step(); CHECK(0x0106 == cpu.state.BC); CHECK(105 == cpu.state.T);
+    cpu.step(); CHECK(0x0C == cpu.state.H); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(117 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.BC); CHECK(127 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(139 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(151 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.C); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(163 == cpu.state.T);
 }
 
 TEST(cpu) {

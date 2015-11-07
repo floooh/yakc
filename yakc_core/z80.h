@@ -82,12 +82,34 @@ public:
         unsigned int T;
     } state;
 
-    // memory map
+    /// memory map
     memory mem;
 
+    /// input hook typedef, take a port number, return value at that port
+    typedef ubyte (*cb_in)(void* userdata, uword port);
+    /// output hook typedef, write 8-bit value to output port
+    typedef void (*cb_out)(void* userdata, uword port, ubyte val);
+
+    /// user-provided in-handler
+    cb_in in_func;
+    /// user-provided out-handler
+    cb_out out_func;
+    /// input/output userdata
+    void* inout_userdata;
+
     /// constructor
-    z80() {
+    z80() :
+    in_func(nullptr),
+    out_func(nullptr),
+    inout_userdata(nullptr) {
         memset(&this->state, 0, sizeof(this->state));
+    }
+    /// setup input and output handler
+    void set_inout_handlers(cb_in func_in, cb_out func_out, void* userdata) {
+        YAKC_ASSERT(func_in && func_out);
+        in_func = func_in;
+        out_func = func_out;
+        inout_userdata = userdata;
     }
     /// perform a reset (RESET pin triggered)
     void reset() {
@@ -192,6 +214,21 @@ public:
             default:
                 YAKC_ASSERT(false);
                 return 0;
+        }
+    }
+    /// call in-handler, return result
+    ubyte in(uword port) {
+        if (in_func) {
+            return in_func(inout_userdata, port);
+        }
+        else {
+            return 0;
+        }
+    }
+    /// call out-handler
+    void out(uword port, ubyte val) {
+        if (out_func) {
+            return out_func(inout_userdata, port, val);
         }
     }
     /// get a string-name for a register

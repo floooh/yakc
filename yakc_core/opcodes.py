@@ -1810,6 +1810,30 @@ def RET_cc(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def IN_A_in(ops) :
+    '''
+    IN A,(n)
+    T-states: 11
+    '''
+    src = ['// IN A,(n)', 'state.A = in((state.A<<8)|(mem.r8(state.PC++)));', t(11)]
+    return add_op(ops, 0xDB, src)
+
+#-------------------------------------------------------------------------------
+def IN_r_iC(ops) :
+    '''
+    IN r,(C)
+    T-states: 12
+    '''
+    for r in r8:
+        op = 0b01000000 | r.bits<<3
+        src = ['// IN {},(C)'.format(r.name),
+            'state.{} = in(state.BC);'.format(r.name),
+            'state.F = szp(state.{})|(state.F&CF);'.format(r.name),
+            t(12)]
+        add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def gen_opcodes() :
     '''
     Generates the single-byte opcode table.
@@ -1888,6 +1912,7 @@ def gen_opcodes() :
     ops = RET_cc(ops)
     ops = DI(ops)
     ops = EI(ops)
+    ops = IN_A_in(ops)
     ops[0xCB] = []
     ops[0xDD] = []
     ops[0xFD] = []
@@ -2011,10 +2036,11 @@ def gen_ed_opcodes() :
     ed_ops = CPDR(ed_ops)
     ed_ops = NEG(ed_ops)
     ed_ops = IM(ed_ops)
+    ed_ops = IN_r_iC(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------
-def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
+def gen_source(f, ops, ext_ops) :
     '''
     Generate the source code from opcode table.
     '''
@@ -2035,52 +2061,12 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
     for op in range(0,256) :
         if op in ops :
             f.write('    case {}:\n'.format(hex(op)))
-            if op == 0xCB :
-                # write CB prefix instrucions
+            if op in [ 0xCB, 0xDD, 0xFD, 0xED ] :
                 f.write('        switch (fetch_op()) {\n')
-                for cb_op in range(0,256) :
-                    if cb_op in cb_ops :
-                        f.write('        case {}:\n'.format(hex(cb_op)))
-                        for line in cb_ops[cb_op] :
-                            f.write('            {}\n'.format(line))
-                        f.write('            break;\n')
-                f.write('        default:\n')
-                f.write('            invalid_opcode(2);\n')
-                f.write('            break;\n')
-                f.write('        }\n')
-            elif op == 0xDD :
-                # write DD prefix instructions
-                f.write('        switch (fetch_op()) {\n')
-                for dd_op in range(0,256) :
-                    if dd_op in dd_ops :
-                        f.write('        case {}:\n'.format(hex(dd_op)))
-                        for line in dd_ops[dd_op] :
-                            f.write('            {}\n'.format(line))
-                        f.write('            break;\n')
-                f.write('        default:\n')
-                f.write('            invalid_opcode(2);\n')
-                f.write('            break;\n')
-                f.write('        }\n')
-            elif op == 0xED :
-                # write ED prefix instructions
-                f.write('        switch (fetch_op()) {\n')
-                for ed_op in range(0,256) :
-                    if ed_op in ed_ops :
-                        f.write('        case {}:\n'.format(hex(ed_op)))
-                        for line in ed_ops[ed_op] :
-                            f.write('            {}\n'.format(line))
-                        f.write('            break;\n')
-                f.write('        default:\n')
-                f.write('            invalid_opcode(2);\n')
-                f.write('            break;\n')
-                f.write('        }\n')
-            elif op == 0xFD :
-                # write FD prefix instructions
-                f.write('        switch (fetch_op()) {\n')
-                for fd_op in range(0,256) :
-                    if fd_op in fd_ops :
-                        f.write('        case {}:\n'.format(hex(fd_op)))
-                        for line in fd_ops[fd_op] :
+                for ext_op in range(0,256) :
+                    if ext_op in ext_ops[op] :
+                        f.write('        case {}:\n'.format(hex(ext_op)))
+                        for line in ext_ops[op][ext_op] :
                             f.write('            {}\n'.format(line))
                         f.write('            break;\n')
                 f.write('        default:\n')
@@ -2102,11 +2088,12 @@ def gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops) :
 def generate(input, out_src, out_hdr) :
     if genutil.isDirty(Version, [input], [out_hdr]) :
         ops = gen_opcodes()
-        cb_ops = gen_cb_opcodes()
-        dd_ops = gen_dd_opcodes()
-        fd_ops = gen_fd_opcodes()
-        ed_ops = gen_ed_opcodes()
+        ext_ops = {}
+        ext_ops[0xCB] = gen_cb_opcodes()
+        ext_ops[0xDD] = gen_dd_opcodes()
+        ext_ops[0xFD] = gen_fd_opcodes()
+        ext_ops[0xED] = gen_ed_opcodes()
         with open(out_hdr, 'w') as f:
-            gen_source(f, ops, cb_ops, dd_ops, fd_ops, ed_ops)
+            gen_source(f, ops, ext_ops)
 
 

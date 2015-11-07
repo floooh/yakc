@@ -2424,6 +2424,11 @@ inline void z80::step() {
         state.PC = (state.F & CF) ? mem.r16(state.PC) : state.PC+2;
         state.T += 10;
         break;
+    case 0xdb:
+        // IN A,(n)
+        state.A = in((state.A<<8)|(mem.r8(state.PC++)));
+        state.T += 11;
+        break;
     case 0xdc:
         // CALL C,nn
         if ((state.F & CF)) {
@@ -2767,6 +2772,12 @@ inline void z80::step() {
         break;
     case 0xed:
         switch (fetch_op()) {
+        case 0x40:
+            // IN B,(C)
+            state.B = in(state.BC);
+            state.F = szp(state.B)|(state.F&CF);
+            state.T += 12;
+            break;
         case 0x43:
             // LD (nn),BC
             mem.w16(mem.r16(state.PC), state.BC);
@@ -2788,6 +2799,12 @@ inline void z80::step() {
             state.I = state.A;
             state.T += 9;
             break;
+        case 0x48:
+            // IN C,(C)
+            state.C = in(state.BC);
+            state.F = szp(state.C)|(state.F&CF);
+            state.T += 12;
+            break;
         case 0x4b:
             // LD BC,(nn)
             state.BC = mem.r16(mem.r16(state.PC));
@@ -2798,6 +2815,12 @@ inline void z80::step() {
             // LD R,A
             state.R = state.A;
             state.T += 9;
+            break;
+        case 0x50:
+            // IN D,(C)
+            state.D = in(state.BC);
+            state.F = szp(state.D)|(state.F&CF);
+            state.T += 12;
             break;
         case 0x53:
             // LD (nn),DE
@@ -2816,6 +2839,12 @@ inline void z80::step() {
             state.F = sziff2(state.I,state.IFF2)|(state.F&CF);
             state.T += 9;
             break;
+        case 0x58:
+            // IN E,(C)
+            state.E = in(state.BC);
+            state.F = szp(state.E)|(state.F&CF);
+            state.T += 12;
+            break;
         case 0x5b:
             // LD DE,(nn)
             state.DE = mem.r16(mem.r16(state.PC));
@@ -2833,6 +2862,12 @@ inline void z80::step() {
             state.F = sziff2(state.R,state.IFF2)|(state.F&CF);
             state.T += 9;
             break;
+        case 0x60:
+            // IN H,(C)
+            state.H = in(state.BC);
+            state.F = szp(state.H)|(state.F&CF);
+            state.T += 12;
+            break;
         case 0x63:
             // LD (nn),HL
             mem.w16(mem.r16(state.PC), state.HL);
@@ -2843,6 +2878,12 @@ inline void z80::step() {
             // RRD
             rrd();
             state.T += 18;
+            break;
+        case 0x68:
+            // IN L,(C)
+            state.L = in(state.BC);
+            state.F = szp(state.L)|(state.F&CF);
+            state.T += 12;
             break;
         case 0x6b:
             // LD HL,(nn)
@@ -2860,6 +2901,12 @@ inline void z80::step() {
             mem.w16(mem.r16(state.PC), state.SP);
             state.PC += 2;
             state.T += 20;
+            break;
+        case 0x78:
+            // IN A,(C)
+            state.A = in(state.BC);
+            state.F = szp(state.A)|(state.F&CF);
+            state.T += 12;
             break;
         case 0x7b:
             // LD SP,(nn)
