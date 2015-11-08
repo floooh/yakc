@@ -1,37 +1,37 @@
 //------------------------------------------------------------------------------
 //  ui_mem_window.cc
 //------------------------------------------------------------------------------
-#include "ui_mem_window.h"
+#include "MemoryWindow.h"
 #include "Input/Core/Key.h"
 
-OryolClassImpl(mem_window);
+OryolClassImpl(MemoryWindow);
 
 using namespace Oryol;
 using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-mem_window::setup(const kc85& kc) {
-    this->set_name("Memory");
+MemoryWindow::Setup(const kc85& kc) {
+    this->setName("Memory");
 }
 
 //------------------------------------------------------------------------------
 bool
-mem_window::draw(kc85& kc) {
-    ubyte* ptr = kc.cpu.mem.get_bank_ptr(this->memory_bank_index);
-    size_t base_display_addr = this->memory_bank_index * memory::bank::size;
+MemoryWindow::Draw(kc85& kc) {
+    ubyte* ptr = kc.cpu.mem.get_bank_ptr(this->MemoryBankIndex);
+    size_t base_display_addr = this->MemoryBankIndex * memory::bank::size;
     if (ptr) {
-        this->edit.AllowEdits = kc.cpu.mem.is_bank_writable(this->memory_bank_index);
+        this->edit.AllowEdits = kc.cpu.mem.is_bank_writable(this->MemoryBankIndex);
         ImGui::SetNextWindowSize(ImVec2(512, 96), ImGuiSetCond_Once);
         if (this->edit.Draw(this->title.AsCStr(), ptr, memory::bank::size, base_display_addr)) {
-            this->visible = true;
+            this->Visible = true;
         }
         else {
-            this->visible = false;
+            this->Visible = false;
         }
     }
     else {
-        this->visible = false;
+        this->Visible = false;
     }
-    return this->visible;
+    return this->Visible;
 }

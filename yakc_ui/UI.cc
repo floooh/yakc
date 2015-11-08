@@ -1,10 +1,10 @@
 //------------------------------------------------------------------------------
-//  ui.cc
+//  UI.cc
 //------------------------------------------------------------------------------
-#include "ui.h"
-#include "util.h"
-#include "ui_cpu_window.h"
-#include "ui_mem_window.h"
+#include "UI.h"
+#include "yakc_app/util.h"
+#include "CpuWindow.h"
+#include "MemoryWindow.h"
 #include "Core/Containers/StaticArray.h"
 #include "IMUI/IMUI.h"
 #include "Time/Clock.h"
@@ -15,13 +15,8 @@ using namespace Oryol;
 using namespace yakc;
 
 //------------------------------------------------------------------------------
-ui::ui() {
-    // empty
-}
-
-//------------------------------------------------------------------------------
 void
-ui::setup(kc85& kc) {
+UI::Setup(kc85& kc) {
     IMUI::Setup();
 
     ImGuiStyle& style = ImGui::GetStyle();
@@ -36,20 +31,20 @@ ui::setup(kc85& kc) {
 
 //------------------------------------------------------------------------------
 void
-ui::discard() {
+UI::Discard() {
     IMUI::Discard();
 }
 
 //------------------------------------------------------------------------------
 void
-ui::open(const kc85& kc, Ptr<window> win) {
-    win->setup(kc);
+UI::OpenWindow(const kc85& kc, Ptr<WindowBase> win) {
+    win->Setup(kc);
     this->windows.Add(win);
 }
 
 //------------------------------------------------------------------------------
 void
-ui::onframe(kc85& kc) {
+UI::OnFrame(kc85& kc) {
     IMUI::NewFrame(Clock::LapTime(this->curTime));
 
     if (ImGui::BeginMainMenuBar()) {
@@ -71,7 +66,7 @@ ui::onframe(kc85& kc) {
         }
         if (ImGui::BeginMenu("Debugger")) {
             if (ImGui::MenuItem("CPU State...")) {
-                this->open(kc, cpu_window::Create());
+                this->OpenWindow(kc, CpuWindow::Create());
             }
             StringBuilder strBuilder;
             for (int i = 0; i < memory::num_banks; i++) {
@@ -81,9 +76,9 @@ ui::onframe(kc85& kc) {
                 if (kc.cpu.mem.get_bank_ptr(i)) {
                     strBuilder.Format(32, "Memory %s...", bank_names[i]);
                     if (ImGui::MenuItem(strBuilder.GetString().AsCStr())) {
-                        auto win = mem_window::Create();
-                        win->memory_bank_index = i;
-                        this->open(kc, win);
+                        auto win = MemoryWindow::Create();
+                        win->MemoryBankIndex = i;
+                        this->OpenWindow(kc, win);
                     }
                 }
             }
@@ -97,13 +92,13 @@ ui::onframe(kc85& kc) {
 
     // draw open windows
     for (auto& win : this->windows) {
-        win->draw(kc);
+        win->Draw(kc);
     }
     ImGui::Render();
 
     // delete closed windows
     for (int i = this->windows.Size() - 1; i >= 0; i--) {
-        if (!this->windows[i]->visible) {
+        if (!this->windows[i]->Visible) {
             this->windows.Erase(i);
         }
     }

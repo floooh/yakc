@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
-//  ui_cpu_window.cc
+//  CpuWindow.cc
 //------------------------------------------------------------------------------
-#include "ui_cpu_window.h"
+#include "CpuWindow.h"
 
 using namespace Oryol;
 using namespace yakc;
 
-OryolClassImpl(cpu_window);
+OryolClassImpl(CpuWindow);
 
 static const z80::reg regs16[] = {
     z80::AF, z80::BC, z80::DE, z80::HL,
@@ -19,30 +19,30 @@ static const z80::reg regs8[] = {
 
 //------------------------------------------------------------------------------
 void
-cpu_window::setup(const kc85& kc) {
-    this->set_name("CPU");
+CpuWindow::Setup(const kc85& kc) {
+    this->setName("CPU");
     for (z80::reg r : regs16) {
-        this->reg_widget[r].configure16(z80::reg_name(r), kc.cpu.get16(r));
+        this->regWidget[r].Configure16(z80::reg_name(r), kc.cpu.get16(r));
     }
     for (z80::reg r : regs8) {
-        this->reg_widget[r].configure8(z80::reg_name(r), kc.cpu.get8(r));
+        this->regWidget[r].Configure8(z80::reg_name(r), kc.cpu.get8(r));
     }
 }
 
 //------------------------------------------------------------------------------
 bool
-cpu_window::draw(kc85& kc) {
-    if (ImGui::Begin(this->title.AsCStr(), &this->visible, ImGuiWindowFlags_AlwaysAutoResize)) {
+CpuWindow::Draw(kc85& kc) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_AlwaysAutoResize)) {
 
         // 16-bit registers
         int i = 0;
         ImGui::PushItemWidth(32);
         for (z80::reg r : regs16) {
-            if (this->reg_widget[r].draw()) {
-                kc.cpu.set16(r, this->reg_widget[r].get16());
+            if (this->regWidget[r].Draw()) {
+                kc.cpu.set16(r, this->regWidget[r].Get16());
             }
             else {
-                this->reg_widget[r].set16(kc.cpu.get16(r));
+                this->regWidget[r].Set16(kc.cpu.get16(r));
             }
             if (i < 3) ImGui::SameLine(++i * 72); else i = 0;
         }
@@ -51,11 +51,11 @@ cpu_window::draw(kc85& kc) {
         // special 8-bit registers
         ImGui::PushItemWidth(16);
         for (z80::reg r : regs8) {
-            if (this->reg_widget[r].draw()) {
-                kc.cpu.set8(r, this->reg_widget[r].get8());
+            if (this->regWidget[r].Draw()) {
+                kc.cpu.set8(r, this->regWidget[r].Get8());
             }
             else {
-                this->reg_widget[r].set8(kc.cpu.get8(r));
+                this->regWidget[r].Set8(kc.cpu.get8(r));
             }
             if (i < 2) ImGui::SameLine(++i * 72); else i = 0;
         }
@@ -114,5 +114,5 @@ cpu_window::draw(kc85& kc) {
         }
     }
     ImGui::End();
-    return this->visible;
+    return this->Visible;
 }

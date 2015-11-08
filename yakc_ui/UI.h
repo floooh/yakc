@@ -1,27 +1,25 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class ui
+    @class UI
     @brief imgui-based debugger UI
 */
-#include "kc85_oryol.h"
-#include "ui_window.h"
+#include "yakc_app/kc85_oryol.h"
+#include "yakc_ui/WindowBase.h"
 #include "Time/TimePoint.h"
 #include "Core/Containers/Array.h"
 
-class ui {
+class UI {
 public:
-    /// constructor
-    ui();
     /// setup the UI
-    void setup(yakc::kc85& kc);
+    void Setup(yakc::kc85& kc);
     /// discard the UI
-    void discard();
+    void Discard();
     /// do one frame
-    void onframe(yakc::kc85& kc);
+    void OnFrame(yakc::kc85& kc);
     /// open a window
-    void open(const yakc::kc85& kc, Oryol::Ptr<window> window);
+    void OpenWindow(const yakc::kc85& kc, Oryol::Ptr<WindowBase> window);
 private:
     Oryol::TimePoint curTime;
-    Oryol::Array<Oryol::Ptr<window>> windows;
+    Oryol::Array<Oryol::Ptr<WindowBase>> windows;
 };

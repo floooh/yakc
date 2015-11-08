@@ -1,38 +1,26 @@
 //------------------------------------------------------------------------------
-//  ui_window.cc
+//  WindowBase.cc
 //------------------------------------------------------------------------------
-#include "ui_window.h"
+#include "WindowBase.h"
 #include "Core/String/StringBuilder.h"
 
-OryolClassImpl(window);
+OryolClassImpl(WindowBase);
 
 using namespace Oryol;
 using namespace yakc;
 
-int window::global_unique_id = 0;
+int WindowBase::globalUniqueId = 0;
 
 //------------------------------------------------------------------------------
-window::~window() {
+WindowBase::~WindowBase() {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-window::setup(const kc85&) {
-    // empty
-}
-
-//------------------------------------------------------------------------------
-bool
-window::draw(kc85&) {
-    return false;
-}
-
-//------------------------------------------------------------------------------
-void
-window::set_name(const char* str) {
+WindowBase::setName(const char* str) {
     o_assert(str);
     StringBuilder strBuilder;
-    strBuilder.Format(32, "%s##%d", str, ++global_unique_id);
+    strBuilder.Format(32, "%s##%d", str, ++globalUniqueId);
     this->title = strBuilder.GetString();
 }
