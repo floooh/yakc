@@ -69,8 +69,6 @@ def gen_source(f, out_src, roms) :
 def generate(input, out_src, out_hdr) :
     genutil.setErrorLocation(input, 6)
     inputs = [input]
-    for rom in roms :
-        inputs.append('{}/{}'.format(os.path.dirname(out_hdr), rom))
     outputs = [out_src, out_hdr]
     if genutil.isDirty(Version, inputs, outputs) :
         with open(out_hdr, 'w') as f :
