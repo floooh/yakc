@@ -18,7 +18,7 @@ public:
     /// do one frame
     void OnFrame(yakc::kc85& kc);
     /// open a window
-    void OpenWindow(const yakc::kc85& kc, Oryol::Ptr<WindowBase> window);
+    void OpenWindow(const yakc::kc85& kc, const Oryol::Ptr<WindowBase>& window);
 private:
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;
