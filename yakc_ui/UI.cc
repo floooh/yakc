@@ -37,7 +37,7 @@ UI::Discard() {
 
 //------------------------------------------------------------------------------
 void
-UI::OpenWindow(const kc85& kc, Ptr<WindowBase> win) {
+UI::OpenWindow(const kc85& kc, const Ptr<WindowBase>& win) {
     win->Setup(kc);
     this->windows.Add(win);
 }
