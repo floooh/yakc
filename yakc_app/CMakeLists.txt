@@ -3,6 +3,7 @@ fips_begin_app(yakc_app windowed)
         Main.cc
         Util.h
         Draw.h Draw.cc
+        KC85Oryol.h
     )
     oryol_shader(shaders.shd)
     if (YAKC_UI)

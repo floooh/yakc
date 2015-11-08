@@ -2,6 +2,7 @@
 //  CpuWindow.cc
 //------------------------------------------------------------------------------
 #include "CpuWindow.h"
+#include "Disasm.h"
 
 using namespace Oryol;
 using namespace yakc;
@@ -94,16 +95,14 @@ CpuWindow::Draw(kc85& kc) {
                 kc.cpu.mem.r8(kc.cpu.state.PC+3));
         }
         else {
-            ImGui::TextColored(green, "Next Opcode: 0x%02X 0x%02X 0x%02X 0x%02X",
-            kc.cpu.mem.r8(kc.cpu.state.PC),
-            kc.cpu.mem.r8(kc.cpu.state.PC+1),
-            kc.cpu.mem.r8(kc.cpu.state.PC+2),
-            kc.cpu.mem.r8(kc.cpu.state.PC+3));
+            Disasm disasm;
+            disasm.Disassemble(kc, kc.cpu.state.PC);
+            ImGui::TextColored(green, "Next Instruction: %s", disasm.Result());
         }
 
         /// FIXME: IFF, HALT, ...
         bool kc_paused = kc.paused();
-        if (ImGui::Checkbox("Paused", &kc_paused)) {
+        if (ImGui::Checkbox("Halt", &kc_paused)) {
             kc.pause(kc_paused);
         }
         if (kc_paused) {

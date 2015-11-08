@@ -7,5 +7,7 @@ fips_begin_module(yakc_ui)
         MemoryWindow.cc MemoryWindow.h
         WindowBase.cc WindowBase.h
         ImGuiMemoryEditor.h
+        Disasm.cc Disasm.h
+        z80dasm.cc z80dasm.h
     )
 fips_end_module()

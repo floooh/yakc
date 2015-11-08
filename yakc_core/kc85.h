@@ -42,11 +42,11 @@ public:
     }
     /// the z80 out callback
     static void out_cb(void* userdata, uword port, ubyte val) {
-        printf("out 0x%04X: 0x%02X\n", port, val);
+        // FIXME
     }
     /// the z80 in callback
     static ubyte in_cb(void* userdata, uword port) {
-        printf("in 0x%04X\n", port);
+        // FIXME
         return 0;
     }
     /// fill memory region with noise
