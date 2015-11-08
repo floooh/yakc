@@ -19,6 +19,11 @@ public:
     /// decode video memory into linear RGBA8 buffer
     void DecodeVideoMemory(const yakc::kc85& kc);
 
+    /// apply view port to keep proper aspect ratio when fullscreen
+    void applyViewport();
+    /// restore fullscreen viewport
+    void restoreViewport();
+
     Oryol::Id drawState;
     Oryol::Shaders::CRT::FSTextures fsTextures;
     Oryol::ImageDataAttrs texUpdateAttrs;

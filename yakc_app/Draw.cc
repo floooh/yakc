@@ -45,8 +45,31 @@ void
 Draw::Render(const kc85& kc) {
     this->DecodeVideoMemory(kc);
     Gfx::UpdateTexture(this->fsTextures.IRM, this->irmBuffer, this->texUpdateAttrs);
+    this->applyViewport();
     Gfx::ApplyDrawState(this->drawState, this->fsTextures);
     Gfx::Draw(0);
+    this->restoreViewport();
+}
+
+//------------------------------------------------------------------------------
+void
+Draw::applyViewport() {
+    float aspect = float(320) / float(256);
+    const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
+    const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
+    int viewPortY = 0;
+    int viewPortH = fbHeight;
+    int viewPortW = (const int) (fbHeight * aspect);
+    int viewPortX = (fbWidth - viewPortW) / 2;
+    Gfx::ApplyViewPort(viewPortX, viewPortY, viewPortW, viewPortH);
+}
+
+//------------------------------------------------------------------------------
+void
+Draw::restoreViewport() {
+    const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
+    const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
+    Gfx::ApplyViewPort(0, 0, fbWidth, fbHeight);
 }
 
 //------------------------------------------------------------------------------
