@@ -10,4 +10,5 @@ fips_begin_module(yakc_ui)
         Disasm.cc Disasm.h
         z80dasm.cc z80dasm.h
     )
+    fips_deps(yakc_core)
 fips_end_module()

@@ -37,7 +37,8 @@ public:
     /// constructor
     kc85():
     cur_model(kc_model::none),
-    is_paused(false) {
+    is_paused(false),
+    key_code(0) {
         // empty
     }
     /// the z80 out callback
@@ -64,6 +65,7 @@ public:
         YAKC_ASSERT(!this->on);
         this->cur_model = m;
         this->on = true;
+        this->key_code = 0;
 
         if (kc_model::kc85_3 == m) {
             // copy ROM content
@@ -114,6 +116,7 @@ public:
         // per micro-second, 1750000 / 1000000 T-states are executed
         // thus: num T-states to execute is (micro_secs * 17500000) / 1000000)
         // or: (micro_secs * 175) / 100
+        this->handle_keyboard_input();
         if (!this->is_paused) {
             unsigned int num_tstates = (micro_secs * 175) / 100;
             this->cpu.run(num_tstates);
@@ -136,11 +139,44 @@ public:
         // FIXME
         return true;
     }
+    /// put a key as ASCII code
+    void put_key(ubyte ascii) {
+        this->key_code = ascii;
+    }
+    /// handle keyboard input
+    void handle_keyboard_input() {
+        // NOTE: this is a shortcut and doesn't emulate the hardware's
+        // tricky serial keyboard input. Instead we're directly poking
+        // the ASCII value into the right memory location
+
+        // don't do anything if previous key hasn't been read yet
+        if (0 == (this->cpu.mem.r8(0x1F8) & 1)) {
+            if (0 == this->key_code) {
+                // clear ascii code location
+                this->cpu.mem.w8(0x1FD, 0);
+                // clear repeat count
+                this->cpu.mem.w8(0x1FA, 0);
+            }
+            else {
+                bool overwrite = true;
+                // FIXME: handle repeat
+                if (this->cpu.mem.r8(0x1FD) == this->key_code) {
+                    // FIXME!
+                }
+                if (overwrite) {
+                    this->cpu.mem.w8(0x1FD, this->key_code);
+                    this->cpu.mem.w8(0x1F8, this->cpu.mem.r8(0x1F8)|1);
+                }
+                this->key_code = 0;
+            }
+        }
+    }
 
 private:
     kc_model cur_model;
     bool on;
     bool is_paused;
+    ubyte key_code;
 };
 
 } // namespace yakc
