@@ -3,6 +3,12 @@ Yet another KC emulator (WTF is a 'KC': https://en.wikipedia.org/wiki/KC_85)
 
 [![Build Status](https://travis-ci.org/floooh/yakc.svg)](https://travis-ci.org/floooh/yakc)
 
+Live Demo:
+
+This is a 'mostly uptodate' emscripten-compiled version:
+
+http://floooh.github.io/virtualkc/
+
 Goals:
 - small and portable emulator core in a simple C++
 - emulator core has hooks for keyboard-input, audio/video-output, load/save blocks of memory
