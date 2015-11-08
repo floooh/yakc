@@ -1,8 +1,8 @@
 fips_begin_app(yakc_app windowed)
     fips_files(
-        main.cc
-        util.h
-        draw.h draw.cc
+        Main.cc
+        Util.h
+        Draw.h Draw.cc
     )
     oryol_shader(shaders.shd)
     if (YAKC_UI)

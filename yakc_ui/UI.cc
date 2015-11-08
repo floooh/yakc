@@ -2,7 +2,7 @@
 //  UI.cc
 //------------------------------------------------------------------------------
 #include "UI.h"
-#include "yakc_app/util.h"
+#include "yakc_app/Util.h"
 #include "CpuWindow.h"
 #include "MemoryWindow.h"
 #include "Core/Containers/StaticArray.h"

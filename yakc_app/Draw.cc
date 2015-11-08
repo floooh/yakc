@@ -1,14 +1,14 @@
 //------------------------------------------------------------------------------
-//  draw.cc
+//  Draw.cc
 //------------------------------------------------------------------------------
-#include "draw.h"
+#include "Draw.h"
 
 using namespace Oryol;
 using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-draw::setup(const GfxSetup& gfxSetup) {
+Draw::Setup(const GfxSetup& gfxSetup) {
 
     this->texUpdateAttrs.NumFaces = 1;
     this->texUpdateAttrs.NumMipMaps = 1;
@@ -36,21 +36,21 @@ draw::setup(const GfxSetup& gfxSetup) {
 
 //------------------------------------------------------------------------------
 void
-draw::discard() {
+Draw::Discard() {
     // nothing to do here
 }
 
 //------------------------------------------------------------------------------
 void
-draw::render(const kc85& kc) {
-    this->decode(kc);
+Draw::Render(const kc85& kc) {
+    this->DecodeVideoMemory(kc);
     Gfx::UpdateTexture(this->fsTextures.IRM, this->irmBuffer, this->texUpdateAttrs);
     Gfx::ApplyDrawState(this->drawState, this->fsTextures);
     Gfx::Draw(0);
 }
 
 //------------------------------------------------------------------------------
-static uint32 fg_palette[16] = {
+static uint32 fgPalette[16] = {
     // foreground colors, pixel channel order is ABGR
     // see: http://www.mpm-kc85.de/html/CAOS_42.htm
     0xFF000000,     // black
@@ -73,7 +73,7 @@ static uint32 fg_palette[16] = {
 };
 
 //------------------------------------------------------------------------------
-static uint32 bg_palette[8] = {
+static uint32 bgPalette[8] = {
     // background colors
     0xFF000000,     // dark-black
     0xFFA00000,     // dark-blue
@@ -87,7 +87,7 @@ static uint32 bg_palette[8] = {
 
 //------------------------------------------------------------------------------
 static void
-draw_8_pixels(uint32* ptr, ubyte pixels, ubyte colors, bool blink_bg) {
+Draw8Pixels(uint32* ptr, ubyte pixels, ubyte colors, bool blinkBg) {
 
     // select foreground- and background color:
     //  bit 7: blinking
@@ -97,13 +97,13 @@ draw_8_pixels(uint32* ptr, ubyte pixels, ubyte colors, bool blink_bg) {
     // index 0 is background color, index 1 is foreground color
     ubyte bg_index = colors & 0x7;
     ubyte fg_index = (colors>>3)&0xF;
-    uint32 bg = bg_palette[bg_index];
+    uint32 bg = bgPalette[bg_index];
     uint32 fg;
-    if (blink_bg & (colors & 0x80)) {
+    if (blinkBg & (colors & 0x80)) {
         fg = bg;
     }
     else {
-        fg = fg_palette[fg_index];
+        fg = fgPalette[fg_index];
     }
     ptr[0] = pixels & 0x80 ? fg : bg;
     ptr[1] = pixels & 0x40 ? fg : bg;
@@ -117,7 +117,7 @@ draw_8_pixels(uint32* ptr, ubyte pixels, ubyte colors, bool blink_bg) {
 
 //------------------------------------------------------------------------------
 void
-draw::decode(const kc85& kc) {
+Draw::DecodeVideoMemory(const kc85& kc) {
 
     bool blink_off = !kc.blink_state();
     if (kc.model() == kc85::kc_model::kc85_3) {
@@ -150,7 +150,7 @@ draw::decode(const kc85& kc) {
                 }
                 ubyte src_pixels = pixel_data[pixel_offset];
                 ubyte src_colors = color_data[color_offset];
-                draw_8_pixels(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_off);
+                Draw8Pixels(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_off);
             }
         }
     }

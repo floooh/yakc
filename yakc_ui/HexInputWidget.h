@@ -4,8 +4,8 @@
     @class HexInputWidget
     @brief wrapper class for a hex-input widget
 */
-#include "yakc_app/kc85_oryol.h"
-#include "yakc_app/util.h"
+#include "yakc_app/KC85Oryol.h"
+#include "yakc_app/Util.h"
 #include "Core/String/StringAtom.h"
 #include "imgui.h"
 
@@ -25,7 +25,7 @@ public:
     void Set16(yakc::uword value) {
         this->modeUWord = true;
         this->value = value;
-        util::uword_to_str(value, this->buf, sizeof(this->buf));
+        Util::UWordToStr(value, this->buf, sizeof(this->buf));
     }
     /// get 16-bit value
     yakc::uword Get16() const {
@@ -35,7 +35,7 @@ public:
     void Set8(yakc::ubyte value) {
         this->modeUWord = false;
         this->value = (yakc::uword) value;
-        util::ubyte_to_str(value, this->buf, sizeof(this->buf));
+        Util::UByteToStr(value, this->buf, sizeof(this->buf));
     }
     /// get 8-bit value
     yakc::ubyte Get8() const {
@@ -46,10 +46,10 @@ public:
         const int editFlags = ImGuiInputTextFlags_CharsHexadecimal|ImGuiInputTextFlags_CharsUppercase|ImGuiInputTextFlags_EnterReturnsTrue;
         if (ImGui::InputText(this->label.AsCStr(), this->buf, bufSize, editFlags)) {
             if (this->modeUWord) {
-                this->Set16(util::parse_uword(this->buf, this->Get16()));
+                this->Set16(Util::ParseUWord(this->buf, this->Get16()));
             }
             else {
-                this->Set8(util::parse_uword(this->buf, this->Get8()));
+                this->Set8(Util::ParseUWord(this->buf, this->Get8()));
             }
             return true;
         }

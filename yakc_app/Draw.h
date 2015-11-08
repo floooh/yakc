@@ -1,23 +1,23 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class draw
+    @class Draw
     @brief render the KC video memory via Oryol Gfx module
 */
 #include "Gfx/Gfx.h"
-#include "kc85_oryol.h"
+#include "KC85Oryol.h"
 #include "shaders.h"
 
-class draw {
+class Draw {
 public:
     /// setup the renderer
-    void setup(const Oryol::GfxSetup& setup);
+    void Setup(const Oryol::GfxSetup& setup);
     /// discard the renderer
-    void discard();
+    void Discard();
     /// render one frame
-    void render(const yakc::kc85& kc);
+    void Render(const yakc::kc85& kc);
     /// decode video memory into linear RGBA8 buffer
-    void decode(const yakc::kc85& kc);
+    void DecodeVideoMemory(const yakc::kc85& kc);
 
     Oryol::Id drawState;
     Oryol::Shaders::CRT::FSTextures fsTextures;

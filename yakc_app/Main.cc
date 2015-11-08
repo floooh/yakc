@@ -6,8 +6,8 @@
 #include "Core/App.h"
 #include "Gfx/Gfx.h"
 #include "Input/Input.h"
-#include "kc85_oryol.h"
-#include "draw.h"
+#include "KC85Oryol.h"
+#include "Draw.h"
 #if YAKC_UI
 #include "yakc_ui/UI.h"
 #endif
@@ -23,7 +23,7 @@ public:
 
     Id drawState;
     kc85 kc;
-    class draw draw;
+    Draw draw;
     #if YAKC_UI
     UI ui;
     #endif
@@ -44,12 +44,11 @@ YakcApp::OnInit() {
     Input::Setup();
     Input::BeginCaptureText();
     this->kc.switchon(kc85::kc_model::kc85_3);
+
     #if YAKC_UI
     this->ui.Setup(this->kc);
     #endif
-
-    // setup the renderer
-    this->draw.setup(gfxSetup);
+    this->draw.Setup(gfxSetup);
     
     return AppState::Running;
 }
@@ -60,7 +59,7 @@ YakcApp::OnRunning() {
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.5f,0.5f,0.5f,1.0f)));
     int micro_secs = 1000000 / 60;
     this->kc.onframe(micro_secs);
-    this->draw.render(this->kc);
+    this->draw.Render(this->kc);
     #if YAKC_UI
     this->ui.OnFrame(this->kc);
     #endif
@@ -71,7 +70,7 @@ YakcApp::OnRunning() {
 //------------------------------------------------------------------------------
 AppState::Code
 YakcApp::OnCleanup() {
-    this->draw.discard();
+    this->draw.Discard();
     #if YAKC_UI
     this->ui.Discard();
     #endif

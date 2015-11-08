@@ -6,7 +6,7 @@
 */
 #include "Core/RefCounted.h"
 #include "Core/String/String.h"
-#include "yakc_app/kc85_oryol.h"
+#include "yakc_app/KC85Oryol.h"
 
 class WindowBase : public Oryol::RefCounted {
     OryolClassDecl(WindowBase);

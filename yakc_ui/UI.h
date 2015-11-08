@@ -4,7 +4,7 @@
     @class UI
     @brief imgui-based debugger UI
 */
-#include "yakc_app/kc85_oryol.h"
+#include "yakc_app/KC85Oryol.h"
 #include "yakc_ui/WindowBase.h"
 #include "Time/TimePoint.h"
 #include "Core/Containers/Array.h"
