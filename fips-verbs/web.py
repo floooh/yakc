@@ -7,7 +7,7 @@ import yaml
 import shutil
 import subprocess
 import glob
-from string import Template
+from distutils.dir_util import copy_tree 
 
 from mod import log, util, project, emscripten, android, nacl
 
@@ -26,6 +26,14 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     for name in ['index.html', 'font.ttf', 'style.css', 'emsc.js', 'about.html', 'favicon.png'] :
         log.info('> copy file: {}'.format(name))
         shutil.copy(proj_dir + '/web/' + name, webpage_dir + '/' + name)
+
+    # if the virtualkc directory exists, copy everything there
+    # so that a simple git push is enough to upload
+    # the webpage
+    vkc_dir = '{}/virtualkc'.format(ws_dir)
+    if os.path.isdir(vkc_dir) :
+        log.info(">>> updating virtualkc repository")
+        copy_tree(webpage_dir, vkc_dir)
 
 #-------------------------------------------------------------------------------
 def build_deploy_webpage(fips_dir, proj_dir) :

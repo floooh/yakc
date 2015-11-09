@@ -91,7 +91,6 @@ a.nav-link:hover, a.nav-link:active {
     margin-right: auto;
     border: 0px none;
     display: block;
-    outline: black solid thin;
 }
 .game:-webkit-full-screen {
     width: 100%;
