@@ -7,7 +7,7 @@
 #include "yakc_app/KC85Oryol.h"
 #include "yakc_app/Util.h"
 #include "Core/String/StringAtom.h"
-#include "imgui.h"
+#include "IMUI/IMUI.h"
 
 class HexInputWidget {
 public:

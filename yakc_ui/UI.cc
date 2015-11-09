@@ -5,6 +5,7 @@
 #include "yakc_app/Util.h"
 #include "CpuWindow.h"
 #include "MemoryWindow.h"
+#include "DisasmWindow.h"
 #include "Core/Containers/StaticArray.h"
 #include "IMUI/IMUI.h"
 #include "Time/Clock.h"
@@ -49,23 +50,23 @@ UI::OnFrame(kc85& kc) {
 
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(kc.model() == kc85::kc_model::kc85_3 ? "KC85/3":"KC85/4")) {
-            if (ImGui::MenuItem("Power Cycle...")) {
+            if (ImGui::MenuItem("Power Cycle")) {
                 kc.switchoff();
                 kc.switchon(kc.model());
             }
-            if (ImGui::MenuItem("Reset...")) {
+            if (ImGui::MenuItem("Reset")) {
                 kc.reset();
             }
-            if (ImGui::MenuItem("Reboot to KC85/3... (TODO)")) {
+            if (ImGui::MenuItem("Reboot to KC85/3 (TODO)")) {
                 // FIXME
             }
-            if (ImGui::MenuItem("Reboot to KC85/4... (TODO)")) {
+            if (ImGui::MenuItem("Reboot to KC85/4 (TODO)")) {
                 // FIXME
             }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Debugger")) {
-            if (ImGui::MenuItem("CPU State...")) {
+            if (ImGui::MenuItem("CPU State")) {
                 this->OpenWindow(kc, CpuWindow::Create());
             }
             StringBuilder strBuilder;
@@ -74,7 +75,7 @@ UI::OnFrame(kc85& kc) {
                     "RAM0", "RAM1", "IRM", "ROM"
                 };
                 if (kc.cpu.mem.get_bank_ptr(i)) {
-                    strBuilder.Format(32, "Memory %s...", bank_names[i]);
+                    strBuilder.Format(32, "Memory %s", bank_names[i]);
                     if (ImGui::MenuItem(strBuilder.GetString().AsCStr())) {
                         auto win = MemoryWindow::Create();
                         win->MemoryBankIndex = i;
@@ -82,8 +83,8 @@ UI::OnFrame(kc85& kc) {
                     }
                 }
             }
-            if (ImGui::MenuItem("Disassembler... (TODO)")) {
-                // FIXME
+            if (ImGui::MenuItem("Disassembler")) {
+                this->OpenWindow(kc, DisasmWindow::Create());
             }
             ImGui::EndMenu();
         }
