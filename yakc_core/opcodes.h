@@ -3119,7 +3119,7 @@ inline void z80::step() {
         break;
     case 0xf0:
         // RET P
-        if ((!(state.F & NF))) {
+        if ((!(state.F & SF))) {
             state.PC = mem.r16(state.SP);
             state.SP += 2;
             state.T += 11;
@@ -3136,7 +3136,7 @@ inline void z80::step() {
         break;
     case 0xf2:
         // JP P,nn
-        state.PC = (!(state.F & NF)) ? mem.r16(state.PC) : state.PC+2;
+        state.PC = (!(state.F & SF)) ? mem.r16(state.PC) : state.PC+2;
         state.T += 10;
         break;
     case 0xf3:
@@ -3146,7 +3146,7 @@ inline void z80::step() {
         break;
     case 0xf4:
         // CALL P,nn
-        if ((!(state.F & NF))) {
+        if ((!(state.F & SF))) {
             state.SP -= 2;
             mem.w16(state.SP, state.PC+2);
             state.PC = mem.r16(state.PC);
@@ -3171,7 +3171,7 @@ inline void z80::step() {
         break;
     case 0xf8:
         // RET M
-        if ((state.F & NF)) {
+        if ((state.F & SF)) {
             state.PC = mem.r16(state.SP);
             state.SP += 2;
             state.T += 11;
@@ -3187,7 +3187,7 @@ inline void z80::step() {
         break;
     case 0xfa:
         // JP M,nn
-        state.PC = (state.F & NF) ? mem.r16(state.PC) : state.PC+2;
+        state.PC = (state.F & SF) ? mem.r16(state.PC) : state.PC+2;
         state.T += 10;
         break;
     case 0xfb:
@@ -3197,7 +3197,7 @@ inline void z80::step() {
         break;
     case 0xfc:
         // CALL M,nn
-        if ((state.F & NF)) {
+        if ((state.F & SF)) {
             state.SP -= 2;
             mem.w16(state.SP, state.PC+2);
             state.PC = mem.r16(state.PC);

@@ -2302,7 +2302,7 @@ TEST(JP_cc_nn) {
         0xEA, 0x1D, 0x02,   //          JP PE,label2
         0xE2, 0x1D, 0x02,   //          JP PO,label2
         0x00,               //          NOP
-        0xD6, 0x03,         // label2:  SUB 0x03
+        0xC6, 0xFD,         // label2:  ADD A,0xFD
         0xF2, 0x26, 0x02,   //          JP P,label3
         0xFA, 0x26, 0x02,   //          JP M,label3
         0x00,               //          NOP
@@ -2323,11 +2323,10 @@ TEST(JP_cc_nn) {
     cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(55 == cpu.state.T);
     cpu.step(); CHECK(0x0219 == cpu.state.PC); CHECK(65 == cpu.state.T);
     cpu.step(); CHECK(0x021D == cpu.state.PC); CHECK(75 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(82 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(82 == cpu.state.T);
     cpu.step(); CHECK(0x0222 == cpu.state.PC); CHECK(92 == cpu.state.T);
     cpu.step(); CHECK(0x0226 == cpu.state.PC); CHECK(102 == cpu.state.T);
-    cpu.step(); CHECK(0x0229 == cpu.state.PC); CHECK(112 == cpu.state.T);
-    cpu.step(); CHECK(0x022D == cpu.state.PC); CHECK(122 == cpu.state.T);
+    cpu.step(); CHECK(0x022D == cpu.state.PC); CHECK(112 == cpu.state.T);
 }
 
 TEST(JP_JR) {
