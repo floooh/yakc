@@ -10,12 +10,12 @@ using namespace yakc;
 OryolClassImpl(CpuWindow);
 
 static const z80::reg regs16[] = {
-    z80::AF, z80::BC, z80::DE, z80::HL,
-    z80::AF_, z80::BC_, z80::DE_, z80::HL_,
-    z80::IX, z80::IY, z80::SP, z80::PC
+    z80::rAF, z80::rBC, z80::rDE, z80::rHL,
+    z80::rAF_, z80::rBC_, z80::rDE_, z80::rHL_,
+    z80::rIX, z80::rIY, z80::rSP, z80::rPC
 };
 static const z80::reg regs8[] = {
-    z80::I, z80::R, z80::IM
+    z80::rI, z80::rR, z80::rIM
 };
 
 //------------------------------------------------------------------------------

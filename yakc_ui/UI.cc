@@ -53,8 +53,8 @@ UI::OnFrame(kc85& kc) {
                 kc.switchoff();
                 kc.switchon(kc.model());
             }
-            if (ImGui::MenuItem("Reset... (TODO)")) {
-                // FIXME
+            if (ImGui::MenuItem("Reset...")) {
+                kc.reset();
             }
             if (ImGui::MenuItem("Reboot to KC85/3... (TODO)")) {
                 // FIXME
