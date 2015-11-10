@@ -20,6 +20,7 @@ Python 2.7.10
 cmake version 3.3.2
 > git clone https://github.com/floooh/yakc
 > cd yakc
+> ./fips gen
 > ./fips make yakc_app
 > ./fips run yakc_app
 ```
