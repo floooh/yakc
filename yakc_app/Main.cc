@@ -86,6 +86,14 @@ YakcApp::OnCleanup() {
 //------------------------------------------------------------------------------
 void
 YakcApp::handleInput() {
+
+    // don't handle KC input if IMGUI has the keyboard focus
+    #if YAKC_UI
+    if (ImGui::GetIO().WantCaptureKeyboard) {
+        return;
+    }
+    #endif
+
     const Keyboard& kbd = Input::Keyboard();
     const wchar_t* text = kbd.CapturedText();
     ubyte ascii = 0;

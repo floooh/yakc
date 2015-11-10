@@ -7,6 +7,7 @@ inline void z80::step() {
     int d;
     uword u16tmp;
     state.INV = false;
+    store_pc_history();
     switch (fetch_op()) {
     case 0x0:
         // NOP

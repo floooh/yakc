@@ -5,15 +5,21 @@
 #include "yakc_app/Util.h"
 #include "CpuWindow.h"
 #include "MemoryWindow.h"
-#include "DisasmWindow.h"
+#include "DebugWindow.h"
 #include "Core/Containers/StaticArray.h"
-#include "IMUI/IMUI.h"
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
 
 using namespace Oryol;
 using namespace yakc;
+
+const ImVec4 UI::ColorText = ImColor(255, 255, 255).Value;
+const ImVec4 UI::ColorDetail = ImColor(164, 17, 6).Value;
+const ImVec4 UI::ColorDetailBright = ImColor(230, 17, 6).Value;
+const ImVec4 UI::ColorDetailDark = ImColor(94, 17, 6).Value;
+const ImVec4 UI::ColorBackground = ImColor(32, 32, 32).Value;
+const ImVec4 UI::ColorBackgroundLight = ImColor(96, 96, 96).Value;
 
 //------------------------------------------------------------------------------
 void
@@ -25,7 +31,32 @@ UI::Setup(kc85& kc) {
     style.Alpha = 1.0f;
     style.WindowFillAlphaDefault = 1.0f;
     style.WindowTitleAlign = ImGuiAlign_Center;
-    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
+    style.TouchExtraPadding = ImVec2(5.0f, 5.0f);
+    style.AntiAliasedLines = false;
+    style.AntiAliasedShapes = false;
+
+    /*
+    style.Colors[ImGuiCol_Text] = ColorText;
+    style.Colors[ImGuiCol_Border] = ColorDetail;
+    style.Colors[ImGuiCol_TitleBg] = ColorDetail;
+    style.Colors[ImGuiCol_FrameBg] = ColorBackgroundLight;
+    style.Colors[ImGuiCol_FrameBgHovered] = ColorDetail;
+    style.Colors[ImGuiCol_FrameBgActive] = ColorDetail;
+    style.Colors[ImGuiCol_WindowBg] = ColorBackground;
+    style.Colors[ImGuiCol_ChildWindowBg] = ColorBackground;
+    style.Colors[ImGuiCol_TitleBgActive] = ColorDetail;
+    style.Colors[ImGuiCol_MenuBarBg] = ColorDetail;
+    style.Colors[ImGuiCol_CheckMark] = ColorDetailBright;
+    style.Colors[ImGuiCol_SliderGrab] = ColorDetail;
+    style.Colors[ImGuiCol_SliderGrabActive] = ColorDetail;
+    style.Colors[ImGuiCol_Button] = ColorDetail;
+    style.Colors[ImGuiCol_ButtonHovered] = ColorDetailBright;
+    style.Colors[ImGuiCol_ButtonActive] = ColorDetailDark;
+    style.Colors[ImGuiCol_ScrollbarBg] = ColorBackgroundLight;
+    style.Colors[ImGuiCol_ScrollbarGrab] = ColorDetail;
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ColorDetailBright;
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = ColorDetailBright;
+    */
 
     this->curTime = Clock::Now();
 }
@@ -65,7 +96,7 @@ UI::OnFrame(kc85& kc) {
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Debugger")) {
+        if (ImGui::BeginMenu("Window")) {
             if (ImGui::MenuItem("CPU State")) {
                 this->OpenWindow(kc, CpuWindow::Create());
             }
@@ -83,8 +114,8 @@ UI::OnFrame(kc85& kc) {
                     }
                 }
             }
-            if (ImGui::MenuItem("Disassembler")) {
-                this->OpenWindow(kc, DisasmWindow::Create());
+            if (ImGui::MenuItem("Debugger")) {
+                this->OpenWindow(kc, DebugWindow::Create());
             }
             ImGui::EndMenu();
         }

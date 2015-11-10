@@ -84,6 +84,12 @@ public:
 
     /// memory map
     memory mem;
+    /// size of PC history ringbuffer (must be 2^N!)
+    static const int pc_history_size = 8;
+    /// current pc history position
+    int pc_history_pos;
+    /// a history ringbuffer of previous PC addresses
+    uword pc_history[pc_history_size];
 
     /// input hook typedef, take a port number, return value at that port
     typedef ubyte (*cb_in)(void* userdata, uword port);
@@ -99,16 +105,22 @@ public:
 
     /// constructor
     z80();
+
     /// setup input and output handler
     void set_inout_handlers(cb_in func_in, cb_out func_out, void* userdata);
     /// perform a reset (RESET pin triggered)
     void reset();
+
     /// called when invalid opcode has been hit
     void invalid_opcode(uword opsize);
+    /// store current pc in history ringbuffer
+    void store_pc_history();
+    /// get pc from history ringbuffer (0 is oldest entry)
+    uword get_pc_history(int index) const;
+
     /// execute a single instruction and update machine state
     void step();
-    /// run for at least 't' T-states, returns number of actually executed T-states
-    unsigned int run(unsigned int t);
+
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
     /// set an 8-bit register value by enum (slow)
@@ -215,10 +227,12 @@ public:
 
 //------------------------------------------------------------------------------
 inline z80::z80() :
+pc_history_pos(0),
 in_func(nullptr),
 out_func(nullptr),
 inout_userdata(nullptr) {
     memset(&this->state, 0, sizeof(this->state));
+    memset(&this->pc_history, 0, sizeof(this->pc_history));
 }
 
 //------------------------------------------------------------------------------
@@ -243,20 +257,24 @@ z80::reset() {
 
 //------------------------------------------------------------------------------
 inline void
+z80::store_pc_history() {
+    pc_history[pc_history_pos++] = state.PC;
+    pc_history_pos &= pc_history_size-1;
+}
+
+//------------------------------------------------------------------------------
+inline uword
+z80::get_pc_history(int index) const {
+    int i = ((this->pc_history_pos-pc_history_size)+index) & (pc_history_size-1);
+    return pc_history[i];
+}
+
+//------------------------------------------------------------------------------
+inline void
 z80::invalid_opcode(uword opsize) {
     state.INV = true;
     state.PC -= opsize;     // stuck on invalid opcode
     state.T  += 4;          // fantasy value
-}
-
-//------------------------------------------------------------------------------
-inline unsigned int
-z80::run(unsigned int t) {
-    state.T = 0;
-    while (state.T < t) {
-        step();
-    }
-    return state.T;
 }
 
 //------------------------------------------------------------------------------

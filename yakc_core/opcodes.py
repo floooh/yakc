@@ -2237,6 +2237,7 @@ def gen_source(f, ops, ext_ops) :
     f.write('    int d;\n')
     f.write('    uword u16tmp;\n')
     f.write('    state.INV = false;\n')
+    f.write('    store_pc_history();\n')
     f.write('    switch (fetch_op()) {\n')
     
     # generate the switch case in sorted order

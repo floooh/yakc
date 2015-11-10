@@ -8,6 +8,7 @@
 #include "yakc_ui/WindowBase.h"
 #include "Time/TimePoint.h"
 #include "Core/Containers/Array.h"
+#include "IMUI/IMUI.h"
 
 class UI {
 public:
@@ -19,6 +20,14 @@ public:
     void OnFrame(yakc::kc85& kc);
     /// open a window
     void OpenWindow(const yakc::kc85& kc, const Oryol::Ptr<WindowBase>& window);
+
+    static const ImVec4 ColorText;
+    static const ImVec4 ColorDetail;
+    static const ImVec4 ColorDetailBright;
+    static const ImVec4 ColorDetailDark;
+    static const ImVec4 ColorBackground;
+    static const ImVec4 ColorBackgroundLight;
+
 private:
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;

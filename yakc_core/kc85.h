@@ -26,6 +26,12 @@ public:
 
     /// the Z80 CPU
     z80 cpu;
+    /// breakpoint is enabled?
+    bool breakpoint_enabled;
+    /// breakpoint address
+    uword breakpoint_address;
+    /// currently paused?
+    bool paused;
 
     /// supported KC types
     enum class kc_model {
@@ -54,12 +60,10 @@ public:
     void reset();
     /// process one frame
     void onframe(int micro_secs);
-    /// pause/continue execution
-    void pause(bool paused);
-    /// return true if currently paused
-    bool paused() const;
-    /// execute next instruction
+    /// do one step
     void step();
+    /// do a debug-step (executes until PC changes)
+    void debug_step();
     /// get current video blink state
     bool blink_state() const;
     /// put a key as ASCII code
@@ -70,14 +74,15 @@ public:
 private:
     kc_model cur_model;
     bool on;
-    bool is_paused;
     ubyte key_code;
 };
 
 //------------------------------------------------------------------------------
 inline kc85::kc85():
+breakpoint_enabled(false),
+breakpoint_address(0x0000),
+paused(false),
 cur_model(kc_model::none),
-is_paused(false),
 key_code(0) {
     // empty
 }
@@ -177,22 +182,37 @@ kc85::onframe(int micro_secs) {
     // thus: num T-states to execute is (micro_secs * 17500000) / 1000000)
     // or: (micro_secs * 175) / 100
     this->handle_keyboard_input();
-    if (!this->is_paused) {
-        unsigned int num_tstates = (micro_secs * 175) / 100;
-        this->cpu.run(num_tstates);
+    if (!this->paused) {
+        const unsigned int num_tstates = (micro_secs * 175) / 100;
+        cpu.state.T = 0;
+        if (this->breakpoint_enabled) {
+            // check if breakpoint has been hit before each cpu-step
+            while (cpu.state.T < num_tstates) {
+                if (cpu.state.PC == this->breakpoint_address) {
+                    this->paused = true;
+                    break;
+                }
+                cpu.step();
+            }
+        }
+        else {
+            // fast loop without breakpoint check
+            while (cpu.state.T < num_tstates) {
+                cpu.step();
+            }
+        }
     }
 }
 
 //------------------------------------------------------------------------------
 inline void
-kc85::pause(bool paused) {
-    this->is_paused = paused;
-}
-
-//------------------------------------------------------------------------------
-inline bool
-kc85::paused() const {
-    return this->is_paused;
+kc85::debug_step() {
+    uword pc;
+    do {
+        pc = this->cpu.state.PC;
+        cpu.step();
+    }
+    while ((pc == cpu.state.PC) && !cpu.state.INV);
 }
 
 //------------------------------------------------------------------------------

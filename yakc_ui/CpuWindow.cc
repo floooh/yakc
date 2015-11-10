@@ -101,11 +101,8 @@ CpuWindow::Draw(kc85& kc) {
         }
 
         /// FIXME: IFF, HALT, ...
-        bool kc_paused = kc.paused();
-        if (ImGui::Checkbox("Halt", &kc_paused)) {
-            kc.pause(kc_paused);
-        }
-        if (kc_paused) {
+        ImGui::Checkbox("Halt", &kc.paused);
+        if (kc.paused) {
             ImGui::SameLine();
             if (ImGui::Button("Step")) {
                 kc.step();
