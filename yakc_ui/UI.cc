@@ -3,7 +3,6 @@
 //------------------------------------------------------------------------------
 #include "UI.h"
 #include "yakc_app/Util.h"
-#include "CpuWindow.h"
 #include "MemoryWindow.h"
 #include "DebugWindow.h"
 #include "Core/Containers/StaticArray.h"
@@ -97,9 +96,6 @@ UI::OnFrame(kc85& kc) {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Window")) {
-            if (ImGui::MenuItem("CPU State")) {
-                this->OpenWindow(kc, CpuWindow::Create());
-            }
             StringBuilder strBuilder;
             for (int i = 0; i < memory::num_banks; i++) {
                 static const char* bank_names[memory::num_banks] = {
