@@ -22,20 +22,20 @@ public:
     ubyte irm0[0x4000];
 
     /// PIO-A bits
-    enum class pio_a {
-        CAOS_ROM    = (1<<0),
-        RAM         = (1<<1),
-        IRM         = (1<<2),
-        RAM_RO      = (1<<3),
-        UNUSED      = (1<<4),
-        LED_TAPE    = (1<<5),
-        CASS_MOTOR  = (1<<6),
-        BASIC_ROM   = (1<<7),
+    enum {
+        PIO_A_CAOS_ROM    = (1<<0),
+        PIO_A_RAM         = (1<<1),
+        PIO_A_IRM         = (1<<2),
+        PIO_A_RAM_RO      = (1<<3),
+        PIO_A_UNUSED      = (1<<4),
+        PIO_A_TAPE_LED    = (1<<5),
+        PIO_A_TAPE_MOTOR  = (1<<6),
+        PIO_A_BASIC_ROM   = (1<<7),
     };
     /// PIO-B bits
-    enum class pio_b {
-        VOLUME_MASK = (1<<5)-1,
-        BLINK_ENABLED = (1<<7),
+    enum pio_b {
+        PIO_B_VOLUME_MASK = (1<<5)-1,
+        PIO_B_BLINK_ENABLED = (1<<7),
     };
 
     /// the Z80 CPU
@@ -144,7 +144,7 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             // CTC3
         default:
             // unknown
-//            YAKC_ASSERT(false);
+            YAKC_ASSERT(false);
             break;
     }
 }

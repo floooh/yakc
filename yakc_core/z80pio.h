@@ -17,7 +17,7 @@ public:
     enum channel {
         A = 0,
         B = 1,
-        num_channels = 2
+        num_channels = 2,
     };
 
     /// channel state
@@ -45,7 +45,7 @@ public:
 //------------------------------------------------------------------------------
 inline void
 z80pio::init() {
-    for (int i = 0; i < num_channels; i++) {
+    for (unsigned int i = 0; i < num_channels; i++) {
         channel_state[i].interrupt_vector = 0;
         channel_state[i].interrupt_enabled = false;
         channel_state[i].mode = 0;
@@ -56,7 +56,7 @@ z80pio::init() {
 //------------------------------------------------------------------------------
 inline void
 z80pio::reset() {
-    for (int i = 0; i < num_channels; i++) {
+    for (unsigned int i = 0; i < num_channels; i++) {
         channel_state[i].interrupt_enabled = false;
         channel_state[i].mode = 0;
         channel_data[i] = 0;

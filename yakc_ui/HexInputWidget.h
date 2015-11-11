@@ -49,7 +49,7 @@ public:
                 this->Set16(Util::ParseUWord(this->buf, this->Get16()));
             }
             else {
-                this->Set8(Util::ParseUWord(this->buf, this->Get8()));
+                this->Set8(Util::ParseUByte(this->buf, this->Get8()));
             }
             return true;
         }

@@ -5,7 +5,7 @@
 #include "yakc_app/Util.h"
 #include "MemoryWindow.h"
 #include "DebugWindow.h"
-#include "Core/Containers/StaticArray.h"
+#include "PIOWindow.h"
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -106,6 +106,9 @@ UI::OnFrame(kc85& kc) {
             }
             if (ImGui::MenuItem("Debugger")) {
                 this->OpenWindow(kc, DebugWindow::Create());
+            }
+            if (ImGui::MenuItem("Z80 PIO")) {
+                this->OpenWindow(kc, PIOWindow::Create());
             }
             ImGui::EndMenu();
         }

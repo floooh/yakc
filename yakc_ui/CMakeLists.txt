@@ -8,6 +8,7 @@ fips_begin_module(yakc_ui)
         ImGuiMemoryEditor.h
         Disasm.cc Disasm.h
         DebugWindow.cc DebugWindow.h
+        PIOWindow.cc PIOWindow.h
         z80dasm.cc z80dasm.h
     )
     fips_deps(yakc_core)
