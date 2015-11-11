@@ -5,6 +5,7 @@
     @brief wrapper class for the entire KC85/3 or KC85/4 system
 */
 #include "z80.h"
+#include "z80pio.h"
 #include "roms.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,8 +25,27 @@ public:
     /// rom bank 1 (0xC000..0xFFFF)
     ubyte rom0[memory::bank::size];
 
+    /// PIO-A bits
+    enum class pio_a {
+        CAOS_ROM    = (1<<0),
+        RAM         = (1<<1),
+        IRM         = (1<<2),
+        RAM_RO      = (1<<3),
+        UNUSED      = (1<<4),
+        LED_TAPE    = (1<<5),
+        CASS_MOTOR  = (1<<6),
+        BASIC_ROM   = (1<<7),
+    };
+    /// PIO-B bits
+    enum class pio_b {
+        VOLUME_MASK = (1<<5)-1,
+        COLOR_BLINK = (1<<7),
+    };
+
     /// the Z80 CPU
     z80 cpu;
+    /// the z80 PIO
+    z80pio pio;
     /// breakpoint is enabled?
     bool breakpoint_enabled;
     /// breakpoint address
@@ -90,14 +110,58 @@ key_code(0) {
 //------------------------------------------------------------------------------
 inline void
 kc85::out_cb(void* userdata, uword port, ubyte val) {
-    // FIXME
+    kc85* self = (kc85*)userdata;
+    switch (port & 0xFF) {
+        case 0x80:
+            // module control
+            break;
+        case 0x88:
+            self->pio.write(z80pio::A, val);
+            break;
+        case 0x89:
+            self->pio.write(z80pio::B, val);
+            break;
+        case 0x8A:
+            self->pio.control(z80pio::A, val);
+            break;
+        case 0x8B:
+            self->pio.control(z80pio::B, val);
+            break;
+        case 0x8C:
+            // CTC0
+            break;
+        case 0x8D:
+            // CTC1
+            break;
+        case 0x8E:
+            // CTC2
+            break;
+        case 0x8F:
+            // CTC3
+        default:
+            // unknown
+            YAKC_ASSERT(false);
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------
 inline ubyte
 kc85::in_cb(void* userdata, uword port) {
-    // FIXME
-    return 0;
+    kc85* self = (kc85*)userdata;
+    switch (port & 0xFF) {
+        case 0x80:
+            // FIXME: module ids
+            return 0;
+        case 0x88:
+            return self->pio.read(z80pio::A);
+        case 0x89:
+            return self->pio.read(z80pio::B);
+        default:
+            // unknown
+            YAKC_ASSERT(false);
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -138,6 +202,7 @@ kc85::switchon(kc_model m) {
         this->cpu.mem.map(3, this->rom0, sizeof(this->rom0), memory::type::rom);
         this->cpu.set_inout_handlers(in_cb, out_cb, this);
     }
+    this->pio.init();
     this->cpu.reset();
 
     // execution on switch-on starts at 0xF000
@@ -147,6 +212,7 @@ kc85::switchon(kc_model m) {
 //------------------------------------------------------------------------------
 inline void
 kc85::reset() {
+    this->pio.reset();
     this->cpu.reset();
     // execution after reset starts at 0xE000
     this->cpu.state.PC = 0xE000;
