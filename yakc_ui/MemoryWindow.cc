@@ -16,19 +16,26 @@ MemoryWindow::Setup(const kc85& kc) {
 }
 
 //------------------------------------------------------------------------------
+static ubyte
+read_func(void* userdata, uword addr) {
+    kc85* kc = (kc85*) userdata;
+    return kc->cpu.mem.r8(addr);
+}
+
+//------------------------------------------------------------------------------
+static void
+write_func(void* userdata, uword addr, ubyte value) {
+    kc85* kc = (kc85*) userdata;
+    kc->cpu.mem.w8(addr, value);
+}
+
+//------------------------------------------------------------------------------
 bool
 MemoryWindow::Draw(kc85& kc) {
-    ubyte* ptr = kc.cpu.mem.get_bank_ptr(this->MemoryBankIndex);
-    size_t base_display_addr = this->MemoryBankIndex * memory::bank::size;
-    if (ptr) {
-        this->edit.AllowEdits = kc.cpu.mem.is_bank_writable(this->MemoryBankIndex);
-        ImGui::SetNextWindowSize(ImVec2(512, 96), ImGuiSetCond_Once);
-        if (this->edit.Draw(this->title.AsCStr(), ptr, memory::bank::size, base_display_addr)) {
-            this->Visible = true;
-        }
-        else {
-            this->Visible = false;
-        }
+    this->edit.AllowEdits = true;
+    ImGui::SetNextWindowSize(ImVec2(512, 256), ImGuiSetCond_Once);
+    if (this->edit.Draw(this->title.AsCStr(), read_func, write_func, &kc)) {
+        this->Visible = true;
     }
     else {
         this->Visible = false;

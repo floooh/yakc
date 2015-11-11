@@ -15,15 +15,11 @@ namespace yakc {
 class kc85 {
 public:
     /// ram bank 0 (0x0000..0x3FFF)
-    ubyte ram0[memory::bank::size];
+    ubyte ram0[0x4000];
     /// ram bank 1 (0x4000..0x7FFF), optional in KC85/3
-    ubyte ram1[memory::bank::size];
+    ubyte ram1[0x4000];
     /// vidmem bank 0 (0x8000..0xBFFF)
-    ubyte irm0[memory::bank::size];
-    /// vidmem bank 1 (0x8000..0xBFFF), only in KC85/4
-    ubyte irm1[memory::bank::size];
-    /// rom bank 1 (0xC000..0xFFFF)
-    ubyte rom0[memory::bank::size];
+    ubyte irm0[0x4000];
 
     /// PIO-A bits
     enum class pio_a {
@@ -39,7 +35,7 @@ public:
     /// PIO-B bits
     enum class pio_b {
         VOLUME_MASK = (1<<5)-1,
-        COLOR_BLINK = (1<<7),
+        BLINK_ENABLED = (1<<7),
     };
 
     /// the Z80 CPU
@@ -69,9 +65,13 @@ public:
     /// fill memory region with noise
     static void fill_noise(void* ptr, int num_bytes);
     /// power-on the device
-    void switchon(kc_model m);
+    void switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size);
     /// power-off the device
     void switchoff();
+    /// get pointer to currently mapped rom
+    ubyte* caos_rom() const;
+    /// get size of currently mapped rom
+    uword caos_rom_size() const;
     /// return true if device is switched on
     bool ison() const;
     /// get the KC model
@@ -95,6 +95,8 @@ private:
     kc_model cur_model;
     bool on;
     ubyte key_code;
+    ubyte* cur_caos_rom;
+    uword cur_caos_rom_size;
 };
 
 //------------------------------------------------------------------------------
@@ -102,8 +104,10 @@ inline kc85::kc85():
 breakpoint_enabled(false),
 breakpoint_address(0x0000),
 paused(false),
-cur_model(kc_model::none),
-key_code(0) {
+cur_model(kc_model::kc85_3),
+key_code(0),
+cur_caos_rom(rom_caos31),
+cur_caos_rom_size(sizeof(rom_caos31)) {
     // empty
 }
 
@@ -140,7 +144,7 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             // CTC3
         default:
             // unknown
-            YAKC_ASSERT(false);
+//            YAKC_ASSERT(false);
             break;
     }
 }
@@ -177,29 +181,28 @@ kc85::fill_noise(void* ptr, int num_bytes) {
 
 //------------------------------------------------------------------------------
 inline void
-kc85::switchon(kc_model m) {
+kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
     YAKC_ASSERT(kc_model::none != m);
     YAKC_ASSERT(!this->on);
     this->cur_model = m;
+    this->cur_caos_rom = caos_rom;
+    this->cur_caos_rom_size = caos_rom_size;
     this->on = true;
     this->key_code = 0;
 
     if (kc_model::kc85_3 == m) {
-        // copy ROM content
-        YAKC_ASSERT(8192 == sizeof(rom_basic_c0));
-        YAKC_ASSERT(8192 == sizeof(rom_caos31));
-
-        // copy the ROM content
-        memcpy(this->rom0, rom_basic_c0, sizeof(rom_basic_c0));
-        memcpy(this->rom0 + sizeof(rom_basic_c0), rom_caos31, sizeof(rom_caos31));
-
         // fill RAM banks with noise
         fill_noise(this->ram0, sizeof(this->ram0));
         fill_noise(this->irm0, sizeof(this->irm0));
 
-        this->cpu.mem.map(0, this->ram0, sizeof(this->ram0), memory::type::ram);
-        this->cpu.mem.map(2, this->irm0, sizeof(this->irm0), memory::type::ram);
-        this->cpu.mem.map(3, this->rom0, sizeof(this->rom0), memory::type::rom);
+        // initial memory map
+        YAKC_ASSERT(0x2000 == sizeof(rom_basic_c0));
+        YAKC_ASSERT(0x2000 == caos_rom_size);
+        this->cpu.mem.map(0x0000, sizeof(this->ram0), this->ram0, true);
+        this->cpu.mem.map(0x8000, sizeof(this->irm0), this->irm0, true);
+        this->cpu.mem.map(0xC000, 0x2000, rom_basic_c0, false);
+        this->cpu.mem.map(0xE000, 0x2000, caos_rom, false);
+
         this->cpu.set_inout_handlers(in_cb, out_cb, this);
     }
     this->pio.init();
@@ -222,10 +225,20 @@ kc85::reset() {
 inline void
 kc85::switchoff() {
     YAKC_ASSERT(this->on);
-    for (int i = 0; i < memory::num_banks; i++) {
-        this->cpu.mem.unmap(i);
-    }
+    this->cpu.mem.unmap_all();
     this->on = false;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte*
+kc85::caos_rom() const {
+    return this->cur_caos_rom;
+}
+
+//------------------------------------------------------------------------------
+inline uword
+kc85::caos_rom_size() const {
+    return this->cur_caos_rom_size;
 }
 
 //------------------------------------------------------------------------------

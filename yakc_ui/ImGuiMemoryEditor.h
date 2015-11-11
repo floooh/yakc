@@ -24,13 +24,22 @@
 
 struct MemoryEditor
 {
+    typedef unsigned char ubyte;
+    typedef unsigned short uword;
+
+    typedef ubyte (*cb_read)(void* userdata, uword addr);
+    typedef void (*cb_write)(void* userdata, uword addr, ubyte value);
+
     bool    Open;
     bool    AllowEdits;
     int     Rows;
     int     DataEditingAddr;
     bool    DataEditingTakeFocus;
     char    DataInput[32];
-    char    AddrInput[32];
+    char    MemAddrInput[32];
+    char    MemSizeInput[32];
+    uword   MemAddr;
+    uword   MemSize;
 
     MemoryEditor()
     {
@@ -38,12 +47,14 @@ struct MemoryEditor
         Rows = 16;
         DataEditingAddr = -1;
         DataEditingTakeFocus = false;
-        strcpy(DataInput, "");
-        strcpy(AddrInput, "");
         AllowEdits = true;
+        MemAddr = 0x0000;
+        MemSize = 0x1000;
+        sprintf(MemAddrInput, "%04X", MemAddr);
+        sprintf(MemSizeInput, "%04X", MemSize);
     }
 
-    bool Draw(const char* title, unsigned char* mem_data, int mem_size, size_t base_display_addr = 0)
+    bool Draw(const char* title, cb_read read_func, cb_write write_func, void* userdata)
     {
         if (ImGui::Begin(title, &Open))
         {
@@ -52,31 +63,27 @@ struct MemoryEditor
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
 
-            int addr_digits_count = 0;
-            for (int n = base_display_addr + mem_size - 1; n > 0; n >>= 4)
-                addr_digits_count++;
-
             float glyph_width = ImGui::CalcTextSize("F").x;
             float cell_width = glyph_width * 3; // "FF " we include trailing space in the width to easily catch clicks everywhere
 
             float line_height = ImGui::GetTextLineHeight();
-            int line_total_count = (int)((mem_size + Rows-1) / Rows);
+            int line_total_count = (int)((MemSize + Rows-1) / Rows);
             ImGuiListClipper clipper(line_total_count, line_height);
             int visible_start_addr = clipper.DisplayStart * Rows;
             int visible_end_addr = clipper.DisplayEnd * Rows;
 
             bool data_next = false;
 
-            if (!AllowEdits || DataEditingAddr >= mem_size)
+            if (!AllowEdits || DataEditingAddr >= MemSize)
                 DataEditingAddr = -1;
 
             int data_editing_addr_backup = DataEditingAddr;
             if (DataEditingAddr != -1)
             {
                 if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)) && DataEditingAddr >= Rows)                   { DataEditingAddr -= Rows; DataEditingTakeFocus = true; }
-                else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)) && DataEditingAddr < mem_size - Rows)  { DataEditingAddr += Rows; DataEditingTakeFocus = true; }
+                else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)) && DataEditingAddr < MemSize - Rows)  { DataEditingAddr += Rows; DataEditingTakeFocus = true; }
                 else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_LeftArrow)) && DataEditingAddr > 0)                { DataEditingAddr -= 1; DataEditingTakeFocus = true; }
-                else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_RightArrow)) && DataEditingAddr < mem_size - 1)    { DataEditingAddr += 1; DataEditingTakeFocus = true; }
+                else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_RightArrow)) && DataEditingAddr < MemSize - 1)    { DataEditingAddr += 1; DataEditingTakeFocus = true; }
             }
             if ((DataEditingAddr / Rows) != (data_editing_addr_backup / Rows))
             {
@@ -90,20 +97,20 @@ struct MemoryEditor
             bool draw_separator = true;
             for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) // display only visible items
             {
-                int addr = line_i * Rows;
-                ImGui::Text("%0*X: ", addr_digits_count, base_display_addr+addr);
+                int offset = line_i * Rows;
+                ImGui::Text("%04X: ", MemAddr+offset);
                 ImGui::SameLine();
 
                 // Draw Hexadecimal
                 float line_start_x = ImGui::GetCursorPosX();
-                for (int n = 0; n < Rows && addr < mem_size; n++, addr++)
+                for (int n = 0; n < Rows && offset < MemSize; n++, offset++)
                 {
                     ImGui::SameLine(line_start_x + cell_width * n);
 
-                    if (DataEditingAddr == addr)
+                    if (DataEditingAddr == offset)
                     {
                         // Display text input on current byte
-                        ImGui::PushID(addr);
+                        ImGui::PushID(offset);
                         struct FuncHolder
                         {
                             // FIXME: We should have a way to retrieve the text edit cursor position more easily in the API, this is rather tedious.
@@ -120,8 +127,7 @@ struct MemoryEditor
                         if (DataEditingTakeFocus)
                         {
                             ImGui::SetKeyboardFocusHere();
-                            sprintf(AddrInput, "%0*lX", addr_digits_count, (unsigned long)base_display_addr+addr);
-                            sprintf(DataInput, "%02X", mem_data[addr]);
+                            sprintf(DataInput, "%02X", read_func(userdata, MemAddr+offset));
                         }
                         ImGui::PushItemWidth(ImGui::CalcTextSize("FF").x);
                         ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsHexadecimal|ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_AutoSelectAll|ImGuiInputTextFlags_NoHorizontalScroll|ImGuiInputTextFlags_AlwaysInsertMode|ImGuiInputTextFlags_CallbackAlways;
@@ -132,22 +138,26 @@ struct MemoryEditor
                         DataEditingTakeFocus = false;
                         ImGui::PopItemWidth();
                         if (cursor_pos >= 2)
+                        {
                             data_write = data_next = true;
+                        }
                         if (data_write)
                         {
                             int data;
                             if (sscanf(DataInput, "%X", &data) == 1)
-                                mem_data[addr] = (unsigned char)data;
+                            {
+                                write_func(userdata, MemAddr+offset, (unsigned char)data);
+                            }
                         }
                         ImGui::PopID();
                     }
                     else
                     {
-                        ImGui::Text("%02X ", mem_data[addr]);
+                        ImGui::Text("%02X ", read_func(userdata, MemAddr+offset));
                         if (AllowEdits && ImGui::IsItemHovered() && ImGui::IsMouseClicked(0))
                         {
                             DataEditingTakeFocus = true;
-                            DataEditingAddr = addr;
+                            DataEditingAddr = offset;
                         }
                     }
                 }
@@ -162,11 +172,11 @@ struct MemoryEditor
                 }
 
                 // Draw ASCII values
-                addr = line_i * Rows;
-                for (int n = 0; n < Rows && addr < mem_size; n++, addr++)
+                offset = line_i * Rows;
+                for (int n = 0; n < Rows && offset < MemSize; n++, offset++)
                 {
                     if (n > 0) ImGui::SameLine();
-                    int c = mem_data[addr];
+                    int c = read_func(userdata, MemAddr + offset);
                     ImGui::Text("%c", (c >= 32 && c < 128) ? c : '.');
                 }
             }
@@ -175,7 +185,7 @@ struct MemoryEditor
             
             ImGui::EndChild();
 
-            if (data_next && DataEditingAddr < mem_size)
+            if (data_next && DataEditingAddr < MemSize)
             {
                 DataEditingAddr = DataEditingAddr + 1;
                 DataEditingTakeFocus = true;
@@ -195,26 +205,28 @@ struct MemoryEditor
             }
             ImGui::PopAllowKeyboardFocus();
             ImGui::PopItemWidth();
-            ImGui::SameLine();
-            ImGui::Text("Range %0*X..%0*X", addr_digits_count, (int)base_display_addr, addr_digits_count, (int)base_display_addr+mem_size-1);
-            ImGui::SameLine();
-            ImGui::PushItemWidth(70);
-            if (ImGui::InputText("##addr", AddrInput, 32, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue))
+            ImGui::SameLine(96);
+            ImGui::PushItemWidth(32);
+            if (ImGui::InputText("Start", MemAddrInput, 32, ImGuiInputTextFlags_CharsHexadecimal))
             {
-                int goto_addr;
-                if (sscanf(AddrInput, "%X", &goto_addr) == 1)
+                int new_addr = MemAddr;
+                if (sscanf(MemAddrInput, "%X", &new_addr) == 1)
                 {
-                    goto_addr -= base_display_addr;
-                    if (goto_addr >= 0 && goto_addr < mem_size)
-                    {
-                        ImGui::BeginChild("##scrolling");
-                        ImGui::SetScrollFromPosY(ImGui::GetCursorStartPos().y + (goto_addr / Rows) * ImGui::GetTextLineHeight());
-                        ImGui::EndChild();
-                        DataEditingAddr = goto_addr;
-                        DataEditingTakeFocus = true;
-                    }
+                    MemAddr = (uword) new_addr;
+                    sprintf(MemAddrInput, "%04X", MemAddr);
                 }
             }
+            ImGui::SameLine();
+            if (ImGui::InputText("Length", MemSizeInput, 32, ImGuiInputTextFlags_CharsHexadecimal))
+            {
+                int new_size = MemSize;
+                if (sscanf(MemSizeInput, "%X", &new_size) == 1)
+                {
+                    MemSize = (uword) new_size;
+                    sprintf(MemSizeInput, "%04X", MemSize);
+                }
+            }
+
             ImGui::PopItemWidth();
         }
         ImGui::End();

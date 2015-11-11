@@ -9,6 +9,7 @@
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
+#include "yakc_core/roms.h"
 
 using namespace Oryol;
 using namespace yakc;
@@ -82,33 +83,26 @@ UI::OnFrame(kc85& kc) {
         if (ImGui::BeginMenu(kc.model() == kc85::kc_model::kc85_3 ? "KC85/3":"KC85/4")) {
             if (ImGui::MenuItem("Power Cycle")) {
                 kc.switchoff();
-                kc.switchon(kc.model());
+                kc.switchon(kc.model(), kc.caos_rom(), kc.caos_rom_size());
             }
             if (ImGui::MenuItem("Reset")) {
                 kc.reset();
             }
-            if (ImGui::MenuItem("Reboot to KC85/3 (TODO)")) {
-                // FIXME
+            if (ImGui::BeginMenu("KC 85/3")) {
+                if (ImGui::MenuItem("CAOS 3.1")) {
+                    kc.switchoff();
+                    kc.switchon(kc85::kc_model::kc85_3, rom_caos31, sizeof(rom_caos31));
+                }
+                ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("Reboot to KC85/4 (TODO)")) {
+            if (ImGui::MenuItem("KC85/4 (TODO)")) {
                 // FIXME
             }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Window")) {
-            StringBuilder strBuilder;
-            for (int i = 0; i < memory::num_banks; i++) {
-                static const char* bank_names[memory::num_banks] = {
-                    "RAM0", "RAM1", "IRM", "ROM"
-                };
-                if (kc.cpu.mem.get_bank_ptr(i)) {
-                    strBuilder.Format(32, "Memory %s", bank_names[i]);
-                    if (ImGui::MenuItem(strBuilder.GetString().AsCStr())) {
-                        auto win = MemoryWindow::Create();
-                        win->MemoryBankIndex = i;
-                        this->OpenWindow(kc, win);
-                    }
-                }
+            if (ImGui::MenuItem("Memory")) {
+                this->OpenWindow(kc, MemoryWindow::Create());
             }
             if (ImGui::MenuItem("Debugger")) {
                 this->OpenWindow(kc, DebugWindow::Create());

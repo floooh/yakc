@@ -10,9 +10,6 @@
 class MemoryWindow : public WindowBase {
     OryolClassDecl(MemoryWindow);
 public:
-    /// configure the memory bank (0..3) before setup() is called
-    int MemoryBankIndex = 0;
-
     /// setup the window
     virtual void Setup(const yakc::kc85& kc) override;
     /// draw method

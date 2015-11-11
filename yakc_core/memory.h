@@ -2,8 +2,9 @@
 //------------------------------------------------------------------------------
 /**
     @class yakc::memory
-    @brief memory load/store operations
+    @brief map Z80 memory to host system memory
 */
+#include <string.h>
 #include "yakc_core/common.h"
 
 namespace yakc {
@@ -12,33 +13,32 @@ class memory {
 public:
     /// 64 kByte addressable memory
     static const int address_range = 1<<16;
-    /// number of banks
-    static const int num_banks = 4;
-
-    // memory bank types
-    enum class type {
-        none,
-        ram,
-        rom
-    };
+    /// number of (8K) pages
+    static const int num_pages = 8;
 
     /// the memory banks
-    struct bank {
-        static const int shift = 14;
+    struct page {
+        static const int shift = 13;
         static const uword size = 1<<shift;
         static const uword mask = size - 1;
         ubyte* ptr = nullptr;
         bool writable = false;
-    } banks[num_banks];
+    } pages[num_pages];
 
-    /// map a memory bank to a block of real memory
-    void map(int bank_index, ubyte* ptr, int size, type t);
-    /// unmap a memory bank
-    void unmap(int bank_index);
-    /// get physical start address of memory bank (can be 0!)
-    ubyte* get_bank_ptr(int bank_index) const;
-    /// get writable flag of bank at index
-    bool is_bank_writable(int bank_index) const;
+    /// a dummy page for unmapped memory
+    ubyte unmapped_page[page::size];
+
+    /// constructor
+    memory();
+
+    /// map a range of memory
+    void map(uword addr, uword size, ubyte* ptr, bool writable);
+    /// unmap a range of memory
+    void unmap(uword addr, uword size);
+    /// unmap all memory pages
+    void unmap_all();
+    /// test if an address is writable
+    bool is_writable(uword addr) const;
     /// read a byte at cpu address
     ubyte r8(address addr) const;
     /// read a signed byte at cpu address
@@ -54,53 +54,67 @@ public:
 };
 
 //------------------------------------------------------------------------------
-inline void
-memory::map(int bank_index, ubyte* ptr, int size, type t) {
-    YAKC_ASSERT((bank_index >= 0) && (bank_index < num_banks));
-    YAKC_ASSERT(ptr && (bank::size == size) && (type::none != t));
-    YAKC_ASSERT(nullptr == this->banks[bank_index].ptr);
-    this->banks[bank_index].ptr = ptr;
-    this->banks[bank_index].writable = (t == type::ram);
+inline
+memory::memory() {
+    memset(this->unmapped_page, 0xFF, sizeof(this->unmapped_page));
+    this->unmap_all();
 }
 
 //------------------------------------------------------------------------------
 inline void
-memory::unmap(int bank_index) {
-        YAKC_ASSERT((bank_index >= 0) && (bank_index < num_banks));
-        this->banks[bank_index].ptr = nullptr;
-        this->banks[bank_index].writable = false;
+memory::map(uword addr, uword size, ubyte* ptr, bool writable) {
+    YAKC_ASSERT((addr & page::mask) == 0);
+    YAKC_ASSERT((size & page::mask) == 0);
+    const uword num = size>>page::shift;
+    YAKC_ASSERT(num <= num_pages);
+    for (uword i = 0; i < num; i++) {
+        const uword offset = i * page::size;
+        const uword page_index = (addr+offset)>>page::shift;
+        YAKC_ASSERT(this->unmapped_page == this->pages[page_index].ptr);
+        this->pages[page_index].ptr = ptr + offset;
+        this->pages[page_index].writable = writable;
     }
+}
 
 //------------------------------------------------------------------------------
-inline ubyte*
-memory::get_bank_ptr(int bank_index) const {
-    YAKC_ASSERT((bank_index >= 0) && (bank_index < num_banks));
-    return this->banks[bank_index].ptr;
+inline void
+memory::unmap(uword addr, uword size) {
+    YAKC_ASSERT((addr & page::mask) == 0);
+    YAKC_ASSERT((size & page::mask) == 0);
+    uword num = size>>page::shift;
+    YAKC_ASSERT(num <= num_pages);
+    for (uword i = 0; i < num; i++) {
+        uword page_index = addr>>page::shift;
+        this->pages[page_index].ptr = this->unmapped_page;
+        this->pages[page_index].writable = false;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+memory::unmap_all() {
+    for (auto& p : this->pages) {
+        p.ptr = this->unmapped_page;
+        p.writable = false;
+    }
 }
 
 //------------------------------------------------------------------------------
 inline bool
-memory::is_bank_writable(int bank_index) const {
-    YAKC_ASSERT((bank_index >= 0) && (bank_index < num_banks));
-    return this->banks[bank_index].writable;
+memory::is_writable(uword addr) const {
+    return this->pages[addr>>page::shift].writable;
 }
 
 //------------------------------------------------------------------------------
 inline ubyte
 memory::r8(address addr) const {
-    const auto& bank = this->banks[addr >> bank::shift];
-    if (bank.ptr) {
-        return bank.ptr[addr & bank::mask];
-    }
-    else {
-        return 0;
-    }
+    return this->pages[addr>>page::shift].ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
 inline byte
 memory::rs8(address addr) const {
-    return (char) this->r8(addr);
+    return (char) this->pages[addr>>page::shift].ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
@@ -115,9 +129,9 @@ memory::r16(address addr) const {
 //------------------------------------------------------------------------------
 inline void
 memory::w8(address addr, ubyte b) const {
-    const auto& bank = this->banks[addr >> bank::shift];
-    if (bank.writable) {
-        bank.ptr[addr & bank::mask] = b;
+    const auto& page = this->pages[addr>>page::shift];
+    if (page.writable) {
+        page.ptr[addr & page::mask] = b;
     }
 }
 
