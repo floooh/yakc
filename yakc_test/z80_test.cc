@@ -6,7 +6,7 @@
 
 using namespace yakc;
 
-ubyte ram0[memory::bank::size];
+ubyte ram0[0x4000];
 
 ubyte in_func(void* userdata, uword port) {
     return (port & 0xFF) * 2;
@@ -22,7 +22,7 @@ void out_func(void* userdata, uword port, ubyte val) {
 z80 init_z80() {
     z80 cpu;
     memset(ram0, 0, sizeof(ram0));
-    cpu.mem.map(0, ram0, sizeof(ram0), memory::type::ram);
+    cpu.mem.map(0x000, sizeof(ram0), ram0, true);
     cpu.set_inout_handlers(in_func, out_func, nullptr);
     return cpu;
 }

@@ -164,7 +164,7 @@ kc85::in_cb(void* userdata, uword port) {
         default:
             // unknown
             YAKC_ASSERT(false);
-            break;
+            return 0xFF;
     }
 }
 
