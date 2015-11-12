@@ -19,7 +19,7 @@ public:
     /// do one frame
     void OnFrame(yakc::kc85& kc);
     /// open a window
-    void OpenWindow(const yakc::kc85& kc, const Oryol::Ptr<WindowBase>& window);
+    void OpenWindow(yakc::kc85& kc, const Oryol::Ptr<WindowBase>& window);
 
     static const ImVec4 ColorText;
     static const ImVec4 ColorDetail;

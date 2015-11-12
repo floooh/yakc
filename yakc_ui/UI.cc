@@ -6,6 +6,7 @@
 #include "MemoryWindow.h"
 #include "DebugWindow.h"
 #include "PIOWindow.h"
+#include "ModuleWindow.h"
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -69,7 +70,7 @@ UI::Discard() {
 
 //------------------------------------------------------------------------------
 void
-UI::OpenWindow(const kc85& kc, const Ptr<WindowBase>& win) {
+UI::OpenWindow(kc85& kc, const Ptr<WindowBase>& win) {
     win->Setup(kc);
     this->windows.Add(win);
 }
@@ -101,6 +102,9 @@ UI::OnFrame(kc85& kc) {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Window")) {
+            if (ImGui::MenuItem("Modules")) {
+                this->OpenWindow(kc, ModuleWindow::Create());
+            }
             if (ImGui::MenuItem("Memory")) {
                 this->OpenWindow(kc, MemoryWindow::Create());
             }

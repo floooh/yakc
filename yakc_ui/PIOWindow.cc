@@ -15,7 +15,7 @@ static const ImVec4 green(0.0f, 1.0f, 0.0f, 1.0f);
 
 //------------------------------------------------------------------------------
 void
-PIOWindow::Setup(const kc85& kc) {
+PIOWindow::Setup(kc85& kc) {
     this->setName("Z80 PIO State");
     this->pioAData.Configure8("PIO A Data (port 0x88)", kc.pio.read(z80pio::A));
     this->pioBData.Configure8("PIO B Data (port 0x89)", kc.pio.read(z80pio::B));

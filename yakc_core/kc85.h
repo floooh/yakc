@@ -56,8 +56,8 @@ public:
     /// expansion modules
     static const int max_num_module_slots = 6;
     struct module_desc {
-        const char* name = nullptr;     // string is not owned
-        const char* desc = nullptr;     // string is not owned
+        const char* name = "NO MODULE"; // string is not owned
+        const char* help = "no help";   // string is not owned
         ubyte* ptr = nullptr;           // if this is 0, and size > 0, backing memory will be allocated
         ubyte type = 0xFF;              // module type (http://www.mpm-kc85.de/html/ModulListe.htm)
         bool writable = false;          // keep this false for ROM modules
@@ -89,14 +89,12 @@ public:
     /// get size of currently mapped rom
     uword caos_rom_size() const;
 
-    /// attach an expansion module
-    void attach_module(ubyte slot, const module_desc& mod);
-    /// remove an expansion module
-    void remove_module(ubyte slot);
+    /// insert module into slot, replaces previous
+    void insert_module(ubyte slot, const module_desc& mod);
     /// test if a module is attached to slot
     bool module_attached(ubyte slot) const;
-    /// get module desc at slot
-    const module_desc& get_module_desc(ubyte slot) const;
+    /// get module slot state
+    const module_slot& get_module_slot(ubyte slot) const;
 
     /// process one frame
     void onframe(int micro_secs);
@@ -112,6 +110,10 @@ public:
     void handle_keyboard_input();
 
 private:
+    /// attach an expansion module
+    void attach_module(ubyte slot, const module_desc& mod);
+    /// remove an expansion module
+    void remove_module(ubyte slot);
     /// find a module slot index, -1 if not found
     int find_module_by_slot(ubyte slot) const;
     /// find highest module slot with active module mapped to address
@@ -231,7 +233,16 @@ kc85::find_active_module_by_addr(uword addr) const {
 
 //------------------------------------------------------------------------------
 inline void
-kc85::attach_module(ubyte slot_addr, const yakc::kc85::module_desc &desc) {
+kc85::insert_module(ubyte slot_addr, const module_desc& desc) {
+    if (this->module_attached(slot_addr)) {
+        this->remove_module(slot_addr);
+    }
+    this->attach_module(slot_addr, desc);
+}
+
+//------------------------------------------------------------------------------
+inline void
+kc85::attach_module(ubyte slot_addr, const module_desc& desc) {
     YAKC_ASSERT(!this->module_attached(slot_addr));
     const int slot_index = this->find_module_by_slot(slot_addr);
     YAKC_ASSERT((slot_index >= 0) && (slot_index < max_num_module_slots));
@@ -241,6 +252,7 @@ kc85::attach_module(ubyte slot_addr, const yakc::kc85::module_desc &desc) {
         // allocate backing memory
         mod.allocated = true;
         mod.desc.ptr = (ubyte*) YAKC_MALLOC(mod.desc.size);
+        memset(mod.desc.ptr, 0, mod.desc.size);
     }
 }
 
@@ -280,11 +292,11 @@ kc85::module_attached(ubyte slot_addr) const {
 }
 
 //------------------------------------------------------------------------------
-inline const kc85::module_desc&
-kc85::get_module_desc(ubyte slot_addr) const {
+inline const kc85::module_slot&
+kc85::get_module_slot(ubyte slot_addr) const {
     const int slot_index = this->find_module_by_slot(slot_addr);
     YAKC_ASSERT((slot_index >= 0) && (slot_index < max_num_module_slots));
-    return this->modules[slot_index].desc;
+    return this->modules[slot_index];
 }
 
 //------------------------------------------------------------------------------

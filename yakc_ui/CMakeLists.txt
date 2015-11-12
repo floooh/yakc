@@ -9,6 +9,7 @@ fips_begin_module(yakc_ui)
         Disasm.cc Disasm.h
         DebugWindow.cc DebugWindow.h
         PIOWindow.cc PIOWindow.h
+        ModuleWindow.cc ModuleWindow.h
         z80dasm.cc z80dasm.h
     )
     fips_deps(yakc_core)

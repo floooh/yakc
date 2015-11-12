@@ -11,7 +11,7 @@ using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-MemoryWindow::Setup(const kc85& kc) {
+MemoryWindow::Setup(kc85& kc) {
     this->setName("Memory");
 }
 

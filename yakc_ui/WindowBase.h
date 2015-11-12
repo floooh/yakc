@@ -14,7 +14,7 @@ public:
     /// destructor
     virtual ~WindowBase();
     /// setup the window
-    virtual void Setup(const yakc::kc85& kc) = 0;
+    virtual void Setup(yakc::kc85& kc) = 0;
     /// draw method, return false if window closed
     virtual bool Draw(yakc::kc85& kc) = 0;
     /// false if window had been closed by user

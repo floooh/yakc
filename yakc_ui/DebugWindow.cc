@@ -22,7 +22,7 @@ static const z80::reg regs8[] = {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::Setup(const kc85& kc) {
+DebugWindow::Setup(kc85& kc) {
     this->setName("Debugger");
 
     // setup register table widgets

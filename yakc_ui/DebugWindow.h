@@ -12,7 +12,7 @@ class DebugWindow : public WindowBase {
     OryolClassDecl(DebugWindow);
 public:
     /// setup the window
-    virtual void Setup(const yakc::kc85& kc) override;
+    virtual void Setup(yakc::kc85& kc) override;
     /// draw method
     virtual bool Draw(yakc::kc85& kc) override;
 
