@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "ModuleWindow.h"
 #include "IMUI/IMUI.h"
+#include "yakc_core/roms.h"
 
 OryolClassImpl(ModuleWindow);
 
@@ -76,5 +77,20 @@ ModuleWindow::setupModules(kc85& kc) {
     mod.type = 0xF4;
     mod.writable = true;
     mod.size = 0x4000;
+    this->modules.Add(mod);
+
+    // M026 FORTH
+    YAKC_ASSERT(sizeof(rom_forth) == 0x2000);
+    mod.name = "M026 FORTH";
+    mod.help = "FORTH language expansion module.\n\n"
+        "First deactivate the BASIC ROM with:\n"
+        "SWITCH 02 00\n\n"
+        "Then activate FORTH with:\n"
+        "SWITCH [SLOT] C1\n\n"
+        "...where [SLOT] is 08 or 0C";
+    mod.type = 0xFB;
+    mod.writable = false;
+    mod.size = 0x2000;
+    mod.ptr = rom_forth;
     this->modules.Add(mod);
 }
