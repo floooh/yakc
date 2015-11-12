@@ -3,6 +3,11 @@
 /**
     @class yakc::memory
     @brief map Z80 memory to host system memory
+    
+    FIXME: the class should support priorities, where lower priority
+    memory banks 'hide' behind higher priority banks, this would
+    enable >16KByte expansion modules, and generally simplify
+    memory bank manegement in the kc85 class.
 */
 #include <string.h>
 #include "yakc_core/common.h"
@@ -37,6 +42,8 @@ public:
     void unmap(uword addr, uword size);
     /// unmap all memory pages
     void unmap_all();
+    /// return true if addr is mapped to real pointer
+    bool is_mapped_to(uword addr, ubyte* ptr) const;
     /// test if an address is writable
     bool is_writable(uword addr) const;
     /// read a byte at cpu address
@@ -97,6 +104,12 @@ memory::unmap_all() {
         p.ptr = this->unmapped_page;
         p.writable = false;
     }
+}
+
+//------------------------------------------------------------------------------
+inline bool
+memory::is_mapped_to(uword addr, ubyte* ptr) const {
+    return ptr == this->pages[addr>>page::shift].ptr;
 }
 
 //------------------------------------------------------------------------------

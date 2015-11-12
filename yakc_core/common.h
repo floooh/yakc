@@ -9,6 +9,12 @@
 #ifndef YAKC_ASSERT
 #define YAKC_ASSERT(x) assert(x)
 #endif
+#ifndef YAKC_MALLOC
+#define YAKC_MALLOC(s) malloc(s)
+#endif
+#ifndef YAKC_FREE
+#define YAKC_FREE(p) free(p)
+#endif
 
 namespace yakc {
 

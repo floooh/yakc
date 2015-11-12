@@ -53,29 +53,51 @@ public:
     /// currently paused?
     bool paused;
 
-    /// module infos
-    static const int max_num_modules = 256;
-    struct {
-        ubyte type = 0xFF;
+    /// expansion modules
+    static const int max_num_module_slots = 6;
+    struct module_desc {
+        const char* name = nullptr;     // string is not owned
+        const char* desc = nullptr;     // string is not owned
+        ubyte* ptr = nullptr;           // if this is 0, and size > 0, backing memory will be allocated
+        ubyte type = 0xFF;              // module type (http://www.mpm-kc85.de/html/ModulListe.htm)
+        bool writable = false;          // keep this false for ROM modules
+        uword size = 0x0000;            // size of mapped memory
+    };
+    struct module_slot {
+        module_desc desc;
+        ubyte slot_addr = 0x00;
+        bool allocated = false;
+        uword addr = 0x0000;
         ubyte control_byte = 0x00;
-    } module_info[max_num_modules];
+    } modules[max_num_module_slots];
 
     /// constructor
     kc85();
+
     /// power-on the device
     void switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size);
     /// power-off the device
     void switchoff();
-    /// get pointer to currently mapped rom
-    ubyte* caos_rom() const;
-    /// get size of currently mapped rom
-    uword caos_rom_size() const;
+    /// reset the device
+    void reset();
     /// return true if device is switched on
     bool ison() const;
     /// get the KC model
     kc_model model() const;
-    /// reset the device
-    void reset();
+    /// get pointer to currently mapped rom
+    ubyte* caos_rom() const;
+    /// get size of currently mapped rom
+    uword caos_rom_size() const;
+
+    /// attach an expansion module
+    void attach_module(ubyte slot, const module_desc& mod);
+    /// remove an expansion module
+    void remove_module(ubyte slot);
+    /// test if a module is attached to slot
+    bool module_attached(ubyte slot) const;
+    /// get module desc at slot
+    const module_desc& get_module_desc(ubyte slot) const;
+
     /// process one frame
     void onframe(int micro_secs);
     /// do one step
@@ -90,6 +112,10 @@ public:
     void handle_keyboard_input();
 
 private:
+    /// find a module slot index, -1 if not found
+    int find_module_by_slot(ubyte slot) const;
+    /// find highest module slot with active module mapped to address
+    int find_active_module_by_addr(uword addr) const;
     /// the z80 out callback
     static void out_cb(void* userdata, uword port, ubyte val);
     /// the z80 in callback
@@ -98,6 +124,8 @@ private:
     static void fill_noise(void* ptr, int num_bytes);
     /// update module/memory mapping
     void update_bank_switching();
+    /// map or unmap a module based on control-byte
+    void update_module(int slot_index);
 
     kc_model cur_model;
     bool on;
@@ -115,7 +143,9 @@ cur_model(kc_model::kc85_3),
 key_code(0),
 cur_caos_rom(rom_caos31),
 cur_caos_rom_size(sizeof(rom_caos31)) {
-    // empty
+    // configure module slots
+    this->modules[0].slot_addr = 0x08;  // base device right module slot
+    this->modules[1].slot_addr = 0x0C;  // base device left module slot
 }
 
 //------------------------------------------------------------------------------
@@ -161,6 +191,14 @@ kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
 
 //------------------------------------------------------------------------------
 inline void
+kc85::switchoff() {
+    YAKC_ASSERT(this->on);
+    this->cpu.mem.unmap_all();
+    this->on = false;
+}
+
+//------------------------------------------------------------------------------
+inline void
 kc85::reset() {
     this->pio.reset();
     this->cpu.reset();
@@ -169,11 +207,110 @@ kc85::reset() {
 }
 
 //------------------------------------------------------------------------------
+inline int
+kc85::find_module_by_slot(ubyte slot_addr) const {
+    for (int i = 0; i < max_num_module_slots; i++) {
+        if (this->modules[i].slot_addr == slot_addr) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+//------------------------------------------------------------------------------
+inline int
+kc85::find_active_module_by_addr(uword addr) const {
+    for (int i = 0; i < max_num_module_slots; i++) {
+        const auto& mod = this->modules[i];
+        if ((mod.slot_addr != 0x00) && (mod.desc.type != 0xFF) && ((mod.control_byte & 0xF0) == (addr>>8))) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+//------------------------------------------------------------------------------
 inline void
-kc85::switchoff() {
-    YAKC_ASSERT(this->on);
-    this->cpu.mem.unmap_all();
-    this->on = false;
+kc85::attach_module(ubyte slot_addr, const yakc::kc85::module_desc &desc) {
+    YAKC_ASSERT(!this->module_attached(slot_addr));
+    const int slot_index = this->find_module_by_slot(slot_addr);
+    YAKC_ASSERT((slot_index >= 0) && (slot_index < max_num_module_slots));
+    auto& mod = this->modules[slot_index];
+    mod.desc = desc;
+    if ((mod.desc.size > 0) && (nullptr == mod.desc.ptr)) {
+        // allocate backing memory
+        mod.allocated = true;
+        mod.desc.ptr = (ubyte*) YAKC_MALLOC(mod.desc.size);
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+kc85::remove_module(ubyte slot_addr) {
+    YAKC_ASSERT(this->module_attached(slot_addr));
+    const int slot_index = this->find_module_by_slot(slot_addr);
+    YAKC_ASSERT((slot_index >= 0) && (slot_index < max_num_module_slots));
+    auto& mod = this->modules[slot_index];
+    // if module is current mapped to memory, unmap it
+    if (mod.desc.size && mod.desc.ptr) {
+        if (cpu.mem.is_mapped_to(mod.addr, mod.desc.ptr)) {
+            cpu.mem.unmap(mod.addr, mod.desc.size);
+        }
+    }
+    // if memory was allocated for the module, free it
+    if (mod.allocated) {
+        YAKC_ASSERT(mod.desc.ptr);
+        YAKC_FREE(mod.desc.ptr);
+        mod.allocated = false;
+    }
+    mod.desc = module_desc();
+    mod.addr = 0x0000;
+}
+
+//------------------------------------------------------------------------------
+inline bool
+kc85::module_attached(ubyte slot_addr) const {
+    const int slot_index = this->find_module_by_slot(slot_addr);
+    if (slot_index >= 0) {
+        return this->modules[slot_index].desc.type != 0xFF;
+    }
+    else {
+        return false;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline const kc85::module_desc&
+kc85::get_module_desc(ubyte slot_addr) const {
+    const int slot_index = this->find_module_by_slot(slot_addr);
+    YAKC_ASSERT((slot_index >= 0) && (slot_index < max_num_module_slots));
+    return this->modules[slot_index].desc;
+}
+
+//------------------------------------------------------------------------------
+inline void
+kc85::update_module(int slot_index) {
+    // private method is only called from update_bank_switching()
+    YAKC_ASSERT((slot_index >= 0) && (slot_index < max_num_module_slots));
+    auto& mod = this->modules[slot_index];
+    YAKC_ASSERT(0xFF != mod.desc.type);
+
+    // compute module start address from control-byte
+    mod.addr = (mod.control_byte & 0xF0)<<8;
+    YAKC_ASSERT((mod.addr & (mod.desc.size-1)) == 0);
+    if (mod.desc.size && mod.desc.ptr) {
+        if (mod.control_byte & 0x01) {
+            // activate the module
+            bool writable = (mod.control_byte & 0x02) && mod.desc.writable;
+            this->cpu.mem.map(mod.addr, mod.desc.size, mod.desc.ptr, writable);
+        }
+        else {
+            // deactivate the module
+            if (this->cpu.mem.is_mapped_to(mod.addr, mod.desc.ptr)) {
+                this->cpu.mem.unmap(mod.addr, mod.desc.size);
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -305,11 +442,15 @@ kc85::handle_keyboard_input() {
 inline void
 kc85::out_cb(void* userdata, uword port, ubyte val) {
     kc85* self = (kc85*)userdata;
-    const ubyte module_slot = port>>8;
     switch (port & 0xFF) {
         case 0x80:
-            self->module_info[module_slot].control_byte = val;
-            self->update_bank_switching();
+            {
+                int slot_index = self->find_module_by_slot(port>>8);
+                if (slot_index >= 0) {
+                    self->modules[slot_index].control_byte = val;
+                    self->update_bank_switching();
+                }
+            }
             break;
         case 0x88:
             self->pio.write(z80pio::A, val);
@@ -346,10 +487,18 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
 inline ubyte
 kc85::in_cb(void* userdata, uword port) {
     kc85* self = (kc85*)userdata;
-    const ubyte slot = port >> 8;
     switch (port & 0xFF) {
         case 0x80:
-            return self->module_info[slot].type;
+            {
+                int slot_index = self->find_module_by_slot(port>>8);
+                if (slot_index >= 0) {
+                    return self->modules[slot_index].desc.type;
+                }
+                else {
+                    return 0xFF;
+                }
+            }
+            break;
         case 0x88:
             return self->pio.read(z80pio::A);
         case 0x89:
@@ -366,26 +515,40 @@ inline void
 kc85::update_bank_switching() {
     // this is called from the out-handler to update modules and memory banks
     const ubyte pio_a = this->pio.read(z80pio::A);
+    int module_slot_index = -1;
 
     // 0x0000
     if (pio_a & PIO_A_RAM) {
         // built-in RAM switched on        
         this->cpu.mem.map(0x0000, 0x4000, this->ram0, true);
     }
-    // FIXME: handle extension modules!
+    else if ((module_slot_index = this->find_active_module_by_addr(0x0000)) >= 0) {
+        // map an expansion module to 0x0000
+        this->update_module(module_slot_index);
+    }
     else {
         // nothing mapped to 0x0000
         this->cpu.mem.unmap(0x0000, 0x4000);
     }
     // 0x4000
-    // FIXME!
+    if ((module_slot_index = this->find_active_module_by_addr(0x4000)) >= 0) {
+        // map an expansion module to 0x4000
+        this->update_module(module_slot_index);
+    }
+    else {
+        // nothing mapped to 0x4000
+        this->cpu.mem.unmap(0x4000, 0x4000);
+    }
 
     // 0x8000 (IRM)
     if (pio_a & PIO_A_IRM) {
         // built-in IRM (video-mem) switched on
         this->cpu.mem.map(0x8000, 0x4000, this->irm0, true);
     }
-    // FIXME: handle extension modules!
+    else if ((module_slot_index = this->find_active_module_by_addr(0x8000)) >= 0) {
+        // map an expansion module to 0x8000
+        this->update_module(module_slot_index);
+    }
     else {
         // nothing mapped to 0x8000
         this->cpu.mem.unmap(0x8000, 0x4000);
@@ -396,7 +559,10 @@ kc85::update_bank_switching() {
         // BASIC is switched on
         this->cpu.mem.map(0xC000, 0x2000, rom_basic_c0, false);
     }
-    // FIXME: handle extension modules!
+    else if ((module_slot_index = this->find_active_module_by_addr(0xC000)) >= 0) {
+        // map an expansion module to 0xC000
+        this->update_module(module_slot_index);
+    }
     else {
         // nothing mapped to 0xC000 address
         this->cpu.mem.unmap(0xC000, 0x2000);
@@ -407,7 +573,10 @@ kc85::update_bank_switching() {
         // CAOS ROM switched on
         this->cpu.mem.map(0xE000, 0x2000, this->caos_rom(), false);
     }
-    // FIXME: handle extension modules!
+    else if ((module_slot_index = this->find_active_module_by_addr(0xE000)) >= 0) {
+        // map an expansion module to 0xE000
+        this->update_module(module_slot_index);
+    }
     else {
         // nothing mapped to 0xE000 address
         this->cpu.mem.unmap(0xE000, 0x2000);
