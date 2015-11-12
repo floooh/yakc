@@ -34,6 +34,8 @@ public:
     void init();
     /// reset the pio
     void reset();
+    /// set write-handler
+
     /// write control register
     void control(channel c, ubyte m);
     /// write data register

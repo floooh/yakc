@@ -70,7 +70,6 @@ memory::map(uword addr, uword size, ubyte* ptr, bool writable) {
     for (uword i = 0; i < num; i++) {
         const uword offset = i * page::size;
         const uword page_index = (addr+offset)>>page::shift;
-        YAKC_ASSERT(this->unmapped_page == this->pages[page_index].ptr);
         this->pages[page_index].ptr = ptr + offset;
         this->pages[page_index].writable = writable;
     }
@@ -84,7 +83,8 @@ memory::unmap(uword addr, uword size) {
     uword num = size>>page::shift;
     YAKC_ASSERT(num <= num_pages);
     for (uword i = 0; i < num; i++) {
-        uword page_index = addr>>page::shift;
+        const uword offset = i * page::size;
+        const uword page_index = (addr+offset)>>page::shift;
         this->pages[page_index].ptr = this->unmapped_page;
         this->pages[page_index].writable = false;
     }

@@ -45,7 +45,7 @@ PIOWindow::Draw(kc85& kc) {
         ImGui::BeginChild("##child");
         ImGui::PushItemWidth(16);
         if (this->pioAData.Draw()) {
-            kc.pio.write(z80pio::A, this->pioAData.Get8());
+            kc.cpu.out(0x88, this->pioAData.Get8());
         }
         else {
             this->pioAData.Set8(kc.pio.read(z80pio::A));
@@ -61,7 +61,7 @@ PIOWindow::Draw(kc85& kc) {
         ImGui::Separator();
         
         if (this->pioBData.Draw()) {
-            kc.pio.write(z80pio::B, this->pioBData.Get8());
+            kc.cpu.out(0x89, this->pioBData.Get8());
         }
         else {
             this->pioBData.Set8(kc.pio.read(z80pio::B));

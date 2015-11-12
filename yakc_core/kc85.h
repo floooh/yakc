@@ -21,7 +21,7 @@ public:
     /// vidmem bank 0 (0x8000..0xBFFF)
     ubyte irm0[0x4000];
 
-    /// PIO-A bits
+    /// PIO bits
     enum {
         PIO_A_CAOS_ROM    = (1<<0),
         PIO_A_RAM         = (1<<1),
@@ -31,11 +31,15 @@ public:
         PIO_A_TAPE_LED    = (1<<5),
         PIO_A_TAPE_MOTOR  = (1<<6),
         PIO_A_BASIC_ROM   = (1<<7),
-    };
-    /// PIO-B bits
-    enum pio_b {
         PIO_B_VOLUME_MASK = (1<<5)-1,
         PIO_B_BLINK_ENABLED = (1<<7),
+    };
+
+    /// supported KC types
+    enum class kc_model {
+        kc85_3,
+        kc85_4,
+        none
     };
 
     /// the Z80 CPU
@@ -49,21 +53,15 @@ public:
     /// currently paused?
     bool paused;
 
-    /// supported KC types
-    enum class kc_model {
-        kc85_3,
-        kc85_4,
-        none
-    };
+    /// module infos
+    static const int max_num_modules = 256;
+    struct {
+        ubyte type = 0xFF;
+        ubyte control_byte = 0x00;
+    } module_info[max_num_modules];
 
     /// constructor
     kc85();
-    /// the z80 out callback
-    static void out_cb(void* userdata, uword port, ubyte val);
-    /// the z80 in callback
-    static ubyte in_cb(void* userdata, uword port);
-    /// fill memory region with noise
-    static void fill_noise(void* ptr, int num_bytes);
     /// power-on the device
     void switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size);
     /// power-off the device
@@ -92,6 +90,15 @@ public:
     void handle_keyboard_input();
 
 private:
+    /// the z80 out callback
+    static void out_cb(void* userdata, uword port, ubyte val);
+    /// the z80 in callback
+    static ubyte in_cb(void* userdata, uword port);
+    /// fill memory region with noise
+    static void fill_noise(void* ptr, int num_bytes);
+    /// update module/memory mapping
+    void update_bank_switching();
+
     kc_model cur_model;
     bool on;
     ubyte key_code;
@@ -115,12 +122,15 @@ cur_caos_rom_size(sizeof(rom_caos31)) {
 inline void
 kc85::out_cb(void* userdata, uword port, ubyte val) {
     kc85* self = (kc85*)userdata;
+    const ubyte module_slot = port>>8;
     switch (port & 0xFF) {
         case 0x80:
-            // module control
+            self->module_info[module_slot].control_byte = val;
+            self->update_bank_switching();
             break;
         case 0x88:
             self->pio.write(z80pio::A, val);
+            self->update_bank_switching();
             break;
         case 0x89:
             self->pio.write(z80pio::B, val);
@@ -153,10 +163,10 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
 inline ubyte
 kc85::in_cb(void* userdata, uword port) {
     kc85* self = (kc85*)userdata;
+    const ubyte slot = port >> 8;
     switch (port & 0xFF) {
         case 0x80:
-            // FIXME: module ids
-            return 0;
+            return self->module_info[slot].type;
         case 0x88:
             return self->pio.read(z80pio::A);
         case 0x89:
@@ -184,6 +194,9 @@ inline void
 kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
     YAKC_ASSERT(kc_model::none != m);
     YAKC_ASSERT(!this->on);
+    YAKC_ASSERT(0x2000 == caos_rom_size);
+    YAKC_ASSERT(0x2000 == sizeof(rom_basic_c0));
+
     this->cur_model = m;
     this->cur_caos_rom = caos_rom;
     this->cur_caos_rom_size = caos_rom_size;
@@ -196,14 +209,10 @@ kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
         fill_noise(this->irm0, sizeof(this->irm0));
 
         // initial memory map
-        YAKC_ASSERT(0x2000 == sizeof(rom_basic_c0));
-        YAKC_ASSERT(0x2000 == caos_rom_size);
-        this->cpu.mem.map(0x0000, sizeof(this->ram0), this->ram0, true);
-        this->cpu.mem.map(0x8000, sizeof(this->irm0), this->irm0, true);
-        this->cpu.mem.map(0xC000, 0x2000, rom_basic_c0, false);
-        this->cpu.mem.map(0xE000, 0x2000, caos_rom, false);
-
         this->cpu.set_inout_handlers(in_cb, out_cb, this);
+        this->cpu.out(0x88, 0x9f);
+        this->cpu.out(0x89, 0x9f);
+        this->update_bank_switching();
     }
     this->pio.init();
     this->cpu.reset();
@@ -351,6 +360,59 @@ kc85::handle_keyboard_input() {
             this->cpu.mem.w8(ix+0x08, this->cpu.mem.r8(ix+0x08)|1);
         }
         this->key_code = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+kc85::update_bank_switching() {
+    // this is called from the out-handler to update modules and memory banks
+    const ubyte pio_a = this->pio.read(z80pio::A);
+
+    // 0x0000
+    if (pio_a & PIO_A_RAM) {
+        // built-in RAM switched on        
+        this->cpu.mem.map(0x0000, 0x4000, this->ram0, true);
+    }
+    // FIXME: handle extension modules!
+    else {
+        // nothing mapped to 0x0000
+        this->cpu.mem.unmap(0x0000, 0x4000);
+    }
+    // 0x4000
+    // FIXME!
+
+    // 0x8000 (IRM)
+    if (pio_a & PIO_A_IRM) {
+        // built-in IRM (video-mem) switched on
+        this->cpu.mem.map(0x8000, 0x4000, this->irm0, true);
+    }
+    // FIXME: handle extension modules!
+    else {
+        // nothing mapped to 0x8000
+        this->cpu.mem.unmap(0x8000, 0x4000);
+    }
+
+    // 0xC000 (BASIC ROM)
+    if (pio_a & PIO_A_BASIC_ROM) {
+        // BASIC is switched on
+        this->cpu.mem.map(0xC000, 0x2000, rom_basic_c0, false);
+    }
+    // FIXME: handle extension modules!
+    else {
+        // nothing mapped to 0xC000 address
+        this->cpu.mem.unmap(0xC000, 0x2000);
+    }
+
+    // 0xF000 (CAOS ROM)
+    if (pio_a & PIO_A_CAOS_ROM) {
+        // CAOS ROM switched on
+        this->cpu.mem.map(0xE000, 0x2000, this->caos_rom(), false);
+    }
+    // FIXME: handle extension modules!
+    else {
+        // nothing mapped to 0xE000 address
+        this->cpu.mem.unmap(0xE000, 0x2000);
     }
 }
 
