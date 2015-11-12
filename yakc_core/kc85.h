@@ -120,66 +120,6 @@ cur_caos_rom_size(sizeof(rom_caos31)) {
 
 //------------------------------------------------------------------------------
 inline void
-kc85::out_cb(void* userdata, uword port, ubyte val) {
-    kc85* self = (kc85*)userdata;
-    const ubyte module_slot = port>>8;
-    switch (port & 0xFF) {
-        case 0x80:
-            self->module_info[module_slot].control_byte = val;
-            self->update_bank_switching();
-            break;
-        case 0x88:
-            self->pio.write(z80pio::A, val);
-            self->update_bank_switching();
-            break;
-        case 0x89:
-            self->pio.write(z80pio::B, val);
-            break;
-        case 0x8A:
-            self->pio.control(z80pio::A, val);
-            break;
-        case 0x8B:
-            self->pio.control(z80pio::B, val);
-            break;
-        case 0x8C:
-            // CTC0
-            break;
-        case 0x8D:
-            // CTC1
-            break;
-        case 0x8E:
-            // CTC2
-            break;
-        case 0x8F:
-            // CTC3
-        default:
-            // unknown
-            YAKC_ASSERT(false);
-            break;
-    }
-}
-
-//------------------------------------------------------------------------------
-inline ubyte
-kc85::in_cb(void* userdata, uword port) {
-    kc85* self = (kc85*)userdata;
-    const ubyte slot = port >> 8;
-    switch (port & 0xFF) {
-        case 0x80:
-            return self->module_info[slot].type;
-        case 0x88:
-            return self->pio.read(z80pio::A);
-        case 0x89:
-            return self->pio.read(z80pio::B);
-        default:
-            // unknown
-            YAKC_ASSERT(false);
-            return 0xFF;
-    }
-}
-
-//------------------------------------------------------------------------------
-inline void
 kc85::fill_noise(void* ptr, int num_bytes) {
     YAKC_ASSERT((num_bytes & 0x03) == 0);
     unsigned int* uptr = (unsigned int*)ptr;
@@ -203,6 +143,8 @@ kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
     this->on = true;
     this->key_code = 0;
 
+    this->pio.init();
+    this->cpu.reset();
     if (kc_model::kc85_3 == m) {
         // fill RAM banks with noise
         fill_noise(this->ram0, sizeof(this->ram0));
@@ -211,11 +153,7 @@ kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
         // initial memory map
         this->cpu.set_inout_handlers(in_cb, out_cb, this);
         this->cpu.out(0x88, 0x9f);
-        this->cpu.out(0x89, 0x9f);
-        this->update_bank_switching();
     }
-    this->pio.init();
-    this->cpu.reset();
 
     // execution on switch-on starts at 0xF000
     this->cpu.state.PC = 0xF000;
@@ -360,6 +298,66 @@ kc85::handle_keyboard_input() {
             this->cpu.mem.w8(ix+0x08, this->cpu.mem.r8(ix+0x08)|1);
         }
         this->key_code = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+kc85::out_cb(void* userdata, uword port, ubyte val) {
+    kc85* self = (kc85*)userdata;
+    const ubyte module_slot = port>>8;
+    switch (port & 0xFF) {
+        case 0x80:
+            self->module_info[module_slot].control_byte = val;
+            self->update_bank_switching();
+            break;
+        case 0x88:
+            self->pio.write(z80pio::A, val);
+            self->update_bank_switching();
+            break;
+        case 0x89:
+            self->pio.write(z80pio::B, val);
+            break;
+        case 0x8A:
+            self->pio.control(z80pio::A, val);
+            break;
+        case 0x8B:
+            self->pio.control(z80pio::B, val);
+            break;
+        case 0x8C:
+            // CTC0
+            break;
+        case 0x8D:
+            // CTC1
+            break;
+        case 0x8E:
+            // CTC2
+            break;
+        case 0x8F:
+            // CTC3
+        default:
+            // unknown
+            YAKC_ASSERT(false);
+            break;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+kc85::in_cb(void* userdata, uword port) {
+    kc85* self = (kc85*)userdata;
+    const ubyte slot = port >> 8;
+    switch (port & 0xFF) {
+        case 0x80:
+            return self->module_info[slot].type;
+        case 0x88:
+            return self->pio.read(z80pio::A);
+        case 0x89:
+            return self->pio.read(z80pio::B);
+        default:
+            // unknown
+            YAKC_ASSERT(false);
+            return 0xFF;
     }
 }
 
