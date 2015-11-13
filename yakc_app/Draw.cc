@@ -14,14 +14,13 @@ Draw::Setup(const GfxSetup& gfxSetup) {
     this->texUpdateAttrs.NumMipMaps = 1;
     this->texUpdateAttrs.Sizes[0][0] = sizeof(this->irmBuffer);
 
-    auto irmSetup = TextureSetup::FromPixelData(irmWidth, irmHeight, 1, TextureType::Texture2D, PixelFormat::RGBA8);
+    auto irmSetup = TextureSetup::Empty(irmWidth, irmHeight, 1, TextureType::Texture2D, PixelFormat::RGBA8, Usage::Stream);
     irmSetup.TextureUsage = Usage::Stream;
     irmSetup.Sampler.MinFilter = TextureFilterMode::Nearest;
     irmSetup.Sampler.MagFilter = TextureFilterMode::Nearest;
     irmSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
     irmSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
-    irmSetup.ImageData = this->texUpdateAttrs;
-    this->fsTextures.IRM = Gfx::CreateResource(irmSetup, this->irmBuffer, sizeof(this->irmBuffer));
+    this->fsTextures.IRM = Gfx::CreateResource(irmSetup);
 
     Id msh = Gfx::CreateResource(MeshSetup::FullScreenQuad(true));
     Id shd = Gfx::CreateResource(Shaders::CRT::Setup());
