@@ -1,5 +1,5 @@
 #pragma once
-// #version:1
+// #version:1#
 // machine generated, do not edit!
 #include "yakc_core/common.h"
 namespace yakc {

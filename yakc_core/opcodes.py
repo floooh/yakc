@@ -2229,7 +2229,7 @@ def gen_source(f, ops, ext_ops) :
     
     # write header
     f.write('#pragma once\n')
-    f.write('// #version:{}\n'.format(Version))
+    f.write('// #version:{}#\n'.format(Version))
     f.write('// machine generated, do not edit!\n')
     f.write('#include "yakc_core/common.h"\n')
     f.write('namespace yakc {\n')

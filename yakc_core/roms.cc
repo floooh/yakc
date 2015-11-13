@@ -1,4 +1,4 @@
-// #version:1
+// #version:1#
 // machine generated, do not edit!
 #include "roms.h"
 namespace yakc {

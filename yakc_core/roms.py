@@ -27,7 +27,7 @@ def get_rom_cname(rom_filename) :
 #-------------------------------------------------------------------------------
 def gen_header(f, out_hdr, roms) :
     f.write('#pragma once\n')
-    f.write('// #version:{}\n'.format(Version))
+    f.write('// #version:{}#\n'.format(Version))
     f.write('// machine generated, do not edit!\n')
     f.write('namespace yakc {\n')
     for rom in roms :
@@ -42,7 +42,7 @@ def gen_header(f, out_hdr, roms) :
 
 #-------------------------------------------------------------------------------
 def gen_source(f, out_src, roms) :
-    f.write('// #version:{}\n'.format(Version))
+    f.write('// #version:{}#\n'.format(Version))
     f.write('// machine generated, do not edit!\n')
     f.write('#include "{}.h"\n'.format(os.path.splitext(os.path.basename(out_src))[0]))
     f.write('namespace yakc {\n')
