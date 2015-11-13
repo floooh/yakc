@@ -46,7 +46,8 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
 //------------------------------------------------------------------------------
 bool
 ModuleWindow::Draw(kc85& kc) {
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::SetNextWindowSize(ImVec2(384, 116), ImGuiSetCond_Once);
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
         this->drawModuleSlot(kc, 0x08);     // base device, right expansion slot
         this->drawModuleSlot(kc, 0x0C);     // base device, left expansion slot
         ImGui::TextWrapped("Hover over slot buttons to get help about inserted module!");
