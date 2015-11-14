@@ -15,6 +15,9 @@
 #ifndef YAKC_FREE
 #define YAKC_FREE(p) free(p)
 #endif
+#ifndef YAKC_PRINTF
+#define YAKC_PRINTF(...) printf(__VA_ARGS__)
+#endif
 
 namespace yakc {
 

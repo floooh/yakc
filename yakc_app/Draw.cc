@@ -109,7 +109,7 @@ static uint32 bgPalette[8] = {
 
 //------------------------------------------------------------------------------
 static void
-Draw8Pixels(uint32* ptr, ubyte pixels, ubyte colors, bool blinkBg) {
+Draw8Pixels(uint32* ptr, ubyte pixels, ubyte colors, bool blink_off) {
 
     // select foreground- and background color:
     //  bit 7: blinking
@@ -117,16 +117,10 @@ Draw8Pixels(uint32* ptr, ubyte pixels, ubyte colors, bool blinkBg) {
     //  bits 2..0: background color
     //
     // index 0 is background color, index 1 is foreground color
-    ubyte bg_index = colors & 0x7;
-    ubyte fg_index = (colors>>3)&0xF;
-    uint32 bg = bgPalette[bg_index];
-    uint32 fg;
-    if (blinkBg & (colors & 0x80)) {
-        fg = bg;
-    }
-    else {
-        fg = fgPalette[fg_index];
-    }
+    const ubyte bg_index = colors & 0x7;
+    const ubyte fg_index = (colors>>3)&0xF;
+    const uint32 bg = bgPalette[bg_index];
+    const uint32 fg = (blink_off && (colors & 0x80)) ? bg : fgPalette[fg_index];
     ptr[0] = pixels & 0x80 ? fg : bg;
     ptr[1] = pixels & 0x40 ? fg : bg;
     ptr[2] = pixels & 0x20 ? fg : bg;
@@ -141,7 +135,7 @@ Draw8Pixels(uint32* ptr, ubyte pixels, ubyte colors, bool blinkBg) {
 void
 Draw::DecodeVideoMemory(const kc85& kc) {
 
-    bool blink_off = !kc.blink_state();
+    const bool blink_off = !kc.blink_state();
     if (kc.model() == kc85::kc_model::kc85_3) {
         const uint8* pixel_data = kc.irm0;
         const uint8* color_data = kc.irm0 + 0x2800;
@@ -150,10 +144,10 @@ Draw::DecodeVideoMemory(const kc85& kc) {
         int color_offset;
         for (int y = 0; y < irmHeight; y++) {
 
-            int left_pixel_offset  = (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>4)&0xF)<<9);
-            int left_color_offset  = (((y>>2)&0x3f)<<5);
-            int right_pixel_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>6)&0x3)<<9);
-            int right_color_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | (((y>>6)&0x3)<<7);
+            const int left_pixel_offset  = (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>4)&0xF)<<9);
+            const int left_color_offset  = (((y>>2)&0x3f)<<5);
+            const int right_pixel_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>6)&0x3)<<9);
+            const int right_color_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | (((y>>6)&0x3)<<7);
 
             uint32* dst_ptr = &(this->irmBuffer[y][0]);
 

@@ -6,6 +6,7 @@
 #include "MemoryWindow.h"
 #include "DebugWindow.h"
 #include "PIOWindow.h"
+#include "CTCWindow.h"
 #include "ModuleWindow.h"
 #include "KeyboardWindow.h"
 #include "Time/Clock.h"
@@ -117,6 +118,9 @@ UI::OnFrame(kc85& kc) {
             }
             if (ImGui::MenuItem("Z80 PIO")) {
                 this->OpenWindow(kc, PIOWindow::Create());
+            }
+            if (ImGui::MenuItem("Z80 CTC")) {
+                this->OpenWindow(kc, CTCWindow::Create());
             }
             ImGui::EndMenu();
         }

@@ -131,12 +131,16 @@ private:
     void update_bank_switching();
     /// map or unmap a module based on control-byte
     void update_module(int slot_index);
+    /// CTC pulse callback
+    static void ctc_pulse_callback(void* userdata, z80ctc::channel c);
 
     kc_model cur_model;
     bool on;
     ubyte key_code;
     ubyte* cur_caos_rom;
     uword cur_caos_rom_size;
+    int vsync_counter;      // 50Hz frame reset counter
+    bool video_blink_flag;  // current blinking flag triggered by CTC channel 2
 };
 
 //------------------------------------------------------------------------------
@@ -147,7 +151,9 @@ paused(false),
 cur_model(kc_model::kc85_3),
 key_code(0),
 cur_caos_rom(rom_caos31),
-cur_caos_rom_size(sizeof(rom_caos31)) {
+cur_caos_rom_size(sizeof(rom_caos31)),
+vsync_counter(0),
+video_blink_flag(false) {
     // configure module slots
     this->modules[0].slot_addr = 0x08;  // base device right module slot
     this->modules[1].slot_addr = 0x0C;  // base device left module slot
@@ -177,9 +183,10 @@ kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
     this->cur_caos_rom_size = caos_rom_size;
     this->on = true;
     this->key_code = 0;
+    this->vsync_counter = 0;
 
     this->pio.init();
-    this->ctc.init();
+    this->ctc.init(ctc_pulse_callback, this);
     this->cpu.reset();
     if (kc_model::kc85_3 == m) {
         // fill RAM banks with noise
@@ -363,23 +370,28 @@ kc85::onframe(int micro_secs) {
     // or: (micro_secs * 175) / 100
     this->handle_keyboard_input();
     if (!this->paused) {
-        const unsigned int num_tstates = (micro_secs * 175) / 100;
+        const int khz = this->cur_model == kc_model::kc85_3 ? 1750 : 1770;
+        const unsigned int num_cycles = (micro_secs * khz) / 1000;
+
+        // step CPU and CTC
         cpu.state.T = 0;
-        if (this->breakpoint_enabled) {
-            // check if breakpoint has been hit before each cpu-step
-            while (cpu.state.T < num_tstates) {
+        while (cpu.state.T < num_cycles) {
+            if (this->breakpoint_enabled) {
                 if (cpu.state.PC == this->breakpoint_address) {
                     this->paused = true;
                     break;
                 }
-                cpu.step();
             }
-        }
-        else {
-            // fast loop without breakpoint check
-            while (cpu.state.T < num_tstates) {
-                cpu.step();
+            unsigned int prev_cycles = cpu.state.T;
+            cpu.step();
+            unsigned int exec_cycles = cpu.state.T - prev_cycles;
+            ctc.update(exec_cycles);
+            if (this->vsync_counter <= 0) {
+                this->ctc.trigger(z80ctc::CTC2);
+                this->ctc.trigger(z80ctc::CTC3);
+                this->vsync_counter = (khz * 1000) / 50;
             }
+            this->vsync_counter -= exec_cycles;
         }
     }
 }
@@ -404,8 +416,12 @@ kc85::step() {
 //------------------------------------------------------------------------------
 inline bool
 kc85::blink_state() const {
-    // FIXME
-    return true;
+    if (this->pio.read(z80pio::B) & PIO_B_BLINK_ENABLED) {
+        return this->video_blink_flag;
+    }
+    else {
+        return true;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -601,4 +617,20 @@ kc85::update_bank_switching() {
     }
 }
 
+//------------------------------------------------------------------------------
+inline void
+kc85::ctc_pulse_callback(void* userdata, z80ctc::channel c) {
+    YAKC_ASSERT(userdata);
+    kc85* self = (kc85*)userdata;
+
+    // CTC channel 2 controls the forward color blink state
+    if (z80ctc::CTC2 == c) {
+        self->video_blink_flag = !self->video_blink_flag;
+    }
+    else {
+        YAKC_PRINTF("FIXME: PULSE CALLBACK FOR CTC CHANNEL %d\n", c);
+    }
+}
+
 } // namespace yakc
+

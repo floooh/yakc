@@ -9,6 +9,7 @@ fips_begin_module(yakc_ui)
         Disasm.cc Disasm.h
         DebugWindow.cc DebugWindow.h
         PIOWindow.cc PIOWindow.h
+        CTCWindow.cc CTCWindow.h
         ModuleWindow.cc ModuleWindow.h
         KeyboardWindow.cc KeyboardWindow.h
         z80dasm.cc z80dasm.h
