@@ -94,4 +94,20 @@ ModuleWindow::setupModules(kc85& kc) {
     mod.size = 0x2000;
     mod.ptr = rom_forth;
     this->modules.Add(mod);
+
+    // M027 DEVELOPMENT
+    YAKC_ASSERT(sizeof(rom_develop) == 0x2000);
+    mod.name = "M027 DEVELOPMENT";
+    mod.help = "Assembler/disassembler expansion module.\n\n"
+        "First deactivate the BASIC ROM with:\n"
+        "SWITCH 02 00\n\n"
+        "Then activate the module with:\n"
+        "SWITCH [SLOT] C1\n\n"
+        "...where [SLOT] is 08 or 0C";
+    mod.type = 0xFB;
+    mod.writable = false;
+    mod.size = 0x2000;
+    mod.ptr = rom_develop;
+    this->modules.Add(mod);
+
 }

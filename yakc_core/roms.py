@@ -4,7 +4,7 @@
 #-------------------------------------------------------------------------------
 
 Version = 1
-roms = ['basic_c0.853', 'caos31.853', 'forth.853'] 
+roms = ['basic_c0.853', 'caos31.853', 'forth.853', 'develop.853'] 
 
 import os.path
 import genutil
