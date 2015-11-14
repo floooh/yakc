@@ -7,6 +7,7 @@
 #include "DebugWindow.h"
 #include "PIOWindow.h"
 #include "ModuleWindow.h"
+#include "KeyboardWindow.h"
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -101,7 +102,10 @@ UI::OnFrame(kc85& kc) {
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Window")) {
+        if (ImGui::BeginMenu("Windows")) {
+            if (ImGui::MenuItem("Keyboard")) {
+                this->OpenWindow(kc, KeyboardWindow::Create());
+            }
             if (ImGui::MenuItem("Modules")) {
                 this->OpenWindow(kc, ModuleWindow::Create());
             }

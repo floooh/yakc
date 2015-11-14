@@ -10,6 +10,7 @@ fips_begin_module(yakc_ui)
         DebugWindow.cc DebugWindow.h
         PIOWindow.cc PIOWindow.h
         ModuleWindow.cc ModuleWindow.h
+        KeyboardWindow.cc KeyboardWindow.h
         z80dasm.cc z80dasm.h
     )
     fips_deps(yakc_core)
