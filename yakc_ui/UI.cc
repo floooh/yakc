@@ -12,7 +12,7 @@
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
-#include "yakc_core/roms.h"
+#include "yakc_roms/roms.h"
 
 using namespace Oryol;
 using namespace yakc;

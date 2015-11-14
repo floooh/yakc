@@ -14,5 +14,5 @@ fips_begin_module(yakc_ui)
         KeyboardWindow.cc KeyboardWindow.h
         z80dasm.cc z80dasm.h
     )
-    fips_deps(yakc_core)
+    fips_deps(yakc_core yakc_roms)
 fips_end_module()

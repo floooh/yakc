@@ -4,12 +4,10 @@
     @class yakc::kc85
     @brief wrapper class for the entire KC85/3 or KC85/4 system
 */
-#include "z80.h"
-#include "z80pio.h"
-#include "z80ctc.h"
-#include "roms.h"
-#include <stdlib.h>
-#include <stdio.h>
+#include "yakc_core/z80.h"
+#include "yakc_core/z80pio.h"
+#include "yakc_core/z80ctc.h"
+#include "yakc_roms/roms.h"
 
 namespace yakc {
 
