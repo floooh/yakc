@@ -6,6 +6,7 @@
 */
 #include "z80.h"
 #include "z80pio.h"
+#include "z80ctc.h"
 #include "roms.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,8 +45,10 @@ public:
 
     /// the Z80 CPU
     z80 cpu;
-    /// the z80 PIO
+    /// the Z80 PIO
     z80pio pio;
+    /// the Z80 CTC
+    z80ctc ctc;
     /// breakpoint is enabled?
     bool breakpoint_enabled;
     /// breakpoint address
@@ -176,6 +179,7 @@ kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
     this->key_code = 0;
 
     this->pio.init();
+    this->ctc.init();
     this->cpu.reset();
     if (kc_model::kc85_3 == m) {
         // fill RAM banks with noise
@@ -202,6 +206,7 @@ kc85::switchoff() {
 //------------------------------------------------------------------------------
 inline void
 kc85::reset() {
+    this->ctc.reset();
     this->pio.reset();
     this->cpu.reset();
     // execution after reset starts at 0xE000
@@ -478,16 +483,17 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             self->pio.control(z80pio::B, val);
             break;
         case 0x8C:
-            // CTC0
+            self->ctc.write(z80ctc::CTC0, val);
             break;
         case 0x8D:
-            // CTC1
+            self->ctc.write(z80ctc::CTC1, val);
             break;
         case 0x8E:
-            // CTC2
+            self->ctc.write(z80ctc::CTC2, val);
             break;
         case 0x8F:
-            // CTC3
+            self->ctc.write(z80ctc::CTC3, val);
+            break;
         default:
             // unknown
             YAKC_ASSERT(false);

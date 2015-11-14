@@ -1,4 +1,11 @@
-fips_begin_app(yakc_app windowed)
+if (FIPS_IOS OR FIPS_OSX)
+    # IOS or OSX are picky about underscores in bundle app names
+    set(appname "yakcapp")
+else()
+    set(appname "yakc_app")
+endif()
+
+fips_begin_app(${appname} windowed)
     fips_files(
         Main.cc
         Util.h

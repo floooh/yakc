@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 /**
     @class yakc::z80pio
-    @brief hold the Z80 PIO state
+    @brief incomplete Z80 PIO emulation (only what needed for KC85)
     
     FIXME: control mode 0x7 is currently not supported
     http://www.cpcwiki.eu/index.php/Z80_PIO
@@ -16,8 +16,8 @@ public:
     /// channels
     enum channel {
         A = 0,
-        B = 1,
-        num_channels = 2,
+        B,
+        num_channels,
     };
 
     /// channel state
@@ -34,7 +34,6 @@ public:
     void init();
     /// reset the pio
     void reset();
-    /// set write-handler
 
     /// write control register
     void control(channel c, ubyte m);
