@@ -15,10 +15,10 @@ from mod import log, util, project, emscripten, android, nacl
 def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     """builds the final webpage under under fips-deploy/oryol-webpage"""
     ws_dir = util.get_workspace_dir(fips_dir)
-    deploy_dir = '{}/fips-deploy/yakc/emsc-make-release/'.format(ws_dir)
+    deploy_dir = '{}/fips-deploy/yakc/yakc-emsc-make-release/'.format(ws_dir)
 
     # copy the application files
-    for name in ['yakc_app.js', 'yakc_app.html.mem'] :
+    for name in ['yakc_app.js'] :
         log.info('> copy file: {}'.format(name))
         shutil.copy(deploy_dir + name, webpage_dir + '/' + name)
 
@@ -46,8 +46,8 @@ def build_deploy_webpage(fips_dir, proj_dir) :
 
     # compile emscripten, pnacl and android samples
     if emscripten.check_exists(fips_dir) :
-        project.gen(fips_dir, proj_dir, 'emsc-make-release')
-        project.build(fips_dir, proj_dir, 'emsc-make-release')
+        project.gen(fips_dir, proj_dir, 'yakc-emsc-make-release')
+        project.build(fips_dir, proj_dir, 'yakc-emsc-make-release')
     
     # deploy the webpage
     deploy_webpage(fips_dir, proj_dir, webpage_dir)
