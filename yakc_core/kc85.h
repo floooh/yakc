@@ -374,24 +374,26 @@ kc85::onframe(int micro_secs) {
         const unsigned int num_cycles = (micro_secs * khz) / 1000;
 
         // step CPU and CTC
-        cpu.state.T = 0;
-        while (cpu.state.T < num_cycles) {
+        unsigned int cycles_executed = 0;
+        while (cycles_executed < num_cycles) {
             if (this->breakpoint_enabled) {
                 if (cpu.state.PC == this->breakpoint_address) {
                     this->paused = true;
                     break;
                 }
             }
-            unsigned int prev_cycles = cpu.state.T;
-            cpu.step();
-            unsigned int exec_cycles = cpu.state.T - prev_cycles;
-            ctc.update(exec_cycles);
+            unsigned int cycles_opcode = cpu.step();
+            ctc.update(cycles_opcode);
+            // FIXME: CTC channels 0 and 1 seem to be triggered per video scanline
+
+            // CTC2 and CTC3 are triggered per 50 Hz video frame
             if (this->vsync_counter <= 0) {
                 this->ctc.trigger(z80ctc::CTC2);
                 this->ctc.trigger(z80ctc::CTC3);
                 this->vsync_counter = (khz * 1000) / 50;
             }
-            this->vsync_counter -= exec_cycles;
+            this->vsync_counter -= cycles_opcode;
+            cycles_executed += cycles_opcode;
         }
     }
 }

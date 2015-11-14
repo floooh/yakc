@@ -44,8 +44,8 @@ TEST(LD_A_RI) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(9 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(13 == cpu.state.T);
-    cpu.step(); CHECK(0x39 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(22 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x39 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(9 == cpu.state.T);
 }
 
 // LD r,s
@@ -118,67 +118,67 @@ TEST(LD_r_sn) {
     };
     cpu.mem.write(0x0000, prog, sizeof(prog));
     cpu.step(); CHECK(0x12 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.B); CHECK(11 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.C); CHECK(15 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.D); CHECK(19 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.E); CHECK(23 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.H); CHECK(27 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.L); CHECK(31 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.A); CHECK(35 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.B); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.C); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.D); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.E); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.H); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.L); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.A); CHECK(4 == cpu.state.T);
 
-    cpu.step(); CHECK(0x13 == cpu.state.B); CHECK(42 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.B); CHECK(46 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.C); CHECK(50 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.D); CHECK(54 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.E); CHECK(58 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.H); CHECK(62 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.L); CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.A); CHECK(70 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.B); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.B); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.C); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.D); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.E); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.H); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.L); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.A); CHECK(4 == cpu.state.T);
 
-    cpu.step(); CHECK(0x14 == cpu.state.C); CHECK(77 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.B); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.C); CHECK(85 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.D); CHECK(89 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.E); CHECK(93 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.H); CHECK(97 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.L); CHECK(101 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.A); CHECK(105 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.C); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.B); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.C); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.D); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.E); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.H); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.L); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.A); CHECK(4 == cpu.state.T);
 
-    cpu.step(); CHECK(0x15 == cpu.state.D); CHECK(112 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.B); CHECK(116 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.C); CHECK(120 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.D); CHECK(124 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.E); CHECK(128 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.H); CHECK(132 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.L); CHECK(136 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.A); CHECK(140 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.D); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.B); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.C); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.D); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.E); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.H); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.L); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.A); CHECK(4 == cpu.state.T);
 
-    cpu.step(); CHECK(0x16 == cpu.state.E); CHECK(147 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.B); CHECK(151 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.C); CHECK(155 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.D); CHECK(159 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.E); CHECK(163 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.H); CHECK(167 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.L); CHECK(171 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.A); CHECK(175 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.E); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.B); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.C); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.D); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.E); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.H); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.L); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.A); CHECK(4 == cpu.state.T);
 
-    cpu.step(); CHECK(0x17 == cpu.state.H); CHECK(182 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.B); CHECK(186 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.C); CHECK(190 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.D); CHECK(194 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.E); CHECK(198 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.H); CHECK(202 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.L); CHECK(206 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.A); CHECK(210 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.H); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.B); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.C); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.D); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.E); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.H); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.L); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.A); CHECK(4 == cpu.state.T);
 
-    cpu.step(); CHECK(0x18 == cpu.state.L); CHECK(217 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.B); CHECK(221 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.C); CHECK(225 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.D); CHECK(229 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.E); CHECK(233 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.H); CHECK(237 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.L); CHECK(241 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.A); CHECK(245 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.L); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.B); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.C); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.D); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.E); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.H); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.L); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.A); CHECK(4 == cpu.state.T);
 }
 
 // LD r,(HL)
@@ -202,18 +202,18 @@ TEST(LD_r_iHL) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL);      CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.A);         CHECK(17 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.mem.r8(0x1000));  CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x22 == cpu.state.A);         CHECK(31 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.B);         CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.C);         CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.D);         CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.E);         CHECK(59 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.H);         CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x10 == cpu.state.H);         CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.L);         CHECK(80 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.L);         CHECK(87 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.A);         CHECK(94 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.A);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.mem.r8(0x1000));  CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x22 == cpu.state.A);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.B);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.C);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.D);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.E);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.H);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x10 == cpu.state.H);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.L);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.L);         CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.A);         CHECK(7 == cpu.state.T);
 }
 
 // LD r,([IX|IY] + d)
@@ -246,21 +246,21 @@ TEST(LD_r_IXY_d) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1003 == cpu.state.IX);  CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(4 == cpu.state.A);        CHECK(33 == cpu.state.T);
-    cpu.step(); CHECK(5 == cpu.state.B);        CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(6 == cpu.state.C);        CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(3 == cpu.state.D);        CHECK(90 == cpu.state.T);
-    cpu.step(); CHECK(2 == cpu.state.E);        CHECK(109 == cpu.state.T);
-    cpu.step(); CHECK(7 == cpu.state.H);        CHECK(128 == cpu.state.T);
-    cpu.step(); CHECK(1 == cpu.state.L);        CHECK(147 == cpu.state.T);
-    cpu.step(); CHECK(0x1004 == cpu.state.IY);  CHECK(161 == cpu.state.T);
-    cpu.step(); CHECK(5 == cpu.state.A);        CHECK(180 == cpu.state.T);
-    cpu.step(); CHECK(6 == cpu.state.B);        CHECK(199 == cpu.state.T);
-    cpu.step(); CHECK(7 == cpu.state.C);        CHECK(218 == cpu.state.T);
-    cpu.step(); CHECK(4 == cpu.state.D);        CHECK(237 == cpu.state.T);
-    cpu.step(); CHECK(3 == cpu.state.E);        CHECK(256 == cpu.state.T);
-    cpu.step(); CHECK(8 == cpu.state.H);        CHECK(275 == cpu.state.T);
-    cpu.step(); CHECK(2 == cpu.state.L);        CHECK(294 == cpu.state.T);
+    cpu.step(); CHECK(4 == cpu.state.A);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(5 == cpu.state.B);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(6 == cpu.state.C);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(3 == cpu.state.D);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(2 == cpu.state.E);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(7 == cpu.state.H);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(1 == cpu.state.L);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x1004 == cpu.state.IY);  CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(5 == cpu.state.A);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(6 == cpu.state.B);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(7 == cpu.state.C);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(4 == cpu.state.D);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(3 == cpu.state.E);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(8 == cpu.state.H);        CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(2 == cpu.state.L);        CHECK(19 == cpu.state.T);
 }
 
 // LD (HL),r
@@ -284,18 +284,18 @@ TEST(LD_iHL_r) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL);      CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.A);         CHECK(17 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.mem.r8(0x1000));  CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.B);         CHECK(31 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.mem.r8(0x1000));  CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.C);         CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.mem.r8(0x1000));  CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.D);         CHECK(59 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.mem.r8(0x1000));  CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.E);         CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.mem.r8(0x1000));  CHECK(80 == cpu.state.T);
-    cpu.step(); CHECK(0x10 == cpu.mem.r8(0x1000));  CHECK(87 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000));  CHECK(94 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.A);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.mem.r8(0x1000));  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.B);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.mem.r8(0x1000));  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.C);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.mem.r8(0x1000));  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.D);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.mem.r8(0x1000));  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.E);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.mem.r8(0x1000));  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x10 == cpu.mem.r8(0x1000));  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000));  CHECK(7  == cpu.state.T);
 }
 
 // LD (IX|IY + d),r
@@ -336,36 +336,36 @@ TEST(LD_iIXY_d_r) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1003 == cpu.state.IX);      CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.A);         CHECK(21 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.mem.r8(0x1003));  CHECK(40 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.B);         CHECK(47 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.mem.r8(0x1004));  CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.C);         CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.mem.r8(0x1005));  CHECK(92 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.D);         CHECK(99 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.mem.r8(0x1002));  CHECK(118 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.E);         CHECK(125 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.mem.r8(0x1001));  CHECK(144 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.H);         CHECK(151 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.mem.r8(0x1006));  CHECK(170 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.L);         CHECK(177 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.mem.r8(0x1000));  CHECK(196 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.A);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.mem.r8(0x1003));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.B);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.mem.r8(0x1004));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.C);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.mem.r8(0x1005));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.D);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.mem.r8(0x1002));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.E);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.mem.r8(0x1001));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.H);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.mem.r8(0x1006));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.L);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.mem.r8(0x1000));  CHECK(19 == cpu.state.T);
     cpu.state.T = 0;
     cpu.step(); CHECK(0x1003 == cpu.state.IY);      CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.A);         CHECK(21 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.mem.r8(0x1003));  CHECK(40 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.state.B);         CHECK(47 == cpu.state.T);
-    cpu.step(); CHECK(0x13 == cpu.mem.r8(0x1004));  CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.C);         CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.mem.r8(0x1005));  CHECK(92 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.D);         CHECK(99 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.mem.r8(0x1002));  CHECK(118 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.state.E);         CHECK(125 == cpu.state.T);
-    cpu.step(); CHECK(0x16 == cpu.mem.r8(0x1001));  CHECK(144 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.state.H);         CHECK(151 == cpu.state.T);
-    cpu.step(); CHECK(0x17 == cpu.mem.r8(0x1006));  CHECK(170 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.state.L);         CHECK(177 == cpu.state.T);
-    cpu.step(); CHECK(0x18 == cpu.mem.r8(0x1000));  CHECK(196 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.A);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.mem.r8(0x1003));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.state.B);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x13 == cpu.mem.r8(0x1004));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.C);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.mem.r8(0x1005));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.D);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.mem.r8(0x1002));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.state.E);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x16 == cpu.mem.r8(0x1001));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.state.H);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x17 == cpu.mem.r8(0x1006));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.state.L);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x18 == cpu.mem.r8(0x1000));  CHECK(19 == cpu.state.T);
 }
 
 // LD (HL),n
@@ -380,9 +380,9 @@ TEST(LD_iHL_n) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x2000 == cpu.state.HL);      CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.mem.r8(0x2000));  CHECK(20 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.HL);      CHECK(30 == cpu.state.T);
-    cpu.step(); CHECK(0x65 == cpu.mem.r8(0x1000));  CHECK(40 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.mem.r8(0x2000));  CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.HL);      CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x65 == cpu.mem.r8(0x1000));  CHECK(10 == cpu.state.T);
 }
 
 // LD ([IX|IY] + d),n
@@ -399,11 +399,11 @@ TEST(LD_iIXY_d_n) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x2000 == cpu.state.IX);      CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.mem.r8(0x2002));  CHECK(33 == cpu.state.T);
-    cpu.step(); CHECK(0x11 == cpu.mem.r8(0x1FFE));  CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.IY);      CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x22 == cpu.mem.r8(0x1001));  CHECK(85 == cpu.state.T);
-    cpu.step(); CHECK(0x44 == cpu.mem.r8(0x0FFF));  CHECK(104 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.mem.r8(0x2002));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x11 == cpu.mem.r8(0x1FFE));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IY);      CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x22 == cpu.mem.r8(0x1001));  CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x44 == cpu.mem.r8(0x0FFF));  CHECK(19 == cpu.state.T);
 }
 
 // LD A,(BC)
@@ -426,10 +426,10 @@ TEST(LD_A_iBCDEnn) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.BC);  CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x1001 == cpu.state.DE);  CHECK(20 == cpu.state.T);
-    cpu.step(); CHECK(0x11 == cpu.state.A);     CHECK(27 == cpu.state.T);
-    cpu.step(); CHECK(0x22 == cpu.state.A);     CHECK(34 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.A);     CHECK(47 == cpu.state.T);
+    cpu.step(); CHECK(0x1001 == cpu.state.DE);  CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x11 == cpu.state.A);     CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x22 == cpu.state.A);     CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.A);     CHECK(13 == cpu.state.T);
 }
 
 // LD (BC),A
@@ -448,11 +448,11 @@ TEST(LD_iBCDEnn_A) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.BC);      CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x1001 == cpu.state.DE);      CHECK(20 == cpu.state.T);
-    cpu.step(); CHECK(0x77 == cpu.state.A);         CHECK(27 == cpu.state.T);
-    cpu.step(); CHECK(0x77 == cpu.mem.r8(0x1000));  CHECK(34 == cpu.state.T);
-    cpu.step(); CHECK(0x77 == cpu.mem.r8(0x1001));  CHECK(41 == cpu.state.T);
-    cpu.step(); CHECK(0x77 == cpu.mem.r8(0x1002));  CHECK(54 == cpu.state.T);
+    cpu.step(); CHECK(0x1001 == cpu.state.DE);      CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x77 == cpu.state.A);         CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x77 == cpu.mem.r8(0x1000));  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x77 == cpu.mem.r8(0x1001));  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x77 == cpu.mem.r8(0x1002));  CHECK(13 == cpu.state.T);
 }
 
 // LD I,A
@@ -467,8 +467,8 @@ TEST(LD_IR_A) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x45 == cpu.state.A);     CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x45 == cpu.state.I);     CHECK(16 == cpu.state.T);
-    cpu.step(); CHECK(0x45 == cpu.state.R);     CHECK(25 == cpu.state.T);
+    cpu.step(); CHECK(0x45 == cpu.state.I);     CHECK(9 == cpu.state.T);
+    cpu.step(); CHECK(0x45 == cpu.state.R);     CHECK(9 == cpu.state.T);
 }
 
 // LD dd,nn
@@ -487,11 +487,11 @@ TEST(LD_ddIXY_nn) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1234 == cpu.state.BC); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.DE); CHECK(20 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.state.HL); CHECK(30 == cpu.state.T);
-    cpu.step(); CHECK(0x1368 == cpu.state.SP); CHECK(40 == cpu.state.T);
-    cpu.step(); CHECK(0x4321 == cpu.state.IX); CHECK(54 == cpu.state.T);
-    cpu.step(); CHECK(0x8765 == cpu.state.IY); CHECK(68 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.DE); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.state.HL); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1368 == cpu.state.SP); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x4321 == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x8765 == cpu.state.IY); CHECK(14 == cpu.state.T);
 }
 
 // LD HL,(nn)
@@ -517,12 +517,12 @@ TEST(LD_HLddIXY_inn) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x0201 == cpu.state.HL); CHECK(16 == cpu.state.T);
-    cpu.step(); CHECK(0x0302 == cpu.state.BC); CHECK(36 == cpu.state.T);
-    cpu.step(); CHECK(0x0403 == cpu.state.DE); CHECK(56 == cpu.state.T);
-    cpu.step(); CHECK(0x0504 == cpu.state.HL); CHECK(76 == cpu.state.T);
-    cpu.step(); CHECK(0x0605 == cpu.state.SP); CHECK(96 == cpu.state.T);
-    cpu.step(); CHECK(0x0706 == cpu.state.IX); CHECK(116 == cpu.state.T);
-    cpu.step(); CHECK(0x0807 == cpu.state.IY); CHECK(136 == cpu.state.T);
+    cpu.step(); CHECK(0x0302 == cpu.state.BC); CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x0403 == cpu.state.DE); CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x0504 == cpu.state.HL); CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x0605 == cpu.state.SP); CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x0706 == cpu.state.IX); CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x0807 == cpu.state.IY); CHECK(20 == cpu.state.T);
 }
 
 // LD (nn),HL
@@ -550,19 +550,19 @@ TEST(LD_inn_HLDDIXY) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x0201 == cpu.state.HL);          CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x0201 == cpu.mem.r16(0x1000));   CHECK(26 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.state.BC);          CHECK(36 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.mem.r16(0x1002));   CHECK(56 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.DE);          CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.mem.r16(0x1004));   CHECK(86 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.state.HL);          CHECK(96 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.mem.r16(0x1006));   CHECK(116 == cpu.state.T);
-    cpu.step(); CHECK(0x1368 == cpu.state.SP);          CHECK(126 == cpu.state.T);
-    cpu.step(); CHECK(0x1368 == cpu.mem.r16(0x1008));   CHECK(146 == cpu.state.T);
-    cpu.step(); CHECK(0x4321 == cpu.state.IX);          CHECK(160 == cpu.state.T);
-    cpu.step(); CHECK(0x4321 == cpu.mem.r16(0x100A));   CHECK(180 == cpu.state.T);
-    cpu.step(); CHECK(0x8765 == cpu.state.IY);          CHECK(194 == cpu.state.T);
-    cpu.step(); CHECK(0x8765 == cpu.mem.r16(0x100C));   CHECK(214 == cpu.state.T);
+    cpu.step(); CHECK(0x0201 == cpu.mem.r16(0x1000));   CHECK(16 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.BC);          CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.mem.r16(0x1002));   CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.DE);          CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.mem.r16(0x1004));   CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.state.HL);          CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.mem.r16(0x1006));   CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x1368 == cpu.state.SP);          CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1368 == cpu.mem.r16(0x1008));   CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x4321 == cpu.state.IX);          CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x4321 == cpu.mem.r16(0x100A));   CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x8765 == cpu.state.IY);          CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x8765 == cpu.mem.r16(0x100C));   CHECK(20 == cpu.state.T);
 }
 
 // LD SP,HL
@@ -581,11 +581,11 @@ TEST(LD_SP_HLIXY) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1234 == cpu.state.HL);  CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.IX);  CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.state.IY);  CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.state.SP);  CHECK(44 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.SP);  CHECK(54 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.state.SP);  CHECK(64 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.IX);  CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.state.IY);  CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.SP);  CHECK(6  == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.SP);  CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.state.SP);  CHECK(10 == cpu.state.T);
 }
 
 // PUSH qq
@@ -620,24 +620,24 @@ TEST(PUSH_POP_qqIXY) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1234 == cpu.state.BC);  CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.DE);  CHECK(20 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.state.HL);  CHECK(30 == cpu.state.T);
-    cpu.step(); CHECK(0xEF00 == cpu.state.AF);  CHECK(37 == cpu.state.T);
-    cpu.step(); CHECK(0x2345 == cpu.state.IX);  CHECK(51 == cpu.state.T);
-    cpu.step(); CHECK(0x6789 == cpu.state.IY);  CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x0100 == cpu.state.SP);  CHECK(75 == cpu.state.T);
-    cpu.step(); CHECK(0xEF00 == cpu.mem.r16(0x00FE)); CHECK(0x00FE == cpu.state.SP); CHECK(86 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.mem.r16(0x00FC)); CHECK(0x00FC == cpu.state.SP); CHECK(97 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.mem.r16(0x00FA)); CHECK(0x00FA == cpu.state.SP); CHECK(108 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.mem.r16(0x00F8)); CHECK(0x00F8 == cpu.state.SP); CHECK(119 == cpu.state.T);
-    cpu.step(); CHECK(0x2345 == cpu.mem.r16(0x00F6)); CHECK(0x00F6 == cpu.state.SP); CHECK(134 == cpu.state.T);
-    cpu.step(); CHECK(0x6789 == cpu.mem.r16(0x00F4)); CHECK(0x00F4 == cpu.state.SP); CHECK(149 == cpu.state.T);
-    cpu.step(); CHECK(0x6789 == cpu.state.AF); CHECK(0x00F6 == cpu.state.SP); CHECK(159 == cpu.state.T);
-    cpu.step(); CHECK(0x2345 == cpu.state.BC); CHECK(0x00F8 == cpu.state.SP); CHECK(169 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.state.DE); CHECK(0x00FA == cpu.state.SP); CHECK(179 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.HL); CHECK(0x00FC == cpu.state.SP); CHECK(189 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.state.IX); CHECK(0x00FE == cpu.state.SP); CHECK(203 == cpu.state.T);
-    cpu.step(); CHECK(0xEF00 == cpu.state.IY); CHECK(0x0100 == cpu.state.SP); CHECK(217 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.DE);  CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.state.HL);  CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0xEF00 == cpu.state.AF);  CHECK(7  == cpu.state.T);
+    cpu.step(); CHECK(0x2345 == cpu.state.IX);  CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x6789 == cpu.state.IY);  CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x0100 == cpu.state.SP);  CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0xEF00 == cpu.mem.r16(0x00FE)); CHECK(0x00FE == cpu.state.SP); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.mem.r16(0x00FC)); CHECK(0x00FC == cpu.state.SP); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.mem.r16(0x00FA)); CHECK(0x00FA == cpu.state.SP); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.mem.r16(0x00F8)); CHECK(0x00F8 == cpu.state.SP); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x2345 == cpu.mem.r16(0x00F6)); CHECK(0x00F6 == cpu.state.SP); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x6789 == cpu.mem.r16(0x00F4)); CHECK(0x00F4 == cpu.state.SP); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x6789 == cpu.state.AF); CHECK(0x00F6 == cpu.state.SP); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x2345 == cpu.state.BC); CHECK(0x00F8 == cpu.state.SP); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.state.DE); CHECK(0x00FA == cpu.state.SP); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.HL); CHECK(0x00FC == cpu.state.SP); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.IX); CHECK(0x00FE == cpu.state.SP); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0xEF00 == cpu.state.IY); CHECK(0x0100 == cpu.state.SP); CHECK(14 == cpu.state.T);
 }
 
 // EX DE,HL
@@ -673,33 +673,33 @@ TEST(EX) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1234 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.DE); CHECK(20 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.state.DE); CHECK(0x5678 == cpu.state.HL); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x1100 == cpu.state.AF); CHECK(0x0000 == cpu.state.AF_); CHECK(31 == cpu.state.T);
-    cpu.step(); CHECK(0x0000 == cpu.state.AF); CHECK(0x1100 == cpu.state.AF_); CHECK(35 == cpu.state.T);
-    cpu.step(); CHECK(0x2200 == cpu.state.AF); CHECK(0x1100 == cpu.state.AF_); CHECK(42 == cpu.state.T);
-    cpu.step(); CHECK(0x1100 == cpu.state.AF); CHECK(0x2200 == cpu.state.AF_); CHECK(46 == cpu.state.T);
-    cpu.step(); CHECK(0x9ABC == cpu.state.BC); CHECK(56 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.DE); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.DE); CHECK(0x5678 == cpu.state.HL); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x1100 == cpu.state.AF); CHECK(0x0000 == cpu.state.AF_); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0000 == cpu.state.AF); CHECK(0x1100 == cpu.state.AF_); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x2200 == cpu.state.AF); CHECK(0x1100 == cpu.state.AF_); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x1100 == cpu.state.AF); CHECK(0x2200 == cpu.state.AF_); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x9ABC == cpu.state.BC); CHECK(10 == cpu.state.T);
     cpu.step();
     CHECK(0x0000 == cpu.state.HL); CHECK(0x5678 == cpu.state.HL_);
     CHECK(0x0000 == cpu.state.DE); CHECK(0x1234 == cpu.state.DE_);
     CHECK(0x0000 == cpu.state.BC); CHECK(0x9ABC == cpu.state.BC_);
-    CHECK(60 == cpu.state.T);
-    cpu.step(); CHECK(0x1111 == cpu.state.HL); CHECK(70 == cpu.state.T);
-    cpu.step(); CHECK(0x2222 == cpu.state.DE); CHECK(80 == cpu.state.T);
-    cpu.step(); CHECK(0x3333 == cpu.state.BC); CHECK(90 == cpu.state.T);
+    CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x1111 == cpu.state.HL); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x2222 == cpu.state.DE); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x3333 == cpu.state.BC); CHECK(10 == cpu.state.T);
     cpu.step();
     CHECK(0x5678 == cpu.state.HL); CHECK(0x1111 == cpu.state.HL_);
     CHECK(0x1234 == cpu.state.DE); CHECK(0x2222 == cpu.state.DE_);
     CHECK(0x9ABC == cpu.state.BC); CHECK(0x3333 == cpu.state.BC_);
-    CHECK(94 == cpu.state.T);
-    cpu.step(); CHECK(0x0100 == cpu.state.SP); CHECK(104 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.mem.r16(0x00FE)); CHECK(115 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.state.HL); CHECK(0x5678 == cpu.mem.r16(0x00FE)); CHECK(134 == cpu.state.T);
-    cpu.step(); CHECK(0x8899 == cpu.state.IX); CHECK(148 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.IX); CHECK(0x8899 == cpu.mem.r16(0x00FE)); CHECK(171 == cpu.state.T);
-    cpu.step(); CHECK(0x6677 == cpu.state.IY); CHECK(185 == cpu.state.T);
-    cpu.step(); CHECK(0x8899 == cpu.state.IY); CHECK(0x6677 == cpu.mem.r16(0x00FE)); CHECK(208 == cpu.state.T);
+    CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0100 == cpu.state.SP); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.mem.r16(0x00FE)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.HL); CHECK(0x5678 == cpu.mem.r16(0x00FE)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x8899 == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.IX); CHECK(0x8899 == cpu.mem.r16(0x00FE)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x6677 == cpu.state.IY); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x8899 == cpu.state.IY); CHECK(0x6677 == cpu.mem.r16(0x00FE)); CHECK(23 == cpu.state.T);
 }
 
 // ADD A,r
@@ -728,21 +728,21 @@ TEST(ADD_A_r) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x0F == cpu.state.A); CHECK(cpu.test_flags(0));       CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x1E == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(11 == cpu.state.T);
-    cpu.step(); CHECK(0xE0 == cpu.state.B);                                 CHECK(18 == cpu.state.T);
-    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(22 == cpu.state.T);
-    cpu.step(); CHECK(0x81 == cpu.state.A);                                 CHECK(29 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.state.C);                                 CHECK(36 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(40 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.D);                                 CHECK(47 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF|z80::CF)); CHECK(51 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.state.E);                                 CHECK(58 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(0));       CHECK(62 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.state.H);                                 CHECK(69 == cpu.state.T);
-    cpu.step(); CHECK(0xC0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x33 == cpu.state.L);                                 CHECK(80 == cpu.state.T);
-    cpu.step(); CHECK(0xF3 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(84 == cpu.state.T);
-    cpu.step(); CHECK(0x37 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(91 == cpu.state.T);
+    cpu.step(); CHECK(0x1E == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xE0 == cpu.state.B);                                 CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x81 == cpu.state.A);                                 CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.C);                                 CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.D);                                 CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.E);                                 CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(0));       CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.H);                                 CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xC0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x33 == cpu.state.L);                                 CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xF3 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x37 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(7 == cpu.state.T);
 }
 
 // ADD A,(HL)
@@ -765,12 +765,12 @@ TEST(ADD_a_iHLIXY_d) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0xA2 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF)); CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(0x23 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(90 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xA2 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x23 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(19 == cpu.state.T);
 }
 
 // ADC A,r
@@ -797,20 +797,20 @@ TEST(ADC_a_r) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.B); CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0x61 == cpu.state.C); CHECK(21 == cpu.state.T);
-    cpu.step(); CHECK(0x81 == cpu.state.D); CHECK(28 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.E); CHECK(35 == cpu.state.T);
-    cpu.step(); CHECK(0x61 == cpu.state.H); CHECK(42 == cpu.state.T);
-    cpu.step(); CHECK(0x81 == cpu.state.L); CHECK(49 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0xA2 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF)); CHECK(61 == cpu.state.T);
-    cpu.step(); CHECK(0x23 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x65 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(69 == cpu.state.T);
-    cpu.step(); CHECK(0xC6 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x47 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(77 == cpu.state.T);
-    cpu.step(); CHECK(0x49 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(84 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.B); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x61 == cpu.state.C); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x81 == cpu.state.D); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.E); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x61 == cpu.state.H); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x81 == cpu.state.L); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xA2 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x23 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x65 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xC6 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x47 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x49 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(7 == cpu.state.T);
 }
 
 // ADC A,(HL)
@@ -834,13 +834,13 @@ TEST(ADC_a_iHLIXY_d) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0xA2 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF)); CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(0x23 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(90 == cpu.state.T);
-    cpu.step(); CHECK(0x26 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(109 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xA2 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x23 == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::CF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x26 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(19 == cpu.state.T);
 }
 
 // SUB A,r
@@ -868,21 +868,21 @@ TEST(SUB_A_r) {
     cpu.mem.write(0x000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.B); CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0xF8 == cpu.state.C); CHECK(21 == cpu.state.T);
-    cpu.step(); CHECK(0x0F == cpu.state.D); CHECK(28 == cpu.state.T);
-    cpu.step(); CHECK(0x79 == cpu.state.E); CHECK(35 == cpu.state.T);
-    cpu.step(); CHECK(0xC0 == cpu.state.H); CHECK(42 == cpu.state.T);
-    cpu.step(); CHECK(0xBF == cpu.state.L); CHECK(49 == cpu.state.T);
-    cpu.step(); CHECK(0x0 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0x07 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(61 == cpu.state.T);
-    cpu.step(); CHECK(0xF8 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x7F == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::VF|z80::NF)); CHECK(69 == cpu.state.T);
-    cpu.step(); CHECK(0xBF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF|z80::NF|z80::CF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(77 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(84 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(91 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.B); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xF8 == cpu.state.C); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0F == cpu.state.D); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x79 == cpu.state.E); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xC0 == cpu.state.H); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xBF == cpu.state.L); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x07 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xF8 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x7F == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::VF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xBF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(7 == cpu.state.T);
 }
 
 // CP A,r
@@ -909,20 +909,20 @@ TEST(CP_A_r) {
     cpu.mem.write(0x000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x05 == cpu.state.B); CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0x03 == cpu.state.C); CHECK(21 == cpu.state.T);
-    cpu.step(); CHECK(0xff == cpu.state.D); CHECK(28 == cpu.state.T);
-    cpu.step(); CHECK(0xaa == cpu.state.E); CHECK(35 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.state.H); CHECK(42 == cpu.state.T);
-    cpu.step(); CHECK(0x7f == cpu.state.L); CHECK(49 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(61 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF|z80::CF)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF|z80::CF)); CHECK(69 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF|z80::NF|z80::CF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(77 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(84 == cpu.state.T);
+    cpu.step(); CHECK(0x05 == cpu.state.B); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.C); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xff == cpu.state.D); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xaa == cpu.state.E); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.H); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x7f == cpu.state.L); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(7 == cpu.state.T);
 }
 
 // SUB A,(HL)
@@ -945,12 +945,12 @@ TEST(SUB_a_iHLIXY_d) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0xBF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0x5E == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::NF)); CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(90 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xBF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x5E == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::NF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(19 == cpu.state.T);
 }
 
 // SUB A,(HL)
@@ -973,12 +973,12 @@ TEST(CP_a_iHLIXY_d) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(90 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(19 == cpu.state.T);
 }
 
 // SBC A,r
@@ -1009,15 +1009,15 @@ TEST(SBC_A_r) {
     for (int i = 0; i < 7; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x0 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0x06 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(61 == cpu.state.T);
-    cpu.step(); CHECK(0xF7 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x7D == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::VF|z80::NF)); CHECK(69 == cpu.state.T);
-    cpu.step(); CHECK(0xBD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF|z80::NF|z80::CF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(77 == cpu.state.T);
-    cpu.step(); CHECK(0xFB == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF)); CHECK(84 == cpu.state.T);
-    cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(91 == cpu.state.T);
+    cpu.step(); CHECK(0x0 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x06 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xF7 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x7D == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::VF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xBD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::VF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFB == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xFD == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(7 == cpu.state.T);
 }
 
 // SBC A,(HL)
@@ -1041,12 +1041,12 @@ TEST(SBC_a_iHLIXY_d) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0xBF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0x5D == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::NF)); CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(0xFC == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(90 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x1003 == cpu.state.IY); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xBF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x5D == cpu.state.A); CHECK(cpu.test_flags(z80::VF|z80::NF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0xFC == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(19 == cpu.state.T);
 }
 
 // OR r
@@ -1078,15 +1078,15 @@ TEST(OR_r) {
     for (int i = 0; i < 7; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(50 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(54 == cpu.state.T);
-    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(58 == cpu.state.T);
-    cpu.step(); CHECK(0x07 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(62 == cpu.state.T);
-    cpu.step(); CHECK(0x0F == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x1F == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(70 == cpu.state.T);
-    cpu.step(); CHECK(0x3F == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(74 == cpu.state.T);
-    cpu.step(); CHECK(0x7F == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(88 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x07 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0F == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x1F == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x3F == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x7F == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
 }
 
 // XOR r
@@ -1118,15 +1118,15 @@ TEST(XOR_r) {
     for (int i = 0; i < 7; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(50 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(54 == cpu.state.T);
-    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(58 == cpu.state.T);
-    cpu.step(); CHECK(0x05 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(62 == cpu.state.T);
-    cpu.step(); CHECK(0x0A == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(66 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(70 == cpu.state.T);
-    cpu.step(); CHECK(0x2A == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(74 == cpu.state.T);
-    cpu.step(); CHECK(0x55 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(88 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x05 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0A == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x2A == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x55 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
 }
 
 // OR (HL)
@@ -1155,12 +1155,12 @@ TEST(OR_XOR_iHLIXY_d) {
 
     // skip loads
     cpu.step(); cpu.step(); cpu.step();
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0x63 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(64 == cpu.state.T);
-    cpu.step(); CHECK(0xE7 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(83 == cpu.state.T);
-    cpu.step(); CHECK(0xA6 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(90 == cpu.state.T);
-    cpu.step(); CHECK(0xC4 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(109 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(128 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x63 == cpu.state.A); CHECK(cpu.test_flags(z80::PF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0xE7 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0xA6 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xC4 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(19 == cpu.state.T);
 }
 
 // AND r
@@ -1198,21 +1198,21 @@ TEST(AND_rn) {
     for (int i = 0; i < 7; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(60 == cpu.state.T);
-    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::PF)); CHECK(64 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(75 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(82 == cpu.state.T);
-    cpu.step(); CHECK(0x08 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(86 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(93 == cpu.state.T);
-    cpu.step(); CHECK(0x10 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(97 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(104 == cpu.state.T);
-    cpu.step(); CHECK(0x20 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(108 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(115 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(122 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(129 == cpu.state.T);
-    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(136 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x08 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x10 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x20 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(7 == cpu.state.T);
 }
 
 // AND (HL)
@@ -1236,9 +1236,9 @@ TEST(AND_iHLIXY_d) {
 
     // skip loads
     cpu.step(); cpu.step(); cpu.step(); cpu.step();
-    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(0x88 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(90 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x88 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF)); CHECK(19 == cpu.state.T);
 }
 
 // INC r
@@ -1277,21 +1277,21 @@ TEST(INC_DEC_r) {
         cpu.step();
     }
 
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(cpu.test_flags(z80::ZF|z80::HF)); CHECK(61 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x10 == cpu.state.C); CHECK(cpu.test_flags(z80::HF)); CHECK(69 == cpu.state.T);
-    cpu.step(); CHECK(0x0F == cpu.state.C); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x0F == cpu.state.D); CHECK(cpu.test_flags(0)); CHECK(77 == cpu.state.T);
-    cpu.step(); CHECK(0x0E == cpu.state.D); CHECK(cpu.test_flags(z80::NF)); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(88 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.state.E); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::VF|z80::CF)); CHECK(92 == cpu.state.T);
-    cpu.step(); CHECK(0x7F == cpu.state.E); CHECK(cpu.test_flags(z80::HF|z80::VF|z80::NF|z80::CF)); CHECK(96 == cpu.state.T);
-    cpu.step(); CHECK(0x3F == cpu.state.H); CHECK(cpu.test_flags(z80::CF)); CHECK(100 == cpu.state.T);
-    cpu.step(); CHECK(0x3E == cpu.state.H); CHECK(cpu.test_flags(z80::NF|z80::CF)); CHECK(104 == cpu.state.T);
-    cpu.step(); CHECK(0x24 == cpu.state.L); CHECK(cpu.test_flags(z80::CF)); CHECK(108 == cpu.state.T);
-    cpu.step(); CHECK(0x23 == cpu.state.L); CHECK(cpu.test_flags(z80::NF|z80::CF)); CHECK(112 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(cpu.test_flags(z80::ZF|z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x10 == cpu.state.C); CHECK(cpu.test_flags(z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0F == cpu.state.C); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0F == cpu.state.D); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0E == cpu.state.D); CHECK(cpu.test_flags(z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.E); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x7F == cpu.state.E); CHECK(cpu.test_flags(z80::HF|z80::VF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x3F == cpu.state.H); CHECK(cpu.test_flags(z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x3E == cpu.state.H); CHECK(cpu.test_flags(z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x24 == cpu.state.L); CHECK(cpu.test_flags(z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x23 == cpu.state.L); CHECK(cpu.test_flags(z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
 }
 
 // INC (HL)
@@ -1325,12 +1325,12 @@ TEST(INC_DEC_iHLIXIY_d) {
     for (int i = 0; i < 3; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF)); CHECK(49 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::HF)); CHECK(60 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::HF)); CHECK(83 == cpu.state.T);
-    cpu.step(); CHECK(0x3F == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(106 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::VF)); CHECK(129 == cpu.state.T);
-    cpu.step(); CHECK(0x7F == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::HF|z80::PF|z80::NF)); CHECK(152 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::HF)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::HF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x3F == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::VF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x7F == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::HF|z80::PF|z80::NF)); CHECK(23 == cpu.state.T);
 }
 
 // INC ss
@@ -1368,18 +1368,18 @@ TEST(INC_DEC_ss_IX_IY) {
         cpu.step();
     }
 
-    cpu.step(); CHECK(0xFFFF == cpu.state.BC); CHECK(74 == cpu.state.T);
-    cpu.step(); CHECK(0x0000 == cpu.state.BC); CHECK(80 == cpu.state.T);
-    cpu.step(); CHECK(0x0000 == cpu.state.DE); CHECK(86 == cpu.state.T);
-    cpu.step(); CHECK(0xFFFF == cpu.state.DE); CHECK(92 == cpu.state.T);
-    cpu.step(); CHECK(0x0100 == cpu.state.HL); CHECK(98 == cpu.state.T);
-    cpu.step(); CHECK(0x00FF == cpu.state.HL); CHECK(104 == cpu.state.T);
-    cpu.step(); CHECK(0x1112 == cpu.state.SP); CHECK(110 == cpu.state.T);
-    cpu.step(); CHECK(0x1111 == cpu.state.SP); CHECK(116 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(126 == cpu.state.T);
-    cpu.step(); CHECK(0x0FFF == cpu.state.IX); CHECK(136 == cpu.state.T);
-    cpu.step(); CHECK(0x1235 == cpu.state.IY); CHECK(146 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.state.IY); CHECK(156 == cpu.state.T);
+    cpu.step(); CHECK(0xFFFF == cpu.state.BC); CHECK(6 == cpu.state.T);
+    cpu.step(); CHECK(0x0000 == cpu.state.BC); CHECK(6 == cpu.state.T);
+    cpu.step(); CHECK(0x0000 == cpu.state.DE); CHECK(6 == cpu.state.T);
+    cpu.step(); CHECK(0xFFFF == cpu.state.DE); CHECK(6 == cpu.state.T);
+    cpu.step(); CHECK(0x0100 == cpu.state.HL); CHECK(6 == cpu.state.T);
+    cpu.step(); CHECK(0x00FF == cpu.state.HL); CHECK(6 == cpu.state.T);
+    cpu.step(); CHECK(0x1112 == cpu.state.SP); CHECK(6 == cpu.state.T);
+    cpu.step(); CHECK(0x1111 == cpu.state.SP); CHECK(6 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.IX); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0FFF == cpu.state.IX); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1235 == cpu.state.IY); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.IY); CHECK(10 == cpu.state.T);
 }
 
 TEST(RLCA_RLA_RRCA_RRA) {
@@ -1400,14 +1400,14 @@ TEST(RLCA_RLA_RRCA_RRA) {
 
     cpu.state.F = 0xff;
     cpu.step(); CHECK(0xA0 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(11 == cpu.state.T);
-    cpu.step(); CHECK(0x82 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF)); CHECK(15 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF)); CHECK(19 == cpu.state.T);
-    cpu.step(); CHECK(0xA0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(23 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(27 == cpu.state.T);
-    cpu.step(); CHECK(0x83 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF)); CHECK(31 == cpu.state.T);
-    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(35 == cpu.state.T);
-    cpu.step(); CHECK(0xA0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(39 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x82 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xA0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x83 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x41 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xA0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::ZF|z80::VF|z80::CF)); CHECK(4 == cpu.state.T);
 }
 
 TEST(RLC_RL_RRC_RR_r) {
@@ -1457,34 +1457,34 @@ TEST(RLC_RL_RRC_RR_r) {
     for (int i = 0; i < 7; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0x06 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(89 == cpu.state.T);
-    cpu.step(); CHECK(0x03 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(97 == cpu.state.T);
-    cpu.step(); CHECK(0xFD == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(105 == cpu.state.T);
-    cpu.step(); CHECK(0xFE == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(113 == cpu.state.T);
-    cpu.step(); CHECK(0x88 == cpu.state.E); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(121 == cpu.state.T);
-    cpu.step(); CHECK(0x11 == cpu.state.E); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(129 == cpu.state.T);
-    cpu.step(); CHECK(0x7E == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(137 == cpu.state.T);
-    cpu.step(); CHECK(0x3F == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(145 == cpu.state.T);
-    cpu.step(); CHECK(0xE0 == cpu.state.L); CHECK(cpu.test_flags(z80::SF)); CHECK(153 == cpu.state.T);
-    cpu.step(); CHECK(0x70 == cpu.state.L); CHECK(cpu.test_flags(0)); CHECK(161 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(169 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(177 == cpu.state.T);
-    cpu.step(); CHECK(0x7F == cpu.state.B); CHECK(cpu.test_flags(z80::CF)); CHECK(185 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(193 == cpu.state.T);
-    cpu.step(); CHECK(0x06 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(201 == cpu.state.T);
-    cpu.step(); CHECK(0x03 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(209 == cpu.state.T);
-    cpu.step(); CHECK(0xFC == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(217 == cpu.state.T);
-    cpu.step(); CHECK(0xFE == cpu.state.D); CHECK(cpu.test_flags(z80::SF)); CHECK(225 == cpu.state.T);
-    cpu.step(); CHECK(0x08 == cpu.state.E); CHECK(cpu.test_flags(z80::CF)); CHECK(233 == cpu.state.T);
-    cpu.step(); CHECK(0x11 == cpu.state.E); CHECK(cpu.test_flags(z80::PF)); CHECK(241 == cpu.state.T);
-    cpu.step(); CHECK(0x7E == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(249 == cpu.state.T);
-    cpu.step(); CHECK(0x3F == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(257 == cpu.state.T);
-    cpu.step(); CHECK(0xE0 == cpu.state.L); CHECK(cpu.test_flags(z80::SF)); CHECK(265 == cpu.state.T);
-    cpu.step(); CHECK(0x70 == cpu.state.L); CHECK(cpu.test_flags(0)); CHECK(273 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x06 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFD == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x88 == cpu.state.E); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x11 == cpu.state.E); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x7E == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x3F == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xE0 == cpu.state.L); CHECK(cpu.test_flags(z80::SF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x70 == cpu.state.L); CHECK(cpu.test_flags(0)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x7F == cpu.state.B); CHECK(cpu.test_flags(z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x06 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFC == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.D); CHECK(cpu.test_flags(z80::SF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x08 == cpu.state.E); CHECK(cpu.test_flags(z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x11 == cpu.state.E); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x7E == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x3F == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xE0 == cpu.state.L); CHECK(cpu.test_flags(z80::SF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x70 == cpu.state.L); CHECK(cpu.test_flags(0)); CHECK(8 == cpu.state.T);
 }
 
 TEST(RRC_RLC_RR_RL_iHLIX_d) {
@@ -1528,30 +1528,30 @@ TEST(RRC_RLC_RR_RL_iHLIX_d) {
     for (int i = 0; i < 3; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x80 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(60 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::CF)); CHECK(75 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(82 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(105 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(124 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(147 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(166 == cpu.state.T);
-    cpu.step(); CHECK(0x88 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(189 == cpu.state.T);
-    cpu.step(); CHECK(0x88 == cpu.state.A); CHECK(208 == cpu.state.T);
-    cpu.step(); CHECK(0x11 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(231 == cpu.state.T);
-    cpu.step(); CHECK(0x11 == cpu.state.A); CHECK(250 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(265 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(272 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::CF)); CHECK(287 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(294 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(317 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(336 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(359 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(378 == cpu.state.T);
-    cpu.step(); CHECK(0x23 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(0)); CHECK(401 == cpu.state.T);
-    cpu.step(); CHECK(0x23 == cpu.state.A); CHECK(420 == cpu.state.T);
-    cpu.step(); CHECK(0x11 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(443 == cpu.state.T);
-    cpu.step(); CHECK(0x11 == cpu.state.A); CHECK(462 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x88 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x88 == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x11 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x11 == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x23 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(0)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x23 == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x11 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x11 == cpu.state.A); CHECK(19 == cpu.state.T);
 }
 
 TEST(SLA_r) {
@@ -1579,13 +1579,13 @@ TEST(SLA_r) {
     for (int i = 0; i < 7; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x54 == cpu.state.C); CHECK(cpu.test_flags(z80::CF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0xFC == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0xFE == cpu.state.E); CHECK(cpu.test_flags(z80::SF)); CHECK(89 == cpu.state.T);
-    cpu.step(); CHECK(0x22 == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(97 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(105 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x54 == cpu.state.C); CHECK(cpu.test_flags(z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFC == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.E); CHECK(cpu.test_flags(z80::SF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x22 == cpu.state.H); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(8 == cpu.state.T);
 }
 
 TEST(SRA_r) {
@@ -1613,13 +1613,13 @@ TEST(SRA_r) {
     for (int i = 0; i < 7; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0xC0 == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0xD5 == cpu.state.C); CHECK(cpu.test_flags(z80::SF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0x3F == cpu.state.E); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(89 == cpu.state.T);
-    cpu.step(); CHECK(0x08 == cpu.state.H); CHECK(cpu.test_flags(z80::CF)); CHECK(97 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(105 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xC0 == cpu.state.B); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xD5 == cpu.state.C); CHECK(cpu.test_flags(z80::SF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x3F == cpu.state.E); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x08 == cpu.state.H); CHECK(cpu.test_flags(z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(8 == cpu.state.T);
 }
 
 TEST(SRL_r) {
@@ -1647,13 +1647,13 @@ TEST(SRL_r) {
     for (int i = 0; i < 7; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(57 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.state.B); CHECK(cpu.test_flags(0)); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x55 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x7F == cpu.state.D); CHECK(cpu.test_flags(0)); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0x3F == cpu.state.E); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(89 == cpu.state.T);
-    cpu.step(); CHECK(0x08 == cpu.state.H); CHECK(cpu.test_flags(z80::CF)); CHECK(97 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(105 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.B); CHECK(cpu.test_flags(0)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x55 == cpu.state.C); CHECK(cpu.test_flags(z80::PF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x7F == cpu.state.D); CHECK(cpu.test_flags(0)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x3F == cpu.state.E); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x08 == cpu.state.H); CHECK(cpu.test_flags(z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF)); CHECK(8 == cpu.state.T);
 }
 
 TEST(SLA_iHLIXY_d) {
@@ -1678,12 +1678,12 @@ TEST(SLA_iHLIXY_d) {
     for (int i = 0; i < 3; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x02 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(0)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(60 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(83 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(102 == cpu.state.T);
-    cpu.step(); CHECK(0x54 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::CF)); CHECK(125 == cpu.state.T);
-    cpu.step(); CHECK(0x54 == cpu.state.A); CHECK(144 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(0)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x54 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::CF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x54 == cpu.state.A); CHECK(19 == cpu.state.T);
 }
 
 TEST(SRA_iHLIXY_d) {
@@ -1708,12 +1708,12 @@ TEST(SRA_iHLIXY_d) {
     for (int i = 0; i < 3; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(60 == cpu.state.T);
-    cpu.step(); CHECK(0xC0 == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(83 == cpu.state.T);
-    cpu.step(); CHECK(0xC0 == cpu.state.A); CHECK(102 == cpu.state.T);
-    cpu.step(); CHECK(0xD5 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::SF)); CHECK(125 == cpu.state.T);
-    cpu.step(); CHECK(0xD5 == cpu.state.A); CHECK(144 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xC0 == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0xC0 == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0xD5 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::SF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0xD5 == cpu.state.A); CHECK(19 == cpu.state.T);
 }
 
 TEST(SRL_iHLIXY_d) {
@@ -1738,12 +1738,12 @@ TEST(SRL_iHLIXY_d) {
     for (int i = 0; i < 3; i++) {
         cpu.step();
     }
-    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(53 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(60 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(0)); CHECK(83 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(102 == cpu.state.T);
-    cpu.step(); CHECK(0x55 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::PF)); CHECK(125 == cpu.state.T);
-    cpu.step(); CHECK(0x55 == cpu.state.A); CHECK(144 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.mem.r8(0x1001)); CHECK(cpu.test_flags(0)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(19 == cpu.state.T);
+    cpu.step(); CHECK(0x55 == cpu.mem.r8(0x1002)); CHECK(cpu.test_flags(z80::PF)); CHECK(23 == cpu.state.T);
+    cpu.step(); CHECK(0x55 == cpu.state.A); CHECK(19 == cpu.state.T);
 }
 
 TEST(RLD_RRD) {
@@ -1770,22 +1770,22 @@ TEST(RLD_RRD) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x12 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(17 == cpu.state.T);
-    cpu.step(); CHECK(0x34 == cpu.mem.r8(0x1000)); CHECK(27 == cpu.state.T);
-    cpu.step(); CHECK(0x14 == cpu.state.A); CHECK(0x23 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::PF)); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0x12 == cpu.state.A); CHECK(0x34 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::PF)); CHECK(63 == cpu.state.T);
-    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(70 == cpu.state.T);
-    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(77 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(87 == cpu.state.T);
-    cpu.step(); CHECK(0xF0 == cpu.state.A); CHECK(0x0E == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(105 == cpu.state.T);
-    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF)); CHECK(123 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(130 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(137 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(147 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x34 == cpu.mem.r8(0x1000)); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x14 == cpu.state.A); CHECK(0x23 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::PF)); CHECK(18 == cpu.state.T);
+    cpu.step(); CHECK(0x12 == cpu.state.A); CHECK(0x34 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::PF)); CHECK(18 == cpu.state.T);
+    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0xF0 == cpu.state.A); CHECK(0x0E == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF|z80::PF)); CHECK(18 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::SF)); CHECK(18 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(10 == cpu.state.T);
     cpu.state.F |= z80::CF;
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(0x01 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(165 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::CF)); CHECK(183 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(190 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(0x01 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(18 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(cpu.test_flags(z80::CF)); CHECK(18 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(7 == cpu.state.T);
 }
 
 TEST(HALT) {
@@ -1797,8 +1797,8 @@ TEST(HALT) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x0000 == cpu.state.PC); CHECK(4 == cpu.state.T);
-    cpu.step(); CHECK(0x0000 == cpu.state.PC); CHECK(8 == cpu.state.T);
-    cpu.step(); CHECK(0x0000 == cpu.state.PC); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x0000 == cpu.state.PC); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0000 == cpu.state.PC); CHECK(4 == cpu.state.T);
 }
 
 TEST(LDI) {
@@ -1829,21 +1829,21 @@ TEST(LDI) {
     CHECK(0x0002 == cpu.state.BC);
     CHECK(0x01 == cpu.mem.r8(0x2000));
     CHECK(cpu.test_flags(z80::PF));
-    CHECK(46 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x2002 == cpu.state.DE);
     CHECK(0x0001 == cpu.state.BC);
     CHECK(0x02 == cpu.mem.r8(0x2001));
     CHECK(cpu.test_flags(z80::PF));
-    CHECK(62 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x1003 == cpu.state.HL);
     CHECK(0x2003 == cpu.state.DE);
     CHECK(0x0000 == cpu.state.BC);
     CHECK(0x03 == cpu.mem.r8(0x2002));
     CHECK(cpu.test_flags(0));
-    CHECK(78 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 }
 
 TEST(LDIR) {
@@ -1873,21 +1873,21 @@ TEST(LDIR) {
     CHECK(0x0002 == cpu.state.BC);
     CHECK(0x01 == cpu.mem.r8(0x2000));
     CHECK(cpu.test_flags(z80::PF));
-    CHECK(51 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x2002 == cpu.state.DE);
     CHECK(0x0001 == cpu.state.BC);
     CHECK(0x02 == cpu.mem.r8(0x2001));
     CHECK(cpu.test_flags(z80::PF));
-    CHECK(72 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1003 == cpu.state.HL);
     CHECK(0x2003 == cpu.state.DE);
     CHECK(0x0000 == cpu.state.BC);
     CHECK(0x03 == cpu.mem.r8(0x2002));
     CHECK(cpu.test_flags(0));
-    CHECK(88 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step(); CHECK(0x33 == cpu.state.A);
 }
 
@@ -1919,21 +1919,21 @@ TEST(LDD) {
     CHECK(0x0002 == cpu.state.BC);
     CHECK(0x03 == cpu.mem.r8(0x2002));
     CHECK(cpu.test_flags(z80::PF));
-    CHECK(46 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x1000 == cpu.state.HL);
     CHECK(0x2000 == cpu.state.DE);
     CHECK(0x0001 == cpu.state.BC);
     CHECK(0x02 == cpu.mem.r8(0x2001));
     CHECK(cpu.test_flags(z80::PF));
-    CHECK(62 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x0FFF == cpu.state.HL);
     CHECK(0x1FFF == cpu.state.DE);
     CHECK(0x0000 == cpu.state.BC);
     CHECK(0x01 == cpu.mem.r8(0x2000));
     CHECK(cpu.test_flags(0));
-    CHECK(78 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 }
 
 TEST(LDDR) {
@@ -1963,21 +1963,21 @@ TEST(LDDR) {
     CHECK(0x0002 == cpu.state.BC);
     CHECK(0x03 == cpu.mem.r8(0x2002));
     CHECK(cpu.test_flags(z80::PF));
-    CHECK(51 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1000 == cpu.state.HL);
     CHECK(0x2000 == cpu.state.DE);
     CHECK(0x0001 == cpu.state.BC);
     CHECK(0x02 == cpu.mem.r8(0x2001));
     CHECK(cpu.test_flags(z80::PF));
-    CHECK(72 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x0FFF == cpu.state.HL);
     CHECK(0x1FFF == cpu.state.DE);
     CHECK(0x0000 == cpu.state.BC);
     CHECK(0x01 == cpu.mem.r8(0x2000));
     CHECK(cpu.test_flags(0));
-    CHECK(88 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step(); CHECK(0x33 == cpu.state.A);
 }
 
@@ -2008,23 +2008,23 @@ TEST(CPI) {
     CHECK(0x1001 == cpu.state.HL);
     CHECK(0x0003 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::PF|z80::NF));
-    CHECK(43 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.state.F |= z80::CF;
     cpu.step();
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x0002 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::PF|z80::NF|z80::CF));
-    CHECK(59 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x1003 == cpu.state.HL);
     CHECK(0x0001 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::NF|z80::CF));
-    CHECK(75 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x1004 == cpu.state.HL);
     CHECK(0x0000 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF));
-    CHECK(91 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 }
 
 TEST(CPIR) {
@@ -2052,23 +2052,23 @@ TEST(CPIR) {
     CHECK(0x1001 == cpu.state.HL);
     CHECK(0x0003 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::PF|z80::NF));
-    CHECK(48 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.state.F |= z80::CF;
     cpu.step();
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x0002 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::PF|z80::NF|z80::CF));
-    CHECK(69 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1003 == cpu.state.HL);
     CHECK(0x0001 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::NF|z80::CF));
-    CHECK(85 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x1004 == cpu.state.HL);
     CHECK(0x0000 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF));
-    CHECK(101 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 }
 
 TEST(CPD) {
@@ -2098,23 +2098,23 @@ TEST(CPD) {
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x0003 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF|z80::NF));
-    CHECK(43 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.state.F |= z80::CF;
     cpu.step();
     CHECK(0x1001 == cpu.state.HL);
     CHECK(0x0002 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF|z80::NF|z80::CF));
-    CHECK(59 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x1000 == cpu.state.HL);
     CHECK(0x0001 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::NF|z80::CF));
-    CHECK(75 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x0FFF == cpu.state.HL);
     CHECK(0x0000 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::NF|z80::CF));
-    CHECK(91 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 }
 
 TEST(CPDR) {
@@ -2142,23 +2142,23 @@ TEST(CPDR) {
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x0003 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF|z80::NF));
-    CHECK(48 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.state.F |= z80::CF;
     cpu.step();
     CHECK(0x1001 == cpu.state.HL);
     CHECK(0x0002 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::SF|z80::HF|z80::PF|z80::NF|z80::CF));
-    CHECK(69 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1000 == cpu.state.HL);
     CHECK(0x0001 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::NF|z80::CF));
-    CHECK(85 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
     cpu.step();
     CHECK(0x0FFF == cpu.state.HL);
     CHECK(0x0000 == cpu.state.BC);
     CHECK(cpu.test_flags(z80::NF|z80::CF));
-    CHECK(101 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 }
 
 TEST(DAA) {
@@ -2181,17 +2181,17 @@ TEST(DAA) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x15 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x27 == cpu.state.B); CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0x3C == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(18 == cpu.state.T);
-    cpu.step(); CHECK(0x42 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::PF)); CHECK(22 == cpu.state.T);
-    cpu.step(); CHECK(0x1B == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(26 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(30 == cpu.state.T);
-    cpu.step(); CHECK(0x90 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(37 == cpu.state.T);
-    cpu.step(); CHECK(0x15 == cpu.state.B); CHECK(cpu.test_flags(z80::NF)); CHECK(44 == cpu.state.T);
-    cpu.step(); CHECK(0xA5 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(48 == cpu.state.T);
-    cpu.step(); CHECK(0x05 == cpu.state.A); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0xF0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(56 == cpu.state.T);
-    cpu.step(); CHECK(0x90 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::NF|z80::CF)); CHECK(60 == cpu.state.T);
+    cpu.step(); CHECK(0x27 == cpu.state.B); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x3C == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x42 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::PF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x1B == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x90 == cpu.state.A); CHECK(cpu.test_flags(z80::NF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x15 == cpu.state.B); CHECK(cpu.test_flags(z80::NF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0xA5 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x05 == cpu.state.A); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xF0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x90 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::NF|z80::CF)); CHECK(4 == cpu.state.T);
 }
 
 TEST(CPL) {
@@ -2208,11 +2208,11 @@ TEST(CPL) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF|z80::NF)); CHECK(8 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF|z80::NF)); CHECK(12 == cpu.state.T);
-    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(19 == cpu.state.T);
-    cpu.step(); CHECK(0x55 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF)); CHECK(23 == cpu.state.T);
-    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF)); CHECK(27 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x55 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0xAA == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF)); CHECK(4 == cpu.state.T);
 }
 
 TEST(NEG) {
@@ -2231,13 +2231,13 @@ TEST(NEG) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(15 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF|z80::CF)); CHECK(22 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(30 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::NF|z80::CF)); CHECK(37 == cpu.state.T);
-    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::NF|z80::CF)); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0xC0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(z80::NF|z80::CF)); CHECK(60 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::NF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x80 == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::PF|z80::NF|z80::CF)); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0xC0 == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x40 == cpu.state.A); CHECK(cpu.test_flags(z80::NF|z80::CF)); CHECK(8 == cpu.state.T);
 }
 
 TEST(CCF_SCF) {
@@ -2254,11 +2254,11 @@ TEST(CCF_SCF) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::CF)); CHECK(8 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF)); CHECK(12 == cpu.state.T);
-    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF|z80::CF)); CHECK(19 == cpu.state.T);
-    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(23 == cpu.state.T);
-    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(27 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::CF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::NF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(cpu.test_flags(z80::HF)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x34 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(4 == cpu.state.T);
 }
 
 TEST(DI_EI_IM) {
@@ -2277,13 +2277,13 @@ TEST(DI_EI_IM) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(!cpu.state.IFF1); CHECK(!cpu.state.IFF2); CHECK(4 == cpu.state.T);
-    cpu.step(); CHECK(cpu.state.IFF1); CHECK(cpu.state.IFF2); CHECK(8 == cpu.state.T);
-    cpu.step(); CHECK(!cpu.state.IFF1); CHECK(!cpu.state.IFF2); CHECK(12 == cpu.state.T);
-    cpu.step(); CHECK(cpu.state.IFF1); CHECK(cpu.state.IFF2); CHECK(16 == cpu.state.T);
-    cpu.step(); CHECK(0 == cpu.state.IM); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(1 == cpu.state.IM); CHECK(32 == cpu.state.T);
-    cpu.step(); CHECK(2 == cpu.state.IM); CHECK(40 == cpu.state.T);
-    cpu.step(); CHECK(0 == cpu.state.IM); CHECK(48 == cpu.state.T);
+    cpu.step(); CHECK(cpu.state.IFF1); CHECK(cpu.state.IFF2); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(!cpu.state.IFF1); CHECK(!cpu.state.IFF2); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(cpu.state.IFF1); CHECK(cpu.state.IFF2); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0 == cpu.state.IM); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(1 == cpu.state.IM); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(2 == cpu.state.IM); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0 == cpu.state.IM); CHECK(8 == cpu.state.T);
 }
 
 TEST(JP_cc_nn) {
@@ -2315,18 +2315,18 @@ TEST(JP_cc_nn) {
     cpu.state.PC = 0x0204;
 
     cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
-    cpu.step(); CHECK(0x0208 == cpu.state.PC); CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0x020C == cpu.state.PC); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(31 == cpu.state.T);
-    cpu.step(); CHECK(0x0211 == cpu.state.PC); CHECK(41 == cpu.state.T);
-    cpu.step(); CHECK(0x0215 == cpu.state.PC); CHECK(51 == cpu.state.T);
-    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(55 == cpu.state.T);
-    cpu.step(); CHECK(0x0219 == cpu.state.PC); CHECK(65 == cpu.state.T);
-    cpu.step(); CHECK(0x021D == cpu.state.PC); CHECK(75 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(82 == cpu.state.T);
-    cpu.step(); CHECK(0x0222 == cpu.state.PC); CHECK(92 == cpu.state.T);
-    cpu.step(); CHECK(0x0226 == cpu.state.PC); CHECK(102 == cpu.state.T);
-    cpu.step(); CHECK(0x022D == cpu.state.PC); CHECK(112 == cpu.state.T);
+    cpu.step(); CHECK(0x0208 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x020C == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0211 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0215 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0219 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x021D == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(cpu.test_flags(z80::SF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0222 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0226 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x022D == cpu.state.PC); CHECK(10 == cpu.state.T);
 }
 
 TEST(JP_JR) {
@@ -2351,16 +2351,16 @@ TEST(JP_JR) {
     cpu.state.PC = 0x0204;
 
     cpu.step(); CHECK(0x0216 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x0219 == cpu.state.IX); CHECK(24 == cpu.state.T);
-    cpu.step(); CHECK(0x0221 == cpu.state.IY); CHECK(38 == cpu.state.T);
-    cpu.step(); CHECK(0x0214 == cpu.state.PC); CHECK(48 == cpu.state.T);
-    cpu.step(); CHECK(0x0212 == cpu.state.PC); CHECK(60 == cpu.state.T);
-    cpu.step(); CHECK(0x0218 == cpu.state.PC); CHECK(72 == cpu.state.T);
-    cpu.step(); CHECK(0x0216 == cpu.state.PC); CHECK(76 == cpu.state.T);
-    cpu.step(); CHECK(0x0219 == cpu.state.PC); CHECK(84 == cpu.state.T);
-    cpu.step(); CHECK(0x0221 == cpu.state.PC); CHECK(92 == cpu.state.T);
-    cpu.step(); CHECK(0x021B == cpu.state.PC); CHECK(104 == cpu.state.T);
-    cpu.step(); CHECK(0x0223 == cpu.state.PC); CHECK(116 == cpu.state.T);
+    cpu.step(); CHECK(0x0219 == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x0221 == cpu.state.IY); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x0214 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0212 == cpu.state.PC); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x0218 == cpu.state.PC); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x0216 == cpu.state.PC); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0219 == cpu.state.PC); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x0221 == cpu.state.PC); CHECK(8 == cpu.state.T);
+    cpu.step(); CHECK(0x021B == cpu.state.PC); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x0223 == cpu.state.PC); CHECK(12 == cpu.state.T);
 }
 
 TEST(JR_cc_e) {
@@ -2385,14 +2385,14 @@ TEST(JR_cc_e) {
     cpu.state.PC = 0x0204;
 
     cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(cpu.test_flags(z80::ZF|z80::NF)); CHECK(4 == cpu.state.T);
-    cpu.step(); CHECK(0x0207 == cpu.state.PC); CHECK(11 == cpu.state.T);
-    cpu.step(); CHECK(0x020A == cpu.state.PC); CHECK(23 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(30 == cpu.state.T);
-    cpu.step(); CHECK(0x020E == cpu.state.PC); CHECK(37 == cpu.state.T);
-    cpu.step(); CHECK(0x0211 == cpu.state.PC); CHECK(49 == cpu.state.T);
-    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(56 == cpu.state.T);
-    cpu.step(); CHECK(0x0215 == cpu.state.PC); CHECK(63 == cpu.state.T);
-    cpu.step(); CHECK(0x0218 == cpu.state.PC); CHECK(75 == cpu.state.T);
+    cpu.step(); CHECK(0x0207 == cpu.state.PC); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x020A == cpu.state.PC); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(0)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x020E == cpu.state.PC); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0211 == cpu.state.PC); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.A); CHECK(cpu.test_flags(z80::SF|z80::HF|z80::NF|z80::CF)); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0215 == cpu.state.PC); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0218 == cpu.state.PC); CHECK(12 == cpu.state.T);
 }
 
 TEST(DJNZ) {
@@ -2409,13 +2409,13 @@ TEST(DJNZ) {
     cpu.state.PC = 0x0204;
 
     cpu.step(); CHECK(0x03 == cpu.state.B); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(11 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(15 == cpu.state.T);
-    cpu.step(); CHECK(0x02 == cpu.state.B); CHECK(0x0207 == cpu.state.PC); CHECK(28 == cpu.state.T);
-    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(32 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.B); CHECK(0x0207 == cpu.state.PC); CHECK(45 == cpu.state.T);
-    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(49 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(0x020A == cpu.state.PC); CHECK(57 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.B); CHECK(0x0207 == cpu.state.PC); CHECK(13 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.B); CHECK(0x0207 == cpu.state.PC); CHECK(13 == cpu.state.T);
+    cpu.step(); CHECK(0x03 == cpu.state.A); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(0x020A == cpu.state.PC); CHECK(8 == cpu.state.T);
 }
 
 TEST(CALL_RET) {
@@ -2439,18 +2439,18 @@ TEST(CALL_RET) {
     cpu.step();
     CHECK(0x0207 == cpu.state.PC);
     CHECK(0x0100 == cpu.state.SP);
-    CHECK(27 == cpu.state.T);
+    CHECK(10 == cpu.state.T);
 
     cpu.step();
     CHECK(0x020A == cpu.state.PC);
     CHECK(0x00FE == cpu.state.SP);
     CHECK(0x020A == cpu.mem.r16(0x00FE));
-    CHECK(44 == cpu.state.T);
+    CHECK(17 == cpu.state.T);
 
     cpu.step();
     CHECK(0x020A == cpu.state.PC);
     CHECK(0x0100 == cpu.state.SP);
-    CHECK(54 == cpu.state.T);
+    CHECK(10 == cpu.state.T);
 }
 
 TEST(CALL_RET_cc) {
@@ -2488,29 +2488,29 @@ TEST(CALL_RET_cc) {
     cpu.state.SP = 0x0100;
 
     cpu.step(); CHECK(0x00 == cpu.state.A); CHECK(4 == cpu.state.T);
-    cpu.step(); CHECK(0x0208 == cpu.state.PC); CHECK(14 == cpu.state.T);
-    cpu.step(); CHECK(0x0229 == cpu.state.PC); CHECK(31 == cpu.state.T);
-    cpu.step(); CHECK(0x022A == cpu.state.PC); CHECK(36 == cpu.state.T);
-    cpu.step(); CHECK(0x020B == cpu.state.PC); CHECK(47 == cpu.state.T);
-    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(54 == cpu.state.T);
-    cpu.step(); CHECK(0x0210 == cpu.state.PC); CHECK(64 == cpu.state.T);
-    cpu.step(); CHECK(0x022B == cpu.state.PC); CHECK(81 == cpu.state.T);
-    cpu.step(); CHECK(0x022C == cpu.state.PC); CHECK(86 == cpu.state.T);
-    cpu.step(); CHECK(0x0213 == cpu.state.PC); CHECK(97 == cpu.state.T);
-    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(101 == cpu.state.T);
-    cpu.step(); CHECK(0x0217 == cpu.state.PC); CHECK(111 == cpu.state.T);
-    cpu.step(); CHECK(0x022D == cpu.state.PC); CHECK(128 == cpu.state.T);
-    cpu.step(); CHECK(0x022E == cpu.state.PC); CHECK(133 == cpu.state.T);
-    cpu.step(); CHECK(0x021A == cpu.state.PC); CHECK(144 == cpu.state.T);
-    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(151 == cpu.state.T);
-    cpu.step(); CHECK(0x021F == cpu.state.PC); CHECK(161 == cpu.state.T);
-    cpu.step(); CHECK(0x022F == cpu.state.PC); CHECK(178 == cpu.state.T);
-    cpu.step(); CHECK(0x0230 == cpu.state.PC); CHECK(183 == cpu.state.T);
-    cpu.step(); CHECK(0x0222 == cpu.state.PC); CHECK(194 == cpu.state.T);
-    cpu.step(); CHECK(0x0225 == cpu.state.PC); CHECK(204 == cpu.state.T);
-    cpu.step(); CHECK(0x0231 == cpu.state.PC); CHECK(221 == cpu.state.T);
-    cpu.step(); CHECK(0x0232 == cpu.state.PC); CHECK(226 == cpu.state.T);
-    cpu.step(); CHECK(0x0228 == cpu.state.PC); CHECK(237 == cpu.state.T);
+    cpu.step(); CHECK(0x0208 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0229 == cpu.state.PC); CHECK(17 == cpu.state.T);
+    cpu.step(); CHECK(0x022A == cpu.state.PC); CHECK(5 == cpu.state.T);
+    cpu.step(); CHECK(0x020B == cpu.state.PC); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x0210 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x022B == cpu.state.PC); CHECK(17 == cpu.state.T);
+    cpu.step(); CHECK(0x022C == cpu.state.PC); CHECK(5 == cpu.state.T);
+    cpu.step(); CHECK(0x0213 == cpu.state.PC); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x02 == cpu.state.A); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(0x0217 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x022D == cpu.state.PC); CHECK(17 == cpu.state.T);
+    cpu.step(); CHECK(0x022E == cpu.state.PC); CHECK(5 == cpu.state.T);
+    cpu.step(); CHECK(0x021A == cpu.state.PC); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0xFF == cpu.state.A); CHECK(7 == cpu.state.T);
+    cpu.step(); CHECK(0x021F == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x022F == cpu.state.PC); CHECK(17 == cpu.state.T);
+    cpu.step(); CHECK(0x0230 == cpu.state.PC); CHECK(5 == cpu.state.T);
+    cpu.step(); CHECK(0x0222 == cpu.state.PC); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x0225 == cpu.state.PC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0231 == cpu.state.PC); CHECK(17 == cpu.state.T);
+    cpu.step(); CHECK(0x0232 == cpu.state.PC); CHECK(5 == cpu.state.T);
+    cpu.step(); CHECK(0x0228 == cpu.state.PC); CHECK(11 == cpu.state.T);
 }
 
 TEST(IN) {
@@ -2537,20 +2537,20 @@ TEST(IN) {
     cpu.state.F = z80::HF|z80::CF;
 
     cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x06 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(18 == cpu.state.T);
-    cpu.step(); CHECK(0x08 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(29 == cpu.state.T);
-    cpu.step(); CHECK(0x0202 == cpu.state.BC); CHECK(39 == cpu.state.T);
-    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(51 == cpu.state.T);
-    cpu.step(); CHECK(0x05FF == cpu.state.BC); CHECK(61 == cpu.state.T);
-    cpu.step(); CHECK(0xFE == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(73 == cpu.state.T);
-    cpu.step(); CHECK(0x0505 == cpu.state.BC); CHECK(83 == cpu.state.T);
-    cpu.step(); CHECK(0x0A == cpu.state.E);CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(95 == cpu.state.T);
-    cpu.step(); CHECK(0x0106 == cpu.state.BC); CHECK(105 == cpu.state.T);
-    cpu.step(); CHECK(0x0C == cpu.state.H); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(117 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.BC); CHECK(127 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(139 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(151 == cpu.state.T);
-    cpu.step(); CHECK(0x00 == cpu.state.C); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(163 == cpu.state.T);
+    cpu.step(); CHECK(0x06 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x08 == cpu.state.A); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x0202 == cpu.state.BC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x04 == cpu.state.A); CHECK(cpu.test_flags(z80::CF)); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x05FF == cpu.state.BC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0xFE == cpu.state.D); CHECK(cpu.test_flags(z80::SF|z80::CF)); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x0505 == cpu.state.BC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0A == cpu.state.E);CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x0106 == cpu.state.BC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0C == cpu.state.H); CHECK(cpu.test_flags(z80::PF|z80::CF)); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.BC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.L); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.B); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x00 == cpu.state.C); CHECK(cpu.test_flags(z80::ZF|z80::PF|z80::CF)); CHECK(12 == cpu.state.T);
 }
 
 TEST(INIR_INDR) {
@@ -2566,46 +2566,46 @@ TEST(INIR_INDR) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x0302 == cpu.state.BC); CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x0302 == cpu.state.BC); CHECK(10 == cpu.state.T);
 
     cpu.step();
     CHECK(0x1001 == cpu.state.HL);
     CHECK(0x0202 == cpu.state.BC);
     CHECK(0x04 == cpu.mem.r8(0x1000));
     CHECK(!(cpu.state.F & z80::ZF));
-    CHECK(41 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x0102 == cpu.state.BC);
     CHECK(0x04 == cpu.mem.r8(0x1001));
     CHECK(!(cpu.state.F & z80::ZF));
-    CHECK(62 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1003 == cpu.state.HL);
     CHECK(0x0002 == cpu.state.BC);
     CHECK(0x04 == cpu.mem.r8(0x1002));
     CHECK(cpu.state.F & z80::ZF);
-    CHECK(78 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 
-    cpu.step(); CHECK(0x0303 == cpu.state.BC); CHECK(88 == cpu.state.T);
+    cpu.step(); CHECK(0x0303 == cpu.state.BC); CHECK(10 == cpu.state.T);
     cpu.step();
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x0203 == cpu.state.BC);
     CHECK(0x06 == cpu.mem.r8(0x1003));
     CHECK(!(cpu.state.F & z80::ZF));
-    CHECK(109 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1001 == cpu.state.HL);
     CHECK(0x0103 == cpu.state.BC);
     CHECK(0x06 == cpu.mem.r8(0x1002));
     CHECK(!(cpu.state.F & z80::ZF));
-    CHECK(130 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1000 == cpu.state.HL);
     CHECK(0x0003 == cpu.state.BC);
     CHECK(0x06 == cpu.mem.r8(0x1001));
     CHECK(cpu.state.F & z80::ZF);
-    CHECK(146 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 }
 
 TEST(OUT) {
@@ -2629,18 +2629,18 @@ TEST(OUT) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x01 == cpu.state.A); CHECK(7 == cpu.state.T);
-    cpu.step(); CHECK(0x0101 == out_port); CHECK(0x01 == out_byte); CHECK(18 == cpu.state.T);
-    cpu.step(); CHECK(0x0102 == out_port); CHECK(0x01 == out_byte); CHECK(29 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == cpu.state.BC); CHECK(39 == cpu.state.T);
-    cpu.step(); CHECK(0x5678 == cpu.state.DE); CHECK(49 == cpu.state.T);
-    cpu.step(); CHECK(0xABCD == cpu.state.HL); CHECK(59 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x01 == out_byte); CHECK(71 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x12 == out_byte); CHECK(83 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x34 == out_byte); CHECK(95 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x56 == out_byte); CHECK(107 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x78 == out_byte); CHECK(119 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == out_port); CHECK(0xAB == out_byte); CHECK(131 == cpu.state.T);
-    cpu.step(); CHECK(0x1234 == out_port); CHECK(0xCD == out_byte); CHECK(143 == cpu.state.T);
+    cpu.step(); CHECK(0x0101 == out_port); CHECK(0x01 == out_byte); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x0102 == out_port); CHECK(0x01 == out_byte); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == cpu.state.BC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x5678 == cpu.state.DE); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0xABCD == cpu.state.HL); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x01 == out_byte); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x12 == out_byte); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x34 == out_byte); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x56 == out_byte); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0x78 == out_byte); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0xAB == out_byte); CHECK(12 == cpu.state.T);
+    cpu.step(); CHECK(0x1234 == out_port); CHECK(0xCD == out_byte); CHECK(12 == cpu.state.T);
 }
 
 TEST(OTIR_OTDR) {
@@ -2661,45 +2661,45 @@ TEST(OTIR_OTDR) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x1000 == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x0302 == cpu.state.BC); CHECK(20 == cpu.state.T);
+    cpu.step(); CHECK(0x0302 == cpu.state.BC); CHECK(10 == cpu.state.T);
     cpu.step();
     CHECK(0x1001 == cpu.state.HL);
     CHECK(0x0202 == cpu.state.BC);
     CHECK(0x0202 == out_port); CHECK(0x01 == out_byte);
     CHECK(!(cpu.state.F & z80::ZF));
-    CHECK(41 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x0102 == cpu.state.BC);
     CHECK(0x0102 == out_port); CHECK(0x02 == out_byte);
     CHECK(!(cpu.state.F & z80::ZF));
-    CHECK(62 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1003 == cpu.state.HL);
     CHECK(0x0002 == cpu.state.BC);
     CHECK(0x0002 == out_port); CHECK(0x03 == out_byte);
     CHECK(cpu.state.F & z80::ZF);
-    CHECK(78 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 
-    cpu.step(); CHECK(0x0303 == cpu.state.BC); CHECK(88 == cpu.state.T);
+    cpu.step(); CHECK(0x0303 == cpu.state.BC); CHECK(10 == cpu.state.T);
     cpu.step();
     CHECK(0x1002 == cpu.state.HL);
     CHECK(0x0203 == cpu.state.BC);
     CHECK(0x0203 == out_port); CHECK(0x04 == out_byte);
     CHECK(!(cpu.state.F & z80::ZF));
-    CHECK(109 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1001 == cpu.state.HL);
     CHECK(0x0103 == cpu.state.BC);
     CHECK(0x0103 == out_port); CHECK(0x03 == out_byte);
     CHECK(!(cpu.state.F & z80::ZF));
-    CHECK(130 == cpu.state.T);
+    CHECK(21 == cpu.state.T);
     cpu.step();
     CHECK(0x1000 == cpu.state.HL);
     CHECK(0x0003 == cpu.state.BC);
     CHECK(0x0003 == out_port); CHECK(0x02 == out_byte);
     CHECK(cpu.state.F & z80::ZF);
-    CHECK(146 == cpu.state.T);
+    CHECK(16 == cpu.state.T);
 }
 
 TEST(ADD_ADC_SBC_16) {
@@ -2730,25 +2730,25 @@ TEST(ADD_ADC_SBC_16) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(0x00FC == cpu.state.HL); CHECK(10 == cpu.state.T);
-    cpu.step(); CHECK(0x0008 == cpu.state.BC); CHECK(20 == cpu.state.T);
-    cpu.step(); CHECK(0xFFFF == cpu.state.DE); CHECK(30 == cpu.state.T);
-    cpu.step(); CHECK(0x0104 == cpu.state.HL); CHECK(cpu.test_flags(0)); CHECK(41 == cpu.state.T);
-    cpu.step(); CHECK(0x0103 == cpu.state.HL); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(52 == cpu.state.T);
-    cpu.step(); CHECK(0x010C == cpu.state.HL); CHECK(cpu.test_flags(0)); CHECK(67 == cpu.state.T);
-    cpu.step(); CHECK(0x0218 == cpu.state.HL); CHECK(cpu.test_flags(0)); CHECK(78 == cpu.state.T);
-    cpu.step(); CHECK(0x0217 == cpu.state.HL); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(89 == cpu.state.T);
-    cpu.step(); CHECK(0x020E == cpu.state.HL); CHECK(cpu.test_flags(z80::NF)); CHECK(104 == cpu.state.T);
-    cpu.step(); CHECK(0x00FC == cpu.state.IX); CHECK(118 == cpu.state.T);
-    cpu.step(); CHECK(0x1000 == cpu.state.SP); CHECK(128 == cpu.state.T);
-    cpu.step(); CHECK(0x0104 == cpu.state.IX); CHECK(cpu.test_flags(0)); CHECK(143 == cpu.state.T);
-    cpu.step(); CHECK(0x0103 == cpu.state.IX); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(158 == cpu.state.T);
-    cpu.step(); CHECK(0x0206 == cpu.state.IX); CHECK(cpu.test_flags(0)); CHECK(173 == cpu.state.T);
-    cpu.step(); CHECK(0x1206 == cpu.state.IX); CHECK(cpu.test_flags(0)); CHECK(188 == cpu.state.T);
-    cpu.step(); CHECK(0xFFFF == cpu.state.IY); CHECK(202 == cpu.state.T);
-    cpu.step(); CHECK(0x0007 == cpu.state.IY); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(217 == cpu.state.T);
-    cpu.step(); CHECK(0x0006 == cpu.state.IY); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(232 == cpu.state.T);
-    cpu.step(); CHECK(0x000C == cpu.state.IY); CHECK(cpu.test_flags(0)); CHECK(247 == cpu.state.T);
-    cpu.step(); CHECK(0x100C == cpu.state.IY); CHECK(cpu.test_flags(0)); CHECK(262 == cpu.state.T);
+    cpu.step(); CHECK(0x0008 == cpu.state.BC); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0xFFFF == cpu.state.DE); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0104 == cpu.state.HL); CHECK(cpu.test_flags(0)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x0103 == cpu.state.HL); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x010C == cpu.state.HL); CHECK(cpu.test_flags(0)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x0218 == cpu.state.HL); CHECK(cpu.test_flags(0)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x0217 == cpu.state.HL); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(11 == cpu.state.T);
+    cpu.step(); CHECK(0x020E == cpu.state.HL); CHECK(cpu.test_flags(z80::NF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x00FC == cpu.state.IX); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x1000 == cpu.state.SP); CHECK(10 == cpu.state.T);
+    cpu.step(); CHECK(0x0104 == cpu.state.IX); CHECK(cpu.test_flags(0)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x0103 == cpu.state.IX); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x0206 == cpu.state.IX); CHECK(cpu.test_flags(0)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x1206 == cpu.state.IX); CHECK(cpu.test_flags(0)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0xFFFF == cpu.state.IY); CHECK(14 == cpu.state.T);
+    cpu.step(); CHECK(0x0007 == cpu.state.IY); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x0006 == cpu.state.IY); CHECK(cpu.test_flags(z80::HF|z80::CF)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x000C == cpu.state.IY); CHECK(cpu.test_flags(0)); CHECK(15 == cpu.state.T);
+    cpu.step(); CHECK(0x100C == cpu.state.IY); CHECK(cpu.test_flags(0)); CHECK(15 == cpu.state.T);
 }
 
 TEST(cpu) {
@@ -2771,14 +2771,14 @@ TEST(cpu) {
     CHECK(4 == cpu.state.T);
     cpu.step();
     CHECK(2 == cpu.state.PC);
-    CHECK(8 == cpu.state.T);
+    CHECK(4 == cpu.state.T);
 
     /// LD BC,0x1234
     const ubyte f = cpu.state.F;
     ram0[2] = 0x01; ram0[3] = 0x34; ram0[4] = 0x12;
     cpu.step();
     CHECK(5 == cpu.state.PC);
-    CHECK(18 == cpu.state.T);
+    CHECK(10 == cpu.state.T);
     CHECK(0x1234 == cpu.state.BC);
     CHECK(0x12 == cpu.state.B);
     CHECK(0x34 == cpu.state.C);

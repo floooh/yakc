@@ -118,8 +118,8 @@ public:
     /// get pc from history ringbuffer (0 is oldest entry)
     uword get_pc_history(int index) const;
 
-    /// execute a single instruction and update machine state
-    void step();
+    /// execute a single instruction, return number of cycles
+    unsigned int step();
 
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
@@ -274,7 +274,7 @@ inline void
 z80::invalid_opcode(uword opsize) {
     state.INV = true;
     state.PC -= opsize;     // stuck on invalid opcode
-    state.T  += 4;          // fantasy value
+    state.T  = 4;          // fantasy value
 }
 
 //------------------------------------------------------------------------------
@@ -970,37 +970,37 @@ z80::dd_fd_cb(ubyte lead) {
         // RLC ([IX|IY]+d)
         case 0x06:
             mem.w8(addr, rlc8(mem.r8(addr), true));
-            state.T += 23;
+            state.T = 23;
             break;
         // RRC ([IX|IY]+d)
         case 0x0E:
             mem.w8(addr, rrc8(mem.r8(addr), true));
-            state.T += 23;
+            state.T = 23;
             break;
         // RL ([IX|IY]+d)
         case 0x16:
             mem.w8(addr, rl8(mem.r8(addr), true));
-            state.T += 23;
+            state.T = 23;
             break;
         // RR ([IX|IY]+d)
         case 0x1E:
             mem.w8(addr, rr8(mem.r8(addr), true));
-            state.T += 23;
+            state.T = 23;
             break;
         // SLA ([IX|IY]+d)
         case 0x26:
             mem.w8(addr, sla8(mem.r8(addr)));
-            state.T += 23;
+            state.T = 23;
             break;
         // SRA ([IX|IY]+d)
         case 0x2E:
             mem.w8(addr, sra8(mem.r8(addr)));
-            state.T += 23;
+            state.T = 23;
             break;
         // SRL ([IX|IY]+d)
         case 0x3E:
             mem.w8(addr, srl8(mem.r8(addr)));
-            state.T += 23;
+            state.T = 23;
             break;
         // BIT b,([IX|IY]+d)
         case 0x46 | (0<<3):
@@ -1012,7 +1012,7 @@ z80::dd_fd_cb(ubyte lead) {
         case 0x46 | (6<<3):
         case 0x46 | (7<<3):
             bit(mem.r8(addr), 1<<((op>>3)&7));
-            state.T += 20;
+            state.T = 20;
             break;
         // RES b,([IX|IY]+d)
         case 0x86 | (0<<3):
@@ -1024,7 +1024,7 @@ z80::dd_fd_cb(ubyte lead) {
         case 0x86 | (6<<3):
         case 0x86 | (7<<3):
             mem.w8(addr, mem.r8(addr) & ~(1<<((op>>3)&7)));
-            state.T += 23;
+            state.T = 23;
             break;
         // SET b,([IX|IY]+d)
         case 0xC6 | (0<<3):
@@ -1036,7 +1036,7 @@ z80::dd_fd_cb(ubyte lead) {
         case 0xC6 | (6<<3):
         case 0xC6 | (7<<3):
             mem.w8(addr, mem.r8(addr) | (1<<((op>>3)&7)));
-            state.T += 23;
+            state.T = 23;
             break;
 
         // unknown opcode
