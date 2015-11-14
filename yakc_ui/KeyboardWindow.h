@@ -14,5 +14,6 @@ public:
     /// draw method
     virtual bool Draw(yakc::kc85& kc) override;
 
+    bool shift = false;
     bool caps_lock = false;
 };
