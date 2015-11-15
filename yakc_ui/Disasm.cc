@@ -3,14 +3,16 @@
 //------------------------------------------------------------------------------
 #include "Disasm.h"
 #include "z80dasm.h"
+#include "Core/Memory/Memory.h"
 
+using namespace Oryol;
 using namespace z80dasm;
 using namespace yakc;
 
 //------------------------------------------------------------------------------
 Disasm::Disasm() :
 context(0) {
-    memset(this->buffer, 0, sizeof(this->buffer));
+    Memory::Clear(this->buffer, sizeof(this->buffer));
 }
 
 //------------------------------------------------------------------------------

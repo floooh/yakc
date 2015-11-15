@@ -2,14 +2,35 @@
 //------------------------------------------------------------------------------
 /**
     @class yakc::memory
-    @brief map Z80 memory to host system memory
+    @brief implements banked Z80 memory mapped to host system memory
+
+    Host system memory 'layers' up to 64 KByte size can be mapped
+    to Z80 memory with an 8KByte 'page-size' granularity as read-only 
+    or read/write.
     
-    FIXME: the class should support priorities, where lower priority
-    memory banks 'hide' behind higher priority banks, this would
-    enable >16KByte expansion modules, and generally simplify
-    memory bank manegement in the kc85 class.
+    Memory-mapping definition happens in 'stacked layers', where lower-priority
+    mappings fill address-range holes in the higher priority mappings,
+    for example:
+    
+    +------+------+======+======+------+------+------+------+
+    |      |      |      |      |      |      |      |      |   64 KByte RAM expansion
+    +------+------+======+======+------+------+------+------+
+                                              +======+
+                                              |      |          8 KByte ROM module
+                                              +======+
+    +======+======+             +======+======+      +======+
+    |      |      |             |      |      |      |      |   base-device memory with holes
+    +======+======+             +======+======+      +======+
+   0000          4000          8000          C000   E000
+   
+    This is a KC85/3 base device with switched-off BASIC ROM, leaving
+    memory holes at 4000-7FFF and C000-DFFF. There's an 8 KByte ROM
+    expansion module in module slot 08 at C000, and a 64KByte RAM expansion
+    at module slot 0C. The ROM module is visible in the hole C000-DFFF,
+    and a 16 KByte part of the 64 KByte expansion module is visible at
+    the hole 4000-7FFF. 3/4 of the 64KByte expansion memory remains
+    culled and is not visible to the CPU.
 */
-#include <string.h>
 #include "yakc_core/common.h"
 
 namespace yakc {
@@ -20,30 +41,37 @@ public:
     static const int address_range = 1<<16;
     /// number of (8K) pages
     static const int num_pages = 8;
+    /// max number of layers
+    static const int num_layers = 8;
 
-    /// the memory banks
+    /// a memory page mapping description
     struct page {
         static const int shift = 13;
         static const uword size = 1<<shift;
         static const uword mask = size - 1;
         ubyte* ptr = nullptr;
         bool writable = false;
-    } pages[num_pages];
+    };
 
-    /// a dummy page for unmapped memory
+    /// memory mapping layers, layer 0 has highest priority
+    page layers[num_layers][num_pages];
+    /// the actually visible pages
+    page pages[num_pages];
+    /// a dummy page for currently unmapped memory
     ubyte unmapped_page[page::size];
 
     /// constructor
     memory();
 
     /// map a range of memory
-    void map(uword addr, uword size, ubyte* ptr, bool writable);
+    void map(int layer, uword addr, uword size, ubyte* ptr, bool writable);
     /// unmap a range of memory
-    void unmap(uword addr, uword size);
+    void unmap(int layer, uword addr, uword size);
+    /// unmap all memory pages in a mapping layer
+    void unmap_layer(int layer);
     /// unmap all memory pages
     void unmap_all();
-    /// return true if addr is mapped to real pointer
-    bool is_mapped_to(uword addr, ubyte* ptr) const;
+
     /// test if an address is writable
     bool is_writable(uword addr) const;
     /// read a byte at cpu address
@@ -58,58 +86,102 @@ public:
     void w16(address addr, uword w) const;
     /// write a byte range
     void write(address addr, ubyte* src, int num) const;
+
+private:
+    /// update the CPU-visible mapping
+    void update_mapping();
 };
 
 //------------------------------------------------------------------------------
 inline
 memory::memory() {
-    memset(this->unmapped_page, 0xFF, sizeof(this->unmapped_page));
+    YAKC_MEMSET(this->unmapped_page, 0xFF, sizeof(this->unmapped_page));
     this->unmap_all();
+    this->update_mapping();
 }
 
 //------------------------------------------------------------------------------
 inline void
-memory::map(uword addr, uword size, ubyte* ptr, bool writable) {
+memory::map(int layer, uword addr, uword size, ubyte* ptr, bool writable) {
+    YAKC_ASSERT((layer >= 0) && (layer < num_layers));
     YAKC_ASSERT((addr & page::mask) == 0);
     YAKC_ASSERT((size & page::mask) == 0);
+
     const uword num = size>>page::shift;
     YAKC_ASSERT(num <= num_pages);
     for (uword i = 0; i < num; i++) {
         const uword offset = i * page::size;
-        const uword page_index = (addr+offset)>>page::shift;
-        this->pages[page_index].ptr = ptr + offset;
-        this->pages[page_index].writable = writable;
+        const uword page_index = (addr+offset)>>page::shift;    // page index will wrap around
+        YAKC_ASSERT(page_index < num_pages);
+        this->layers[layer][page_index].ptr = ptr + offset;
+        this->layers[layer][page_index].writable = writable;
     }
+    this->update_mapping();
 }
 
 //------------------------------------------------------------------------------
 inline void
-memory::unmap(uword addr, uword size) {
+memory::unmap(int layer, uword addr, uword size) {
+    YAKC_ASSERT((layer >= 0) && (layer < num_layers));
     YAKC_ASSERT((addr & page::mask) == 0);
     YAKC_ASSERT((size & page::mask) == 0);
+
     uword num = size>>page::shift;
     YAKC_ASSERT(num <= num_pages);
     for (uword i = 0; i < num; i++) {
         const uword offset = i * page::size;
         const uword page_index = (addr+offset)>>page::shift;
-        this->pages[page_index].ptr = this->unmapped_page;
-        this->pages[page_index].writable = false;
+        YAKC_ASSERT(page_index < num_pages);
+        this->layers[layer][page_index] = page();;
     }
+    this->update_mapping();
+}
+
+//------------------------------------------------------------------------------
+inline void
+memory::unmap_layer(int layer) {
+    YAKC_ASSERT((layer >= 0) && (layer < num_layers));
+    for (auto& p : this->layers[layer]) {
+        p = page();
+    }
+    this->update_mapping();
 }
 
 //------------------------------------------------------------------------------
 inline void
 memory::unmap_all() {
-    for (auto& p : this->pages) {
-        p.ptr = this->unmapped_page;
-        p.writable = false;
+    for (auto& l : this->layers) {
+        for (auto& p : l) {
+            p = page();
+        }
     }
+    this->update_mapping();
 }
 
 //------------------------------------------------------------------------------
-inline bool
-memory::is_mapped_to(uword addr, ubyte* ptr) const {
-    return ptr == this->pages[addr>>page::shift].ptr;
+inline void
+memory::update_mapping() {
+    // for each 8KByte memory page, find the highest priority layer
+    // which maps this memory range
+    for (int page_index = 0; page_index < num_pages; page_index++) {
+        int layer_index;
+        for (layer_index = 0; layer_index < num_layers; layer_index++) {
+            if (this->layers[layer_index][page_index].ptr) {
+                // found highest-priority layer with valid mapping
+                break;
+            }
+        }
+        // set the CPU-visible mapping
+        if (layer_index != num_layers) {
+            // a valid mapping exists for this page
+            this->pages[page_index] = this->layers[layer_index][page_index];
+        }
+        else {
+            // no mapping exists, set to the special 'unmapped page'
+            this->pages[page_index].ptr = this->unmapped_page;
+            this->pages[page_index].writable = false;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------

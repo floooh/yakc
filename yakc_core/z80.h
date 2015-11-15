@@ -4,7 +4,6 @@
     @class yakc::z80
     @brief the Z80 (or rather U880) cpu
 */
-#include <string.h>
 #include "yakc_core/common.h"
 #include "yakc_core/memory.h"
 
@@ -231,8 +230,8 @@ pc_history_pos(0),
 in_func(nullptr),
 out_func(nullptr),
 inout_userdata(nullptr) {
-    memset(&this->state, 0, sizeof(this->state));
-    memset(&this->pc_history, 0, sizeof(this->pc_history));
+    YAKC_MEMSET(&this->state, 0, sizeof(this->state));
+    YAKC_MEMSET(&this->pc_history, 0, sizeof(this->pc_history));
 }
 
 //------------------------------------------------------------------------------

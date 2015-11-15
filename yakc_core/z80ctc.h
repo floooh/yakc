@@ -9,7 +9,6 @@
     (see here: https://github.com/mamedev/mame/blob/dfa148ff8022e9f1a544c8603dd0e8c4aa469c1e/src/mame/machine/kc.cpp#L710)
 */
 #include "yakc_core/common.h"
-#include <stdio.h>
 
 namespace yakc {
 
