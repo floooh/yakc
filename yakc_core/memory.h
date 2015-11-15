@@ -43,7 +43,7 @@ public:
     /// number of (8K) pages
     static const int num_pages = 8;
     /// max number of layers
-    static const int num_layers = 8;
+    static const int num_layers = 4;
 
     /// a memory page mapping description
     struct page {
@@ -72,6 +72,8 @@ public:
     void unmap_layer(int layer);
     /// unmap all memory pages
     void unmap_all();
+    /// get the layer index a memory page is mapped to, -1 if unmapped
+    int get_mapped_layer_index(int page_index) const;
 
     /// test if an address is writable
     bool is_writable(uword addr) const;
@@ -185,6 +187,18 @@ memory::update_mapping() {
             this->pages[page_index].writable = false;
         }
     }
+}
+
+//------------------------------------------------------------------------------
+inline int
+memory::get_mapped_layer_index(int page_index) const {
+    YAKC_ASSERT((page_index>=0) && (page_index < num_pages));
+    for (int layer_index = 0; layer_index < num_layers; layer_index++) {
+        if (this->pages[page_index].ptr == this->layers[layer_index][page_index].ptr) {
+            return layer_index;
+        }
+    }
+    return -1;
 }
 
 //------------------------------------------------------------------------------

@@ -4,6 +4,7 @@ fips_begin_module(yakc_ui)
         UI.cc UI.h
         HexInputWidget.h
         MemoryWindow.cc MemoryWindow.h
+        MemoryMapWindow.cc MemoryMapWindow.h
         WindowBase.cc WindowBase.h
         ImGuiMemoryEditor.h
         Disasm.cc Disasm.h

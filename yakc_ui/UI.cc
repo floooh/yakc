@@ -4,6 +4,7 @@
 #include "UI.h"
 #include "yakc_app/Util.h"
 #include "MemoryWindow.h"
+#include "MemoryMapWindow.h"
 #include "DebugWindow.h"
 #include "PIOWindow.h"
 #include "CTCWindow.h"
@@ -110,8 +111,11 @@ UI::OnFrame(kc85& kc) {
             if (ImGui::MenuItem("Modules")) {
                 this->OpenWindow(kc, ModuleWindow::Create());
             }
-            if (ImGui::MenuItem("Memory")) {
+            if (ImGui::MenuItem("Memory Editor")) {
                 this->OpenWindow(kc, MemoryWindow::Create());
+            }
+            if (ImGui::MenuItem("Memory Map")) {
+                this->OpenWindow(kc, MemoryMapWindow::Create());
             }
             if (ImGui::MenuItem("Debugger")) {
                 this->OpenWindow(kc, DebugWindow::Create());
