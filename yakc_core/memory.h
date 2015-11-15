@@ -38,7 +38,8 @@ namespace yakc {
 class memory {
 public:
     /// 64 kByte addressable memory
-    static const int address_range = 1<<16;
+    static const int addr_range = 1<<16;
+    static const int addr_mask = addr_range - 1;
     /// number of (8K) pages
     static const int num_pages = 8;
     /// max number of layers
@@ -64,9 +65,9 @@ public:
     memory();
 
     /// map a range of memory
-    void map(int layer, uword addr, uword size, ubyte* ptr, bool writable);
+    void map(int layer, uword addr, unsigned int size, ubyte* ptr, bool writable);
     /// unmap a range of memory
-    void unmap(int layer, uword addr, uword size);
+    void unmap(int layer, uword addr, unsigned int size);
     /// unmap all memory pages in a mapping layer
     void unmap_layer(int layer);
     /// unmap all memory pages
@@ -102,16 +103,17 @@ memory::memory() {
 
 //------------------------------------------------------------------------------
 inline void
-memory::map(int layer, uword addr, uword size, ubyte* ptr, bool writable) {
+memory::map(int layer, uword addr, unsigned int size, ubyte* ptr, bool writable) {
     YAKC_ASSERT((layer >= 0) && (layer < num_layers));
     YAKC_ASSERT((addr & page::mask) == 0);
     YAKC_ASSERT((size & page::mask) == 0);
+    YAKC_ASSERT(size <= addr_range);
 
     const uword num = size>>page::shift;
     YAKC_ASSERT(num <= num_pages);
     for (uword i = 0; i < num; i++) {
         const uword offset = i * page::size;
-        const uword page_index = (addr+offset)>>page::shift;    // page index will wrap around
+        const uword page_index = ((addr+offset)&addr_mask) >> page::shift;    // page index will wrap around
         YAKC_ASSERT(page_index < num_pages);
         this->layers[layer][page_index].ptr = ptr + offset;
         this->layers[layer][page_index].writable = writable;
@@ -121,16 +123,17 @@ memory::map(int layer, uword addr, uword size, ubyte* ptr, bool writable) {
 
 //------------------------------------------------------------------------------
 inline void
-memory::unmap(int layer, uword addr, uword size) {
+memory::unmap(int layer, uword addr, unsigned int size) {
     YAKC_ASSERT((layer >= 0) && (layer < num_layers));
     YAKC_ASSERT((addr & page::mask) == 0);
     YAKC_ASSERT((size & page::mask) == 0);
+    YAKC_ASSERT(size <= addr_range);
 
     uword num = size>>page::shift;
     YAKC_ASSERT(num <= num_pages);
     for (uword i = 0; i < num; i++) {
         const uword offset = i * page::size;
-        const uword page_index = (addr+offset)>>page::shift;
+        const uword page_index = ((addr+offset)&addr_mask) >> page::shift;
         YAKC_ASSERT(page_index < num_pages);
         this->layers[layer][page_index] = page();;
     }

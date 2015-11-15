@@ -64,13 +64,17 @@ ModuleWindow::setupModules(kc85& kc) {
 
     // empty module slot
     mod.help = "Click to select module!";
-    kc.insert_module(0x08, mod);    // just set the help text...
-    kc.insert_module(0x0C, mod);    // just set the help text...
+    if (!kc.is_module_in_slot(0x08)) {
+        kc.insert_module(0x08, mod);    // just set the help text...
+    }
+    if (!kc.is_module_in_slot(0x0C)) {
+        kc.insert_module(0x0C, mod);    // just set the help text...
+    }
     this->modules.Add(mod);
 
     // M022 EXPANDER RAM
-    mod.name = "M022 EXPANDER-RAM (16KB)";
-    mod.help = "A 16 KByte RAM expansion module.\n\n"
+    mod.name = "M022 EXPANDER RAM";
+    mod.help = "16 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 43: map to address 0x4000\n"
         "SWITCH [SLOT] 83: map to address 0x8000\n"
         "SWITCH [SLOT] 00: switch module off\n\n"
@@ -78,6 +82,19 @@ ModuleWindow::setupModules(kc85& kc) {
     mod.type = 0xF4;
     mod.writable = true;
     mod.size = 0x4000;
+    this->modules.Add(mod);
+
+    // M011 64 K RAM
+    mod.name = "M011 64 K BYTE RAM";
+    mod.help = "64 KByte RAM expansion module.\n\n"
+        "SWITCH [SLOT] 03: map 1st block to 0x0000\n"
+        "SWITCH [SLOT] 43: map 1st block to 0x4000\n"
+        "SWITCH [SLOT] 83: map 1st block to 0x8000\n"
+        "SWITCH [SLOT] C3: map 1st block to 0xC000\n"
+        "...where [SLOT] is 08 or 0C.\n";
+    mod.type = 0xF6;
+    mod.writable = true;
+    mod.size = 0x10000;
     this->modules.Add(mod);
 
     // M026 FORTH

@@ -62,7 +62,7 @@ public:
         ubyte* ptr = nullptr;           // if this is 0, and size > 0, backing memory will be allocated
         ubyte type = 0xFF;              // module type (http://www.mpm-kc85.de/html/ModulListe.htm)
         bool writable = false;          // keep this false for ROM modules
-        uword size = 0x0000;            // size of mapped memory
+        unsigned int size = 0;          // size of mapped memory (<= 0x10000)
     };
     struct module_slot {
         module_desc desc;
@@ -98,6 +98,8 @@ public:
     bool module_attached(ubyte slot_addr) const;
     /// get module slot state
     const module_slot& get_module_slot(ubyte slot_addr) const;
+    /// test if a module is in slot
+    bool is_module_in_slot(ubyte slot_addr) const;
 
     /// process one frame
     void onframe(int micro_secs);
@@ -324,6 +326,12 @@ kc85::get_module_slot(ubyte slot_addr) const {
 }
 
 //------------------------------------------------------------------------------
+inline bool
+kc85::is_module_in_slot(ubyte slot_addr) const {
+    return this->get_module_slot(slot_addr).desc.type != 0xFF;
+}
+
+//------------------------------------------------------------------------------
 inline void
 kc85::update_module(ubyte slot_addr) {
     // private method is only called from update_bank_switching()
@@ -335,7 +343,6 @@ kc85::update_module(ubyte slot_addr) {
 
         // compute module start address from control-byte
         mod.addr = (mod.control_byte & 0xF0)<<8;
-        YAKC_ASSERT((mod.addr & (mod.desc.size-1)) == 0);
         if (mod.desc.size && mod.desc.ptr) {
             if (mod.control_byte & 0x01) {
                 // activate the module
