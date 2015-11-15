@@ -20,6 +20,8 @@ public:
     void OnFrame(yakc::kc85& kc);
     /// open a window
     void OpenWindow(yakc::kc85& kc, const Oryol::Ptr<WindowBase>& window);
+    /// toggle the UI on/off
+    void Toggle();
 
     static const ImVec4 ColorText;
     static const ImVec4 ColorDetail;
@@ -31,4 +33,6 @@ public:
 private:
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;
+    bool uiEnabled = false;
+    bool helpOpen = true;
 };

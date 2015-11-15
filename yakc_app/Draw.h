@@ -11,7 +11,7 @@
 class Draw {
 public:
     /// setup the renderer
-    void Setup(const Oryol::GfxSetup& setup);
+    void Setup(const Oryol::GfxSetup& setup, int frameSize);
     /// discard the renderer
     void Discard();
     /// render one frame
@@ -27,6 +27,7 @@ public:
     Oryol::Id drawState;
     Oryol::Shaders::CRT::FSTextures fsTextures;
     Oryol::ImageDataAttrs texUpdateAttrs;
+    int frameSize = 0;
 
     static const int irmWidth = 320;
     static const int irmHeight = 256;

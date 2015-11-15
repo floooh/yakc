@@ -73,6 +73,12 @@ UI::Discard() {
 
 //------------------------------------------------------------------------------
 void
+UI::Toggle() {
+    this->uiEnabled = !this->uiEnabled;
+}
+
+//------------------------------------------------------------------------------
+void
 UI::OpenWindow(kc85& kc, const Ptr<WindowBase>& win) {
     win->Setup(kc);
     this->windows.Add(win);
@@ -82,58 +88,74 @@ UI::OpenWindow(kc85& kc, const Ptr<WindowBase>& win) {
 void
 UI::OnFrame(kc85& kc) {
     IMUI::NewFrame(Clock::LapTime(this->curTime));
-
-    if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu(kc.model() == kc85::kc_model::kc85_3 ? "KC85/3":"KC85/4")) {
-            if (ImGui::MenuItem("Power Cycle")) {
-                kc.switchoff();
-                kc.switchon(kc.model(), kc.caos_rom(), kc.caos_rom_size());
-            }
-            if (ImGui::MenuItem("Reset")) {
-                kc.reset();
-            }
-            if (ImGui::BeginMenu("KC 85/3")) {
-                if (ImGui::MenuItem("CAOS 3.1")) {
+    if (this->uiEnabled) {
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu(kc.model() == kc85::kc_model::kc85_3 ? "KC85/3":"KC85/4")) {
+                if (ImGui::MenuItem("Power Cycle")) {
                     kc.switchoff();
-                    kc.switchon(kc85::kc_model::kc85_3, rom_caos31, sizeof(rom_caos31));
+                    kc.switchon(kc.model(), kc.caos_rom(), kc.caos_rom_size());
+                }
+                if (ImGui::MenuItem("Reset")) {
+                    kc.reset();
+                }
+                if (ImGui::BeginMenu("KC 85/3")) {
+                    if (ImGui::MenuItem("CAOS 3.1")) {
+                        kc.switchoff();
+                        kc.switchon(kc85::kc_model::kc85_3, rom_caos31, sizeof(rom_caos31));
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::MenuItem("KC85/4 (TODO)")) {
+                    // FIXME
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("KC85/4 (TODO)")) {
-                // FIXME
+            if (ImGui::BeginMenu("Windows")) {
+                if (ImGui::MenuItem("Keyboard")) {
+                    this->OpenWindow(kc, KeyboardWindow::Create());
+                }
+                if (ImGui::MenuItem("Modules")) {
+                    this->OpenWindow(kc, ModuleWindow::Create());
+                }
+                if (ImGui::MenuItem("Memory Editor")) {
+                    this->OpenWindow(kc, MemoryWindow::Create());
+                }
+                if (ImGui::MenuItem("Memory Map")) {
+                    this->OpenWindow(kc, MemoryMapWindow::Create());
+                }
+                if (ImGui::MenuItem("Debugger")) {
+                    this->OpenWindow(kc, DebugWindow::Create());
+                }
+                if (ImGui::MenuItem("Z80 PIO")) {
+                    this->OpenWindow(kc, PIOWindow::Create());
+                }
+                if (ImGui::MenuItem("Z80 CTC")) {
+                    this->OpenWindow(kc, CTCWindow::Create());
+                }
+                ImGui::EndMenu();
             }
-            ImGui::EndMenu();
+            ImGui::EndMainMenuBar();
         }
-        if (ImGui::BeginMenu("Windows")) {
-            if (ImGui::MenuItem("Keyboard")) {
-                this->OpenWindow(kc, KeyboardWindow::Create());
-            }
-            if (ImGui::MenuItem("Modules")) {
-                this->OpenWindow(kc, ModuleWindow::Create());
-            }
-            if (ImGui::MenuItem("Memory Editor")) {
-                this->OpenWindow(kc, MemoryWindow::Create());
-            }
-            if (ImGui::MenuItem("Memory Map")) {
-                this->OpenWindow(kc, MemoryMapWindow::Create());
-            }
-            if (ImGui::MenuItem("Debugger")) {
-                this->OpenWindow(kc, DebugWindow::Create());
-            }
-            if (ImGui::MenuItem("Z80 PIO")) {
-                this->OpenWindow(kc, PIOWindow::Create());
-            }
-            if (ImGui::MenuItem("Z80 CTC")) {
-                this->OpenWindow(kc, CTCWindow::Create());
-            }
-            ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
-    }
 
-    // draw open windows
-    for (auto& win : this->windows) {
-        win->Draw(kc);
+        // draw open windows
+        for (auto& win : this->windows) {
+            win->Draw(kc);
+        }
+    }
+    else {
+        // if UI is disabled, draw a simple overlay with help on how to toggle UI
+        if (helpOpen) {
+            ImGui::SetNextWindowPosCenter();
+            if (ImGui::Begin("Help", &this->helpOpen, ImVec2(0,0), 0.75f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize))
+            {
+                ImGui::Text("Press TAB or double-tap to toggle UI!");
+                ImGui::Dummy(ImVec2(96,0)); ImGui::SameLine();
+                if (ImGui::Button("Got it!")) {
+                    this->helpOpen = false;
+                }
+            }
+            ImGui::End();
+        }
     }
     ImGui::Render();
 

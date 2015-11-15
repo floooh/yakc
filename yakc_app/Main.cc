@@ -37,8 +37,11 @@ OryolMain(YakcApp);
 AppState::Code
 YakcApp::OnInit() {
 
-    // we only need few resources, so don't waste memory 
-    auto gfxSetup = GfxSetup::Window(640, 512, "KC85");
+    // we only need few resources, so don't waste memory
+    const int frameSize = 10;
+    const int width = 2*frameSize + 2*320;
+    const int height = 2*frameSize + 2*256;
+    auto gfxSetup = GfxSetup::Window(width, height, "KC85");
     gfxSetup.SetPoolSize(GfxResourceType::Mesh, 4);
     gfxSetup.SetPoolSize(GfxResourceType::Texture, 4);
     gfxSetup.SetPoolSize(GfxResourceType::DrawState, 4);
@@ -51,7 +54,7 @@ YakcApp::OnInit() {
     #if YAKC_UI
     this->ui.Setup(this->kc);
     #endif
-    this->draw.Setup(gfxSetup);
+    this->draw.Setup(gfxSetup, frameSize);
     
     return AppState::Running;
 }
@@ -59,7 +62,7 @@ YakcApp::OnInit() {
 //------------------------------------------------------------------------------
 AppState::Code
 YakcApp::OnRunning() {
-    Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.5f,0.5f,0.5f,1.0f)));
+    Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = 1000000 / 60;
     this->handleInput();
     this->kc.onframe(micro_secs);
@@ -86,15 +89,20 @@ YakcApp::OnCleanup() {
 //------------------------------------------------------------------------------
 void
 YakcApp::handleInput() {
+    const Keyboard& kbd = Input::Keyboard();
+    const Touchpad& touch = Input::Touchpad();
 
-    // don't handle KC input if IMGUI has the keyboard focus
     #if YAKC_UI
+    // don't handle KC input if IMGUI has the keyboard focus
     if (ImGui::GetIO().WantCaptureKeyboard) {
         return;
     }
+    // toggle UI?
+    if (kbd.KeyDown(Key::Tab) || touch.DoubleTapped) {
+        this->ui.Toggle();
+    }
     #endif
 
-    const Keyboard& kbd = Input::Keyboard();
     const wchar_t* text = kbd.CapturedText();
     ubyte ascii = 0;
 

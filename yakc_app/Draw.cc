@@ -8,8 +8,9 @@ using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-Draw::Setup(const GfxSetup& gfxSetup) {
+Draw::Setup(const GfxSetup& gfxSetup, int frame) {
 
+    this->frameSize = frame;
     this->texUpdateAttrs.NumFaces = 1;
     this->texUpdateAttrs.NumMipMaps = 1;
     this->texUpdateAttrs.Sizes[0][0] = sizeof(this->irmBuffer);
@@ -23,7 +24,11 @@ Draw::Setup(const GfxSetup& gfxSetup) {
     this->fsTextures.IRM = Gfx::CreateResource(irmSetup);
 
     Id msh = Gfx::CreateResource(MeshSetup::FullScreenQuad(true));
+    #if ORYOL_IOS || ORYOL_ANDROID
+    Id shd = Gfx::CreateResource(Shaders::Clean::Setup());
+    #else
     Id shd = Gfx::CreateResource(Shaders::CRT::Setup());
+    #endif
     auto dss = DrawStateSetup::FromMeshAndShader(msh, shd);
     dss.DepthStencilState.DepthWriteEnabled = false;
     dss.DepthStencilState.DepthCmpFunc = CompareFunc::Always;
@@ -56,9 +61,9 @@ Draw::applyViewport() {
     float aspect = float(320) / float(256);
     const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
     const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
-    int viewPortY = 0;
-    int viewPortH = fbHeight;
-    int viewPortW = (const int) (fbHeight * aspect);
+    int viewPortY = this->frameSize;
+    int viewPortH = fbHeight - 2*frameSize;
+    int viewPortW = (const int) (fbHeight * aspect) - 2*this->frameSize;
     int viewPortX = (fbWidth - viewPortW) / 2;
     Gfx::ApplyViewPort(viewPortX, viewPortY, viewPortW, viewPortH);
 }
