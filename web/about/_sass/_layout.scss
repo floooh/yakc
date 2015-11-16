@@ -35,12 +35,12 @@
 
 .navigation {
     list-style: none;
-    background: #111;
+    background: $kc-background;
 
     position: fixed;
     width: $nav-width;
     height: 100%;
-    top: 72px;
+    top: 90px;
     left: 0;
     z-index: 0;
     margin-left: 0;
@@ -50,8 +50,8 @@
 .nav-item {
     width: 200px;
     padding-left: 10px;
-    border-top: 1px solid #111;
-    border-bottom: 1px solid #000;
+    border-top: 1px solid $kc-background;
+    border-bottom: 1px solid $kc-background;
 }
 
 .nav-item a {
@@ -76,7 +76,7 @@
     position: relative;
     min-height: 100%;
     background-color: white;
-    top: 70px;
+    top: 95px;
     bottom: 100%;
     margin-left: $nav-width;
     padding-top: 20px;

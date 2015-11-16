@@ -1,0 +1,25 @@
+@font-face {
+    font-family: 'kcfont';
+    src: url('font.ttf');
+}
+
+.kc-top-padding {
+    height: 10px
+}
+
+.kc-title {
+    text-align: left;
+    font-family: 'kcfont';
+    font-size: 40px;
+    background-color: black;
+    color: white;
+    min-width: 500px;
+    padding-left: 30px;
+    padding-top: 8px;
+}
+.kc-title-border {
+    height: 4px;
+    background: rgb(229,76,84);
+}
+
+

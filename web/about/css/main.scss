@@ -14,13 +14,15 @@ $font-weight: 400;
 
 $spacing-unit:    30px;
 
+$kc-background:     rgb(25,112,195);
+
 $header-line-height:        72px;
-$header-background-color:   #bb0033; /*#2a7ae2;*/
+$header-background-color:   $kc-background;
 $header-font-weight:        300;
-$header-title-color:               #fdfdfd;
+$header-title-color:        #ffffff;
 
 $text-color:                #111;
-$background-color:          #fdfdfd;
+$background-color:          $kc-background;
 $brand-color:               #2a7ae2;
 
 $grey-color:       #828282;
@@ -36,5 +38,6 @@ $nav-width:         200px;
 @import
         "base",
         "layout",
-        "syntax-highlighting"
+        "syntax-highlighting",
+        "kc"
 ;
