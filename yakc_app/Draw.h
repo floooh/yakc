@@ -26,6 +26,7 @@ public:
 
     Oryol::Id drawState;
     Oryol::Shaders::CRT::FSTextures fsTextures;
+    Oryol::Shaders::CRT::FSParams fsParams;
     Oryol::ImageDataAttrs texUpdateAttrs;
     int frameSize = 0;
 

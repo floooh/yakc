@@ -102,7 +102,7 @@ public:
     bool is_module_in_slot(ubyte slot_addr) const;
 
     /// process one frame
-    void onframe(int micro_secs);
+    void onframe(int speed_multiplier, int micro_secs);
     /// do one step
     void step();
     /// do a debug-step (executes until PC changes)
@@ -383,15 +383,16 @@ kc85::model() const {
 
 //------------------------------------------------------------------------------
 inline void
-kc85::onframe(int micro_secs) {
+kc85::onframe(int speed_multiplier, int micro_secs) {
     // at 1.75 MHz:
     // per micro-second, 1750000 / 1000000 T-states are executed
     // thus: num T-states to execute is (micro_secs * 17500000) / 1000000)
     // or: (micro_secs * 175) / 100
+    YAKC_ASSERT(speed_multiplier > 0);
     this->handle_keyboard_input();
     if (!this->paused) {
         // KC85/3 is 1.75MHz, KC85/4 is 1.77MHz
-        const int khz = this->cur_model == kc_model::kc85_3 ? 1750 : 1770;
+        const int khz = (this->cur_model == kc_model::kc85_3 ? 1750 : 1770) * speed_multiplier;
         const unsigned int num_cycles = (micro_secs * khz) / 1000;
 
         // step CPU and CTC

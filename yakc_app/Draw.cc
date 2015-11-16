@@ -24,11 +24,7 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     this->fsTextures.IRM = Gfx::CreateResource(irmSetup);
 
     Id msh = Gfx::CreateResource(MeshSetup::FullScreenQuad(true));
-    #if ORYOL_IOS || ORYOL_ANDROID
-    Id shd = Gfx::CreateResource(Shaders::Clean::Setup());
-    #else
     Id shd = Gfx::CreateResource(Shaders::CRT::Setup());
-    #endif
     auto dss = DrawStateSetup::FromMeshAndShader(msh, shd);
     dss.DepthStencilState.DepthWriteEnabled = false;
     dss.DepthStencilState.DepthCmpFunc = CompareFunc::Always;
@@ -36,6 +32,9 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     dss.BlendState.DepthFormat = gfxSetup.DepthFormat;
     dss.RasterizerState.SampleCount = gfxSetup.SampleCount;
     this->drawState = Gfx::CreateResource(dss);
+
+    this->fsParams.CRTEffect = true;
+    this->fsParams.ColorTV = true;
 }
 
 //------------------------------------------------------------------------------
@@ -51,6 +50,7 @@ Draw::Render(const kc85& kc) {
     Gfx::UpdateTexture(this->fsTextures.IRM, this->irmBuffer, this->texUpdateAttrs);
     this->applyViewport();
     Gfx::ApplyDrawState(this->drawState, this->fsTextures);
+    Gfx::ApplyUniformBlock(this->fsParams);
     Gfx::Draw(0);
     this->restoreViewport();
 }

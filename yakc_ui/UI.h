@@ -30,6 +30,13 @@ public:
     static const ImVec4 ColorBackground;
     static const ImVec4 ColorBackgroundLight;
 
+    struct settings {
+        bool crtEffect = true;
+        bool colorTV = true;
+        float crtWarp = 1.0f/64.0f;
+        int cpuSpeed = 1;
+    } Settings;
+
 private:
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;

@@ -38,13 +38,13 @@ _const float hardScan=-8.0;
 //_const float hardPix=-2.0;
 _const float hardPix=-2.0;
 
-// Display warp.
+// Display warp. (this is provided as pixelshader param)
 // 0.0 = none
 // 1.0/8.0 = extreme
 //static const vec2 warp=vec2(1.0/32.0,1.0/32.0);
 //static const vec2 warp=vec2(1.0/24.0,1.0/16.0);
 //_const vec2 warp=vec2(1.0/32.0,1.0/24.0);
-_const vec2 warp=vec2(1.0/64.0,1.0/64.0);
+//_const vec2 warp=vec2(1.0/64.0,1.0/64.0);
 
 // Amount of shadow mask.
 //_const float maskDark=0.75;
@@ -126,7 +126,7 @@ _func vec3 Tri(sampler2D iChannel0, vec2 pos){
     return a*wa+b*wb+c*wc;}
 
 // Distortion of scanlines, and end of screen alpha.
-_func vec2 Warp(vec2 pos){
+_func vec2 Warp(vec2 pos, vec2 warp){
     pos=pos*2.0-1.0;
     pos*=vec2(1.0+(pos.y*pos.y)*warp.x,1.0+(pos.x*pos.x)*warp.y);
     return pos*0.5+0.5;}
@@ -141,8 +141,8 @@ _func vec3 Mask(vec2 pos){
     else mask.b=maskLight;
     return mask;}
 
-_func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv) {
-    vec2 pos=Warp(uv);
+_func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
+    vec2 pos=Warp(uv, warp);
     return vec4(ToSrgb(Tri(iChannel0, pos) * Mask(fragCoord.yx)), 1.0); }
 @end
 
@@ -161,29 +161,34 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv) {
 @texture sampler2D iChannel0 IRM
 @end
 
+@uniform_block fsParams FSParams
+@uniform bool crtEffect CRTEffect
+@uniform bool colorTV ColorTV
+@uniform vec2 crtWarp CRTWarp
+@end
+
 // this renders with expensive CRT effect
 @fs crtFS
 @use_code_block TL_CRT
 @use_texture_block fsTextures
+@use_uniform_block fsParams
 @in vec2 uv
 {
-    _color = tl_crt(iChannel0, _fragcoord, uv);
-}
-@end
-
-// this renders without expensive post effect
-@fs cleanFS
-@use_texture_block fsTextures
-@in vec2 uv
-{
-    _color = tex2D(iChannel0, uv);
+    vec4 color;
+    if (crtEffect) {
+        color = tl_crt(iChannel0, _fragcoord, uv, crtWarp);
+    }
+    else {
+        color = tex2D(iChannel0, uv);
+    }
+    if (!colorTV) {
+        float lum = dot(color.xyz, vec3(0.3, 0.59, 0.11));
+        color.xyz = vec3(lum, lum, lum);
+    }
+    _color = color;
 }
 @end
 
 @bundle CRT
 @program vs crtFS
-@end
-
-@bundle Clean
-@program vs cleanFS
 @end

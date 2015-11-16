@@ -134,6 +134,20 @@ UI::OnFrame(kc85& kc) {
                 }
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("Settings")) {
+                if (ImGui::MenuItem("CRT Effect", nullptr, this->Settings.crtEffect)) {
+                    this->Settings.crtEffect = !this->Settings.crtEffect;
+                }
+                if (ImGui::MenuItem("Color TV", nullptr, this->Settings.colorTV)) {
+                    this->Settings.colorTV = !this->Settings.colorTV;
+                }
+                ImGui::SliderFloat("CRT Warp", &this->Settings.crtWarp, 0.0f, 1.0f/16.0f);
+                ImGui::SliderInt("CPU Speed", &this->Settings.cpuSpeed, 1, 8, "%.0fx");
+                if (ImGui::MenuItem("Reset To Defaults")) {
+                    this->Settings = settings();
+                }
+                ImGui::EndMenu();
+            }
             ImGui::EndMainMenuBar();
         }
 

@@ -65,7 +65,10 @@ YakcApp::OnRunning() {
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = 1000000 / 60;
     this->handleInput();
-    this->kc.onframe(micro_secs);
+    this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs);
+    this->draw.fsParams.CRTEffect = this->ui.Settings.crtEffect;
+    this->draw.fsParams.ColorTV = this->ui.Settings.colorTV;
+    this->draw.fsParams.CRTWarp = glm::vec2(this->ui.Settings.crtWarp);
     this->draw.Render(this->kc);
     #if YAKC_UI
     this->ui.OnFrame(this->kc);
