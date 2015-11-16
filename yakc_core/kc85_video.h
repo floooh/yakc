@@ -20,15 +20,18 @@ public:
     /// decode KC85 video memory into linear RGBA8 buffer
     void decode(ubyte* rgba8_buf, int buf_size) const;
 
-    /// blink callback flag, must be connected to CTC ZC/TO2 line
-    static void blink_cb(void* userdata);
+    /// enable/disable blinkg based on PIO B bit 7
+    void pio_blink_enable(bool b);
+    /// toggle blink flag, must be connected to CTC ZC/TO2 line
+    static void ctc_blink_cb(void* userdata);
 
 private:
     /// decode 8 pixels
     void decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_off) const;
 
     kc85_model model = kc85_model::kc85_3;
-    bool blink_flag = false;
+    bool pio_blink_flag = true;
+    bool ctc_blink_flag = true;
     unsigned int fgPal[16];
     unsigned int bgPal[16];
 };
@@ -75,14 +78,20 @@ kc85_video::reset() {
 
 //------------------------------------------------------------------------------
 inline void
-kc85_video::blink_cb(void* userdata) {
-    kc85_video* self = (kc85_video*) userdata;
-    self->blink_flag = !self->blink_flag;
+kc85_video::pio_blink_enable(bool b) {
+    this->pio_blink_flag = b;
 }
 
 //------------------------------------------------------------------------------
 inline void
-kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_off) const {
+kc85_video::ctc_blink_cb(void* userdata) {
+    kc85_video* self = (kc85_video*) userdata;
+    self->ctc_blink_flag = !self->ctc_blink_flag;
+}
+
+//------------------------------------------------------------------------------
+inline void
+kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_bg) const {
     // select foreground- and background color:
     //  bit 7: blinking
     //  bits 6..3: foreground color
@@ -92,7 +101,7 @@ kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_of
     const ubyte bg_index = colors & 0x7;
     const ubyte fg_index = (colors>>3)&0xF;
     const unsigned int bg = this->bgPal[bg_index];
-    const unsigned int fg = (blink_off && (colors & 0x80)) ? bg : this->fgPal[fg_index];
+    const unsigned int fg = (blink_bg && (colors & 0x80)) ? bg : this->fgPal[fg_index];
     ptr[0] = pixels & 0x80 ? fg : bg;
     ptr[1] = pixels & 0x40 ? fg : bg;
     ptr[2] = pixels & 0x20 ? fg : bg;
@@ -108,6 +117,7 @@ inline void
 kc85_video::decode(ubyte* rgba8_buf, int buf_size) const {
     YAKC_ASSERT(buf_size == 320*256*4);
 
+    const bool blink_bg = this->ctc_blink_flag && this->pio_blink_flag;
     if (kc85_model::kc85_3 == this->model) {
         const ubyte* pixel_data = this->irm0;
         const ubyte* color_data = this->irm0 + 0x2800;
@@ -139,7 +149,7 @@ kc85_video::decode(ubyte* rgba8_buf, int buf_size) const {
                 }
                 ubyte src_pixels = pixel_data[pixel_offset];
                 ubyte src_colors = color_data[color_offset];
-                this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, !this->blink_flag);
+                this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
             }
         }
     }

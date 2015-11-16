@@ -188,7 +188,7 @@ kc85::switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
         this->clck.config_timer(0, 50, z80ctc::ctrg2, &this->ctc);
 
         // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
-        this->ctc.connect_czto2(kc85_video::blink_cb, &this->video);
+        this->ctc.connect_czto2(kc85_video::ctc_blink_cb, &this->video);
 
         // fill RAM banks with noise
         fill_noise(this->ram0, sizeof(this->ram0));
@@ -494,6 +494,7 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             break;
         case 0x89:
             self->pio.write(z80pio::B, val);
+            self->video.pio_blink_enable(val & PIO_B_BLINK_ENABLED);
             break;
         case 0x8A:
             self->pio.control(z80pio::A, val);
