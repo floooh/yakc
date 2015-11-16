@@ -37,4 +37,10 @@ typedef unsigned short uword;
 typedef short word;
 typedef unsigned short address;
 
+enum class kc85_model {
+    kc85_3,
+    kc85_4,
+    none,
+};
+
 }

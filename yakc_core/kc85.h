@@ -4,10 +4,12 @@
     @class yakc::kc85
     @brief wrapper class for the entire KC85/3 or KC85/4 system
 */
+#include "yakc_core/clock.h"
 #include "yakc_core/z80.h"
 #include "yakc_core/z80pio.h"
 #include "yakc_core/z80ctc.h"
 #include "yakc_roms/roms.h"
+#include "yakc_core/kc85_video.h"
 
 namespace yakc {
 
@@ -15,10 +17,6 @@ class kc85 {
 public:
     /// ram bank 0 (0x0000..0x3FFF)
     ubyte ram0[0x4000];
-    /// ram bank 1 (0x4000..0x7FFF), optional in KC85/3
-    ubyte ram1[0x4000];
-    /// vidmem bank 0 (0x8000..0xBFFF)
-    ubyte irm0[0x4000];
 
     /// PIO bits
     enum {
@@ -34,19 +32,17 @@ public:
         PIO_B_BLINK_ENABLED = (1<<7),
     };
 
-    /// supported KC types
-    enum class kc_model {
-        kc85_3,
-        kc85_4,
-        none
-    };
-
+    /// central time source
+    clock clck;
     /// the Z80 CPU
     z80 cpu;
     /// the Z80 PIO
     z80pio pio;
     /// the Z80 CTC
     z80ctc ctc;
+    /// video decoder
+    kc85_video video;
+
     /// breakpoint is enabled?
     bool breakpoint_enabled;
     /// breakpoint address
@@ -76,7 +72,7 @@ public:
     kc85();
 
     /// power-on the device
-    void switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size);
+    void switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size);
     /// power-off the device
     void switchoff();
     /// reset the device
@@ -84,7 +80,7 @@ public:
     /// return true if device is switched on
     bool ison() const;
     /// get the KC model
-    kc_model model() const;
+    kc85_model model() const;
     /// get pointer to currently mapped rom
     ubyte* caos_rom() const;
     /// get size of currently mapped rom
@@ -107,8 +103,6 @@ public:
     void step();
     /// do a debug-step (executes until PC changes)
     void debug_step();
-    /// get current video blink state
-    bool blink_state() const;
     /// put a key as ASCII code
     void put_key(ubyte ascii);
     /// handle keyboard input
@@ -133,16 +127,12 @@ private:
     static void fill_noise(void* ptr, int num_bytes);
     /// update module/memory mapping
     void update_bank_switching();
-    /// CTC pulse callback
-    static void ctc_pulse_callback(void* userdata, z80ctc::channel c);
 
-    kc_model cur_model;
+    kc85_model cur_model;
     bool on;
     ubyte key_code;
     ubyte* cur_caos_rom;
     uword cur_caos_rom_size;
-    int vsync_counter;      // 50Hz frame reset counter
-    bool video_blink_flag;  // current blinking flag triggered by CTC channel 2
 };
 
 //------------------------------------------------------------------------------
@@ -150,12 +140,10 @@ inline kc85::kc85():
 breakpoint_enabled(false),
 breakpoint_address(0x0000),
 paused(false),
-cur_model(kc_model::kc85_3),
+cur_model(kc85_model::kc85_3),
 key_code(0),
 cur_caos_rom(rom_caos31),
-cur_caos_rom_size(sizeof(rom_caos31)),
-vsync_counter(0),
-video_blink_flag(false) {
+cur_caos_rom_size(sizeof(rom_caos31)) {
     // configure module slots
     this->modules[0].slot_addr = 0x08;  // base device right module slot
     this->modules[1].slot_addr = 0x0C;  // base device left module slot
@@ -174,8 +162,8 @@ kc85::fill_noise(void* ptr, int num_bytes) {
 
 //------------------------------------------------------------------------------
 inline void
-kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
-    YAKC_ASSERT(kc_model::none != m);
+kc85::switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
+    YAKC_ASSERT(kc85_model::none != m);
     YAKC_ASSERT(!this->on);
     YAKC_ASSERT(0x2000 == caos_rom_size);
     YAKC_ASSERT(0x2000 == sizeof(rom_basic_c0));
@@ -185,18 +173,28 @@ kc85::switchon(kc_model m, ubyte* caos_rom, uword caos_rom_size) {
     this->cur_caos_rom_size = caos_rom_size;
     this->on = true;
     this->key_code = 0;
-    this->vsync_counter = 0;
 
+    this->video.init(m);
     this->pio.init();
-    this->ctc.init(ctc_pulse_callback, this);
-    this->cpu.reset();
-    if (kc_model::kc85_3 == m) {
+    this->ctc.init();
+    this->cpu.init(in_cb, out_cb, this);
+    if (kc85_model::kc85_3 == m) {
+
+        // initialize clock to 1.75 MHz
+        this->clck.init(1750);
+
+        // connect CTC2 trigger to a 50Hz vertical-blank-timer,
+        // this controls the foreground color blinking flag
+        this->clck.config_timer(0, 50, z80ctc::ctrg2, &this->ctc);
+
+        // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
+        this->ctc.connect_czto2(kc85_video::blink_cb, &this->video);
+
         // fill RAM banks with noise
         fill_noise(this->ram0, sizeof(this->ram0));
-        fill_noise(this->irm0, sizeof(this->irm0));
+        fill_noise(this->video.irm0, sizeof(this->video.irm0));
 
         // initial memory map
-        this->cpu.set_inout_handlers(in_cb, out_cb, this);
         this->cpu.out(0x88, 0x9f);
     }
 
@@ -215,6 +213,7 @@ kc85::switchoff() {
 //------------------------------------------------------------------------------
 inline void
 kc85::reset() {
+    this->video.reset();
     this->ctc.reset();
     this->pio.reset();
     this->cpu.reset();
@@ -293,7 +292,7 @@ kc85::remove_module(ubyte slot_addr) {
     auto& mod = this->modules[slot_index];
     // if module has memory, unmap it
     if (mod.desc.size && mod.desc.ptr) {
-        cpu.mem.unmap_layer(slot_to_memory_layer(slot_addr));
+        this->cpu.mem.unmap_layer(slot_to_memory_layer(slot_addr));
     }
     // if memory was allocated for the module, free it
     if (mod.allocated) {
@@ -338,7 +337,7 @@ kc85::update_module(ubyte slot_addr) {
     const int slot_index = this->find_module_by_slot(slot_addr);
     auto& mod = this->modules[slot_index];
     if (0xFF != mod.desc.type) {
-        const int memory_layer_index = slot_to_memory_layer(slot_addr);
+        const int memory_layer_index = this->slot_to_memory_layer(slot_addr);
         this->cpu.mem.unmap_layer(memory_layer_index);
 
         // compute module start address from control-byte
@@ -376,7 +375,7 @@ kc85::ison() const {
 }
 
 //------------------------------------------------------------------------------
-inline kc85::kc_model
+inline kc85_model
 kc85::model() const {
     return this->cur_model;
 }
@@ -391,30 +390,21 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
     YAKC_ASSERT(speed_multiplier > 0);
     this->handle_keyboard_input();
     if (!this->paused) {
-        // KC85/3 is 1.75MHz, KC85/4 is 1.77MHz
-        const int khz = (this->cur_model == kc_model::kc85_3 ? 1750 : 1770) * speed_multiplier;
-        const unsigned int num_cycles = (micro_secs * khz) / 1000;
+        const unsigned int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
 
         // step CPU and CTC
         unsigned int cycles_executed = 0;
         while (cycles_executed < num_cycles) {
             if (this->breakpoint_enabled) {
-                if (cpu.state.PC == this->breakpoint_address) {
+                if (this->cpu.state.PC == this->breakpoint_address) {
                     this->paused = true;
                     break;
                 }
             }
-            unsigned int cycles_opcode = cpu.step();
-            ctc.update(cycles_opcode);
-            // FIXME: CTC channels 0 and 1 seem to be triggered per video scanline
+            unsigned int cycles_opcode = this->cpu.step();
+            this->clck.update(cycles_opcode);
+            this->ctc.update(cycles_opcode);
 
-            // CTC2 and CTC3 are triggered per 50 Hz video frame
-            if (this->vsync_counter <= 0) {
-                this->ctc.trigger(z80ctc::CTC2);
-                this->ctc.trigger(z80ctc::CTC3);
-                this->vsync_counter = (khz * 1000) / 50;
-            }
-            this->vsync_counter -= cycles_opcode;
             cycles_executed += cycles_opcode;
         }
     }
@@ -426,26 +416,15 @@ kc85::debug_step() {
     uword pc;
     do {
         pc = this->cpu.state.PC;
-        cpu.step();
+        this->cpu.step();
     }
-    while ((pc == cpu.state.PC) && !cpu.state.INV);
+    while ((pc == this->cpu.state.PC) && !this->cpu.state.INV);
 }
 
 //------------------------------------------------------------------------------
 inline void
 kc85::step() {
     this->cpu.step();
-}
-
-//------------------------------------------------------------------------------
-inline bool
-kc85::blink_state() const {
-    if (this->pio.read(z80pio::B) & PIO_B_BLINK_ENABLED) {
-        return this->video_blink_flag;
-    }
-    else {
-        return true;
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -574,42 +553,27 @@ kc85::update_bank_switching() {
     const ubyte pio_a = this->pio.read(z80pio::A);
 
     // first map the base-device memory banks
-    cpu.mem.unmap_layer(0);
+    this->cpu.mem.unmap_layer(0);
     // 16 KByte RAM
     if (pio_a & PIO_A_RAM) {
-        cpu.mem.map(0, 0x0000, 0x4000, ram0, true);
+        this->cpu.mem.map(0, 0x0000, 0x4000, ram0, true);
     }
     // 16 KByte video memory
     if (pio_a & PIO_A_IRM) {
-        cpu.mem.map(0, 0x8000, 0x4000, irm0, true);
+        this->cpu.mem.map(0, 0x8000, 0x4000, this->video.irm0, true);
     }
     // 8 KByte BASIC ROM
     if (pio_a & PIO_A_BASIC_ROM) {
-        cpu.mem.map(0, 0xC000, 0x2000, rom_basic_c0, false);
+        this->cpu.mem.map(0, 0xC000, 0x2000, rom_basic_c0, false);
     }
     // 8 KByte CAOS ROM
     if (pio_a & PIO_A_CAOS_ROM) {
-        cpu.mem.map(0, 0xE000, 0x2000, caos_rom(), false);
+        this->cpu.mem.map(0, 0xE000, 0x2000, caos_rom(), false);
     }
 
     // map modules in base-device expansion slots
     this->update_module(0x08);
     this->update_module(0x0C);
-}
-
-//------------------------------------------------------------------------------
-inline void
-kc85::ctc_pulse_callback(void* userdata, z80ctc::channel c) {
-    YAKC_ASSERT(userdata);
-    kc85* self = (kc85*)userdata;
-
-    // CTC channel 2 controls the forward color blink state
-    if (z80ctc::CTC2 == c) {
-        self->video_blink_flag = !self->video_blink_flag;
-    }
-    else {
-        YAKC_PRINTF("FIXME: PULSE CALLBACK FOR CTC CHANNEL %d\n", c);
-    }
 }
 
 } // namespace yakc

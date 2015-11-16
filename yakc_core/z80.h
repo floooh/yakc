@@ -105,8 +105,8 @@ public:
     /// constructor
     z80();
 
-    /// setup input and output handler
-    void set_inout_handlers(cb_in func_in, cb_out func_out, void* userdata);
+    /// one-time init
+    void init(cb_in func_in, cb_out func_out, void* userdata);
     /// perform a reset (RESET pin triggered)
     void reset();
 
@@ -236,8 +236,9 @@ inout_userdata(nullptr) {
 
 //------------------------------------------------------------------------------
 inline void
-z80::set_inout_handlers(cb_in func_in, cb_out func_out, void* userdata) {
+z80::init(cb_in func_in, cb_out func_out, void* userdata) {
     YAKC_ASSERT(func_in && func_out);
+    this->reset();
     in_func = func_in;
     out_func = func_out;
     inout_userdata = userdata;

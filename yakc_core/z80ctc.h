@@ -24,9 +24,6 @@ public:
         num_channels,
     };
 
-    /// pulse-callback for channels CTC0 to CTC3
-    typedef void (*cb_pulse)(void* userdata, channel c);
-
     /// CTC channel mode bits
     enum mode_bits {
         INTERRUPT = (1<<7),         // 1: interrupt enabled, 0: interrupt disabled
@@ -58,6 +55,9 @@ public:
         CONTROL_VECTOR = 0,
     };
 
+    /// callback for ZC/TO0..3 lines
+    typedef void (*cb_zcto)(void* userdata);
+
     /// channel state
     struct channel_state {
         uword mode = 0;                 // current mode bits
@@ -66,17 +66,33 @@ public:
         bool waiting_for_trigger = false;
         int timer = 0;                  // timer cycle-counter
         bool timer_enabled = false;
+        cb_zcto callback = nullptr;
+        void* userdata = nullptr;
     } channels[num_channels];
     ubyte interrupt_vector = 0;
 
     /// initialize the ctc
-    void init(cb_pulse pulse_callback, void* userdata);
+    void init();
     /// reset the ctc
     void reset();
     /// update the CTC for a number of ticks, a tick is equal to a Z80 T-cycle
     void update(int ticks);
-    /// trigger a channel (0 and 1 per scanline, 2 and 3 per 50Hz frame)
-    void trigger(channel c);
+
+    /// set callback for ZC/TO0 line
+    void connect_czto0(cb_zcto cb, void* userdata);
+    /// set callback for ZC/TO1 line
+    void connect_czto1(cb_zcto cb, void* userdata);
+    /// set callback for ZC/TO2 line
+    void connect_czto2(cb_zcto cb, void* userdata);
+    /// trigger line for CTC0
+    static void ctrg0(void* self);
+    /// trigger line for CTC1
+    static void ctrg1(void* self);
+    /// trigger line for CTC2
+    static void ctrg2(void* self);
+    /// trigger line for CTC3
+    static void ctrg3(void* self);
+
     /// write value to channel
     void write(channel c, ubyte v);
     /// read value from channel
@@ -93,18 +109,15 @@ private:
     void update_timer(channel c, int ticks);
     /// execute timer callback (interrupt and trigger callbacks)
     void timer_callback(channel c);
-
-    void* userdata = nullptr;
-    cb_pulse pulse_callback = nullptr;
+    /// external trigger, called from trg0..trg3
+    void trigger(channel c);
 };
 
 //------------------------------------------------------------------------------
 inline void
-z80ctc::init(cb_pulse pulse_cb, void* ud) {
-    pulse_callback = pulse_cb;
-    userdata = ud;
-    for (unsigned int i = 0; i < num_channels; i++) {
-        channels[i] = channel_state();
+z80ctc::init() {
+    for (auto& chn : channels) {
+        chn = channel_state();
     }
     interrupt_vector = 0;
 }
@@ -112,9 +125,14 @@ z80ctc::init(cb_pulse pulse_cb, void* ud) {
 //------------------------------------------------------------------------------
 inline void
 z80ctc::reset() {
-    // FIXME: ???
-    for (unsigned int i = 0; i < num_channels; i++) {
-        channels[i] = channel_state();
+    // don't clear callbacks on reset
+    for (auto& chn : channels) {
+        chn.mode = 0;
+        chn.constant = 0;
+        chn.counter = 0;
+        chn.waiting_for_trigger = false;
+        chn.timer = 0;
+        chn.timer_enabled = false;
     }
 }
 
@@ -150,14 +168,59 @@ z80ctc::trigger(channel c) {
 
 //------------------------------------------------------------------------------
 inline void
+z80ctc::connect_czto0(cb_zcto cb, void* userdata) {
+    channels[CTC0].callback = cb;
+    channels[CTC0].userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_czto1(cb_zcto cb, void* userdata) {
+    channels[CTC1].callback = cb;
+    channels[CTC1].userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_czto2(cb_zcto cb, void* userdata) {
+    channels[CTC2].callback = cb;
+    channels[CTC2].userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::ctrg0(void* self) {
+    ((z80ctc*)self)->trigger(CTC0);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::ctrg1(void* self) {
+    ((z80ctc*)self)->trigger(CTC1);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::ctrg2(void* self) {
+    ((z80ctc*)self)->trigger(CTC2);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::ctrg3(void* self) {
+    ((z80ctc*)self)->trigger(CTC3);
+}
+
+//------------------------------------------------------------------------------
+inline void
 z80ctc::timer_callback(channel c) {
     channel_state& chn = channels[c];
     chn.counter = chn.constant;
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
         YAKC_PRINTF("CTC FIXME: INTERRUPT REQUEST");
     }
-    if (pulse_callback) {
-        pulse_callback(this->userdata, c);
+    if (chn.callback) {
+        chn.callback(chn.userdata);
     }
 }
 

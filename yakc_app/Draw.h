@@ -16,8 +16,6 @@ public:
     void Discard();
     /// render one frame
     void Render(const yakc::kc85& kc);
-    /// decode video memory into linear RGBA8 buffer
-    void DecodeVideoMemory(const yakc::kc85& kc);
 
     /// apply view port to keep proper aspect ratio when fullscreen
     void applyViewport();
@@ -30,7 +28,5 @@ public:
     Oryol::ImageDataAttrs texUpdateAttrs;
     int frameSize = 0;
 
-    static const int irmWidth = 320;
-    static const int irmHeight = 256;
-    Oryol::uint32 irmBuffer[irmHeight][irmWidth];
+    Oryol::uint8 decodeBuffer[320 * 256 * 4];
 };

@@ -90,7 +90,7 @@ UI::OnFrame(kc85& kc) {
     IMUI::NewFrame(Clock::LapTime(this->curTime));
     if (this->uiEnabled) {
         if (ImGui::BeginMainMenuBar()) {
-            if (ImGui::BeginMenu(kc.model() == kc85::kc_model::kc85_3 ? "KC85/3":"KC85/4")) {
+            if (ImGui::BeginMenu(kc.model() == kc85_model::kc85_3 ? "KC85/3":"KC85/4")) {
                 if (ImGui::MenuItem("Power Cycle")) {
                     kc.switchoff();
                     kc.switchon(kc.model(), kc.caos_rom(), kc.caos_rom_size());
@@ -101,7 +101,7 @@ UI::OnFrame(kc85& kc) {
                 if (ImGui::BeginMenu("KC 85/3")) {
                     if (ImGui::MenuItem("CAOS 3.1")) {
                         kc.switchoff();
-                        kc.switchon(kc85::kc_model::kc85_3, rom_caos31, sizeof(rom_caos31));
+                        kc.switchon(kc85_model::kc85_3, rom_caos31, sizeof(rom_caos31));
                     }
                     ImGui::EndMenu();
                 }

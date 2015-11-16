@@ -49,7 +49,7 @@ YakcApp::OnInit() {
     Gfx::Setup(gfxSetup);
     Input::Setup();
     Input::BeginCaptureText();
-    this->kc.switchon(kc85::kc_model::kc85_3, rom_caos31, sizeof(rom_caos31));
+    this->kc.switchon(kc85_model::kc85_3, rom_caos31, sizeof(rom_caos31));
 
     #if YAKC_UI
     this->ui.Setup(this->kc);
