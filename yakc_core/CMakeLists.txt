@@ -1,5 +1,5 @@
 fips_begin_module(yakc_core)
     fips_vs_warning_level(3)
-    fips_files(kc85.h kc85_video.h memory.h clock.h z80.h z80pio.h z80ctc.h common.h _dummy.cc)
+    fips_files(kc85.h kc85_video.h memory.h clock.h z80int.h z80.h z80pio.h z80ctc.h common.h _dummy.cc)
     fips_generate(FROM opcodes.py HEADER opcodes.h)
 fips_end_module()
