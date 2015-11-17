@@ -25,9 +25,9 @@ TEST(memory) {
     memset(ram1, 2, sizeof(ram1));
     memset(rom, 3, sizeof(rom));
 
-    mem.map(0x0000, size, ram0, true);
-    mem.map(0x4000, size, ram1, true);
-    mem.map(0xC000, size, rom, false);
+    mem.map(0, 0x0000, size, ram0, true);
+    mem.map(0, 0x4000, size, ram1, true);
+    mem.map(0, 0xC000, size, rom, false);
 
     CHECK(mem.r8(0x0000) == 1);
     CHECK(mem.r8(0x0001) == 1);

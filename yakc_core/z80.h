@@ -6,6 +6,7 @@
 */
 #include "yakc_core/common.h"
 #include "yakc_core/memory.h"
+#include "yakc_core/z80int.h"
 
 namespace yakc {
 
@@ -102,13 +103,24 @@ public:
     /// input/output userdata
     void* inout_userdata;
 
+    /// highest priority interrupt controller in daisy chain
+    z80int* irq_device;
+    /// an interrupt request has been received
+    bool irq_received;
+
     /// constructor
     z80();
 
     /// one-time init
     void init(cb_in func_in, cb_out func_out, void* userdata);
+    /// connect the highest priority interrupt controller device
+    void connect_irq_device(z80int* device);
     /// perform a reset (RESET pin triggered)
     void reset();
+    /// receive an interrupt request, return true if interrupts are enabled
+    static bool irq(void* self);
+    /// execute a single instruction, return number of cycles
+    unsigned int step();
 
     /// called when invalid opcode has been hit
     void invalid_opcode(uword opsize);
@@ -116,9 +128,6 @@ public:
     void store_pc_history();
     /// get pc from history ringbuffer (0 is oldest entry)
     uword get_pc_history(int index) const;
-
-    /// execute a single instruction, return number of cycles
-    unsigned int step();
 
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
@@ -229,7 +238,9 @@ inline z80::z80() :
 pc_history_pos(0),
 in_func(nullptr),
 out_func(nullptr),
-inout_userdata(nullptr) {
+inout_userdata(nullptr),
+irq_device(nullptr),
+irq_received(false) {
     YAKC_MEMSET(&this->state, 0, sizeof(this->state));
     YAKC_MEMSET(&this->pc_history, 0, sizeof(this->pc_history));
 }
@@ -239,20 +250,41 @@ inline void
 z80::init(cb_in func_in, cb_out func_out, void* userdata) {
     YAKC_ASSERT(func_in && func_out);
     this->reset();
-    in_func = func_in;
-    out_func = func_out;
-    inout_userdata = userdata;
+    this->in_func = func_in;
+    this->out_func = func_out;
+    this->inout_userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::connect_irq_device(z80int* device) {
+    YAKC_ASSERT(device);
+    this->irq_device = device;
 }
 
 //------------------------------------------------------------------------------
 inline void
 z80::reset() {
-    state.PC = 0;
-    state.IM = 0;
-    state.IFF1 = false;
-    state.IFF2 = false;
-    state.I = 0;
-    state.R = 0;
+    this->state.PC = 0;
+    this->state.IM = 0;
+    this->state.IFF1 = false;
+    this->state.IFF2 = false;
+    this->state.I = 0;
+    this->state.R = 0;
+    this->irq_received = false;
+}
+
+//------------------------------------------------------------------------------
+inline bool
+z80::irq(void* userdata) {
+    z80* self = (z80*) userdata;
+    if (self->state.IFF1) {
+        self->irq_received = true;
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 //------------------------------------------------------------------------------

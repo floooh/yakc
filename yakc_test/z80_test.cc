@@ -22,8 +22,8 @@ void out_func(void* userdata, uword port, ubyte val) {
 z80 init_z80() {
     z80 cpu;
     memset(ram0, 0, sizeof(ram0));
-    cpu.mem.map(0x000, sizeof(ram0), ram0, true);
-    cpu.set_inout_handlers(in_func, out_func, nullptr);
+    cpu.mem.map(0, 0x0000, sizeof(ram0), ram0, true);
+    cpu.init(in_func, out_func, nullptr);
     return cpu;
 }
 
