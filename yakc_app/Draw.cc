@@ -17,8 +17,8 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
 
     auto irmSetup = TextureSetup::Empty(320, 256, 1, TextureType::Texture2D, PixelFormat::RGBA8, Usage::Stream);
     irmSetup.TextureUsage = Usage::Stream;
-    irmSetup.Sampler.MinFilter = TextureFilterMode::Nearest;
-    irmSetup.Sampler.MagFilter = TextureFilterMode::Nearest;
+    irmSetup.Sampler.MinFilter = TextureFilterMode::Linear;
+    irmSetup.Sampler.MagFilter = TextureFilterMode::Linear;
     irmSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
     irmSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
     this->fsTextures.IRM = Gfx::CreateResource(irmSetup);

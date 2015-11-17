@@ -24,19 +24,19 @@
 //
 
 // hardcoded to source display resolution
-_const vec2 res = vec2(320, 256);
+_const vec2 res = vec2(480, 384);
 
 // Hardness of scanline.
 //  -8.0 = soft
 // -16.0 = medium
 //_const float hardScan=-8.0;
-_const float hardScan=-8.0;
+_const float hardScan=-6.0;
 
 // Hardness of pixels in scanline.
 // -2.0 = soft
 // -4.0 = hard
 //_const float hardPix=-2.0;
-_const float hardPix=-2.0;
+_const float hardPix=-2.5;
 
 // Display warp. (this is provided as pixelshader param)
 // 0.0 = none
@@ -50,8 +50,8 @@ _const float hardPix=-2.0;
 //_const float maskDark=0.75;
 //_const float maskLight=2.0;
 
-_const float maskDark=0.5;
-_const float maskLight=1.5;
+_const float maskDark=0.55;
+_const float maskLight=2.5;
 
 //------------------------------------------------------------------------
 

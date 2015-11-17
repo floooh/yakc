@@ -135,7 +135,7 @@ UI::OnFrame(kc85& kc) {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Settings")) {
-                if (ImGui::MenuItem("CRT Effect (Broken on Windows?)", nullptr, this->Settings.crtEffect)) {
+                if (ImGui::MenuItem("CRT Effect", nullptr, this->Settings.crtEffect)) {
                     this->Settings.crtEffect = !this->Settings.crtEffect;
                 }
                 if (ImGui::MenuItem("Color TV", nullptr, this->Settings.colorTV)) {
