@@ -188,7 +188,7 @@ kc85::switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
         this->clck.config_timer(0, 50, z80ctc::ctrg2, &this->ctc);
 
         // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
-        this->ctc.connect_czto2(kc85_video::ctc_blink_cb, &this->video);
+        this->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
 
         // fill RAM banks with noise
         fill_noise(this->ram0, sizeof(this->ram0));
@@ -403,7 +403,7 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             }
             unsigned int cycles_opcode = this->cpu.step();
             this->clck.update(cycles_opcode);
-            this->ctc.update(cycles_opcode);
+            this->ctc.update_timers(cycles_opcode);
 
             cycles_executed += cycles_opcode;
         }
@@ -541,6 +541,14 @@ kc85::in_cb(void* userdata, uword port) {
             return self->pio.read(z80pio::A);
         case 0x89:
             return self->pio.read(z80pio::B);
+        case 0x8C:
+            return self->ctc.read(z80ctc::CTC0);
+        case 0x8D:
+            return self->ctc.read(z80ctc::CTC1);
+        case 0x8E:
+            return self->ctc.read(z80ctc::CTC2);
+        case 0x8F:
+            return self->ctc.read(z80ctc::CTC3);
         default:
             // unknown
             YAKC_ASSERT(false);

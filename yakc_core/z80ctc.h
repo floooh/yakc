@@ -60,12 +60,10 @@ public:
 
     /// channel state
     struct channel_state {
-        uword mode = 0;                 // current mode bits
-        uword constant = 0;             // the time constant
-        uword counter = 0;              // current trigger-counter value
+        ubyte mode = RESET;             // current mode bits
+        ubyte constant = 0;             // the time constant
+        int down_counter = 0;           // current down-counter value
         bool waiting_for_trigger = false;
-        int timer = 0;                  // timer cycle-counter
-        bool timer_enabled = false;
         cb_zcto callback = nullptr;
         void* userdata = nullptr;
     } channels[num_channels];
@@ -76,14 +74,14 @@ public:
     /// reset the ctc
     void reset();
     /// update the CTC for a number of ticks, a tick is equal to a Z80 T-cycle
-    void update(int ticks);
+    void update_timers(int ticks);
 
-    /// set callback for ZC/TO0 line
-    void connect_czto0(cb_zcto cb, void* userdata);
+    /// set callback for ZC/TO0 line (zero-count/time-out)
+    void connect_zcto0(cb_zcto cb, void* userdata);
     /// set callback for ZC/TO1 line
-    void connect_czto1(cb_zcto cb, void* userdata);
+    void connect_zcto1(cb_zcto cb, void* userdata);
     /// set callback for ZC/TO2 line
-    void connect_czto2(cb_zcto cb, void* userdata);
+    void connect_zcto2(cb_zcto cb, void* userdata);
     /// trigger line for CTC0
     static void ctrg0(void* self);
     /// trigger line for CTC1
@@ -99,18 +97,12 @@ public:
     ubyte read(channel c);
 
 private:
-    /// software-reset on a single channel
-    void reset_channel(channel c);
-    /// disable timer on channel
-    void disable_timer(channel c);
-    /// enable timer on channel
-    void enable_timer(channel c);
-    /// update timer on a channel
-    void update_timer(channel c, int ticks);
-    /// execute timer callback (interrupt and trigger callbacks)
-    void timer_callback(channel c);
+    /// get the counter/timer cycle count (prescaler * constant)
+    int down_counter_init(const channel_state& chn) const;
+    /// execute actions when down_counter reaches zero
+    void down_counter_callback(channel_state& chn);
     /// external trigger, called from trg0..trg3
-    void trigger(channel c);
+    void update_counter(channel_state& chn);
 };
 
 //------------------------------------------------------------------------------
@@ -127,134 +119,11 @@ inline void
 z80ctc::reset() {
     // don't clear callbacks on reset
     for (auto& chn : channels) {
-        chn.mode = 0;
+        chn.mode = RESET;
         chn.constant = 0;
-        chn.counter = 0;
+        chn.down_counter = 0;
         chn.waiting_for_trigger = false;
-        chn.timer = 0;
-        chn.timer_enabled = false;
     }
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::update(int ticks) {
-    for (int i = 0; i < num_channels; i++) {
-        if (channels[i].timer_enabled) {
-            update_timer((channel)i, ticks);
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::trigger(channel c) {
-    YAKC_ASSERT((c >= 0) && (c < num_channels));
-
-    // if channel is in timer mode and waiting for trigger, start the time
-    channel_state& chn = channels[c];
-    if (((chn.mode & MODE) == MODE_TIMER) && chn.waiting_for_trigger) {
-        enable_timer(c);
-    }
-    chn.waiting_for_trigger = false;
-
-    // if in counter mode, decrement the counter and check if it hits zero
-    if ((chn.mode & MODE) == MODE_COUNTER) {
-        if (--chn.counter == 0) {
-            timer_callback(c);
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::connect_czto0(cb_zcto cb, void* userdata) {
-    channels[CTC0].callback = cb;
-    channels[CTC0].userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::connect_czto1(cb_zcto cb, void* userdata) {
-    channels[CTC1].callback = cb;
-    channels[CTC1].userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::connect_czto2(cb_zcto cb, void* userdata) {
-    channels[CTC2].callback = cb;
-    channels[CTC2].userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::ctrg0(void* self) {
-    ((z80ctc*)self)->trigger(CTC0);
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::ctrg1(void* self) {
-    ((z80ctc*)self)->trigger(CTC1);
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::ctrg2(void* self) {
-    ((z80ctc*)self)->trigger(CTC2);
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::ctrg3(void* self) {
-    ((z80ctc*)self)->trigger(CTC3);
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::timer_callback(channel c) {
-    channel_state& chn = channels[c];
-    chn.counter = chn.constant;
-    if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
-        YAKC_PRINTF("CTC FIXME: INTERRUPT REQUEST");
-    }
-    if (chn.callback) {
-        chn.callback(chn.userdata);
-    }
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::disable_timer(channel c) {
-    channels[c].timer_enabled = false;
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::enable_timer(channel c) {
-    int val = (channels[c].mode & PRESCALER ? 256 : 16) * channels[c].constant;
-    channels[c].timer = val;
-    channels[c].timer_enabled = true;
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::update_timer(channel c, int num_cycles) {
-    channel_state& chn = channels[c];
-    chn.timer -= num_cycles;
-    while (chn.timer < 0) {
-        YAKC_PRINTF("CTC CHANNEL %d TIMER TRIGGERED!\n", c);
-        chn.timer += (chn.mode & PRESCALER ? 256 : 16) * chn.constant;
-    }
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80ctc::reset_channel(channel c) {
-    YAKC_ASSERT((c >= 0) && (c<num_channels));
-    this->channels[c].constant = 0x100;
-    this->disable_timer(c);
 }
 
 //------------------------------------------------------------------------------
@@ -265,25 +134,16 @@ z80ctc::write(channel c, ubyte v) {
     channel_state& chn = channels[c];
     if (chn.mode & CONSTANT_FOLLOWS) {
         // time constant value following a control word
-        chn.constant = v ? v : 0x100;   // 0 ==> 256
-        chn.counter = chn.constant;
-        chn.mode &= ~CONSTANT_FOLLOWS;
-        chn.mode &= ~RESET;
+        chn.constant = v;
+        chn.down_counter = down_counter_init(chn);
+        chn.mode &= ~(CONSTANT_FOLLOWS|RESET);
         if ((chn.mode & MODE) == MODE_TIMER) {
-            if ((chn.mode & TRIGGER) == TRIGGER_AUTOMATIC) {
-                this->enable_timer(c);
-            }
-            else {
-                this->channels[c].waiting_for_trigger = true;
-            }
+            chn.waiting_for_trigger = (chn.mode & TRIGGER) == TRIGGER_PULSE;
         }
     }
     else if ((v & CONTROL) == CONTROL_WORD) {
         // a control word
         chn.mode = v;
-        if (v & RESET) {
-            this->reset_channel(c);
-        }
     }
     else {
         // an interrupt vector for the whole CTC must be written
@@ -298,9 +158,115 @@ z80ctc::write(channel c, ubyte v) {
 //------------------------------------------------------------------------------
 inline ubyte
 z80ctc::read(channel c) {
+YAKC_ASSERT(false); // not sure when CTC channels are read, so assert when it happens
     YAKC_ASSERT((c >= 0) && (c<num_channels));
-    YAKC_PRINTF("FIXME: CTC %d READ!\n", c);
-    return 0;
+    const channel_state& chn = channels[c];
+    int val = chn.down_counter;
+    if ((chn.mode & MODE) == MODE_TIMER) {
+        val /= ((chn.mode & PRESCALER) == PRESCALER_256) ? 256 : 16;
+    }
+    return (ubyte) val;
+}
+
+//------------------------------------------------------------------------------
+inline int
+z80ctc::down_counter_init(const channel_state& chn) const {
+    int c = (0 == chn.constant) ? 0x100 : chn.constant;
+    if ((chn.mode & MODE) == MODE_TIMER) {
+        c *= ((chn.mode & PRESCALER) == PRESCALER_256) ? 256 : 16;
+    }
+    return c;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::update_timers(int ticks) {
+    for (int i = 0; i < num_channels; i++) {
+        channel_state& chn = channels[i];
+        if (!(chn.mode & RESET)) {
+            if (((chn.mode & MODE) == MODE_TIMER) && !chn.waiting_for_trigger) {
+                chn.down_counter -= ticks;
+                while (chn.down_counter < 0) {
+                    down_counter_callback(chn);
+                    chn.down_counter += down_counter_init(chn);
+                }
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::update_counter(channel_state& chn) {
+    if (!(chn.mode & RESET)) {
+        if ((chn.mode & MODE) == MODE_COUNTER) {
+            if (--chn.down_counter == 0) {
+                down_counter_callback(chn);
+            }
+        }
+        chn.waiting_for_trigger = false;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::down_counter_callback(channel_state& chn) {
+    if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
+        YAKC_PRINTF("CTC FIXME: INTERRUPT REQUEST\n");
+    }
+    if (chn.callback) {
+        chn.callback(chn.userdata);
+    }
+    chn.down_counter = down_counter_init(chn);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_zcto0(cb_zcto cb, void* userdata) {
+    channels[CTC0].callback = cb;
+    channels[CTC0].userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_zcto1(cb_zcto cb, void* userdata) {
+    channels[CTC1].callback = cb;
+    channels[CTC1].userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_zcto2(cb_zcto cb, void* userdata) {
+    channels[CTC2].callback = cb;
+    channels[CTC2].userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::ctrg0(void* userdata) {
+    z80ctc* self = (z80ctc*)userdata;
+    self->update_counter(self->channels[CTC0]);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::ctrg1(void* userdata) {
+    z80ctc* self = (z80ctc*)userdata;
+    self->update_counter(self->channels[CTC1]);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::ctrg2(void* userdata) {
+    z80ctc* self = (z80ctc*)userdata;
+    self->update_counter(self->channels[CTC2]);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::ctrg3(void* userdata) {
+    z80ctc* self = (z80ctc*)userdata;
+    self->update_counter(self->channels[CTC3]);
 }
 
 } // namespace yakc
