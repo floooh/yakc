@@ -14,4 +14,10 @@
 #include "yakc_core/common.h"
 #include "yakc_core/memory.h"
 #include "yakc_core/z80.h"
+#include "yakc_core/z80ctc.h"
+#include "yakc_core/z80pio.h"
 #include "yakc_core/kc85.h"
+#include "yakc_core/kc85_expansion.h"
+#include "yakc_core/kc85_module.h"
+#include "yakc_core/kc85_video.h"
+

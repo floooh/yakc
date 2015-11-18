@@ -37,14 +37,14 @@ MemoryMapWindow::getPageName(kc85& kc, int layer_index, int page_index) const {
             break;
         case 1:
             // base device module slot 08
-            if (kc.module_attached(0x08)) {
-                return kc.get_module_slot(0x08).desc.name;
+            if (kc.exp.slot_occupied(0x08)) {
+                return kc.exp.slot_by_addr(0x08).mod.name;
             }
             break;
         case 2:
             // base device module slot 0C
-            if (kc.module_attached(0x0C)) {
-                return kc.get_module_slot(0x0C).desc.name;
+            if (kc.exp.slot_occupied(0x0C)) {
+                return kc.exp.slot_by_addr(0x0C).mod.name;
             }
             break;
     }

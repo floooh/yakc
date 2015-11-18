@@ -43,4 +43,14 @@ enum class kc85_model {
     none,
 };
 
+inline void
+fill_random(void* ptr, int num_bytes) {
+    YAKC_ASSERT((num_bytes & 0x03) == 0);
+    unsigned int* uptr = (unsigned int*)ptr;
+    int num_uints = num_bytes>>2;
+    for (int i = 0; i < num_uints; i++) {
+        *uptr++ = YAKC_RAND();
+    }
 }
+
+} // namespace yakc

@@ -21,5 +21,5 @@ private:
     /// draw a single module slot
     void drawModuleSlot(yakc::kc85& kc, yakc::ubyte slot_addr);
 
-    Oryol::Array<yakc::kc85::module_desc> modules;
+    Oryol::Array<yakc::kc85_module> modules;
 };

@@ -23,19 +23,22 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
     ImGui::PushID(slot_addr);
     ImGui::AlignFirstTextHeightToWidgets();
     ImGui::Text("SLOT %02X:", slot_addr); ImGui::SameLine();
-    const kc85::module_slot& slot = kc.get_module_slot(slot_addr);
-    if (ImGui::Button(slot.desc.name, ImVec2(192, 0))) {
+    const auto& slot = kc.exp.slot_by_addr(slot_addr);
+    if (ImGui::Button(slot.mod.name, ImVec2(192, 0))) {
         ImGui::OpenPopup("select");
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip(slot.desc.help);
+        ImGui::SetTooltip(slot.mod.help);
     }
     ImGui::SameLine();
-    ImGui::Text("type:%02X ctrl:%02X", slot.desc.type, slot.control_byte);
+    ImGui::Text("type:%02X ctrl:%02X", slot.mod.type, slot.control_byte);
     if (ImGui::BeginPopup("select")) {
         for (const auto& mod : this->modules) {
             if (ImGui::Selectable(mod.name)) {
-                kc.insert_module(slot_addr, mod);
+                if (kc.exp.slot_occupied(slot_addr)) {
+                    kc.exp.remove_module(slot_addr, kc.cpu.mem);
+                }
+                kc.exp.insert_module(slot_addr, mod);
             }
         }
         ImGui::EndPopup();
@@ -60,71 +63,48 @@ ModuleWindow::Draw(kc85& kc) {
 void
 ModuleWindow::setupModules(kc85& kc) {
 
-    kc85::module_desc mod;
-
     // empty module slot
-    mod.help = "Click to select module!";
-    if (!kc.is_module_in_slot(0x08)) {
-        kc.insert_module(0x08, mod);    // just set the help text...
+    auto mod = kc85_module::create_empty("NO MODULE", "Click to insert module!");
+    if (!kc.exp.slot_occupied(0x08)) {
+        kc.exp.slot_by_addr(0x08).mod = mod;
     }
-    if (!kc.is_module_in_slot(0x0C)) {
-        kc.insert_module(0x0C, mod);    // just set the help text...
+    if (!kc.exp.slot_occupied(0x0C)) {
+        kc.exp.slot_by_addr(0x0C).mod = mod;
     }
     this->modules.Add(mod);
 
     // M022 EXPANDER RAM
-    mod.name = "M022 EXPANDER RAM";
-    mod.help = "16 KByte RAM expansion module.\n\n"
+    this->modules.Add(kc85_module::create_ram(0xF4, 0x4000, "M022 EPANDER RAM",
+        "16 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 43: map to address 0x4000\n"
         "SWITCH [SLOT] 83: map to address 0x8000\n"
         "SWITCH [SLOT] 00: switch module off\n\n"
-        "...where [SLOT] is 08 or 0C";
-    mod.type = 0xF4;
-    mod.writable = true;
-    mod.size = 0x4000;
-    this->modules.Add(mod);
+        "...where [SLOT] is 08 or 0C"));
 
     // M011 64 K RAM
-    mod.name = "M011 64 K BYTE RAM";
-    mod.help = "64 KByte RAM expansion module.\n\n"
+    this->modules.Add(kc85_module::create_ram(0xF6, 0x10000, "M011 64 KBYTE RAM",
+        "64 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 03: map 1st block to 0x0000\n"
         "SWITCH [SLOT] 43: map 1st block to 0x4000\n"
         "SWITCH [SLOT] 83: map 1st block to 0x8000\n"
         "SWITCH [SLOT] C3: map 1st block to 0xC000\n"
-        "...where [SLOT] is 08 or 0C.\n";
-    mod.type = 0xF6;
-    mod.writable = true;
-    mod.size = 0x10000;
-    this->modules.Add(mod);
+        "...where [SLOT] is 08 or 0C.\n"));
 
     // M026 FORTH
-    YAKC_ASSERT(sizeof(rom_forth) == 0x2000);
-    mod.name = "M026 FORTH";
-    mod.help = "FORTH language expansion module.\n\n"
+    this->modules.Add(kc85_module::create_rom(0xFB, rom_forth, 0x2000, "M026 FORTH",
+        "FORTH language expansion module.\n\n"
         "First deactivate the BASIC ROM with:\n"
         "SWITCH 02 00\n\n"
         "Then activate FORTH with:\n"
         "SWITCH [SLOT] C1\n\n"
-        "...where [SLOT] is 08 or 0C";
-    mod.type = 0xFB;
-    mod.writable = false;
-    mod.size = 0x2000;
-    mod.ptr = rom_forth;
-    this->modules.Add(mod);
+        "...where [SLOT] is 08 or 0C"));
 
     // M027 DEVELOPMENT
-    YAKC_ASSERT(sizeof(rom_develop) == 0x2000);
-    mod.name = "M027 DEVELOPMENT";
-    mod.help = "Assembler/disassembler expansion module.\n\n"
+    this->modules.Add(kc85_module::create_rom(0xFB, rom_develop, 0x2000, "M027 DEVELOPMENT",
+        "Assembler/disassembler expansion module.\n\n"
         "First deactivate the BASIC ROM with:\n"
         "SWITCH 02 00\n\n"
         "Then activate the module with:\n"
         "SWITCH [SLOT] C1\n\n"
-        "...where [SLOT] is 08 or 0C";
-    mod.type = 0xFB;
-    mod.writable = false;
-    mod.size = 0x2000;
-    mod.ptr = rom_develop;
-    this->modules.Add(mod);
-
+        "...where [SLOT] is 08 or 0C"));
 }
