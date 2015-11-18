@@ -20,7 +20,7 @@ namespace yakc {
 class z80int {
 public:
     /// interrupt request callback (/INT pin on CPU), returns false if CPU interrupts disabled
-    typedef bool (*cb_int)(void* userdata);
+    typedef void (*cb_int)(void* userdata);
 
     /// connect to CPU /INT pin callback, called when device requests interrupt
     void connect_cpu(cb_int int_cb, void* userdata);
@@ -29,10 +29,13 @@ public:
 
     /// reset our state
     void reset();
+
     /// called by device to request an interrupt
     void request_interrupt(ubyte data);
     /// called by CPU to acknowldge interrupt request, return data byte (usually interrupt vector)
     ubyte interrupt_acknowledged();
+    /// called by CPU after request_interrupt to notify devices that it cannot serve the request
+    void interrupt_cancelled();
     /// the CPU has executed a RETI, enable downstream devices interrupt
     void reti();
     /// enable interrupt, called by upstream device
@@ -89,12 +92,11 @@ z80int::request_interrupt(ubyte data) {
 
     YAKC_ASSERT(this->int_cb);
     if (this->int_enabled && !this->int_active) {
-        if (this->int_cb(this->int_cb_userdata)) {
-            this->int_requested = true;
-            this->int_request_data = data;
-            if (this->downstream_device) {
-                this->downstream_device->disable_interrupt();
-            }
+        this->int_cb(this->int_cb_userdata);
+        this->int_requested = true;
+        this->int_request_data = data;
+        if (this->downstream_device) {
+            this->downstream_device->disable_interrupt();
         }
     }
 }
@@ -119,6 +121,27 @@ z80int::interrupt_acknowledged() {
             // hmm this shouldn't happen...
             YAKC_ASSERT(false);
             return 0;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80int::interrupt_cancelled() {
+    // this is called by the CPU after an interrupt-request
+    // if the CPU is in an interrupt-disabled state
+    YAKC_ASSERT(this->int_enabled);
+    YAKC_ASSERT(!this->int_active);
+    if (this->int_requested) {
+        this->int_requested = false;
+    }
+    else {
+        if (this->downstream_device) {
+            this->downstream_device->interrupt_cancelled();
+        }
+        else {
+            // this shouldn't happen
+            YAKC_ASSERT(false);
         }
     }
 }

@@ -117,8 +117,8 @@ public:
     void connect_irq_device(z80int* device);
     /// perform a reset (RESET pin triggered)
     void reset();
-    /// receive an interrupt request, return true if interrupts are enabled
-    static bool irq(void* self);
+    /// receive an interrupt request
+    static void irq(void* self);
     /// execute a single instruction, return number of cycles
     unsigned int step();
 
@@ -275,16 +275,10 @@ z80::reset() {
 }
 
 //------------------------------------------------------------------------------
-inline bool
+inline void
 z80::irq(void* userdata) {
     z80* self = (z80*) userdata;
-    if (self->state.IFF1) {
-        self->irq_received = true;
-        return true;
-    }
-    else {
-        return false;
-    }
+    self->irq_received = true;
 }
 
 //------------------------------------------------------------------------------
