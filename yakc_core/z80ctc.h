@@ -186,7 +186,7 @@ z80ctc::update_timers(int ticks) {
         if (!(chn.mode & RESET)) {
             if (((chn.mode & MODE) == MODE_TIMER) && !chn.waiting_for_trigger) {
                 chn.down_counter -= ticks;
-                while (chn.down_counter < 0) {
+                while (chn.down_counter <= 0) {
                     down_counter_callback(chn);
                     chn.down_counter += down_counter_init(chn);
                 }
