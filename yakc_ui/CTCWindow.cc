@@ -34,12 +34,12 @@ bool
 CTCWindow::Draw(kc85& kc) {
     ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        ImGui::Text("Interrupt Vector: %02X", kc.ctc.interrupt_vector);
         StringBuilder strBuilder;
         for (int i = 0; i < z80ctc::num_channels; i++) {
             strBuilder.Format(32, "Channel %d (port 0x%02X)", i, i+0x8C);
             if (ImGui::CollapsingHeader(strBuilder.AsCStr())) {
                 ImGui::Text("Time Constant: %02X", kc.ctc.channels[i].constant);
+                ImGui::Text("Interrupr Vector: %02X", kc.ctc.channels[i].interrupt_vector);
                 ImGui::Text("Mode Bits: %02X", kc.ctc.channels[i].mode);
                 drawModeBit(kc, i, z80ctc::INTERRUPT, "INTERRUPT", "Enabled", "Disabled");
                 drawModeBit(kc, i, z80ctc::MODE, "MODE", "Counter", "Timer");

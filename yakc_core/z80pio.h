@@ -29,6 +29,8 @@ public:
 
     /// channel data values
     ubyte channel_data[num_channels]={0};
+    /// interrupt controller
+    z80int int_ctrl;
 
     /// initialize the pio
     void init();

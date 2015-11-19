@@ -9,6 +9,7 @@
     (see here: https://github.com/mamedev/mame/blob/dfa148ff8022e9f1a544c8603dd0e8c4aa469c1e/src/mame/machine/kc.cpp#L710)
 */
 #include "yakc_core/common.h"
+#include "yakc_core/z80int.h"
 
 namespace yakc {
 
@@ -66,8 +67,11 @@ public:
         bool waiting_for_trigger = false;
         cb_zcto callback = nullptr;
         void* userdata = nullptr;
+        ubyte interrupt_vector = 0;
     } channels[num_channels];
-    ubyte interrupt_vector = 0;
+
+    /// interrupt controller
+    z80int int_ctrl;
 
     /// initialize the ctc
     void init();
@@ -100,7 +104,7 @@ private:
     /// get the counter/timer cycle count (prescaler * constant)
     int down_counter_init(const channel_state& chn) const;
     /// execute actions when down_counter reaches zero
-    void down_counter_callback(channel_state& chn);
+    void down_counter_callback(channel_state& c);
     /// external trigger, called from trg0..trg3
     void update_counter(channel_state& chn);
 };
@@ -111,7 +115,6 @@ z80ctc::init() {
     for (auto& chn : channels) {
         chn = channel_state();
     }
-    interrupt_vector = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +153,9 @@ z80ctc::write(channel c, ubyte v) {
         // to channel 0, interrupt vectors for following channels
         // are computed from the base vector plus 2 byte per channel
         if (CTC0 == c) {
-            interrupt_vector = v & 0xF8;
+            for (int i = 0; i < num_channels; i++) {
+                channels[i].interrupt_vector = (v & 0xF8) + 2*i;
+            }
         }
     }
 }
@@ -212,7 +217,7 @@ z80ctc::update_counter(channel_state& chn) {
 inline void
 z80ctc::down_counter_callback(channel_state& chn) {
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
-        YAKC_PRINTF("CTC FIXME: INTERRUPT REQUEST\n");
+        this->int_ctrl.request_interrupt(chn.interrupt_vector);
     }
     if (chn.callback) {
         chn.callback(chn.userdata);

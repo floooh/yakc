@@ -114,11 +114,19 @@ kc85::switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
     this->on = true;
     this->key_code = 0;
 
+    // initialize hardware components
     this->exp.init();
     this->video.init(m);
     this->pio.init();
     this->ctc.init();
     this->cpu.init(in_cb, out_cb, this);
+
+    // setup interrupt controller daisy chain (CTC has highest priority before PIO)
+    this->pio.int_ctrl.connect_cpu(z80::irq, &this->cpu);
+    this->ctc.int_ctrl.connect_cpu(z80::irq, &this->cpu);
+    this->cpu.connect_irq_device(&this->ctc.int_ctrl);
+    this->ctc.int_ctrl.connect_irq_device(&this->pio.int_ctrl);
+
     if (kc85_model::kc85_3 == m) {
 
         // initialize clock to 1.75 MHz
