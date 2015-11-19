@@ -2267,8 +2267,10 @@ TEST(DI_EI_IM) {
     ubyte prog[] = {
         0xF3,           // DI
         0xFB,           // EI
+        0x00,           // NOP
         0xF3,           // DI
         0xFB,           // EI
+        0x00,           // NOP
         0xED, 0x46,     // IM 0
         0xED, 0x56,     // IM 1
         0xED, 0x5E,     // IM 2
@@ -2277,9 +2279,13 @@ TEST(DI_EI_IM) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     cpu.step(); CHECK(!cpu.state.IFF1); CHECK(!cpu.state.IFF2); CHECK(4 == cpu.state.T);
-    cpu.step(); CHECK(cpu.state.IFF1); CHECK(cpu.state.IFF2); CHECK(4 == cpu.state.T);
     cpu.step(); CHECK(!cpu.state.IFF1); CHECK(!cpu.state.IFF2); CHECK(4 == cpu.state.T);
     cpu.step(); CHECK(cpu.state.IFF1); CHECK(cpu.state.IFF2); CHECK(4 == cpu.state.T);
+
+    cpu.step(); CHECK(!cpu.state.IFF1); CHECK(!cpu.state.IFF2); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(!cpu.state.IFF1); CHECK(!cpu.state.IFF2); CHECK(4 == cpu.state.T);
+    cpu.step(); CHECK(cpu.state.IFF1); CHECK(cpu.state.IFF2); CHECK(4 == cpu.state.T);
+
     cpu.step(); CHECK(0 == cpu.state.IM); CHECK(8 == cpu.state.T);
     cpu.step(); CHECK(1 == cpu.state.IM); CHECK(8 == cpu.state.T);
     cpu.step(); CHECK(2 == cpu.state.IM); CHECK(8 == cpu.state.T);

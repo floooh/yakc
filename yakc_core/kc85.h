@@ -66,8 +66,6 @@ public:
 
     /// process one frame
     void onframe(int speed_multiplier, int micro_secs);
-    /// do one step
-    void step();
     /// do a debug-step (executes until PC changes)
     void debug_step();
     /// put a key as ASCII code
@@ -212,6 +210,7 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             unsigned int cycles_opcode = this->cpu.step();
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);
+            this->cpu.handle_irq();
 
             cycles_executed += cycles_opcode;
         }
@@ -227,12 +226,6 @@ kc85::debug_step() {
         this->cpu.step();
     }
     while ((pc == this->cpu.state.PC) && !this->cpu.state.INV);
-}
-
-//------------------------------------------------------------------------------
-inline void
-kc85::step() {
-    this->cpu.step();
 }
 
 //------------------------------------------------------------------------------

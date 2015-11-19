@@ -51,7 +51,7 @@ public:
     ubyte int_request_data = 0;
     /// the interrupt has been acknowledged and is currently processed by CPU
     /// until RETI is received
-    bool int_active = false;
+    bool int_pending = false;
 
 private:
     cb_int int_cb = nullptr;
@@ -78,7 +78,7 @@ z80int::reset() {
     this->int_enabled = true;
     this->int_requested = false;
     this->int_request_data = 0;
-    this->int_active = false;
+    this->int_pending = false;
 }
 
 //------------------------------------------------------------------------------
@@ -91,7 +91,8 @@ z80int::request_interrupt(ubyte data) {
     // CURRENTLY, ASSUME THAT WE CANNOT INTERRUPT OURSELF
 
     YAKC_ASSERT(this->int_cb);
-    if (this->int_enabled && !this->int_active) {
+    if (this->int_enabled) {
+        this->int_enabled = false;
         this->int_cb(this->int_cb_userdata);
         this->int_requested = true;
         this->int_request_data = data;
@@ -104,12 +105,11 @@ z80int::request_interrupt(ubyte data) {
 //------------------------------------------------------------------------------
 inline ubyte
 z80int::interrupt_acknowledged() {
-    YAKC_ASSERT(this->int_enabled);
     if (this->int_requested) {
         // it's our turn, return the interrupt-request data byte,
         // downstream interrupts remain disabled until RETI
         this->int_requested = false;
-        this->int_active = true;
+        this->int_pending = true;
         return this->int_request_data;
     }
     else {
@@ -130,8 +130,8 @@ inline void
 z80int::interrupt_cancelled() {
     // this is called by the CPU after an interrupt-request
     // if the CPU is in an interrupt-disabled state
-    YAKC_ASSERT(this->int_enabled);
-    YAKC_ASSERT(!this->int_active);
+    YAKC_ASSERT(!this->int_pending);
+    this->int_enabled = true;
     if (this->int_requested) {
         this->int_requested = false;
     }
@@ -149,11 +149,11 @@ z80int::interrupt_cancelled() {
 //------------------------------------------------------------------------------
 inline void
 z80int::reti() {
-    YAKC_ASSERT(this->int_enabled);
-    if (this->int_active) {
+    this->int_enabled = true;
+    if (this->int_pending) {
         // this was our interrupt service routine that has finished,
         // enable interrupt on downstream device
-        this->int_active = false;
+        this->int_pending = false;
         if (this->downstream_device) {
             this->downstream_device->enable_interrupt();
         }
@@ -172,7 +172,7 @@ z80int::enable_interrupt() {
     this->int_enabled = true;
     // interrupt-enable only propagates downstream if we're
     // currently not under service by the CPU
-    if (!this->int_active && this->downstream_device) {
+    if (!this->int_pending && this->downstream_device) {
         this->downstream_device->enable_interrupt();
     }
 }

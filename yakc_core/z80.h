@@ -107,6 +107,8 @@ public:
     z80int* irq_device;
     /// an interrupt request has been received
     bool irq_received;
+    /// delayed-interrupt-enable flag set bei ei()
+    bool enable_interrupt;
 
     /// constructor
     z80();
@@ -117,8 +119,6 @@ public:
     void connect_irq_device(z80int* device);
     /// perform a reset (RESET pin triggered)
     void reset();
-    /// receive an interrupt request
-    static void irq(void* self);
     /// execute a single instruction, return number of cycles
     unsigned int step();
 
@@ -128,6 +128,17 @@ public:
     void store_pc_history();
     /// get pc from history ringbuffer (0 is oldest entry)
     uword get_pc_history(int index) const;
+
+    /// receive an interrupt request
+    static void irq(void* self);
+    /// handle an interrupt request, must be called after step()
+    void handle_irq();
+    /// implement the RETI instruction
+    void reti();
+    /// implement the EI instruction
+    void ei();
+    /// implement the DI instruction
+    void di();
 
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
@@ -240,7 +251,8 @@ in_func(nullptr),
 out_func(nullptr),
 inout_userdata(nullptr),
 irq_device(nullptr),
-irq_received(false) {
+irq_received(false),
+enable_interrupt(false) {
     YAKC_MEMSET(&this->state, 0, sizeof(this->state));
     YAKC_MEMSET(&this->pc_history, 0, sizeof(this->pc_history));
 }
@@ -272,6 +284,7 @@ z80::reset() {
     this->state.I = 0;
     this->state.R = 0;
     this->irq_received = false;
+    this->enable_interrupt = false;
 }
 
 //------------------------------------------------------------------------------
@@ -283,9 +296,69 @@ z80::irq(void* userdata) {
 
 //------------------------------------------------------------------------------
 inline void
+z80::handle_irq() {
+    if (this->irq_received) {
+        // we don't implement MODE0 or MODE1 (yet?)
+        YAKC_ASSERT(2 == this->state.IM);
+        this->irq_received = false;
+        // no point in handling interrupt if no daisy chain is configured
+        if (this->irq_device) {
+            // interrupt enabled?
+            if (this->state.IFF1) {
+                // first disable interrupts
+                this->state.IFF1 = this->state.IFF2 = false;
+                // ask daisy chain for interrupt vector
+                ubyte vec = this->irq_device->interrupt_acknowledged();
+                // generate interrupt vector address (MODE2)
+                uword addr = (this->state.I<<8)|(vec&0xFE);
+                // push current PC on stack, and load PC with interrupt routine
+                this->state.SP -= 2;
+                this->mem.w16(this->state.SP, this->state.PC);
+                this->state.PC = this->mem.r16(addr);
+                this->state.T += 19;
+            }
+            else {
+                // interrupts are disabled, notify daisy chain
+                this->irq_device->interrupt_cancelled();
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::reti() {
+    // this is the same as RET
+    this->state.PC = mem.r16(state.SP);
+    this->state.SP += 2;
+    this->state.T = 14;
+    // ...notify daisy chain, if configured
+    if (this->irq_device) {
+        this->irq_device->reti();
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::ei() {
+    // NOTE: interrupts are actually enabled *after the next instruction*,
+    // thus we only set a flag here, the IFF flags will then be changed
+    // during the next instruction decode in step()
+    this->enable_interrupt = true;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::di() {
+    this->state.IFF1 = false;
+    this->state.IFF2 = false;
+}
+
+//------------------------------------------------------------------------------
+inline void
 z80::store_pc_history() {
-    pc_history[pc_history_pos++] = state.PC;
-    pc_history_pos &= pc_history_size-1;
+    this->pc_history[pc_history_pos++] = this->state.PC;
+    this->pc_history_pos &= this->pc_history_size-1;
 }
 
 //------------------------------------------------------------------------------

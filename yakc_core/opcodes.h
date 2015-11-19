@@ -8,6 +8,10 @@ inline unsigned int z80::step() {
     uword u16tmp;
     state.INV = false;
     store_pc_history();
+    if (enable_interrupt) {
+        state.IFF1 = state.IFF2 = true;
+        enable_interrupt = false;
+    }
     switch (fetch_op()) {
     case 0x0:
         // NOP
@@ -2877,6 +2881,11 @@ inline unsigned int z80::step() {
             state.PC += 2;
             state.T = 20;
             break;
+        case 0x4d:
+            // RETI
+            reti();
+            state.T = 15;
+            break;
         case 0x4f:
             // LD R,A
             state.R = state.A;
@@ -3142,7 +3151,7 @@ inline unsigned int z80::step() {
         break;
     case 0xf3:
         // DI
-        state.IFF1 = state.IFF2 = false;
+        di();
         state.T = 4;
         break;
     case 0xf4:
@@ -3193,7 +3202,7 @@ inline unsigned int z80::step() {
         break;
     case 0xfb:
         // EI
-        state.IFF1 = state.IFF2 = true;
+        ei();
         state.T = 4;
         break;
     case 0xfc:

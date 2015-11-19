@@ -86,9 +86,7 @@ def NOP(ops) :
     NOP
     T-states: 4
     ''' 
-    src = [
-        '// NOP',
-        t(4)]
+    src = [ '// NOP', t(4)]
     return add_op(ops, 0x00, src)
 
 #-------------------------------------------------------------------------------
@@ -97,10 +95,7 @@ def HALT(ops) :
     HALT
     T-states: 4
     '''
-    src = [
-        '// HALT',
-        'state.PC--;',
-        t(4)]
+    src = [ '// HALT', 'state.PC--;', t(4)]
     return add_op(ops, 0x76, src)
 
 #-------------------------------------------------------------------------------
@@ -110,11 +105,7 @@ def DI(ops) :
     T-states: 4
     '''
     op = 0b11110011
-    src = [
-        '// DI',
-        'state.IFF1 = state.IFF2 = false;',
-        t(4)
-    ]
+    src = [ '// DI', 'di();', t(4) ]
     return add_op(ops, 0xF3, src)
 
 #-------------------------------------------------------------------------------
@@ -123,11 +114,7 @@ def EI(ops) :
     EI
     T-states: 4
     '''
-    src = [
-        '// EI',
-        'state.IFF1 = state.IFF2 = true;',
-        t(4)
-    ]
+    src = [ '// EI', 'ei();', t(4) ]
     return add_op(ops, 0xFB, src)
 
 #-------------------------------------------------------------------------------
@@ -1826,6 +1813,15 @@ def RET_cc(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def RETI(ops) :
+    '''
+    RETI
+    T-states: 14
+    '''
+    src = ['// RETI', 'reti();', t(15)]
+    return add_op(ops, 0x4D, src);
+
+#-------------------------------------------------------------------------------
 def IN_A_in(ops) :
     '''
     IN A,(n)
@@ -2219,6 +2215,7 @@ def gen_ed_opcodes() :
     ed_ops = OTDR(ed_ops)
     ed_ops = ADC_HL_ss(ed_ops)
     ed_ops = SBC_HL_ss(ed_ops)
+    ed_ops = RETI(ed_ops)
     return ed_ops
 
 #-------------------------------------------------------------------------------
@@ -2238,6 +2235,10 @@ def gen_source(f, ops, ext_ops) :
     f.write('    uword u16tmp;\n')
     f.write('    state.INV = false;\n')
     f.write('    store_pc_history();\n')
+    f.write('    if (enable_interrupt) {\n')
+    f.write('        state.IFF1 = state.IFF2 = true;\n')
+    f.write('        enable_interrupt = false;\n')
+    f.write('    }\n')
     f.write('    switch (fetch_op()) {\n')
     
     # generate the switch case in sorted order
