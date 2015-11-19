@@ -13,6 +13,7 @@ fips_begin_module(yakc_ui)
         CTCWindow.cc CTCWindow.h
         ModuleWindow.cc ModuleWindow.h
         KeyboardWindow.cc KeyboardWindow.h
+        LoadWindow.cc LoadWindow.h
         z80dasm.cc z80dasm.h
     )
     fips_deps(yakc_core yakc_roms)

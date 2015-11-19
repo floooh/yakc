@@ -10,6 +10,7 @@
 #include "CTCWindow.h"
 #include "ModuleWindow.h"
 #include "KeyboardWindow.h"
+#include "LoadWindow.h"
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -91,6 +92,9 @@ UI::OnFrame(kc85& kc) {
     if (this->uiEnabled) {
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu(kc.model() == kc85_model::kc85_3 ? "KC85/3":"KC85/4")) {
+                if (ImGui::MenuItem("Load File...")) {
+                    this->OpenWindow(kc, LoadWindow::Create());
+                }
                 if (ImGui::MenuItem("Power Cycle")) {
                     kc.switchoff();
                     kc.switchon(kc.model(), kc.caos_rom(), kc.caos_rom_size());
