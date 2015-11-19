@@ -16,7 +16,7 @@ public:
         ubyte slot_addr = 0x00;
         kc85_module mod;
         uword addr = 0x0000;
-        ubyte control_byte;
+        ubyte control_byte = 0;
     };
 
     /// initialize the expansion system
