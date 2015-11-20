@@ -28,6 +28,20 @@ cmake version 3.3.2
 This should work on OSX, Linux and Windows, but only OSX is really tested
 so far.
 
+### Screenshots
+
+![Overlay UI](screenshots/debug_ui.png)
+
+![Pengo Intro Screen](screenshots/pengo_menu.png)
+
+![Pengo Ingame](screenshots/pengo_ingame.png)
+
+![Cave](screenshots/cave.png)
+
+![House Intro Screen](screenshots/house_menu.png)
+
+![House Ingame](screenshots/house_ingame.png)
+
 ### Goals:
 - small and portable emulator core in a simple C++
 - emulator core has hooks for keyboard-input, audio/video-output, load/save blocks of memory
