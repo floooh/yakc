@@ -51,7 +51,7 @@ _const float hardPix=-2.5;
 //_const float maskLight=2.0;
 
 _const float maskDark=0.55;
-_const float maskLight=2.5;
+_const float maskLight=2.0;
 
 //------------------------------------------------------------------------
 

@@ -6,13 +6,13 @@
 #include "Core/App.h"
 #include "Gfx/Gfx.h"
 #include "Input/Input.h"
+#include "IO/IO.h"
 #include "KC85Oryol.h"
 #include "Draw.h"
 #if YAKC_UI
 #include "yakc_ui/UI.h"
 #endif
-#include "Messaging/Dispatcher.h"
-#include "Input/InputProtocol.h"
+#include "HTTP/HTTPFileSystem.h"
 
 using namespace Oryol;
 using namespace yakc;
@@ -24,6 +24,7 @@ public:
     AppState::Code OnCleanup();
     void handleInput();
 
+    ubyte last_ascii = 0;
     Id drawState;
     kc85 kc;
     Draw draw;
@@ -37,6 +38,17 @@ OryolMain(YakcApp);
 AppState::Code
 YakcApp::OnInit() {
 
+    // setup IO system for loading from webserver
+    #if ORYOL_DEBUG
+    String baseUrl = "http://localhost:8000/";
+    #else
+    String baseUrl = "http://floooh.github.com/virtualkc/";
+    #endif
+    IOSetup ioSetup;
+    ioSetup.FileSystems.Add("http", HTTPFileSystem::Creator());
+    ioSetup.Assigns.Add("kcc:", baseUrl);
+    IO::Setup(ioSetup);
+
     // we only need few resources, so don't waste memory
     const int frameSize = 10;
     const int width = 2*frameSize + 2*320;
@@ -49,13 +61,14 @@ YakcApp::OnInit() {
     Gfx::Setup(gfxSetup);
     Input::Setup();
     Input::BeginCaptureText();
-    this->kc.switchon(kc85_model::kc85_3, rom_caos31, sizeof(rom_caos31));
 
     #if YAKC_UI
     this->ui.Setup(this->kc);
     #endif
     this->draw.Setup(gfxSetup, frameSize);
-    
+
+    this->kc.switchon(kc85_model::kc85_3, rom_caos31, sizeof(rom_caos31));
+
     return AppState::Running;
 }
 
@@ -86,6 +99,7 @@ YakcApp::OnCleanup() {
     #endif
     Input::Discard();
     Gfx::Discard();
+    IO::Discard();
     return App::OnCleanup();
 }
 
@@ -120,6 +134,10 @@ YakcApp::handleInput() {
             ascii = tolower(ascii);
         }
     }
+    if ((ascii == 0) && (kbd.AnyKeyPressed())) {
+        ascii = this->last_ascii;
+    }
+    this->last_ascii = ascii;
 
     // special keys
     struct toAscii {
@@ -150,7 +168,7 @@ YakcApp::handleInput() {
         { Key::F12, 0xFC },
     };
     for (const auto& key : keyTable) {
-        if (kbd.KeyDown(key.key)) {
+        if (kbd.KeyPressed(key.key)) {
             // special case: shift-backspace clears screen
             if (kbd.KeyPressed(Key::LeftShift) && (key.key == Key::BackSpace)) {
                 ascii = 0x0C;

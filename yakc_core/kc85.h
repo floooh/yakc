@@ -197,16 +197,10 @@ kc85::model() const {
 //------------------------------------------------------------------------------
 inline void
 kc85::onframe(int speed_multiplier, int micro_secs) {
-    // at 1.75 MHz:
-    // per micro-second, 1750000 / 1000000 T-states are executed
-    // thus: num T-states to execute is (micro_secs * 17500000) / 1000000)
-    // or: (micro_secs * 175) / 100
     YAKC_ASSERT(speed_multiplier > 0);
     this->handle_keyboard_input();
     if (!this->paused) {
         const unsigned int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
-
-        // step CPU and CTC
         unsigned int cycles_executed = 0;
         while (cycles_executed < num_cycles) {
             if (this->breakpoint_enabled) {
@@ -219,7 +213,6 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);
             cycles_opcode += this->cpu.handle_irq();
-
             cycles_executed += cycles_opcode;
         }
     }
@@ -255,25 +248,33 @@ kc85::handle_keyboard_input() {
         return;
     }
 
-    // don't do anything if previous key hasn't been read yet
-    // NOTE: IX is usually set to 0x01F0
-    const uword ix = this->cpu.state.IX;
-    if (0 != (this->cpu.mem.r8(ix+0x08) & 1)) {
-        return;
-    }
-
     // write key to special OS locations
+    static bool first_repeat = true;
+    const uword ix = this->cpu.state.IX;
     if (0 == this->key_code) {
         // clear ascii code location
         this->cpu.mem.w8(ix+0x0D, 0);
         // clear repeat count
         this->cpu.mem.w8(ix+0x0A, 0);
+        // reset first-repeat-flag
+        first_repeat = true;
     }
     else {
         bool overwrite = true;
-        // FIXME: handle repeat
         if (this->cpu.mem.r8(ix+0x0D) == this->key_code) {
-            // FIXME!
+            // handle key repeat (hack!)
+            ubyte repeat_count = this->cpu.mem.r8(ix+0x0A);
+            this->cpu.mem.w8(ix+0x0A, repeat_count+1);
+            const int repeat_wait_frames = first_repeat ? 40 : 15;
+            if (repeat_count > repeat_wait_frames) {
+                // reset repeat counter
+                this->cpu.mem.w8(ix+0x0A, 0x00);
+                first_repeat = false;
+            }
+            else {
+                // wait a little longer for key-repeat
+                overwrite = false;
+            }
         }
         if (overwrite) {
             this->cpu.mem.w8(ix+0x0D, this->key_code);
@@ -322,7 +323,7 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             break;
         default:
             // unknown
-            YAKC_ASSERT(false);
+            //YAKC_ASSERT(false);
             break;
     }
 }

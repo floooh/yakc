@@ -88,7 +88,7 @@ public:
     /// write a word to cpu address
     void w16(address addr, uword w) const;
     /// write a byte range
-    void write(address addr, ubyte* src, int num) const;
+    void write(address addr, const ubyte* src, int num) const;
 
 private:
     /// update the CPU-visible mapping
@@ -246,7 +246,7 @@ memory::w16(address addr, uword w) const {
 
 //------------------------------------------------------------------------------
 inline void
-memory::write(address addr, ubyte* src, int num) const {
+memory::write(address addr, const ubyte* src, int num) const {
     for (int i = 0; i < num; i++) {
         this->w8(addr++, src[i]);
     }
