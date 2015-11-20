@@ -41,6 +41,9 @@ YakcApp::OnInit() {
     // setup IO system for loading from webserver
     #if ORYOL_DEBUG
     String baseUrl = "http://localhost:8000/";
+    #elif ORYOL_EMSCRIPTEN
+    // ok, this is strange, why is the github URL different from Oryol??
+    String baseUrl = "http://floooh.github.com/";
     #else
     String baseUrl = "http://floooh.github.com/virtualkc/";
     #endif
