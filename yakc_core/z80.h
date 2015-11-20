@@ -131,8 +131,8 @@ public:
 
     /// receive an interrupt request
     static void irq(void* self);
-    /// handle an interrupt request, must be called after step()
-    void handle_irq();
+    /// handle an interrupt request, must be called after step(), return num tstates taken
+    int handle_irq();
     /// implement the RETI instruction
     void reti();
     /// implement the EI instruction
@@ -295,9 +295,11 @@ z80::irq(void* userdata) {
 }
 
 //------------------------------------------------------------------------------
-inline void
+inline int
 z80::handle_irq() {
+    int tstates = 0;
     if (this->irq_received) {
+        tstates += 2;
         // we don't implement MODE0 or MODE1 (yet?)
         YAKC_ASSERT(2 == this->state.IM);
         this->irq_received = false;
@@ -315,7 +317,7 @@ z80::handle_irq() {
                 this->state.SP -= 2;
                 this->mem.w16(this->state.SP, this->state.PC);
                 this->state.PC = this->mem.r16(addr);
-                this->state.T += 19;
+                tstates += 19;
             }
             else {
                 // interrupts are disabled, notify daisy chain
@@ -323,6 +325,7 @@ z80::handle_irq() {
             }
         }
     }
+    return tstates;
 }
 
 //------------------------------------------------------------------------------
@@ -331,7 +334,6 @@ z80::reti() {
     // this is the same as RET
     this->state.PC = mem.r16(state.SP);
     this->state.SP += 2;
-    this->state.T = 14;
     // ...notify daisy chain, if configured
     if (this->irq_device) {
         this->irq_device->reti();

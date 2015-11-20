@@ -218,7 +218,7 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             unsigned int cycles_opcode = this->cpu.step();
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);
-            this->cpu.handle_irq();
+            cycles_opcode += this->cpu.handle_irq();
 
             cycles_executed += cycles_opcode;
         }
