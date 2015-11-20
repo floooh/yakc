@@ -27,6 +27,11 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         log.info('> copy file: {}'.format(name))
         shutil.copy(proj_dir + '/web/' + name, webpage_dir + '/' + name)
 
+    # copy kcc files
+    for kcc in glob.glob(proj_dir + '/yakc_kcc/*.kcc') :
+        log.info('> copy file: {}'.format(kcc))
+        shutil.copy(kcc, webpage_dir + '/' + os.path.basename(kcc))
+
     # if the virtualkc directory exists, copy everything there
     # so that a simple git push is enough to upload
     # the webpage
