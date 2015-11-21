@@ -8,7 +8,7 @@
 
 ### Overview
 
-The serial keyboard chip sends timed impulses to pin BSTB of the PIO which 
+The serial keyboard chip sends timed impulses to pin BSTB of the PIO 
 which invokes the PIO-B interrupt handler at address $E199. The interrupt
 handler decodes the serial keyboard signal by measuring the time
 between pulses using CTC-3 channel as timer and writes temporary data
