@@ -164,7 +164,7 @@ E1D8:   JR Z,$E1EB      ; key hasn't changed
 
 No key-repeat, write new keycode to IX+D
 E1DA:   LD (IX+$0D),A   ; key has changed, store new keycode in IX+D
-E1DD:   RES 4,(IX+$08)  ; key has not changed, clear bit 4 IX+8 key-repeat flag
+E1DD:   RES 4,(IX+$08)  ; clear bit 4 IX+8 'first key-repeat' flag
 
 E1E1:   SET 0,(IX+$08)  ; set bit 0 (key-ready) in IX+8 
 E1E5:   LD (IX+$0A),$00 ; reset key repeat counter in IX+A
