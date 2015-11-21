@@ -5,6 +5,7 @@
     @brief emulator app utility functions
 */
 #include "KC85Oryol.h"
+#include <stdio.h>
 
 class Util {
 public:
@@ -30,41 +31,23 @@ public:
 
     /// parse 4 hex characters into an uint16_t, return old value if failed
     static yakc::uword ParseUWord(const char* str, yakc::uword oldVal) {
-        yakc::uword res = 0;
-        for (int i = 0; i < 4; i++) {
-            int shift = (3-i)*4;
-            char c = str[i];
-            if ((c >= '0') && (c <= '9')) {
-                res |= (c-'0') << shift;
-            }
-            else if ((c >= 'A') && (c <= 'F')) {
-                res |= ((c-'A')+10) << shift;
-            }
-            else {
-                // failure
-                return oldVal;
-            }
+        int res = 0;
+        if (sscanf(str, "%X", &res) == 1) {
+            return (yakc::uword) res;
         }
-        return res;
+        else {
+            return oldVal;
+        }
     }
 
     /// parse 2 hex characters into an uint8_t, return old value if failed
     static yakc::ubyte ParseUByte(const char* str, yakc::ubyte oldVal) {
-        yakc::ubyte res = 0;
-        for (int i = 0; i < 2; i++) {
-            int shift = (1-i)*4;
-            char c = str[i];
-            if ((c >= '0') && (c <= '9')) {
-                res |= (c-'0') << shift;
-            }
-            else if ((c >= 'A') && (c <= 'F')) {
-                res |= ((c-'A')+10) << shift;
-            }
-            else {
-                // failure
-                return oldVal;
-            }
+        int res = 0;
+        if (sscanf(str, "%X", &res) == 1) {
+            return (yakc::ubyte) res;
         }
-        return res;
+        else {
+            return oldVal;
+        }
     }
 };
