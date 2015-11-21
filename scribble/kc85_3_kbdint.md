@@ -1,22 +1,23 @@
-KC85/3 keyboard input
-=====================
+## KC85/3 keyboard input
 
-Useful links:
+### Useful links:
 
-Service manual: http://www.sax.de/~zander/kc85/doku/kc853serv.pdf
-Circuit diagrams: http://www.mpm-kc85.de/schaltbild/KC85_3_Grundgeraet_sp.pdf
-System manual: http://www.mpm-kc85.de/dokupack/KC85_3_SystemHB.pdf
+* Service manual: http://www.sax.de/~zander/kc85/doku/kc853serv.pdf
+* Circuit diagrams: http://www.mpm-kc85.de/schaltbild/KC85_3_Grundgeraet_sp.pdf
+* System manual: http://www.mpm-kc85.de/dokupack/KC85_3_SystemHB.pdf
 
-The serial keyboard impulse goes into PIO pin BSTB and causes an interrupt
-which calls the interrupt handler at address $E199. The interrupt
+### Overview
+
+The serial keyboard chip sends timed impulses to pin BSTB of the PIO which 
+which invokes the PIO-B interrupt handler at address $E199. The interrupt
 handler decodes the serial keyboard signal by measuring the time
 between pulses using CTC-3 channel as timer and writes temporary data
 into the following memory locations:
 
-IX+C:             temporary keyboard scancode
-IX+A:             pause-counter for key-repeat
-bit 4 in IX+8:    cleared for first key-repeat, set for followup key-repeat
-bit 3 in IX+8:    time-out bit from CTC3 interrupt service routine
+* **(IX+C)**: temporary keyboard scancode
+* **(IX+A)**: pause-counter for key-repeat
+* **bit 4 in (IX+8)**: cleared for first key-repeat, set for followup key-repeat
+* **bit 3 in (IX+8)**: time-out bit from CTC3 interrupt service routine
 
 If the CTC-3 timer reaches 0 without being pre-empted by the PIO-B
 interrupt, a timeout bit (bit 3 in IX+8) is set, and the keycode
@@ -47,34 +48,39 @@ every time the key-repeat counter reaches 2.
 Now the question is, how often is the keyboard interrupt called to get
 the correct key-repeat timing. Hmm...
 
-Disassembly of OS keyboard handling functions:
+### Disassembly of OS keyboard handling functions:
 
-KBDS (get key status without ack):
+**KBDS (get key status without ack):**
+
 Carry flag is set if new keycode available in A.
 
+```z80asm
 E2A8:   OR A            ; clear CF
 E2A9:   BIT 0,(IX+$08)  ; new key available?
 E2AD:   RET Z           ; no
 E2AE:   LD A,(IX+$0D)   ; load keycode into A...
 E2B1:   SCF             ; ...and set carry flag
 E2B2:   RET
+```
 
-KBDZ (get key status with acknowledge, proper key-repeat):
+**KBDZ (get key status with acknowledge, proper key-repeat):**
+
 Carry flag is set if new keycode available in A.
 
+```z80asm
 E29F:   CALL $E2A8      ; KBDS
 E2A2:   RET NC          ; return if no key
 E2A3:   RES 0,(IX+$08)  ; acknowledge key
 E2A7:   RET
+```
 
-
-The CTC-3 interrupt service routine:
-====================================
+### The CTC-3 interrupt service routine:
 This is called when the CTC-3 timer programmed in the PIO-B 
 interrupt reaches zero without being pre-empted by the
 PIO-B keyboard interrupt, so this is a timeout and deletes the current
 keycode in IX+D:
 
+```z80asm
 E189:   EI
 E18A:   PUSH AF
                             ; this stops the timer until the next keyboard interrupt:
@@ -91,11 +97,13 @@ E18D:   OUT ($8F),A
 E18F:   SET 3,(IX+$08)      ; set timeout bit
 E193:   LD (IX+$0D),$00     ; clear current keycode
 E197:   JR $E206            ; done (just a POP AF, RETI) 
+```
 
+### The PIO-B interrupt service routine:
 
-The PIO-B interrupt service routine:
-====================================
+This is called when a new pulse from the keyboard chip comes in.
 
+```z80asm
 keyboard interrupt start:
 E199:   EI
 E19A:   PUSH AF
@@ -188,7 +196,7 @@ Scancode construction, new bit is 1
 E20C:   SCF             ; C=1, called when measured CTC3 time was >$44 
 E20D:   RR (IX+$0C)     ; build scancode in IX+$0C by rotating from carry flag
 E211:   JR $E206
-
+```
 
 
 
