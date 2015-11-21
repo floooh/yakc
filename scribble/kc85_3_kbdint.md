@@ -122,7 +122,7 @@ E19E:   LD A,$A7        ; write 10100111 CTC3 control word
                         ;   1: constant follows
                         ;   1: reset channel
                         ;   1: this is a control word
-E1A0:   OUT (%8F),A     
+E1A0:   OUT ($8F),A     
 E1A2:   LD A,$8F        ; time-constant CTC3, start timer
 E1A4:   OUT ($8F),A
 E1A6:   POP AF
