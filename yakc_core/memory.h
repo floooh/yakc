@@ -81,10 +81,12 @@ public:
     ubyte r8(address addr) const;
     /// read a signed byte at cpu address
     byte rs8(address addr) const;
-    /// read a word at cpu address
-    uword r16(address addr) const;
     /// write a byte to cpu address
     void w8(address addr, ubyte b) const;
+    /// read/write access to byte
+    ubyte& a8(address addr);
+    /// read a word at cpu address
+    uword r16(address addr) const;
     /// write a word to cpu address
     void w16(address addr, uword w) const;
     /// write a byte range
@@ -217,6 +219,12 @@ memory::r8(address addr) const {
 inline byte
 memory::rs8(address addr) const {
     return (char) this->pages[addr>>page::shift].ptr[addr&page::mask];
+}
+
+//------------------------------------------------------------------------------
+inline ubyte&
+memory::a8(address addr) {
+    return this->pages[addr>>page::shift].ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------

@@ -182,8 +182,5 @@ YakcApp::handleInput() {
             break;
         }
     }
-
-    if (0 != ascii) {
-        this->kc.put_key(ascii);
-    }
+    this->kc.put_key(ascii);
 }

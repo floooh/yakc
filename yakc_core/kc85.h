@@ -238,9 +238,13 @@ kc85::put_key(ubyte ascii) {
 //------------------------------------------------------------------------------
 inline void
 kc85::handle_keyboard_input() {
-    // NOTE: this is a shortcut and doesn't emulate the hardware's
-    // tricky serial keyboard input. Instead we're directly poking
-    // the ASCII value into the right memory location
+    // this is a simplified version of the PIO-B interrupt service routine
+    // which is normally triggered when the serial keyboard hardware
+    // sends a new pulse (for details, see
+    // https://github.com/floooh/yakc/blob/master/scribble/kc85_3_kbdint.md )
+    //
+    // we ignore the whole tricky serial decoding and patch the
+    // keycode directly into the right memory locations.
 
     // don't do anything if interrupts disabled, IX might point
     // to the wrong base address!
@@ -248,39 +252,57 @@ kc85::handle_keyboard_input() {
         return;
     }
 
-    // write key to special OS locations
-    static bool first_repeat = true;
+    // status bits
+    static const ubyte timeout = (1<<3);
+    static const ubyte keyready = (1<<0);
+    static const ubyte repeat = (1<<4);
+    static const ubyte short_repeat_count = 8;
+    static const ubyte long_repeat_count = 60;
+
+    auto& mem = this->cpu.mem;
     const uword ix = this->cpu.state.IX;
     if (0 == this->key_code) {
-        // clear ascii code location
-        this->cpu.mem.w8(ix+0x0D, 0);
-        // clear repeat count
-        this->cpu.mem.w8(ix+0x0A, 0);
-        // reset first-repeat-flag
-        first_repeat = true;
+        // if keycode is 0, this basically means the CTC3 timeout was hit
+        mem.a8(ix+0x8) |= timeout;      // set the CTC3 timeout bit
+        mem.w8(ix+0xD, 0);              // clear current keycode
     }
     else {
-        bool overwrite = true;
-        if (this->cpu.mem.r8(ix+0x0D) == this->key_code) {
-            // handle key repeat (hack!)
-            ubyte repeat_count = this->cpu.mem.r8(ix+0x0A);
-            this->cpu.mem.w8(ix+0x0A, repeat_count+1);
-            const int repeat_wait_frames = first_repeat ? 40 : 15;
-            if (repeat_count > repeat_wait_frames) {
-                // reset repeat counter
-                this->cpu.mem.w8(ix+0x0A, 0x00);
-                first_repeat = false;
+        // a valid keycode has been received, clear the timeout bit
+        mem.a8(ix+0x8) &= ~timeout;
+
+        // check for key-repeat
+        if (this->key_code != mem.r8(ix+0xD)) {
+            // no key-repeat
+            mem.w8(ix+0xD, this->key_code);     // write new keycode
+            mem.a8(ix+0x8) &= ~repeat;          // clear the first-key-repeat bit
+            mem.a8(ix+0x8) |= keyready;         // set the key-ready bit
+            mem.w8(ix+0xA, 0);                  // clear the key-repeat counter
+        }
+        else {
+            // handle key-repeat
+            mem.a8(ix+0xA)++;                   // increment repeat-pause-counter
+            if (mem.r8(ix+0x8) & repeat) {
+                // this is a followup, short key-repeat
+                if (mem.r8(ix+0xA) < short_repeat_count) {
+                    // wait some more...
+                    return;
+                }
             }
             else {
-                // wait a little longer for key-repeat
-                overwrite = false;
+                // this is the first, long key-repeat
+                if (mem.r8(ix+0xA) < long_repeat_count) {
+                    // wait some more...
+                    return;
+                }
+                else {
+                    // first key-repeat pause over, set first-key-repeat flag
+                    mem.a8(ix+0x8) |= repeat;
+                }
             }
+            // key-repeat triggered, just set the key-ready flag and reset repeat-count
+            mem.a8(ix+0x8) |= keyready;
+            mem.w8(ix+0xA, 0);
         }
-        if (overwrite) {
-            this->cpu.mem.w8(ix+0x0D, this->key_code);
-            this->cpu.mem.w8(ix+0x08, this->cpu.mem.r8(ix+0x08)|1);
-        }
-        this->key_code = 0;
     }
 }
 
