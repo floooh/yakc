@@ -6,6 +6,7 @@
 #include "MemoryWindow.h"
 #include "MemoryMapWindow.h"
 #include "DebugWindow.h"
+#include "DisasmWindow.h"
 #include "PIOWindow.h"
 #include "CTCWindow.h"
 #include "ModuleWindow.h"
@@ -115,27 +116,33 @@ UI::OnFrame(kc85& kc) {
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Windows")) {
+            if (ImGui::BeginMenu("Hardware")) {
                 if (ImGui::MenuItem("Keyboard")) {
                     this->OpenWindow(kc, KeyboardWindow::Create());
                 }
-                if (ImGui::MenuItem("Modules")) {
+                if (ImGui::MenuItem("Expansion Slots")) {
                     this->OpenWindow(kc, ModuleWindow::Create());
-                }
-                if (ImGui::MenuItem("Memory Editor")) {
-                    this->OpenWindow(kc, MemoryWindow::Create());
                 }
                 if (ImGui::MenuItem("Memory Map")) {
                     this->OpenWindow(kc, MemoryMapWindow::Create());
-                }
-                if (ImGui::MenuItem("Debugger")) {
-                    this->OpenWindow(kc, DebugWindow::Create());
                 }
                 if (ImGui::MenuItem("Z80 PIO")) {
                     this->OpenWindow(kc, PIOWindow::Create());
                 }
                 if (ImGui::MenuItem("Z80 CTC")) {
                     this->OpenWindow(kc, CTCWindow::Create());
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Debugging")) {
+                if (ImGui::MenuItem("Debugger")) {
+                    this->OpenWindow(kc, DebugWindow::Create());
+                }
+                if (ImGui::MenuItem("Disassembler")) {
+                    this->OpenWindow(kc, DisasmWindow::Create());
+                }
+                if (ImGui::MenuItem("Memory Editor")) {
+                    this->OpenWindow(kc, MemoryWindow::Create());
                 }
                 ImGui::EndMenu();
             }

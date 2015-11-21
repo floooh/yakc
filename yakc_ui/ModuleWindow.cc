@@ -14,7 +14,7 @@ using namespace yakc;
 void
 ModuleWindow::Setup(kc85& kc) {
     this->setupModules(kc);
-    this->setName("Expansion Modules");
+    this->setName("Expansion Slots");
 }
 
 //------------------------------------------------------------------------------

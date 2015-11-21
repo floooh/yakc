@@ -9,6 +9,7 @@ fips_begin_module(yakc_ui)
         ImGuiMemoryEditor.h
         Disasm.cc Disasm.h
         DebugWindow.cc DebugWindow.h
+        DisasmWindow.cc DisasmWindow.h
         PIOWindow.cc PIOWindow.h
         CTCWindow.cc CTCWindow.h
         ModuleWindow.cc ModuleWindow.h

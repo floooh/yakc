@@ -1,0 +1,28 @@
+Disassembled KC85/3 keyboard interrupt routine, at E199 (from interrupt
+vector of PIO-B at 01E6:
+
+E199:   EI
+E19A:   PUSH AF
+E19B:   IN A,($8F)
+E19D:   PUSH AF
+E19E:   LD A,$A7
+E1A0:   OUT (%8F),A
+E1A2:   LD A,$8F
+E1A4:   OUT ($8F),A
+E1A6:   POP AF
+
+E1A7:   BIT 3,(IX+$08)
+E1AB:   RES 3,(IX+$08)
+E1AF:   JR NZ,$E206
+E1B1:   CP $65
+E1B3:   JR NC,$E209
+E1B5:   CP $44
+E1B7:   JR NC $E20C
+
+E1B9:   PUSH HL
+E1BA:   PUSH DE
+D1BB:   SRL (IX+$0C)
+E1BF:   LD A,(IX+$08)
+E1C2:   AND $80
+
+
