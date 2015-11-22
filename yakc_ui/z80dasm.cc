@@ -539,7 +539,7 @@ int z80disasm(fetch_func fetch, unsigned short pc, char* buffer, void* userdata)
     }
     else
     {
-        dst += sprintf(dst, "%s", s_mnemonic[d->mnemonic]);
+        sprintf(dst, "%s", s_mnemonic[d->mnemonic]);
     }
     
     return pos | s_flags[d->mnemonic] | DASMFLAG_SUPPORTED;
