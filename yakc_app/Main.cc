@@ -5,6 +5,7 @@
 #include "Pre.h"
 #include "Core/App.h"
 #include "Gfx/Gfx.h"
+#include "Sound/Sound.h"
 #include "Input/Input.h"
 #include "IO/IO.h"
 #include "KC85Oryol.h"
@@ -65,6 +66,8 @@ YakcApp::OnInit() {
     Input::Setup();
     Input::BeginCaptureText();
 
+    Sound::Setup(SoundSetup());
+
     #if YAKC_UI
     this->ui.Setup(this->kc);
     #endif
@@ -100,6 +103,7 @@ YakcApp::OnCleanup() {
     #if YAKC_UI
     this->ui.Discard();
     #endif
+    Sound::Discard();
     Input::Discard();
     Gfx::Discard();
     IO::Discard();
