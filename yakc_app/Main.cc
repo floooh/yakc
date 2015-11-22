@@ -10,6 +10,7 @@
 #include "IO/IO.h"
 #include "KC85Oryol.h"
 #include "Draw.h"
+#include "Audio.h"
 #if YAKC_UI
 #include "yakc_ui/UI.h"
 #endif
@@ -29,6 +30,7 @@ public:
     Id drawState;
     kc85 kc;
     Draw draw;
+    Audio audio;
     #if YAKC_UI
     UI ui;
     #endif
@@ -72,6 +74,7 @@ YakcApp::OnInit() {
     this->ui.Setup(this->kc);
     #endif
     this->draw.Setup(gfxSetup, frameSize);
+    this->audio.Setup();
 
     this->kc.switchon(kc85_model::kc85_3, rom_caos31, sizeof(rom_caos31));
 
@@ -85,6 +88,7 @@ YakcApp::OnRunning() {
     int micro_secs = 1000000 / 60;
     this->handleInput();
     this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs);
+    this->audio.Update(this->kc);
     this->draw.fsParams.CRTEffect = this->ui.Settings.crtEffect;
     this->draw.fsParams.ColorTV = this->ui.Settings.colorTV;
     this->draw.fsParams.CRTWarp = glm::vec2(this->ui.Settings.crtWarp);
@@ -99,6 +103,7 @@ YakcApp::OnRunning() {
 //------------------------------------------------------------------------------
 AppState::Code
 YakcApp::OnCleanup() {
+    this->audio.Discard();
     this->draw.Discard();
     #if YAKC_UI
     this->ui.Discard();

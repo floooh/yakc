@@ -57,7 +57,7 @@ public:
     };
 
     /// callback for ZC/TO0..3 lines
-    typedef void (*cb_zcto)(void* userdata);
+    typedef void (*ctc_cb)(void* userdata);
 
     /// channel state
     struct channel_state {
@@ -65,8 +65,8 @@ public:
         ubyte constant = 0;             // the time constant
         int down_counter = 0;           // current down-counter value
         bool waiting_for_trigger = false;
-        cb_zcto callback = nullptr;
-        void* userdata = nullptr;
+        ctc_cb zcto_callback = nullptr;
+        void* zcto_userdata = nullptr;
         ubyte interrupt_vector = 0;
     } channels[num_channels];
 
@@ -81,11 +81,12 @@ public:
     void update_timers(int ticks);
 
     /// set callback for ZC/TO0 line (zero-count/time-out)
-    void connect_zcto0(cb_zcto cb, void* userdata);
+    void connect_zcto0(ctc_cb cb, void* userdata);
     /// set callback for ZC/TO1 line
-    void connect_zcto1(cb_zcto cb, void* userdata);
+    void connect_zcto1(ctc_cb cb, void* userdata);
     /// set callback for ZC/TO2 line
-    void connect_zcto2(cb_zcto cb, void* userdata);
+    void connect_zcto2(ctc_cb cb, void* userdata);
+
     /// trigger line for CTC0
     static void ctrg0(void* self);
     /// trigger line for CTC1
@@ -219,31 +220,31 @@ z80ctc::down_counter_callback(channel_state& chn) {
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
         this->int_ctrl.request_interrupt(chn.interrupt_vector);
     }
-    if (chn.callback) {
-        chn.callback(chn.userdata);
+    if (chn.zcto_callback) {
+        chn.zcto_callback(chn.zcto_userdata);
     }
     chn.down_counter = down_counter_init(chn);
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80ctc::connect_zcto0(cb_zcto cb, void* userdata) {
-    channels[CTC0].callback = cb;
-    channels[CTC0].userdata = userdata;
+z80ctc::connect_zcto0(ctc_cb cb, void* userdata) {
+    channels[CTC0].zcto_callback = cb;
+    channels[CTC0].zcto_userdata = userdata;
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80ctc::connect_zcto1(cb_zcto cb, void* userdata) {
-    channels[CTC1].callback = cb;
-    channels[CTC1].userdata = userdata;
+z80ctc::connect_zcto1(ctc_cb cb, void* userdata) {
+    channels[CTC1].zcto_callback = cb;
+    channels[CTC1].zcto_userdata = userdata;
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80ctc::connect_zcto2(cb_zcto cb, void* userdata) {
-    channels[CTC2].callback = cb;
-    channels[CTC2].userdata = userdata;
+z80ctc::connect_zcto2(ctc_cb cb, void* userdata) {
+    channels[CTC2].zcto_callback = cb;
+    channels[CTC2].zcto_userdata = userdata;
 }
 
 //------------------------------------------------------------------------------
