@@ -68,7 +68,11 @@ TEST(zexdoc) {
         t += cpu.step();
         // check for bdos call and trap
         if (cpu.state.INV) {
-            printf("INVALID OPCODE HIT (%02X %02X)\n", cpu.mem.r8(cpu.state.PC), cpu.mem.r8(cpu.state.PC+1));
+            printf("INVALID OPCODE HIT (%02X %02X %02X %02X)\n",
+                cpu.mem.r8(cpu.state.PC),
+                cpu.mem.r8(cpu.state.PC+1),
+                cpu.mem.r8(cpu.state.PC+2),
+                cpu.mem.r8(cpu.state.PC+3));
             bool invalid_opcode = false;
             CHECK(invalid_opcode);
             running = false;

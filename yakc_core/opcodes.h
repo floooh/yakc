@@ -2501,6 +2501,21 @@ inline unsigned int z80::step() {
             state.IX++;
             state.T = 10;
             break;
+        case 0x24:
+            // INC IXH
+            state.IXH = inc8(state.IXH);
+            state.T = 8;
+            break;
+        case 0x25:
+            // DEC IXH
+            state.IXH = dec8(state.IXH);
+            state.T = 8;
+            break;
+        case 0x26:
+            // LD IXH,n
+            state.IXH = mem.r8(state.PC++);
+            state.T = 11;
+            break;
         case 0x29:
             // ADD IX,IX
             state.IX = add16(state.IX, state.IX);
@@ -2516,6 +2531,21 @@ inline unsigned int z80::step() {
             // DEC IX
             state.IX--;
             state.T = 10;
+            break;
+        case 0x2c:
+            // INC IXL
+            state.IXL = inc8(state.IXL);
+            state.T = 8;
+            break;
+        case 0x2d:
+            // DEC IXL
+            state.IXL = dec8(state.IXL);
+            state.T = 8;
+            break;
+        case 0x2e:
+            // LD IXL,n
+            state.IXL = mem.r8(state.PC++);
+            state.T = 11;
             break;
         case 0x34:
             // INC (IX+d)
@@ -2540,11 +2570,76 @@ inline unsigned int z80::step() {
             state.IX = add16(state.IX, state.SP);
             state.T = 15;
             break;
+        case 0x40:
+            // LD B,B
+            state.B = state.B;
+            state.T = 8;
+            break;
+        case 0x41:
+            // LD B,C
+            state.B = state.C;
+            state.T = 8;
+            break;
+        case 0x42:
+            // LD B,D
+            state.B = state.D;
+            state.T = 8;
+            break;
+        case 0x43:
+            // LD B,E
+            state.B = state.E;
+            state.T = 8;
+            break;
+        case 0x44:
+            // LD B,IXH
+            state.B = state.IXH;
+            state.T = 8;
+            break;
+        case 0x45:
+            // LD B,IXL
+            state.B = state.IXL;
+            state.T = 8;
+            break;
         case 0x46:
             // LD B,(IX+d)
             d = mem.rs8(state.PC++);
             state.B = mem.r8(state.IX + d);
             state.T = 19;
+            break;
+        case 0x47:
+            // LD B,A
+            state.B = state.A;
+            state.T = 8;
+            break;
+        case 0x48:
+            // LD C,B
+            state.C = state.B;
+            state.T = 8;
+            break;
+        case 0x49:
+            // LD C,C
+            state.C = state.C;
+            state.T = 8;
+            break;
+        case 0x4a:
+            // LD C,D
+            state.C = state.D;
+            state.T = 8;
+            break;
+        case 0x4b:
+            // LD C,E
+            state.C = state.E;
+            state.T = 8;
+            break;
+        case 0x4c:
+            // LD C,IXH
+            state.C = state.IXH;
+            state.T = 8;
+            break;
+        case 0x4d:
+            // LD C,IXL
+            state.C = state.IXL;
+            state.T = 8;
             break;
         case 0x4e:
             // LD C,(IX+d)
@@ -2552,11 +2647,81 @@ inline unsigned int z80::step() {
             state.C = mem.r8(state.IX + d);
             state.T = 19;
             break;
+        case 0x4f:
+            // LD C,A
+            state.C = state.A;
+            state.T = 8;
+            break;
+        case 0x50:
+            // LD D,B
+            state.D = state.B;
+            state.T = 8;
+            break;
+        case 0x51:
+            // LD D,C
+            state.D = state.C;
+            state.T = 8;
+            break;
+        case 0x52:
+            // LD D,D
+            state.D = state.D;
+            state.T = 8;
+            break;
+        case 0x53:
+            // LD D,E
+            state.D = state.E;
+            state.T = 8;
+            break;
+        case 0x54:
+            // LD D,IXH
+            state.D = state.IXH;
+            state.T = 8;
+            break;
+        case 0x55:
+            // LD D,IXL
+            state.D = state.IXL;
+            state.T = 8;
+            break;
         case 0x56:
             // LD D,(IX+d)
             d = mem.rs8(state.PC++);
             state.D = mem.r8(state.IX + d);
             state.T = 19;
+            break;
+        case 0x57:
+            // LD D,A
+            state.D = state.A;
+            state.T = 8;
+            break;
+        case 0x58:
+            // LD E,B
+            state.E = state.B;
+            state.T = 8;
+            break;
+        case 0x59:
+            // LD E,C
+            state.E = state.C;
+            state.T = 8;
+            break;
+        case 0x5a:
+            // LD E,D
+            state.E = state.D;
+            state.T = 8;
+            break;
+        case 0x5b:
+            // LD E,E
+            state.E = state.E;
+            state.T = 8;
+            break;
+        case 0x5c:
+            // LD E,IXH
+            state.E = state.IXH;
+            state.T = 8;
+            break;
+        case 0x5d:
+            // LD E,IXL
+            state.E = state.IXL;
+            state.T = 8;
             break;
         case 0x5e:
             // LD E,(IX+d)
@@ -2564,17 +2729,92 @@ inline unsigned int z80::step() {
             state.E = mem.r8(state.IX + d);
             state.T = 19;
             break;
+        case 0x5f:
+            // LD E,A
+            state.E = state.A;
+            state.T = 8;
+            break;
+        case 0x60:
+            // LD IXH,B
+            state.IXH = state.B;
+            state.T = 8;
+            break;
+        case 0x61:
+            // LD IXH,C
+            state.IXH = state.C;
+            state.T = 8;
+            break;
+        case 0x62:
+            // LD IXH,D
+            state.IXH = state.D;
+            state.T = 8;
+            break;
+        case 0x63:
+            // LD IXH,E
+            state.IXH = state.E;
+            state.T = 8;
+            break;
+        case 0x64:
+            // LD IXH,IXH
+            state.IXH = state.IXH;
+            state.T = 8;
+            break;
+        case 0x65:
+            // LD IXH,IXL
+            state.IXH = state.IXL;
+            state.T = 8;
+            break;
         case 0x66:
             // LD H,(IX+d)
             d = mem.rs8(state.PC++);
             state.H = mem.r8(state.IX + d);
             state.T = 19;
             break;
+        case 0x67:
+            // LD IXH,A
+            state.IXH = state.A;
+            state.T = 8;
+            break;
+        case 0x68:
+            // LD IXL,B
+            state.IXL = state.B;
+            state.T = 8;
+            break;
+        case 0x69:
+            // LD IXL,C
+            state.IXL = state.C;
+            state.T = 8;
+            break;
+        case 0x6a:
+            // LD IXL,D
+            state.IXL = state.D;
+            state.T = 8;
+            break;
+        case 0x6b:
+            // LD IXL,E
+            state.IXL = state.E;
+            state.T = 8;
+            break;
+        case 0x6c:
+            // LD IXL,IXH
+            state.IXL = state.IXH;
+            state.T = 8;
+            break;
+        case 0x6d:
+            // LD IXL,IXL
+            state.IXL = state.IXL;
+            state.T = 8;
+            break;
         case 0x6e:
             // LD L,(IX+d)
             d = mem.rs8(state.PC++);
             state.L = mem.r8(state.IX + d);
             state.T = 19;
+            break;
+        case 0x6f:
+            // LD IXL,A
+            state.IXL = state.A;
+            state.T = 8;
             break;
         case 0x70:
             // LD (IX+d),B
@@ -2618,11 +2858,56 @@ inline unsigned int z80::step() {
             mem.w8(state.IX + d, state.A);
             state.T = 19;
             break;
+        case 0x78:
+            // LD A,B
+            state.A = state.B;
+            state.T = 8;
+            break;
+        case 0x79:
+            // LD A,C
+            state.A = state.C;
+            state.T = 8;
+            break;
+        case 0x7a:
+            // LD A,D
+            state.A = state.D;
+            state.T = 8;
+            break;
+        case 0x7b:
+            // LD A,E
+            state.A = state.E;
+            state.T = 8;
+            break;
+        case 0x7c:
+            // LD A,IXH
+            state.A = state.IXH;
+            state.T = 8;
+            break;
+        case 0x7d:
+            // LD A,IXL
+            state.A = state.IXL;
+            state.T = 8;
+            break;
         case 0x7e:
             // LD A,(IX+d)
             d = mem.rs8(state.PC++);
             state.A = mem.r8(state.IX + d);
             state.T = 19;
+            break;
+        case 0x7f:
+            // LD A,A
+            state.A = state.A;
+            state.T = 8;
+            break;
+        case 0x84:
+            // ADD A,IXH
+            state.A = add8(state.A, state.IXH);
+            state.T = 8;
+            break;
+        case 0x85:
+            // ADD A,IXL
+            state.A = add8(state.A, state.IXL);
+            state.T = 8;
             break;
         case 0x86:
             // ADD A,(IX+d)
@@ -2630,11 +2915,31 @@ inline unsigned int z80::step() {
             state.A = add8(state.A, mem.r8(state.IX + d));
             state.T = 19;
             break;
+        case 0x8c:
+            // ADC A,IXH
+            state.A = adc8(state.A, state.IXH);
+            state.T = 8;
+            break;
+        case 0x8d:
+            // ADC A,IXL
+            state.A = adc8(state.A, state.IXL);
+            state.T = 8;
+            break;
         case 0x8e:
             // ADC A,(IX+d)
             d = mem.rs8(state.PC++);
             state.A = adc8(state.A, mem.r8(state.IX + d));
             state.T = 19;
+            break;
+        case 0x94:
+            // SUB IXH
+            state.A = sub8(state.A, state.IXH);
+            state.T = 8;
+            break;
+        case 0x95:
+            // SUB IXL
+            state.A = sub8(state.A, state.IXL);
+            state.T = 8;
             break;
         case 0x96:
             // SUB (IX+d)
@@ -2642,11 +2947,33 @@ inline unsigned int z80::step() {
             state.A = sub8(state.A, mem.r8(state.IX + d));
             state.T = 19;
             break;
+        case 0x9c:
+            // SBC A,IXH
+            state.A = sbc8(state.A, state.IXH);
+            state.T = 8;
+            break;
+        case 0x9d:
+            // SBC A,IXL
+            state.A = sbc8(state.A, state.IXL);
+            state.T = 8;
+            break;
         case 0x9e:
             // SBC A,(IX+d)
             d = mem.rs8(state.PC++);
             state.A = sbc8(state.A, mem.r8(state.IX + d));
             state.T = 19;
+            break;
+        case 0xa4:
+            // AND IXH
+            state.A &= state.IXH;
+            state.F = szp(state.A)|HF;
+            state.T = 8;
+            break;
+        case 0xa5:
+            // AND IXL
+            state.A &= state.IXL;
+            state.F = szp(state.A)|HF;
+            state.T = 8;
             break;
         case 0xa6:
             // AND (IX+d)
@@ -2655,6 +2982,18 @@ inline unsigned int z80::step() {
             state.F = szp(state.A)|HF;
             state.T = 19;
             break;
+        case 0xac:
+            // XOR IXH
+            state.A ^= state.IXH;
+            state.F = szp(state.A);
+            state.T = 8;
+            break;
+        case 0xad:
+            // XOR IXL
+            state.A ^= state.IXL;
+            state.F = szp(state.A);
+            state.T = 8;
+            break;
         case 0xae:
             // XOR (IX+d)
             d = mem.rs8(state.PC++);
@@ -2662,12 +3001,34 @@ inline unsigned int z80::step() {
             state.F = szp(state.A);
             state.T = 19;
             break;
+        case 0xb4:
+            // OR IXH
+            state.A |= state.IXH;
+            state.F = szp(state.A);
+            state.T = 8;
+            break;
+        case 0xb5:
+            // OR IXL
+            state.A |= state.IXL;
+            state.F = szp(state.A);
+            state.T = 8;
+            break;
         case 0xb6:
             // OR (IX+d)
             d = mem.rs8(state.PC++);
             state.A |= mem.r8(state.IX + d);
             state.F = szp(state.A);
             state.T = 19;
+            break;
+        case 0xbc:
+            // CP IXH
+            sub8(state.A, state.IXH);
+            state.T = 8;
+            break;
+        case 0xbd:
+            // CP IXL
+            sub8(state.A, state.IXL);
+            state.T = 8;
             break;
         case 0xbe:
             // CP (IX+d)
@@ -3247,6 +3608,21 @@ inline unsigned int z80::step() {
             state.IY++;
             state.T = 10;
             break;
+        case 0x24:
+            // INC IYH
+            state.IYH = inc8(state.IYH);
+            state.T = 8;
+            break;
+        case 0x25:
+            // DEC IYH
+            state.IYH = dec8(state.IYH);
+            state.T = 8;
+            break;
+        case 0x26:
+            // LD IYH,n
+            state.IYH = mem.r8(state.PC++);
+            state.T = 11;
+            break;
         case 0x29:
             // ADD IY,IY
             state.IY = add16(state.IY, state.IY);
@@ -3262,6 +3638,21 @@ inline unsigned int z80::step() {
             // DEC IY
             state.IY--;
             state.T = 10;
+            break;
+        case 0x2c:
+            // INC IYL
+            state.IYL = inc8(state.IYL);
+            state.T = 8;
+            break;
+        case 0x2d:
+            // DEC IYL
+            state.IYL = dec8(state.IYL);
+            state.T = 8;
+            break;
+        case 0x2e:
+            // LD IYL,n
+            state.IYL = mem.r8(state.PC++);
+            state.T = 11;
             break;
         case 0x34:
             // INC (IY+d)
@@ -3286,11 +3677,76 @@ inline unsigned int z80::step() {
             state.IY = add16(state.IY, state.SP);
             state.T = 15;
             break;
+        case 0x40:
+            // LD B,B
+            state.B = state.B;
+            state.T = 8;
+            break;
+        case 0x41:
+            // LD B,C
+            state.B = state.C;
+            state.T = 8;
+            break;
+        case 0x42:
+            // LD B,D
+            state.B = state.D;
+            state.T = 8;
+            break;
+        case 0x43:
+            // LD B,E
+            state.B = state.E;
+            state.T = 8;
+            break;
+        case 0x44:
+            // LD B,IYH
+            state.B = state.IYH;
+            state.T = 8;
+            break;
+        case 0x45:
+            // LD B,IYL
+            state.B = state.IYL;
+            state.T = 8;
+            break;
         case 0x46:
             // LD B,(IY+d)
             d = mem.rs8(state.PC++);
             state.B = mem.r8(state.IY + d);
             state.T = 19;
+            break;
+        case 0x47:
+            // LD B,A
+            state.B = state.A;
+            state.T = 8;
+            break;
+        case 0x48:
+            // LD C,B
+            state.C = state.B;
+            state.T = 8;
+            break;
+        case 0x49:
+            // LD C,C
+            state.C = state.C;
+            state.T = 8;
+            break;
+        case 0x4a:
+            // LD C,D
+            state.C = state.D;
+            state.T = 8;
+            break;
+        case 0x4b:
+            // LD C,E
+            state.C = state.E;
+            state.T = 8;
+            break;
+        case 0x4c:
+            // LD C,IYH
+            state.C = state.IYH;
+            state.T = 8;
+            break;
+        case 0x4d:
+            // LD C,IYL
+            state.C = state.IYL;
+            state.T = 8;
             break;
         case 0x4e:
             // LD C,(IY+d)
@@ -3298,11 +3754,81 @@ inline unsigned int z80::step() {
             state.C = mem.r8(state.IY + d);
             state.T = 19;
             break;
+        case 0x4f:
+            // LD C,A
+            state.C = state.A;
+            state.T = 8;
+            break;
+        case 0x50:
+            // LD D,B
+            state.D = state.B;
+            state.T = 8;
+            break;
+        case 0x51:
+            // LD D,C
+            state.D = state.C;
+            state.T = 8;
+            break;
+        case 0x52:
+            // LD D,D
+            state.D = state.D;
+            state.T = 8;
+            break;
+        case 0x53:
+            // LD D,E
+            state.D = state.E;
+            state.T = 8;
+            break;
+        case 0x54:
+            // LD D,IYH
+            state.D = state.IYH;
+            state.T = 8;
+            break;
+        case 0x55:
+            // LD D,IYL
+            state.D = state.IYL;
+            state.T = 8;
+            break;
         case 0x56:
             // LD D,(IY+d)
             d = mem.rs8(state.PC++);
             state.D = mem.r8(state.IY + d);
             state.T = 19;
+            break;
+        case 0x57:
+            // LD D,A
+            state.D = state.A;
+            state.T = 8;
+            break;
+        case 0x58:
+            // LD E,B
+            state.E = state.B;
+            state.T = 8;
+            break;
+        case 0x59:
+            // LD E,C
+            state.E = state.C;
+            state.T = 8;
+            break;
+        case 0x5a:
+            // LD E,D
+            state.E = state.D;
+            state.T = 8;
+            break;
+        case 0x5b:
+            // LD E,E
+            state.E = state.E;
+            state.T = 8;
+            break;
+        case 0x5c:
+            // LD E,IYH
+            state.E = state.IYH;
+            state.T = 8;
+            break;
+        case 0x5d:
+            // LD E,IYL
+            state.E = state.IYL;
+            state.T = 8;
             break;
         case 0x5e:
             // LD E,(IY+d)
@@ -3310,17 +3836,92 @@ inline unsigned int z80::step() {
             state.E = mem.r8(state.IY + d);
             state.T = 19;
             break;
+        case 0x5f:
+            // LD E,A
+            state.E = state.A;
+            state.T = 8;
+            break;
+        case 0x60:
+            // LD IYH,B
+            state.IYH = state.B;
+            state.T = 8;
+            break;
+        case 0x61:
+            // LD IYH,C
+            state.IYH = state.C;
+            state.T = 8;
+            break;
+        case 0x62:
+            // LD IYH,D
+            state.IYH = state.D;
+            state.T = 8;
+            break;
+        case 0x63:
+            // LD IYH,E
+            state.IYH = state.E;
+            state.T = 8;
+            break;
+        case 0x64:
+            // LD IYH,IYH
+            state.IYH = state.IYH;
+            state.T = 8;
+            break;
+        case 0x65:
+            // LD IYH,IYL
+            state.IYH = state.IYL;
+            state.T = 8;
+            break;
         case 0x66:
             // LD H,(IY+d)
             d = mem.rs8(state.PC++);
             state.H = mem.r8(state.IY + d);
             state.T = 19;
             break;
+        case 0x67:
+            // LD IYH,A
+            state.IYH = state.A;
+            state.T = 8;
+            break;
+        case 0x68:
+            // LD IYL,B
+            state.IYL = state.B;
+            state.T = 8;
+            break;
+        case 0x69:
+            // LD IYL,C
+            state.IYL = state.C;
+            state.T = 8;
+            break;
+        case 0x6a:
+            // LD IYL,D
+            state.IYL = state.D;
+            state.T = 8;
+            break;
+        case 0x6b:
+            // LD IYL,E
+            state.IYL = state.E;
+            state.T = 8;
+            break;
+        case 0x6c:
+            // LD IYL,IYH
+            state.IYL = state.IYH;
+            state.T = 8;
+            break;
+        case 0x6d:
+            // LD IYL,IYL
+            state.IYL = state.IYL;
+            state.T = 8;
+            break;
         case 0x6e:
             // LD L,(IY+d)
             d = mem.rs8(state.PC++);
             state.L = mem.r8(state.IY + d);
             state.T = 19;
+            break;
+        case 0x6f:
+            // LD IYL,A
+            state.IYL = state.A;
+            state.T = 8;
             break;
         case 0x70:
             // LD (IY+d),B
@@ -3364,11 +3965,56 @@ inline unsigned int z80::step() {
             mem.w8(state.IY + d, state.A);
             state.T = 19;
             break;
+        case 0x78:
+            // LD A,B
+            state.A = state.B;
+            state.T = 8;
+            break;
+        case 0x79:
+            // LD A,C
+            state.A = state.C;
+            state.T = 8;
+            break;
+        case 0x7a:
+            // LD A,D
+            state.A = state.D;
+            state.T = 8;
+            break;
+        case 0x7b:
+            // LD A,E
+            state.A = state.E;
+            state.T = 8;
+            break;
+        case 0x7c:
+            // LD A,IYH
+            state.A = state.IYH;
+            state.T = 8;
+            break;
+        case 0x7d:
+            // LD A,IYL
+            state.A = state.IYL;
+            state.T = 8;
+            break;
         case 0x7e:
             // LD A,(IY+d)
             d = mem.rs8(state.PC++);
             state.A = mem.r8(state.IY + d);
             state.T = 19;
+            break;
+        case 0x7f:
+            // LD A,A
+            state.A = state.A;
+            state.T = 8;
+            break;
+        case 0x84:
+            // ADD A,IYH
+            state.A = add8(state.A, state.IYH);
+            state.T = 8;
+            break;
+        case 0x85:
+            // ADD A,IYL
+            state.A = add8(state.A, state.IYL);
+            state.T = 8;
             break;
         case 0x86:
             // ADD A,(IY+d)
@@ -3376,11 +4022,31 @@ inline unsigned int z80::step() {
             state.A = add8(state.A, mem.r8(state.IY + d));
             state.T = 19;
             break;
+        case 0x8c:
+            // ADC A,IYH
+            state.A = adc8(state.A, state.IYH);
+            state.T = 8;
+            break;
+        case 0x8d:
+            // ADC A,IYL
+            state.A = adc8(state.A, state.IYL);
+            state.T = 8;
+            break;
         case 0x8e:
             // ADC A,(IY+d)
             d = mem.rs8(state.PC++);
             state.A = adc8(state.A, mem.r8(state.IY + d));
             state.T = 19;
+            break;
+        case 0x94:
+            // SUB IYH
+            state.A = sub8(state.A, state.IYH);
+            state.T = 8;
+            break;
+        case 0x95:
+            // SUB IYL
+            state.A = sub8(state.A, state.IYL);
+            state.T = 8;
             break;
         case 0x96:
             // SUB (IY+d)
@@ -3388,11 +4054,33 @@ inline unsigned int z80::step() {
             state.A = sub8(state.A, mem.r8(state.IY + d));
             state.T = 19;
             break;
+        case 0x9c:
+            // SBC A,IYH
+            state.A = sbc8(state.A, state.IYH);
+            state.T = 8;
+            break;
+        case 0x9d:
+            // SBC A,IYL
+            state.A = sbc8(state.A, state.IYL);
+            state.T = 8;
+            break;
         case 0x9e:
             // SBC A,(IY+d)
             d = mem.rs8(state.PC++);
             state.A = sbc8(state.A, mem.r8(state.IY + d));
             state.T = 19;
+            break;
+        case 0xa4:
+            // AND IYH
+            state.A &= state.IYH;
+            state.F = szp(state.A)|HF;
+            state.T = 8;
+            break;
+        case 0xa5:
+            // AND IYL
+            state.A &= state.IYL;
+            state.F = szp(state.A)|HF;
+            state.T = 8;
             break;
         case 0xa6:
             // AND (IY+d)
@@ -3401,6 +4089,18 @@ inline unsigned int z80::step() {
             state.F = szp(state.A)|HF;
             state.T = 19;
             break;
+        case 0xac:
+            // XOR IYH
+            state.A ^= state.IYH;
+            state.F = szp(state.A);
+            state.T = 8;
+            break;
+        case 0xad:
+            // XOR IYL
+            state.A ^= state.IYL;
+            state.F = szp(state.A);
+            state.T = 8;
+            break;
         case 0xae:
             // XOR (IY+d)
             d = mem.rs8(state.PC++);
@@ -3408,12 +4108,34 @@ inline unsigned int z80::step() {
             state.F = szp(state.A);
             state.T = 19;
             break;
+        case 0xb4:
+            // OR IYH
+            state.A |= state.IYH;
+            state.F = szp(state.A);
+            state.T = 8;
+            break;
+        case 0xb5:
+            // OR IYL
+            state.A |= state.IYL;
+            state.F = szp(state.A);
+            state.T = 8;
+            break;
         case 0xb6:
             // OR (IY+d)
             d = mem.rs8(state.PC++);
             state.A |= mem.r8(state.IY + d);
             state.F = szp(state.A);
             state.T = 19;
+            break;
+        case 0xbc:
+            // CP IYH
+            sub8(state.A, state.IYH);
+            state.T = 8;
+            break;
+        case 0xbd:
+            // CP IYL
+            sub8(state.A, state.IYL);
+            state.T = 8;
             break;
         case 0xbe:
             // CP (IY+d)

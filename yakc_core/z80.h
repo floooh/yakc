@@ -64,8 +64,14 @@ public:
         /// special registers
         ubyte I;
         ubyte R;
-        uword IX;
-        uword IY;
+        union {
+            struct { ubyte IXL, IXH; };
+            uword IX;
+        };
+        union {
+            struct { ubyte IYL, IYH; };
+            uword IY;
+        };
         uword SP;
         uword PC;
 
@@ -1050,8 +1056,8 @@ z80::rrd() {
 inline void
 z80::bit(ubyte val, ubyte mask) {
     ubyte r = val & mask;
-    ubyte f = r ? (r & SF) : (ZF|PF);
-    f |= (r & (YF|XF));
+    ubyte f = HF | (r ? (r & SF) : (ZF|PF));
+    f |= (val & (YF|XF));
     state.F = f | (state.F & CF);
 }
 
@@ -1142,7 +1148,7 @@ z80::dd_fd_cb(ubyte lead) {
 
         // unknown opcode
         default:
-            YAKC_ASSERT(false);
+            invalid_opcode(4);
             break;
     }
 }

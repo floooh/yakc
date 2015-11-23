@@ -20,6 +20,11 @@ r8 = [
     R(0b111, 'A')
 ]
 
+r8ixy = [
+    R(0b100, 'H'),
+    R(0b101, 'L'),
+]
+
 # 16-bit register bit masks with SP
 r16sp = [
     R(0b00, 'BC'),
@@ -148,6 +153,33 @@ def LD_r_s(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def uLD_r_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    LD r,s
+    LD r,s
+    LD r,s
+    LD r,s
+    where r and s is A,B,C,D,E,IXH,IXL,IYH,IYL
+    T-states: 8(?)
+    '''
+    for r in r8 :
+        for s in r8 :
+            op = 0b01000000 | r.bits<<3 | s.bits
+            rname = r.name
+            if rname=='H' or rname=='L':
+                rname = '{}{}'.format(xname,rname)
+            sname = s.name
+            if sname=='H' or sname=='L':
+                sname = '{}{}'.format(xname,sname)
+            src = [
+                '// LD {},{}'.format(rname, sname),
+                'state.{} = state.{};'.format(rname, sname),
+                t(8)]
+            ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def LD_r_n(ops) :
     '''
     LD r,n
@@ -159,6 +191,25 @@ def LD_r_n(ops) :
             '// LD {},n'.format(r.name),
             'state.{} = mem.r8(state.PC++);'.format(r.name),
             t(7)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def uLD_IXYhl_n(ops,xname) :
+    '''
+    undocumented!
+    LD IXH,n
+    LD IXL,n
+    LD IYH,n
+    LD IYL,n
+    T-states: 11(?)
+    '''
+    for r in r8ixy :
+        op = 0b00000110 | r.bits<<3
+        src = [
+            '// LD {}{},n'.format(xname, r.name),
+            'state.{}{} = mem.r8(state.PC++);'.format(xname, r.name),
+            t(11)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -636,6 +687,25 @@ def ADD_A_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def uADD_A_IXYhl(ops, xname) :
+    '''
+    undocumented! 
+    ADD A,IXH
+    ADD A,IXL
+    ADD A,IYH
+    ADD A,IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy :
+        op = 0b10000000 | r.bits
+        src = [
+            '// ADD A,{}{}'.format(xname, r.name),
+            'state.A = add8(state.A, state.{}{});'.format(xname, r.name),
+            t(8)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def ADC_A_r(ops) :
     '''
     ADC A,r
@@ -647,6 +717,25 @@ def ADC_A_r(ops) :
             '// ADC A,{}'.format(r.name),
             'state.A = adc8(state.A, state.{});'.format(r.name),
             t(4)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def uADC_A_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    ADC A,IXH
+    ADC A,IXL
+    ADC A,IYH
+    ADC A,IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy :
+        op = 0b10001000 | r.bits
+        src = [
+            '// ADC A,{}{}'.format(xname, r.name),
+            'state.A = adc8(state.A, state.{}{});'.format(xname, r.name),
+            t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -740,6 +829,25 @@ def SUB_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def uSUB_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    SUB IXH
+    SUB IXL
+    SUB IYH
+    SUB IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy:
+        op = 0b10010000 | r.bits
+        src = [
+            '// SUB {}{}'.format(xname, r.name),
+            'state.A = sub8(state.A, state.{}{});'.format(xname, r.name),
+            t(8)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def CP_r(ops) :
     '''
     CP r
@@ -755,6 +863,25 @@ def CP_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def uCP_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    CP IXH
+    CP IXL
+    CP IYH
+    CP IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy:
+        op = 0b10111000 | r.bits
+        src = [
+            '// CP {}{}'.format(xname, r.name),
+            'sub8(state.A, state.{}{});'.format(xname, r.name),
+            t(8)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def SBC_A_r(ops) :
     '''
     SBC A,r
@@ -766,6 +893,25 @@ def SBC_A_r(ops) :
             '// SBC A,{}'.format(r.name),
             'state.A = sbc8(state.A, state.{});'.format(r.name),
             t(4)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def uSBC_A_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    SBC A,IXH
+    SBC A,IXL
+    SBC A,IYH
+    SBC A,IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy:
+        op = 0b10011000 | r.bits
+        src = [
+            '// SBC A,{}{}'.format(xname, r.name),
+            'state.A = sbc8(state.A, state.{}{});'.format(xname, r.name),
+            t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -897,6 +1043,26 @@ def AND_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def uAND_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    AND IXH
+    AND IXL
+    AND IYH
+    AND IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy:
+        op = 0b10100000 | r.bits
+        src = [
+            '// AND {}{}'.format(xname, r.name),
+            'state.A &= state.{}{};'.format(xname, r.name),
+            'state.F = szp(state.A)|HF;',
+            t(8)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def OR_r(ops) :
     '''
     OR r
@@ -909,6 +1075,26 @@ def OR_r(ops) :
             'state.A |= state.{};'.format(r.name),
             'state.F = szp(state.A);',
             t(4)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def uOR_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    OR IXH
+    OR IXL
+    OR IYH
+    OR IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy:
+        op = 0b10110000 | r.bits
+        src = [
+            '// OR {}{}'.format(xname, r.name),
+            'state.A |= state.{}{};'.format(xname, r.name),
+            'state.F = szp(state.A);',
+            t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -927,6 +1113,27 @@ def XOR_r(ops) :
             t(4)]
         ops = add_op(ops, op, src)
     return ops
+
+#-------------------------------------------------------------------------------
+def uXOR_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    XOR IXH
+    XOR IXL
+    XOR IYH
+    XOR IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy:
+        op = 0b10101000 | r.bits
+        src = [
+            '// XOR {}{}'.format(xname, r.name),
+            'state.A ^= state.{}{};'.format(xname, r.name),
+            'state.F = szp(state.A);',
+            t(8)]
+        ops = add_op(ops, op, src)
+    return ops
+
 #-------------------------------------------------------------------------------
 def AND_n(ops) :
     '''
@@ -1064,6 +1271,25 @@ def INC_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def uINC_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    INC IXH
+    INC IXL
+    INC IYH
+    INC IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy:
+        op = 0b00000100 | r.bits<<3
+        src = [
+            '// INC {}{}'.format(xname, r.name),
+            'state.{}{} = inc8(state.{}{});'.format(xname, r.name, xname, r.name),
+            t(8)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def DEC_r(ops) :
     '''
     DEC r
@@ -1075,6 +1301,25 @@ def DEC_r(ops) :
             '// DEC {}'.format(r.name),
             'state.{} = dec8(state.{});'.format(r.name, r.name),
             t(4)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def uDEC_IXYhl(ops, xname) :
+    '''
+    undocumented!
+    DEC IXH
+    DEC IXL
+    DEC IYH
+    DEC IYL
+    T-states: 8(?)
+    '''
+    for r in r8ixy:
+        op = 0b00000101 | r.bits<<3
+        src = [
+            '// DEC {}{}'.format(xname, r.name),
+            'state.{}{} = dec8(state.{}{});'.format(xname, r.name, xname, r.name),
+            t(8)]
         ops = add_op(ops, op, src)
     return ops
 
@@ -2144,6 +2389,19 @@ def gen_dd_opcodes() :
     dd_ops = JP_iIXY(dd_ops, 'IX')
     dd_ops = ADD_IXY_pp(dd_ops, 'IX')
     dd_ops = DD_FD_CB(dd_ops, 0xDD)
+    # undocumented instructions
+    dd_ops = uADD_A_IXYhl(dd_ops, 'IX')
+    dd_ops = uADC_A_IXYhl(dd_ops, 'IX')
+    dd_ops = uSUB_IXYhl(dd_ops, 'IX')
+    dd_ops = uCP_IXYhl(dd_ops, 'IX')
+    dd_ops = uSBC_A_IXYhl(dd_ops, 'IX')
+    dd_ops = uAND_IXYhl(dd_ops, 'IX')
+    dd_ops = uOR_IXYhl(dd_ops, 'IX')
+    dd_ops = uXOR_IXYhl(dd_ops, 'IX')
+    dd_ops = uINC_IXYhl(dd_ops, 'IX')
+    dd_ops = uDEC_IXYhl(dd_ops, 'IX')
+    dd_ops = uLD_r_IXYhl(dd_ops, 'IX')
+    dd_ops = uLD_IXYhl_n(dd_ops, 'IX')
     return dd_ops
 
 #-------------------------------------------------------------------------------
@@ -2177,6 +2435,19 @@ def gen_fd_opcodes() :
     fd_ops = JP_iIXY(fd_ops, 'IY')
     fd_ops = ADD_IXY_pp(fd_ops, 'IY')
     fd_ops = DD_FD_CB(fd_ops, 0xFD)
+    # undocumented instructions
+    fd_ops = uADD_A_IXYhl(fd_ops, 'IY')
+    fd_ops = uADC_A_IXYhl(fd_ops, 'IY')
+    fd_ops = uSUB_IXYhl(fd_ops, 'IY')
+    fd_ops = uCP_IXYhl(fd_ops, 'IY')
+    fd_ops = uSBC_A_IXYhl(fd_ops, 'IY')
+    fd_ops = uAND_IXYhl(fd_ops, 'IY')
+    fd_ops = uOR_IXYhl(fd_ops, 'IY')
+    fd_ops = uXOR_IXYhl(fd_ops, 'IY')
+    fd_ops = uINC_IXYhl(fd_ops, 'IY')
+    fd_ops = uDEC_IXYhl(fd_ops, 'IY')
+    fd_ops = uLD_r_IXYhl(fd_ops, 'IY')
+    fd_ops = uLD_IXYhl_n(fd_ops, 'IY')
     return fd_ops
 
 #-------------------------------------------------------------------------------
