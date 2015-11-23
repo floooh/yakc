@@ -91,7 +91,7 @@ ModuleWindow::setupModules(kc85& kc) {
         "...where [SLOT] is 08 or 0C.\n"));
 
     // M026 FORTH
-    this->modules.Add(kc85_module::create_rom(0xFB, rom_forth, 0x2000, "M026 FORTH",
+    this->modules.Add(kc85_module::create_rom(0xFB, dump_forth, 0x2000, "M026 FORTH",
         "FORTH language expansion module.\n\n"
         "First deactivate the BASIC ROM with:\n"
         "SWITCH 02 00\n\n"
@@ -100,7 +100,7 @@ ModuleWindow::setupModules(kc85& kc) {
         "...where [SLOT] is 08 or 0C"));
 
     // M027 DEVELOPMENT
-    this->modules.Add(kc85_module::create_rom(0xFB, rom_develop, 0x2000, "M027 DEVELOPMENT",
+    this->modules.Add(kc85_module::create_rom(0xFB, dump_develop, 0x2000, "M027 DEVELOPMENT",
         "Assembler/disassembler expansion module.\n\n"
         "First deactivate the BASIC ROM with:\n"
         "SWITCH 02 00\n\n"

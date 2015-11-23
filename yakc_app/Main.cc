@@ -76,7 +76,7 @@ YakcApp::OnInit() {
     this->draw.Setup(gfxSetup, frameSize);
     this->audio.Setup();
 
-    this->kc.switchon(kc85_model::kc85_3, rom_caos31, sizeof(rom_caos31));
+    this->kc.switchon(kc85_model::kc85_3, dump_caos31, sizeof(dump_caos31));
 
     return AppState::Running;
 }

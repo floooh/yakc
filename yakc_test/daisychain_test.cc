@@ -7,7 +7,7 @@
 
 using namespace yakc;
 
-ubyte ram[0x4000];
+static ubyte ram[0x4000];
 
 static void step(z80& cpu) {
     cpu.step();

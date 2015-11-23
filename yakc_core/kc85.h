@@ -95,8 +95,8 @@ breakpoint_address(0x0000),
 paused(false),
 cur_model(kc85_model::kc85_3),
 key_code(0),
-cur_caos_rom(rom_caos31),
-cur_caos_rom_size(sizeof(rom_caos31)) {
+cur_caos_rom(dump_caos31),
+cur_caos_rom_size(sizeof(dump_caos31)) {
     // empty
 }
 
@@ -106,7 +106,7 @@ kc85::switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
     YAKC_ASSERT(kc85_model::none != m);
     YAKC_ASSERT(!this->on);
     YAKC_ASSERT(0x2000 == caos_rom_size);
-    YAKC_ASSERT(0x2000 == sizeof(rom_basic_c0));
+    YAKC_ASSERT(0x2000 == sizeof(dump_basic_c0));
 
     this->cur_model = m;
     this->cur_caos_rom = caos_rom;
@@ -393,7 +393,7 @@ kc85::update_bank_switching() {
     }
     // 8 KByte BASIC ROM
     if (pio_a & PIO_A_BASIC_ROM) {
-        this->cpu.mem.map(0, 0xC000, 0x2000, rom_basic_c0, false);
+        this->cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
     }
     // 8 KByte CAOS ROM
     if (pio_a & PIO_A_CAOS_ROM) {

@@ -6,20 +6,20 @@
 
 using namespace yakc;
 
-ubyte ram0[0x4000];
+static ubyte ram0[0x4000];
 
-ubyte in_func(void* userdata, uword port) {
+static ubyte in_func(void* userdata, uword port) {
     return (port & 0xFF) * 2;
 }
 
 static uword out_port = 0;
 static ubyte out_byte = 0xFF;
-void out_func(void* userdata, uword port, ubyte val) {
+static void out_func(void* userdata, uword port, ubyte val) {
     out_port = port;
     out_byte = val;
 }
 
-z80 init_z80() {
+static z80 init_z80() {
     z80 cpu;
     memset(ram0, 0, sizeof(ram0));
     cpu.mem.map(0, 0x0000, sizeof(ram0), ram0, true);
