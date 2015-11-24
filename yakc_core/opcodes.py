@@ -1578,6 +1578,21 @@ def SLA_r(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
+def uSLL_r(ops) :
+    '''
+    undocumented!
+    SLL r
+    T-states: 8
+    '''
+    for r in r8 :
+        op = 0b00110000 | r.bits
+        src = ['// SLL {}'.format(r.name),
+               'state.{} = sll8(state.{});'.format(r.name, r.name),
+               t(8)]
+        ops = add_op(ops, op, src)
+    return ops
+
+#-------------------------------------------------------------------------------
 def SRA_r(ops) :
     '''
     SRA r
@@ -1611,10 +1626,18 @@ def SLA_iHL(ops) :
     SLA (HL)
     T-states: 15
     '''
-    src = ['// SLA (HL)',
-        'mem.w8(state.HL, sla8(mem.r8(state.HL)));',
-        t(15)]
+    src = ['// SLA (HL)', 'mem.w8(state.HL, sla8(mem.r8(state.HL)));', t(15)]
     return add_op(ops, 0x26, src)
+
+#-------------------------------------------------------------------------------
+def uSLL_iHL(ops) :
+    '''
+    undocumented!
+    SLL (HL)
+    T-states: 15
+    '''
+    src = ['// SLL (HL)', 'mem.w8(state.HL, sll8(mem.r8(state.HL)));', t(15)]
+    return add_op(ops, 0x36, src)
 
 #-------------------------------------------------------------------------------
 def SRA_iHL(ops) :
@@ -1739,7 +1762,7 @@ def RES_b_iHL(ops) :
     for b in range(0, 8) :
         op = 0b10000110 | b<<3
         src = ['// RES {},(HL)'.format(b),
-            'mem.w8(state.HL, mem.r8(state.HL)|(1<<{}));'.format(b),
+            'mem.w8(state.HL, mem.r8(state.HL)&~(1<<{}));'.format(b),
             t(15)]
         ops = add_op(ops, op, src)
     return ops
@@ -2345,7 +2368,9 @@ def gen_cb_opcodes() :
     cb_ops = RR_r(cb_ops)
     cb_ops = RR_iHL(cb_ops)
     cb_ops = SLA_r(cb_ops)
+    cb_ops = uSLL_r(cb_ops)
     cb_ops = SLA_iHL(cb_ops)
+    cb_ops = uSLL_iHL(cb_ops)
     cb_ops = SRA_r(cb_ops)
     cb_ops = SRA_iHL(cb_ops)
     cb_ops = SRL_r(cb_ops)

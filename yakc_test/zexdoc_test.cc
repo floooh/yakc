@@ -29,6 +29,7 @@ static bool cpm_bdos(z80& cpu) {
     if (2 == cpu.state.C) {
         // output a character
         putc(cpu.state.E, stdout);
+        fflush(stdout);
     }
     else if (9 == cpu.state.C) {
         // output a string
@@ -36,6 +37,7 @@ static bool cpm_bdos(z80& cpu) {
         uword addr = cpu.state.DE;
         while ((c = cpu.mem.r8(addr++)) != '$') {
             putc(c, stdout);
+            fflush(stdout);
         }
     }
     else {
@@ -85,7 +87,7 @@ TEST(zexdoc) {
             }
         }
         else if (cpu.state.PC == 0) {
-            printf("IT'S A TRAP!\n");
+            printf("\nDONE!\n");
             running = false;
         }
     }

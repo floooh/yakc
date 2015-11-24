@@ -1350,6 +1350,46 @@ inline unsigned int z80::step() {
             state.A = sra8(state.A);
             state.T = 8;
             break;
+        case 0x30:
+            // SLL B
+            state.B = sll8(state.B);
+            state.T = 8;
+            break;
+        case 0x31:
+            // SLL C
+            state.C = sll8(state.C);
+            state.T = 8;
+            break;
+        case 0x32:
+            // SLL D
+            state.D = sll8(state.D);
+            state.T = 8;
+            break;
+        case 0x33:
+            // SLL E
+            state.E = sll8(state.E);
+            state.T = 8;
+            break;
+        case 0x34:
+            // SLL H
+            state.H = sll8(state.H);
+            state.T = 8;
+            break;
+        case 0x35:
+            // SLL L
+            state.L = sll8(state.L);
+            state.T = 8;
+            break;
+        case 0x36:
+            // SLL (HL)
+            mem.w8(state.HL, sll8(mem.r8(state.HL)));
+            state.T = 15;
+            break;
+        case 0x37:
+            // SLL A
+            state.A = sll8(state.A);
+            state.T = 8;
+            break;
         case 0x38:
             // SRL B
             state.B = srl8(state.B);
@@ -1742,7 +1782,7 @@ inline unsigned int z80::step() {
             break;
         case 0x86:
             // RES 0,(HL)
-            mem.w8(state.HL, mem.r8(state.HL)|(1<<0));
+            mem.w8(state.HL, mem.r8(state.HL)&~(1<<0));
             state.T = 15;
             break;
         case 0x87:
@@ -1782,7 +1822,7 @@ inline unsigned int z80::step() {
             break;
         case 0x8e:
             // RES 1,(HL)
-            mem.w8(state.HL, mem.r8(state.HL)|(1<<1));
+            mem.w8(state.HL, mem.r8(state.HL)&~(1<<1));
             state.T = 15;
             break;
         case 0x8f:
@@ -1822,7 +1862,7 @@ inline unsigned int z80::step() {
             break;
         case 0x96:
             // RES 2,(HL)
-            mem.w8(state.HL, mem.r8(state.HL)|(1<<2));
+            mem.w8(state.HL, mem.r8(state.HL)&~(1<<2));
             state.T = 15;
             break;
         case 0x97:
@@ -1862,7 +1902,7 @@ inline unsigned int z80::step() {
             break;
         case 0x9e:
             // RES 3,(HL)
-            mem.w8(state.HL, mem.r8(state.HL)|(1<<3));
+            mem.w8(state.HL, mem.r8(state.HL)&~(1<<3));
             state.T = 15;
             break;
         case 0x9f:
@@ -1902,7 +1942,7 @@ inline unsigned int z80::step() {
             break;
         case 0xa6:
             // RES 4,(HL)
-            mem.w8(state.HL, mem.r8(state.HL)|(1<<4));
+            mem.w8(state.HL, mem.r8(state.HL)&~(1<<4));
             state.T = 15;
             break;
         case 0xa7:
@@ -1942,7 +1982,7 @@ inline unsigned int z80::step() {
             break;
         case 0xae:
             // RES 5,(HL)
-            mem.w8(state.HL, mem.r8(state.HL)|(1<<5));
+            mem.w8(state.HL, mem.r8(state.HL)&~(1<<5));
             state.T = 15;
             break;
         case 0xaf:
@@ -1982,7 +2022,7 @@ inline unsigned int z80::step() {
             break;
         case 0xb6:
             // RES 6,(HL)
-            mem.w8(state.HL, mem.r8(state.HL)|(1<<6));
+            mem.w8(state.HL, mem.r8(state.HL)&~(1<<6));
             state.T = 15;
             break;
         case 0xb7:
@@ -2022,7 +2062,7 @@ inline unsigned int z80::step() {
             break;
         case 0xbe:
             // RES 7,(HL)
-            mem.w8(state.HL, mem.r8(state.HL)|(1<<7));
+            mem.w8(state.HL, mem.r8(state.HL)&~(1<<7));
             state.T = 15;
             break;
         case 0xbf:

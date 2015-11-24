@@ -236,6 +236,8 @@ public:
     ubyte rr8(ubyte val, bool flags_szp);
     /// shift left into carry bit and update flags
     ubyte sla8(ubyte val);
+    /// undocumented: shift left into carry bit, update flags
+    ubyte sll8(ubyte val);
     /// shift right into carry bit, preserve sign, update flags
     ubyte sra8(ubyte val);
     /// shift right into carry bit, update flags
@@ -246,6 +248,8 @@ public:
     void rrd();
     /// implements the BIT test instruction, updates flags
     void bit(ubyte val, ubyte mask);
+    /// undocumented register-autocopy for the DD/FD CB instructions
+    void undoc_autocopy(ubyte reg, ubyte val);
     /// special handling for the FD/DD CB bit opcodes
     void dd_fd_cb(ubyte lead);
 };
@@ -1014,6 +1018,13 @@ z80::sla8(ubyte val) {
 
 //------------------------------------------------------------------------------
 inline ubyte
+z80::sll8(ubyte val) {
+    // undocument! sll8 is identical to sla8
+    return sla8(val);
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
 z80::sra8(ubyte val) {
     ubyte r = (val>>1) | (val & 0x80);
     ubyte f = val & 0x01 ? CF : 0;
@@ -1063,6 +1074,22 @@ z80::bit(ubyte val, ubyte mask) {
 
 //------------------------------------------------------------------------------
 inline void
+z80::undoc_autocopy(ubyte reg, ubyte val) {
+    // this is for the undocumented DD CB and FB CB instruction which autocopy
+    // the result into an 8-bit register (except for the F register)
+    switch (reg) {
+        case 0: state.B = val; break;
+        case 1: state.C = val; break;
+        case 2: state.D = val; break;
+        case 3: state.E = val; break;
+        case 4: state.H = val; break;
+        case 5: state.L = val; break;
+        case 7: state.A = val; break;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
 z80::dd_fd_cb(ubyte lead) {
     int d = mem.rs8(state.PC++);
     uword addr;
@@ -1072,41 +1099,119 @@ z80::dd_fd_cb(ubyte lead) {
     else {
         addr = state.IY + d;
     }
+    ubyte val;
     ubyte op = mem.r8(state.PC++);
     switch (op) {
-        // RLC ([IX|IY]+d)
+        // RLC ([IX|IY]+d) -> r (except F)
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
+        case 0x04:
+        case 0x05:
         case 0x06:
-            mem.w8(addr, rlc8(mem.r8(addr), true));
+        case 0x07:
+            val = rlc8(mem.r8(addr), true);
+            undoc_autocopy(op, val);
+            mem.w8(addr, val);
             state.T = 23;
             break;
         // RRC ([IX|IY]+d)
+        case 0x08:
+        case 0x09:
+        case 0x0A:
+        case 0x0B:
+        case 0x0C:
+        case 0x0D:
         case 0x0E:
-            mem.w8(addr, rrc8(mem.r8(addr), true));
+        case 0x0F:
+            val = rrc8(mem.r8(addr), true);
+            undoc_autocopy(op-0x08, val);
+            mem.w8(addr, val);
             state.T = 23;
             break;
         // RL ([IX|IY]+d)
+        case 0x10:
+        case 0x11:
+        case 0x12:
+        case 0x13:
+        case 0x14:
+        case 0x15:
         case 0x16:
-            mem.w8(addr, rl8(mem.r8(addr), true));
+        case 0x17:
+            val = rl8(mem.r8(addr), true);
+            undoc_autocopy(op-0x10, val);
+            mem.w8(addr, val);
             state.T = 23;
             break;
         // RR ([IX|IY]+d)
+        case 0x18:
+        case 0x19:
+        case 0x1A:
+        case 0x1B:
+        case 0x1C:
+        case 0x1D:
         case 0x1E:
-            mem.w8(addr, rr8(mem.r8(addr), true));
+        case 0x1F:
+            val = rr8(mem.r8(addr), true);
+            undoc_autocopy(op-0x18, val);
+            mem.w8(addr, val);
             state.T = 23;
             break;
         // SLA ([IX|IY]+d)
+        case 0x20:
+        case 0x21:
+        case 0x22:
+        case 0x23:
+        case 0x24:
+        case 0x25:
         case 0x26:
-            mem.w8(addr, sla8(mem.r8(addr)));
+        case 0x27:
+            val = sla8(mem.r8(addr));
+            undoc_autocopy(op-0x20, val);
+            mem.w8(addr, val);
             state.T = 23;
             break;
         // SRA ([IX|IY]+d)
+        case 0x28:
+        case 0x29:
+        case 0x2A:
+        case 0x2B:
+        case 0x2C:
+        case 0x2D:
         case 0x2E:
-            mem.w8(addr, sra8(mem.r8(addr)));
+        case 0x2F:
+            val = sra8(mem.r8(addr));
+            undoc_autocopy(op-0x28, val);
+            mem.w8(addr, val);
+            state.T = 23;
+            break;
+        // SLL ([IX|IY]+d)
+        case 0x30:
+        case 0x31:
+        case 0x32:
+        case 0x33:
+        case 0x34:
+        case 0x35:
+        case 0x36:
+        case 0x37:
+            val = sll8(mem.r8(addr));
+            undoc_autocopy(op-0x30, val);
+            mem.w8(addr, val);
             state.T = 23;
             break;
         // SRL ([IX|IY]+d)
+        case 0x38:
+        case 0x39:
+        case 0x3A:
+        case 0x3B:
+        case 0x3C:
+        case 0x3D:
         case 0x3E:
-            mem.w8(addr, srl8(mem.r8(addr)));
+        case 0x3F:
+            val = srl8(mem.r8(addr));
+            undoc_autocopy(op-0x38, val);
+            mem.w8(addr, val);
             state.T = 23;
             break;
         // BIT b,([IX|IY]+d)
