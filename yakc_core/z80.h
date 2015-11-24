@@ -543,11 +543,13 @@ z80::out(uword port, ubyte val) {
     }
 }
 
+#define SZ(i) ((i&0xFF)?((i&0x80)?SF:0):ZF)
+
 //------------------------------------------------------------------------------
 inline ubyte
 z80::add8(ubyte acc, ubyte add) {
     int r = int(acc) + int(add);
-    ubyte f = (r & 0xFF) ? ((r & 0x80) ? SF : 0) : ZF;
+    ubyte f = SZ(r);
     if (r > 0xFF) f |= CF;
     if ((r & 0xF) < (acc & 0xF)) f |= HF;
     if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -560,7 +562,7 @@ inline ubyte
 z80::adc8(ubyte acc, ubyte add) {
     if (state.F & CF) {
         int r = int(acc) + int(add) + 1;
-        ubyte f = r ? ((r & 0x80) ? SF : 0) : ZF;
+        ubyte f = SZ(r);
         if (r > 0xFF) f |= CF;
         if ((r & 0xF) <= (acc & 0xF)) f |= HF;
         if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -576,7 +578,7 @@ z80::adc8(ubyte acc, ubyte add) {
 inline ubyte
 z80::sub8(ubyte acc, ubyte sub) {
     int r = int(acc) - int(sub);
-    ubyte f = NF | (r ? ((r & 0x80) ? SF : 0) : ZF);
+    ubyte f = NF | SZ(r);
     if (r < 0) f |= CF;
     if ((r & 0xF) > (acc & 0xF)) f |= HF;
     if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -589,7 +591,7 @@ inline ubyte
 z80::sbc8(ubyte acc, ubyte sub) {
     if (state.F & CF) {
         int r = int(acc) - int(sub) - 1;
-        ubyte f = NF | (r ? ((r & 0x80) ? SF : 0) : ZF);
+        ubyte f = NF | SZ(r);
         if (r < 0) f |= CF;
         if ((r & 0xF) >= (acc & 0xF)) f |= HF;
         if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -605,7 +607,7 @@ z80::sbc8(ubyte acc, ubyte sub) {
 inline ubyte
 z80::inc8(ubyte val) {
     ubyte r = val + 1;
-    ubyte f = (r ? ((r & 0x80) ? SF : 0) : ZF);
+    ubyte f = SZ(r);
     if ((r & 0xF) == 0) f |= HF;
     if (r == 0x80) f |= VF;
     state.F = f | (state.F & CF);
@@ -616,7 +618,7 @@ z80::inc8(ubyte val) {
 inline ubyte
 z80::dec8(ubyte val) {
     ubyte r = val - 1;
-    ubyte f = NF | (r ? ((r & 0x80) ? SF : 0) : ZF);
+    ubyte f = NF | SZ(r);
     if ((r & 0xF) == 0xF) f |= HF;
     if (r == 0x7F) f |= VF;
     state.F = f | (state.F & CF);
@@ -726,7 +728,7 @@ z80::lddr() {
 inline void
 z80::cpi() {
     int r = int(state.A) - int(mem.r8(state.HL));
-    ubyte f = NF | (state.F & CF) | (r ? ((r & 0x80) ? SF : 0) : ZF);
+    ubyte f = NF | (state.F & CF) | SZ(r);
     if ((r & 0xF) > (state.A & 0xF)) {
         f |= HF;
         r--;
@@ -758,7 +760,7 @@ z80::cpir() {
 inline void
 z80::cpd() {
     int r = int(state.A) - int(mem.r8(state.HL));
-    ubyte f = NF | (state.F & CF) | (r ? ((r & 0x80) ? SF : 0) : ZF);
+    ubyte f = NF | (state.F & CF) | SZ(r);
     if ((r & 0xF) > (state.A & 0xF)) {
         f |= HF;
         r--;
