@@ -727,7 +727,10 @@ inline void
 z80::cpi() {
     int r = int(state.A) - int(mem.r8(state.HL));
     ubyte f = NF | (state.F & CF) | (r ? ((r & 0x80) ? SF : 0) : ZF);
-    if ((r & 0xF) >= (state.A & 0xF)) f |= HF;
+    if ((r & 0xF) > (state.A & 0xF)) {
+        f |= HF;
+        r--;
+    }
     if (r & 0x02) f |= YF;
     if (r & 0x08) f |= XF;
     state.HL++;
@@ -756,7 +759,10 @@ inline void
 z80::cpd() {
     int r = int(state.A) - int(mem.r8(state.HL));
     ubyte f = NF | (state.F & CF) | (r ? ((r & 0x80) ? SF : 0) : ZF);
-    if ((r & 0xF) >= (state.A & 0xF)) f |= HF;
+    if ((r & 0xF) > (state.A & 0xF)) {
+        f |= HF;
+        r--;
+    }
     if (r & 0x02) f |= YF;
     if (r & 0x08) f |= XF;
     state.HL--;
