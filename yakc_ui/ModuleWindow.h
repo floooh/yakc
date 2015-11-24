@@ -15,7 +15,6 @@ public:
     virtual void Setup(yakc::kc85& kc) override;
     /// draw method
     virtual bool Draw(yakc::kc85& kc) override;
-private:
     /// setup the list of supported modules
     void setupModules(yakc::kc85& kc);
     /// draw a single module slot
