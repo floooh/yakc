@@ -800,7 +800,7 @@ z80::szp(ubyte val) {
     if (val & (1<<5)) p++;
     if (val & (1<<6)) p++;
     if (val & (1<<7)) p++;
-    ubyte f = val ? val & SF : ZF;
+    ubyte f = SZ(val);
     f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
     f |= p & 1 ? 0 : PF;
     return f;
@@ -1027,8 +1027,11 @@ z80::sla8(ubyte val) {
 //------------------------------------------------------------------------------
 inline ubyte
 z80::sll8(ubyte val) {
-    // undocument! sll8 is identical to sla8
-    return sla8(val);
+    // undocument! sll8 is identical with sla8 but inserts a 1 into the LSB
+    ubyte r = (val<<1) | 1;
+    ubyte f = val & 0x80 ? CF : 0;
+    state.F = f | szp(r);
+    return r;
 }
 
 //------------------------------------------------------------------------------
