@@ -4,6 +4,7 @@
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc_core/z80.h"
 #include "yakc_test/zex.h"
+#include <string.h>
 
 /*
 This runs Frank Cringle's zexdoc test through the Z80 emulator. These are
@@ -14,6 +15,18 @@ make these work.
 using namespace yakc;
 
 static ubyte ram[0x10000];
+
+static const int output_size = 1<<16;
+static int out_pos = 0;
+static unsigned char output[output_size];
+
+static void put_char(char c) {
+    if (out_pos < output_size) {
+        output[out_pos++] = c;
+    }
+    putc(c, stdout);
+    fflush(stdout);
+}
 
 static ubyte in_func(void* userdata, uword port) {
     return 0;
@@ -28,16 +41,14 @@ static bool cpm_bdos(z80& cpu) {
     bool retval = true;
     if (2 == cpu.state.C) {
         // output a character
-        putc(cpu.state.E, stdout);
-        fflush(stdout);
+        put_char(cpu.state.E);
     }
     else if (9 == cpu.state.C) {
         // output a string
         ubyte c;
         uword addr = cpu.state.DE;
         while ((c = cpu.mem.r8(addr++)) != '$') {
-            putc(c, stdout);
-            fflush(stdout);
+            put_char(c);
         }
     }
     else {
@@ -52,6 +63,7 @@ static bool cpm_bdos(z80& cpu) {
 }
 
 TEST(zexdoc) {
+    memset(output, 0, sizeof(output));
 
     // initialize the z80 cpu
     z80 cpu;
@@ -87,9 +99,18 @@ TEST(zexdoc) {
             }
         }
         else if (cpu.state.PC == 0) {
-            printf("\nDONE!\n");
             running = false;
         }
+    }
+
+    // did an error occur?
+    output[output_size-1] = 0;
+    if (strstr((const char*)output, "ERROR")!=nullptr) {
+        bool zexdoc_failed = false;
+        CHECK(zexdoc_failed);
+    }
+    else {
+        printf("\n\nALL ZEXDOC TESTS PASSED!\n");
     }
 }
 
