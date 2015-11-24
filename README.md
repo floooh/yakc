@@ -69,4 +69,6 @@ https://github.com/mamedev/mame/blob/master/src/devices/cpu/z80/z80dasm.c
 https://github.com/floooh/oryol
 - the debugger UI is implemented on top of IMGUI:
 https://github.com/ocornut/imgui
-
+- the ZEXDOC/ZEXALL conformance tests by Frank D. Cringle in yakc_test 
+for testing Z80 compatibility is licensed under the GPL2, the source code 
+is also located in yakc_test
