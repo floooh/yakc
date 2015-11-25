@@ -166,6 +166,14 @@ public:
     ubyte in(uword port);
     /// call out-handler
     void out(uword port, ubyte val);
+
+    /// get sz flag mask from value (sign/zero)
+    static ubyte sz(ubyte val);
+    /// get flags for the LD A,I and LD A,R instructions
+    static ubyte sziff2(ubyte val, bool iff2);
+    /// get the SF|ZF|PF flags for a value
+    static ubyte szp(ubyte val);
+
     /// perform an 8-bit add, return result, and update flags
     ubyte add8(ubyte acc, ubyte add);
     /// perform an 8-bit adc, return result and update flags
@@ -200,8 +208,6 @@ public:
     void cpd();
     /// implement the CPDR instruction, return number of T-states
     int cpdr();
-    /// get the SF|ZF|PF flags for a value
-    static ubyte szp(ubyte val);
     /// return flags for ini/ind instruction
     ubyte ini_ind_flags(ubyte io_val, int c_add);
     /// implement the INI instruction
@@ -224,8 +230,6 @@ public:
     int otdr();
     /// implement the DAA instruction
     void daa();
-    /// get flags for the LD A,I and LD A,R instructions
-    static ubyte sziff2(ubyte val, bool iff2);
     /// rotate left, copy sign bit into CF,
     ubyte rlc8(ubyte val, bool flags_szp);
     /// rotate right, copy bit 0 into CF
@@ -543,13 +547,44 @@ z80::out(uword port, ubyte val) {
     }
 }
 
-#define SZ(i) ((i&0xFF)?((i&0x80)?SF:0):ZF)
+//------------------------------------------------------------------------------
+inline ubyte
+z80::sz(ubyte val) {
+    return ((val)?(val&SF):ZF);
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80::szp(ubyte val) {
+    int p = 0;
+    if (val & (1<<0)) p++;
+    if (val & (1<<1)) p++;
+    if (val & (1<<2)) p++;
+    if (val & (1<<3)) p++;
+    if (val & (1<<4)) p++;
+    if (val & (1<<5)) p++;
+    if (val & (1<<6)) p++;
+    if (val & (1<<7)) p++;
+    ubyte f = sz(val);
+    f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
+    f |= p & 1 ? 0 : PF;
+    return f;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80::sziff2(ubyte val, bool iff2) {
+    ubyte f = sz(val);
+    f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
+    if (iff2) f |= PF;
+    return f;
+}
 
 //------------------------------------------------------------------------------
 inline ubyte
 z80::add8(ubyte acc, ubyte add) {
     int r = int(acc) + int(add);
-    ubyte f = SZ(r);
+    ubyte f = sz(r);
     if (r > 0xFF) f |= CF;
     if ((r & 0xF) < (acc & 0xF)) f |= HF;
     if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -562,7 +597,7 @@ inline ubyte
 z80::adc8(ubyte acc, ubyte add) {
     if (state.F & CF) {
         int r = int(acc) + int(add) + 1;
-        ubyte f = SZ(r);
+        ubyte f = sz(r);
         if (r > 0xFF) f |= CF;
         if ((r & 0xF) <= (acc & 0xF)) f |= HF;
         if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -578,7 +613,7 @@ z80::adc8(ubyte acc, ubyte add) {
 inline ubyte
 z80::sub8(ubyte acc, ubyte sub) {
     int r = int(acc) - int(sub);
-    ubyte f = NF | SZ(r);
+    ubyte f = NF | sz(r);
     if (r < 0) f |= CF;
     if ((r & 0xF) > (acc & 0xF)) f |= HF;
     if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -591,7 +626,7 @@ inline ubyte
 z80::sbc8(ubyte acc, ubyte sub) {
     if (state.F & CF) {
         int r = int(acc) - int(sub) - 1;
-        ubyte f = NF | SZ(r);
+        ubyte f = NF | sz(r);
         if (r < 0) f |= CF;
         if ((r & 0xF) >= (acc & 0xF)) f |= HF;
         if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -607,7 +642,7 @@ z80::sbc8(ubyte acc, ubyte sub) {
 inline ubyte
 z80::inc8(ubyte val) {
     ubyte r = val + 1;
-    ubyte f = SZ(r);
+    ubyte f = sz(r);
     if ((r & 0xF) == 0) f |= HF;
     if (r == 0x80) f |= VF;
     state.F = f | (state.F & CF);
@@ -618,7 +653,7 @@ z80::inc8(ubyte val) {
 inline ubyte
 z80::dec8(ubyte val) {
     ubyte r = val - 1;
-    ubyte f = NF | SZ(r);
+    ubyte f = NF | sz(r);
     if ((r & 0xF) == 0xF) f |= HF;
     if (r == 0x7F) f |= VF;
     state.F = f | (state.F & CF);
@@ -728,7 +763,7 @@ z80::lddr() {
 inline void
 z80::cpi() {
     int r = int(state.A) - int(mem.r8(state.HL));
-    ubyte f = NF | (state.F & CF) | SZ(r);
+    ubyte f = NF | (state.F & CF) | sz(r);
     if ((r & 0xF) > (state.A & 0xF)) {
         f |= HF;
         r--;
@@ -760,7 +795,7 @@ z80::cpir() {
 inline void
 z80::cpd() {
     int r = int(state.A) - int(mem.r8(state.HL));
-    ubyte f = NF | (state.F & CF) | SZ(r);
+    ubyte f = NF | (state.F & CF) | sz(r);
     if ((r & 0xF) > (state.A & 0xF)) {
         f |= HF;
         r--;
@@ -786,24 +821,6 @@ z80::cpdr() {
     else {
         return 16;
     }
-}
-
-//------------------------------------------------------------------------------
-inline ubyte
-z80::szp(ubyte val) {
-    int p = 0;
-    if (val & (1<<0)) p++;
-    if (val & (1<<1)) p++;
-    if (val & (1<<2)) p++;
-    if (val & (1<<3)) p++;
-    if (val & (1<<4)) p++;
-    if (val & (1<<5)) p++;
-    if (val & (1<<6)) p++;
-    if (val & (1<<7)) p++;
-    ubyte f = SZ(val);
-    f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
-    f |= p & 1 ? 0 : PF;
-    return f;
 }
 
 //------------------------------------------------------------------------------
@@ -948,15 +965,6 @@ z80::daa() {
     state.F |= (state.A^val) & HF;
     state.F |= szp(val);
     state.A = val;
-}
-
-//------------------------------------------------------------------------------
-inline ubyte
-z80::sziff2(ubyte val, bool iff2) {
-    ubyte f = val ? val & SF : ZF;
-    f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
-    if (iff2) f |= PF;
-    return f;
 }
 
 //------------------------------------------------------------------------------
