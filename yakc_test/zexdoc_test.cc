@@ -4,7 +4,9 @@
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc_core/z80.h"
 #include "yakc_test/zex.h"
+#include "Time/Clock.h"
 #include <string.h>
+#include <inttypes.h>
 
 /*
 This runs Frank Cringle's zexdoc test through the Z80 emulator. These are
@@ -13,6 +15,7 @@ make these work.
 */
 
 using namespace yakc;
+using namespace Oryol;
 
 static ubyte ram[0x10000];
 
@@ -76,8 +79,9 @@ TEST(zexdoc) {
     // load the test program dump at 0x100
     cpu.mem.write(0x0100, dump_zexdoc, sizeof(dump_zexdoc));
 
+    auto startTime = Clock::Now();
     bool running = true;
-    int t = 0;
+    std::uint64_t t = 0;
     while (running) {
         t += cpu.step();
         // check for bdos call and trap
@@ -102,6 +106,8 @@ TEST(zexdoc) {
             running = false;
         }
     }
+    float64 dur = Clock::Since(startTime).AsSeconds();
+    printf("\n%" PRIu64 " cycles in %.3f seconds (== Z80 @ %.3f MHz)\n", t, dur, (t/dur)/1000000.0);
 
     // did an error occur?
     output[output_size-1] = 0;
