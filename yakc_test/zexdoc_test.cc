@@ -66,6 +66,7 @@ static bool cpm_bdos(z80& cpu) {
 }
 
 TEST(zexdoc) {
+
     memset(output, 0, sizeof(output));
 
     // initialize the z80 cpu
@@ -82,8 +83,10 @@ TEST(zexdoc) {
     auto startTime = Clock::Now();
     bool running = true;
     std::uint64_t t = 0;
+    std::uint64_t num = 0;
     while (running) {
         t += cpu.step();
+        num++;
         // check for bdos call and trap
         if (cpu.state.INV) {
             printf("INVALID OPCODE HIT (%02X %02X %02X %02X)\n",
@@ -107,7 +110,7 @@ TEST(zexdoc) {
         }
     }
     float64 dur = Clock::Since(startTime).AsSeconds();
-    printf("\n%" PRIu64 " cycles in %.3f seconds (== Z80 @ %.3f MHz)\n", t, dur, (t/dur)/1000000.0);
+    printf("\n%llu cycles, %llu ops in %.3fsecs (%.2f MHz / %.2f MIPS)\n", t, num, dur, (t/dur)/1000000.0,(num/dur)/1000000.0);
 
     // did an error occur?
     output[output_size-1] = 0;

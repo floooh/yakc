@@ -83,7 +83,7 @@ def add_op(ops, op, src) :
 
 #-------------------------------------------------------------------------------
 def t(num) :
-    return 'state.T = {};'.format(num)
+    return 'return {};'.format(num)
 
 #-------------------------------------------------------------------------------
 def NOP(ops) :
@@ -1784,7 +1784,7 @@ def DD_FD_CB(ops, lead_byte) :
         '// BIT b,([IX|IY]+d',
         '// SET b,([IX|IY]+d',
         '// RES b,([IX|IY]+d',
-        'dd_fd_cb({});'.format(hex(lead_byte))]
+        'return dd_fd_cb({});'.format(hex(lead_byte))]
     return add_op(ops, 0xCB, src)
 
 #-------------------------------------------------------------------------------
@@ -1802,7 +1802,7 @@ def LDIR(ops) :
     LDIR
     T-states: 21/16
     '''
-    src = ['// LDIR', 'state.T = ldir();']
+    src = ['// LDIR', 'return ldir();']
     return add_op(ops, 0xB0, src)
 
 #-------------------------------------------------------------------------------
@@ -1820,7 +1820,7 @@ def LDDR(ops) :
     LDDR
     T-states: 21/16
     '''
-    src = ['// LDDR', 'state.T = lddr();']
+    src = ['// LDDR', 'return lddr();']
     return add_op(ops, 0xB8, src)
 
 #-------------------------------------------------------------------------------
@@ -1838,7 +1838,7 @@ def CPIR(ops) :
     CPIR
     T-states: 21/16
     '''
-    src = ['// CPIR', 'state.T = cpir();']
+    src = ['// CPIR', 'return cpir();']
     return add_op(ops, 0xB1, src)
 
 #-------------------------------------------------------------------------------
@@ -1856,7 +1856,7 @@ def CPDR(ops) :
     CPDR
     T-states: 21/16
     '''
-    src = ['// CPDR', 'state.T = cpdr();']
+    src = ['// CPDR', 'return cpdr();']
     return add_op(ops, 0xB9, src)
 
 #-------------------------------------------------------------------------------
@@ -1966,11 +1966,11 @@ def JR_cc_e(ops) :
         src = ['// JR {},e'.format(c.name),
             'if ({}) {{'.format(c.test),
             '    state.PC += mem.rs8(state.PC++);',
-            '    state.T = 12;',
+            '    return 12;',
             '}',
             'else {',
             '    state.PC++;',
-            '    state.T = 7;',
+            '    return 7;',
             '}']
         ops = add_op(ops, c.op, src)
     return ops
@@ -2003,11 +2003,11 @@ def DJNZ_e(ops) :
         '// DJNZ e',
         'if (--state.B > 0) {',
         '    state.PC += mem.rs8(state.PC++);',
-        '    state.T = 13;',
+        '    return 13;',
         '}',
         'else {',
         '    state.PC++;',
-        '    state.T = 8;',
+        '    return 8;',
         '}']
     return add_op(ops, 0x10, src)
 
@@ -2039,11 +2039,11 @@ def CALL_cc_nn(ops) :
             '    state.SP -= 2;',
             '    mem.w16(state.SP, state.PC+2);',
             '    state.PC = mem.r16(state.PC);',
-            '    state.T = 17;',
+            '    return 17;',
             '}',
             'else {',
             '    state.PC += 2;',
-            '    state.T = 10;',
+            '    return 10;',
             '}']
         ops = add_op(ops, op, src)
     return ops
@@ -2072,10 +2072,10 @@ def RET_cc(ops) :
             'if ({}) {{'.format(c.test),
             '    state.PC = mem.r16(state.SP);',
             '    state.SP += 2;',
-            '    state.T = 11;',
+            '    return 11;',
             '}',
             'else {',
-            '    state.T = 5;',
+            '    return 5;',
             '}']
         ops = add_op(ops, op, src)
     return ops
@@ -2128,7 +2128,7 @@ def INIR(ops) :
     INIR
     T-states: 21/16
     '''
-    src = ['// INIR', 'state.T = inir();']
+    src = ['// INIR', 'return inir();']
     return add_op(ops, 0xB2, src)
 
 #-------------------------------------------------------------------------------
@@ -2146,7 +2146,7 @@ def INDR(ops) :
     INDR
     T-states: 21/16
     '''
-    src = ['// INDR', 'state.T = indr();']
+    src = ['// INDR', 'return indr();']
     return add_op(ops, 0xBA, src)
 
 #-------------------------------------------------------------------------------
@@ -2187,7 +2187,7 @@ def OTIR(ops) :
     OTIR
     T-state: 21/16
     '''
-    src = ['// OTIR', 'state.T = otir();']
+    src = ['// OTIR', 'return otir();']
     return add_op(ops, 0xB3, src)
 
 #-------------------------------------------------------------------------------
@@ -2205,7 +2205,7 @@ def OTDR(ops) :
     OTDR
     T-states: 21/16
     '''
-    src = ['// OTDR', 'state.T = otdr();']
+    src = ['// OTDR', 'return otdr();']
     return add_op(ops, 0xBB, src)
 
 #-------------------------------------------------------------------------------
@@ -2550,7 +2550,7 @@ def gen_source(f, ops, ext_ops) :
                             f.write('            {}\n'.format(line))
                         f.write('            break;\n')
                 f.write('        default:\n')
-                f.write('            invalid_opcode(2);\n')
+                f.write('            return invalid_opcode(2);\n')
                 f.write('            break;\n')
                 f.write('        }\n')
             else :
@@ -2558,10 +2558,13 @@ def gen_source(f, ops, ext_ops) :
                     f.write('        {}\n'.format(line))
             f.write('        break;\n')
     f.write('    default:\n')
-    f.write('       invalid_opcode(1);\n')
+    f.write('       return invalid_opcode(1);\n')
     f.write('       break;\n')
     f.write('    }\n')
-    f.write('    return state.T;\n')
+    f.write('#ifdef _DEBUG\n')
+    f.write('    YAKC_ASSERT(false);\n')
+    f.write('#endif\n')
+    f.write('    return 0;\n')
     f.write('}\n')
     f.write('} // namespace yakc\n')
 

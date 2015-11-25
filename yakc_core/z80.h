@@ -84,8 +84,6 @@ public:
         bool INV;
         /// the interrupt mode (0, 1 or 2)
         ubyte IM;
-        /// current T cycle counter
-        unsigned int T;
     } state;
 
     /// memory map
@@ -129,7 +127,7 @@ public:
     unsigned int step();
 
     /// called when invalid opcode has been hit
-    void invalid_opcode(uword opsize);
+    unsigned int invalid_opcode(uword opsize);
     /// store current pc in history ringbuffer
     void store_pc_history();
     /// get pc from history ringbuffer (0 is oldest entry)
@@ -167,8 +165,6 @@ public:
     /// call out-handler
     void out(uword port, ubyte val);
 
-    /// get sz flag mask from value (sign/zero)
-    static ubyte sz(ubyte val);
     /// get flags for the LD A,I and LD A,R instructions
     static ubyte sziff2(ubyte val, bool iff2);
     /// get the SF|ZF|PF flags for a value
@@ -255,7 +251,7 @@ public:
     /// undocumented register-autocopy for the DD/FD CB instructions
     void undoc_autocopy(ubyte reg, ubyte val);
     /// special handling for the FD/DD CB bit opcodes
-    void dd_fd_cb(ubyte lead);
+    int dd_fd_cb(ubyte lead);
 };
 
 //------------------------------------------------------------------------------
@@ -385,11 +381,11 @@ z80::get_pc_history(int index) const {
 }
 
 //------------------------------------------------------------------------------
-inline void
+inline unsigned int
 z80::invalid_opcode(uword opsize) {
     state.INV = true;
     state.PC -= opsize;     // stuck on invalid opcode
-    state.T  = 4;          // fantasy value
+    return 4;
 }
 
 //------------------------------------------------------------------------------
@@ -547,11 +543,7 @@ z80::out(uword port, ubyte val) {
     }
 }
 
-//------------------------------------------------------------------------------
-inline ubyte
-z80::sz(ubyte val) {
-    return ((val)?(val&SF):ZF);
-}
+#define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
 
 //------------------------------------------------------------------------------
 inline ubyte
@@ -565,7 +557,7 @@ z80::szp(ubyte val) {
     if (val & (1<<5)) p++;
     if (val & (1<<6)) p++;
     if (val & (1<<7)) p++;
-    ubyte f = sz(val);
+    ubyte f = val?(val&SF):ZF;
     f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
     f |= p & 1 ? 0 : PF;
     return f;
@@ -574,7 +566,7 @@ z80::szp(ubyte val) {
 //------------------------------------------------------------------------------
 inline ubyte
 z80::sziff2(ubyte val, bool iff2) {
-    ubyte f = sz(val);
+    ubyte f = YAKC_SZ(val);
     f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
     if (iff2) f |= PF;
     return f;
@@ -584,7 +576,7 @@ z80::sziff2(ubyte val, bool iff2) {
 inline ubyte
 z80::add8(ubyte acc, ubyte add) {
     int r = int(acc) + int(add);
-    ubyte f = sz(r);
+    ubyte f = YAKC_SZ(r);
     if (r > 0xFF) f |= CF;
     if ((r & 0xF) < (acc & 0xF)) f |= HF;
     if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -597,7 +589,7 @@ inline ubyte
 z80::adc8(ubyte acc, ubyte add) {
     if (state.F & CF) {
         int r = int(acc) + int(add) + 1;
-        ubyte f = sz(r);
+        ubyte f = YAKC_SZ(r);
         if (r > 0xFF) f |= CF;
         if ((r & 0xF) <= (acc & 0xF)) f |= HF;
         if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -613,7 +605,7 @@ z80::adc8(ubyte acc, ubyte add) {
 inline ubyte
 z80::sub8(ubyte acc, ubyte sub) {
     int r = int(acc) - int(sub);
-    ubyte f = NF | sz(r);
+    ubyte f = NF | YAKC_SZ(r);
     if (r < 0) f |= CF;
     if ((r & 0xF) > (acc & 0xF)) f |= HF;
     if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -626,7 +618,7 @@ inline ubyte
 z80::sbc8(ubyte acc, ubyte sub) {
     if (state.F & CF) {
         int r = int(acc) - int(sub) - 1;
-        ubyte f = NF | sz(r);
+        ubyte f = NF | YAKC_SZ(r);
         if (r < 0) f |= CF;
         if ((r & 0xF) >= (acc & 0xF)) f |= HF;
         if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -642,7 +634,7 @@ z80::sbc8(ubyte acc, ubyte sub) {
 inline ubyte
 z80::inc8(ubyte val) {
     ubyte r = val + 1;
-    ubyte f = sz(r);
+    ubyte f = YAKC_SZ(r);
     if ((r & 0xF) == 0) f |= HF;
     if (r == 0x80) f |= VF;
     state.F = f | (state.F & CF);
@@ -653,7 +645,7 @@ z80::inc8(ubyte val) {
 inline ubyte
 z80::dec8(ubyte val) {
     ubyte r = val - 1;
-    ubyte f = NF | sz(r);
+    ubyte f = NF | YAKC_SZ(r);
     if ((r & 0xF) == 0xF) f |= HF;
     if (r == 0x7F) f |= VF;
     state.F = f | (state.F & CF);
@@ -763,7 +755,7 @@ z80::lddr() {
 inline void
 z80::cpi() {
     int r = int(state.A) - int(mem.r8(state.HL));
-    ubyte f = NF | (state.F & CF) | sz(r);
+    ubyte f = NF | (state.F & CF) | YAKC_SZ(r);
     if ((r & 0xF) > (state.A & 0xF)) {
         f |= HF;
         r--;
@@ -795,7 +787,7 @@ z80::cpir() {
 inline void
 z80::cpd() {
     int r = int(state.A) - int(mem.r8(state.HL));
-    ubyte f = NF | (state.F & CF) | sz(r);
+    ubyte f = NF | (state.F & CF) | YAKC_SZ(r);
     if ((r & 0xF) > (state.A & 0xF)) {
         f |= HF;
         r--;
@@ -1108,7 +1100,7 @@ z80::undoc_autocopy(ubyte reg, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-inline void
+inline int
 z80::dd_fd_cb(ubyte lead) {
     int d = mem.rs8(state.PC++);
     uword addr;
@@ -1133,8 +1125,7 @@ z80::dd_fd_cb(ubyte lead) {
             val = rlc8(mem.r8(addr), true);
             undoc_autocopy(op, val);
             mem.w8(addr, val);
-            state.T = 23;
-            break;
+            return 23;
         // RRC ([IX|IY]+d)
         case 0x08:
         case 0x09:
@@ -1147,8 +1138,7 @@ z80::dd_fd_cb(ubyte lead) {
             val = rrc8(mem.r8(addr), true);
             undoc_autocopy(op-0x08, val);
             mem.w8(addr, val);
-            state.T = 23;
-            break;
+            return 23;
         // RL ([IX|IY]+d)
         case 0x10:
         case 0x11:
@@ -1161,8 +1151,7 @@ z80::dd_fd_cb(ubyte lead) {
             val = rl8(mem.r8(addr), true);
             undoc_autocopy(op-0x10, val);
             mem.w8(addr, val);
-            state.T = 23;
-            break;
+            return 23;
         // RR ([IX|IY]+d)
         case 0x18:
         case 0x19:
@@ -1175,8 +1164,7 @@ z80::dd_fd_cb(ubyte lead) {
             val = rr8(mem.r8(addr), true);
             undoc_autocopy(op-0x18, val);
             mem.w8(addr, val);
-            state.T = 23;
-            break;
+            return 23;
         // SLA ([IX|IY]+d)
         case 0x20:
         case 0x21:
@@ -1189,8 +1177,7 @@ z80::dd_fd_cb(ubyte lead) {
             val = sla8(mem.r8(addr));
             undoc_autocopy(op-0x20, val);
             mem.w8(addr, val);
-            state.T = 23;
-            break;
+            return 23;
         // SRA ([IX|IY]+d)
         case 0x28:
         case 0x29:
@@ -1203,8 +1190,7 @@ z80::dd_fd_cb(ubyte lead) {
             val = sra8(mem.r8(addr));
             undoc_autocopy(op-0x28, val);
             mem.w8(addr, val);
-            state.T = 23;
-            break;
+            return 23;
         // SLL ([IX|IY]+d)
         case 0x30:
         case 0x31:
@@ -1217,8 +1203,7 @@ z80::dd_fd_cb(ubyte lead) {
             val = sll8(mem.r8(addr));
             undoc_autocopy(op-0x30, val);
             mem.w8(addr, val);
-            state.T = 23;
-            break;
+            return 23;
         // SRL ([IX|IY]+d)
         case 0x38:
         case 0x39:
@@ -1231,8 +1216,7 @@ z80::dd_fd_cb(ubyte lead) {
             val = srl8(mem.r8(addr));
             undoc_autocopy(op-0x38, val);
             mem.w8(addr, val);
-            state.T = 23;
-            break;
+            return 23;
         // BIT b,([IX|IY]+d)
         case 0x46 | (0<<3):
         case 0x46 | (1<<3):
@@ -1243,8 +1227,7 @@ z80::dd_fd_cb(ubyte lead) {
         case 0x46 | (6<<3):
         case 0x46 | (7<<3):
             bit(mem.r8(addr), 1<<((op>>3)&7));
-            state.T = 20;
-            break;
+            return 20;
         // RES b,([IX|IY]+d)
         case 0x86 | (0<<3):
         case 0x86 | (1<<3):
@@ -1255,8 +1238,7 @@ z80::dd_fd_cb(ubyte lead) {
         case 0x86 | (6<<3):
         case 0x86 | (7<<3):
             mem.w8(addr, mem.r8(addr) & ~(1<<((op>>3)&7)));
-            state.T = 23;
-            break;
+            return 23;
         // SET b,([IX|IY]+d)
         case 0xC6 | (0<<3):
         case 0xC6 | (1<<3):
@@ -1267,13 +1249,11 @@ z80::dd_fd_cb(ubyte lead) {
         case 0xC6 | (6<<3):
         case 0xC6 | (7<<3):
             mem.w8(addr, mem.r8(addr) | (1<<((op>>3)&7)));
-            state.T = 23;
-            break;
+            return 23;
 
         // unknown opcode
         default:
-            invalid_opcode(4);
-            break;
+            return invalid_opcode(4);
     }
 }
 
