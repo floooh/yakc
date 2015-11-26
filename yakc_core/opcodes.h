@@ -7,7 +7,6 @@ inline unsigned int z80::step() {
     int d;
     uword u16tmp;
     state.INV = false;
-    store_pc_history();
     if (enable_interrupt) {
         state.IFF1 = state.IFF2 = true;
         enable_interrupt = false;
@@ -854,145 +853,145 @@ inline unsigned int z80::step() {
     case 0xa0:
         // AND B
         state.A &= state.B;
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 4;
         break;
     case 0xa1:
         // AND C
         state.A &= state.C;
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 4;
         break;
     case 0xa2:
         // AND D
         state.A &= state.D;
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 4;
         break;
     case 0xa3:
         // AND E
         state.A &= state.E;
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 4;
         break;
     case 0xa4:
         // AND H
         state.A &= state.H;
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 4;
         break;
     case 0xa5:
         // AND L
         state.A &= state.L;
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 4;
         break;
     case 0xa6:
         // AND (HL)
         state.A &= mem.r8(state.HL);
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 7;
         break;
     case 0xa7:
         // AND A
         state.A &= state.A;
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 4;
         break;
     case 0xa8:
         // XOR B
         state.A ^= state.B;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xa9:
         // XOR C
         state.A ^= state.C;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xaa:
         // XOR D
         state.A ^= state.D;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xab:
         // XOR E
         state.A ^= state.E;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xac:
         // XOR H
         state.A ^= state.H;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xad:
         // XOR L
         state.A ^= state.L;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xae:
         // XOR (HL)
         state.A ^= mem.r8(state.HL);
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 7;
         break;
     case 0xaf:
         // XOR A
         state.A ^= state.A;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xb0:
         // OR B
         state.A |= state.B;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xb1:
         // OR C
         state.A |= state.C;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xb2:
         // OR D
         state.A |= state.D;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xb3:
         // OR E
         state.A |= state.E;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xb4:
         // OR H
         state.A |= state.H;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xb5:
         // OR L
         state.A |= state.L;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xb6:
         // OR (HL)
         state.A |= mem.r8(state.HL);
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 7;
         break;
     case 0xb7:
         // OR A
         state.A |= state.A;
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 4;
         break;
     case 0xb8:
@@ -3006,58 +3005,58 @@ inline unsigned int z80::step() {
         case 0xa4:
             // AND IXH
             state.A &= state.IXH;
-            state.F = szp(state.A)|HF;
+            state.F = szp[state.A]|HF;
             return 8;
             break;
         case 0xa5:
             // AND IXL
             state.A &= state.IXL;
-            state.F = szp(state.A)|HF;
+            state.F = szp[state.A]|HF;
             return 8;
             break;
         case 0xa6:
             // AND (IX+d)
             d = mem.rs8(state.PC++);
             state.A &= mem.r8(state.IX + d);
-            state.F = szp(state.A)|HF;
+            state.F = szp[state.A]|HF;
             return 19;
             break;
         case 0xac:
             // XOR IXH
             state.A ^= state.IXH;
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 8;
             break;
         case 0xad:
             // XOR IXL
             state.A ^= state.IXL;
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 8;
             break;
         case 0xae:
             // XOR (IX+d)
             d = mem.rs8(state.PC++);
             state.A ^= mem.r8(state.IX + d);
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 19;
             break;
         case 0xb4:
             // OR IXH
             state.A |= state.IXH;
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 8;
             break;
         case 0xb5:
             // OR IXL
             state.A |= state.IXL;
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 8;
             break;
         case 0xb6:
             // OR (IX+d)
             d = mem.rs8(state.PC++);
             state.A |= mem.r8(state.IX + d);
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 19;
             break;
         case 0xbc:
@@ -3179,7 +3178,7 @@ inline unsigned int z80::step() {
     case 0xe6:
         // AND n
         state.A &= mem.r8(state.PC++);
-        state.F = szp(state.A)|HF;
+        state.F = szp[state.A]|HF;
         return 7;
         break;
     case 0xe8:
@@ -3226,7 +3225,7 @@ inline unsigned int z80::step() {
         case 0x40:
             // IN B,(C)
             state.B = in(state.BC);
-            state.F = szp(state.B)|(state.F&CF);
+            state.F = szp[state.B]|(state.F&CF);
             return 12;
             break;
         case 0x41:
@@ -3263,7 +3262,7 @@ inline unsigned int z80::step() {
         case 0x48:
             // IN C,(C)
             state.C = in(state.BC);
-            state.F = szp(state.C)|(state.F&CF);
+            state.F = szp[state.C]|(state.F&CF);
             return 12;
             break;
         case 0x49:
@@ -3295,7 +3294,7 @@ inline unsigned int z80::step() {
         case 0x50:
             // IN D,(C)
             state.D = in(state.BC);
-            state.F = szp(state.D)|(state.F&CF);
+            state.F = szp[state.D]|(state.F&CF);
             return 12;
             break;
         case 0x51:
@@ -3328,7 +3327,7 @@ inline unsigned int z80::step() {
         case 0x58:
             // IN E,(C)
             state.E = in(state.BC);
-            state.F = szp(state.E)|(state.F&CF);
+            state.F = szp[state.E]|(state.F&CF);
             return 12;
             break;
         case 0x59:
@@ -3361,7 +3360,7 @@ inline unsigned int z80::step() {
         case 0x60:
             // IN H,(C)
             state.H = in(state.BC);
-            state.F = szp(state.H)|(state.F&CF);
+            state.F = szp[state.H]|(state.F&CF);
             return 12;
             break;
         case 0x61:
@@ -3388,7 +3387,7 @@ inline unsigned int z80::step() {
         case 0x68:
             // IN L,(C)
             state.L = in(state.BC);
-            state.F = szp(state.L)|(state.F&CF);
+            state.F = szp[state.L]|(state.F&CF);
             return 12;
             break;
         case 0x69:
@@ -3426,7 +3425,7 @@ inline unsigned int z80::step() {
         case 0x78:
             // IN A,(C)
             state.A = in(state.BC);
-            state.F = szp(state.A)|(state.F&CF);
+            state.F = szp[state.A]|(state.F&CF);
             return 12;
             break;
         case 0x79:
@@ -3525,7 +3524,7 @@ inline unsigned int z80::step() {
     case 0xee:
         // XOR n
         state.A ^= mem.r8(state.PC++);
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 7;
         break;
     case 0xf0:
@@ -3577,7 +3576,7 @@ inline unsigned int z80::step() {
     case 0xf6:
         // OR n
         state.A |= mem.r8(state.PC++);
-        state.F = szp(state.A);
+        state.F = szp[state.A];
         return 7;
         break;
     case 0xf8:
@@ -4113,58 +4112,58 @@ inline unsigned int z80::step() {
         case 0xa4:
             // AND IYH
             state.A &= state.IYH;
-            state.F = szp(state.A)|HF;
+            state.F = szp[state.A]|HF;
             return 8;
             break;
         case 0xa5:
             // AND IYL
             state.A &= state.IYL;
-            state.F = szp(state.A)|HF;
+            state.F = szp[state.A]|HF;
             return 8;
             break;
         case 0xa6:
             // AND (IY+d)
             d = mem.rs8(state.PC++);
             state.A &= mem.r8(state.IY + d);
-            state.F = szp(state.A)|HF;
+            state.F = szp[state.A]|HF;
             return 19;
             break;
         case 0xac:
             // XOR IYH
             state.A ^= state.IYH;
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 8;
             break;
         case 0xad:
             // XOR IYL
             state.A ^= state.IYL;
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 8;
             break;
         case 0xae:
             // XOR (IY+d)
             d = mem.rs8(state.PC++);
             state.A ^= mem.r8(state.IY + d);
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 19;
             break;
         case 0xb4:
             // OR IYH
             state.A |= state.IYH;
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 8;
             break;
         case 0xb5:
             // OR IYL
             state.A |= state.IYL;
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 8;
             break;
         case 0xb6:
             // OR (IY+d)
             d = mem.rs8(state.PC++);
             state.A |= mem.r8(state.IY + d);
-            state.F = szp(state.A);
+            state.F = szp[state.A];
             return 19;
             break;
         case 0xbc:

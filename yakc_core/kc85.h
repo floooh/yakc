@@ -209,6 +209,7 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
                     break;
                 }
             }
+            this->cpu.store_pc_history();   // FIXME: move debug features into separate class!
             unsigned int cycles_opcode = this->cpu.step();
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);

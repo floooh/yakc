@@ -1037,7 +1037,7 @@ def AND_r(ops) :
         src = [
             '// AND {}'.format(r.name),
             'state.A &= state.{};'.format(r.name),
-            'state.F = szp(state.A)|HF;',
+            'state.F = szp[state.A]|HF;',
             t(4)]
         ops = add_op(ops, op, src)
     return ops
@@ -1057,7 +1057,7 @@ def uAND_IXYhl(ops, xname) :
         src = [
             '// AND {}{}'.format(xname, r.name),
             'state.A &= state.{}{};'.format(xname, r.name),
-            'state.F = szp(state.A)|HF;',
+            'state.F = szp[state.A]|HF;',
             t(8)]
         ops = add_op(ops, op, src)
     return ops
@@ -1073,7 +1073,7 @@ def OR_r(ops) :
         src = [
             '// OR {}'.format(r.name),
             'state.A |= state.{};'.format(r.name),
-            'state.F = szp(state.A);',
+            'state.F = szp[state.A];',
             t(4)]
         ops = add_op(ops, op, src)
     return ops
@@ -1093,7 +1093,7 @@ def uOR_IXYhl(ops, xname) :
         src = [
             '// OR {}{}'.format(xname, r.name),
             'state.A |= state.{}{};'.format(xname, r.name),
-            'state.F = szp(state.A);',
+            'state.F = szp[state.A];',
             t(8)]
         ops = add_op(ops, op, src)
     return ops
@@ -1109,7 +1109,7 @@ def XOR_r(ops) :
         src = [
             '// XOR {}'.format(r.name),
             'state.A ^= state.{};'.format(r.name),
-            'state.F = szp(state.A);',
+            'state.F = szp[state.A];',
             t(4)]
         ops = add_op(ops, op, src)
     return ops
@@ -1129,7 +1129,7 @@ def uXOR_IXYhl(ops, xname) :
         src = [
             '// XOR {}{}'.format(xname, r.name),
             'state.A ^= state.{}{};'.format(xname, r.name),
-            'state.F = szp(state.A);',
+            'state.F = szp[state.A];',
             t(8)]
         ops = add_op(ops, op, src)
     return ops
@@ -1144,7 +1144,7 @@ def AND_n(ops) :
     src = [
         '// AND n',
         'state.A &= mem.r8(state.PC++);',
-        'state.F = szp(state.A)|HF;',
+        'state.F = szp[state.A]|HF;',
         t(7)]
     return add_op(ops, 0xE6, src)
 
@@ -1157,7 +1157,7 @@ def OR_n(ops) :
     src = [
         '// OR n',
         'state.A |= mem.r8(state.PC++);',
-        'state.F = szp(state.A);',
+        'state.F = szp[state.A];',
         t(7)]
     return add_op(ops, 0xF6, src)
 
@@ -1170,7 +1170,7 @@ def XOR_n(ops) :
     src = [
         '// XOR n',
         'state.A ^= mem.r8(state.PC++);',
-        'state.F = szp(state.A);',
+        'state.F = szp[state.A];',
         t(7)]
     return add_op(ops, 0xEE, src)
 
@@ -1183,7 +1183,7 @@ def AND_iHL(ops) :
     src = [
         '// AND (HL)',
         'state.A &= mem.r8(state.HL);',
-        'state.F = szp(state.A)|HF;',
+        'state.F = szp[state.A]|HF;',
         t(7)]
     return add_op(ops, 0xA6, src)
 
@@ -1196,7 +1196,7 @@ def OR_iHL(ops) :
     src = [
         '// OR (HL)',
         'state.A |= mem.r8(state.HL);',
-        'state.F = szp(state.A);',
+        'state.F = szp[state.A];',
         t(7)]
     return add_op(ops, 0xB6, src)
 
@@ -1209,7 +1209,7 @@ def XOR_iHL(ops) :
     src = [
         '// XOR (HL)',
         'state.A ^= mem.r8(state.HL);',
-        'state.F = szp(state.A);',
+        'state.F = szp[state.A];',
         t(7)]
     return add_op(ops, 0xAE, src)
 
@@ -1223,7 +1223,7 @@ def AND_iIXY_d(ops, xname) :
         '// AND ({}+d)'.format(xname),
         'd = mem.rs8(state.PC++);',
         'state.A &= mem.r8(state.{} + d);'.format(xname),
-        'state.F = szp(state.A)|HF;',
+        'state.F = szp[state.A]|HF;',
         t(19)]
     return add_op(ops, 0xA6, src)
 
@@ -1237,7 +1237,7 @@ def OR_iIXY_d(ops, xname) :
         '// OR ({}+d)'.format(xname),
         'd = mem.rs8(state.PC++);',
         'state.A |= mem.r8(state.{} + d);'.format(xname),
-        'state.F = szp(state.A);',
+        'state.F = szp[state.A];',
         t(19)]
     return add_op(ops, 0xB6, src)
 
@@ -1251,7 +1251,7 @@ def XOR_iIXY_d(ops, xname) :
         '// XOR ({}+d)'.format(xname),
         'd = mem.rs8(state.PC++);',
         'state.A ^= mem.r8(state.{} + d);'.format(xname),
-        'state.F = szp(state.A);',
+        'state.F = szp[state.A];',
         t(19)]
     return add_op(ops, 0xAE, src)
 
@@ -2108,7 +2108,7 @@ def IN_r_iC(ops) :
         op = 0b01000000 | r.bits<<3
         src = ['// IN {},(C)'.format(r.name),
             'state.{} = in(state.BC);'.format(r.name),
-            'state.F = szp(state.{})|(state.F&CF);'.format(r.name),
+            'state.F = szp[state.{}]|(state.F&CF);'.format(r.name),
             t(12)]
         add_op(ops, op, src)
     return ops
@@ -2530,7 +2530,6 @@ def gen_source(f, ops, ext_ops) :
     f.write('    int d;\n')
     f.write('    uword u16tmp;\n')
     f.write('    state.INV = false;\n')
-    f.write('    store_pc_history();\n')
     f.write('    if (enable_interrupt) {\n')
     f.write('        state.IFF1 = state.IFF2 = true;\n')
     f.write('        enable_interrupt = false;\n')

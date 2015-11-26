@@ -86,6 +86,17 @@ public:
         ubyte IM;
     } state;
 
+    /// flag lookup table for SZP flag combinations
+    ubyte szp[256];
+    /// inc8 flags
+    ubyte inc8_flags[256];
+    /// dec8 flags
+    ubyte dec8_flags[256];
+    /// flag lookup table for add8
+    ubyte add8_flags[256][256];
+    /// flag lookup table for sub8
+    ubyte sub8_flags[256][256];
+
     /// memory map
     memory mem;
     /// size of PC history ringbuffer (must be 2^N!)
@@ -119,6 +130,8 @@ public:
 
     /// one-time init
     void init(cb_in func_in, cb_out func_out, void* userdata);
+    /// initialize the flag lookup tables
+    void init_flag_tables();
     /// connect the highest priority interrupt controller device
     void connect_irq_device(z80int* device);
     /// perform a reset (RESET pin triggered)
@@ -167,8 +180,6 @@ public:
 
     /// get flags for the LD A,I and LD A,R instructions
     static ubyte sziff2(ubyte val, bool iff2);
-    /// get the SF|ZF|PF flags for a value
-    static ubyte szp(ubyte val);
 
     /// perform an 8-bit add, return result, and update flags
     ubyte add8(ubyte acc, ubyte add);
@@ -271,10 +282,64 @@ enable_interrupt(false) {
 inline void
 z80::init(cb_in func_in, cb_out func_out, void* userdata) {
     YAKC_ASSERT(func_in && func_out);
+    this->init_flag_tables();
     this->reset();
     this->in_func = func_in;
     this->out_func = func_out;
     this->inout_userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+#define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
+inline void
+z80::init_flag_tables() {
+    for (int val = 0; val < 256; val++) {
+        int p = 0;
+        if (val & (1<<0)) p++;
+        if (val & (1<<1)) p++;
+        if (val & (1<<2)) p++;
+        if (val & (1<<3)) p++;
+        if (val & (1<<4)) p++;
+        if (val & (1<<5)) p++;
+        if (val & (1<<6)) p++;
+        if (val & (1<<7)) p++;
+        ubyte f = val?(val&SF):ZF;
+        f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
+        f |= p & 1 ? 0 : PF;
+        this->szp[val] = f;
+    }
+    for (int val = 0; val < 256; val++) {
+        ubyte f = YAKC_SZ(val);
+        if ((val & 0xF) == 0) f |= HF;
+        if (val == 0x80) f |= VF;
+        this->inc8_flags[val] = f;
+    }
+    for (int val = 0; val < 256; val++) {
+        ubyte f = NF | YAKC_SZ(val);
+        if ((val & 0xF) == 0xF) f |= HF;
+        if (val == 0x7F) f |= VF;
+        this->dec8_flags[val] = f;
+    }
+    for (int acc = 0; acc < 256; acc++) {
+        for (int add = 0; add < 256; add++) {
+            int r = acc + add;
+            ubyte f = YAKC_SZ(r);
+            if (r > 0xFF) f |= CF;
+            if ((r & 0xF) < (acc & 0xF)) f |= HF;
+            if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+            this->add8_flags[acc][add] = f;
+        }
+    }
+    for (int acc = 0; acc < 256; acc++) {
+        for (int sub = 0; sub < 256; sub++) {
+            int r = int(acc) - int(sub);
+            ubyte f = NF | YAKC_SZ(r);
+            if (r < 0) f |= CF;
+            if ((r & 0xF) > (acc & 0xF)) f |= HF;
+            if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+            this->sub8_flags[acc][sub] = f;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -543,26 +608,6 @@ z80::out(uword port, ubyte val) {
     }
 }
 
-#define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
-
-//------------------------------------------------------------------------------
-inline ubyte
-z80::szp(ubyte val) {
-    int p = 0;
-    if (val & (1<<0)) p++;
-    if (val & (1<<1)) p++;
-    if (val & (1<<2)) p++;
-    if (val & (1<<3)) p++;
-    if (val & (1<<4)) p++;
-    if (val & (1<<5)) p++;
-    if (val & (1<<6)) p++;
-    if (val & (1<<7)) p++;
-    ubyte f = val?(val&SF):ZF;
-    f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
-    f |= p & 1 ? 0 : PF;
-    return f;
-}
-
 //------------------------------------------------------------------------------
 inline ubyte
 z80::sziff2(ubyte val, bool iff2) {
@@ -575,26 +620,22 @@ z80::sziff2(ubyte val, bool iff2) {
 //------------------------------------------------------------------------------
 inline ubyte
 z80::add8(ubyte acc, ubyte add) {
-    int r = int(acc) + int(add);
-    ubyte f = YAKC_SZ(r);
-    if (r > 0xFF) f |= CF;
-    if ((r & 0xF) < (acc & 0xF)) f |= HF;
-    if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
-    state.F = f;
-    return (ubyte)r;
+    state.F = add8_flags[acc][add];
+    return acc + add;
 }
 
 //------------------------------------------------------------------------------
 inline ubyte
 z80::adc8(ubyte acc, ubyte add) {
     if (state.F & CF) {
+        // don't waste flag table space for rarely used instructions
         int r = int(acc) + int(add) + 1;
         ubyte f = YAKC_SZ(r);
         if (r > 0xFF) f |= CF;
         if ((r & 0xF) <= (acc & 0xF)) f |= HF;
         if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
         state.F = f;
-        return (ubyte)r;
+        return ubyte(r);
     }
     else {
         return add8(acc, add);
@@ -604,26 +645,22 @@ z80::adc8(ubyte acc, ubyte add) {
 //------------------------------------------------------------------------------
 inline ubyte
 z80::sub8(ubyte acc, ubyte sub) {
-    int r = int(acc) - int(sub);
-    ubyte f = NF | YAKC_SZ(r);
-    if (r < 0) f |= CF;
-    if ((r & 0xF) > (acc & 0xF)) f |= HF;
-    if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
-    state.F = f;
-    return (ubyte)r;
+    state.F = sub8_flags[acc][sub];
+    return acc - sub;
 }
 
 //------------------------------------------------------------------------------
 inline ubyte
 z80::sbc8(ubyte acc, ubyte sub) {
     if (state.F & CF) {
+        // don't waste flag table space for rarely used instructions
         int r = int(acc) - int(sub) - 1;
         ubyte f = NF | YAKC_SZ(r);
         if (r < 0) f |= CF;
         if ((r & 0xF) >= (acc & 0xF)) f |= HF;
         if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
         state.F = f;
-        return (ubyte)r;
+        return ubyte(r);
     }
     else {
         return sub8(acc, sub);
@@ -634,10 +671,7 @@ z80::sbc8(ubyte acc, ubyte sub) {
 inline ubyte
 z80::inc8(ubyte val) {
     ubyte r = val + 1;
-    ubyte f = YAKC_SZ(r);
-    if ((r & 0xF) == 0) f |= HF;
-    if (r == 0x80) f |= VF;
-    state.F = f | (state.F & CF);
+    state.F = this->inc8_flags[r] | (state.F & CF);
     return r;
 }
 
@@ -645,10 +679,7 @@ z80::inc8(ubyte val) {
 inline ubyte
 z80::dec8(ubyte val) {
     ubyte r = val - 1;
-    ubyte f = NF | YAKC_SZ(r);
-    if ((r & 0xF) == 0xF) f |= HF;
-    if (r == 0x7F) f |= VF;
-    state.F = f | (state.F & CF);
+    state.F = this->dec8_flags[r] | (state.F & CF);
     return r;
 }
 
@@ -825,7 +856,7 @@ z80::ini_ind_flags(ubyte io_val, int c_add) {
     if (io_val & SF) f |= NF;
     unsigned int t = (unsigned int)((state.C+c_add)&0xFF) + (unsigned int)io_val;
     if (t & 0x100) f |= HF|CF;
-    f |= szp(ubyte(t & 0x07)^state.B) & PF;
+    f |= szp[ubyte(t & 0x07)^state.B] & PF;
     return f;
 }
 
@@ -883,7 +914,7 @@ z80::outi_outd_flags(ubyte io_val) {
     if (io_val & SF) f |= NF;
     unsigned int t = (unsigned int)state.L + (unsigned int)io_val;
     if (t & 0x100) f |= HF|CF;
-    f |= szp(ubyte(t & 0x07)^state.B) & PF;
+    f |= szp[ubyte(t & 0x07)^state.B] & PF;
     return f;
 }
 
@@ -955,7 +986,7 @@ z80::daa() {
     state.F &= CF|NF;
     state.F |= (state.A > 0x99) ? CF:0;
     state.F |= (state.A^val) & HF;
-    state.F |= szp(val);
+    state.F |= szp[val];
     state.A = val;
 }
 
@@ -965,7 +996,7 @@ z80::rlc8(ubyte val, bool flags_szp) {
     ubyte r = val<<1|val>>7;
     ubyte f = (val & 0x80) ? CF : 0;
     if (flags_szp) {
-        state.F = f | szp(r);
+        state.F = f | szp[r];
     }
     else {
         state.F = f | (state.F & (SF|ZF|PF));
@@ -977,9 +1008,9 @@ z80::rlc8(ubyte val, bool flags_szp) {
 inline ubyte
 z80::rrc8(ubyte val, bool flags_szp) {
     ubyte r = val>>1|val<<7;
-    ubyte f = (val & 0x01) ? CF : 0;
+    ubyte f = val & CF;
     if (flags_szp) {
-        state.F = f | szp(r);
+        state.F = f | szp[r];
     }
     else {
         state.F = f | (state.F & (SF|ZF|PF));
@@ -993,7 +1024,7 @@ z80::rl8(ubyte val, bool flags_szp) {
     ubyte r = val<<1 | ((state.F & CF) ? 0x01:0x00);
     ubyte f = val & 0x80 ? CF : 0;
     if (flags_szp) {
-        state.F = f | szp(r);
+        state.F = f | szp[r];
     }
     else {
         state.F = f | (state.F & (SF|ZF|PF));
@@ -1005,9 +1036,9 @@ z80::rl8(ubyte val, bool flags_szp) {
 inline ubyte
 z80::rr8(ubyte val, bool flags_szp) {
     ubyte r = val>>1 | ((state.F & CF) ? 0x80:0x00);
-    ubyte f = val & 0x01 ? CF : 0;
+    ubyte f = val & CF;
     if (flags_szp) {
-        state.F = f | szp(r);
+        state.F = f | szp[r];
     }
     else {
         state.F = f | (state.F & (SF|ZF|PF));
@@ -1019,8 +1050,7 @@ z80::rr8(ubyte val, bool flags_szp) {
 inline ubyte
 z80::sla8(ubyte val) {
     ubyte r = val<<1;
-    ubyte f = val & 0x80 ? CF : 0;
-    state.F = f | szp(r);
+    state.F = (val & 0x80 ? CF : 0) | szp[r];
     return r;
 }
 
@@ -1029,8 +1059,7 @@ inline ubyte
 z80::sll8(ubyte val) {
     // undocument! sll8 is identical with sla8 but inserts a 1 into the LSB
     ubyte r = (val<<1) | 1;
-    ubyte f = val & 0x80 ? CF : 0;
-    state.F = f | szp(r);
+    state.F = (val & 0x80 ? CF : 0) | szp[r];
     return r;
 }
 
@@ -1038,8 +1067,7 @@ z80::sll8(ubyte val) {
 inline ubyte
 z80::sra8(ubyte val) {
     ubyte r = (val>>1) | (val & 0x80);
-    ubyte f = val & 0x01 ? CF : 0;
-    state.F = f | szp(r);
+    state.F = (val & CF) | szp[r];
     return r;
 }
 
@@ -1047,8 +1075,7 @@ z80::sra8(ubyte val) {
 inline ubyte
 z80::srl8(ubyte val) {
     ubyte r = val>>1;
-    ubyte f = val & 0x01 ? CF : 0;
-    state.F = f | szp(r);
+    state.F = (val & CF) | szp[r];
     return r;
 }
 
@@ -1060,7 +1087,7 @@ z80::rld() {
     state.A = (state.A & 0xF0) | (x>>4);    // move (HL) high nibble into A low nibble
     x = (x<<4) | tmp;   // move (HL) low to high nibble, move A low nibble to (HL) low nibble
     mem.w8(state.HL, x);
-    state.F = szp(state.A) | (state.F & CF);
+    state.F = szp[state.A] | (state.F & CF);
 }
 
 //------------------------------------------------------------------------------
@@ -1071,7 +1098,7 @@ z80::rrd() {
     state.A = (state.A & 0xF0) | (x & 0x0F);    // move (HL) low nibble to A low nibble
     x = (x >> 4) | (tmp << 4);  // move A low nibble to (HL) high nibble, and (HL) high nibble to (HL) low nibble
     mem.w8(state.HL, x);
-    state.F = szp(state.A) | (state.F & CF);
+    state.F = szp[state.A] | (state.F & CF);
 }
 
 //------------------------------------------------------------------------------
