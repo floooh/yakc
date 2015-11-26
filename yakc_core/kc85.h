@@ -6,6 +6,7 @@
 */
 #include "yakc_core/clock.h"
 #include "yakc_core/z80.h"
+#include "yakc_core/z80dbg.h"
 #include "yakc_core/z80pio.h"
 #include "yakc_core/z80ctc.h"
 #include "yakc_roms/roms.h"
@@ -42,8 +43,7 @@ public:
     kc85_expansion exp;
 
     /// debugging support
-    bool breakpoint_enabled;
-    uword breakpoint_address;
+    z80dbg dbg;
     bool paused;
 
     /// constructor
@@ -90,8 +90,6 @@ private:
 
 //------------------------------------------------------------------------------
 inline kc85::kc85():
-breakpoint_enabled(false),
-breakpoint_address(0x0000),
 paused(false),
 cur_model(kc85_model::kc85_3),
 key_code(0),
@@ -203,13 +201,11 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
         const unsigned int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
         unsigned int cycles_executed = 0;
         while (cycles_executed < num_cycles) {
-            if (this->breakpoint_enabled) {
-                if (this->cpu.state.PC == this->breakpoint_address) {
-                    this->paused = true;
-                    break;
-                }
+            if (this->dbg.check_break(this->cpu)) {
+                this->paused = true;
+                break;
             }
-            this->cpu.store_pc_history();   // FIXME: move debug features into separate class!
+            this->dbg.store_pc_history(this->cpu); // FIXME: only if debug window open?
             unsigned int cycles_opcode = this->cpu.step();
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);
@@ -225,7 +221,7 @@ kc85::debug_step() {
     uword pc;
     do {
         pc = this->cpu.state.PC;
-        this->cpu.store_pc_history();
+        this->dbg.store_pc_history(this->cpu);  // FIXME: only if debug window open?
         this->cpu.step();
     }
     while ((pc == this->cpu.state.PC) && !this->cpu.state.INV);

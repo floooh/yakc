@@ -17,9 +17,9 @@ public:
     virtual bool Draw(yakc::kc85& kc) override;
 
     /// draw a 16-bit register widget
-    void drawReg16(yakc::kc85& kc, yakc::z80::reg r);
+    void drawReg16(yakc::kc85& kc, yakc::z80dbg::reg r);
     /// draw an 8-bit register widget
-    void drawReg8(yakc::kc85& kc, yakc::z80::reg r);
+    void drawReg8(yakc::kc85& kc, yakc::z80dbg::reg r);
     /// draw the register table
     void drawRegisterTable(yakc::kc85& kc);
     /// draw the main window content, starting at given address
@@ -27,6 +27,6 @@ public:
     /// draw control buttons
     void drawControls(yakc::kc85& kc);
 
-    HexInputWidget regWidget[yakc::z80::reg::num];
+    HexInputWidget regWidget[yakc::z80dbg::reg::num];
     HexInputWidget breakPointWidget;
 };

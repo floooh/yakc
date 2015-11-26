@@ -25,15 +25,6 @@ public:
         ZF = (1<<6),        // zero flag
         SF = (1<<7),        // sign flag
     };
-    /// register enum for set_reg/get_reg methods
-    enum reg {
-        rA=0, rF, rB, rC, rD, rE, rH, rL,
-        rAF, rBC, rDE, rHL,
-        rAF_,rBC_, rDE_, rHL_,
-        rI, rR, rIX, rIY, rSP, rPC,
-        rIM,
-        num
-    };
 
     /// the cpu state
     struct cpu_state {
@@ -99,12 +90,6 @@ public:
 
     /// memory map
     memory mem;
-    /// size of PC history ringbuffer (must be 2^N!)
-    static const int pc_history_size = 8;
-    /// current pc history position
-    int pc_history_pos;
-    /// a history ringbuffer of previous PC addresses
-    uword pc_history[pc_history_size];
 
     /// input hook typedef, take a port number, return value at that port
     typedef ubyte (*cb_in)(void* userdata, uword port);
@@ -141,10 +126,6 @@ public:
 
     /// called when invalid opcode has been hit
     unsigned int invalid_opcode(uword opsize);
-    /// store current pc in history ringbuffer
-    void store_pc_history();
-    /// get pc from history ringbuffer (0 is oldest entry)
-    uword get_pc_history(int index) const;
 
     /// receive an interrupt request
     static void irq(void* self);
@@ -159,17 +140,7 @@ public:
 
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
-    /// set an 8-bit register value by enum (slow)
-    void set8(reg r, ubyte v);
-    /// get an 8-bit register value by enum (slow)
-    ubyte get8(reg r) const;
-    /// set a 16-bit register value by enum (slow)
-    void set16(reg r, uword v);
-    /// get a 16-bit register value by enum (slow)
-    uword get16(reg r) const;
-    /// get a string-name for a register
-    static const char* reg_name(reg r);
-    /// helper to test expected flag bitmask
+    /// helper to test expected flag bitmask (FIXME: move to z80dbg?)
     bool test_flags(ubyte expected) const;
     /// fetch an opcode byte and increment R register
     ubyte fetch_op();
@@ -267,7 +238,6 @@ public:
 
 //------------------------------------------------------------------------------
 inline z80::z80() :
-pc_history_pos(0),
 in_func(nullptr),
 out_func(nullptr),
 inout_userdata(nullptr),
@@ -275,7 +245,6 @@ irq_device(nullptr),
 irq_received(false),
 enable_interrupt(false) {
     YAKC_MEMSET(&this->state, 0, sizeof(this->state));
-    YAKC_MEMSET(&this->pc_history, 0, sizeof(this->pc_history));
 }
 
 //------------------------------------------------------------------------------
@@ -432,20 +401,6 @@ z80::di() {
 }
 
 //------------------------------------------------------------------------------
-inline void
-z80::store_pc_history() {
-    this->pc_history[pc_history_pos++] = this->state.PC;
-    this->pc_history_pos &= this->pc_history_size-1;
-}
-
-//------------------------------------------------------------------------------
-inline uword
-z80::get_pc_history(int index) const {
-    int i = ((this->pc_history_pos-pc_history_size)+index) & (pc_history_size-1);
-    return pc_history[i];
-}
-
-//------------------------------------------------------------------------------
 inline unsigned int
 z80::invalid_opcode(uword opsize) {
     state.INV = true;
@@ -459,119 +414,6 @@ z80::swap16(uword& r0, uword& r1) {
     uword tmp = r0;
     r0 = r1;
     r1 = tmp;
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80::set8(reg r, ubyte v) {
-    switch (r) {
-        case rA:     state.A = v; break;
-        case rF:     state.F = v; break;
-        case rB:     state.B = v; break;
-        case rC:     state.C = v; break;
-        case rD:     state.D = v; break;
-        case rE:     state.E = v; break;
-        case rH:     state.H = v; break;
-        case rL:     state.L = v; break;
-        case rI:     state.I = v; break;
-        case rR:     state.R = v; break;
-        case rIM:    state.IM = v; break;
-        default:    YAKC_ASSERT(false); break;
-    }
-}
-
-//------------------------------------------------------------------------------
-inline ubyte
-z80::get8(reg r) const {
-    switch (r) {
-        case rA:    return state.A;
-        case rF:    return state.F;
-        case rB:    return state.B;
-        case rC:    return state.C;
-        case rD:    return state.D;
-        case rE:    return state.E;
-        case rH:    return state.H;
-        case rL:    return state.L;
-        case rI:    return state.I;
-        case rR:    return state.R;
-        case rIM:   return state.IM;
-        default:
-            YAKC_ASSERT(false);
-            return 0;
-    }
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80::set16(reg r, uword v) {
-    switch (r) {
-        case rAF:   state.AF = v; break;
-        case rBC:   state.BC = v; break;
-        case rDE:   state.DE = v; break;
-        case rHL:   state.HL = v; break;
-        case rAF_:  state.AF_ = v; break;
-        case rBC_:  state.BC_ = v; break;
-        case rDE_:  state.DE_ = v; break;
-        case rHL_:  state.HL_ = v; break;
-        case rIX:   state.IX = v; break;
-        case rIY:   state.IY = v; break;
-        case rSP:   state.SP = v; break;
-        case rPC:   state.PC = v; break;
-        default:    YAKC_ASSERT(false);
-    }
-}
-
-//------------------------------------------------------------------------------
-inline uword
-z80::get16(reg r) const {
-    switch (r) {
-        case rAF:    return state.AF;
-        case rBC:    return state.BC;
-        case rDE:    return state.DE;
-        case rHL:    return state.HL;
-        case rAF_:   return state.AF_;
-        case rBC_:   return state.BC_;
-        case rDE_:   return state.DE_;
-        case rHL_:   return state.HL_;
-        case rIX:    return state.IX;
-        case rIY:    return state.IY;
-        case rSP:    return state.SP;
-        case rPC:    return state.PC;
-        default:
-            YAKC_ASSERT(false);
-            return 0;
-    }
-}
-
-//------------------------------------------------------------------------------
-inline const char*
-z80::reg_name(reg r) {
-    switch (r) {
-        case rA: return "A";
-        case rF: return "F";
-        case rB: return "B";
-        case rC: return "C";
-        case rD: return "D";
-        case rE: return "E";
-        case rH: return "H";
-        case rL: return "L";
-        case rAF: return "AF";
-        case rBC: return "BC";
-        case rDE: return "DE";
-        case rHL: return "HL";
-        case rAF_: return "AF'";
-        case rBC_: return "BC'";
-        case rDE_: return "DE'";
-        case rHL_: return "HL'";
-        case rI: return "I";
-        case rR: return "R";
-        case rIX: return "IX";
-        case rIY: return "IY";
-        case rSP: return "SP";
-        case rPC: return "PC";
-        case rIM: return "IM";
-        default: return "?";
-    }
 }
 
 //------------------------------------------------------------------------------
