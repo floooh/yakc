@@ -225,6 +225,7 @@ kc85::debug_step() {
     uword pc;
     do {
         pc = this->cpu.state.PC;
+        this->cpu.store_pc_history();
         this->cpu.step();
     }
     while ((pc == this->cpu.state.PC) && !this->cpu.state.INV);
