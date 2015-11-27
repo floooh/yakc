@@ -46,7 +46,7 @@ Audio::updateVoice(int channel) {
         ((chn.mode ^ this->ctc_state[channel].mode) && z80ctc::RESET)) {
 
         if (!(chn.mode & z80ctc::RESET)) {
-            const float synthRate = 88.0f; // FIXME: should be 44.1?
+            const float synthRate = 88.2f; // FIXME: should be 44.1?
             const float clockRate = float(this->kc->clck.baseFreqKHz);
             const int tickDiv = int(clockRate / synthRate);
             unsigned int synthTickOffset = this->kc->cycles_frame / tickDiv;
