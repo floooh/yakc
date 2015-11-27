@@ -67,6 +67,8 @@ public:
         bool waiting_for_trigger = false;
         ctc_cb zcto_callback = nullptr;
         void* zcto_userdata = nullptr;
+        ctc_cb const_callback = nullptr;
+        void* const_userdata = nullptr;
         ubyte interrupt_vector = 0;
     } channels[num_channels];
 
@@ -86,6 +88,15 @@ public:
     void connect_zcto1(ctc_cb cb, void* userdata);
     /// set callback for ZC/TO2 line
     void connect_zcto2(ctc_cb cb, void* userdata);
+
+    /// connect a constant-changed callback to channel0
+    void connect_constant_changed0(ctc_cb cb, void* userdata);
+    /// connect a constant-changed callback to channel1
+    void connect_constant_changed1(ctc_cb cb, void* userdata);
+    /// connect a constant-changed callback to channel1
+    void connect_constant_changed2(ctc_cb cb, void* userdata);
+    /// connect a constant-changed callback to channel1
+    void connect_constant_changed3(ctc_cb cb, void* userdata);
 
     /// trigger line for CTC0
     static void ctrg0(void* self);
@@ -144,10 +155,18 @@ z80ctc::write(channel c, ubyte v) {
         if ((chn.mode & MODE) == MODE_TIMER) {
             chn.waiting_for_trigger = (chn.mode & TRIGGER) == TRIGGER_PULSE;
         }
+        if (chn.const_callback) {
+            chn.const_callback(chn.const_userdata);
+        }
     }
     else if ((v & CONTROL) == CONTROL_WORD) {
         // a control word
         chn.mode = v;
+        if (!(chn.mode & CONSTANT_FOLLOWS)) {
+            if (chn.const_callback) {
+                chn.const_callback(chn.const_userdata);
+            }
+        }
     }
     else {
         // an interrupt vector for the whole CTC must be written
@@ -191,7 +210,7 @@ z80ctc::update_timers(int ticks) {
         channel_state& chn = channels[i];
         if (!(chn.mode & RESET)) {
             if (((chn.mode & MODE) == MODE_TIMER) && !chn.waiting_for_trigger) {
-                chn.down_counter -= ticks;
+                chn.down_counter -= (ticks * 2); // ???
                 while (chn.down_counter <= 0) {
                     down_counter_callback(chn);
                     chn.down_counter += down_counter_init(chn);
@@ -245,6 +264,34 @@ inline void
 z80ctc::connect_zcto2(ctc_cb cb, void* userdata) {
     channels[CTC2].zcto_callback = cb;
     channels[CTC2].zcto_userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_constant_changed0(ctc_cb cb, void* userdata) {
+    channels[CTC0].const_callback = cb;
+    channels[CTC0].const_userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_constant_changed1(ctc_cb cb, void* userdata) {
+    channels[CTC1].const_callback = cb;
+    channels[CTC1].const_userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_constant_changed2(ctc_cb cb, void* userdata) {
+    channels[CTC2].const_callback = cb;
+    channels[CTC2].const_userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::connect_constant_changed3(ctc_cb cb, void* userdata) {
+    channels[CTC3].const_callback = cb;
+    channels[CTC3].const_userdata = userdata;
 }
 
 //------------------------------------------------------------------------------

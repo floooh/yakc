@@ -46,6 +46,9 @@ public:
     z80dbg dbg;
     bool paused;
 
+    /// current frame-cycle (only useful for chip callbacks)
+    unsigned int cycles_frame;
+
     /// constructor
     kc85();
 
@@ -91,6 +94,7 @@ private:
 //------------------------------------------------------------------------------
 inline kc85::kc85():
 paused(false),
+cycles_frame(0),
 cur_model(kc85_model::kc85_3),
 key_code(0),
 cur_caos_rom(dump_caos31),
@@ -199,8 +203,8 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
     this->handle_keyboard_input();
     if (!this->paused) {
         const unsigned int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
-        unsigned int cycles_executed = 0;
-        while (cycles_executed < num_cycles) {
+        this->cycles_frame = 0;
+        while (this->cycles_frame < num_cycles) {
             if (this->dbg.check_break(this->cpu)) {
                 this->paused = true;
                 break;
@@ -210,7 +214,7 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);
             cycles_opcode += this->cpu.handle_irq();
-            cycles_executed += cycles_opcode;
+            this->cycles_frame += cycles_opcode;
         }
     }
 }

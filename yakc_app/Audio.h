@@ -5,28 +5,28 @@
     @brief implement audio playback callback
 */
 #include "KC85Oryol.h"
-#include "Sound/Sound.h"
 
 class Audio {
 public:
     /// setup audio playback
-    void Setup();
+    void Setup(yakc::kc85& kc);
     /// shutdown audio playback
     void Discard();
-    /// call per frame to update audio playback parameters
-    void Update(yakc::kc85& kc);
+    /// call per frame
+    void Update();
 
-    /// compute CTC channel frequency
-    int channelFreq(const yakc::kc85& kc, yakc::z80ctc::channel c);
+private:
+    /// ctc0 constant changed callback
+    static void ctc0_const_changed(void* userdata);
+    /// ctc1 constant changed callback
+    static void ctc1_const_changed(void* userdata);
+    /// update a sound voice
+    void updateVoice(int channel);
 
-    /// channel 0 active
-    bool chn0Active = false;
-    /// channel 1 active
-    bool chn1Active = false;
-    /// current frequency on CTC0
-    int curFreq0 = 0;
-    /// current frequency on CTC1
-    int curFreq1 = 0;
-    /// current volume (defined in PIO-B)
-    int curVolume = 0;
+    yakc::kc85* kc = nullptr;
+
+    struct {
+        yakc::ubyte mode = 0;
+        yakc::ubyte constant = 0;
+    } ctc_state[2];
 };

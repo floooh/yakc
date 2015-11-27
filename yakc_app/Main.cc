@@ -5,7 +5,7 @@
 #include "Pre.h"
 #include "Core/App.h"
 #include "Gfx/Gfx.h"
-#include "Sound/Sound.h"
+#include "Synth/Synth.h"
 #include "Input/Input.h"
 #include "IO/IO.h"
 #include "KC85Oryol.h"
@@ -68,15 +68,14 @@ YakcApp::OnInit() {
     Input::Setup();
     Input::BeginCaptureText();
 
-    Sound::Setup(SoundSetup());
+    Synth::Setup(SynthSetup());
 
     #if YAKC_UI
     this->ui.Setup(this->kc);
     #endif
-    this->draw.Setup(gfxSetup, frameSize);
-    this->audio.Setup();
-
     this->kc.switchon(kc85_model::kc85_3, dump_caos31, sizeof(dump_caos31));
+    this->draw.Setup(gfxSetup, frameSize);
+    this->audio.Setup(this->kc);
 
     // put a 16kByte module into slot 8 by default, CAOS will initialize
     // this automatically on startup
@@ -98,7 +97,7 @@ YakcApp::OnRunning() {
     int micro_secs = 1000000 / 60;
     this->handleInput();
     this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs);
-    this->audio.Update(this->kc);
+    this->audio.Update();
     this->draw.fsParams.CRTEffect = this->ui.Settings.crtEffect;
     this->draw.fsParams.ColorTV = this->ui.Settings.colorTV;
     this->draw.fsParams.CRTWarp = glm::vec2(this->ui.Settings.crtWarp);
@@ -118,7 +117,7 @@ YakcApp::OnCleanup() {
     #if YAKC_UI
     this->ui.Discard();
     #endif
-    Sound::Discard();
+    Synth::Discard();
     Input::Discard();
     Gfx::Discard();
     IO::Discard();
