@@ -56,6 +56,10 @@ Audio::cb_stop(void* userdata, unsigned int delay_cycles, int channel) {
 //------------------------------------------------------------------------------
 void
 Audio::cb_volume(void* userdata, unsigned int delay_cycles, int vol) {
+/*
+    Ignore volume changes completely for now, some (of my) games
+    seem to set the volume to 0, not sure yet what's up with that.
+
     Audio* self = (Audio*) userdata;
     const unsigned int audioDelayTicks = self->asAudioTicks(delay_cycles);
 
@@ -66,4 +70,5 @@ Audio::cb_volume(void* userdata, unsigned int delay_cycles, int vol) {
     op.Wave = SynthOp::Const;
     op.Amp  = (((1<<15) - 1) * vol) / 31;
     Synth::AddOp(0, 1, op, audioDelayTicks);
+*/
 }

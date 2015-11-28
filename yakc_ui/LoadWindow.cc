@@ -4,6 +4,7 @@
 #include "LoadWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
+#include <string.h>
 
 OryolClassImpl(LoadWIndow);
 
@@ -149,5 +150,18 @@ LoadWindow::start(kc85& kc, const fileInfo& info) {
         // reset volume
         kc.cpu.out(0x89, 0x9f);
         kc.cpu.state.PC = info.execAddr;
+
+        // FIXME: patch JUNGLE until I have time to do a proper
+        // 'restoration', see Alexander Lang's KC emu here:
+        // http://lanale.de/kc85_emu/KC85_Emu.html
+        if (info.name == "JUNGLE     ") {
+            // patch start level 1 into memory
+            auto& mem = kc.cpu.mem;
+            mem.w8(0x36b7, 1);
+            mem.w8(0x3697, 1);
+            for (int i = 0; i < 5; i++) {
+                mem.w8(0x1770 + i, mem.r8(0x36b6 + i));
+            }
+        }
     }
 }
