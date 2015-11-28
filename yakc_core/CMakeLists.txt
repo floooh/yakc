@@ -3,7 +3,7 @@ fips_begin_module(yakc_core)
     fips_files(
         memory.h clock.h common.h _dummy.cc
         z80int.h z80.h z80pio.h z80ctc.h z80dbg.h
-        kc85.h kc85_video.h kc85_expansion.h kc85_module.h
+        kc85.h kc85_video.h kc85_audio.h kc85_expansion.h kc85_module.h
     )
     fips_generate(FROM opcodes.py HEADER opcodes.h)
 fips_end_module()

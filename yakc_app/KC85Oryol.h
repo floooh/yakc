@@ -21,4 +21,5 @@
 #include "yakc_core/kc85_expansion.h"
 #include "yakc_core/kc85_module.h"
 #include "yakc_core/kc85_video.h"
+#include "yakc_core/kc85_audio.h"
 

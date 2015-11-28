@@ -16,17 +16,15 @@ public:
     void Update();
 
 private:
-    /// ctc0 constant changed callback
-    static void ctc0_const_changed(void* userdata);
-    /// ctc1 constant changed callback
-    static void ctc1_const_changed(void* userdata);
-    /// update a sound voice
-    void updateVoice(int channel);
+    /// convert 1.75MHz ticks to audio ticks, including a base delay
+    unsigned int asAudioTicks(unsigned int z80Cycles) const;
+    /// callback to start sound or change frequency
+    static void cb_sound(void* userdata, unsigned int delay_cycles, int channel, int hz);
+    /// callback to stop sound
+    static void cb_stop(void* userdata, unsigned int delay_cycles, int channel);
+    /// callback to change volume
+    static void cb_volume(void* userdata, unsigned int delay_cycles, int vol);
 
-    yakc::kc85* kc = nullptr;
-
-    struct {
-        yakc::ubyte mode = 0;
-        yakc::ubyte constant = 0;
-    } ctc_state[2];
+    static const int baseDelayTicks = 44100 / 15;
+    yakc::kc85* kc;
 };

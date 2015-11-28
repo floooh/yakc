@@ -11,6 +11,7 @@
 #include "yakc_core/z80ctc.h"
 #include "yakc_roms/roms.h"
 #include "yakc_core/kc85_video.h"
+#include "yakc_core/kc85_audio.h"
 #include "yakc_core/kc85_expansion.h"
 
 namespace yakc {
@@ -40,14 +41,12 @@ public:
     z80pio pio;
     z80ctc ctc;
     kc85_video video;
+    kc85_audio audio;
     kc85_expansion exp;
 
     /// debugging support
     z80dbg dbg;
     bool paused;
-
-    /// current frame-cycle (only useful for chip callbacks)
-    unsigned int cycles_frame;
 
     /// constructor
     kc85();
@@ -94,7 +93,6 @@ private:
 //------------------------------------------------------------------------------
 inline kc85::kc85():
 paused(false),
-cycles_frame(0),
 cur_model(kc85_model::kc85_3),
 key_code(0),
 cur_caos_rom(dump_caos31),
@@ -117,11 +115,12 @@ kc85::switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
     this->key_code = 0;
 
     // initialize hardware components
-    this->exp.init();
-    this->video.init(m);
     this->pio.init();
     this->ctc.init();
     this->cpu.init(in_cb, out_cb, this);
+    this->exp.init();
+    this->video.init(m);
+    this->audio.init(&this->ctc);
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
     this->pio.int_ctrl.connect_cpu(z80::irq, &this->cpu);
@@ -165,6 +164,7 @@ inline void
 kc85::reset() {
     this->exp.reset();
     this->video.reset();
+    this->audio.reset();
     this->ctc.reset();
     this->pio.reset();
     this->cpu.reset();
@@ -203,8 +203,8 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
     this->handle_keyboard_input();
     if (!this->paused) {
         const unsigned int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
-        this->cycles_frame = 0;
-        while (this->cycles_frame < num_cycles) {
+        unsigned int cycles_frame = 0;
+        while (cycles_frame < num_cycles) {
             if (this->dbg.check_break(this->cpu)) {
                 this->paused = true;
                 break;
@@ -213,8 +213,9 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             unsigned int cycles_opcode = this->cpu.step();
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);
+            this->audio.update_t(cycles_frame);
             cycles_opcode += this->cpu.handle_irq();
-            this->cycles_frame += cycles_opcode;
+            cycles_frame += cycles_opcode;
         }
     }
 }
@@ -326,6 +327,7 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
         case 0x89:
             self->pio.write(z80pio::B, val);
             self->video.pio_blink_enable(val & PIO_B_BLINK_ENABLED);
+            self->audio.update_volume(val & PIO_B_VOLUME_MASK);
             break;
         case 0x8A:
             self->pio.control(z80pio::A, val);

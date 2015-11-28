@@ -146,6 +146,8 @@ LoadWindow::copy(kc85& kc, const fileInfo& info, const Ptr<Stream>& data) {
 void
 LoadWindow::start(kc85& kc, const fileInfo& info) {
     if (info.hasExecAddr) {
+        // reset volume
+        kc.cpu.out(0x89, 0x9f);
         kc.cpu.state.PC = info.execAddr;
     }
 }
