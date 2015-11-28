@@ -6,6 +6,7 @@
 */
 #include "yakc_app/KC85Oryol.h"
 #include "yakc_ui/WindowBase.h"
+#include "yakc_ui/FileLoader.h"
 #include "Time/TimePoint.h"
 #include "Core/Containers/Array.h"
 #include "IMUI/IMUI.h"
@@ -38,6 +39,7 @@ public:
     } Settings;
 
 private:
+    FileLoader fileLoader;
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;
     bool uiEnabled = false;

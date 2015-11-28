@@ -64,12 +64,14 @@ UI::Setup(kc85& kc) {
     style.Colors[ImGuiCol_ScrollbarGrabActive] = ColorDetailBright;
     */
 
+    this->fileLoader.Setup(kc);
     this->curTime = Clock::Now();
 }
 
 //------------------------------------------------------------------------------
 void
 UI::Discard() {
+    this->fileLoader.Discard();
     this->windows.Clear();
     IMUI::Discard();
 }
@@ -95,7 +97,9 @@ UI::OnFrame(kc85& kc) {
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu(kc.model() == kc85_model::kc85_3 ? "KC85/3":"KC85/4")) {
                 if (ImGui::MenuItem("Load File...")) {
-                    this->OpenWindow(kc, LoadWindow::Create());
+                    auto loadWindow = LoadWindow::Create();
+                    loadWindow->SetFileLoader(&this->fileLoader);
+                    this->OpenWindow(kc, loadWindow);
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
                     kc.switchoff();

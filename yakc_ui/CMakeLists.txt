@@ -15,6 +15,7 @@ fips_begin_module(yakc_ui)
         ModuleWindow.cc ModuleWindow.h
         KeyboardWindow.cc KeyboardWindow.h
         LoadWindow.cc LoadWindow.h
+        FileLoader.cc FileLoader.h
         z80dasm.cc z80dasm.h
     )
     fips_deps(yakc_core yakc_roms)
