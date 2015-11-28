@@ -120,6 +120,14 @@ UI::OnFrame(kc85& kc) {
                 }
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("Games")) {
+                for (const auto& item : this->fileLoader.Items) {
+                    if (ImGui::MenuItem(item.Name.AsCStr())) {
+                        this->fileLoader.LoadAndStart(kc, item);
+                    }
+                }
+                ImGui::EndMenu();
+            }
             if (ImGui::BeginMenu("Hardware")) {
                 if (ImGui::MenuItem("Keyboard")) {
                     this->OpenWindow(kc, KeyboardWindow::Create());
