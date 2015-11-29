@@ -52,13 +52,11 @@ public:
     kc85();
 
     /// power-on the device
-    void switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size);
+    void poweron(kc85_model m, ubyte* caos_rom, uword caos_rom_size);
     /// power-off the device
-    void switchoff();
+    void poweroff();
     /// reset the device
     void reset();
-    /// return true if device is switched on
-    bool ison() const;
     /// get the KC model
     kc85_model model() const;
     /// get pointer to currently mapped rom
@@ -102,7 +100,7 @@ cur_caos_rom_size(sizeof(dump_caos31)) {
 
 //------------------------------------------------------------------------------
 inline void
-kc85::switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
+kc85::poweron(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
     YAKC_ASSERT(kc85_model::none != m);
     YAKC_ASSERT(!this->on);
     YAKC_ASSERT(0x2000 == caos_rom_size);
@@ -147,13 +145,13 @@ kc85::switchon(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
         this->cpu.out(0x88, 0x9f);
     }
 
-    // execution on switch-on starts at 0xF000
+    // execution on power-on starts at 0xF000
     this->cpu.state.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
 inline void
-kc85::switchoff() {
+kc85::poweroff() {
     YAKC_ASSERT(this->on);
     this->cpu.mem.unmap_all();
     this->on = false;
@@ -182,12 +180,6 @@ kc85::caos_rom() const {
 inline uword
 kc85::caos_rom_size() const {
     return this->cur_caos_rom_size;
-}
-
-//------------------------------------------------------------------------------
-inline bool
-kc85::ison() const {
-    return this->on;
 }
 
 //------------------------------------------------------------------------------

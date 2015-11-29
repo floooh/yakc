@@ -102,16 +102,16 @@ UI::OnFrame(kc85& kc) {
                     this->OpenWindow(kc, loadWindow);
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
-                    kc.switchoff();
-                    kc.switchon(kc.model(), kc.caos_rom(), kc.caos_rom_size());
+                    kc.poweroff();
+                    kc.poweron(kc.model(), kc.caos_rom(), kc.caos_rom_size());
                 }
                 if (ImGui::MenuItem("Reset")) {
                     kc.reset();
                 }
                 if (ImGui::BeginMenu("KC 85/3")) {
                     if (ImGui::MenuItem("CAOS 3.1")) {
-                        kc.switchoff();
-                        kc.switchon(kc85_model::kc85_3, dump_caos31, sizeof(dump_caos31));
+                        kc.poweroff();
+                        kc.poweron(kc85_model::kc85_3, dump_caos31, sizeof(dump_caos31));
                     }
                     ImGui::EndMenu();
                 }

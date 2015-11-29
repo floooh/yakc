@@ -73,7 +73,7 @@ YakcApp::OnInit() {
     #if YAKC_UI
     this->ui.Setup(this->kc);
     #endif
-    this->kc.switchon(kc85_model::kc85_3, dump_caos31, sizeof(dump_caos31));
+    this->kc.poweron(kc85_model::kc85_3, dump_caos31, sizeof(dump_caos31));
     this->draw.Setup(gfxSetup, frameSize);
     this->audio.Setup(this->kc);
 
