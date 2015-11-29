@@ -15,6 +15,14 @@ FileLoader::Setup(kc85& kc) {
     this->Items.Add("Labyrinth", "labyrinth.kcc");
     this->Items.Add("House", "house.kcc");
     this->Items.Add("Jungle", "jungle.kcc");
+    this->Items.Add("Pacman", "pacman.kcc");
+    this->Items.Add("Breakout", "breakout.kcc");
+// some don't properly work yet
+//    this->Items.Add("Boulderdash", "bould-3.kcc");
+//    this->Items.Add("Digger", "digger-3.kcc");
+    this->Items.Add("Ladder", "ladder-3.kcc");
+    this->Items.Add("Chess", "chess.kcc");
+    this->Items.Add("Testbild", "testbild.kcc");
     this->ioQueue.Start();
 }
 
