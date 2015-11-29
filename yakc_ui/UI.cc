@@ -108,16 +108,6 @@ UI::OnFrame(kc85& kc) {
                 if (ImGui::MenuItem("Reset")) {
                     kc.reset();
                 }
-                if (ImGui::BeginMenu("KC 85/3")) {
-                    if (ImGui::MenuItem("CAOS 3.1")) {
-                        kc.poweroff();
-                        kc.poweron(kc85_model::kc85_3, dump_caos31, sizeof(dump_caos31));
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::MenuItem("KC85/4 (TODO)")) {
-                    // FIXME
-                }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Games")) {
