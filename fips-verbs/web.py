@@ -17,15 +17,13 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     ws_dir = util.get_workspace_dir(fips_dir)
     deploy_dir = '{}/fips-deploy/yakc/yakc-emsc-make-release/'.format(ws_dir)
 
+    # webpage files
+    copy_tree(proj_dir+'/web/_site', webpage_dir)
+
     # copy the application files
     for name in ['yakc_app.js'] :
         log.info('> copy file: {}'.format(name))
         shutil.copy(deploy_dir + name, webpage_dir + '/' + name)
-
-    # webpage files
-    for name in ['index.html', 'font.ttf', 'style.css', 'emsc.js', 'about.html', 'favicon.png'] :
-        log.info('> copy file: {}'.format(name))
-        shutil.copy(proj_dir + '/web/' + name, webpage_dir + '/' + name)
 
     # copy kcc files
     for kcc in glob.glob(proj_dir + '/yakc_kcc/*.kcc') :
@@ -53,7 +51,10 @@ def build_deploy_webpage(fips_dir, proj_dir) :
     if emscripten.check_exists(fips_dir) :
         project.gen(fips_dir, proj_dir, 'yakc-emsc-make-release')
         project.build(fips_dir, proj_dir, 'yakc-emsc-make-release')
-    
+   
+    # build the webpage via jekyll
+    subprocess.call('jekyll build', cwd=proj_dir+'/web', shell=True)
+
     # deploy the webpage
     deploy_webpage(fips_dir, proj_dir, webpage_dir)
 

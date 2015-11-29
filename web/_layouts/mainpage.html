@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  {% include head.html %}
+  <body>
+    {% include main-header.html %}
+    {% include main-nav-bar.html %}
+
+    <div class="game-border">
+    <canvas class="game" id="canvas" hidden oncontextmenu="event.preventDefault()" width="640" height="512"></canvas>
+    </div>
+
+    <script type="text/javascript" src="emsc.js"></script>
+    <script async type="text/javascript" src="yakc_app.js"></script>
+
+  </body>
+</html>
+
