@@ -80,7 +80,7 @@ YakcApp::OnInit() {
     // on KC85/3 put a 16kByte module into slot 8 by default, CAOS will initialize
     // this automatically on startup
     // FIXME: find a better way to setup complete computer configs
-    this->kc.exp.insert_module(0x08,kc85_module::create_ram(0xF4, 0x4000,
+    this->kc.exp.insert_module(0x08,kc85_module::create_ram(0xF4, 0xC0, 0x4000,
         "M022 EPANDER RAM",
         "16 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 43: map to address 0x4000\n"

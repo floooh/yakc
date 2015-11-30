@@ -46,7 +46,8 @@ enum class kc85_model {
 };
 
 enum class kc85_caos {
-    caos_2_1,
+    caos_hc900,
+    caos_2_2,
     caos_3_1,
     caos_3_4,
     caos_4_1,

@@ -116,29 +116,33 @@ UI::OnFrame(kc85& kc) {
                     kc.reset();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/2")) {
-                    if (ImGui::MenuItem("CAOS 2.1")) {
+                    if (ImGui::MenuItem("HC900-CAOS")) {
                         kc.poweroff();
-                        kc.poweron(kc85_model::kc85_2, kc85_caos::caos_2_1);
+                        kc.poweron(kc85_model::kc85_2, kc85_caos::caos_hc900);
+                    }
+                    if (ImGui::MenuItem("HC-CAOS 2.2")) {
+                        kc.poweroff();
+                        kc.poweron(kc85_model::kc85_2, kc85_caos::caos_2_2);
                     }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/3")) {
-                    if (ImGui::MenuItem("CAOS 3.1")) {
+                    if (ImGui::MenuItem("HC-CAOS 3.1")) {
                         kc.poweroff();
                         kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_1);
                     }
-                    if (ImGui::MenuItem("CAOS 3.4")) {
+                    if (ImGui::MenuItem("HC-CAOS 3.4i")) {
                         kc.poweroff();
                         kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_4);
                     }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/4")) {
-                    if (ImGui::MenuItem("CAOS 4.1")) {
+                    if (ImGui::MenuItem("KC-CAOS 4.1")) {
                         kc.poweroff();
                         kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_1);
                     }
-                    if (ImGui::MenuItem("CAOS 4.2")) {
+                    if (ImGui::MenuItem("KC-CAOS 4.2")) {
                         kc.poweroff();
                         kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_2);
                     }

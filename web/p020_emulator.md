@@ -82,7 +82,7 @@ The core classes are under **yakc\_core**.
 
 - **clock**: this provides a central system clock and counters
 - **memory**: the memory class maps the 64kByte Z80 address range to 
-host memory in 8 KByte pages. It also implements a simple bank-switching 
+host memory in 2 KByte pages. It also implements a simple bank-switching 
 logic to map memory pages in and out of the visible address range.
 
 ### Z80 emulation:
@@ -157,7 +157,7 @@ The emulator is running the ZEXDOC conformance test without errors, which means
 that the documented CPU flags are computed correctly, and most undocumented
 instructions have been implemented.
 
-### How the KC85 emulator core works:
+### How the KC85 emulator works:
 
 The KC85 emulator wraps around the Z80 emulator components. The most important 
 methods of the kc85 class are **poweron()**, **reset()** and **onframe()**.

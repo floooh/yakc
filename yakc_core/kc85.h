@@ -139,7 +139,12 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->caos_c_size = 0;
     this->caos_e_size = 0x2000;
     switch (os) {
-        case kc85_caos::caos_2_1:
+        case kc85_caos::caos_hc900:
+            this->caos_e_ptr = dump_hc900;
+            break;
+        case kc85_caos::caos_2_2:
+            this->caos_e_ptr = dump_caos22;
+            break;
         case kc85_caos::caos_3_1:
             this->caos_e_ptr = dump_caos31;
             break;

@@ -13,9 +13,9 @@ public:
     /// create as 'empty' module
     static kc85_module create_empty(const char* name, const char* help);
     /// create as ROM module
-    static kc85_module create_rom(ubyte type, ubyte* ptr, unsigned int size, const char* name, const char* help);
+    static kc85_module create_rom(ubyte type, ubyte addr_mask, ubyte* ptr, unsigned int size, const char* name, const char* help);
     /// create as RAM module
-    static kc85_module create_ram(ubyte type, unsigned int size, const char* name, const char* help);
+    static kc85_module create_ram(ubyte type, ubyte addr_mask, unsigned int size, const char* name, const char* help);
     /// destructor
     ~kc85_module();
     /// called when module is inserted
@@ -37,6 +37,8 @@ public:
     bool writable = false;
     /// true if memory was allocated in on_insert
     bool mem_owned= false;
+    /// address-bit-mask
+    ubyte address_mask = 0xC0;
 };
 
 //------------------------------------------------------------------------------
@@ -56,7 +58,7 @@ kc85_module::create_empty(const char* name, const char* help) {
 
 //------------------------------------------------------------------------------
 inline kc85_module
-kc85_module::create_rom(ubyte type, ubyte* ptr, unsigned int size, const char* name, const char* help) {
+kc85_module::create_rom(ubyte type, ubyte mask, ubyte* ptr, unsigned int size, const char* name, const char* help) {
     YAKC_ASSERT(ptr);
     YAKC_ASSERT(size > 0);
     kc85_module mod;
@@ -67,12 +69,13 @@ kc85_module::create_rom(ubyte type, ubyte* ptr, unsigned int size, const char* n
     mod.mem_size = size;
     mod.writable = false;
     mod.mem_owned = false;
+    mod.address_mask = mask;
     return mod;
 }
 
 //------------------------------------------------------------------------------
 inline kc85_module
-kc85_module::create_ram(ubyte type, unsigned int size, const char* name, const char* help) {
+kc85_module::create_ram(ubyte type, ubyte mask, unsigned int size, const char* name, const char* help) {
     YAKC_ASSERT(size > 0);
     kc85_module mod;
     mod.type = type;
@@ -82,6 +85,7 @@ kc85_module::create_ram(ubyte type, unsigned int size, const char* name, const c
     mod.mem_size = size;
     mod.writable = true;
     mod.mem_owned = true;
+    mod.address_mask = mask;
     return mod;
 }
 

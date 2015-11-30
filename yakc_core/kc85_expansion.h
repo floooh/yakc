@@ -162,7 +162,7 @@ kc85_expansion::update_memory_mappings(memory& mem) {
             mem.unmap_layer(memory_layer);
 
             // compute module start address from control-byte
-            slot.addr = (slot.control_byte & 0xF0)<<8;
+            slot.addr = (slot.control_byte & slot.mod.address_mask)<<8;
             if (slot.mod.mem_size && slot.mod.mem_ptr) {
                 if (slot.control_byte & 0x01) {
                     // activate the module
