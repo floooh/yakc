@@ -22,7 +22,7 @@ FileLoader::Setup(kc85& kc) {
 //    this->Items.Add("Digger", "digger-3.kcc");
     this->Items.Add("Ladder", "ladder-3.kcc", kc85_model::kc85_3);
     this->Items.Add("Chess", "chess.kcc", kc85_model::any);
-    this->Items.Add("Testbild", "testbild.kcc", kc85_model::any);
+    this->Items.Add("Testbild", "testbild.kcc", kc85_model::kc85_3);
     this->ioQueue.Start();
 }
 
