@@ -53,10 +53,16 @@ for providing hints when I was stuck.
 
 The emulator is fairly complete, but not perfect:
 
-- emulates a KC85/3 and (soon) KC85/4 with switchable CAOS operating system ROMs
+- emulates the KC85/2 (with support for M006 BASIC module), KC85/3 and KC85/4 with switchable CAOS operating system ROMs
 - fast and nearly complete documented Z80 emulation passing the ZEXDOC
   conformance test, instructions are emulated with their proper cycle counts
-- expansion slot system with RAM and ROM modules
+- expansion slot system with support for the following RAM and ROM modules:
+    - M022 EPANDER-RAM (16 KByte RAM)
+    - M011 64 KBYTE RAM
+    - M006 BASIC (+ HC-901 CAOS, only useful on KC85/2)
+    - M026 FORTH
+    - M027 DEVELOPMENT
+    - ...more modules may be added in the future
 - internal RAM/ROM bank switching
 - properly emulates the CTC and PIO registers and their interaction with the
 rest of the system (with a few minor exceptions)
