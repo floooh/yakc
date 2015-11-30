@@ -25,13 +25,19 @@ MemoryMapWindow::getPageName(kc85& kc, int layer_index, int page_index) const {
             switch (page_index) {
                 case 0:
                 case 1:
+                case 2:
+                case 3:
                     return "RAM0";
-                case 4:
-                case 5:
+                case 8:
+                case 9:
+                case 10:
+                case 11:
                     return "IRM";
-                case 6:
+                case 12:
+                case 13:
                     return "BASIC ROM";
-                case 7:
+                case 14:
+                case 15:
                     return "CAOS ROM";
             }
             break;
@@ -58,8 +64,8 @@ MemoryMapWindow::Draw(kc85& kc) {
     static const ImVec4 grey(0.25f, 0.25f, 0.25f, 1.0f);
     static const ImVec4 light_green(0.0f, 1.0f, 0.0f, 1.0f);
     static const ImVec4 dark_green(0.0f, 0.5f, 0.0f, 1.0f);
-    static const ImVec2 page_size(48, 0);
-    ImGui::SetNextWindowSize(ImVec2(480, 100), ImGuiSetCond_Once);
+    static const ImVec2 page_size(24, 0);
+    ImGui::SetNextWindowSize(ImVec2(512, 100), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
         static const int num_layers = 3;
         static const char* layer_name[num_layers] = { "BUILT-IN", "SLOT 08", "SLOT 0C" };
@@ -87,7 +93,7 @@ MemoryMapWindow::Draw(kc85& kc) {
                 if (is_mapped && ImGui::IsItemHovered()) {
                     strBuilder.Format(48, "%s\n(%04X-%04X)",
                         this->getPageName(kc, layer, page),
-                        page * 0x2000, ((page+1) * 0x2000)-1);
+                        page * memory::page::size, ((page+1) * memory::page::size)-1);
                     ImGui::SetTooltip(strBuilder.AsCStr());
                 }
                 ImGui::PopStyleColor();

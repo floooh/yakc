@@ -103,7 +103,7 @@ UI::OnFrame(kc85& kc) {
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
                     kc.poweroff();
-                    kc.poweron(kc.model(), kc.caos_rom(), kc.caos_rom_size());
+                    kc.poweron(kc.model());
                 }
                 if (ImGui::MenuItem("Reset")) {
                     kc.reset();

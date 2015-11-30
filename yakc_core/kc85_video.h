@@ -10,8 +10,8 @@ namespace yakc {
 
 class kc85_video {
 public:
-    /// video memory bank 0
-    ubyte irm0[0x4000];
+    /// video memory banks
+    ubyte irm[4][0x4000];
 
     /// initialize the video hardware
     void init(kc85_model m);
@@ -24,12 +24,15 @@ public:
     void pio_blink_enable(bool b);
     /// toggle blink flag, must be connected to CTC ZC/TO2 line
     static void ctc_blink_cb(void* userdata);
+    /// update the KC85/4 IRM control byte (written to port 84)
+    void kc85_4_irm_control(ubyte val);
 
 private:
     /// decode 8 pixels
     void decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_off) const;
 
     kc85_model model = kc85_model::kc85_3;
+    ubyte irm_control = 0;
     bool pio_blink_flag = true;
     bool ctc_blink_flag = true;
     unsigned int fgPal[16];
@@ -40,7 +43,8 @@ private:
 inline void
 kc85_video::init(kc85_model m) {
     this->model = m;
-    fill_random(this->irm0, sizeof(this->irm0));
+    this->irm_control = 0;
+    fill_random(this->irm, sizeof(this->irm));
 
     // setup foreground color palette
     this->fgPal[0] = 0xFF000000;     // black
@@ -74,7 +78,7 @@ kc85_video::init(kc85_model m) {
 //------------------------------------------------------------------------------
 inline void
 kc85_video::reset() {
-    // FIXME
+    this->irm_control = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -88,6 +92,12 @@ inline void
 kc85_video::ctc_blink_cb(void* userdata) {
     kc85_video* self = (kc85_video*) userdata;
     self->ctc_blink_flag = !self->ctc_blink_flag;
+}
+
+//------------------------------------------------------------------------------
+inline void
+kc85_video::kc85_4_irm_control(ubyte val) {
+    this->irm_control = val;
 }
 
 //------------------------------------------------------------------------------
@@ -118,12 +128,12 @@ inline void
 kc85_video::decode(ubyte* rgba8_buf, int buf_size) const {
     YAKC_ASSERT(buf_size == 320*256*4);
 
+    unsigned int* dst_start = (unsigned int*) rgba8_buf;
     const bool blink_bg = this->ctc_blink_flag && this->pio_blink_flag;
     if (kc85_model::kc85_3 == this->model) {
-        const ubyte* pixel_data = this->irm0;
-        const ubyte* color_data = this->irm0 + 0x2800;
+        const ubyte* pixel_data = this->irm[0];
+        const ubyte* color_data = this->irm[0] + 0x2800;
 
-        unsigned int* dst_start = (unsigned int*) rgba8_buf;
         int pixel_offset;
         int color_offset;
         for (int y = 0; y < 256; y++) {
@@ -136,7 +146,7 @@ kc85_video::decode(ubyte* rgba8_buf, int buf_size) const {
             unsigned int* dst_ptr = &(dst_start[y*320]);
 
             // x is not per-pixel, but per byte
-            const int width = 320 >> 3;
+            const int width = 320>>3;
             for (int x = 0; x < width; x++) {
                 if (x < 0x20) {
                     // left 256x256 quad
@@ -150,6 +160,22 @@ kc85_video::decode(ubyte* rgba8_buf, int buf_size) const {
                 }
                 ubyte src_pixels = pixel_data[pixel_offset];
                 ubyte src_colors = color_data[color_offset];
+                this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
+            }
+        }
+    }
+    else if (kc85_model::kc85_4 == this->model) {
+        int irm_index = (this->irm_control & 1) * 2;
+        const ubyte* pixel_data = this->irm[irm_index];
+        const ubyte* color_data = this->irm[irm_index+1];
+        int offset;
+        for (int y = 0; y < 256; y++) {
+            unsigned int* dst_ptr = &(dst_start[y*320]);
+            const int width = 320>>3;
+            for (int x = 0; x < width; x++) {
+                offset = y | (x<<8);
+                ubyte src_pixels = pixel_data[offset];
+                ubyte src_colors = color_data[offset];
                 this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
             }
         }

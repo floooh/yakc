@@ -2,6 +2,8 @@
 files:
     - 'basic_c0.853'
     - 'caos31.853'
+    - 'caos41e.854'
+    - 'caos41c.854'
     - 'forth.853'
     - 'develop.853'
 

@@ -5,7 +5,7 @@
     @brief implements banked Z80 memory mapped to host system memory
 
     Host system memory 'layers' up to 64 KByte size can be mapped
-    to Z80 memory with an 8KByte 'page-size' granularity as read-only 
+    to Z80 memory with an 4KByte 'page-size' granularity as read-only
     or read/write.
     
     Memory-mapping definition happens in 'stacked layers', where lower-priority
@@ -40,14 +40,14 @@ public:
     /// 64 kByte addressable memory
     static const int addr_range = 1<<16;
     static const int addr_mask = addr_range - 1;
-    /// number of (8K) pages
-    static const int num_pages = 8;
+    /// number of (2K) pages
+    static const int num_pages = 32;
     /// max number of layers
     static const int num_layers = 4;
 
     /// a memory page mapping description
     struct page {
-        static const int shift = 13;
+        static const int shift = 11;
         static const uword size = 1<<shift;
         static const uword mask = size - 1;
         ubyte* ptr = nullptr;

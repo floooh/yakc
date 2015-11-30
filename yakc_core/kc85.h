@@ -18,10 +18,10 @@ namespace yakc {
 
 class kc85 {
 public:
-    /// ram bank 0 (0x0000..0x3FFF)
-    ubyte ram0[0x4000];
+    /// ram banks
+    ubyte ram[4][0x4000];
 
-    /// PIO bits
+    /// IO bits
     enum {
         PIO_A_CAOS_ROM    = (1<<0),
         PIO_A_RAM         = (1<<1),
@@ -31,8 +31,23 @@ public:
         PIO_A_TAPE_LED    = (1<<5),
         PIO_A_TAPE_MOTOR  = (1<<6),
         PIO_A_BASIC_ROM   = (1<<7),
+
         PIO_B_VOLUME_MASK = (1<<5)-1,
+        PIO_B_RAM8 = (1<<5),            // KC85/4 only
+        PIO_B_RAM8_RO = (1<<6),         // KC85/4 only
         PIO_B_BLINK_ENABLED = (1<<7),
+
+        // KC85/4 only
+        IO84_SEL_VIEW_IMG   = (1<<0),  // 0: display img0, 1: display img1
+        IO84_SEL_CPU_COLOR  = (1<<1),  // 0: access pixels, 1: access colors
+        IO84_SEL_CPU_IMG    = (1<<2),  // 0: access img0, 1: access img1
+        IO84_HICOLOR        = (1<<3),  // 0: hicolor mode off, 1: hicolor mode on
+        IO84_SEL_RAM8       = (1<<4),  // select RAM8 block 0 or 1
+        IO84_BLOCKSEL_RAM8  = (1<<5),  // no idea what that does...?
+
+        IO86_RAM4   = (1<<0),
+        IO86_RAM4_RO = (1<<1),
+        IO86_CAOS_ROM_C = (1<<7)
     };
 
     /// hardware components
@@ -43,6 +58,8 @@ public:
     kc85_video video;
     kc85_audio audio;
     kc85_expansion exp;
+    ubyte io84;             // special KC85/4 io register
+    ubyte io86;             // special KC85/4 io register
 
     /// debugging support
     z80dbg dbg;
@@ -52,17 +69,13 @@ public:
     kc85();
 
     /// power-on the device
-    void poweron(kc85_model m, ubyte* caos_rom, uword caos_rom_size);
+    void poweron(kc85_model m);
     /// power-off the device
     void poweroff();
     /// reset the device
     void reset();
     /// get the KC model
     kc85_model model() const;
-    /// get pointer to currently mapped rom
-    ubyte* caos_rom() const;
-    /// get size of currently mapped rom
-    uword caos_rom_size() const;
 
     /// process one frame
     void onframe(int speed_multiplier, int micro_secs);
@@ -84,33 +97,29 @@ private:
     kc85_model cur_model;
     bool on;
     ubyte key_code;
-    ubyte* cur_caos_rom;
-    uword cur_caos_rom_size;
 };
 
 //------------------------------------------------------------------------------
 inline kc85::kc85():
+io84(0),
+io86(0),
 paused(false),
 cur_model(kc85_model::kc85_3),
-key_code(0),
-cur_caos_rom(dump_caos31),
-cur_caos_rom_size(sizeof(dump_caos31)) {
+key_code(0) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 inline void
-kc85::poweron(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
+kc85::poweron(kc85_model m) {
     YAKC_ASSERT(kc85_model::none != m);
     YAKC_ASSERT(!this->on);
-    YAKC_ASSERT(0x2000 == caos_rom_size);
-    YAKC_ASSERT(0x2000 == sizeof(dump_basic_c0));
 
     this->cur_model = m;
-    this->cur_caos_rom = caos_rom;
-    this->cur_caos_rom_size = caos_rom_size;
     this->on = true;
     this->key_code = 0;
+    this->io84 = 0;
+    this->io86 = 0;
 
     // initialize hardware components
     this->pio.init();
@@ -126,20 +135,27 @@ kc85::poweron(kc85_model m, ubyte* caos_rom, uword caos_rom_size) {
     this->cpu.connect_irq_device(&this->ctc.int_ctrl);
     this->ctc.int_ctrl.connect_irq_device(&this->pio.int_ctrl);
 
+    // connect CTC2 trigger to a 50Hz vertical-blank-timer,
+    // this controls the foreground color blinking flag
+    this->clck.config_timer(0, 50, z80ctc::ctrg2, &this->ctc);
+
+    // fill RAM banks with noise
+    fill_random(this->ram, sizeof(this->ram));
+
+    // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
+    this->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
+
     if (kc85_model::kc85_3 == m) {
 
         // initialize clock to 1.75 MHz
         this->clck.init(1750);
 
-        // connect CTC2 trigger to a 50Hz vertical-blank-timer,
-        // this controls the foreground color blinking flag
-        this->clck.config_timer(0, 50, z80ctc::ctrg2, &this->ctc);
-
-        // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
-        this->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
-
-        // fill RAM banks with noise
-        fill_random(this->ram0, sizeof(this->ram0));
+        // initial memory map
+        this->cpu.out(0x88, 0x9f);
+    }
+    else {
+        // KC85/4 is clocked at 1.77 MHz
+        this->clck.init(1770);
 
         // initial memory map
         this->cpu.out(0x88, 0x9f);
@@ -166,20 +182,10 @@ kc85::reset() {
     this->ctc.reset();
     this->pio.reset();
     this->cpu.reset();
+    this->io84 = 0;
+    this->io86 = 0;
     // execution after reset starts at 0xE000
     this->cpu.state.PC = 0xE000;
-}
-
-//------------------------------------------------------------------------------
-inline ubyte*
-kc85::caos_rom() const {
-    return this->cur_caos_rom;
-}
-
-//------------------------------------------------------------------------------
-inline uword
-kc85::caos_rom_size() const {
-    return this->cur_caos_rom_size;
 }
 
 //------------------------------------------------------------------------------
@@ -312,6 +318,19 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
                 self->update_bank_switching();
             }
             break;
+        case 0x84:
+            if (kc85_model::kc85_4 == self->cur_model) {
+                self->io84 = val;
+                self->video.kc85_4_irm_control(val);
+                self->update_bank_switching();
+            }
+            break;
+        case 0x86:
+            if (kc85_model::kc85_4 == self->cur_model) {
+                self->io86 = val;
+                self->update_bank_switching();
+            }
+            break;
         case 0x88:
             self->pio.write(z80pio::A, val);
             self->update_bank_switching();
@@ -353,6 +372,10 @@ kc85::in_cb(void* userdata, uword port) {
     switch (port & 0xFF) {
         case 0x80:
             return self->exp.module_type(port>>8);
+        case 0x84:
+            return (kc85_model::kc85_4 == self->cur_model) ? self->io84 : 0xFF;
+        case 0x86:
+            return (kc85_model::kc85_4 == self->cur_model) ? self->io86 : 0xFF;
         case 0x88:
             return self->pio.read(z80pio::A);
         case 0x89:
@@ -375,25 +398,67 @@ kc85::in_cb(void* userdata, uword port) {
 //------------------------------------------------------------------------------
 inline void
 kc85::update_bank_switching() {
-    const ubyte pio_a = this->pio.read(z80pio::A);
-
-    // first map the base-device memory banks
     this->cpu.mem.unmap_layer(0);
-    // 16 KByte RAM
-    if (pio_a & PIO_A_RAM) {
-        this->cpu.mem.map(0, 0x0000, 0x4000, ram0, true);
+    const ubyte pio_a = this->pio.read(z80pio::A);
+    const ubyte pio_b = this->pio.read(z80pio::B);
+
+
+    if (kc85_model::kc85_3 == this->cur_model) {
+        // ** KC85/3 **
+
+        // 16 KByte RAM at 0x0000 (write-protection not supported)
+        if (pio_a & PIO_A_RAM) {
+            this->cpu.mem.map(0, 0x0000, 0x4000, ram[0], true);
+        }
+        // 16 KByte video memory at 0x8000
+        if (pio_a & PIO_A_IRM) {
+            this->cpu.mem.map(0, 0x8000, 0x4000, this->video.irm[0], true);
+        }
+        // 8 KByte BASIC ROM at 0xC000
+        if (pio_a & PIO_A_BASIC_ROM) {
+            this->cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
+        }
+        // 8 KByte CAOS ROM at 0xF000
+        if (pio_a & PIO_A_CAOS_ROM) {
+            this->cpu.mem.map(0, 0xE000, 0x2000, dump_caos31, false);
+        }
     }
-    // 16 KByte video memory
-    if (pio_a & PIO_A_IRM) {
-        this->cpu.mem.map(0, 0x8000, 0x4000, this->video.irm0, true);
-    }
-    // 8 KByte BASIC ROM
-    if (pio_a & PIO_A_BASIC_ROM) {
-        this->cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
-    }
-    // 8 KByte CAOS ROM
-    if (pio_a & PIO_A_CAOS_ROM) {
-        this->cpu.mem.map(0, 0xE000, 0x2000, caos_rom(), false);
+    else if (kc85_model::kc85_4 == this->cur_model) {
+        // ** KC85/4 **
+
+        // 16 KByte RAM at 0x0000 (write-protection not supported)
+        if (pio_a & PIO_A_RAM) {
+            this->cpu.mem.map(0, 0x0000, 0x4000, ram[0], true);
+        }
+        // 16 KByte RAM at 0x4000
+        if (this->io86 & IO86_RAM4) {
+            this->cpu.mem.map(0, 0x4000, 0x4000, ram[1], true); // this->io86 & IO86_RAM4_RO);
+        }
+        // 16 KByte RAM at 0x8000 (2 banks)
+        if (pio_b & PIO_B_RAM8) {
+            ubyte* ram8_ptr = (this->io84 & IO84_SEL_RAM8) ? ram[3] : ram[2];
+            this->cpu.mem.map(0, 0x8000, 0x4000, ram8_ptr, true); // pio_b & PIO_B_RAM8_RO);
+        }
+        // IRM is 4 banks, 2 for pixels, 2 for color,
+        // the area A800 to BFFF is always mapped to IRM0!
+        if (pio_a & PIO_A_IRM) {
+            int irm_index = (this->io84 & 6)>>1;
+            ubyte* irm_ptr = this->video.irm[irm_index];
+            this->cpu.mem.map(0, 0x8000, 0x2800, irm_ptr, true);
+            this->cpu.mem.map(0, 0xA800, 0x1800, this->video.irm[0]+0x2800, true);
+        }
+        // 8 KByte BASIC ROM at 0xC000
+        if (pio_a & PIO_A_BASIC_ROM) {
+            this->cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
+        }
+        // 4 KByte CAOS ROM-C at 0xC000
+        if (this->io86 & IO86_CAOS_ROM_C) {
+            this->cpu.mem.map(0, 0xC000, 0x1000, dump_caos41c, false);
+        }
+        // 8 KByte CAOS ROM-E at 0xE000
+        if (pio_a & PIO_A_CAOS_ROM) {
+            this->cpu.mem.map(0, 0xE000, 0x2000, dump_caos41e, false);
+        }
     }
 
     // map modules in base-device expansion slots
