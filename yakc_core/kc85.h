@@ -184,8 +184,14 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->cpu.connect_irq_device(&this->ctc.int_ctrl);
     this->ctc.int_ctrl.connect_irq_device(&this->pio.int_ctrl);
 
-    // fill RAM banks with noise
-    fill_random(this->ram, sizeof(this->ram));
+    // fill RAM banks with noise (but not on KC85/4? at least the 4
+    // doesn't have the random-color-pattern when switching it on)
+    if (kc85_model::kc85_4 == m) {
+        clear(this->ram, sizeof(this->ram));
+    }
+    else {
+        fill_random(this->ram, sizeof(this->ram));
+    }
 
     // connect CTC2 trigger to a 50Hz vertical-blank-timer,
     // this controls the foreground color blinking flag

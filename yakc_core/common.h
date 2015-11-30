@@ -55,6 +55,11 @@ enum class kc85_caos {
 };
 
 inline void
+clear(void* ptr, int num_bytes) {
+    memset(ptr, 0, num_bytes);
+}
+
+inline void
 fill_random(void* ptr, int num_bytes) {
     YAKC_ASSERT((num_bytes & 0x03) == 0);
     unsigned int* uptr = (unsigned int*)ptr;

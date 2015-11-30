@@ -44,7 +44,13 @@ inline void
 kc85_video::init(kc85_model m) {
     this->model = m;
     this->irm_control = 0;
-    fill_random(this->irm, sizeof(this->irm));
+
+    if (m == kc85_model::kc85_4) {
+        clear(this->irm, sizeof(this->irm));
+    }
+    else {
+        fill_random(this->irm, sizeof(this->irm));
+    }
 
     // setup foreground color palette
     this->fgPal[0] = 0xFF000000;     // black
