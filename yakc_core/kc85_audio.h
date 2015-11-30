@@ -77,17 +77,19 @@ kc85_audio::setup_callbacks(void* ud, sound_cb cb_snd, volume_cb cb_vol, stop_cb
 inline void
 kc85_audio::init(z80ctc* ctc_) {
     YAKC_ASSERT(ctc_);
-
     this->ctc = ctc_;
     this->ctc->connect_write0(ctc_write0, this);
     this->ctc->connect_write1(ctc_write1, this);
+    this->reset();
 }
 
 //------------------------------------------------------------------------------
 inline void
 kc85_audio::reset() {
-    this->cb_stop(userdata, 0, 0);
-    this->cb_stop(userdata, 0, 1);
+    if (this->cb_stop) {
+        this->cb_stop(userdata, 0, 0);
+        this->cb_stop(userdata, 0, 1);
+    }
     this->channels[0] = channel_state();
     this->channels[1] = channel_state();
 }

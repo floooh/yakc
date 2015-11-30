@@ -13,9 +13,10 @@ class FileLoader {
 public:
     /// a load item
     struct Item {
-        Item(const char* n, const char* fn) : Name(n), Filename(fn) {};
+        Item(const char* n, const char* fn, yakc::kc85_model compat) : Name(n), Filename(fn), Compat(compat) {};
         Oryol::String Name;
         Oryol::String Filename;
+        yakc::kc85_model Compat;
     };
     /// available items
     Oryol::Array<Item> Items;

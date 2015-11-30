@@ -130,7 +130,24 @@ kc85_video::decode(ubyte* rgba8_buf, int buf_size) const {
 
     unsigned int* dst_start = (unsigned int*) rgba8_buf;
     const bool blink_bg = this->ctc_blink_flag && this->pio_blink_flag;
-    if (kc85_model::kc85_3 == this->model) {
+
+    if (kc85_model::kc85_4 == this->model) {
+        int irm_index = (this->irm_control & 1) * 2;
+        const ubyte* pixel_data = this->irm[irm_index];
+        const ubyte* color_data = this->irm[irm_index+1];
+        int offset;
+        for (int y = 0; y < 256; y++) {
+            unsigned int* dst_ptr = &(dst_start[y*320]);
+            const int width = 320>>3;
+            for (int x = 0; x < width; x++) {
+                offset = y | (x<<8);
+                ubyte src_pixels = pixel_data[offset];
+                ubyte src_colors = color_data[offset];
+                this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
+            }
+        }
+    }
+    else {
         const ubyte* pixel_data = this->irm[0];
         const ubyte* color_data = this->irm[0] + 0x2800;
 
@@ -160,22 +177,6 @@ kc85_video::decode(ubyte* rgba8_buf, int buf_size) const {
                 }
                 ubyte src_pixels = pixel_data[pixel_offset];
                 ubyte src_colors = color_data[color_offset];
-                this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
-            }
-        }
-    }
-    else if (kc85_model::kc85_4 == this->model) {
-        int irm_index = (this->irm_control & 1) * 2;
-        const ubyte* pixel_data = this->irm[irm_index];
-        const ubyte* color_data = this->irm[irm_index+1];
-        int offset;
-        for (int y = 0; y < 256; y++) {
-            unsigned int* dst_ptr = &(dst_start[y*320]);
-            const int width = 320>>3;
-            for (int x = 0; x < width; x++) {
-                offset = y | (x<<8);
-                ubyte src_pixels = pixel_data[offset];
-                ubyte src_colors = color_data[offset];
                 this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
             }
         }

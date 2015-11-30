@@ -34,11 +34,15 @@ LoadWindow::Draw(kc85& kc) {
 
         // item list
         static int selected = 0;
+        int curr = 0;
         ImGui::BeginChild("kcclist", ImVec2(150,0), true);
-        for (int i = 0; i < this->loader->Items.Size(); i++) {
-            if (ImGui::Selectable(this->loader->Items[i].Name.AsCStr(), selected == i)) {
-                selected = i;
-                this->loader->Load(kc, this->loader->Items[i]);
+        for (const auto& item : this->loader->Items) {
+            if ((item.Compat == kc85_model::any) || (item.Compat == kc.model())) {
+                if (ImGui::Selectable(item.Name.AsCStr(), selected == curr)) {
+                    selected = curr;
+                    this->loader->Load(kc, item);
+                }
+                curr++;
             }
         }
         ImGui::EndChild();

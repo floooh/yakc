@@ -10,19 +10,19 @@ using namespace yakc;
 //------------------------------------------------------------------------------
 void
 FileLoader::Setup(kc85& kc) {
-    this->Items.Add("Pengo", "pengo.kcc");
-    this->Items.Add("Cave", "cave.kcc");
-    this->Items.Add("Labyrinth", "labyrinth.kcc");
-    this->Items.Add("House", "house.kcc");
-    this->Items.Add("Jungle", "jungle.kcc");
-    this->Items.Add("Pacman", "pacman.kcc");
-    this->Items.Add("Breakout", "breakout.kcc");
+    this->Items.Add("Pengo", "pengo.kcc", kc85_model::kc85_3);
+    this->Items.Add("Cave", "cave.kcc", kc85_model::kc85_3);
+    this->Items.Add("Labyrinth", "labyrinth.kcc", kc85_model::kc85_3);
+    this->Items.Add("House", "house.kcc", kc85_model::kc85_3);
+    this->Items.Add("Jungle", "jungle.kcc", kc85_model::kc85_3);
+    this->Items.Add("Pacman", "pacman.kcc", kc85_model::kc85_3);
+    this->Items.Add("Breakout", "breakout.kcc", kc85_model::kc85_3);
 // some don't properly work yet
 //    this->Items.Add("Boulderdash", "bould-3.kcc");
 //    this->Items.Add("Digger", "digger-3.kcc");
-    this->Items.Add("Ladder", "ladder-3.kcc");
-    this->Items.Add("Chess", "chess.kcc");
-    this->Items.Add("Testbild", "testbild.kcc");
+    this->Items.Add("Ladder", "ladder-3.kcc", kc85_model::kc85_3);
+    this->Items.Add("Chess", "chess.kcc", kc85_model::any);
+    this->Items.Add("Testbild", "testbild.kcc", kc85_model::any);
     this->ioQueue.Start();
 }
 

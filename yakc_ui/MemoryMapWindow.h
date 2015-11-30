@@ -14,6 +14,12 @@ public:
     /// draw method
     virtual bool Draw(yakc::kc85& kc) override;
 
+    struct pageInfo {
+        const char* name = nullptr;
+        unsigned int addr = 0;
+        unsigned int size = 0;
+    };
+
     /// get name for a memory layer and page
-    const char* getPageName(yakc::kc85& kc, int layer_index, int page_index) const;
+    pageInfo getPageInfo(yakc::kc85& kc, int layer_index, int page_index) const;
 };

@@ -103,29 +103,31 @@ UI::OnFrame(kc85& kc) {
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
                     kc.poweroff();
-                    kc.poweron(kc.model());
+                    kc.poweron(kc.model(), kc.caos());
                 }
                 if (ImGui::MenuItem("Reset")) {
                     kc.reset();
                 }
-                if (kc.model() == kc85_model::kc85_3) {
-                    if (ImGui::MenuItem("Boot to KC85/4")) {
-                        kc.poweroff();
-                        kc.poweron(kc85_model::kc85_4);
-                    }
+                if (ImGui::MenuItem("Boot to KC85/3 (CAOS 3.1)")) {
+                    kc.poweroff();
+                    kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_1);
                 }
-                else {
-                    if (ImGui::MenuItem("Boot to KC85/3")) {
-                        kc.poweroff();
-                        kc.poweron(kc85_model::kc85_3);
-                    }
+                if (ImGui::MenuItem("Boot to KC85/4 (CAOS 4.1)")) {
+                    kc.poweroff();
+                    kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_1);
+                }
+                if (ImGui::MenuItem("Boot to KC85/4 (CAOS 4.2)")) {
+                    kc.poweroff();
+                    kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_2);
                 }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Games")) {
                 for (const auto& item : this->fileLoader.Items) {
-                    if (ImGui::MenuItem(item.Name.AsCStr())) {
-                        this->fileLoader.LoadAndStart(kc, item);
+                    if ((item.Compat == kc85_model::any) || (item.Compat == kc.model())) {
+                        if (ImGui::MenuItem(item.Name.AsCStr())) {
+                            this->fileLoader.LoadAndStart(kc, item);
+                        }
                     }
                 }
                 ImGui::EndMenu();

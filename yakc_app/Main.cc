@@ -73,22 +73,20 @@ YakcApp::OnInit() {
     #if YAKC_UI
     this->ui.Setup(this->kc);
     #endif
-    const kc85_model model = kc85_model::kc85_3;
-    this->kc.poweron(model);
+    this->kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_1);
     this->draw.Setup(gfxSetup, frameSize);
     this->audio.Setup(this->kc);
 
     // on KC85/3 put a 16kByte module into slot 8 by default, CAOS will initialize
     // this automatically on startup
-    if (model == kc85_model::kc85_3) {
-        this->kc.exp.insert_module(0x08,kc85_module::create_ram(0xF4, 0x4000,
-            "M022 EPANDER RAM",
-            "16 KByte RAM expansion module.\n\n"
-            "SWITCH [SLOT] 43: map to address 0x4000\n"
-            "SWITCH [SLOT] 83: map to address 0x8000\n"
-            "SWITCH [SLOT] 00: switch module off\n\n"
-            "...where [SLOT] is 08 or 0C"));
-    }
+    // FIXME: find a better way to setup complete computer configs
+    this->kc.exp.insert_module(0x08,kc85_module::create_ram(0xF4, 0x4000,
+        "M022 EPANDER RAM",
+        "16 KByte RAM expansion module.\n\n"
+        "SWITCH [SLOT] 43: map to address 0x4000\n"
+        "SWITCH [SLOT] 83: map to address 0x8000\n"
+        "SWITCH [SLOT] 00: switch module off\n\n"
+        "...where [SLOT] is 08 or 0C"));
 
     return AppState::Running;
 }

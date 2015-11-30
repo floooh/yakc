@@ -41,6 +41,13 @@ enum class kc85_model {
     kc85_3,
     kc85_4,
     none,
+    any,
+};
+
+enum class kc85_caos {
+    caos_3_1,
+    caos_4_1,
+    caos_4_2,
 };
 
 inline void

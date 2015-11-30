@@ -69,13 +69,15 @@ public:
     kc85();
 
     /// power-on the device
-    void poweron(kc85_model m);
+    void poweron(kc85_model m, kc85_caos os);
     /// power-off the device
     void poweroff();
     /// reset the device
     void reset();
     /// get the KC model
     kc85_model model() const;
+    /// get the CAOS versuon
+    kc85_caos caos() const;
 
     /// process one frame
     void onframe(int speed_multiplier, int micro_secs);
@@ -95,8 +97,11 @@ private:
     void update_bank_switching();
 
     kc85_model cur_model;
+    kc85_caos cur_caos;
     bool on;
     ubyte key_code;
+    ubyte* caos_c_ptr;
+    ubyte* caos_e_ptr;
 };
 
 //------------------------------------------------------------------------------
@@ -105,21 +110,44 @@ io84(0),
 io86(0),
 paused(false),
 cur_model(kc85_model::kc85_3),
-key_code(0) {
+cur_caos(kc85_caos::caos_3_1),
+key_code(0),
+caos_c_ptr(nullptr),
+caos_e_ptr(nullptr) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 inline void
-kc85::poweron(kc85_model m) {
+kc85::poweron(kc85_model m, kc85_caos os) {
     YAKC_ASSERT(kc85_model::none != m);
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
+    this->cur_caos = os;
     this->on = true;
     this->key_code = 0;
     this->io84 = 0;
     this->io86 = 0;
+
+    // set operating system pointers
+    switch (os) {
+        case kc85_caos::caos_3_1:
+            this->caos_e_ptr = dump_caos31;
+            this->caos_c_ptr = nullptr;
+            break;
+        case kc85_caos::caos_4_1:
+            this->caos_e_ptr = dump_caos41e;
+            this->caos_c_ptr = dump_caos41c;
+            break;
+        case kc85_caos::caos_4_2:
+            this->caos_e_ptr = dump_caos42e;
+            this->caos_c_ptr = dump_caos42c;
+            break;
+        default:
+            YAKC_ASSERT(false);
+            break;
+    }
 
     // initialize the clock, the 85/4 runs at 1.77 MHz, the others at 1.75 MHz
     this->clck.init((m == kc85_model::kc85_4) ? 1770 : 1750);
@@ -182,6 +210,12 @@ kc85::reset() {
 inline kc85_model
 kc85::model() const {
     return this->cur_model;
+}
+
+//------------------------------------------------------------------------------
+inline kc85_caos
+kc85::caos() const {
+    return this->cur_caos;
 }
 
 //------------------------------------------------------------------------------
@@ -404,7 +438,7 @@ kc85::update_bank_switching() {
         }
         // 8 KByte CAOS ROM at 0xF000
         if (pio_a & PIO_A_CAOS_ROM) {
-            this->cpu.mem.map(0, 0xE000, 0x2000, dump_caos31, false);
+            this->cpu.mem.map(0, 0xE000, 0x2000, this->caos_e_ptr, false);
         }
     }
     else if (kc85_model::kc85_4 == this->cur_model) {
@@ -444,11 +478,11 @@ kc85::update_bank_switching() {
         }
         // 4 KByte CAOS ROM-C at 0xC000
         if (this->io86 & IO86_CAOS_ROM_C) {
-            this->cpu.mem.map(0, 0xC000, 0x1000, dump_caos41c, false);
+            this->cpu.mem.map(0, 0xC000, 0x1000, this->caos_c_ptr, false);
         }
         // 8 KByte CAOS ROM-E at 0xE000
         if (pio_a & PIO_A_CAOS_ROM) {
-            this->cpu.mem.map(0, 0xE000, 0x2000, dump_caos41e, false);
+            this->cpu.mem.map(0, 0xE000, 0x2000, this->caos_e_ptr, false);
         }
     }
 
