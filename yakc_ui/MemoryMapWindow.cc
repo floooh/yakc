@@ -13,7 +13,7 @@ using namespace yakc;
 //------------------------------------------------------------------------------
 void
 MemoryMapWindow::Setup(kc85& kc) {
-    this->setName("Memory Map");
+    this->setName("Memory Map (FIXME!)");
 }
 
 //------------------------------------------------------------------------------
