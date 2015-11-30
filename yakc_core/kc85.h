@@ -121,6 +121,9 @@ kc85::poweron(kc85_model m) {
     this->io84 = 0;
     this->io86 = 0;
 
+    // initialize the clock, the 85/4 runs at 1.77 MHz, the others at 1.75 MHz
+    this->clck.init((m == kc85_model::kc85_4) ? 1770 : 1750);
+
     // initialize hardware components
     this->pio.init();
     this->ctc.init();
@@ -135,31 +138,18 @@ kc85::poweron(kc85_model m) {
     this->cpu.connect_irq_device(&this->ctc.int_ctrl);
     this->ctc.int_ctrl.connect_irq_device(&this->pio.int_ctrl);
 
+    // fill RAM banks with noise
+    fill_random(this->ram, sizeof(this->ram));
+
     // connect CTC2 trigger to a 50Hz vertical-blank-timer,
     // this controls the foreground color blinking flag
     this->clck.config_timer(0, 50, z80ctc::ctrg2, &this->ctc);
 
-    // fill RAM banks with noise
-    fill_random(this->ram, sizeof(this->ram));
-
     // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
     this->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
 
-    if (kc85_model::kc85_3 == m) {
-
-        // initialize clock to 1.75 MHz
-        this->clck.init(1750);
-
-        // initial memory map
-        this->cpu.out(0x88, 0x9f);
-    }
-    else {
-        // KC85/4 is clocked at 1.77 MHz
-        this->clck.init(1770);
-
-        // initial memory map
-        this->cpu.out(0x88, 0x9f);
-    }
+    // initial memory map
+    this->cpu.out(0x88, 0x9f);
 
     // execution on power-on starts at 0xF000
     this->cpu.state.PC = 0xF000;
@@ -359,8 +349,6 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             self->ctc.write(z80ctc::CTC3, val);
             break;
         default:
-            // unknown
-            //YAKC_ASSERT(false);
             break;
     }
 }
@@ -368,14 +356,12 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
 //------------------------------------------------------------------------------
 inline ubyte
 kc85::in_cb(void* userdata, uword port) {
+    // NOTE: on KC85/4, the hardware doesn't provide a way to read-back
+    // the additional IO ports at 0x84 and 0x86 (see KC85/4 service manual)
     kc85* self = (kc85*)userdata;
     switch (port & 0xFF) {
         case 0x80:
             return self->exp.module_type(port>>8);
-        case 0x84:
-            return (kc85_model::kc85_4 == self->cur_model) ? self->io84 : 0xFF;
-        case 0x86:
-            return (kc85_model::kc85_4 == self->cur_model) ? self->io86 : 0xFF;
         case 0x88:
             return self->pio.read(z80pio::A);
         case 0x89:
@@ -389,8 +375,6 @@ kc85::in_cb(void* userdata, uword port) {
         case 0x8F:
             return self->ctc.read(z80ctc::CTC3);
         default:
-            // unknown
-            YAKC_ASSERT(false);
             return 0xFF;
     }
 }
@@ -444,7 +428,14 @@ kc85::update_bank_switching() {
         if (pio_a & PIO_A_IRM) {
             int irm_index = (this->io84 & 6)>>1;
             ubyte* irm_ptr = this->video.irm[irm_index];
+            // on the KC85, an access to IRM banks other than the
+            // first is only possible for the first 10 KByte until
+            // A800, memory access to the remaining 6 KBytes
+            // (A800 to BFFF) is always forced to the first IRM bank
+            // by the address decoder hardware (see KC85/4 service manual)
             this->cpu.mem.map(0, 0x8000, 0x2800, irm_ptr, true);
+
+            // always force access to A800 and above to the first IRM bank
             this->cpu.mem.map(0, 0xA800, 0x1800, this->video.irm[0]+0x2800, true);
         }
         // 8 KByte BASIC ROM at 0xC000

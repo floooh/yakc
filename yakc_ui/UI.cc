@@ -108,6 +108,18 @@ UI::OnFrame(kc85& kc) {
                 if (ImGui::MenuItem("Reset")) {
                     kc.reset();
                 }
+                if (kc.model() == kc85_model::kc85_3) {
+                    if (ImGui::MenuItem("Boot to KC85/4")) {
+                        kc.poweroff();
+                        kc.poweron(kc85_model::kc85_4);
+                    }
+                }
+                else {
+                    if (ImGui::MenuItem("Boot to KC85/3")) {
+                        kc.poweroff();
+                        kc.poweron(kc85_model::kc85_3);
+                    }
+                }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Games")) {

@@ -5,22 +5,24 @@
     @brief implements banked Z80 memory mapped to host system memory
 
     Host system memory 'layers' up to 64 KByte size can be mapped
-    to Z80 memory with an 4KByte 'page-size' granularity as read-only
-    or read/write.
+    to Z80 memory with an 2KByte 'page-size' granularity as read-only
+    or read/write. The 2 KByte page size is needed because this is the
+    smallest memory block 'unit' required by the KC85/4 video memory
+    organization.
     
     Memory-mapping definition happens in 'stacked layers', where lower-priority
     mappings fill address-range holes in the higher priority mappings,
     for example:
     
-    +------+------+======+======+------+------+------+------+
-    |      |      |      |      |      |      |      |      |   64 KByte RAM expansion
-    +------+------+======+======+------+------+------+------+
+    +-------------+=============+-------------+-------------+
+    |             |             |             |             |   64 KByte RAM expansion
+    +-------------+=============+-------------+-------------+
                                               +======+
                                               |      |          8 KByte ROM module
                                               +======+
-    +======+======+             +======+======+      +======+
-    |      |      |             |      |      |      |      |   base-device memory with holes
-    +======+======+             +======+======+      +======+
+    +=============+             +=============+      +======+
+    |             |             |             |      |      |   base-device memory with holes
+    +=============+             +=============+      +======+
    0000          4000          8000          C000   E000
    
     This is a KC85/3 base device with switched-off BASIC ROM, leaving
