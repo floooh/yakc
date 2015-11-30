@@ -38,14 +38,17 @@ typedef short word;
 typedef unsigned short address;
 
 enum class kc85_model {
-    kc85_3,
-    kc85_4,
-    none,
-    any,
+    kc85_2 = (1<<0),
+    kc85_3 = (1<<1),
+    kc85_4 = (1<<2),
+    none = 0,
+    any = (kc85_2|kc85_3|kc85_4),
 };
 
 enum class kc85_caos {
+    caos_2_1,
     caos_3_1,
+    caos_3_4,
     caos_4_1,
     caos_4_2,
 };

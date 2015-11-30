@@ -76,7 +76,7 @@ public:
     void reset();
     /// get the KC model
     kc85_model model() const;
-    /// get the CAOS versuon
+    /// get the CAOS version
     kc85_caos caos() const;
 
     /// process one frame
@@ -101,7 +101,9 @@ private:
     bool on;
     ubyte key_code;
     ubyte* caos_c_ptr;
+    int caos_c_size;
     ubyte* caos_e_ptr;
+    int caos_e_size;
 };
 
 //------------------------------------------------------------------------------
@@ -113,7 +115,9 @@ cur_model(kc85_model::kc85_3),
 cur_caos(kc85_caos::caos_3_1),
 key_code(0),
 caos_c_ptr(nullptr),
-caos_e_ptr(nullptr) {
+caos_c_size(0),
+caos_e_ptr(nullptr),
+caos_e_size(0) {
     // empty
 }
 
@@ -131,18 +135,27 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->io86 = 0;
 
     // set operating system pointers
+    this->caos_c_ptr = nullptr;
+    this->caos_c_size = 0;
+    this->caos_e_size = 0x2000;
     switch (os) {
+        case kc85_caos::caos_2_1:
         case kc85_caos::caos_3_1:
             this->caos_e_ptr = dump_caos31;
+            break;
+        case kc85_caos::caos_3_4:
+            this->caos_e_ptr = dump_caos34;
             this->caos_c_ptr = nullptr;
             break;
         case kc85_caos::caos_4_1:
             this->caos_e_ptr = dump_caos41e;
             this->caos_c_ptr = dump_caos41c;
+            this->caos_c_size = 0x1000;
             break;
         case kc85_caos::caos_4_2:
             this->caos_e_ptr = dump_caos42e;
             this->caos_c_ptr = dump_caos42c;
+            this->caos_c_size = 0x1000;
             break;
         default:
             YAKC_ASSERT(false);
@@ -421,8 +434,8 @@ kc85::update_bank_switching() {
     const ubyte pio_b = this->pio.read(z80pio::B);
 
 
-    if (kc85_model::kc85_3 == this->cur_model) {
-        // ** KC85/3 **
+    if ((kc85_model::kc85_2 == this->cur_model) | (kc85_model::kc85_3 == this->cur_model)) {
+        // ** KC85/3 or KC85/2 **
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
         if (pio_a & PIO_A_RAM) {
@@ -432,13 +445,15 @@ kc85::update_bank_switching() {
         if (pio_a & PIO_A_IRM) {
             this->cpu.mem.map(0, 0x8000, 0x4000, this->video.irm[0], true);
         }
-        // 8 KByte BASIC ROM at 0xC000
-        if (pio_a & PIO_A_BASIC_ROM) {
-            this->cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
+        // 8 KByte BASIC ROM at 0xC000 (only KC85/3)
+        if (kc85_model::kc85_3 == this->cur_model) {
+            if (pio_a & PIO_A_BASIC_ROM) {
+                this->cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
+            }
         }
         // 8 KByte CAOS ROM at 0xF000
         if (pio_a & PIO_A_CAOS_ROM) {
-            this->cpu.mem.map(0, 0xE000, 0x2000, this->caos_e_ptr, false);
+            this->cpu.mem.map(0, 0xE000, this->caos_e_size, this->caos_e_ptr, false);
         }
     }
     else if (kc85_model::kc85_4 == this->cur_model) {
@@ -478,11 +493,11 @@ kc85::update_bank_switching() {
         }
         // 4 KByte CAOS ROM-C at 0xC000
         if (this->io86 & IO86_CAOS_ROM_C) {
-            this->cpu.mem.map(0, 0xC000, 0x1000, this->caos_c_ptr, false);
+            this->cpu.mem.map(0, 0xC000, this->caos_c_size, this->caos_c_ptr, false);
         }
         // 8 KByte CAOS ROM-E at 0xE000
         if (pio_a & PIO_A_CAOS_ROM) {
-            this->cpu.mem.map(0, 0xE000, 0x2000, this->caos_e_ptr, false);
+            this->cpu.mem.map(0, 0xE000, this->caos_e_size, this->caos_e_ptr, false);
         }
     }
 

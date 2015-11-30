@@ -37,7 +37,7 @@ LoadWindow::Draw(kc85& kc) {
         int curr = 0;
         ImGui::BeginChild("kcclist", ImVec2(150,0), true);
         for (const auto& item : this->loader->Items) {
-            if ((item.Compat == kc85_model::any) || (item.Compat == kc.model())) {
+            if (int(item.Compat) & int(kc.model())) {
                 if (ImGui::Selectable(item.Name.AsCStr(), selected == curr)) {
                     selected = curr;
                     this->loader->Load(kc, item);

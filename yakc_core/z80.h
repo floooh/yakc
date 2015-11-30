@@ -109,6 +109,8 @@ public:
     bool irq_received;
     /// delayed-interrupt-enable flag set bei ei()
     bool enable_interrupt;
+    /// break on invalid opcode?
+    bool break_on_invalid_opcode;
 
     /// constructor
     z80();
@@ -243,7 +245,8 @@ out_func(nullptr),
 inout_userdata(nullptr),
 irq_device(nullptr),
 irq_received(false),
-enable_interrupt(false) {
+enable_interrupt(false),
+break_on_invalid_opcode(false) {
     YAKC_MEMSET(&this->state, 0, sizeof(this->state));
 }
 
@@ -403,8 +406,10 @@ z80::di() {
 //------------------------------------------------------------------------------
 inline unsigned int
 z80::invalid_opcode(uword opsize) {
-    state.INV = true;
-    state.PC -= opsize;     // stuck on invalid opcode
+    if (this->break_on_invalid_opcode) {
+        state.INV = true;
+        state.PC -= opsize;     // stuck on invalid opcode
+    }
     return 4;
 }
 
