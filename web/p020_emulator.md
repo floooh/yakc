@@ -14,7 +14,7 @@ possible to build native versions for OSX, Linux, Windows, Android and iOS.
 
 Extra care has been taken to keep the client size small for the 
 web browser platform. The compressed size for the complete emulator
-with debugging UI is under 400 kBytes (compressed), without the debugging UI
+with debugging UI is under 400 kBytes, without the debugging UI
 the compressed size is under 200 kBytes.
 
 The emulator consists of 4 main components:
