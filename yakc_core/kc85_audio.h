@@ -118,7 +118,7 @@ kc85_audio::update_channel(int channel) {
     // has the CTC channel state changed since last time?
     const auto& ctc_chn = this->ctc->channels[channel];
     if ((ctc_chn.constant != this->channels[channel].ctc_constant) ||
-        ((ctc_chn.mode ^ this->channels[channel].ctc_mode) && z80ctc::RESET)) {
+        (ctc_chn.mode ^ this->channels[channel].ctc_mode)) {
 
         if (!(this->channels[channel].ctc_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
             // CTC channel has become inactive, call the stop-callback
