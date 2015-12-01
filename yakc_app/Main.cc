@@ -198,9 +198,12 @@ YakcApp::handleInput() {
     };
     for (const auto& key : keyTable) {
         if (kbd.KeyPressed(key.key)) {
-            // special case: shift-backspace clears screen
+            // special case: shift-backspace clears screen shift-escape is STP
             if (kbd.KeyPressed(Key::LeftShift) && (key.key == Key::BackSpace)) {
                 ascii = 0x0C;
+            }
+            else if (kbd.KeyPressed(Key::LeftShift) && (key.key == Key::Escape)) {
+                ascii = 0x13;
             }
             else {
                 ascii = key.ascii;

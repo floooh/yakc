@@ -3,6 +3,8 @@ layout: page
 title: The Emulator
 ---
 
+## The YAKC KC85 Emulator
+
 **YAKC** means 'Yet Another KC emulator'. I might come up with a better name some day.
 
 The [github repo is here](https://github.com/floooh/yakc)
