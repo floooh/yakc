@@ -445,7 +445,7 @@ kc85::update_bank_switching() {
     const ubyte pio_b = this->pio.read(z80pio::B);
 
 
-    if ((kc85_model::kc85_2 == this->cur_model) | (kc85_model::kc85_3 == this->cur_model)) {
+    if ((kc85_model::kc85_2 == this->cur_model) || (kc85_model::kc85_3 == this->cur_model)) {
         // ** KC85/3 or KC85/2 **
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
