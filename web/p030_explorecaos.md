@@ -142,8 +142,8 @@ This means:
 
 ~~~
 CAOSE ON:   the operating system ROM at address E000 is switched on
-ROMC 0 OFF: both ROM banks at addres C000 are switched off
-RAM0 ON:    the built-in RAM at address 0000 is switched
+ROMC 0 OFF: both ROM banks at address C000 are switched off
+RAM0 ON:    the built-in RAM at address 0000 is switched on
 RAM4 ON:    the built-in RAM at address 4000 is switched on
 RAM8 0 ON:  the first of the 2 RAM banks at address 8000 is switched on
 BILD 0:     the first video memory area (out of 2) is displayed
@@ -201,8 +201,8 @@ Insert the FORTH expansion module into slot 08 using the debugging UI
 
 ![Forth Module](images/forth_module.png)
 
-The modul is now in expansion slot 08, as can be seen with the **MODUL**
-command, but it is not switched-on yet. To function properly, the FORTH
+The FORTH module is now in expansion slot 08, as can be seen with the **MODUL**
+command, but it is not switched-on yet. To function properly, the 
 module must be switched to address C000, this is achieved with the
 command **SWITCH 08 C1** (08 means 'expansion slot 08', the 'C' in C1 means 
 'at address C000, and the '1' in C1 means: 'active'). Another MODUL
@@ -239,8 +239,8 @@ useful in the emulator.
 On a real KC85, the commands **LOAD**, **SAVE** and **VERIFY** are used
 to load and save data from and to cassettes, and verify a saved file.
 
-In the emulator, LOAD and VERIFY will simply wait forever. For shits and
-giggles you can try to save some data (make sure you have sound enabled):
+In the emulator, LOAD and VERIFY will simply wait forever. For shitz'n'giggles 
+you can try to save some data (make sure you have sound enabled):
 
 ![Saving](images/save.png)
 
