@@ -444,7 +444,6 @@ kc85::update_bank_switching() {
     const ubyte pio_a = this->pio.read(z80pio::A);
     const ubyte pio_b = this->pio.read(z80pio::B);
 
-
     if ((kc85_model::kc85_2 == this->cur_model) || (kc85_model::kc85_3 == this->cur_model)) {
         // ** KC85/3 or KC85/2 **
 
