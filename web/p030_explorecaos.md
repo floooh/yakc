@@ -44,16 +44,16 @@ takes 5 parameters that define the window rectangle and a window id:
 WINDOW y h x w id
 ~~~
 
-Where 'x' and 'y' are the coordinates of the top-left corners, and 'w' and
-'h' are the width and height, the max width of a window is 28 hex, and
-the max height is 20 hex (which is 40/32 dezimal). The 'id' is a number between
+Where 'x' and 'y' are the coordinates of the top-left corner, and 'w' and
+'h' are the window width and height. The max width of a window is 28 hex, and
+the max height is 20 hex. The 'id' is a number between
 0 and 9. Once windows are defined, they can be activated with 
 
 ~~~
 WINDOW id
 ~~~
 
-The following commands split the screen in half, and define windows with 
+The following commands split the screen in half into two windows with 
 different background colors (if you screw up, simply Reset the KC85/4 
 using the debugger menu).
 
@@ -109,6 +109,8 @@ at **aaaa** with **ss** number of lines at a time and **n** columns:
 DISPLAY aaaa [ss [n]]
 ~~~
 
+For instance, to show the start of the pixel video memory:
+
 ~~~
 %DISPLAY 8000 4
 ...
@@ -129,9 +131,9 @@ prompt:
 
 ### Memory banks, expansion slots and modules
 
-The commands **SYSTEM**, **MODUL**, **JUMP** and **SWITCH** deal with the
+The commands **SYSTEM**, **MODUL**, **JUMP** and **SWITCH** control the
 hardware expansion system. Each KC85 has 2 expansion slots numbered **08** and 
-**0C**, and additional 'bus-drivers' with 4 more expansion slots could
+**0C**. Additional 'bus-driver' devices with 4 more expansion slots could
 be stacked on top of the base device.
 
 The command **SYSTEM** gives an overview of the built-in memory banks:
@@ -231,7 +233,7 @@ this is currently only useful with the M006 BASIC ROM module for the KC85/2.
 How this works is left as an excersice to the reader ;)
 
 
-### Cassette loading and saving, and V24 control
+### Cassette loading/saving, and V24 control
 
 Before you get excited, all the remaining commands don't do anything
 useful in the emulator.
