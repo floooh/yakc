@@ -81,7 +81,7 @@ YakcApp::OnInit() {
     // this automatically on startup
     // FIXME: find a better way to setup complete computer configs
     this->kc.exp.insert_module(0x08,kc85_module::create_ram(0xF4, 0xC0, 0x4000,
-        "M022 EPANDER RAM",
+        "M022 EXPANDER RAM",
         "16 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 43: map to address 0x4000\n"
         "SWITCH [SLOT] 83: map to address 0x8000\n"
