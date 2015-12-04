@@ -30,17 +30,13 @@ so far.
 
 ### Screenshots
 
-![Overlay UI](screenshots/debug_ui.png)
+![Overlay UI](misc/debug_ui.png)
 
-![Pengo Intro Screen](screenshots/pengo_menu.png)
+![Pengo Intro Screen](misc/pengo_menu.png)
 
-![Pengo Ingame](screenshots/pengo_ingame.png)
+![Cave](misc/cave.png)
 
-![Cave](screenshots/cave.png)
-
-![House Intro Screen](screenshots/house_menu.png)
-
-![House Ingame](screenshots/house_ingame.png)
+![House Ingame](misc/house_ingame.png)
 
 ### Goals:
 - small and portable emulator core in a simple C++
