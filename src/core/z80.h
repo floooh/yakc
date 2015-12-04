@@ -154,6 +154,8 @@ public:
     /// get flags for the LD A,I and LD A,R instructions
     static ubyte sziff2(ubyte val, bool iff2);
 
+    /// halt instruction
+    void halt();
     /// perform an 8-bit add, return result, and update flags
     ubyte add8(ubyte acc, ubyte add);
     /// perform an 8-bit adc, return result and update flags
@@ -326,12 +328,20 @@ inline void
 z80::reset() {
     this->state.PC = 0;
     this->state.IM = 0;
+    this->state.HALT = false;
     this->state.IFF1 = false;
     this->state.IFF2 = false;
     this->state.I = 0;
     this->state.R = 0;
     this->irq_received = false;
     this->enable_interrupt = false;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::halt() {
+    this->state.HALT = true;
+    this->state.PC--;
 }
 
 //------------------------------------------------------------------------------
@@ -349,18 +359,20 @@ z80::handle_irq() {
         tstates += 2;
         // we don't implement MODE0 or MODE1 (yet?)
         YAKC_ASSERT(2 == this->state.IM);
+
+        // leave halt
+        if (this->state.HALT) {
+            this->state.HALT = false;
+            this->state.PC++;
+        }
+
         this->irq_received = false;
-        // no point in handling interrupt if no daisy chain is configured
         if (this->irq_device) {
-            // interrupt enabled?
             if (this->state.IFF1) {
-                // first disable interrupts
+                // handle interrupt
                 this->state.IFF1 = this->state.IFF2 = false;
-                // ask daisy chain for interrupt vector
                 ubyte vec = this->irq_device->interrupt_acknowledged();
-                // generate interrupt vector address (MODE2)
                 uword addr = (this->state.I<<8)|(vec&0xFE);
-                // push current PC on stack, and load PC with interrupt routine
                 this->state.SP -= 2;
                 this->mem.w16(this->state.SP, this->state.PC);
                 this->state.PC = this->mem.r16(addr);

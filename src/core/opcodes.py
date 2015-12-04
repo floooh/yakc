@@ -100,7 +100,7 @@ def HALT(ops) :
     HALT
     T-states: 4
     '''
-    src = [ '// HALT', 'state.PC--;', t(4)]
+    src = [ '// HALT', 'halt();', t(4)]
     return add_op(ops, 0x76, src)
 
 #-------------------------------------------------------------------------------

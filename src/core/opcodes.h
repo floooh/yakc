@@ -642,7 +642,7 @@ inline unsigned int z80::step() {
         break;
     case 0x76:
         // HALT
-        state.PC--;
+        halt();
         return 4;
         break;
     case 0x77:
