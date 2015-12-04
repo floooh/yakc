@@ -26,7 +26,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         shutil.copy(deploy_dir + name, webpage_dir + '/' + name)
 
     # copy kcc files
-    for kcc in glob.glob(proj_dir + '/kcc/*.kcc') :
+    for kcc in glob.glob(proj_dir + '/src/kcc/*.kcc') :
         log.info('> copy file: {}'.format(kcc))
         shutil.copy(kcc, webpage_dir + '/' + os.path.basename(kcc))
 
