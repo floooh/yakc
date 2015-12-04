@@ -37,15 +37,15 @@ fips_import_fips_imgui_imgui()
 fips_import_fips_unittestpp_unittestpp()
 fips_ide_group("")
 
-fips_include_directories(.)
+fips_include_directories(src)
 
-fips_add_subdirectory(yakc_roms)
-fips_add_subdirectory(yakc_core)
-fips_add_subdirectory(yakc_test)
+fips_add_subdirectory(src/roms)
+fips_add_subdirectory(src/core)
+fips_add_subdirectory(src/test)
 if (YAKC_UI)
-    fips_add_subdirectory(yakc_ui)
+    fips_add_subdirectory(src/ui)
 endif()
-fips_add_subdirectory(yakc_app)
+fips_add_subdirectory(src/yakc)
 fips_finish()
 
 

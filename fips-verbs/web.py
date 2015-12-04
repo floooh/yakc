@@ -21,12 +21,12 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     copy_tree(proj_dir+'/web/_site', webpage_dir)
 
     # copy the application files
-    for name in ['yakc_app.js'] :
+    for name in ['yakc.js'] :
         log.info('> copy file: {}'.format(name))
         shutil.copy(deploy_dir + name, webpage_dir + '/' + name)
 
     # copy kcc files
-    for kcc in glob.glob(proj_dir + '/yakc_kcc/*.kcc') :
+    for kcc in glob.glob(proj_dir + '/kcc/*.kcc') :
         log.info('> copy file: {}'.format(kcc))
         shutil.copy(kcc, webpage_dir + '/' + os.path.basename(kcc))
 
