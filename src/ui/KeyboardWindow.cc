@@ -66,7 +66,7 @@ bool
 KeyboardWindow::Draw(kc85& kc) {
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.75f);
     ImGui::SetNextWindowSize(ImVec2(572, 196));
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
 
         // main section keys
         const ImVec2 size(32,24);

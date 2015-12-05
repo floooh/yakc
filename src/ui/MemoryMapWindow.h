@@ -26,9 +26,10 @@ public:
         hidden,
     };
 
+    /// draw background grid
+    void drawGrid(bool is_kc85_4);
     /// draw a 'memory rectangle'
-    void drawRect(int layer, yakc::uword addr, yakc::uword len, type t);
-
+    void drawRect(int layer, yakc::uword addr, unsigned int len, const char* tooltip, type t);
     /// get name for a memory layer and page
     pageInfo getPageInfo(yakc::kc85& kc, int layer_index, int page_index) const;
 };

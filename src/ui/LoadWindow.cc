@@ -30,7 +30,7 @@ LoadWindow::Draw(kc85& kc) {
     YAKC_ASSERT(this->loader);
 
     ImGui::SetNextWindowSize(ImVec2(512, 256), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
 
         // item list
         static int selected = 0;

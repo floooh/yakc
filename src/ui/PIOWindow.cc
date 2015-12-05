@@ -41,7 +41,7 @@ pioControlState(const kc85& kc, z80pio::channel chn) {
 bool
 PIOWindow::Draw(kc85& kc) {
     ImGui::SetNextWindowSize(ImVec2(220, 384), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         ImGui::BeginChild("##child");
         ImGui::PushItemWidth(16);
         if (this->pioAData.Draw()) {

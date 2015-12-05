@@ -22,7 +22,7 @@ DisasmWindow::Setup(kc85& kc) {
 bool
 DisasmWindow::Draw(kc85& kc) {
     ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->drawMainContent(kc, this->startWidget.Get16(), this->lengthWidget.Get16());
         ImGui::Separator();
         this->drawControls();

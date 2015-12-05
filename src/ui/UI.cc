@@ -41,6 +41,7 @@ UI::Setup(kc85& kc) {
     style.AntiAliasedLines = false;
     style.AntiAliasedShapes = false;
 
+
     /*
     style.Colors[ImGuiCol_Text] = ColorText;
     style.Colors[ImGuiCol_Border] = ColorDetail;
@@ -216,7 +217,7 @@ UI::OnFrame(kc85& kc) {
         // if UI is disabled, draw a simple overlay with help on how to toggle UI
         if (helpOpen) {
             ImGui::SetNextWindowPosCenter();
-            if (ImGui::Begin("Help", &this->helpOpen, ImVec2(0,0), 0.75f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize))
+            if (ImGui::Begin("Help", &this->helpOpen, ImVec2(0,0), 0.75f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders))
             {
                 ImGui::Text("Press TAB or double-tap to toggle UI!");
                 ImGui::Dummy(ImVec2(96,0)); ImGui::SameLine();

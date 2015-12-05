@@ -33,7 +33,7 @@ drawModeBit(const kc85& kc, int chn_index, ubyte mask, const char* name, const c
 bool
 CTCWindow::Draw(kc85& kc) {
     ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         StringBuilder strBuilder;
         for (int i = 0; i < z80ctc::num_channels; i++) {
             strBuilder.Format(32, "Channel %d (port 0x%02X)", i, i+0x8C);

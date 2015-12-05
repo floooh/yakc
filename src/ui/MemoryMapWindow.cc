@@ -10,6 +10,10 @@ OryolClassImpl(MemoryMapWindow);
 using namespace Oryol;
 using namespace yakc;
 
+static const int bank_height = 20;
+static const int left_padding = 80;
+static const int bank_div = 160;
+
 //------------------------------------------------------------------------------
 void
 MemoryMapWindow::Setup(kc85& kc) {
@@ -18,7 +22,41 @@ MemoryMapWindow::Setup(kc85& kc) {
 
 //------------------------------------------------------------------------------
 void
-MemoryMapWindow::drawRect(int layer, uword addr, uword len, type t) {
+MemoryMapWindow::drawGrid(bool is_kc85_4) {
+    StringBuilder strBuilder;
+    ImDrawList* l = ImGui::GetWindowDrawList();
+    const ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
+    const ImVec2 canvas_area = ImGui::GetContentRegionAvail();
+    const ImU32 white = 0xFFFFFFFF;
+    const float glyph_width = ImGui::CalcTextSize("F").x;
+    for (int i = 0; i < 5; i++) {
+        const int addr = 0x4000 * i;
+        const int x = addr / bank_div;
+        const ImVec2 a(x+canvas_pos.x+left_padding, canvas_pos.y);
+        const ImVec2 b(a.x, a.y+canvas_area.y+4-bank_height);
+        l->AddLine(a, b, white);
+
+        strBuilder.Format(32, "%04X", addr == 0x10000 ? 0xFFFF:addr);
+        float text_x = addr == 0x10000 ? b.x - 4*glyph_width : b.x;
+        l->AddText(ImVec2(text_x, b.y), white, strBuilder.AsCStr());
+    }
+    const ImVec2 a(canvas_pos.x+left_padding, canvas_pos.y+canvas_area.y-bank_height);
+    const ImVec2 b(a.x+0x10000/bank_div, a.y);
+    l->AddLine(a, b, white);
+
+    ImVec2 text_pos(canvas_pos.x, canvas_pos.y + 2);
+    for (int i = 0; i < (is_kc85_4 ? 6 : 1); i++) {
+        l->AddText(text_pos, white, "internal");
+        text_pos.y += bank_height;
+    }
+    l->AddText(text_pos, white, "slot 0x08");
+    text_pos.y += bank_height;
+    l->AddText(text_pos, white, "slot 0x0C");
+}
+
+//------------------------------------------------------------------------------
+void
+MemoryMapWindow::drawRect(int layer, uword addr, unsigned int len, const char* tooltip, type t) {
     static const ImVec4 grey(0.25f, 0.25f, 0.25f, 1.0f);
     static const ImVec4 light_green(0.0f, 1.0f, 0.0f, 1.0f);
     static const ImVec4 dark_green(0.0f, 0.5f, 0.0f, 1.0f);
@@ -35,21 +73,21 @@ MemoryMapWindow::drawRect(int layer, uword addr, uword len, type t) {
             color = ImGui::ColorConvertFloat4ToU32(dark_green);
             break;
     }
-
-    // compute rectangle coordinates
-    const int h = 20;
-    const int w = len / 160;
-    const int x = addr / 160;
+    const int h = bank_height;
     const int y = layer * h;
-    const int padding = 4;
-    ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
+    const ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
 
-    ImVec2 a(x+canvas_pos.x, y+canvas_pos.y);
-    ImVec2 b((a.x+w)-padding,(a.y+h)-padding);
-    ImDrawList* l = ImGui::GetWindowDrawList();
-    l->PushClipRectFullScreen();
-    l->AddRectFilled(a, b, color);
-    l->PopClipRect();
+    const int w = len / bank_div;
+    const int x = addr / bank_div;
+    ImVec2 a(x+canvas_pos.x+left_padding+3, y+canvas_pos.y+2);
+    ImVec2 b(a.x+w-5, a.y+h-4);
+    ImGui::GetWindowDrawList()->AddRectFilled(a, b, color);
+
+    if (ImGui::IsMouseHoveringRect(a, b)) {
+        if (tooltip) {
+            ImGui::SetTooltip(tooltip);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -62,18 +100,22 @@ MemoryMapWindow::Draw(kc85& kc) {
     static const ImVec2 page_size(12, 0);
     bool is_kc85_4 = kc.model() == kc85_model::kc85_4;
     bool is_kc85_2 = kc.model() == kc85_model::kc85_2;
-    const int window_height = is_kc85_4 ? 200 : 100;
+    const int window_height = is_kc85_4 ? 220 : 120;
     ImGui::SetNextWindowSize(ImVec2(512, window_height), ImGuiSetCond_Always);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
+
+        // draw the background grid
+        this->drawGrid(is_kc85_4);
+
         const ubyte pio_a = kc.pio.read(z80pio::A);
         const ubyte pio_b = kc.pio.read(z80pio::B);
 
         // built-in memory at 0x0000
-        this->drawRect(0, 0x0000, 0x4000, (pio_a & kc85::PIO_A_RAM) ? type::mapped : type::off) ;
+        this->drawRect(0, 0x0000, 0x4000, "RAM 0", (pio_a & kc85::PIO_A_RAM) ? type::mapped : type::off) ;
 
         // built-in memory at 0x4000 (KC85/4 only)
         if (is_kc85_4) {
-            this->drawRect(0, 0x4000, 0x4000, (kc.io86 & kc85::IO86_RAM4) ? type::mapped : type::off);
+            this->drawRect(0, 0x4000, 0x4000, "RAM 4", (kc.io86 & kc85::IO86_RAM4) ? type::mapped : type::off);
         }
 
         // video memory
@@ -82,30 +124,32 @@ MemoryMapWindow::Draw(kc85& kc) {
                 for (int layer = 0; layer < 4; layer++) {
                     const uword len = (0 == layer) ? 0x4000 : 0x2800;
                     const int irm_index = (kc.io84 & 6)>>1;
+                    strBuilder.Format(32, "IRM %d", layer);
                     if (layer == irm_index) {
                         // KC85/4: irm0 mapped (image 0 pixel buffer)
-                        this->drawRect(layer, 0x8000, len, type::mapped);
+                        this->drawRect(layer, 0x8000, len, strBuilder.AsCStr(), type::mapped);
                     }
                     else {
                         // KC85/4: irm0 pixel buffer unmapped, area at 0xA800 always mapped
-                        this->drawRect(layer, 0x8000, len, type::off);
+                        this->drawRect(layer, 0x8000, len, strBuilder.AsCStr(), type::off);
                         if (0 == layer) {
-                            this->drawRect(0, 0xA800, 0x1800, type::mapped);
+                            this->drawRect(0, 0xA800, 0x1800, "IRM 0", type::mapped);
                         }
                     }
                 }
             }
             else {
                 // KC85/2, /3: video memory bank active
-                this->drawRect(0, 0x8000, 0x4000, type::mapped);
+                this->drawRect(0, 0x8000, 0x4000, "IRM", type::mapped);
             }
         }
         else {
             // video memory completely off
-            this->drawRect(0, 0x8000, 0x4000, type::off);
+            this->drawRect(0, 0x8000, 0x4000, "IRM 0", type::off);
             if (is_kc85_4) {
                 for (int layer = 1; layer < 4; layer++) {
-                    this->drawRect(layer, 0x8000, 0x2800, type::off);
+                    strBuilder.Format(32, "IRM %d", layer);
+                    this->drawRect(layer, 0x8000, 0x2800, strBuilder.AsCStr(), type::off);
                 }
             }
         }
@@ -126,20 +170,20 @@ MemoryMapWindow::Draw(kc85& kc) {
                 ram8_0 = type::off;
                 ram8_1 = type::off;
             }
-            this->drawRect(4, 0x8000, 0x4000, ram8_0);
-            this->drawRect(5, 0x8000, 0x4000, ram8_1);
+            this->drawRect(4, 0x8000, 0x4000, "RAM 8 / 0", ram8_0);
+            this->drawRect(5, 0x8000, 0x4000, "RAM 8 / 1", ram8_1);
         }
 
         // BASIC / CAOS-C banks
         if (!is_kc85_2) {
-            this->drawRect(0, 0xC000, 0x2000, (pio_a & kc85::PIO_A_BASIC_ROM) ? type::mapped : type::off);
+            this->drawRect(0, 0xC000, 0x2000, "BASIC ROM", (pio_a & kc85::PIO_A_BASIC_ROM) ? type::mapped : type::off);
         }
         if (is_kc85_4) {
-            this->drawRect(1, 0xC000, 0x1000, (kc.io86 & kc85::IO86_CAOS_ROM_C) ? type::mapped : type::off);
+            this->drawRect(1, 0xC000, 0x1000, "CAOS ROM C", (kc.io86 & kc85::IO86_CAOS_ROM_C) ? type::mapped : type::off);
         }
 
         // CAOS-E bank
-        this->drawRect(0, 0xE000, 0x2000, (pio_a & kc85::PIO_A_CAOS_ROM) ? type::mapped : type::off);
+        this->drawRect(0, 0xE000, 0x2000, "CAOS ROM E", (pio_a & kc85::PIO_A_CAOS_ROM) ? type::mapped : type::off);
 
         // modules
         for (int mem_layer = 1; mem_layer < 3; mem_layer++) {
@@ -149,15 +193,19 @@ MemoryMapWindow::Draw(kc85& kc) {
                 const int draw_layer = (is_kc85_4 ? 5 : 0) + mem_layer;
                 const auto& slot = kc.exp.slot_by_addr(slot_addr);
                 YAKC_ASSERT(slot.mod.mem_size > 0);
-                const unsigned int num_banks = ((slot.mod.mem_size-1)>>14)+1;
-                for (unsigned int bank = 0; bank < num_banks; bank++) {
-                    const uword addr = slot.addr + bank * 0x4000;
-                    const uword len  = slot.mod.mem_size - bank * 0x4000;
+
+                // split modules > 16 KByte into multiple banks
+                unsigned int addr = slot.addr;
+                unsigned int len  = slot.mod.mem_size;
+                unsigned int end  = addr + len;
+                while (addr < end) {
                     type t = type::off;
                     if (slot.control_byte & 1) {
                         t = (mem.ptr(addr) == slot.mod.mem_ptr) ? type::mapped : type::hidden;
                     }
-                    this->drawRect(draw_layer, addr, len, t);
+                    this->drawRect(draw_layer, addr, len >= 0x4000 ? 0x4000:(len&0x3FFF), slot.mod.name, t);
+                    addr += 0x4000;
+                    len  -= 0x4000;
                 }
             }
         }

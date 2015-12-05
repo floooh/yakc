@@ -39,7 +39,7 @@ DebugWindow::Setup(kc85& kc) {
 bool
 DebugWindow::Draw(kc85& kc) {
     ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->drawRegisterTable(kc);
         ImGui::Separator();
         this->drawMainContent(kc, kc.cpu.state.PC, 48);
