@@ -39,6 +39,7 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
                     kc.exp.remove_module(slot_addr, kc.cpu.mem);
                 }
                 kc.exp.insert_module(slot_addr, mod);
+                kc.cpu.out(slot_addr<<8|0x80, 0x00);
             }
         }
         ImGui::EndPopup();

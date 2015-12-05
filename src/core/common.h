@@ -35,7 +35,6 @@ typedef unsigned char ubyte;
 typedef char byte;
 typedef unsigned short uword;
 typedef short word;
-typedef unsigned short address;
 
 enum class kc85_model {
     kc85_2 = (1<<0),

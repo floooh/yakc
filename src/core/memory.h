@@ -75,24 +75,28 @@ public:
     /// unmap all memory pages
     void unmap_all();
     /// get the layer index a memory page is mapped to, -1 if unmapped
-    int get_mapped_layer_index(int page_index) const;
+    int layer(uword addr) const;
+    /// map a Z80 address to host memory pointer (read/write)
+    ubyte* ptr(uword addr);
+    /// map a Z80 address to host memory pointer (read-only)
+    const ubyte* ptr(uword addr) const;
 
     /// test if an address is writable
     bool is_writable(uword addr) const;
     /// read a byte at cpu address
-    ubyte r8(address addr) const;
+    ubyte r8(uword addr) const;
     /// read a signed byte at cpu address
-    byte rs8(address addr) const;
+    byte rs8(uword addr) const;
     /// write a byte to cpu address
-    void w8(address addr, ubyte b) const;
+    void w8(uword addr, ubyte b) const;
     /// read/write access to byte
-    ubyte& a8(address addr);
+    ubyte& a8(uword addr);
     /// read a word at cpu address
-    uword r16(address addr) const;
+    uword r16(uword addr) const;
     /// write a word to cpu address
-    void w16(address addr, uword w) const;
+    void w16(uword addr, uword w) const;
     /// write a byte range
-    void write(address addr, const ubyte* src, int num) const;
+    void write(uword addr, const ubyte* src, int num) const;
 
 private:
     /// update the CPU-visible mapping
@@ -195,14 +199,26 @@ memory::update_mapping() {
 
 //------------------------------------------------------------------------------
 inline int
-memory::get_mapped_layer_index(int page_index) const {
-    YAKC_ASSERT((page_index>=0) && (page_index < num_pages));
+memory::layer(uword addr) const {
+    const int page_index = addr>>page::shift;
     for (int layer_index = 0; layer_index < num_layers; layer_index++) {
         if (this->pages[page_index].ptr == this->layers[layer_index][page_index].ptr) {
             return layer_index;
         }
     }
     return -1;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte*
+memory::ptr(uword addr) {
+    return this->pages[addr>>page::shift].ptr;
+}
+
+//------------------------------------------------------------------------------
+inline const ubyte*
+memory::ptr(uword addr) const {
+    return this->pages[addr>>page::shift].ptr;
 }
 
 //------------------------------------------------------------------------------
@@ -213,25 +229,25 @@ memory::is_writable(uword addr) const {
 
 //------------------------------------------------------------------------------
 inline ubyte
-memory::r8(address addr) const {
+memory::r8(uword addr) const {
     return this->pages[addr>>page::shift].ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
 inline byte
-memory::rs8(address addr) const {
+memory::rs8(uword addr) const {
     return (char) this->pages[addr>>page::shift].ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
 inline ubyte&
-memory::a8(address addr) {
+memory::a8(uword addr) {
     return this->pages[addr>>page::shift].ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
 inline uword
-memory::r16(address addr) const {
+memory::r16(uword addr) const {
     ubyte l = this->r8(addr);
     ubyte h = this->r8(addr+1);
     uword w = h << 8 | l;
@@ -240,7 +256,7 @@ memory::r16(address addr) const {
 
 //------------------------------------------------------------------------------
 inline void
-memory::w8(address addr, ubyte b) const {
+memory::w8(uword addr, ubyte b) const {
     const auto& page = this->pages[addr>>page::shift];
     if (page.writable) {
         page.ptr[addr & page::mask] = b;
@@ -249,14 +265,14 @@ memory::w8(address addr, ubyte b) const {
 
 //------------------------------------------------------------------------------
 inline void
-memory::w16(address addr, uword w) const {
+memory::w16(uword addr, uword w) const {
     this->w8(addr, w & 0xFF);
     this->w8(addr + 1, (w>>8));
 }
 
 //------------------------------------------------------------------------------
 inline void
-memory::write(address addr, const ubyte* src, int num) const {
+memory::write(uword addr, const ubyte* src, int num) const {
     for (int i = 0; i < num; i++) {
         this->w8(addr++, src[i]);
     }

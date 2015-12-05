@@ -20,6 +20,15 @@ public:
         unsigned int size = 0;
     };
 
+    enum class type {
+        off,
+        mapped,
+        hidden,
+    };
+
+    /// draw a 'memory rectangle'
+    void drawRect(int layer, yakc::uword addr, yakc::uword len, type t);
+
     /// get name for a memory layer and page
     pageInfo getPageInfo(yakc::kc85& kc, int layer_index, int page_index) const;
 };
