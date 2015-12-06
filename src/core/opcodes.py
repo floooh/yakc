@@ -702,100 +702,25 @@ def uALU_IXYhl(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
-def ADD_iIXY_d(ops, xname) :
-    src = [
-        '// ADD ({}+d)'.format(xname),
-        'd = mem.rs8(state.PC++);',
-        'add8(mem.r8(state.{} + d));'.format(xname),
-        t(19)]
-    return add_op(ops, 0x86, src)
-
-#-------------------------------------------------------------------------------
-def ADC_iIXY_d(ops, xname) :
-    src = [
-        '// ADC ({}+d)'.format(xname),
-        'd = mem.rs8(state.PC++);',
-        'adc8(mem.r8(state.{} + d));'.format(xname),
-        t(19)]
-    return add_op(ops, 0x8E, src)
-
-#-------------------------------------------------------------------------------
-def SUB_iIXY_d(ops, xname) :
-    '''
-    SUB ([IX|IY]+d)
-    T-states: 19
-    '''
-    src = [
-        '// SUB ({}+d)'.format(xname),
-        'd = mem.rs8(state.PC++);',
-        'sub8(mem.r8(state.{} + d));'.format(xname),
-        t(19)]
-    return add_op(ops, 0x96, src)
-
-#-------------------------------------------------------------------------------
-def CP_iIXY_d(ops, xname) :
-    '''
-    CP ([IX|IY]+d)
-    T-states: 19
-    '''
-    src = [
-        '// CP ({}+d)'.format(xname),
-        'd = mem.rs8(state.PC++);',
-        'cp8(mem.r8(state.{} + d));'.format(xname),
-        t(19)]
-    return add_op(ops, 0xBE, src)
-
-#-------------------------------------------------------------------------------
-def SBC_A_iIXY_d(ops, xname) :
-    '''
-    SBC A,([IX|IY]+d)
-    T-states: 19
-    '''
-    src = [
-        '// SBC A,({}+d)'.format(xname),
-        'd = mem.rs8(state.PC++);',
-        'sbc8(mem.r8(state.{} + d));'.format(xname),
-        t(19)]
-    return add_op(ops, 0x9E, src)
-
-#-------------------------------------------------------------------------------
-def AND_iIXY_d(ops, xname) :
-    '''
-    AND ([IX|IY]+d)
-    T-states: 19
-    '''
-    src = [
-        '// AND ({}+d)'.format(xname),
-        'd = mem.rs8(state.PC++);',
-        'and8(mem.r8(state.{} + d));'.format(xname),
-        t(19)]
-    return add_op(ops, 0xA6, src)
-
-#-------------------------------------------------------------------------------
-def OR_iIXY_d(ops, xname) :
-    '''
-    OR ([IX|IY]+d)
-    T-states: 19
-    '''
-    src = [
-        '// OR ({}+d)'.format(xname),
-        'd = mem.rs8(state.PC++);',
-        'or8(mem.r8(state.{} + d));'.format(xname),
-        t(19)]
-    return add_op(ops, 0xB6, src)
-
-#-------------------------------------------------------------------------------
-def XOR_iIXY_d(ops, xname) :
-    '''
-    XOR ([IX|IY]+d)
-    T-states: 19
-    '''
-    src = [
-        '// XOR ({}+d)'.format(xname),
-        'd = mem.rs8(state.PC++);',
-        'xor8(mem.r8(state.{} + d));'.format(xname),
-        t(19)]
-    return add_op(ops, 0xAE, src)
+def ALU_iIXY_d(ops, xname) :
+    alu_ops = [
+        ['ADD', 'add8', 0x86],
+        ['ADC', 'adc8', 0x8E],
+        ['SUB', 'sub8', 0x96],
+        ['SBC', 'sbc8', 0x9E],
+        ['AND', 'and8', 0xA6],
+        ['XOR', 'xor8', 0xAE],
+        ['OR',  'or8',  0xB6],
+        ['CP',  'cp8',  0xBE]
+    ]
+    for alu in alu_ops :
+        src = [
+            '// {}({}+d)'.format(alu[0], xname),
+            'd = mem.rs8(state.PC++);',
+            '{}(mem.r8(state.{} + d));'.format(alu[1], xname),
+            t(19)]
+        ops = add_op(ops, alu[2], src)
+    return ops
 
 #-------------------------------------------------------------------------------
 def INC_r(ops) :
@@ -1330,76 +1255,16 @@ def DD_FD_CB(ops, lead_byte) :
     return add_op(ops, 0xCB, src)
 
 #-------------------------------------------------------------------------------
-def LDI(ops) :
-    '''
-    LDI
-    T-states: 16
-    '''
-    src = ['// LDI', 'ldi();', t(16)]
-    return add_op(ops, 0xA0, src)
-
-#-------------------------------------------------------------------------------
-def LDIR(ops) :
-    '''
-    LDIR
-    T-states: 21/16
-    '''
-    src = ['// LDIR', 'return ldir();']
-    return add_op(ops, 0xB0, src)
-
-#-------------------------------------------------------------------------------
-def LDD(ops) :
-    '''
-    LDD
-    T-states: 16
-    '''
-    src = ['// LDD', 'ldd();', t(16)]
-    return add_op(ops, 0xA8, src)
-
-#-------------------------------------------------------------------------------
-def LDDR(ops) :
-    '''
-    LDDR
-    T-states: 21/16
-    '''
-    src = ['// LDDR', 'return lddr();']
-    return add_op(ops, 0xB8, src)
-
-#-------------------------------------------------------------------------------
-def CPI(ops) :
-    '''
-    CPI
-    T-states: 16
-    '''
-    src = ['// CPI', 'cpi();', t(16)]
-    return add_op(ops, 0xA1, src)
-
-#-------------------------------------------------------------------------------
-def CPIR(ops) :
-    '''
-    CPIR
-    T-states: 21/16
-    '''
-    src = ['// CPIR', 'return cpir();']
-    return add_op(ops, 0xB1, src)
-
-#-------------------------------------------------------------------------------
-def CPD(ops) :
-    '''
-    CPD
-    T-states: 16
-    '''
-    src = ['// CPD', 'cpd();', t(16)]
-    return add_op(ops, 0xA9, src)
-
-#-------------------------------------------------------------------------------
-def CPDR(ops) :
-    '''
-    CPDR
-    T-states: 21/16
-    '''
-    src = ['// CPDR', 'return cpdr();']
-    return add_op(ops, 0xB9, src)
+def LD_CP_I_D_R(ops) :
+    src = add_op(ops, 0xA0, ['// LDI', 'ldi();', t(16)])
+    src = add_op(ops, 0xA1, ['// CPI', 'cpi();', t(16)])
+    src = add_op(ops, 0xA8, ['// LDD', 'ldd();', t(16)])
+    src = add_op(ops, 0xA9, ['// CPD', 'cpd();', t(16)])
+    src = add_op(ops, 0xB0, ['// LDIR', 'return ldir();'])
+    src = add_op(ops, 0xB1, ['// CPIR', 'return cpir();'])
+    src = add_op(ops, 0xB8, ['// LDDR', 'return lddr();'])
+    src = add_op(ops, 0xB9, ['// CPDR', 'return cpdr();'])
+    return src
 
 #-------------------------------------------------------------------------------
 def DAA(ops) :
@@ -1913,14 +1778,7 @@ def gen_dd_opcodes() :
     dd_ops = PUSH_IXY(dd_ops, 'IX')
     dd_ops = POP_IXY(dd_ops, 'IX')
     dd_ops = EX_iSP_HLIXY(dd_ops, 'IX')
-    dd_ops = ADD_iIXY_d(dd_ops, 'IX')
-    dd_ops = ADC_iIXY_d(dd_ops, 'IX')
-    dd_ops = SUB_iIXY_d(dd_ops, 'IX')
-    dd_ops = CP_iIXY_d(dd_ops, 'IX') 
-    dd_ops = SBC_A_iIXY_d(dd_ops, 'IX')
-    dd_ops = AND_iIXY_d(dd_ops, 'IX')
-    dd_ops = OR_iIXY_d(dd_ops, 'IX')
-    dd_ops = XOR_iIXY_d(dd_ops, 'IX')
+    dd_ops = ALU_iIXY_d(dd_ops, 'IX')
     dd_ops = INC_iIXY_d(dd_ops, 'IX')
     dd_ops = DEC_iIXY_d(dd_ops, 'IX')
     dd_ops = INC_IXY(dd_ops, 'IX')
@@ -1952,14 +1810,7 @@ def gen_fd_opcodes() :
     fd_ops = PUSH_IXY(fd_ops, 'IY')
     fd_ops = POP_IXY(fd_ops, 'IY')
     fd_ops = EX_iSP_HLIXY(fd_ops, 'IY')
-    fd_ops = ADD_iIXY_d(fd_ops, 'IY')
-    fd_ops = ADC_iIXY_d(fd_ops, 'IY')
-    fd_ops = SUB_iIXY_d(fd_ops, 'IY')
-    fd_ops = CP_iIXY_d(fd_ops, 'IY')
-    fd_ops = SBC_A_iIXY_d(fd_ops, 'IY')
-    fd_ops = AND_iIXY_d(fd_ops, 'IY')
-    fd_ops = OR_iIXY_d(fd_ops, 'IY')
-    fd_ops = XOR_iIXY_d(fd_ops, 'IY')
+    fd_ops = ALU_iIXY_d(fd_ops, 'IY')
     fd_ops = INC_iIXY_d(fd_ops, 'IY')
     fd_ops = DEC_iIXY_d(fd_ops, 'IY')
     fd_ops = INC_IXY(fd_ops, 'IY')
@@ -1989,14 +1840,7 @@ def gen_ed_opcodes() :
     ed_ops = LD_inn_dd(ed_ops)
     ed_ops = RLD(ed_ops)
     ed_ops = RRD(ed_ops)
-    ed_ops = LDI(ed_ops)
-    ed_ops = LDIR(ed_ops)
-    ed_ops = LDD(ed_ops)
-    ed_ops = LDDR(ed_ops)
-    ed_ops = CPI(ed_ops)
-    ed_ops = CPIR(ed_ops)
-    ed_ops = CPD(ed_ops)
-    ed_ops = CPDR(ed_ops)
+    ed_ops = LD_CP_I_D_R(ed_ops)
     ed_ops = NEG(ed_ops)
     ed_ops = IM(ed_ops)
     ed_ops = IN_r_iC(ed_ops)

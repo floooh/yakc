@@ -2925,7 +2925,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0x86:
-            // ADD (IX+d)
+            // ADD(IX+d)
             d = mem.rs8(state.PC++);
             add8(mem.r8(state.IX + d));
             return 19;
@@ -2941,7 +2941,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0x8e:
-            // ADC (IX+d)
+            // ADC(IX+d)
             d = mem.rs8(state.PC++);
             adc8(mem.r8(state.IX + d));
             return 19;
@@ -2957,7 +2957,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0x96:
-            // SUB (IX+d)
+            // SUB(IX+d)
             d = mem.rs8(state.PC++);
             sub8(mem.r8(state.IX + d));
             return 19;
@@ -2973,7 +2973,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0x9e:
-            // SBC A,(IX+d)
+            // SBC(IX+d)
             d = mem.rs8(state.PC++);
             sbc8(mem.r8(state.IX + d));
             return 19;
@@ -2989,7 +2989,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0xa6:
-            // AND (IX+d)
+            // AND(IX+d)
             d = mem.rs8(state.PC++);
             and8(mem.r8(state.IX + d));
             return 19;
@@ -3005,7 +3005,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0xae:
-            // XOR (IX+d)
+            // XOR(IX+d)
             d = mem.rs8(state.PC++);
             xor8(mem.r8(state.IX + d));
             return 19;
@@ -3021,7 +3021,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0xb6:
-            // OR (IX+d)
+            // OR(IX+d)
             d = mem.rs8(state.PC++);
             or8(mem.r8(state.IX + d));
             return 19;
@@ -3037,7 +3037,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0xbe:
-            // CP (IX+d)
+            // CP(IX+d)
             d = mem.rs8(state.PC++);
             cp8(mem.r8(state.IX + d));
             return 19;
@@ -4020,7 +4020,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0x86:
-            // ADD (IY+d)
+            // ADD(IY+d)
             d = mem.rs8(state.PC++);
             add8(mem.r8(state.IY + d));
             return 19;
@@ -4036,7 +4036,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0x8e:
-            // ADC (IY+d)
+            // ADC(IY+d)
             d = mem.rs8(state.PC++);
             adc8(mem.r8(state.IY + d));
             return 19;
@@ -4052,7 +4052,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0x96:
-            // SUB (IY+d)
+            // SUB(IY+d)
             d = mem.rs8(state.PC++);
             sub8(mem.r8(state.IY + d));
             return 19;
@@ -4068,7 +4068,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0x9e:
-            // SBC A,(IY+d)
+            // SBC(IY+d)
             d = mem.rs8(state.PC++);
             sbc8(mem.r8(state.IY + d));
             return 19;
@@ -4084,7 +4084,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0xa6:
-            // AND (IY+d)
+            // AND(IY+d)
             d = mem.rs8(state.PC++);
             and8(mem.r8(state.IY + d));
             return 19;
@@ -4100,7 +4100,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0xae:
-            // XOR (IY+d)
+            // XOR(IY+d)
             d = mem.rs8(state.PC++);
             xor8(mem.r8(state.IY + d));
             return 19;
@@ -4116,7 +4116,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0xb6:
-            // OR (IY+d)
+            // OR(IY+d)
             d = mem.rs8(state.PC++);
             or8(mem.r8(state.IY + d));
             return 19;
@@ -4132,7 +4132,7 @@ inline unsigned int z80::step() {
             return 8;
             break;
         case 0xbe:
-            // CP (IY+d)
+            // CP(IY+d)
             d = mem.rs8(state.PC++);
             cp8(mem.r8(state.IY + d));
             return 19;
