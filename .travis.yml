@@ -23,6 +23,7 @@ install:
 
 script:
   - echo $TRAVIS_OS_NAME
+  - git --version
 
   # LINUX
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips set config yakc-linux-make-unittest; fi
