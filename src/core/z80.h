@@ -156,14 +156,24 @@ public:
 
     /// halt instruction
     void halt();
-    /// perform an 8-bit add, return result, and update flags
-    ubyte add8(ubyte acc, ubyte add);
-    /// perform an 8-bit adc, return result and update flags
-    ubyte adc8(ubyte acc, ubyte add);
-    /// perform an 8-bit sub, return result, and update flags
-    ubyte sub8(ubyte acc, ubyte sub);
-    /// perform an 8-bit sbc, return result and update flags
-    ubyte sbc8(ubyte acc, ubyte sub);
+    /// perform an 8-bit add and update flags
+    void add8(ubyte add);
+    /// perform an 8-bit adc and update flags
+    void adc8(ubyte add);
+    /// perform an 8-bit sub and update flags
+    void sub8(ubyte sub);
+    /// perform an 8-bit sbc and update flags
+    void sbc8(ubyte sub);
+    /// perform 8-bit compare (identical with sub8 but throw result away)
+    void cp8(ubyte sub);
+    /// perform a neg and update flags
+    void neg8();
+    /// perform an 8-bit and and update flags
+    void and8(ubyte val);
+    /// perform an 8-bit or and update flags
+    void or8(ubyte val);
+    /// perform an 8-bit xor and update flags
+    void xor8(ubyte val);
     /// perform an 8-bit inc and set flags
     ubyte inc8(ubyte val);
     /// perform an 8-bit dec and set flags
@@ -477,53 +487,87 @@ z80::sziff2(ubyte val, bool iff2) {
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::add8(ubyte acc, ubyte add) {
-    state.F = add8_flags[acc][add];
-    return acc + add;
+inline void
+z80::add8(ubyte add) {
+    state.F = add8_flags[state.A][add];
+    state.A += add;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::adc8(ubyte acc, ubyte add) {
+inline void
+z80::adc8(ubyte add) {
     if (state.F & CF) {
         // don't waste flag table space for rarely used instructions
-        int r = int(acc) + int(add) + 1;
+        int r = int(state.A) + int(add) + 1;
         ubyte f = YAKC_SZ(r);
         if (r > 0xFF) f |= CF;
-        if ((r & 0xF) <= (acc & 0xF)) f |= HF;
-        if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+        if ((r & 0xF) <= (state.A & 0xF)) f |= HF;
+        if (((state.A&0x80) == (add&0x80)) && ((r&0x80) != (state.A&0x80))) f |= VF;
         state.F = f;
-        return ubyte(r);
+        state.A = ubyte(r);
     }
     else {
-        return add8(acc, add);
+        add8(add);
     }
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::sub8(ubyte acc, ubyte sub) {
-    state.F = sub8_flags[acc][sub];
-    return acc - sub;
+inline void
+z80::sub8(ubyte sub) {
+    state.F = sub8_flags[state.A][sub];
+    state.A -= sub;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::sbc8(ubyte acc, ubyte sub) {
+inline void
+z80::cp8(ubyte sub) {
+    state.F = sub8_flags[state.A][sub];
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::neg8() {
+    state.F = sub8_flags[0][state.A];
+    state.A = ubyte(0) - state.A;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::sbc8(ubyte sub) {
     if (state.F & CF) {
         // don't waste flag table space for rarely used instructions
-        int r = int(acc) - int(sub) - 1;
+        int r = int(state.A) - int(sub) - 1;
         ubyte f = NF | YAKC_SZ(r);
         if (r < 0) f |= CF;
-        if ((r & 0xF) >= (acc & 0xF)) f |= HF;
-        if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+        if ((r & 0xF) >= (state.A & 0xF)) f |= HF;
+        if (((state.A&0x80) != (sub&0x80)) && ((r&0x80) != (state.A&0x80))) f |= VF;
         state.F = f;
-        return ubyte(r);
+        state.A = ubyte(r);
     }
     else {
-        return sub8(acc, sub);
+        sub8(sub);
     }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::and8(ubyte val) {
+    state.A &= val;
+    state.F = szp[state.A]|HF;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::or8(ubyte val) {
+    state.A |= val;
+    state.F = szp[state.A];
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::xor8(ubyte val) {
+    state.A ^= val;
+    state.F = szp[state.A];
 }
 
 //------------------------------------------------------------------------------
