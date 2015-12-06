@@ -723,18 +723,23 @@ def ALU_iIXY_d(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
-def INC_r(ops) :
-    '''
-    INC r
-    T-states: 4
-    '''
-    for r in r8 :
-        op = 0b00000100 | r.bits<<3
-        src = [
-            '// INC {}'.format(r.name),
-            'state.{} = inc8(state.{});'.format(r.name, r.name),
-            t(4)]
-        ops = add_op(ops, op, src)
+def INC_DEC_r(ops) :
+    inc_dec_ops = [
+        ['INC', 'inc8', 0b00000100],
+        ['DEC', 'dec8', 0b00000101]
+    ]
+    for id_op in inc_dec_ops :
+        for r in r8ihl :
+            op = id_op[2] | r.bits<<3
+            src = ['// {} {}'.format(id_op[0], r.name)]
+            if r.mem :
+                src.append('mem.w8(state.HL, {}(mem.r8(state.HL)));'.format(id_op[1]))
+                src.append(t(11))
+            else :
+                cycles = 4
+                src.append('state.{} = {}(state.{});'.format(r.name, id_op[1], r.name))
+                src.append(t(4))
+            ops = add_op(ops, op, src)
     return ops
 
 #-------------------------------------------------------------------------------
@@ -757,21 +762,6 @@ def uINC_IXYhl(ops, xname) :
     return ops
 
 #-------------------------------------------------------------------------------
-def DEC_r(ops) :
-    '''
-    DEC r
-    T-states: 4
-    '''
-    for r in r8 :
-        op = 0b00000101 | r.bits<<3
-        src = [
-            '// DEC {}'.format(r.name),
-            'state.{} = dec8(state.{});'.format(r.name, r.name),
-            t(4)]
-        ops = add_op(ops, op, src)
-    return ops
-
-#-------------------------------------------------------------------------------
 def uDEC_IXYhl(ops, xname) :
     '''
     undocumented!
@@ -789,30 +779,6 @@ def uDEC_IXYhl(ops, xname) :
             t(8)]
         ops = add_op(ops, op, src)
     return ops
-
-#-------------------------------------------------------------------------------
-def INC_iHL(ops) :
-    '''
-    INC (HL)
-    T-states: 11
-    '''
-    src = [
-        '// INC (HL)',
-        'mem.w8(state.HL, inc8(mem.r8(state.HL)));',
-        t(11)]
-    return add_op(ops, 0x34, src)
-
-#-------------------------------------------------------------------------------
-def DEC_iHL(ops) :
-    '''
-    DEC (HL)
-    T-states: 11
-    '''
-    src = [
-        '// DEC (HL)',
-        'mem.w8(state.HL, dec8(mem.r8(state.HL)));',
-        t(11)]
-    return add_op(ops, 0x35, src)
 
 #-------------------------------------------------------------------------------
 def INC_iIXY_d(ops, xname) :
@@ -1521,40 +1487,16 @@ def IN_r_iC(ops) :
     return ops
 
 #-------------------------------------------------------------------------------
-def INI(ops) :
-    '''
-    INI
-    T-states: 16
-    '''
-    src = ['// INI', 'ini();', t(16)]
-    return add_op(ops, 0xA2, src)
-
-#-------------------------------------------------------------------------------
-def INIR(ops) :
-    '''
-    INIR
-    T-states: 21/16
-    '''
-    src = ['// INIR', 'return inir();']
-    return add_op(ops, 0xB2, src)
-
-#-------------------------------------------------------------------------------
-def IND(ops) :
-    '''
-    IND
-    T-states: 16
-    '''
-    src = ['// IND', 'ind();', t(16)]
-    return add_op(ops, 0xAA, src)
-
-#-------------------------------------------------------------------------------
-def INDR(ops) :
-    '''
-    INDR
-    T-states: 21/16
-    '''
-    src = ['// INDR', 'return indr();']
-    return add_op(ops, 0xBA, src)
+def IN_OUT_I_D_R(ops) :
+    src = add_op(ops, 0xA2, ['// INI', 'ini();', t(16)])
+    src = add_op(ops, 0xA3, ['// OUTI', 'outi();', t(16)])
+    src = add_op(ops, 0xAA, ['// IND', 'ind();', t(16)])
+    src = add_op(ops, 0xAB, ['// OUTD', 'outd();', t(16)])
+    src = add_op(ops, 0xB2, ['// INIR', 'return inir();'])
+    src = add_op(ops, 0xB3, ['// OTIR', 'return otir();'])
+    src = add_op(ops, 0xBA, ['// INDR', 'return indr();'])
+    src = add_op(ops, 0xBB, ['// OTDR', 'return otdr();'])
+    return src
 
 #-------------------------------------------------------------------------------
 def OUT_in_A(ops) :
@@ -1578,42 +1520,6 @@ def OUT_iC_r(ops) :
             t(12)]
         ops = add_op(ops, op, src)
     return ops
-
-#-------------------------------------------------------------------------------
-def OUTI(ops) :
-    '''
-    OUTI
-    T-states: 16
-    '''
-    src = ['// OUTI', 'outi();', t(16)]
-    return add_op(ops, 0xA3, src)
-
-#-------------------------------------------------------------------------------
-def OTIR(ops) :
-    '''
-    OTIR
-    T-state: 21/16
-    '''
-    src = ['// OTIR', 'return otir();']
-    return add_op(ops, 0xB3, src)
-
-#-------------------------------------------------------------------------------
-def OUTD(ops) :
-    '''
-    OUTD
-    T-states: 16
-    '''
-    src = ['// OUTD', 'outd();', t(16)]
-    return add_op(ops, 0xAB, src)
-
-#-------------------------------------------------------------------------------
-def OTDR(ops) :
-    '''
-    OTDR
-    T-states: 21/16
-    '''
-    src = ['// OTDR', 'return otdr();']
-    return add_op(ops, 0xBB, src)
 
 #-------------------------------------------------------------------------------
 def ADD_HL_ss(ops) :
@@ -1698,10 +1604,7 @@ def gen_opcodes() :
     ops = EX_iSP_HLIXY(ops, 'HL')
     ops = ALU_r(ops)
     ops = ALU_n(ops)
-    ops = INC_r(ops)
-    ops = INC_iHL(ops)
-    ops = DEC_r(ops)
-    ops = DEC_iHL(ops)
+    ops = INC_DEC_r(ops)
     ops = INC_ss(ops)
     ops = DEC_ss(ops)
     ops = RLCA(ops)
@@ -1844,15 +1747,8 @@ def gen_ed_opcodes() :
     ed_ops = NEG(ed_ops)
     ed_ops = IM(ed_ops)
     ed_ops = IN_r_iC(ed_ops)
-    ed_ops = INI(ed_ops)
-    ed_ops = INIR(ed_ops)
-    ed_ops = IND(ed_ops)
-    ed_ops = INDR(ed_ops)
+    ed_ops = IN_OUT_I_D_R(ed_ops)
     ed_ops = OUT_iC_r(ed_ops)
-    ed_ops = OUTI(ed_ops)
-    ed_ops = OTIR(ed_ops)
-    ed_ops = OUTD(ed_ops)
-    ed_ops = OTDR(ed_ops)
     ed_ops = ADC_HL_ss(ed_ops)
     ed_ops = SBC_HL_ss(ed_ops)
     ed_ops = RETI(ed_ops)
