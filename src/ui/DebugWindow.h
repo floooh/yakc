@@ -23,7 +23,7 @@ public:
     /// draw the register table
     void drawRegisterTable(yakc::kc85& kc);
     /// draw the main window content, starting at given address
-    void drawMainContent(const yakc::kc85& kc, yakc::uword start_addr, int num_lines);
+    void drawMainContent(yakc::kc85& kc, yakc::uword start_addr, int num_lines);
     /// draw control buttons
     void drawControls(yakc::kc85& kc);
 

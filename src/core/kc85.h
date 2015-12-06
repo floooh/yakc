@@ -81,8 +81,6 @@ public:
 
     /// process one frame
     void onframe(int speed_multiplier, int micro_secs);
-    /// do a debug-step (executes until PC changes)
-    void debug_step();
     /// put a key as ASCII code
     void put_key(ubyte ascii);
     /// handle keyboard input
@@ -264,18 +262,6 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             cycles_frame += cycles_opcode;
         }
     }
-}
-
-//------------------------------------------------------------------------------
-inline void
-kc85::debug_step() {
-    uword pc;
-    do {
-        pc = this->cpu.state.PC;
-        this->dbg.store_pc_history(this->cpu);  // FIXME: only if debug window open?
-        this->cpu.step();
-    }
-    while ((pc == this->cpu.state.PC) && !this->cpu.state.INV);
 }
 
 //------------------------------------------------------------------------------

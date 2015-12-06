@@ -21,10 +21,6 @@ public:
         num
     };
 
-    /// breakpoint enabled?
-    bool breakpoint_enabled;
-    /// current breakpoint address
-    uword breakpoint_address;
     /// size of PC history ringbuffer (must be 2^N!)
     static const int pc_history_size = 8;
     /// current pc history position
@@ -42,6 +38,18 @@ public:
     /// get pc from history ringbuffer (0 is oldest entry)
     uword get_pc_history(int index) const;
 
+    /// enable a breakpoint
+    void enable_breakpoint(int index, uword addr);
+    /// disable a breakpoint
+    void disable_breakpoint(int index);
+    /// if breakpoint at addr exists, toggle state, else enable breakpoint
+    void toggle_breakpoint(int index, uword addr);
+    /// test if an address is a breakpoint
+    bool is_breakpoint(uword addr) const;
+
+    /// step until PC changed (or an invalid opcode is hit)
+    void step_pc_modified(z80& cpu);
+
     /// set an 8-bit register value by enum (slow)
     static void set8(z80& cpu, reg r, ubyte v);
     /// get an 8-bit register value by enum (slow)
@@ -52,13 +60,18 @@ public:
     static uword get16(const z80& cpu, reg r);
     /// get a string-name for a register
     static const char* reg_name(reg r);
+
+private:
+    static const int max_breakpoints = 2;
+    struct {
+        bool enabled = false;
+        uword address = 0;
+    } breakpoints[max_breakpoints];
 };
 
 //------------------------------------------------------------------------------
 inline
 z80dbg::z80dbg() :
-breakpoint_enabled(false),
-breakpoint_address(0x0000),
 pc_history_pos(0) {
     YAKC_MEMSET(&this->pc_history, 0, sizeof(this->pc_history));
 }
@@ -66,7 +79,14 @@ pc_history_pos(0) {
 //------------------------------------------------------------------------------
 inline bool
 z80dbg::check_break(const z80& cpu) const {
-    return (this->breakpoint_enabled) && (cpu.state.PC == this->breakpoint_address);
+    for (int i = 0; i < max_breakpoints; i++) {
+        if (this->breakpoints[i].enabled) {
+            if (cpu.state.PC == this->breakpoints[i].address) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -81,6 +101,56 @@ inline uword
 z80dbg::get_pc_history(int index) const {
     int i = ((this->pc_history_pos-pc_history_size)+index) & (pc_history_size-1);
     return pc_history[i];
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80dbg::enable_breakpoint(int index, uword addr) {
+    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
+    this->breakpoints[index].enabled = true;
+    this->breakpoints[index].address = addr;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80dbg::disable_breakpoint(int index) {
+    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
+    this->breakpoints[index].enabled = false;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80dbg::toggle_breakpoint(int index, uword addr) {
+    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
+    if (this->breakpoints[index].address == addr) {
+        this->breakpoints[index].enabled = !this->breakpoints[index].enabled;
+    }
+    else {
+        this->enable_breakpoint(index, addr);
+    }
+}
+
+//------------------------------------------------------------------------------
+inline bool
+z80dbg::is_breakpoint(uword addr) const {
+    for (int i = 0; i < max_breakpoints; i++) {
+        if ((this->breakpoints[i].enabled) && (this->breakpoints[i].address == addr)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80dbg::step_pc_modified(z80& cpu) {
+    uword pc;
+    do {
+        pc = cpu.state.PC;
+        this->store_pc_history(cpu);
+        cpu.step();
+    }
+    while ((pc == cpu.state.PC) && !cpu.state.INV);
 }
 
 //------------------------------------------------------------------------------

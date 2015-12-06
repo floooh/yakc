@@ -86,7 +86,7 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     this->drawReg16(kc, z80dbg::HL); ImGui::SameLine(4 * 72);
     ImGui::PushItemWidth(16);
     this->drawReg8(kc, z80dbg::I); ImGui::SameLine(4 * 72 + 48);
-    this->drawReg8(kc, z80dbg::IM);
+    ImGui::TextColored(kc.cpu.state.IFF1 ? green:red, "IFF1");
     ImGui::PopItemWidth();
 
     this->drawReg16(kc, z80dbg::AF_); ImGui::SameLine(1 * 72);
@@ -94,14 +94,19 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     this->drawReg16(kc, z80dbg::DE_); ImGui::SameLine(3 * 72);
     this->drawReg16(kc, z80dbg::HL_); ImGui::SameLine(4 * 72);
     ImGui::PushItemWidth(16);
-    this->drawReg8(kc, z80dbg::R); ImGui::SameLine(4 * 72 + 64);
-    ImGui::TextColored(kc.cpu.state.IFF1 ? green:red, "IFF1");
+    this->drawReg8(kc, z80dbg::IM); ImGui::SameLine(4 * 72 + 48);
+    ImGui::TextColored(kc.cpu.state.IFF2 ? green:red, "IFF2");
     ImGui::PopItemWidth();
 
     this->drawReg16(kc, z80dbg::IX); ImGui::SameLine(1 * 72);
     this->drawReg16(kc, z80dbg::IY); ImGui::SameLine(2 * 72);
     this->drawReg16(kc, z80dbg::SP); ImGui::SameLine(3 * 72);
     this->drawReg16(kc, z80dbg::PC); ImGui::SameLine(4 * 72);
+    ImGui::PushItemWidth(16);
+    this->drawReg8(kc, z80dbg::R); ImGui::SameLine(4 * 72 + 48);
+    ImGui::TextColored(kc.cpu.state.HALT ? green:red, "HALT");
+    ImGui::PopItemWidth();
+
     char strFlags[9];
     const ubyte f = kc.cpu.state.F;
     strFlags[0] = (f & z80::SF) ? 'S':'-';
@@ -113,8 +118,8 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     strFlags[6] = (f & z80::NF) ? 'N':'-';
     strFlags[7] = (f & z80::CF) ? 'C':'-';
     strFlags[8] = 0;
-    ImGui::Text(strFlags); ImGui::SameLine(4 * 72 + 64);
-    ImGui::TextColored(kc.cpu.state.IFF2 ? green:red, "IFF2");
+    ImGui::Text("flags: %s", strFlags);
+    if (kc.cpu.state.INV)
     ImGui::PopItemWidth();
 }
 
@@ -125,11 +130,10 @@ DebugWindow::drawControls(kc85& kc) {
     if (this->breakPointWidget.Draw()) {
         const uword bp_addr = this->breakPointWidget.Get16();
         if (bp_addr != 0xFFFF) {
-            kc.dbg.breakpoint_enabled = true;
-            kc.dbg.breakpoint_address = this->breakPointWidget.Get16();
+            kc.dbg.enable_breakpoint(0, this->breakPointWidget.Get16());
         }
         else {
-            kc.dbg.breakpoint_enabled = false;
+            kc.dbg.disable_breakpoint(0);
         }
     }
     ImGui::PopItemWidth();
@@ -138,19 +142,20 @@ DebugWindow::drawControls(kc85& kc) {
     if (kc.paused) {
         ImGui::SameLine();
         if (ImGui::Button("step")) {
-            kc.debug_step();
+            kc.dbg.step_pc_modified(kc.cpu);
         }
     }
+    ImGui::Checkbox("break on invalid opcode", &kc.cpu.break_on_invalid_opcode);
 }
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawMainContent(const kc85& kc, uword start_addr, int num_lines) {
+DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
     // this is a modified version of ImGuiMemoryEditor.h
-    ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));
+    ImGui::BeginChild("##scrolling", ImVec2(0, -2 * ImGui::GetItemsLineHeightWithSpacing()));
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(1,1));
 
     const float line_height = ImGui::GetTextLineHeight();
     const int line_total_count = num_lines;
@@ -172,25 +177,40 @@ DebugWindow::drawMainContent(const kc85& kc, uword start_addr, int num_lines) {
         if (line_i < z80dbg::pc_history_size) {
             display_addr = kc.dbg.get_pc_history(line_i);
             num_bytes = disasm.Disassemble(kc, display_addr);
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+            if (kc.dbg.is_breakpoint(display_addr)) {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 1.0f, 1.0f));
+            }
+            else {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+            }
         }
         else {
             display_addr = cur_addr;
             num_bytes = disasm.Disassemble(kc, display_addr);
-            if (cur_addr == start_addr) {
-                if (kc.cpu.state.INV) {
+                if ((cur_addr == start_addr) && kc.cpu.state.INV) {
                     // invalid/non-implemented opcode hit
                     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
                 }
-                else {
+                else if (kc.dbg.is_breakpoint(cur_addr)) {
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 1.0f, 1.0f));
+                }
+                else if (cur_addr == start_addr) {
                     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
                 }
-            }
-            else {
-                ImGui::PushStyleColor(ImGuiCol_Text, UI::ColorText);
-            }
+                else {
+                    ImGui::PushStyleColor(ImGuiCol_Text, UI::ColorText);
+                }
             cur_addr += num_bytes;
         }
+
+        // set breakpoint
+        ImGui::PushID(line_i);
+        if (ImGui::Button(" B ")) {
+            kc.dbg.toggle_breakpoint(0, display_addr);
+            this->breakPointWidget.Set16(display_addr);
+        }
+        ImGui::PopID();
+        ImGui::SameLine(32);
 
         // draw the address
         ImGui::Text("%04X: ", display_addr);

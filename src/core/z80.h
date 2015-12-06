@@ -71,10 +71,10 @@ public:
         /// the interrupt-enable flip-flops
         bool IFF1;
         bool IFF2;
-        /// invalid or unknown instruction has been encountered
-        bool INV;
         /// the interrupt mode (0, 1 or 2)
         ubyte IM;
+        /// invalid or unknown instruction has been encountered
+        bool INV;
     } state;
 
     /// flag lookup table for SZP flag combinations
