@@ -156,6 +156,8 @@ public:
 
     /// halt instruction
     void halt();
+    /// rst instruction (vec is 0x00, 0x08, 0x10, ...)
+    void rst(ubyte vec);
     /// perform an 8-bit add and update flags
     void add8(ubyte add);
     /// perform an 8-bit adc and update flags
@@ -352,6 +354,14 @@ inline void
 z80::halt() {
     this->state.HALT = true;
     this->state.PC--;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::rst(ubyte vec) {
+    state.SP -= 2;
+    mem.w16(state.SP, state.PC);
+    state.PC = (uword) vec;
 }
 
 //------------------------------------------------------------------------------

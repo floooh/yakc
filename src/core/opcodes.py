@@ -105,16 +105,22 @@ def NOP_HALT_DI_EI(ops) :
 
 #-------------------------------------------------------------------------------
 def IM(ops) :
-    '''
-    IM 0,1,2
-    T-states: 8
-    '''
     for im in {(0,0x46),(1,0x56),(2,0x5E)} :
         src = [
             '// IM {}'.format(im[0]),
             'state.IM = {};'.format(im[0]),
             t(8)]
         ops = add_op(ops, im[1], src)
+    return ops
+
+#-------------------------------------------------------------------------------
+def RST(ops) :
+    for p in range(0,8) :
+        src = [
+            '// RST {}'.format(p),
+            'rst({});'.format(p<<3),
+            t(11)]
+        ops = add_op(ops, 0b11000111|p<<3, src)
     return ops
 
 #-------------------------------------------------------------------------------
@@ -1289,6 +1295,7 @@ def gen_opcodes() :
     '''
     ops = {}
     ops = NOP_HALT_DI_EI(ops)
+    ops = RST(ops)
     ops = LD_r_s(ops)
     ops = LD_r_n(ops)
     ops = LD_A_iBC(ops)

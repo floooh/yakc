@@ -1061,6 +1061,11 @@ inline unsigned int z80::step() {
         add8(mem.r8(state.PC++));
         return 7;
         break;
+    case 0xc7:
+        // RST 0
+        rst(0);
+        return 11;
+        break;
     case 0xc8:
         // RET Z
         if ((state.F & ZF)) {
@@ -2395,6 +2400,11 @@ inline unsigned int z80::step() {
         adc8(mem.r8(state.PC++));
         return 7;
         break;
+    case 0xcf:
+        // RST 1
+        rst(8);
+        return 11;
+        break;
     case 0xd0:
         // RET NC
         if ((!(state.F & CF))) {
@@ -2445,6 +2455,11 @@ inline unsigned int z80::step() {
         // SUB n
         sub8(mem.r8(state.PC++));
         return 7;
+        break;
+    case 0xd7:
+        // RST 2
+        rst(16);
+        return 11;
         break;
     case 0xd8:
         // RET C
@@ -3094,6 +3109,11 @@ inline unsigned int z80::step() {
         sbc8(mem.r8(state.PC++));
         return 7;
         break;
+    case 0xdf:
+        // RST 3
+        rst(24);
+        return 11;
+        break;
     case 0xe0:
         // RET PO
         if ((!(state.F & PF))) {
@@ -3146,6 +3166,11 @@ inline unsigned int z80::step() {
         // AND n
         and8(mem.r8(state.PC++));
         return 7;
+        break;
+    case 0xe7:
+        // RST 4
+        rst(32);
+        return 11;
         break;
     case 0xe8:
         // RET PE
@@ -3492,6 +3517,11 @@ inline unsigned int z80::step() {
         xor8(mem.r8(state.PC++));
         return 7;
         break;
+    case 0xef:
+        // RST 5
+        rst(40);
+        return 11;
+        break;
     case 0xf0:
         // RET P
         if ((!(state.F & SF))) {
@@ -3542,6 +3572,11 @@ inline unsigned int z80::step() {
         // OR n
         or8(mem.r8(state.PC++));
         return 7;
+        break;
+    case 0xf7:
+        // RST 6
+        rst(48);
+        return 11;
         break;
     case 0xf8:
         // RET M
@@ -4188,6 +4223,11 @@ inline unsigned int z80::step() {
         // CP n
         cp8(mem.r8(state.PC++));
         return 7;
+        break;
+    case 0xff:
+        // RST 7
+        rst(56);
+        return 11;
         break;
     default:
        return invalid_opcode(1);
