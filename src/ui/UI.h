@@ -32,7 +32,7 @@ public:
     static const ImVec4 ColorBackgroundLight;
 
     struct settings {
-        bool crtEffect = true;
+        bool crtEffect = false;
         bool colorTV = true;
         float crtWarp = 1.0f/64.0f;
         int cpuSpeed = 1;
