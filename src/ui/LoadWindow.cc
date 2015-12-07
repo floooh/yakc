@@ -63,13 +63,14 @@ LoadWindow::Draw(kc85& kc) {
         }
         else if (FileLoader::Ready == this->loader->State) {
             ImGui::Text("Name: %s", this->loader->Info.Name.AsCStr());
+            ImGui::Text("Type: %s", (this->loader->Info.Type == FileLoader::FileType::KCC) ? "KCC":"TAP");
             ImGui::Text("Start Address: 0x%04X", this->loader->Info.StartAddr);
             ImGui::Text("End Address:   0x%04X", this->loader->Info.EndAddr);
             if (this->loader->Info.HasExecAddr) {
                 ImGui::Text("Exec Address:  0x%04X", this->loader->Info.ExecAddr);
             }
             else {
-                ImGui::Text("No executable address in KCC file.");
+                ImGui::Text("No executable address in file.");
             }
             if (this->loader->Info.FileSizeError) {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "File Size Error!");

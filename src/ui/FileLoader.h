@@ -29,6 +29,13 @@ public:
         Failed,
     } State = Waiting;
 
+    /// file types
+    enum class FileType {
+        None,
+        KCC,
+        TAP,
+    };
+
     /// file info of last loaded file
     struct FileInfo {
         Oryol::String Name;
@@ -37,6 +44,8 @@ public:
         yakc::uword ExecAddr = 0;
         bool HasExecAddr = false;
         bool FileSizeError = false;
+        FileType Type = FileType::None;
+        int PayloadOffset = 0;
     } Info;
     /// url of last loaded file
     Oryol::URL Url;
@@ -59,7 +68,7 @@ public:
 private:
     /// internal load method
     void load(yakc::kc85* kc, const Item& item, bool autostart);
-    /// get file info from loaded KCC file
+    /// get file info from loaded file data
     static FileInfo parseHeader(const Oryol::Ptr<Oryol::Stream>& data);
     /// copy data from loaded stream object into KC memory
     static void copy(yakc::kc85* kc, const FileInfo& info, const Oryol::Ptr<Oryol::Stream>& data);
@@ -67,6 +76,7 @@ private:
     static void start(yakc::kc85* kc, const FileInfo& info);
 
     /// KCC file format header block
+    #pragma pack(push,1)
     struct kcc_header {
         yakc::ubyte name[10];
         yakc::ubyte reserved[6];
@@ -79,6 +89,17 @@ private:
         yakc::ubyte exec_addr_h;
         yakc::ubyte pad[128 - 23];  // pad to 128 bytes
     };
+    #pragma pack(pop)
+
+    /// TAP file format header block
+    #pragma pack(push,1)
+    struct tap_header {
+        yakc::ubyte sig[16];        // "\xC3KC-TAPE by AF. ";
+        yakc::ubyte type;           // 00: KCTAP_Z9001, 01: KCTAP_KC85, else: KCTAB_SYS
+        kcc_header kcc;             // from here on identical with KCC
+    };
+    #pragma pack(pop)
+
     Oryol::IOQueue ioQueue;
     Oryol::Ptr<Oryol::Stream> kccData;
 };

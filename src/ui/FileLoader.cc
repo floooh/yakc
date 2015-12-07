@@ -10,18 +10,23 @@ using namespace yakc;
 //------------------------------------------------------------------------------
 void
 FileLoader::Setup(kc85& kc) {
-    this->Items.Add("Pengo", "pengo.kcc", kc85_model::kc85_3);
-    this->Items.Add("Cave", "cave.kcc", kc85_model::kc85_3);
-    this->Items.Add("Labyrinth", "labyrinth.kcc", kc85_model::kc85_3);
-    this->Items.Add("House", "house.kcc", kc85_model::kc85_3);
-    this->Items.Add("Jungle", "jungle.kcc", kc85_model::kc85_3);
-    this->Items.Add("Pacman", "pacman.kcc", kc85_model::kc85_3);
-    this->Items.Add("Breakout", "breakout.kcc", kc85_model::kc85_3);
-    this->Items.Add("Boulderdash", "bould-3.kcc", kc85_model::kc85_3);
-    this->Items.Add("Digger", "digger-3.kcc", kc85_model::kc85_3);
-    this->Items.Add("Ladder", "ladder-3.kcc", kc85_model::kc85_3);
-    this->Items.Add("Chess", "chess.kcc", kc85_model::any);
-    this->Items.Add("Testbild", "testbild.kcc", kc85_model::kc85_3);
+    this->Items.Add("Pengo (KC85/3)", "pengo.kcc", kc85_model::kc85_3);
+    this->Items.Add("Pengo (KC85/4)", "pengo4.kcc", kc85_model::kc85_4);
+    this->Items.Add("Cave (KC85/3)", "cave.kcc", kc85_model::kc85_3);
+    this->Items.Add("Labyrinth (KC85/3)", "labyrinth.kcc", kc85_model::kc85_3);
+    this->Items.Add("House (KC85/3)", "house.kcc", kc85_model::kc85_3);
+    this->Items.Add("House (KC85/4)", "house4.tap", kc85_model::kc85_4);
+    this->Items.Add("Jungle (KC85/3)", "jungle.kcc", kc85_model::kc85_3);
+    this->Items.Add("Jungle (KC85/4)", "jungle4.tap", kc85_model::kc85_4);
+    this->Items.Add("Pacman (KC85/3)", "pacman.kcc", kc85_model::kc85_3);
+    this->Items.Add("Breakout (KC85/3)", "breakout.kcc", kc85_model::kc85_3);
+    this->Items.Add("Boulderdash (KC85/3)", "boulder3.tap", kc85_model::kc85_3);
+    this->Items.Add("Boulderdash (KC85/4)", "boulder4.tap", kc85_model::kc85_4);
+    this->Items.Add("Digger (KC85/3)", "digger-3.kcc", kc85_model::kc85_3);
+    this->Items.Add("Digger (KC85/4)", "digger4.tap", kc85_model::kc85_4);
+    this->Items.Add("Ladder (KC85/3)", "ladder-3.kcc", kc85_model::kc85_3);
+    this->Items.Add("Chess (KC85/3+KC85/4)", "chess.kcc", kc85_model::any);
+    this->Items.Add("Testbild (KC85/3)", "testbild.kcc", kc85_model::kc85_3);
     this->ioQueue.Start();
 }
 
@@ -98,12 +103,26 @@ FileLoader::FileInfo
 FileLoader::parseHeader(const Ptr<Stream>& data) {
     FileInfo info;
     if (data->Open(OpenMode::ReadOnly)) {
-        const kcc_header* hdr = (const kcc_header*) data->MapRead(nullptr);
-        info.Name = String((const char*)hdr->name, 0, 16);
-        info.StartAddr = hdr->load_addr_h<<8 | hdr->load_addr_l;
-        info.EndAddr = hdr->end_addr_h<<8 | hdr->end_addr_l;
-        info.ExecAddr = hdr->exec_addr_h<<8 | hdr->exec_addr_l;
-        info.HasExecAddr = hdr->num_addr > 2;
+        const ubyte* start = data->MapRead(nullptr);
+        const ubyte* ptr = start;
+
+        // first check whether this is a KCC or TAP file
+        const char* tap_header_string = "\xC3KC-TAPE by AF. ";
+        if (0 == memcmp(ptr, tap_header_string, strlen(tap_header_string))) {
+            // it's a TAP!
+            info.Type = FileType::TAP;
+            ptr = (const ubyte*)&(((tap_header*)ptr)->kcc);
+        }
+        else {
+            info.Type = FileType::KCC;
+        }
+        const kcc_header* kcc_hdr = (const kcc_header*) ptr;
+        info.Name = String((const char*)kcc_hdr->name, 0, 16);
+        info.StartAddr = kcc_hdr->load_addr_h<<8 | kcc_hdr->load_addr_l;
+        info.EndAddr = kcc_hdr->end_addr_h<<8 | kcc_hdr->end_addr_l;
+        info.ExecAddr = kcc_hdr->exec_addr_h<<8 | kcc_hdr->exec_addr_l;
+        info.HasExecAddr = kcc_hdr->num_addr > 2;
+        info.PayloadOffset = (ptr + sizeof(kcc_header)) - start;
         if ((info.EndAddr-info.StartAddr) > data->Size()-128) {
             info.FileSizeError = true;
         }
@@ -119,9 +138,24 @@ FileLoader::copy(kc85* kc, const FileInfo& info, const Ptr<Stream>& data) {
     if (!info.FileSizeError) {
         if (data->Open(OpenMode::ReadOnly)) {
             const ubyte* end;
-            const ubyte* kcc = data->MapRead(&end);
-            kcc += 128; // skip header
-            kc->cpu.mem.write(info.StartAddr, kcc, info.EndAddr-info.StartAddr);
+            const ubyte* payload = data->MapRead(&end) + info.PayloadOffset;
+            if (FileType::KCC == info.Type) {
+                // KCC payload is simply a continuous block of data
+                kc->cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
+            }
+            else {
+                // TAP payload is 128 byte blocks, each with a single header byte
+                uword addr = info.StartAddr;
+                const ubyte* ptr = payload;
+                while (addr < info.EndAddr) {
+                    // skip block lead byte
+                    ptr++;
+                    // copy 128 bytes
+                    for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
+                        kc->cpu.mem.w8(addr++, *ptr++);
+                    }
+                }
+            }
             data->UnmapRead();
             data->Close();
         }
