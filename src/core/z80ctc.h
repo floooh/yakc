@@ -183,7 +183,6 @@ z80ctc::write(channel c, ubyte v) {
 //------------------------------------------------------------------------------
 inline ubyte
 z80ctc::read(channel c) {
-YAKC_ASSERT(false); // not sure when CTC channels are read, so assert when it happens
     YAKC_ASSERT((c >= 0) && (c<num_channels));
     const channel_state& chn = channels[c];
     int val = chn.down_counter;
