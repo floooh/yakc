@@ -4,6 +4,7 @@
 #include "CommandWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
+#include <ctype.h>
 
 OryolClassImpl(CommandWindow);
 
