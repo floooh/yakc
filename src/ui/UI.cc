@@ -12,6 +12,7 @@
 #include "ModuleWindow.h"
 #include "KeyboardWindow.h"
 #include "LoadWindow.h"
+#include "CommandWindow.h"
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -188,6 +189,9 @@ UI::OnFrame(kc85& kc) {
                 }
                 if (ImGui::MenuItem("Memory Editor")) {
                     this->OpenWindow(kc, MemoryWindow::Create());
+                }
+                if (ImGui::MenuItem("Scan for Commands...")) {
+                    this->OpenWindow(kc, CommandWindow::Create());
                 }
                 ImGui::EndMenu();
             }

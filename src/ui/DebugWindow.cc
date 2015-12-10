@@ -127,6 +127,12 @@ DebugWindow::drawRegisterTable(kc85& kc) {
 void
 DebugWindow::drawControls(kc85& kc) {
     ImGui::PushItemWidth(32);
+    if (kc.dbg.breakpoint_enabled(0)) {
+        this->breakPointWidget.Set16(kc.dbg.breakpoint_addr(0));
+    }
+    else {
+        this->breakPointWidget.Set16(0xFFFF);
+    }
     if (this->breakPointWidget.Draw()) {
         const uword bp_addr = this->breakPointWidget.Get16();
         if (bp_addr != 0xFFFF) {

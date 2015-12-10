@@ -46,6 +46,10 @@ public:
     void toggle_breakpoint(int index, uword addr);
     /// test if an address is a breakpoint
     bool is_breakpoint(uword addr) const;
+    /// return true if breakpoint is enabled
+    bool breakpoint_enabled(int index) const;
+    /// get breakpoint address
+    uword breakpoint_addr(int index) const;
 
     /// step until PC changed (or an invalid opcode is hit)
     void step_pc_modified(z80& cpu);
@@ -139,6 +143,20 @@ z80dbg::is_breakpoint(uword addr) const {
         }
     }
     return false;
+}
+
+//------------------------------------------------------------------------------
+inline bool
+z80dbg::breakpoint_enabled(int index) const {
+    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
+    return this->breakpoints[index].enabled;
+}
+
+//------------------------------------------------------------------------------
+inline uword
+z80dbg::breakpoint_addr(int index) const {
+    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
+    return this->breakpoints[index].address;
 }
 
 //------------------------------------------------------------------------------
