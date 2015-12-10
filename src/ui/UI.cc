@@ -140,10 +140,6 @@ UI::OnFrame(kc85& kc) {
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/4")) {
-                    if (ImGui::MenuItem("KC-CAOS 4.1")) {
-                        kc.poweroff();
-                        kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_1);
-                    }
                     if (ImGui::MenuItem("KC-CAOS 4.2")) {
                         kc.poweroff();
                         kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_2);

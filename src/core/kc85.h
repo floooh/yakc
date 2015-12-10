@@ -150,11 +150,6 @@ kc85::poweron(kc85_model m, kc85_caos os) {
             this->caos_e_ptr = dump_caos34;
             this->caos_c_ptr = nullptr;
             break;
-        case kc85_caos::caos_4_1:
-            this->caos_e_ptr = dump_caos41e;
-            this->caos_c_ptr = dump_caos41c;
-            this->caos_c_size = 0x1000;
-            break;
         case kc85_caos::caos_4_2:
             this->caos_e_ptr = dump_caos42e;
             this->caos_c_ptr = dump_caos42c;

@@ -1,0 +1,58 @@
+
+Hmmmm ok, everything's working fine on CAOS 4.2, running on CAOS 4.1
+is broken in the game menu screen.
+
+020B..04E8:     print intro screen
+
+jump to 3ABF -> wait for key 0x0D (Enter)
+
+3AC6:   set custom font tables
+3AD8:   clear BF00 .. BFFF
+3AE5:   copy 5 bytes from 3692 to 0051:
+        08 09 0A 0B 20 
+        (these are the control-key ASCII codes)
+3AF0:   define some window rects
+3B09:   copy 4 bytes from 3624 to B99C:
+        00 00 28 20 
+        (this is a fullscreen window rect)
+        copy 6 bytes from 3644 to B9A0:
+        00 00 00 07 37 F8
+        ... copy 8x more such data sets to
+        the area starting at B9A0...
+
+3B25:   CALL 0CC0:
+
+0CC0:   modify CTAB jumptable:
+        copy to 0DC5, overwrite (0DE1) with 0CD6 (BEEP..??)
+
+3B28:   CALL 1160: clear screen with color in A
+        wait a little while (CALL F003 14)
+3B33:   CALL 77E2 with A=0B
+
+77E2:   no idea what's happening there, must be KC85/4 specific stuff
+        since it's so close towards the end, there are also calls into 
+        the 0x0900 area which seem to toggle pixel/color banks
+        
+3BA0:   JUNGLE intro screen done, waiting for any key
+
+3BAC:   copy ROM area C000 into pixel memory to produce a noise background
+        pattern, but on the the 85/4 C000 BASIC ROM is actually switched OFF!
+
+        CALL 3853
+3853:   draw top menu screen decoration (AKKU, ...)
+
+3BD1:   draw menu screen usage instruction string
+
+3BF4:   CALL 38CC with A=01
+
+38CC:   select window and draw a BEEP (hey that's our custom function at 0CD6!)
+
+0CD6:   hmm ok, the new BEEP handler seems to draw a window with border...
+
+around 3C03:    draw topleft information window
+
+3C33:   the following call to draw a string at 370D is broken!
+        the string is the hardware and CAOS info, which seems to 
+        confuse the SYSCALL 45...
+        -> this works fine on CAOS 4.2
+
