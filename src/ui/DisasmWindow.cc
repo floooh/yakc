@@ -13,7 +13,7 @@ using namespace yakc;
 //------------------------------------------------------------------------------
 void
 DisasmWindow::Setup(kc85& kc) {
-    this->setName("Disassember");
+    this->setName("Disassembler");
     this->startWidget.Configure16("Start", 0x0000);
     this->lengthWidget.Configure16("Num", 64);
 }
