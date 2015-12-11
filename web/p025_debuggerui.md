@@ -29,7 +29,7 @@ disassembled instruction stream:
 ![debugwindow](images/debugwindow.png)
 
 The debugging window updates once per frame following the
-CPU as it crunches through the instruction stream. 
+CPU as it crunches through the instructions.
 
 Pressing the **break** checkbox at the bottom halts execution and goes into
 step-debug mode. The address field left to the break checkbox allows to set a
@@ -75,7 +75,7 @@ the content of ROM banks cannot be modified.
 
 This window allows to scan the CPU-visible memory for the magic command
 headers (usually 7F 7F), a list of found commands is displayed with their
-starts address, and a **B** button which sets a breakpoint at the start
+start address, and a **B** button which sets a breakpoint at the start
 of the command code:
 
 ![scancommands](images/scancommands.png)
@@ -104,9 +104,9 @@ actually visible to the CPU:
 
 ![memory_map](images/memory_map.png)
 
-The screenshot shows the memory map of a KC85/4 with its deeply stacked
-video memory banks, there's also a ROM module inserted which is mapped to 
-address C000.
+The screenshot shows the memory map of a KC85/4 with its deeply stacked video
+memory banks at address 8000. There's also a 16 KByte ROM module inserted into
+slot 0x08 which is mapped to address C000.
 
 The memory bank colors are as follows:
 
@@ -115,8 +115,8 @@ The memory bank colors are as follows:
 CPU because it is shadowed by a higher priority active bank
 - **dark grey**: the memory bank exists but is currently switched off
 
-The memory mapping visualization updates at 60fps, when keeping the
-window open while performing operations in the emulator, it is actually
+The memory mapping visualization updates at 60fps. When keeping the
+window open while performing operations in the emulator it is actually
 possible to watch how the memory banks are mapped in and out of the CPUs
 address space.
 
