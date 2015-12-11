@@ -110,7 +110,7 @@ address C000.
 
 The memory bank colors are as follows:
 
-- **bright green**: the memory bank is activate and visible to the CPU
+- **bright green**: the memory bank is active and visible to the CPU
 - **dark green**: the memory bank is active, but is not accessible by the
 CPU because it is shadowed by a higher priority active bank
 - **dark grey**: the memory bank exists but is currently switched off
@@ -129,8 +129,8 @@ The PIO data registers can also directly be modified in the UI:
 
 ### The Settings Menu
 
-This allows you to switch various image post-effects on and off, and increase
-the speed of the emulated CPU.
+The settings menu allows to switch various image post-effects on and off, and
+increase the speed of the emulated CPU.
 
 ![settings](images/settings.png)
 
