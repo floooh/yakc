@@ -271,7 +271,7 @@ kc85::handle_keyboard_input() {
     // this is a simplified version of the PIO-B interrupt service routine
     // which is normally triggered when the serial keyboard hardware
     // sends a new pulse (for details, see
-    // https://github.com/floooh/yakc/blob/master/scribble/kc85_3_kbdint.md )
+    // https://github.com/floooh/yakc/blob/master/misc/kc85_3_kbdint.md )
     //
     // we ignore the whole tricky serial decoding and patch the
     // keycode directly into the right memory locations.
