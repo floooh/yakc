@@ -62,18 +62,129 @@ port 0x84 and 0x86 are backed at memory addresses at (IX+1) and (IX+4):
 - **0x86 bits 2..6**: unused/reserved
 - **0x86 bit 7**: CAOS ROM at address 0xC000 on/off
 
-### Z80 CTC Registers
+### Z80 CTC Channels
 
-(FIXME!)
+The CTC channels are used to generate the stereo audio signal and 
+for measuring the time between serial keyboard impulses:
 
+- **CTC 0**: configured as timer, generates the audio frequency
+for one audio channel
+- **CTC 1**: configured as timer, generates the audio frequency for the 
+other audio channel, and for the cassette tape save audio signal
+- **CTC 2**: usually used as timer to generate an interrupt for sound length,
+also controls the video foreground color blinking frequency
+- **CTC 3**: used by the keyboard interrupt handler to measure the length
+between two serial impulses from the keyboard
+
+### Color Buffer Byte Structure
+
+A byte in color buffer uses 3 bits for the background color,
+4 bits for the foreground color, and 1 bit for blinking:
+
+~~~
+ 7  6  5  4  3  2  1  0
++--+--+--+--+--+--+--+--+
+|B |FX|FG|FR|FB|BG|BR|BB|
++--+--+--+--+--+--+--+--+
+~~~
+
+- **B**: foreground color blink bit
+- **FX**: foreground color intensity
+- **FG**: foreground color green
+- **FR**: foreground color red
+- **FB**: foreground color blue
+- **BG**: background color green
+- **BR**: background color red
+- **BB**: background color blue
 
 ### KC85/3 Video Memory Layout
 
-(FIXME!)
+The KC85/3 video memory consists of a single pixel buffer at address 
+0x8000 followed by a lower-resolution color buffer at address 0xA800. 
+
+A single pixel buffer byte represents a horizontal 8-pixel pattern, and 
+one color buffer byte describes the foreground and background color
+for a block of 8x4 pixel.
+
+The display resolution is 320x256 pixels, which results in a pixel buffer
+size of 10KByte and a color buffer size of 2.5KByte. The remaining memory
+in the video memory bank is used for a 40x32 ASCII code backing buffer,
+operating system variables and cassette loading/saving buffers.
+
+The pixel buffer layout is not linear, there is a 256x256 pixel area
+on the left side, and 64x256 pixel area on the right side.
+
+Vertical lines are not sequential but interleaved. The next line is reached by
+adding 0x80 to the current address, 
+
+##### KC85/3 Pixel buffer memory layout:
+
+Each block is 8x1 pixels, or 1 byte:
+
+~~~
+ 0                                32      40
++--------------------------------+--------+
+|8000                            |A000    |
+|8080                            |A080    |
+|8100                            |A100    |
+|8180                            |A180    |
+|8020                            |A020    |
+|80A0                            |A0A0    |
+|8120                            |A120    |
+|81A0                            |A1A0    |
+|...
+~~~
+
+##### KC85/3 Color buffer memory layout:
+
+Each block is 8x4 pixels, or 1 byte:
+
+~~~
+ 0                                32      40
++--------------------------------+--------+
+|A800                            |B000    |
+|A820                            |B020    |
+|...
+~~~
 
 ### KC85/4 Video Memory Layout
 
-(FIXME!)
+On the KC85/4, the pixel resolution is the same, each pixel buffer byte
+describes 8x1 pixels.
+
+The color resolution has increased to be the same as the pixel resolution,
+each byte in the color buffer describes the foreground and background
+color for 8x1 pixels.
+
+Since the pixel and color buffer no longer fit into one 16KByte memory bank,
+they have been split into two separate memory banks, this means that
+a bank switch is necessary to write pixels and colors.
+
+The KC85/4 also has a second set of pixel- and color-buffers, and it is
+possible to select a different set for displaying and CPU access, making
+hardware-double-buffering possible.
+
+The pixel- and color-buffer layout has been rotated by 90 degrees. Writing
+bytes sequentially in pixel- or color-buffer fills vertical columns on screen,
+which drastically simplifies video memory addressing. The separate left
+and right area that had to be addressed differently are gone.
+
+Since pixel- and color-buffers have the same resolution, the address 
+computation for both is identical.
+
+~~~
++----------------------------------------+
+|8000                                    |
+|8001                                    |
+|8002                                    |
+|...                                     |
+~~~
+
+### KC85/4 Hicolor Mode
+
+(TODO)
+
+
 
 
 
