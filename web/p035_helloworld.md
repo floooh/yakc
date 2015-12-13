@@ -16,7 +16,7 @@ BASIC, machine code, and assembler on a KC85/3.
 The KC85/3 and KC85/4 came with a built-in BASIC in ROM, for the 
 KC85/2, a BASIC ROM expansion module was offered.
 
-First start the BASIC interpreter by typing BASIC into the command
+First start the BASIC interpreter by typing **BASIC** into the command
 prompts (if you're currently on the KC85/2, first reboot into KC85/3 or
 KC85/4). On start, the BASIC interpreter asks for the 'MEMORY END', simply
 hit Enter there. After the interpreter has figured out how much memory is 
