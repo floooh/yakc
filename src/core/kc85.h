@@ -12,7 +12,8 @@
 #include "roms/roms.h"
 #include "core/kc85_video.h"
 #include "core/kc85_audio.h"
-#include "core/kc85_expansion.h"
+#include "core/kc85_exp.h"
+#include "core/kc85_roms.h"
 
 namespace yakc {
 
@@ -57,7 +58,8 @@ public:
     z80ctc ctc;
     kc85_video video;
     kc85_audio audio;
-    kc85_expansion exp;
+    kc85_exp exp;
+    kc85_roms roms;
     ubyte io84;             // special KC85/4 io register
     ubyte io86;             // special KC85/4 io register
 
@@ -98,9 +100,9 @@ private:
     kc85_caos cur_caos;
     bool on;
     ubyte key_code;
-    ubyte* caos_c_ptr;
+    const ubyte* caos_c_ptr;
     int caos_c_size;
-    ubyte* caos_e_ptr;
+    const ubyte* caos_e_ptr;
     int caos_e_size;
 };
 
@@ -135,25 +137,34 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     // set operating system pointers
     this->caos_c_ptr = nullptr;
     this->caos_c_size = 0;
-    this->caos_e_size = 0x2000;
     switch (os) {
         case kc85_caos::caos_hc900:
-            this->caos_e_ptr = dump_hc900;
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::hc900);
+            this->caos_e_size = this->roms.size(kc85_roms::hc900);
             break;
         case kc85_caos::caos_2_2:
-            this->caos_e_ptr = dump_caos22;
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos22);
+            this->caos_e_size = this->roms.size(kc85_roms::caos22);
             break;
         case kc85_caos::caos_3_1:
-            this->caos_e_ptr = dump_caos31;
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos31);
+            this->caos_e_size = this->roms.size(kc85_roms::caos31);
             break;
         case kc85_caos::caos_3_4:
-            this->caos_e_ptr = dump_caos34;
-            this->caos_c_ptr = nullptr;
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos34);
+            this->caos_e_size = this->roms.size(kc85_roms::caos34);
+            break;
+        case kc85_caos::caos_4_1:
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos41e);
+            this->caos_e_size = this->roms.size(kc85_roms::caos41e);
+            this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos41c);
+            this->caos_c_size = this->roms.size(kc85_roms::caos41c);
             break;
         case kc85_caos::caos_4_2:
-            this->caos_e_ptr = dump_caos42e;
-            this->caos_c_ptr = dump_caos42c;
-            this->caos_c_size = 0x1000;
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos42e);
+            this->caos_e_size = this->roms.size(kc85_roms::caos42e);
+            this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos42c);
+            this->caos_c_size = this->roms.size(kc85_roms::caos42c);
             break;
         default:
             YAKC_ASSERT(false);
@@ -400,7 +411,7 @@ kc85::in_cb(void* userdata, uword port) {
     kc85* self = (kc85*)userdata;
     switch (port & 0xFF) {
         case 0x80:
-            return self->exp.module_type(port>>8);
+            return self->exp.module_type_in_slot(port>>8);
         case 0x88:
             return self->pio.read(z80pio::A);
         case 0x89:
@@ -444,7 +455,7 @@ kc85::update_bank_switching() {
         }
         // 8 KByte CAOS ROM at 0xF000
         if (pio_a & PIO_A_CAOS_ROM) {
-            this->cpu.mem.map(0, 0xE000, this->caos_e_size, this->caos_e_ptr, false);
+            this->cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
         }
     }
     else if (kc85_model::kc85_4 == this->cur_model) {
@@ -484,11 +495,11 @@ kc85::update_bank_switching() {
         }
         // 4 KByte CAOS ROM-C at 0xC000
         if (this->io86 & IO86_CAOS_ROM_C) {
-            this->cpu.mem.map(0, 0xC000, this->caos_c_size, this->caos_c_ptr, false);
+            this->cpu.mem.map(0, 0xC000, this->caos_c_size, (ubyte*)this->caos_c_ptr, false);
         }
         // 8 KByte CAOS ROM-E at 0xE000
         if (pio_a & PIO_A_CAOS_ROM) {
-            this->cpu.mem.map(0, 0xE000, this->caos_e_size, this->caos_e_ptr, false);
+            this->cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
         }
     }
 

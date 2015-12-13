@@ -118,13 +118,17 @@ UI::OnFrame(kc85& kc) {
                     kc.reset();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/2")) {
-                    if (ImGui::MenuItem("HC900-CAOS")) {
-                        kc.poweroff();
-                        kc.poweron(kc85_model::kc85_2, kc85_caos::caos_hc900);
+                    if (kc.roms.has(kc85_roms::hc900)) {
+                        if (ImGui::MenuItem("HC900-CAOS")) {
+                            kc.poweroff();
+                            kc.poweron(kc85_model::kc85_2, kc85_caos::caos_hc900);
+                        }
                     }
-                    if (ImGui::MenuItem("HC-CAOS 2.2")) {
-                        kc.poweroff();
-                        kc.poweron(kc85_model::kc85_2, kc85_caos::caos_2_2);
+                    if (kc.roms.has(kc85_roms::caos22)) {
+                        if (ImGui::MenuItem("HC-CAOS 2.2")) {
+                            kc.poweroff();
+                            kc.poweron(kc85_model::kc85_2, kc85_caos::caos_2_2);
+                        }
                     }
                     ImGui::EndMenu();
                 }
@@ -133,16 +137,26 @@ UI::OnFrame(kc85& kc) {
                         kc.poweroff();
                         kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_1);
                     }
-                    if (ImGui::MenuItem("HC-CAOS 3.4i")) {
-                        kc.poweroff();
-                        kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_4);
+                    if (kc.roms.has(kc85_roms::caos34)) {
+                        if (ImGui::MenuItem("HC-CAOS 3.4i")) {
+                            kc.poweroff();
+                            kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_4);
+                        }
                     }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/4")) {
-                    if (ImGui::MenuItem("KC-CAOS 4.2")) {
-                        kc.poweroff();
-                        kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_2);
+                    if (kc.roms.has(kc85_roms::caos41c) && kc.roms.has(kc85_roms::caos41e)) {
+                        if (ImGui::MenuItem("KC-CAOS 4.1")) {
+                            kc.poweroff();
+                            kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_1);
+                        }
+                    }
+                    if (kc.roms.has(kc85_roms::caos42c) && kc.roms.has(kc85_roms::caos42e)) {
+                        if (ImGui::MenuItem("KC-CAOS 4.2")) {
+                            kc.poweroff();
+                            kc.poweron(kc85_model::kc85_4, kc85_caos::caos_4_2);
+                        }
                     }
                     ImGui::EndMenu();
                 }

@@ -13,7 +13,6 @@ using namespace yakc;
 //------------------------------------------------------------------------------
 void
 ModuleWindow::Setup(kc85& kc) {
-    this->setupModules(kc);
     this->setName("Expansion Slots");
 }
 
@@ -28,18 +27,22 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
         ImGui::OpenPopup("select");
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip(slot.mod.help);
+        ImGui::SetTooltip(slot.mod.desc);
     }
     ImGui::SameLine();
     ImGui::Text("type:%02X ctrl:%02X", slot.mod.type, slot.control_byte);
     if (ImGui::BeginPopup("select")) {
-        for (const auto& mod : this->modules) {
-            if (ImGui::Selectable(mod.name)) {
-                if (kc.exp.slot_occupied(slot_addr)) {
-                    kc.exp.remove_module(slot_addr, kc.cpu.mem);
+        for (int i = 0; i < kc85_exp::num_module_types; i++) {
+            kc85_exp::module_type type = (kc85_exp::module_type)i;
+            if (kc.exp.is_module_registered(type)) {
+                const auto& mod = kc.exp.module_template(type);
+                if (ImGui::Selectable(mod.name)) {
+                    if (kc.exp.slot_occupied(slot_addr)) {
+                        kc.exp.remove_module(slot_addr, kc.cpu.mem);
+                    }
+                    kc.exp.insert_module(slot_addr, type);
+                    kc.cpu.out(slot_addr<<8|0x80, 0x00);
                 }
-                kc.exp.insert_module(slot_addr, mod);
-                kc.cpu.out(slot_addr<<8|0x80, 0x00);
             }
         }
         ImGui::EndPopup();
@@ -58,61 +61,4 @@ ModuleWindow::Draw(kc85& kc) {
     }
     ImGui::End();
     return this->Visible;
-}
-
-//------------------------------------------------------------------------------
-void
-ModuleWindow::setupModules(kc85& kc) {
-
-    // empty module slot
-    auto mod = kc85_module::create_empty("NO MODULE", "Click to insert module!");
-    if (!kc.exp.slot_occupied(0x08)) {
-        kc.exp.slot_by_addr(0x08).mod = mod;
-    }
-    if (!kc.exp.slot_occupied(0x0C)) {
-        kc.exp.slot_by_addr(0x0C).mod = mod;
-    }
-    this->modules.Add(mod);
-
-    // M022 EXPANDER RAM
-    this->modules.Add(kc85_module::create_ram(0xF4, 0xC0, 0x4000, "M022 EXPANDER RAM",
-        "16 KByte RAM expansion module.\n\n"
-        "SWITCH [SLOT] 43: map to address 0x4000\n"
-        "SWITCH [SLOT] 83: map to address 0x8000\n"
-        "SWITCH [SLOT] 00: switch module off\n\n"
-        "...where [SLOT] is 08 or 0C"));
-
-    // M011 64 K RAM
-    this->modules.Add(kc85_module::create_ram(0xF6, 0xC0, 0x10000, "M011 64 KBYTE RAM",
-        "64 KByte RAM expansion module.\n\n"
-        "SWITCH [SLOT] 03: map 1st block to 0x0000\n"
-        "SWITCH [SLOT] 43: map 1st block to 0x4000\n"
-        "SWITCH [SLOT] 83: map 1st block to 0x8000\n"
-        "SWITCH [SLOT] C3: map 1st block to 0xC000\n"
-        "...where [SLOT] is 08 or 0C.\n"));
-
-    // M026 FORTH
-    this->modules.Add(kc85_module::create_rom(0xFB, 0xE0, dump_forth, 0x2000, "M026 FORTH",
-        "FORTH language expansion module.\n\n"
-        "First deactivate the BASIC ROM with:\n"
-        "SWITCH 02 00\n\n"
-        "Then activate FORTH with:\n"
-        "SWITCH [SLOT] C1\n\n"
-        "...where [SLOT] is 08 or 0C"));
-
-    // M027 DEVELOPMENT
-    this->modules.Add(kc85_module::create_rom(0xFB, 0xE0, dump_develop, 0x2000, "M027 DEVELOPMENT",
-        "Assembler/disassembler expansion module.\n\n"
-        "First deactivate the BASIC ROM with:\n"
-        "SWITCH 02 00\n\n"
-        "Then activate the module with:\n"
-        "SWITCH [SLOT] C1\n\n"
-        "...where [SLOT] is 08 or 0C"));
-
-    // M006 KC85/2 BASIC
-    this->modules.Add(kc85_module::create_rom(0xFC, 0xC0, dump_m006, 0x4000, "M006 BASIC (KC85/2)",
-        "BASIC + HC-901 CAOS for KC85/2.\n\n"
-        "Active with:\n"
-        "JUMP [SLOT]\n\n"
-        "...where [SLOT] is 08 or 0C"));
 }

@@ -26,10 +26,9 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         shutil.copy(deploy_dir + name, webpage_dir + '/' + name)
 
     # copy kcc and tap files
-    for ext in ['kcc','tap'] :
-        for fname in glob.glob(proj_dir + '/src/kcc/*.{}'.format(ext)) :
-            log.info('> copy file: {}'.format(fname))
-            shutil.copy(fname, webpage_dir + '/' + os.path.basename(fname))
+    for fname in glob.glob(proj_dir + '/files/*') :
+        log.info('> copy file: {}'.format(fname))
+        shutil.copy(fname, webpage_dir + '/' + os.path.basename(fname))
 
     # if the virtualkc directory exists, copy everything there
     # so that a simple git push is enough to upload

@@ -8,6 +8,7 @@
 #include "Synth/Synth.h"
 #include "Input/Input.h"
 #include "IO/IO.h"
+#include "IO/Core/IOQueue.h"
 #include "KC85Oryol.h"
 #include "Draw.h"
 #include "Audio.h"
@@ -25,6 +26,9 @@ public:
     AppState::Code OnRunning();
     AppState::Code OnCleanup();
     void handleInput();
+    void initRoms();
+    void addRom(kc85_roms::rom type, const Ptr<Stream>& data);
+    void initModules();
 
     ubyte last_ascii = 0;
     Id drawState;
@@ -34,6 +38,8 @@ public:
     #if YAKC_UI
     UI ui;
     #endif
+    IOQueue ioQueue;
+
 };
 OryolMain(YakcApp);
 
@@ -53,6 +59,7 @@ YakcApp::OnInit() {
     IOSetup ioSetup;
     ioSetup.FileSystems.Add("http", HTTPFileSystem::Creator());
     ioSetup.Assigns.Add("kcc:", baseUrl);
+    ioSetup.Assigns.Add("rom:", baseUrl);
     IO::Setup(ioSetup);
 
     // we only need few resources, so don't waste memory
@@ -70,23 +77,20 @@ YakcApp::OnInit() {
 
     Synth::Setup(SynthSetup());
 
+    // initialize the ROM dumps and modules
+    this->initRoms();
+
     #if YAKC_UI
     this->ui.Setup(this->kc);
     #endif
     this->kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_1);
     this->draw.Setup(gfxSetup, frameSize);
     this->audio.Setup(this->kc);
+    this->initModules();
 
     // on KC85/3 put a 16kByte module into slot 8 by default, CAOS will initialize
     // this automatically on startup
-    // FIXME: find a better way to setup complete computer configs
-    this->kc.exp.insert_module(0x08,kc85_module::create_ram(0xF4, 0xC0, 0x4000,
-        "M022 EXPANDER RAM",
-        "16 KByte RAM expansion module.\n\n"
-        "SWITCH [SLOT] 43: map to address 0x4000\n"
-        "SWITCH [SLOT] 83: map to address 0x8000\n"
-        "SWITCH [SLOT] 00: switch module off\n\n"
-        "...where [SLOT] is 08 or 0C"));
+    this->kc.exp.insert_module(0x08, kc85_exp::m022_16kbyte);
 
     return AppState::Running;
 }
@@ -114,12 +118,18 @@ YakcApp::OnRunning() {
     this->ui.OnFrame(this->kc);
     #endif
     Gfx::CommitFrame();
+    if (this->ioQueue.IsStarted() && this->ioQueue.Empty()) {
+        this->ioQueue.Stop();
+    }
     return Gfx::QuitRequested() ? AppState::Cleanup : AppState::Running;
 }
 
 //------------------------------------------------------------------------------
 AppState::Code
 YakcApp::OnCleanup() {
+    if (this->ioQueue.IsStarted()) {
+        this->ioQueue.Stop();
+    }
     this->audio.Discard();
     this->draw.Discard();
     #if YAKC_UI
@@ -212,4 +222,112 @@ YakcApp::handleInput() {
         }
     }
     this->kc.put_key(ascii);
+}
+
+//------------------------------------------------------------------------------
+void
+YakcApp::addRom(kc85_roms::rom type, const Ptr<Stream>& data) {
+    if (data->Open(OpenMode::ReadOnly)) {
+        this->kc.roms.add(type, data->MapRead(nullptr), data->Size());
+        data->Close();
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+YakcApp::initRoms() {
+
+    // standard roms required for initial booting are built-in
+    this->kc.roms.add(kc85_roms::caos31, dump_caos31, sizeof(dump_caos31));
+    this->kc.roms.add(kc85_roms::basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
+
+    // async-load optional ROMs
+    this->ioQueue.Start();
+    this->ioQueue.Add("rom:hc900.852", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::hc900, data);
+    });
+    this->ioQueue.Add("rom:caos22.852", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::caos22, data);
+    });
+    this->ioQueue.Add("rom:caos34.853", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::caos34, data);
+    });
+    this->ioQueue.Add("rom:caos41c.854", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::caos41c, data);
+    });
+    this->ioQueue.Add("rom:caos41e.854", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::caos41e, data);
+    });
+    this->ioQueue.Add("rom:caos42c.854", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::caos42c, data);
+    });
+    this->ioQueue.Add("rom:caos42e.854", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::caos42e, data);
+    });
+}
+
+//------------------------------------------------------------------------------
+void
+YakcApp::initModules() {
+    this->kc.exp.register_none_module("NO MODULE", "Click to insert module!");
+    if (!kc.exp.slot_occupied(0x08)) {
+        kc.exp.insert_module(0x08, kc85_exp::none);
+    }
+    if (!kc.exp.slot_occupied(0x0C)) {
+        kc.exp.insert_module(0x0C, kc85_exp::none);
+    }
+
+    // M022 EXPANDER RAM
+    this->kc.exp.register_ram_module(kc85_exp::m022_16kbyte, 0xC0, 0x4000,
+        "16 KByte RAM expansion module.\n\n"
+        "SWITCH [SLOT] 43: map to address 0x4000\n"
+        "SWITCH [SLOT] 83: map to address 0x8000\n"
+        "SWITCH [SLOT] 00: switch module off\n\n"
+        "...where [SLOT] is 08 or 0C");
+
+    // M011 64 K RAM
+    this->kc.exp.register_ram_module(kc85_exp::m011_64kbyte, 0xC0, 0x10000,
+        "64 KByte RAM expansion module.\n\n"
+        "SWITCH [SLOT] 03: map 1st block to 0x0000\n"
+        "SWITCH [SLOT] 43: map 1st block to 0x4000\n"
+        "SWITCH [SLOT] 83: map 1st block to 0x8000\n"
+        "SWITCH [SLOT] C3: map 1st block to 0xC000\n"
+        "...where [SLOT] is 08 or 0C.\n");
+
+    // M026 FORTH
+    this->ioQueue.Add("rom:forth.853", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::forth, data);
+        this->kc.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
+            kc.roms.ptr(kc85_roms::forth), kc.roms.size(kc85_roms::forth),
+            "FORTH language expansion module.\n\n"
+            "First deactivate the BASIC ROM with:\n"
+            "SWITCH 02 00\n\n"
+            "Then activate FORTH with:\n"
+            "SWITCH [SLOT] C1\n\n"
+            "...where [SLOT] is 08 or 0C");
+    });
+
+    // M027 DEVELOPMENT
+    this->ioQueue.Add("rom:develop.853", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::develop, data);
+        this->kc.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
+            kc.roms.ptr(kc85_roms::develop), kc.roms.size(kc85_roms::develop),
+            "Assembler/disassembler expansion module.\n\n"
+            "First deactivate the BASIC ROM with:\n"
+            "SWITCH 02 00\n\n"
+            "Then activate the module with:\n"
+            "SWITCH [SLOT] C1\n\n"
+            "...where [SLOT] is 08 or 0C");
+    });
+
+    // M006 BASIC (+ HC-CAOS 901)
+    this->ioQueue.Add("rom:m006.rom", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::basic_mod, data);
+        this->kc.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
+            kc.roms.ptr(kc85_roms::basic_mod), kc.roms.size(kc85_roms::basic_mod),
+            "BASIC + HC-901 CAOS for KC85/2.\n\n"
+            "Active with:\n"
+            "JUMP [SLOT]\n\n"
+            "...where [SLOT] is 08 or 0C");
+    });
 }

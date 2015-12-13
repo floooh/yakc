@@ -18,8 +18,7 @@
 #include "core/z80ctc.h"
 #include "core/z80pio.h"
 #include "core/kc85.h"
-#include "core/kc85_expansion.h"
-#include "core/kc85_module.h"
+#include "core/kc85_exp.h"
 #include "core/kc85_video.h"
 #include "core/kc85_audio.h"
 

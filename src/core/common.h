@@ -8,6 +8,10 @@
 #include <string.h>
 #define YAKC_MEMSET(ptr,val,size) memset(ptr,val,size);
 #endif
+#ifndef YAKC_MEMCPY
+#include <string.h>
+#define YAKC_MEMCPY(dst,src,num) memcpy(dst,src,num);
+#endif
 #ifndef YAKC_ASSERT
 #include <assert.h>
 #define YAKC_ASSERT(x) assert(x)
@@ -55,7 +59,7 @@ enum class kc85_caos {
 
 inline void
 clear(void* ptr, int num_bytes) {
-    memset(ptr, 0, num_bytes);
+    YAKC_MEMSET(ptr, 0, num_bytes);
 }
 
 inline void
