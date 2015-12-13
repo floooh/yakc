@@ -16,7 +16,7 @@ possible to build native versions for OSX, Linux, Windows, Android and iOS.
 
 Extra care has been taken to keep the client size small for the 
 web browser platform. The compressed size for the complete emulator
-with debugging UI is under 450 kBytes, without the debugging UI
+with debugging UI is under 400 kBytes, without the debugging UI
 the compressed size is under 200 kBytes.
 
 The emulator consists of 4 main components:
@@ -117,9 +117,7 @@ RGBA8 image (which is then usually copied into an OpenGL texture)
 - **kc85\_audio**: this is a simple interface class to the KC85 sound generation
 hardware (which is just a CTC-driven oscillator connected to an internal speaker),
 it provides callbacks to control start/stop/frequency and volume of sound
-- **kc85\_expansion and kc85\_module**: these 2 classes emulate the expansion
-slot system of the KC85, only RAM and ROM expansion modules are currently
-implemented
+- **kc85\_exp**: emulates the expansion slot system of the KC85
 - **kc85**: this is the emulators main class which embeds, connects and 
 controls all previously described components
 

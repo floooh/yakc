@@ -24,16 +24,16 @@ public:
     };
 
     struct module {
-        bool registered = false;
-        module_type type = none;
-        ubyte id = 0xFF;
-        const char* name = nullptr;
-        const char* desc = nullptr;
-        ubyte* mem_ptr = nullptr;
+        bool registered     = false;
+        module_type type    = none;
+        ubyte id            = 0xFF;
+        const char* name    = nullptr;
+        const char* desc    = nullptr;
+        ubyte* mem_ptr      = nullptr;
         unsigned int mem_size = 0;
-        bool writable = false;
-        bool mem_owned= false;
-        ubyte addr_mask = 0xC0;
+        bool writable       = false;
+        bool mem_owned      = false;
+        ubyte addr_mask     = 0xC0;
     };
 
     struct module_slot {
