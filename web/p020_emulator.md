@@ -60,7 +60,7 @@ The emulator is fairly complete, but not perfect:
 - fast and nearly complete documented Z80 emulation passing the ZEXDOC
   conformance test, instructions are emulated with their proper cycle counts
 - expansion slot system with support for the following RAM and ROM modules:
-    - M022 EPANDER-RAM (16 KByte RAM)
+    - M022 EXPANDER-RAM (16 KByte RAM)
     - M011 64 KBYTE RAM
     - M006 BASIC (+ HC-901 CAOS, only useful on KC85/2)
     - M026 FORTH
