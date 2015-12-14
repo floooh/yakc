@@ -196,7 +196,7 @@ and writing the result to the console would look like this in LISP:
 5
 ~~~
 
-In FORTH, the it looks like this:
+In FORTH it looks like this:
 
 ~~~
 3 2 + . [press Enter] 5 OK
@@ -239,10 +239,10 @@ output is set. **I** puts the current loop counter on the stack, and **1**
 is the standard blue background color.
 
 The next line starting with the 'dot-quote' word **."** prints all
-following characters to the next quote character to screen.
+following characters until the next quote character to screen.
 
-Finally the **LOOP** finish the loop, and the **;** (semicolon) finishes
-the new word definition.
+Finally the **LOOP** word finishes the do-loop block, and the **;** (semicolon) 
+finishes the new word definition.
 
 We have now created a new word **HELLO** in the FORTH dictionary. You can
 print the entire dictionary with **VLIST** (press Escape to stop early).
@@ -288,7 +288,7 @@ Start the editor with the **EDIT** command, and enter the following assembler
 source code. 
 
 > NOTE: Use **F1** to set the cursor to the next Tab position (the KC85
-didn't have a Tab key), at the end of each line, press Escape, and when
+didn't have a Tab key), at the end of each line, press Enter, and when
 done press Escape to leave the editor.
 
 ~~~
