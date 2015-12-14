@@ -30,7 +30,7 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
         ImGui::SetTooltip(slot.mod.desc);
     }
     ImGui::SameLine();
-    ImGui::Text("type:%02X ctrl:%02X", slot.mod.type, slot.control_byte);
+    ImGui::Text("type:%02X ctrl:%02X", slot.mod.id, slot.control_byte);
     if (ImGui::BeginPopup("select")) {
         for (int i = 0; i < kc85_exp::num_module_types; i++) {
             kc85_exp::module_type type = (kc85_exp::module_type)i;
