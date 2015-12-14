@@ -252,12 +252,15 @@ YakcApp::initRoms() {
     this->ioQueue.Add("rom:caos34.853", [this](const Ptr<Stream>& data) {
         this->addRom(kc85_roms::caos34, data);
     });
+    /*
+    CAOS 4.1 was never official AFAIK, and some games don't work on it
     this->ioQueue.Add("rom:caos41c.854", [this](const Ptr<Stream>& data) {
         this->addRom(kc85_roms::caos41c, data);
     });
     this->ioQueue.Add("rom:caos41e.854", [this](const Ptr<Stream>& data) {
         this->addRom(kc85_roms::caos41e, data);
     });
+    */
     this->ioQueue.Add("rom:caos42c.854", [this](const Ptr<Stream>& data) {
         this->addRom(kc85_roms::caos42c, data);
     });
