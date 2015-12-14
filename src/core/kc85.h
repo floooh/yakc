@@ -104,6 +104,7 @@ private:
     int caos_c_size;
     const ubyte* caos_e_ptr;
     int caos_e_size;
+    unsigned int left_over_cycles;
 };
 
 //------------------------------------------------------------------------------
@@ -117,7 +118,8 @@ key_code(0),
 caos_c_ptr(nullptr),
 caos_c_size(0),
 caos_e_ptr(nullptr),
-caos_e_size(0) {
+caos_e_size(0),
+left_over_cycles(0) {
     // empty
 }
 
@@ -203,7 +205,7 @@ kc85::poweron(kc85_model m, kc85_caos os) {
 
     // connect a timer with the duration of one PAL line
     // (~64ns) to the video scanline decoder callback
-    this->clck.config_timer(1, 50*320, kc85_video::pal_line_cb, &this->video);
+    this->clck.config_timer(1, (unsigned int)(50.136*312), kc85_video::pal_line_cb, &this->video);
 
     // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
     this->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
@@ -257,7 +259,7 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
     this->handle_keyboard_input();
     if (!this->paused) {
         const unsigned int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
-        unsigned int cycles_frame = 0;
+        unsigned int cycles_frame = this->left_over_cycles;
         while (cycles_frame < num_cycles) {
             if (this->dbg.check_break(this->cpu)) {
                 this->paused = true;
@@ -271,6 +273,7 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             cycles_opcode += this->cpu.handle_irq();
             cycles_frame += cycles_opcode;
         }
+        this->left_over_cycles = cycles_frame - num_cycles;
     }
 }
 

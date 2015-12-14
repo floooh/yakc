@@ -115,15 +115,20 @@ kc85_video::kc85_4_irm_control(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 kc85_video::pal_line_cb(void* userdata) {
-    // this needs to be called for each PAL line (one PAL line: 64 nanoseconds)
+    // this needs to be called for each PAL line (one PAL line: 64 microseconds)
     kc85_video* self = (kc85_video*) userdata;
     if (self->curPalLine < 256) {
         const bool blink_bg = self->ctc_blink_flag && self->pio_blink_flag;
         self->decode_one_line(self->LinearBuffer, self->curPalLine, blink_bg);
     }
     self->curPalLine++;
-    if (self->curPalLine >= 320) {
-        // 319 is not a bug, this includes the beam return and overscan
+    // 326 wrap-around is a magic value to make the Digger ultra-fast
+    // flash look somewhat right, the diamond-scrolling is very sensitive
+    // to this value, and also changes depending on what instructions
+    // the CPU executes, there must be some remaining precision problem
+    // in the CTC counters/timers (probably some 'left-over' cycles
+    // are not accounted for correctly?
+    if (self->curPalLine >= 326) {
         self->curPalLine = 0;
     }
 }
