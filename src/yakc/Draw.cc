@@ -13,7 +13,7 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     this->frameSize = frame;
     this->texUpdateAttrs.NumFaces = 1;
     this->texUpdateAttrs.NumMipMaps = 1;
-    this->texUpdateAttrs.Sizes[0][0] = sizeof(this->decodeBuffer);
+    this->texUpdateAttrs.Sizes[0][0] = 320*256*4;
 
     auto irmSetup = TextureSetup::Empty(320, 256, 1, TextureType::Texture2D, PixelFormat::RGBA8, Usage::Stream);
     irmSetup.TextureUsage = Usage::Stream;
@@ -46,10 +46,8 @@ Draw::Discard() {
 //------------------------------------------------------------------------------
 void
 Draw::Render(const kc85& kc) {
-    // decode KC85 video memory into linear RGBA8 buffer
-    kc.video.decode(this->decodeBuffer, sizeof(this->decodeBuffer));
     // copy decoded RGBA8 into texture
-    Gfx::UpdateTexture(this->fsTextures.IRM, this->decodeBuffer, this->texUpdateAttrs);
+    Gfx::UpdateTexture(this->fsTextures.IRM, kc.video.LinearBuffer, this->texUpdateAttrs);
     this->applyViewport();
     Gfx::ApplyDrawState(this->drawState, this->fsTextures);
     Gfx::ApplyUniformBlock(this->fsParams);

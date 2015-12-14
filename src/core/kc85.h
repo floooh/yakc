@@ -201,6 +201,10 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     // this controls the foreground color blinking flag
     this->clck.config_timer(0, 50, z80ctc::ctrg2, &this->ctc);
 
+    // connect a timer with the duration of one PAL line
+    // (~64ns) to the video scanline decoder callback
+    this->clck.config_timer(1, 50*320, kc85_video::pal_line_cb, &this->video);
+
     // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
     this->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
 

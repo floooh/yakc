@@ -17,19 +17,24 @@ public:
     void init(kc85_model m);
     /// reset the video hardware
     void reset();
-    /// decode KC85 video memory into linear RGBA8 buffer
-    void decode(ubyte* rgba8_buf, int buf_size) const;
 
     /// enable/disable blinkg based on PIO B bit 7
     void pio_blink_enable(bool b);
     /// toggle blink flag, must be connected to CTC ZC/TO2 line
     static void ctc_blink_cb(void* userdata);
+    /// PAL-line callback, scan-converts one video memory line
+    static void pal_line_cb(void* userdata);
     /// update the KC85/4 IRM control byte (written to port 84)
     void kc85_4_irm_control(ubyte val);
+
+    /// decoded linear RGBA8 video buffer
+    unsigned int LinearBuffer[320*256];
 
 private:
     /// decode 8 pixels
     void decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_off) const;
+    /// decode the next line
+    void decode_one_line(unsigned int* ptr, int y, bool blink_bg);
 
     kc85_model model = kc85_model::kc85_3;
     ubyte irm_control = 0;
@@ -37,6 +42,7 @@ private:
     bool ctc_blink_flag = true;
     unsigned int fgPal[16];
     unsigned int bgPal[16];
+    unsigned int curPalLine = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -108,6 +114,22 @@ kc85_video::kc85_4_irm_control(ubyte val) {
 
 //------------------------------------------------------------------------------
 inline void
+kc85_video::pal_line_cb(void* userdata) {
+    // this needs to be called for each PAL line (one PAL line: 64 nanoseconds)
+    kc85_video* self = (kc85_video*) userdata;
+    if (self->curPalLine < 256) {
+        const bool blink_bg = self->ctc_blink_flag && self->pio_blink_flag;
+        self->decode_one_line(self->LinearBuffer, self->curPalLine, blink_bg);
+    }
+    self->curPalLine++;
+    if (self->curPalLine >= 320) {
+        // 319 is not a bug, this includes the beam return and overscan
+        self->curPalLine = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
 kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_bg) const {
     // select foreground- and background color:
     //  bit 7: blinking
@@ -131,61 +153,46 @@ kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_bg
 
 //------------------------------------------------------------------------------
 inline void
-kc85_video::decode(ubyte* rgba8_buf, int buf_size) const {
-    YAKC_ASSERT(buf_size == 320*256*4);
-
-    unsigned int* dst_start = (unsigned int*) rgba8_buf;
-    const bool blink_bg = this->ctc_blink_flag && this->pio_blink_flag;
-
+kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
+    const int width = 320>>3;
+    unsigned int* dst_ptr = &(dst_start[y*320]);
     if (kc85_model::kc85_4 == this->model) {
+        // KC85/4
         int irm_index = (this->irm_control & 1) * 2;
         const ubyte* pixel_data = this->irm[irm_index];
         const ubyte* color_data = this->irm[irm_index+1];
-        int offset;
-        for (int y = 0; y < 256; y++) {
-            unsigned int* dst_ptr = &(dst_start[y*320]);
-            const int width = 320>>3;
-            for (int x = 0; x < width; x++) {
-                offset = y | (x<<8);
-                ubyte src_pixels = pixel_data[offset];
-                ubyte src_colors = color_data[offset];
-                this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
-            }
+        for (int x = 0; x < width; x++) {
+            int offset = y | (x<<8);
+            ubyte src_pixels = pixel_data[offset];
+            ubyte src_colors = color_data[offset];
+            this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
         }
     }
     else {
+        // KC85/3
         const ubyte* pixel_data = this->irm[0];
         const ubyte* color_data = this->irm[0] + 0x2800;
-
-        int pixel_offset;
-        int color_offset;
-        for (int y = 0; y < 256; y++) {
-
-            const int left_pixel_offset  = (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>4)&0xF)<<9);
-            const int left_color_offset  = (((y>>2)&0x3f)<<5);
-            const int right_pixel_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>6)&0x3)<<9);
-            const int right_color_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | (((y>>6)&0x3)<<7);
-
-            unsigned int* dst_ptr = &(dst_start[y*320]);
-
-            // x is not per-pixel, but per byte
-            const int width = 320>>3;
-            for (int x = 0; x < width; x++) {
-                if (x < 0x20) {
-                    // left 256x256 quad
-                    pixel_offset = x | left_pixel_offset;
-                    color_offset = x | left_color_offset;
-                }
-                else {
-                    // right 64x256 strip
-                    pixel_offset = 0x2000 + ((x&0x7) | right_pixel_offset);
-                    color_offset = 0x0800 + ((x&0x7) | right_color_offset);
-                }
-                ubyte src_pixels = pixel_data[pixel_offset];
-                ubyte src_colors = color_data[color_offset];
-                this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
+        const int left_pixel_offset  = (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>4)&0xF)<<9);
+        const int left_color_offset  = (((y>>2)&0x3f)<<5);
+        const int right_pixel_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>6)&0x3)<<9);
+        const int right_color_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | (((y>>6)&0x3)<<7);
+        int pixel_offset, color_offset;
+        for (int x = 0; x < width; x++) {
+            if (x < 0x20) {
+                // left 256x256 quad
+                pixel_offset = x | left_pixel_offset;
+                color_offset = x | left_color_offset;
             }
+            else {
+                // right 64x256 strip
+                pixel_offset = 0x2000 + ((x&0x7) | right_pixel_offset);
+                color_offset = 0x0800 + ((x&0x7) | right_color_offset);
+            }
+            ubyte src_pixels = pixel_data[pixel_offset];
+            ubyte src_colors = color_data[color_offset];
+            this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
         }
+
     }
 }
 

@@ -27,6 +27,4 @@ public:
     Oryol::Shaders::CRT::FSParams fsParams;
     Oryol::ImageDataAttrs texUpdateAttrs;
     int frameSize = 0;
-
-    Oryol::uint8 decodeBuffer[320 * 256 * 4];
 };
