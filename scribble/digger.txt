@@ -1,0 +1,137 @@
+
+KC85/3 Digger:
+
+
+CTC interrupt vectors:
+
+---
+CTC0: 290B, or 2923  -> only written after game starts, set to 0000 before
+
+290B:   di
+        push af
+        ld a,(0988)
+        dec a
+        jp z,291B
+        ld (0988),a
+        pop af
+        ei
+        reti
+291B:   ld a,03
+        out (8C),a      ; CTC0: INT: disabled, RESET: active
+        pop af
+        ei
+        reti
+
+2923:   di
+        push af
+        ld a,(0988)
+        dec a
+        jp z,293c
+        ld (0988),a
+        ld a,85
+        out (8C),a
+        ld a,(0988)
+        out (8C),a
+        pop af
+        ei
+        reti
+
+CTC1: 3CF4
+
+
+---
+CTC2: 3D32
+
+3D32:   di
+        push af
+        push hl
+        ld hl,(32C5)    ; 260 initial value, decremented for each call
+        dec hl
+        ld a,h
+        or (hl)
+        jp nz, 3D46
+        ld a,01         ; 
+        ld (05f9),a
+        ld hl,(09AA)    ; 260
+3D46:   ld (32C5),hl
+        pop hl
+        pop af
+        ei
+        reti
+
+
+
+
+
+----------
+Start address: 3FF1 -> 3C3D
+
+3C57: intro screen rendering and waiting for input
+
+
+
+SUBROUTINES:
+
+0A00:   clear screen
+--
+34A8:   ld a,8f
+        out (89),a      // PIO B (blinking on, volume to 0F)
+        call 3D4E
+        5x nop
+        call 32cb
+        call 3349
+        call 338e
+
+; --- setup CTC2 channel as timer
+3D4E:   ld hl,3D32
+        ld (01EC),hl    // set interrupt vector CTC2
+        ld hl,(09AA)    // 260
+        ld (32C5),hl
+        ld a,85         // program CTC2
+        out (8E),a      // INT: enabled, 
+                           MODE: timer, 
+                           PRESCALE: 16
+                           TRIGGER: auto, 
+                           CONST: follows
+        ld a,21         // CTC2 constant
+        out (8E),a
+        pop hl
+        ret
+
+;---
+32CB:   sub a
+        ld (05f1),a
+        ld (05f2),a
+        ld (05f3),a
+        ld a,(0883)     // 20
+        ld (05f6),a
+        ld a,3a
+        ld (0986),a
+        call 0a00       // clear screen
+        ld hl,0811
+        ld (05fb),hl
+        ld hl,09d7
+        ld bc,0006
+        call 15d6
+        ...
+
+
+
+OUT (CTC0),0x85:
+    296A
+    2933
+
+
+OK here what happens with the sound glitch:
+
+    296A is normal code which reprograms the CTC0,
+    first write control word, then write constant.
+
+    The other write to CTC0 is in the CTC2 interrupt 
+    routine, if this kicks in right after the 
+    control word in 296A has been written, the CTC state
+    gets messed up, since the control word written
+    in the interrupt service routine is interpreted 
+    by the CTC as timer constant...
+
+    How is this case handled on real hardware???
