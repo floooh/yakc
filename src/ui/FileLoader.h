@@ -72,6 +72,8 @@ private:
     static FileInfo parseHeader(const Oryol::Ptr<Oryol::Stream>& data);
     /// copy data from loaded stream object into KC memory
     static void copy(yakc::kc85* kc, const FileInfo& info, const Oryol::Ptr<Oryol::Stream>& data);
+    /// special-case patch loaded files
+    static void patch(yakc::kc85* kc, const FileInfo& info);
     /// auto-start the loaded program
     static void start(yakc::kc85* kc, const FileInfo& info);
 

@@ -56,6 +56,7 @@ bool
 FileLoader::Copy(kc85& kc) {
     if (Ready == this->State) {
         copy(&kc, this->Info, this->kccData);
+        patch(&kc, this->Info);
         return true;
     }
     else {
@@ -68,6 +69,7 @@ bool
 FileLoader::Start(kc85& kc) {
     if (Ready == this->State) {
         copy(&kc, this->Info, this->kccData);
+        patch(&kc, this->Info);
         start(&kc, this->Info);
         return true;
     }
@@ -91,6 +93,7 @@ FileLoader::load(kc85* kc, const Item& item, bool autostart) {
             this->State = Ready;
             if (autostart) {
                 copy(kc, this->Info, this->kccData);
+                patch(kc, this->Info);
                 start(kc, this->Info);
             }
         },
@@ -167,23 +170,38 @@ FileLoader::copy(kc85* kc, const FileInfo& info, const Ptr<Stream>& data) {
 
 //------------------------------------------------------------------------------
 void
+FileLoader::patch(kc85* kc, const FileInfo& info) {
+    // FIXME: patch JUNGLE until I have time to do a proper
+    // 'restoration', see Alexander Lang's KC emu here:
+    // http://lanale.de/kc85_emu/KC85_Emu.html
+    if (info.Name == "JUNGLE     ") {
+        // patch start level 1 into memory
+        auto& mem = kc->cpu.mem;
+        mem.w8(0x36b7, 1);
+        mem.w8(0x3697, 1);
+        for (int i = 0; i < 5; i++) {
+            mem.w8(0x1770 + i, mem.r8(0x36b6 + i));
+        }
+    }
+    // FIXME: patch Digger (see http://lanale.de/kc85_emu/KC85_Emu.html)
+    if (info.Name == "DIGGER/3COM") {
+        auto& mem = kc->cpu.mem;
+        mem.w16(0x09AA, 0x0160);    // time for delay-loop 0160 instead of 0260
+        mem.w8(0x3d3a, 0xB5);   // OR L instead of OR (HL)
+    }
+    if (info.Name == "DIGGERJ") {
+        auto& mem = kc->cpu.mem;
+        mem.w16(0x09AA, 0x0260);
+        mem.w8(0x3d3a, 0xB5);   // OR L instead of OR (HL)
+    }
+}
+
+//------------------------------------------------------------------------------
+void
 FileLoader::start(kc85* kc, const FileInfo& info) {
     if (info.HasExecAddr) {
         // reset volume
         kc->cpu.out(0x89, 0x9f);
         kc->cpu.state.PC = info.ExecAddr;
-
-        // FIXME: patch JUNGLE until I have time to do a proper
-        // 'restoration', see Alexander Lang's KC emu here:
-        // http://lanale.de/kc85_emu/KC85_Emu.html
-        if (info.Name == "JUNGLE     ") {
-            // patch start level 1 into memory
-            auto& mem = kc->cpu.mem;
-            mem.w8(0x36b7, 1);
-            mem.w8(0x3697, 1);
-            for (int i = 0; i < 5; i++) {
-                mem.w8(0x1770 + i, mem.r8(0x36b6 + i));
-            }
-        }
     }
 }
