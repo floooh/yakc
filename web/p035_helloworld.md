@@ -9,7 +9,7 @@ title: Hello World
 {:toc}
 
 How to write a simple Hello World program in
-BASIC, machine code, and assembler on a KC85/3.
+BASIC, machine code, FORTH and assembler on a KC85/3.
 
 ### Hello World in BASIC
 
@@ -60,11 +60,13 @@ When done, leave the BASIC interpreter with the **BYE** command.
 
 ### Hello World in Machine Code
 
-Most performance-critical KC games were written in machine code before the 
-assembler ROM module was available (or if one couldn't get ahold of one):
+Most performance-critical KC games were written directly in machine code, at
+least before the assembler ROM module was available (or if one couldn't get
+ahold of one). The process was a bit tricky since it involved a manual
+translation step from assembler code to machine code:
 
 - write down the assembler statements (called mnemonics) on paper
-- manually translate those to machine code
+- manually translate those to machine code using a lookup table
 - type the machine code into memory using the MODIFY command
 - test and repeat
 
@@ -87,7 +89,7 @@ C9
 .
 ~~~
 
-After entering the dot and presseing Enter, you should be back at the
+After entering the dot and pressing Enter, you should be back at the
 command prompt.
 
 Now enter MENU (and Enter), there should be a new command called 'HELLO'
@@ -256,7 +258,7 @@ To leave the FORTH system and go back to CAOS, type **BYE**.
 
 ### Hello World in Assembler
 
-Let's create the colorful Hello World program in assembly.
+Let's write the fancy Hello World program in assembly.
 
 First insert the module 'M027 DEVELOPMENT' into slot 0x08:
 
@@ -337,8 +339,8 @@ set the foreground color, but not the background color.
 LOOP:   PUSH AF
 ~~~
 This clears the register A to zero, and saves it on the stack. A will become
-our foreground color value and loop counter. The **LOOP:** marks the 
-beginning of our loop.
+the foreground color value and loop counter. The **LOOP:** label marks the
+beginning of the loop.
 
 ~~~
         LD L,A

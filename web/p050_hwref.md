@@ -47,7 +47,7 @@ globally enable or disable the foreground color blinking. On the KC85/4,
 
 The KC85/4 has 2 additional IO ports which are not backed by the PIO and 
 cannot be read-back with an IN instruction, instead the values for
-port 0x84 and 0x86 are backed at memory addresses at (IX+1) and (IX+4):
+port 0x84 and 0x86 are backed at memory addresses (IX+1) and (IX+4):
 
 - **0x84 bit 0**: display image 0 or 1
 - **0x84 bit 1**: CPU access to pixel or color video memory bank (0: pixels, 1: color)
