@@ -24,6 +24,7 @@ public:
         basic_mod,      // BASIC+HC-901 CAOS ROM MODULE, KC85/2
         forth,          // FORTH module
         develop,        // DEVELOP module
+        texor,          // TEXOR module
 
         num_roms
     };

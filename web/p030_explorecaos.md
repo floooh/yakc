@@ -119,7 +119,7 @@ For instance, to show the start of the pixel video memory:
 
 ![Display](images/display.png)
 
-The DISPLAY command will wait for keyboard input. Hit the [Escape] to 
+The DISPLAY command will wait for keyboard input. Hit [Escape] to 
 go back to the command prompt.
 
 The **MODIFY** command implements a simple hex-editor. Let's mess up some video

@@ -27,6 +27,9 @@ FileLoader::Setup(kc85& kc) {
     this->Items.Add("Ladder (KC85/3)", "ladder-3.kcc", kc85_model::kc85_3);
     this->Items.Add("Chess (KC85/3+KC85/4)", "chess.kcc", kc85_model::any);
     this->Items.Add("Testbild (KC85/3)", "testbild.kcc", kc85_model::kc85_3);
+    this->Items.Add("Demo1 (KC85/4)", "demo1.kcc", kc85_model::kc85_4);
+    this->Items.Add("Demo2 (KC85/4)", "demo2.kcc", kc85_model::kc85_4);
+    this->Items.Add("Demo3 (KC85/4)", "demo3.kcc", kc85_model::kc85_4);
     this->ioQueue.Start();
 }
 

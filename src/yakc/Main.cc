@@ -326,8 +326,21 @@ YakcApp::initModules() {
         this->kc.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
             kc.roms.ptr(kc85_roms::basic_mod), kc.roms.size(kc85_roms::basic_mod),
             "BASIC + HC-901 CAOS for KC85/2.\n\n"
-            "Active with:\n"
+            "Activate with:\n"
             "JUMP [SLOT]\n\n"
+            "...where [SLOT] is 08 or 0C");
+    });
+
+    // M012 TEXOR
+    this->ioQueue.Add("rom:texor.rom", [this](const Ptr<Stream>& data) {
+        this->addRom(kc85_roms::texor, data);
+        this->kc.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
+            kc.roms.ptr(kc85_roms::texor), kc.roms.size(kc85_roms::texor),
+            "TEXOR text processing software.\n\n"
+            "First deactivate the BASIC ROM with:\n"
+            "SWITCH 02 00\n\n"
+            "Then activate the module with:\n"
+            "SWITCH [SLOT] C1\n\n"
             "...where [SLOT] is 08 or 0C");
     });
 }
