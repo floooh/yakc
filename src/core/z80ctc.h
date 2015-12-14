@@ -207,7 +207,7 @@ inline void
 z80ctc::update_timers(int ticks) {
     for (int i = 0; i < num_channels; i++) {
         channel_state& chn = channels[i];
-        if (!(chn.mode & RESET)) {
+        if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
             if (((chn.mode & MODE) == MODE_TIMER) && !chn.waiting_for_trigger) {
                 chn.down_counter -= (ticks * 2); // ???
                 while (chn.down_counter <= 0) {
@@ -222,7 +222,7 @@ z80ctc::update_timers(int ticks) {
 //------------------------------------------------------------------------------
 inline void
 z80ctc::update_counter(channel_state& chn) {
-    if (!(chn.mode & RESET)) {
+    if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
         if ((chn.mode & MODE) == MODE_COUNTER) {
             if (--chn.down_counter == 0) {
                 down_counter_callback(chn);
