@@ -186,9 +186,11 @@ kc85::poweron(kc85_model m, kc85_caos os) {
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
     this->pio.int_ctrl.connect_cpu(z80::irq, &this->cpu);
-    this->ctc.int_ctrl.connect_cpu(z80::irq, &this->cpu);
-    this->cpu.connect_irq_device(&this->ctc.int_ctrl);
-    this->ctc.int_ctrl.connect_irq_device(&this->pio.int_ctrl);
+    for (int i = 0; i < z80ctc::num_channels; i++) {
+        this->ctc.channels[i].int_ctrl.connect_cpu(z80::irq, &this->cpu);
+    }
+    this->cpu.connect_irq_device(&this->ctc.channels[0].int_ctrl);
+    this->ctc.init_daisychain(&this->pio.int_ctrl);
 
     // fill RAM banks with noise (but not on KC85/4? at least the 4
     // doesn't have the random-color-pattern when switching it on)
@@ -267,13 +269,17 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             }
             this->dbg.store_pc_history(this->cpu); // FIXME: only if debug window open?
             unsigned int cycles_opcode = this->cpu.step();
+            cycles_opcode += this->cpu.handle_irq();
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);
             this->audio.update_t(cycles_frame);
-            cycles_opcode += this->cpu.handle_irq();
             cycles_frame += cycles_opcode;
         }
         this->left_over_cycles = cycles_frame - num_cycles;
+        if (this->left_over_cycles > 0) {
+            this->clck.update(this->left_over_cycles);
+            this->ctc.update_timers(this->left_over_cycles);
+        }
     }
 }
 

@@ -9,6 +9,7 @@
     (see here: https://github.com/mamedev/mame/blob/dfa148ff8022e9f1a544c8603dd0e8c4aa469c1e/src/mame/machine/kc.cpp#L710)
 */
 #include "core/common.h"
+#include "core/z80.h"
 #include "core/z80int.h"
 
 namespace yakc {
@@ -70,17 +71,19 @@ public:
         ctc_cb write_callback = nullptr;
         void* write_userdata = nullptr;
         ubyte interrupt_vector = 0;
+        z80int int_ctrl;
     } channels[num_channels];
-
-    /// interrupt controller
-    z80int int_ctrl;
 
     /// initialize the ctc
     void init();
+    /// initialize the downstream daisy chain
+    void init_daisychain(z80int* downstream);
+
     /// reset the ctc
     void reset();
     /// update the CTC for a number of ticks, a tick is equal to a Z80 T-cycle
     void update_timers(int ticks);
+
 
     /// set callback for ZC/TO0 line (zero-count/time-out)
     void connect_zcto0(ctc_cb cb, void* userdata);
@@ -126,6 +129,17 @@ inline void
 z80ctc::init() {
     for (auto& chn : channels) {
         chn = channel_state();
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80ctc::init_daisychain(z80int* downstream) {
+    for (int i = 0; i < 3; i++) {
+        this->channels[i].int_ctrl.connect_irq_device(&this->channels[i+1].int_ctrl);
+    }
+    if (downstream) {
+        this->channels[3].int_ctrl.connect_irq_device(downstream);
     }
 }
 
@@ -236,7 +250,7 @@ z80ctc::update_counter(channel_state& chn) {
 inline void
 z80ctc::down_counter_callback(channel_state& chn) {
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
-        this->int_ctrl.request_interrupt(chn.interrupt_vector);
+        chn.int_ctrl.request_interrupt(chn.interrupt_vector);
     }
     if (chn.zcto_callback) {
         chn.zcto_callback(chn.zcto_userdata);

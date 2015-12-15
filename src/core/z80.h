@@ -386,9 +386,13 @@ z80::handle_irq() {
             this->state.PC++;
         }
 
-        this->irq_received = false;
+        // NOTE: currently there's no timeout on an interrupt request if
+        // interrupts are disabled for too long, immediately cancelling
+        // the request doesn't work right (has problems with some KC
+        // games which have high-frequency interrupts for playing sound)
         if (this->irq_device) {
             if (this->state.IFF1) {
+                this->irq_received = false;
                 // handle interrupt
                 this->state.IFF1 = this->state.IFF2 = false;
                 ubyte vec = this->irq_device->interrupt_acknowledged();
@@ -397,10 +401,6 @@ z80::handle_irq() {
                 this->mem.w16(this->state.SP, this->state.PC);
                 this->state.PC = this->mem.r16(addr);
                 tstates += 19;
-            }
-            else {
-                // interrupts are disabled, notify daisy chain
-                this->irq_device->interrupt_cancelled();
             }
         }
     }
