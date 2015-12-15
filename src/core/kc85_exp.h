@@ -69,6 +69,8 @@ public:
     module_slot& slot_by_addr(ubyte slot_addr);
     /// get module slot by slot address (read-only)
     const module_slot& slot_by_addr(ubyte slot_addr) const;
+    /// test if module in slot 'owns' a host memory address
+    bool module_in_slot_owns_pointer(ubyte slot_addr, const ubyte* ptr) const;
 
     /// test if a slot is occupied
     bool slot_occupied(ubyte slot_addr) const;
@@ -226,6 +228,15 @@ kc85_exp::slot_by_addr(ubyte slot_addr) {
 inline const kc85_exp::module_slot&
 kc85_exp::slot_by_addr(ubyte slot_addr) const {
     return const_cast<kc85_exp*>(this)->slot_by_addr(slot_addr);
+}
+
+//------------------------------------------------------------------------------
+inline bool
+kc85_exp::module_in_slot_owns_pointer(ubyte slot_addr, const ubyte* ptr) const {
+    const auto& slot = this->slot_by_addr(slot_addr);
+    return (slot.mod.mem_ptr != 0) &&
+        (ptr >= slot.mod.mem_ptr) &&
+        (ptr < slot.mod.mem_ptr+slot.mod.mem_size);
 }
 
 //------------------------------------------------------------------------------

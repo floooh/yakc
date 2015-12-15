@@ -201,7 +201,7 @@ MemoryMapWindow::Draw(kc85& kc) {
                 while (addr < end) {
                     type t = type::off;
                     if (slot.control_byte & 1) {
-                        t = (mem.ptr(addr) == slot.mod.mem_ptr) ? type::mapped : type::hidden;
+                        t = kc.exp.module_in_slot_owns_pointer(slot_addr, mem.ptr(addr)) ? type::mapped : type::hidden;
                     }
                     this->drawRect(draw_layer, addr, len >= 0x4000 ? 0x4000:(len&0x3FFF), slot.mod.name, t);
                     addr += 0x4000;
