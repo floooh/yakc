@@ -76,6 +76,13 @@ also controls the video foreground color blinking frequency
 - **CTC 3**: used by the keyboard interrupt handler to measure the length
 between two serial impulses from the keyboard
 
+The interrupt vectors for CTC channel 0 to 3 start at 0x01E8:
+
+- **0x01E8**: CTC-0 interrupt vector (unused)
+- **0x01EA**: CTC-1 interrupt vector (cassette tape output)
+- **0x01EC**: CTC-2 interrupt vector (sound duration)
+- **0x01EE**: CTC-3 interrupt vector (keyboard input)
+
 ### Color Buffer Byte Structure
 
 A byte in color buffer uses 3 bits for the background color,
