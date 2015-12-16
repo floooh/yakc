@@ -104,7 +104,6 @@ private:
     int caos_c_size;
     const ubyte* caos_e_ptr;
     int caos_e_size;
-    unsigned int left_over_cycles;
 };
 
 //------------------------------------------------------------------------------
@@ -118,8 +117,7 @@ key_code(0),
 caos_c_ptr(nullptr),
 caos_c_size(0),
 caos_e_ptr(nullptr),
-caos_e_size(0),
-left_over_cycles(0) {
+caos_e_size(0) {
     // empty
 }
 
@@ -260,25 +258,20 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
     YAKC_ASSERT(speed_multiplier > 0);
     this->handle_keyboard_input();
     if (!this->paused) {
-        const unsigned int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
-        unsigned int cycles_frame = this->left_over_cycles;
+        const int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
+        int cycles_frame = 0;
         while (cycles_frame < num_cycles) {
             if (this->dbg.check_break(this->cpu)) {
                 this->paused = true;
                 break;
             }
             this->dbg.store_pc_history(this->cpu); // FIXME: only if debug window open?
-            unsigned int cycles_opcode = this->cpu.step();
+            int cycles_opcode = this->cpu.step();
             cycles_opcode += this->cpu.handle_irq();
             this->clck.update(cycles_opcode);
             this->ctc.update_timers(cycles_opcode);
             this->audio.update_t(cycles_frame);
             cycles_frame += cycles_opcode;
-        }
-        this->left_over_cycles = cycles_frame - num_cycles;
-        if (this->left_over_cycles > 0) {
-            this->clck.update(this->left_over_cycles);
-            this->ctc.update_timers(this->left_over_cycles);
         }
     }
 }

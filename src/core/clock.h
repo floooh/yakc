@@ -19,14 +19,14 @@ public:
     typedef void (*cb_timer)(void* userdata);
 
     /// initialize the clock to a base frequency
-    void init(unsigned int baseFreqKHz);
+    void init(int baseFreqKHz);
     /// return number of cycles for a given time-span in micro-seconds
-    unsigned int cycles(unsigned int micro_seconds) const;
+    int cycles(int micro_seconds) const;
 
     /// configure a timer
-    void config_timer(int index, unsigned int hz, cb_timer callback, void* userdata);
+    void config_timer(int index, int hz, cb_timer callback, void* userdata);
     /// advance the timers by a number of cycles
-    void update(unsigned int num_cycles);
+    void update(int num_cycles);
 
     /// the clock main frequency in KHz
     int baseFreqKHz = 0;
@@ -44,7 +44,7 @@ public:
 
 //------------------------------------------------------------------------------
 inline void
-clock::init(unsigned int khz) {
+clock::init(int khz) {
     YAKC_ASSERT(khz > 0);
     this->baseFreqKHz = khz;
     for (auto& t : this->timers) {
@@ -53,14 +53,14 @@ clock::init(unsigned int khz) {
 }
 
 //------------------------------------------------------------------------------
-inline unsigned int
-clock::cycles(unsigned int micro_seconds) const {
+inline int
+clock::cycles(int micro_seconds) const {
     return (this->baseFreqKHz * micro_seconds) / 1000;
 }
 
 //------------------------------------------------------------------------------
 inline void
-clock::config_timer(int index, unsigned int hz, cb_timer callback, void* userdata) {
+clock::config_timer(int index, int hz, cb_timer callback, void* userdata) {
     YAKC_ASSERT((index >= 0) && (index < num_timers));
     YAKC_ASSERT(hz > 0);
     auto& t = this->timers[index];
@@ -73,7 +73,7 @@ clock::config_timer(int index, unsigned int hz, cb_timer callback, void* userdat
 
 //------------------------------------------------------------------------------
 inline void
-clock::update(unsigned int num_cycles) {
+clock::update(int num_cycles) {
     for (auto& t : this->timers) {
         if (t.callback) {
             t.value -= num_cycles;
