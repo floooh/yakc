@@ -69,9 +69,9 @@ private:
     /// internal load method
     void load(yakc::kc85* kc, const Item& item, bool autostart);
     /// get file info from loaded file data
-    static FileInfo parseHeader(const Oryol::Ptr<Oryol::Stream>& data);
+    static FileInfo parseHeader(const Oryol::Buffer& data);
     /// copy data from loaded stream object into KC memory
-    static void copy(yakc::kc85* kc, const FileInfo& info, const Oryol::Ptr<Oryol::Stream>& data);
+    static void copy(yakc::kc85* kc, const FileInfo& info, const Oryol::Buffer& data);
     /// special-case patch loaded files
     static void patch(yakc::kc85* kc, const FileInfo& info);
     /// auto-start the loaded program
@@ -103,5 +103,5 @@ private:
     #pragma pack(pop)
 
     Oryol::IOQueue ioQueue;
-    Oryol::Ptr<Oryol::Stream> kccData;
+    Oryol::Buffer kccData;
 };

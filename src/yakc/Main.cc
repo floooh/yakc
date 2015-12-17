@@ -27,7 +27,6 @@ public:
     AppState::Code OnCleanup();
     void handleInput();
     void initRoms();
-    void addRom(kc85_roms::rom type, const Ptr<Stream>& data);
     void initModules();
 
     ubyte last_ascii = 0;
@@ -226,15 +225,6 @@ YakcApp::handleInput() {
 
 //------------------------------------------------------------------------------
 void
-YakcApp::addRom(kc85_roms::rom type, const Ptr<Stream>& data) {
-    if (data->Open(OpenMode::ReadOnly)) {
-        this->kc.roms.add(type, data->MapRead(nullptr), data->Size());
-        data->Close();
-    }
-}
-
-//------------------------------------------------------------------------------
-void
 YakcApp::initRoms() {
 
     // standard roms required for initial booting are built-in
@@ -243,29 +233,20 @@ YakcApp::initRoms() {
 
     // async-load optional ROMs
     this->ioQueue.Start();
-    this->ioQueue.Add("rom:hc900.852", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::hc900, data);
+    this->ioQueue.Add("rom:hc900.852", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::hc900, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    this->ioQueue.Add("rom:caos22.852", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::caos22, data);
+    this->ioQueue.Add("rom:caos22.852", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::caos22, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    this->ioQueue.Add("rom:caos34.853", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::caos34, data);
+    this->ioQueue.Add("rom:caos34.853", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::caos34, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    /*
-    CAOS 4.1 was never official AFAIK, and some games don't work on it
-    this->ioQueue.Add("rom:caos41c.854", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::caos41c, data);
+    this->ioQueue.Add("rom:caos42c.854", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::caos42c, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    this->ioQueue.Add("rom:caos41e.854", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::caos41e, data);
-    });
-    */
-    this->ioQueue.Add("rom:caos42c.854", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::caos42c, data);
-    });
-    this->ioQueue.Add("rom:caos42e.854", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::caos42e, data);
+    this->ioQueue.Add("rom:caos42e.854", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }
 
@@ -298,8 +279,8 @@ YakcApp::initModules() {
         "...where [SLOT] is 08 or 0C.\n");
 
     // M026 FORTH
-    this->ioQueue.Add("rom:forth.853", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::forth, data);
+    this->ioQueue.Add("rom:forth.853", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::forth, ioRes.Data.Data(), ioRes.Data.Size());
         this->kc.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
             kc.roms.ptr(kc85_roms::forth), kc.roms.size(kc85_roms::forth),
             "FORTH language expansion module.\n\n"
@@ -311,8 +292,8 @@ YakcApp::initModules() {
     });
 
     // M027 DEVELOPMENT
-    this->ioQueue.Add("rom:develop.853", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::develop, data);
+    this->ioQueue.Add("rom:develop.853", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::develop, ioRes.Data.Data(), ioRes.Data.Size());
         this->kc.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
             kc.roms.ptr(kc85_roms::develop), kc.roms.size(kc85_roms::develop),
             "Assembler/disassembler expansion module.\n\n"
@@ -324,8 +305,8 @@ YakcApp::initModules() {
     });
 
     // M006 BASIC (+ HC-CAOS 901)
-    this->ioQueue.Add("rom:m006.rom", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::basic_mod, data);
+    this->ioQueue.Add("rom:m006.rom", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
         this->kc.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
             kc.roms.ptr(kc85_roms::basic_mod), kc.roms.size(kc85_roms::basic_mod),
             "BASIC + HC-901 CAOS for KC85/2.\n\n"
@@ -335,8 +316,8 @@ YakcApp::initModules() {
     });
 
     // M012 TEXOR
-    this->ioQueue.Add("rom:texor.rom", [this](const Ptr<Stream>& data) {
-        this->addRom(kc85_roms::texor, data);
+    this->ioQueue.Add("rom:texor.rom", [this](IOQueue::Result ioRes) {
+        this->kc.roms.add(kc85_roms::texor, ioRes.Data.Data(), ioRes.Data.Size());
         this->kc.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
             kc.roms.ptr(kc85_roms::texor), kc.roms.size(kc85_roms::texor),
             "TEXOR text processing software.\n\n"

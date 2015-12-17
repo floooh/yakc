@@ -87,8 +87,8 @@ FileLoader::load(kc85* kc, const Item& item, bool autostart) {
     this->State = Loading;
     this->ioQueue.Add(strBuilder.GetString(),
         // load succeeded
-        [this, kc, autostart](const Ptr<Stream>& data) {
-            this->kccData = data;
+        [this, kc, autostart](IOQueue::Result ioResult) {
+            this->kccData = std::move(ioResult.Data);
             this->Info = parseHeader(this->kccData);
             this->State = Ready;
             if (autostart) {
@@ -106,64 +106,55 @@ FileLoader::load(kc85* kc, const Item& item, bool autostart) {
 
 //------------------------------------------------------------------------------
 FileLoader::FileInfo
-FileLoader::parseHeader(const Ptr<Stream>& data) {
+FileLoader::parseHeader(const Buffer& data) {
     FileInfo info;
-    if (data->Open(OpenMode::ReadOnly)) {
-        const ubyte* start = data->MapRead(nullptr);
-        const ubyte* ptr = start;
+    const ubyte* start = data.Data();
+    const ubyte* ptr = start;
 
-        // first check whether this is a KCC or TAP file
-        const char* tap_header_string = "\xC3KC-TAPE by AF. ";
-        if (0 == memcmp(ptr, tap_header_string, strlen(tap_header_string))) {
-            // it's a TAP!
-            info.Type = FileType::TAP;
-            ptr = (const ubyte*)&(((tap_header*)ptr)->kcc);
-        }
-        else {
-            info.Type = FileType::KCC;
-        }
-        const kcc_header* kcc_hdr = (const kcc_header*) ptr;
-        info.Name = String((const char*)kcc_hdr->name, 0, 16);
-        info.StartAddr = kcc_hdr->load_addr_h<<8 | kcc_hdr->load_addr_l;
-        info.EndAddr = kcc_hdr->end_addr_h<<8 | kcc_hdr->end_addr_l;
-        info.ExecAddr = kcc_hdr->exec_addr_h<<8 | kcc_hdr->exec_addr_l;
-        info.HasExecAddr = kcc_hdr->num_addr > 2;
-        info.PayloadOffset = (ptr + sizeof(kcc_header)) - start;
-        if ((info.EndAddr-info.StartAddr) > data->Size()-128) {
-            info.FileSizeError = true;
-        }
-        data->UnmapRead();
-        data->Close();
+    // first check whether this is a KCC or TAP file
+    const char* tap_header_string = "\xC3KC-TAPE by AF. ";
+    if (0 == memcmp(ptr, tap_header_string, strlen(tap_header_string))) {
+        // it's a TAP!
+        info.Type = FileType::TAP;
+        ptr = (const ubyte*)&(((tap_header*)ptr)->kcc);
+    }
+    else {
+        info.Type = FileType::KCC;
+    }
+    const kcc_header* kcc_hdr = (const kcc_header*) ptr;
+    info.Name = String((const char*)kcc_hdr->name, 0, 16);
+    info.StartAddr = kcc_hdr->load_addr_h<<8 | kcc_hdr->load_addr_l;
+    info.EndAddr = kcc_hdr->end_addr_h<<8 | kcc_hdr->end_addr_l;
+    info.ExecAddr = kcc_hdr->exec_addr_h<<8 | kcc_hdr->exec_addr_l;
+    info.HasExecAddr = kcc_hdr->num_addr > 2;
+    info.PayloadOffset = (ptr + sizeof(kcc_header)) - start;
+    if ((info.EndAddr-info.StartAddr) > data.Size()-128) {
+        info.FileSizeError = true;
     }
     return info;
 }
 
 //------------------------------------------------------------------------------
 void
-FileLoader::copy(kc85* kc, const FileInfo& info, const Ptr<Stream>& data) {
+FileLoader::copy(kc85* kc, const FileInfo& info, const Buffer& data) {
     if (!info.FileSizeError) {
-        if (data->Open(OpenMode::ReadOnly)) {
-            const ubyte* end;
-            const ubyte* payload = data->MapRead(&end) + info.PayloadOffset;
-            if (FileType::KCC == info.Type) {
-                // KCC payload is simply a continuous block of data
-                kc->cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
-            }
-            else {
-                // TAP payload is 128 byte blocks, each with a single header byte
-                uword addr = info.StartAddr;
-                const ubyte* ptr = payload;
-                while (addr < info.EndAddr) {
-                    // skip block lead byte
-                    ptr++;
-                    // copy 128 bytes
-                    for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
-                        kc->cpu.mem.w8(addr++, *ptr++);
-                    }
+        const ubyte* payload = data.Data() + info.PayloadOffset;
+        if (FileType::KCC == info.Type) {
+            // KCC payload is simply a continuous block of data
+            kc->cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
+        }
+        else {
+            // TAP payload is 128 byte blocks, each with a single header byte
+            uword addr = info.StartAddr;
+            const ubyte* ptr = payload;
+            while (addr < info.EndAddr) {
+                // skip block lead byte
+                ptr++;
+                // copy 128 bytes
+                for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
+                    kc->cpu.mem.w8(addr++, *ptr++);
                 }
             }
-            data->UnmapRead();
-            data->Close();
         }
     }
 }
