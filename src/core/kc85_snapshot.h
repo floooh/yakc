@@ -79,7 +79,7 @@ public:
                 ubyte interrupt_vector;
                 ubyte interrupt_enabled;
                 ubyte mode;
-                ubyte padding;
+                ubyte data;
             } chn[2];
             intctrl_t intctrl;
         } pio;
@@ -368,6 +368,7 @@ kc85_snapshot::write_pio_state(const kc85& kc, state_t& state) {
         dst.interrupt_vector = src.interrupt_vector;
         dst.interrupt_enabled = src.interrupt_enabled;
         dst.mode = src.mode;
+        dst.data = kc.pio.channel_data[c];
     }
     write_intctrl_state(kc.pio.int_ctrl, state.pio.intctrl);
 }
@@ -382,6 +383,7 @@ kc85_snapshot::apply_pio_state(const state_t& state, kc85& kc) {
         dst.interrupt_vector = src.interrupt_vector;
         dst.interrupt_enabled = src.interrupt_enabled;
         dst.mode = src.mode;
+        kc.pio.channel_data[c] = src.data;
     }
     apply_intctrl_state(state.pio.intctrl, kc.pio.int_ctrl);
 }
@@ -398,6 +400,7 @@ kc85_snapshot::write_video_state(const kc85& kc, state_t& state) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_video_state(const state_t& state, kc85& kc) {
+    kc.video.model = (kc85_model) state.kc.model;
     kc.video.cur_pal_line = state.video.cur_pal_line;
     kc.video.irm_control = state.video.irm_control;
     kc.video.pio_blink_flag = state.video.pio_blink_flag;
@@ -417,6 +420,7 @@ kc85_snapshot::write_audio_state(const kc85& kc, state_t& state) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_audio_state(const state_t& state, kc85& kc) {
+    kc.audio.reset();
     kc.audio.volume = state.audio.volume;
     for (int c = 0; c < 2; c++) {
         kc.audio.channels[c].ctc_mode = state.audio.chn[c].ctc_mode;
@@ -442,6 +446,9 @@ inline void
 kc85_snapshot::apply_exp_state(const state_t& state, kc85& kc) {
     for (int s = 0; s < 2; s++) {
         const auto& slot = state.exp.slots[s];
+        if (kc.exp.slot_occupied(slot.slot_addr)) {
+            kc.exp.remove_module(slot.slot_addr, kc.cpu.mem);
+        }
         kc.exp.insert_module(slot.slot_addr, (kc85_exp::module_type)slot.module_type);
         kc.exp.update_control_byte(slot.slot_addr, slot.control_byte);
     }
@@ -455,6 +462,16 @@ kc85_snapshot::write_memory_state(const kc85& kc, state_t& state) {
 
     YAKC_MEMCPY(state.ram, kc.ram, sizeof(kc.ram));
     YAKC_MEMCPY(state.irm, kc.video.irm, sizeof(kc.video.irm));
+
+    // copy content of RAM modules
+    const auto& slot08 = kc.exp.slot_by_addr(0x08);
+    if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
+        YAKC_MEMCPY(state.ram8, slot08.mod.mem_ptr, slot08.mod.mem_size);
+    }
+    const auto& slot0C = kc.exp.slot_by_addr(0x0C);
+    if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
+        YAKC_MEMCPY(state.ramC, slot0C.mod.mem_ptr, slot0C.mod.mem_size);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -465,7 +482,14 @@ kc85_snapshot::apply_memory_state(const state_t& state, kc85& kc) {
 
     YAKC_MEMCPY(kc.ram, state.ram, sizeof(state.ram));
     YAKC_MEMCPY(kc.video.irm, state.irm, sizeof(state.irm));
-
+    const auto& slot08 = kc.exp.slot_by_addr(0x08);
+    if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
+        YAKC_MEMCPY(slot08.mod.mem_ptr, state.ram8, slot08.mod.mem_size);
+    }
+    const auto& slot0C = kc.exp.slot_by_addr(0x0C);
+    if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
+        YAKC_MEMCPY(slot0C.mod.mem_ptr, state.ramC, slot0C.mod.mem_size);
+    }
     kc.update_bank_switching();
 }
 

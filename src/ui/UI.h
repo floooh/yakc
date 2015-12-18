@@ -7,6 +7,7 @@
 #include "yakc/KC85Oryol.h"
 #include "ui/WindowBase.h"
 #include "ui/FileLoader.h"
+#include "ui/SnapshotStorage.h"
 #include "Time/TimePoint.h"
 #include "Core/Containers/Array.h"
 #include "IMUI/IMUI.h"
@@ -40,6 +41,7 @@ public:
 
 private:
     FileLoader fileLoader;
+    SnapshotStorage snapshotStorage;
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;
     bool uiEnabled = false;

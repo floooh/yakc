@@ -25,6 +25,17 @@ SnapshotStorage::HasSnapshot(int slotIndex) const {
 }
 
 //------------------------------------------------------------------------------
+bool
+SnapshotStorage::HasSnapshots() const {
+    for (int i = 0; i < MaxNumSnapshots; i++) {
+        if (this->HasSnapshot(i)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
 void
 SnapshotStorage::ApplySnapshot(int slotIndex, kc85& kc) {
     YAKC_ASSERT((slotIndex >= 0) && (slotIndex < MaxNumSnapshots));

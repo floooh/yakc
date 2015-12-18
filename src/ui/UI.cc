@@ -94,6 +94,7 @@ UI::OpenWindow(kc85& kc, const Ptr<WindowBase>& win) {
 //------------------------------------------------------------------------------
 void
 UI::OnFrame(kc85& kc) {
+    StringBuilder strBuilder;
     IMUI::NewFrame(Clock::LapTime(this->curTime));
     if (this->uiEnabled) {
         if (ImGui::BeginMainMenuBar()) {
@@ -105,6 +106,28 @@ UI::OnFrame(kc85& kc) {
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
+                if (ImGui::BeginMenu("Take Snapshot")) {
+                    for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
+                        strBuilder.Format(32, "Snapshot %d", i);
+                        if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                            this->snapshotStorage.TakeSnapshot(kc, i);
+                        }
+                    }
+                    ImGui::EndMenu();
+                }
+                if (this->snapshotStorage.HasSnapshots()) {
+                    if (ImGui::BeginMenu("Apply Snapshot")) {
+                        for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
+                            if (this->snapshotStorage.HasSnapshot(i)) {
+                                strBuilder.Format(32, "Snapshot %d", i);
+                                if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                                    this->snapshotStorage.ApplySnapshot(i, kc);
+                                }
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
+                }
                 if (ImGui::MenuItem("Load File...")) {
                     auto loadWindow = LoadWindow::Create();
                     loadWindow->SetFileLoader(&this->fileLoader);
