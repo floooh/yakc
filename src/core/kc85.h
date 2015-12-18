@@ -88,13 +88,14 @@ public:
     /// handle keyboard input
     void handle_keyboard_input();
 
-private:
     /// the z80 out callback
     static void out_cb(void* userdata, uword port, ubyte val);
     /// the z80 in callback
     static ubyte in_cb(void* userdata, uword port);
     /// update module/memory mapping
     void update_bank_switching();
+    /// update the rom pointers
+    void update_rom_pointers();
 
     kc85_model cur_model;
     kc85_caos cur_caos;
@@ -135,41 +136,7 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->io86 = 0;
 
     // set operating system pointers
-    this->caos_c_ptr = nullptr;
-    this->caos_c_size = 0;
-    switch (os) {
-        case kc85_caos::caos_hc900:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::hc900);
-            this->caos_e_size = this->roms.size(kc85_roms::hc900);
-            break;
-        case kc85_caos::caos_2_2:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos22);
-            this->caos_e_size = this->roms.size(kc85_roms::caos22);
-            break;
-        case kc85_caos::caos_3_1:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos31);
-            this->caos_e_size = this->roms.size(kc85_roms::caos31);
-            break;
-        case kc85_caos::caos_3_4:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos34);
-            this->caos_e_size = this->roms.size(kc85_roms::caos34);
-            break;
-        case kc85_caos::caos_4_1:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos41e);
-            this->caos_e_size = this->roms.size(kc85_roms::caos41e);
-            this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos41c);
-            this->caos_c_size = this->roms.size(kc85_roms::caos41c);
-            break;
-        case kc85_caos::caos_4_2:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos42e);
-            this->caos_e_size = this->roms.size(kc85_roms::caos42e);
-            this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos42c);
-            this->caos_c_size = this->roms.size(kc85_roms::caos42c);
-            break;
-        default:
-            YAKC_ASSERT(false);
-            break;
-    }
+    this->update_rom_pointers();
 
     // initialize the clock, the 85/4 runs at 1.77 MHz, the others at 1.75 MHz
     this->clck.init((m == kc85_model::kc85_4) ? 1770 : 1750);
@@ -250,6 +217,46 @@ kc85::model() const {
 inline kc85_caos
 kc85::caos() const {
     return this->cur_caos;
+}
+
+//------------------------------------------------------------------------------
+inline void
+kc85::update_rom_pointers() {
+    this->caos_c_ptr = nullptr;
+    this->caos_c_size = 0;
+    switch (this->cur_caos) {
+        case kc85_caos::caos_hc900:
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::hc900);
+            this->caos_e_size = this->roms.size(kc85_roms::hc900);
+            break;
+        case kc85_caos::caos_2_2:
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos22);
+            this->caos_e_size = this->roms.size(kc85_roms::caos22);
+            break;
+        case kc85_caos::caos_3_1:
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos31);
+            this->caos_e_size = this->roms.size(kc85_roms::caos31);
+            break;
+        case kc85_caos::caos_3_4:
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos34);
+            this->caos_e_size = this->roms.size(kc85_roms::caos34);
+            break;
+        case kc85_caos::caos_4_1:
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos41e);
+            this->caos_e_size = this->roms.size(kc85_roms::caos41e);
+            this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos41c);
+            this->caos_c_size = this->roms.size(kc85_roms::caos41c);
+            break;
+        case kc85_caos::caos_4_2:
+            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos42e);
+            this->caos_e_size = this->roms.size(kc85_roms::caos42e);
+            this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos42c);
+            this->caos_c_size = this->roms.size(kc85_roms::caos42c);
+            break;
+        default:
+            YAKC_ASSERT(false);
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -66,11 +66,11 @@ public:
         ubyte constant = 0;             // the time constant
         int down_counter = 0;           // current down-counter value
         bool waiting_for_trigger = false;
+        ubyte interrupt_vector = 0;
         ctc_cb zcto_callback = nullptr;
         void* zcto_userdata = nullptr;
         ctc_cb write_callback = nullptr;
         void* write_userdata = nullptr;
-        ubyte interrupt_vector = 0;
         z80int int_ctrl;
     } channels[num_channels];
 

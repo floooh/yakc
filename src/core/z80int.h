@@ -54,8 +54,7 @@ public:
     bool int_requested = false;
     /// the data byte for the requested interrupt
     ubyte int_request_data = 0;
-    /// the interrupt has been acknowledged and is currently processed by CPU
-    /// until RETI is received
+    /// the interrupt has been acknowledged and is currently processed by CPU until RETI is received
     bool int_pending = false;
 
 private:

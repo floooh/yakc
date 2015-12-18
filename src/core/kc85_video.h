@@ -30,7 +30,6 @@ public:
     /// decoded linear RGBA8 video buffer
     unsigned int LinearBuffer[320*256];
 
-private:
     /// decode 8 pixels
     void decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_off) const;
     /// decode the next line
@@ -40,9 +39,9 @@ private:
     ubyte irm_control = 0;
     bool pio_blink_flag = true;
     bool ctc_blink_flag = true;
-    unsigned int fgPal[16];
-    unsigned int bgPal[16];
-    unsigned int curPalLine = 0;
+    uword cur_pal_line = 0;
+    unsigned int fg_pal[16];
+    unsigned int bg_pal[16];
 };
 
 //------------------------------------------------------------------------------
@@ -59,32 +58,32 @@ kc85_video::init(kc85_model m) {
     }
 
     // setup foreground color palette
-    this->fgPal[0] = 0xFF000000;     // black
-    this->fgPal[1] = 0xFFFF0000;     // blue
-    this->fgPal[2] = 0xFF0000FF;     // red
-    this->fgPal[3] = 0xFFFF00FF;     // magenta
-    this->fgPal[4] = 0xFF00FF00;     // green
-    this->fgPal[5] = 0xFFFFFF00;     // cyan
-    this->fgPal[6] = 0xFF00FFFF;     // yellow
-    this->fgPal[7] = 0xFFFFFFFF;     // white
-    this->fgPal[8] = 0xFF000000;     // black #2
-    this->fgPal[9] = 0xFFFF00A0;     // violet
-    this->fgPal[10] = 0xFF00A0FF;     // orange
-    this->fgPal[11] = 0xFFA000FF;     // purple
-    this->fgPal[12] = 0xFFA0FF00;     // blueish green
-    this->fgPal[13] = 0xFFFFA000;     // greenish blue
-    this->fgPal[14] = 0xFF00FFA0;     // yellow-green
-    this->fgPal[15] = 0xFFFFFFFF;     // white #2
+    this->fg_pal[0] = 0xFF000000;     // black
+    this->fg_pal[1] = 0xFFFF0000;     // blue
+    this->fg_pal[2] = 0xFF0000FF;     // red
+    this->fg_pal[3] = 0xFFFF00FF;     // magenta
+    this->fg_pal[4] = 0xFF00FF00;     // green
+    this->fg_pal[5] = 0xFFFFFF00;     // cyan
+    this->fg_pal[6] = 0xFF00FFFF;     // yellow
+    this->fg_pal[7] = 0xFFFFFFFF;     // white
+    this->fg_pal[8] = 0xFF000000;     // black #2
+    this->fg_pal[9] = 0xFFFF00A0;     // violet
+    this->fg_pal[10] = 0xFF00A0FF;     // orange
+    this->fg_pal[11] = 0xFFA000FF;     // purple
+    this->fg_pal[12] = 0xFFA0FF00;     // blueish green
+    this->fg_pal[13] = 0xFFFFA000;     // greenish blue
+    this->fg_pal[14] = 0xFF00FFA0;     // yellow-green
+    this->fg_pal[15] = 0xFFFFFFFF;     // white #2
 
     // setup background color palette
-    this->bgPal[0] = 0xFF000000;      // black
-    this->bgPal[1] = 0xFFA00000;      // dark-blue
-    this->bgPal[2] = 0xFF0000A0;      // dark-red
-    this->bgPal[3] = 0xFFA000A0;      // dark-magenta
-    this->bgPal[4] = 0xFF00A000;      // dark-green
-    this->bgPal[5] = 0xFFA0A000;      // dark-cyan
-    this->bgPal[6] = 0xFF00A0A0;      // dark-yellow
-    this->bgPal[7] = 0xFFA0A0A0;      // gray
+    this->bg_pal[0] = 0xFF000000;      // black
+    this->bg_pal[1] = 0xFFA00000;      // dark-blue
+    this->bg_pal[2] = 0xFF0000A0;      // dark-red
+    this->bg_pal[3] = 0xFFA000A0;      // dark-magenta
+    this->bg_pal[4] = 0xFF00A000;      // dark-green
+    this->bg_pal[5] = 0xFFA0A000;      // dark-cyan
+    this->bg_pal[6] = 0xFF00A0A0;      // dark-yellow
+    this->bg_pal[7] = 0xFFA0A0A0;      // gray
 }
 
 //------------------------------------------------------------------------------
@@ -117,19 +116,19 @@ inline void
 kc85_video::pal_line_cb(void* userdata) {
     // this needs to be called for each PAL line (one PAL line: 64 microseconds)
     kc85_video* self = (kc85_video*) userdata;
-    if (self->curPalLine < 256) {
+    if (self->cur_pal_line < 256) {
         const bool blink_bg = self->ctc_blink_flag && self->pio_blink_flag;
-        self->decode_one_line(self->LinearBuffer, self->curPalLine, blink_bg);
+        self->decode_one_line(self->LinearBuffer, self->cur_pal_line, blink_bg);
     }
-    self->curPalLine++;
+    self->cur_pal_line++;
     // 326 wrap-around is a magic value to make the Digger ultra-fast
     // flash look somewhat right, the diamond-scrolling is very sensitive
     // to this value, and also changes depending on what instructions
     // the CPU executes, there must be some remaining precision problem
     // in the CTC counters/timers (probably some 'left-over' cycles
     // are not accounted for correctly?
-    if (self->curPalLine >= 326) {
-        self->curPalLine = 0;
+    if (self->cur_pal_line >= 326) {
+        self->cur_pal_line = 0;
     }
 }
 
@@ -144,8 +143,8 @@ kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_bg
     // index 0 is background color, index 1 is foreground color
     const ubyte bg_index = colors & 0x7;
     const ubyte fg_index = (colors>>3)&0xF;
-    const unsigned int bg = this->bgPal[bg_index];
-    const unsigned int fg = (blink_bg && (colors & 0x80)) ? bg : this->fgPal[fg_index];
+    const unsigned int bg = this->bg_pal[bg_index];
+    const unsigned int fg = (blink_bg && (colors & 0x80)) ? bg : this->fg_pal[fg_index];
     ptr[0] = pixels & 0x80 ? fg : bg;
     ptr[1] = pixels & 0x40 ? fg : bg;
     ptr[2] = pixels & 0x20 ? fg : bg;

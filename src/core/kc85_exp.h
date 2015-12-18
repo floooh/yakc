@@ -89,7 +89,6 @@ public:
     /// convert a slot address to a memory layer
     int memory_layer_by_slot_addr(ubyte slot_addr) const;
 
-private:
     module registry[num_module_types];
     static const int num_slots = 2;
     module_slot slots[num_slots];

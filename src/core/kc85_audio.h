@@ -39,7 +39,6 @@ public:
     /// update volume (0..1F, called from kc85 PIO-B handler)
     void update_volume(int vol);
 
-private:
     /// update a sound channel when ctc state has changed
     void update_channel(int channel);
     /// must be connected to z80ctc::connect_write0()
@@ -59,8 +58,8 @@ private:
 
     static const int num_channels = 2;
     struct channel_state {
-        yakc::ubyte ctc_mode = z80ctc::RESET;
-        yakc::ubyte ctc_constant = 0;
+        ubyte ctc_mode = z80ctc::RESET;
+        ubyte ctc_constant = 0;
     } channels[num_channels];
 };
 

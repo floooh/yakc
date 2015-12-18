@@ -24,7 +24,7 @@ Audio::Discard() {
 unsigned int
 Audio::asAudioTicks(unsigned int z80Cycles) const {
     const float synthRate = Synth::SynthSetup().SampleRate / 1000.0f;
-    const float clockRate = float(this->kc->clck.baseFreqKHz);
+    const float clockRate = float(this->kc->clck.base_freq_khz);
     const unsigned int tickDiv = (unsigned int)(clockRate / synthRate);
     return (z80Cycles / tickDiv) + baseDelayTicks;
 }

@@ -29,12 +29,12 @@ public:
     void update(int num_cycles);
 
     /// the clock main frequency in KHz
-    int baseFreqKHz = 0;
+    int base_freq_khz = 0;
     /// max number of timers
     static const int num_timers = 4;
     /// timer state
     struct timer_state {
-        int freqHz = 0;        // timer frequency in Hz
+        int freq_hz = 0;       // timer frequency in Hz
         int count = 0;         // how often the counter went through 0
         int value = 0;         // current counter value
         cb_timer callback = nullptr;
@@ -46,7 +46,7 @@ public:
 inline void
 clock::init(int khz) {
     YAKC_ASSERT(khz > 0);
-    this->baseFreqKHz = khz;
+    this->base_freq_khz = khz;
     for (auto& t : this->timers) {
         t = timer_state();
     }
@@ -55,7 +55,7 @@ clock::init(int khz) {
 //------------------------------------------------------------------------------
 inline int
 clock::cycles(int micro_seconds) const {
-    return (this->baseFreqKHz * micro_seconds) / 1000;
+    return (this->base_freq_khz * micro_seconds) / 1000;
 }
 
 //------------------------------------------------------------------------------
@@ -64,9 +64,9 @@ clock::config_timer(int index, int hz, cb_timer callback, void* userdata) {
     YAKC_ASSERT((index >= 0) && (index < num_timers));
     YAKC_ASSERT(hz > 0);
     auto& t = this->timers[index];
-    t.freqHz = hz;
+    t.freq_hz = hz;
     t.count = 0;
-    t.value = (this->baseFreqKHz*1000)/t.freqHz;
+    t.value = (this->base_freq_khz*1000)/t.freq_hz;
     t.callback = callback;
     t.userdata = userdata;
 }
@@ -79,7 +79,7 @@ clock::update(int num_cycles) {
             t.value -= num_cycles;
             while (t.value <= 0) {
                 t.count++;
-                t.value += (this->baseFreqKHz*1000)/t.freqHz;
+                t.value += (this->base_freq_khz*1000)/t.freq_hz;
                 t.callback(t.userdata);
             }
         }

@@ -21,4 +21,4 @@
 #include "core/kc85_exp.h"
 #include "core/kc85_video.h"
 #include "core/kc85_audio.h"
-
+#include "core/kc85_snapshot.h"

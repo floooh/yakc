@@ -18,6 +18,7 @@ fips_begin_module(ui)
         LoadWindow.cc LoadWindow.h
         CommandWindow.cc CommandWindow.h
         FileLoader.cc FileLoader.h
+        SnapshotStorage.cc SnapshotStorage.h
         z80dasm.cc z80dasm.h
     )
     fips_deps(core roms)
