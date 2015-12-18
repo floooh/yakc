@@ -106,28 +106,6 @@ UI::OnFrame(kc85& kc) {
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
-                if (ImGui::BeginMenu("Take Snapshot")) {
-                    for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                        strBuilder.Format(32, "Snapshot %d", i);
-                        if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                            this->snapshotStorage.TakeSnapshot(kc, i);
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-                if (this->snapshotStorage.HasSnapshots()) {
-                    if (ImGui::BeginMenu("Apply Snapshot")) {
-                        for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                            if (this->snapshotStorage.HasSnapshot(i)) {
-                                strBuilder.Format(32, "Snapshot %d", i);
-                                if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                    this->snapshotStorage.ApplySnapshot(i, kc);
-                                }
-                            }
-                        }
-                        ImGui::EndMenu();
-                    }
-                }
                 if (ImGui::MenuItem("Load File...")) {
                     auto loadWindow = LoadWindow::Create();
                     loadWindow->SetFileLoader(&this->fileLoader);
@@ -225,6 +203,28 @@ UI::OnFrame(kc85& kc) {
                 }
                 if (ImGui::MenuItem("Scan for Commands...")) {
                     this->OpenWindow(kc, CommandWindow::Create());
+                }
+                if (ImGui::BeginMenu("Take Snapshot")) {
+                    for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
+                        strBuilder.Format(32, "Snapshot %d", i);
+                        if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                            this->snapshotStorage.TakeSnapshot(kc, i);
+                        }
+                    }
+                    ImGui::EndMenu();
+                }
+                if (this->snapshotStorage.HasSnapshots()) {
+                    if (ImGui::BeginMenu("Apply Snapshot")) {
+                        for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
+                            if (this->snapshotStorage.HasSnapshot(i)) {
+                                strBuilder.Format(32, "Snapshot %d", i);
+                                if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                                    this->snapshotStorage.ApplySnapshot(i, kc);
+                                }
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
                 }
                 ImGui::EndMenu();
             }
