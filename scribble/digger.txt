@@ -1,6 +1,27 @@
 
 KC85/3 Digger:
 
+The area at 0500 is the current playfield, in the KC85/3 version,
+when going from map 3 to map 4, this is filled with zeroes instead
+of useful values.
+
+Source playfield pointers seem to be stored at 05E3:
+
+KC85/4:
+4000 
+409C
+4138
+41D4
+51AC (-> that's the one that fails on KC85/3?)
+
+KC85/3:
+3EB3
+3F4F
+BA00        this is the problem...??
+
+In the KC85/3 version, BA00 is written to 05E3 as the next source
+playfield address after map 3, and this is obvously wrong. BA00 
+contains all zeroes, which results in the black playing field.
 
 CTC interrupt vectors:
 
@@ -135,3 +156,147 @@ OK here what happens with the sound glitch:
     by the CTC as timer constant...
 
     How is this case handled on real hardware???
+
+
+
+--------------------------------------
+Cursor Left handling:
+
+2EA9:   push hl
+        call 298B
+        ld hl,(05E5)    ; 030A
+        ld (05FB),hl
+        sub a
+        ld (098A),a
+        ld a,h
+        ld h,l
+        sub 02
+        add a,a
+        ld l,a
+        add a,a
+
+        ..
+
+298B:   ld a,(098C)
+        and a
+        ret z
+
+317B:   new level had been rendered
+
+3319:   call 3151           ; ???
+
+3151:   ld a,05             ; init new game?
+        ld (05f0),a
+        ld hl,(0881)
+        ld (05f4),hl
+        sub a
+        ld (05f7),a
+        ld (05f8),a
+        ld (05fa),a
+        ld (0989),a
+        ld (098a),a
+        ld (098c),a
+        ld (09a0),a
+
+        call 09ac   
+        call 1804   new playfield at 0500 already initialized
+        call 1498   *** -> initialize new game, expect playfield at 0500...?
+        
+        ld hl,ffff
+        ld b,08
+
+3180    ld a,(01fd)
+        sub 0d          ; ENTER?
+        jp z,1343
+        dec hl
+        ld a,h
+        or l
+        jp nz 3180
+        dec b
+        jp 1340
+
+--
+09AC:   call 1480       --> initialized new playield
+        call 2113
+        ret
+
+1480:   ex af,af'
+        exx
+        ld de,0500
+        ld hl,(05e3)    --> contains address of next playfield?
+        ld bc,008c
+        ldir
+        ld de,05e0
+        ld bc,0010
+        ldir
+        ex af,af'
+        exx
+        ret
+
+2113:   push af
+        push bc
+        push de
+        push hl
+        ld hl,0500
+        ld de,0900
+        ld bc,8b00
+        sub a
+        ld (0886),a
+        bit 4,(hl)
+        jp z,2179
+        ld a,l
+        ld c,00
+
+2131:   inc c
+        sub 0a
+        jp nc 2131
+
+        add a,0a
+        inc c
+        add a,a
+        ld (de),a
+        inc e
+        ld a,c
+        ld (de),a
+        inc e
+        ld a,l
+        ld (de),a
+        inc e
+        ld a,(hl)
+        res 6,(hl)
+        res 7,(hl)
+        rlca
+        rlca
+        and 03
+        ld (de),a
+        push hl
+        ld h,05
+        ld a,(0886)
+        inc a
+        ...
+
+
+
+1498:   push af
+        push bc
+        push de
+        push hl
+        ld hl,0500
+        ld de,0200
+        ld bc,0e14
+        ld a,(hl)       ; 66
+        rlca
+        rlca
+        rlca
+        rlca
+        and 0f
+        ld (05fb),de
+        call 0a27
+        ...
+
+14d2    ret             ; new map displayed
+
+
+0a27:   some sort of display update routine?
+
+

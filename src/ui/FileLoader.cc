@@ -22,7 +22,7 @@ FileLoader::Setup(kc85& kc) {
     this->Items.Add("Breakout (KC85/3)", "breakout.kcc", kc85_model::kc85_3);
     this->Items.Add("Boulderdash (KC85/3)", "boulder3.tap", kc85_model::kc85_3);
     this->Items.Add("Boulderdash (KC85/4)", "boulder4.tap", kc85_model::kc85_4);
-    this->Items.Add("Digger (KC85/3)", "digger-3.kcc", kc85_model::kc85_3);
+    this->Items.Add("Digger (KC85/3)", "digger3.tap", kc85_model::kc85_3);
     this->Items.Add("Digger (KC85/4)", "digger4.tap", kc85_model::kc85_4);
     this->Items.Add("Ladder (KC85/3)", "ladder-3.kcc", kc85_model::kc85_3);
     this->Items.Add("Chess (KC85/3+KC85/4)", "chess.kcc", kc85_model::any);
@@ -175,7 +175,7 @@ FileLoader::patch(kc85* kc, const FileInfo& info) {
         }
     }
     // FIXME: patch Digger (see http://lanale.de/kc85_emu/KC85_Emu.html)
-    if (info.Name == "DIGGER/3COM") {
+    if (info.Name == "DIGGER  COM\x01") {
         auto& mem = kc->cpu.mem;
         mem.w16(0x09AA, 0x0160);    // time for delay-loop 0160 instead of 0260
         mem.w8(0x3d3a, 0xB5);   // OR L instead of OR (HL)
