@@ -19,8 +19,8 @@ TEST(daisychain) {
     z80 cpu;
     memset(ram, 0, sizeof(ram));
     cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
-    cpu.state.IM = 0x02;
-    cpu.state.I = 0x01;
+    cpu.IM = 0x02;
+    cpu.I = 0x01;
 
     ubyte prog[] = {
         0xFB,               // EI
@@ -54,15 +54,15 @@ TEST(daisychain) {
     // EI
     step(cpu);
     CHECK(cpu.enable_interrupt);
-    CHECK(!cpu.state.IFF1);
-    CHECK(!cpu.state.IFF2);
+    CHECK(!cpu.IFF1);
+    CHECK(!cpu.IFF2);
 
     // LD SP,0x0100, and delayed interrupt-enable from EI
     step(cpu);
-    CHECK(cpu.state.SP == 0x0100);
+    CHECK(cpu.SP == 0x0100);
     CHECK(!cpu.enable_interrupt);
-    CHECK(cpu.state.IFF1);
-    CHECK(cpu.state.IFF2);
+    CHECK(cpu.IFF1);
+    CHECK(cpu.IFF2);
 
     // request interrupt, execute nop, acknowledge interrupt
     dev0.request_interrupt(0xE8);
@@ -79,21 +79,21 @@ TEST(daisychain) {
     CHECK(!dev0.int_enabled);
     CHECK(!dev1.int_enabled);
     CHECK(!dev2.int_enabled);
-    CHECK(cpu.state.PC == 0x0008);
-    CHECK(!cpu.state.IFF1);
-    CHECK(!cpu.state.IFF2);
+    CHECK(cpu.PC == 0x0008);
+    CHECK(!cpu.IFF1);
+    CHECK(!cpu.IFF2);
 
     // interrupt handler, first execute an EI
     cpu.step();
     CHECK(cpu.enable_interrupt);
-    CHECK(!cpu.state.IFF1);
-    CHECK(!cpu.state.IFF2);
+    CHECK(!cpu.IFF1);
+    CHECK(!cpu.IFF2);
 
     // a NOP following the EI, interrupts should be enabled again afterwards
     cpu.step();
     CHECK(!cpu.enable_interrupt);
-    CHECK(cpu.state.IFF1);
-    CHECK(cpu.state.IFF2);
+    CHECK(cpu.IFF1);
+    CHECK(cpu.IFF2);
 
     // this is the RETI
     cpu.step();
@@ -101,7 +101,7 @@ TEST(daisychain) {
     CHECK(dev0.int_enabled);
     CHECK(dev1.int_enabled);
     CHECK(dev2.int_enabled);
-    CHECK(cpu.state.IFF1);
-    CHECK(cpu.state.IFF2);
-    CHECK(cpu.state.PC == 0x0005);
+    CHECK(cpu.IFF1);
+    CHECK(cpu.IFF2);
+    CHECK(cpu.PC == 0x0005);
 }

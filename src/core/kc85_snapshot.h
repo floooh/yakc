@@ -259,25 +259,25 @@ kc85_snapshot::apply_kc_state(const state_t& state, kc85& kc) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::write_cpu_state(const kc85& kc, state_t& state) {
-    state.cpu.AF  = kc.cpu.state.AF;
-    state.cpu.BC  = kc.cpu.state.BC;
-    state.cpu.DE  = kc.cpu.state.DE;
-    state.cpu.HL  = kc.cpu.state.HL;
-    state.cpu.AF_ = kc.cpu.state.AF_;
-    state.cpu.BC_ = kc.cpu.state.BC_;
-    state.cpu.DE_ = kc.cpu.state.DE_;
-    state.cpu.HL_ = kc.cpu.state.HL_;
-    state.cpu.IX  = kc.cpu.state.IX;
-    state.cpu.IY  = kc.cpu.state.IY;
-    state.cpu.SP  = kc.cpu.state.SP;
-    state.cpu.PC  = kc.cpu.state.PC;
-    state.cpu.I   = kc.cpu.state.I;
-    state.cpu.R   = kc.cpu.state.R;
-    state.cpu.IM  = kc.cpu.state.IM;
-    state.cpu.HALT = kc.cpu.state.HALT;
-    state.cpu.IFF1 = kc.cpu.state.IFF1;
-    state.cpu.IFF2 = kc.cpu.state.IFF2;
-    state.cpu.INV  = kc.cpu.state.INV;
+    state.cpu.AF  = kc.cpu.AF;
+    state.cpu.BC  = kc.cpu.BC;
+    state.cpu.DE  = kc.cpu.DE;
+    state.cpu.HL  = kc.cpu.HL;
+    state.cpu.AF_ = kc.cpu.AF_;
+    state.cpu.BC_ = kc.cpu.BC_;
+    state.cpu.DE_ = kc.cpu.DE_;
+    state.cpu.HL_ = kc.cpu.HL_;
+    state.cpu.IX  = kc.cpu.IX;
+    state.cpu.IY  = kc.cpu.IY;
+    state.cpu.SP  = kc.cpu.SP;
+    state.cpu.PC  = kc.cpu.PC;
+    state.cpu.I   = kc.cpu.I;
+    state.cpu.R   = kc.cpu.R;
+    state.cpu.IM  = kc.cpu.IM;
+    state.cpu.HALT = kc.cpu.HALT;
+    state.cpu.IFF1 = kc.cpu.IFF1;
+    state.cpu.IFF2 = kc.cpu.IFF2;
+    state.cpu.INV  = kc.cpu.INV;
     state.cpu.irq_received = kc.cpu.irq_received;
     state.cpu.enable_interrupt = kc.cpu.enable_interrupt;
 }
@@ -285,25 +285,25 @@ kc85_snapshot::write_cpu_state(const kc85& kc, state_t& state) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_cpu_state(const state_t& state, kc85& kc) {
-    kc.cpu.state.AF = state.cpu.AF;
-    kc.cpu.state.BC = state.cpu.BC;
-    kc.cpu.state.DE = state.cpu.DE;
-    kc.cpu.state.HL = state.cpu.HL;
-    kc.cpu.state.AF_ = state.cpu.AF_;
-    kc.cpu.state.BC_ = state.cpu.BC_;
-    kc.cpu.state.DE_ = state.cpu.DE_;
-    kc.cpu.state.HL_ = state.cpu.HL_;
-    kc.cpu.state.IX  = state.cpu.IX;
-    kc.cpu.state.IY  = state.cpu.IY;
-    kc.cpu.state.SP  = state.cpu.SP;
-    kc.cpu.state.PC  = state.cpu.PC;
-    kc.cpu.state.I   = state.cpu.I;
-    kc.cpu.state.R   = state.cpu.R;
-    kc.cpu.state.IM  = state.cpu.IM;
-    kc.cpu.state.HALT = state.cpu.HALT;
-    kc.cpu.state.IFF1 = state.cpu.IFF1;
-    kc.cpu.state.IFF2 = state.cpu.IFF2;
-    kc.cpu.state.INV  = state.cpu.INV;
+    kc.cpu.AF = state.cpu.AF;
+    kc.cpu.BC = state.cpu.BC;
+    kc.cpu.DE = state.cpu.DE;
+    kc.cpu.HL = state.cpu.HL;
+    kc.cpu.AF_ = state.cpu.AF_;
+    kc.cpu.BC_ = state.cpu.BC_;
+    kc.cpu.DE_ = state.cpu.DE_;
+    kc.cpu.HL_ = state.cpu.HL_;
+    kc.cpu.IX  = state.cpu.IX;
+    kc.cpu.IY  = state.cpu.IY;
+    kc.cpu.SP  = state.cpu.SP;
+    kc.cpu.PC  = state.cpu.PC;
+    kc.cpu.I   = state.cpu.I;
+    kc.cpu.R   = state.cpu.R;
+    kc.cpu.IM  = state.cpu.IM;
+    kc.cpu.HALT = state.cpu.HALT;
+    kc.cpu.IFF1 = state.cpu.IFF1;
+    kc.cpu.IFF2 = state.cpu.IFF2;
+    kc.cpu.INV  = state.cpu.INV;
     kc.cpu.irq_received = state.cpu.irq_received;
     kc.cpu.enable_interrupt = state.cpu.enable_interrupt;
 }

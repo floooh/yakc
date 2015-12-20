@@ -181,7 +181,7 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->cpu.out(0x88, 0x9f);
 
     // execution on power-on starts at 0xF000
-    this->cpu.state.PC = 0xF000;
+    this->cpu.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ kc85::reset() {
     this->io84 = 0;
     this->io86 = 0;
     // execution after reset starts at 0xE000
-    this->cpu.state.PC = 0xE000;
+    this->cpu.PC = 0xE000;
 }
 
 //------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ kc85::handle_keyboard_input() {
 
     // don't do anything if interrupts disabled, IX might point
     // to the wrong base address!
-    if (!this->cpu.state.IFF1) {
+    if (!this->cpu.IFF1) {
         return;
     }
 
@@ -314,7 +314,7 @@ kc85::handle_keyboard_input() {
     static const ubyte long_repeat_count = 60;
 
     auto& mem = this->cpu.mem;
-    const uword ix = this->cpu.state.IX;
+    const uword ix = this->cpu.IX;
     if (0 == this->key_code) {
         // if keycode is 0, this basically means the CTC3 timeout was hit
         mem.a8(ix+0x8) |= timeout;      // set the CTC3 timeout bit

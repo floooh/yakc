@@ -42,7 +42,7 @@ DebugWindow::Draw(kc85& kc) {
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->drawRegisterTable(kc);
         ImGui::Separator();
-        this->drawMainContent(kc, kc.cpu.state.PC, 48);
+        this->drawMainContent(kc, kc.cpu.PC, 48);
         ImGui::Separator();
         this->drawControls(kc);
     }
@@ -86,7 +86,7 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     this->drawReg16(kc, z80dbg::HL); ImGui::SameLine(4 * 72);
     ImGui::PushItemWidth(16);
     this->drawReg8(kc, z80dbg::I); ImGui::SameLine(4 * 72 + 48);
-    ImGui::TextColored(kc.cpu.state.IFF1 ? green:red, "IFF1");
+    ImGui::TextColored(kc.cpu.IFF1 ? green:red, "IFF1");
     ImGui::PopItemWidth();
 
     this->drawReg16(kc, z80dbg::AF_); ImGui::SameLine(1 * 72);
@@ -95,7 +95,7 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     this->drawReg16(kc, z80dbg::HL_); ImGui::SameLine(4 * 72);
     ImGui::PushItemWidth(16);
     this->drawReg8(kc, z80dbg::IM); ImGui::SameLine(4 * 72 + 48);
-    ImGui::TextColored(kc.cpu.state.IFF2 ? green:red, "IFF2");
+    ImGui::TextColored(kc.cpu.IFF2 ? green:red, "IFF2");
     ImGui::PopItemWidth();
 
     this->drawReg16(kc, z80dbg::IX); ImGui::SameLine(1 * 72);
@@ -104,11 +104,11 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     this->drawReg16(kc, z80dbg::PC); ImGui::SameLine(4 * 72);
     ImGui::PushItemWidth(16);
     this->drawReg8(kc, z80dbg::R); ImGui::SameLine(4 * 72 + 48);
-    ImGui::TextColored(kc.cpu.state.HALT ? green:red, "HALT");
+    ImGui::TextColored(kc.cpu.HALT ? green:red, "HALT");
     ImGui::PopItemWidth();
 
     char strFlags[9];
-    const ubyte f = kc.cpu.state.F;
+    const ubyte f = kc.cpu.F;
     strFlags[0] = (f & z80::SF) ? 'S':'-';
     strFlags[1] = (f & z80::ZF) ? 'Z':'-';
     strFlags[2] = (f & z80::YF) ? 'Y':'-';
@@ -119,7 +119,7 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     strFlags[7] = (f & z80::CF) ? 'C':'-';
     strFlags[8] = 0;
     ImGui::Text("flags: %s", strFlags);
-    if (kc.cpu.state.INV)
+    if (kc.cpu.INV)
     ImGui::PopItemWidth();
 }
 
@@ -193,7 +193,7 @@ DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
         else {
             display_addr = cur_addr;
             num_bytes = disasm.Disassemble(kc, display_addr);
-                if ((cur_addr == start_addr) && kc.cpu.state.INV) {
+                if ((cur_addr == start_addr) && kc.cpu.INV) {
                     // invalid/non-implemented opcode hit
                     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
                 }

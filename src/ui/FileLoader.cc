@@ -127,7 +127,7 @@ FileLoader::parseHeader(const Buffer& data) {
     info.EndAddr = kcc_hdr->end_addr_h<<8 | kcc_hdr->end_addr_l;
     info.ExecAddr = kcc_hdr->exec_addr_h<<8 | kcc_hdr->exec_addr_l;
     info.HasExecAddr = kcc_hdr->num_addr > 2;
-    info.PayloadOffset = (ptr + sizeof(kcc_header)) - start;
+    info.PayloadOffset = int((ptr + sizeof(kcc_header)) - start);
     if ((info.EndAddr-info.StartAddr) > data.Size()-128) {
         info.FileSizeError = true;
     }
@@ -193,6 +193,6 @@ FileLoader::start(kc85* kc, const FileInfo& info) {
     if (info.HasExecAddr) {
         // reset volume
         kc->cpu.out(0x89, 0x9f);
-        kc->cpu.state.PC = info.ExecAddr;
+        kc->cpu.PC = info.ExecAddr;
     }
 }

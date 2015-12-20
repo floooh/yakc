@@ -85,7 +85,7 @@ inline bool
 z80dbg::check_break(const z80& cpu) const {
     for (int i = 0; i < max_breakpoints; i++) {
         if (this->breakpoints[i].enabled) {
-            if (cpu.state.PC == this->breakpoints[i].address) {
+            if (cpu.PC == this->breakpoints[i].address) {
                 return true;
             }
         }
@@ -96,7 +96,7 @@ z80dbg::check_break(const z80& cpu) const {
 //------------------------------------------------------------------------------
 inline void
 z80dbg::store_pc_history(const z80& cpu) {
-    this->pc_history[pc_history_pos++] = cpu.state.PC;
+    this->pc_history[pc_history_pos++] = cpu.PC;
     this->pc_history_pos &= this->pc_history_size-1;
 }
 
@@ -164,28 +164,28 @@ inline void
 z80dbg::step_pc_modified(z80& cpu) {
     uword pc;
     do {
-        pc = cpu.state.PC;
+        pc = cpu.PC;
         this->store_pc_history(cpu);
         cpu.step();
     }
-    while ((pc == cpu.state.PC) && !cpu.state.INV);
+    while ((pc == cpu.PC) && !cpu.INV);
 }
 
 //------------------------------------------------------------------------------
 inline void
 z80dbg::set8(z80& cpu, reg r, ubyte v) {
     switch (r) {
-        case A:     cpu.state.A = v; break;
-        case F:     cpu.state.F = v; break;
-        case B:     cpu.state.B = v; break;
-        case C:     cpu.state.C = v; break;
-        case D:     cpu.state.D = v; break;
-        case E:     cpu.state.E = v; break;
-        case H:     cpu.state.H = v; break;
-        case L:     cpu.state.L = v; break;
-        case I:     cpu.state.I = v; break;
-        case R:     cpu.state.R = v; break;
-        case IM:    cpu.state.IM = v; break;
+        case A:     cpu.A = v; break;
+        case F:     cpu.F = v; break;
+        case B:     cpu.B = v; break;
+        case C:     cpu.C = v; break;
+        case D:     cpu.D = v; break;
+        case E:     cpu.E = v; break;
+        case H:     cpu.H = v; break;
+        case L:     cpu.L = v; break;
+        case I:     cpu.I = v; break;
+        case R:     cpu.R = v; break;
+        case IM:    cpu.IM = v; break;
         default:    YAKC_ASSERT(false); break;
     }
 }
@@ -194,17 +194,17 @@ z80dbg::set8(z80& cpu, reg r, ubyte v) {
 inline ubyte
 z80dbg::get8(const z80& cpu, reg r) {
     switch (r) {
-        case A:    return cpu.state.A;
-        case F:    return cpu.state.F;
-        case B:    return cpu.state.B;
-        case C:    return cpu.state.C;
-        case D:    return cpu.state.D;
-        case E:    return cpu.state.E;
-        case H:    return cpu.state.H;
-        case L:    return cpu.state.L;
-        case I:    return cpu.state.I;
-        case R:    return cpu.state.R;
-        case IM:   return cpu.state.IM;
+        case A:    return cpu.A;
+        case F:    return cpu.F;
+        case B:    return cpu.B;
+        case C:    return cpu.C;
+        case D:    return cpu.D;
+        case E:    return cpu.E;
+        case H:    return cpu.H;
+        case L:    return cpu.L;
+        case I:    return cpu.I;
+        case R:    return cpu.R;
+        case IM:   return cpu.IM;
         default:
             YAKC_ASSERT(false);
             return 0;
@@ -215,18 +215,18 @@ z80dbg::get8(const z80& cpu, reg r) {
 inline void
 z80dbg::set16(z80& cpu, reg r, uword v) {
     switch (r) {
-        case AF:   cpu.state.AF = v; break;
-        case BC:   cpu.state.BC = v; break;
-        case DE:   cpu.state.DE = v; break;
-        case HL:   cpu.state.HL = v; break;
-        case AF_:  cpu.state.AF_ = v; break;
-        case BC_:  cpu.state.BC_ = v; break;
-        case DE_:  cpu.state.DE_ = v; break;
-        case HL_:  cpu.state.HL_ = v; break;
-        case IX:   cpu.state.IX = v; break;
-        case IY:   cpu.state.IY = v; break;
-        case SP:   cpu.state.SP = v; break;
-        case PC:   cpu.state.PC = v; break;
+        case AF:   cpu.AF = v; break;
+        case BC:   cpu.BC = v; break;
+        case DE:   cpu.DE = v; break;
+        case HL:   cpu.HL = v; break;
+        case AF_:  cpu.AF_ = v; break;
+        case BC_:  cpu.BC_ = v; break;
+        case DE_:  cpu.DE_ = v; break;
+        case HL_:  cpu.HL_ = v; break;
+        case IX:   cpu.IX = v; break;
+        case IY:   cpu.IY = v; break;
+        case SP:   cpu.SP = v; break;
+        case PC:   cpu.PC = v; break;
         default:   YAKC_ASSERT(false);
     }
 }
@@ -235,18 +235,18 @@ z80dbg::set16(z80& cpu, reg r, uword v) {
 inline uword
 z80dbg::get16(const z80& cpu, reg r) {
     switch (r) {
-        case AF:    return cpu.state.AF;
-        case BC:    return cpu.state.BC;
-        case DE:    return cpu.state.DE;
-        case HL:    return cpu.state.HL;
-        case AF_:   return cpu.state.AF_;
-        case BC_:   return cpu.state.BC_;
-        case DE_:   return cpu.state.DE_;
-        case HL_:   return cpu.state.HL_;
-        case IX:    return cpu.state.IX;
-        case IY:    return cpu.state.IY;
-        case SP:    return cpu.state.SP;
-        case PC:    return cpu.state.PC;
+        case AF:    return cpu.AF;
+        case BC:    return cpu.BC;
+        case DE:    return cpu.DE;
+        case HL:    return cpu.HL;
+        case AF_:   return cpu.AF_;
+        case BC_:   return cpu.BC_;
+        case DE_:   return cpu.DE_;
+        case HL_:   return cpu.HL_;
+        case IX:    return cpu.IX;
+        case IY:    return cpu.IY;
+        case SP:    return cpu.SP;
+        case PC:    return cpu.PC;
         default:
             YAKC_ASSERT(false);
             return 0;
