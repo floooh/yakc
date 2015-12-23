@@ -24,6 +24,7 @@ FileLoader::Setup(kc85& kc) {
     this->Items.Add("Boulderdash (KC85/4)", "boulder4.tap", kc85_model::kc85_4);
     this->Items.Add("Digger (KC85/3)", "digger3.tap", kc85_model::kc85_3);
     this->Items.Add("Digger (KC85/4)", "digger4.tap", kc85_model::kc85_4);
+    this->Items.Add("Tetris (KC85/4)", "tetris.kcc", kc85_model::kc85_4);
     this->Items.Add("Ladder (KC85/3)", "ladder-3.kcc", kc85_model::kc85_3);
     this->Items.Add("Chess (KC85/3+KC85/4)", "chess.kcc", kc85_model::any);
     this->Items.Add("Testbild (KC85/3)", "testbild.kcc", kc85_model::kc85_3);
