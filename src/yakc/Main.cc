@@ -16,6 +16,7 @@
 #include "ui/UI.h"
 #endif
 #include "HTTP/HTTPFileSystem.h"
+#include "Time/Clock.h"
 
 using namespace Oryol;
 using namespace yakc;
@@ -38,7 +39,7 @@ public:
     UI ui;
     #endif
     IOQueue ioQueue;
-
+    TimePoint lapTimePoint;
 };
 OryolMain(YakcApp);
 
@@ -91,22 +92,29 @@ YakcApp::OnInit() {
     // this automatically on startup
     this->kc.exp.insert_module(0x08, kc85_exp::m022_16kbyte);
 
+    this->lapTimePoint = Clock::Now();
+
     return AppState::Running;
 }
 
 //------------------------------------------------------------------------------
 AppState::Code
 YakcApp::OnRunning() {
+    Duration frameTime = Clock::LapTime(this->lapTimePoint);
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
-    int micro_secs = 1000000 / 60;
+    int micro_secs = (int) frameTime.AsMicroSeconds();
     this->handleInput();
     #if YAKC_UI
+        o_trace_begin(yakc_kc);
         this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs);
+        o_trace_end();
         this->draw.fsParams.CRTEffect = this->ui.Settings.crtEffect;
         this->draw.fsParams.ColorTV = this->ui.Settings.colorTV;
         this->draw.fsParams.CRTWarp = glm::vec2(this->ui.Settings.crtWarp);
     #else
+        o_trace_begin(yakc_kc);
         this->kc.onframe(1, micro_secs);
+        o_trace_end();
         this->draw.fsParams.CRTEffect = true;
         this->draw.fsParams.ColorTV = true;
         this->draw.fsParams.CRTWarp = glm::vec2(1.0f/64.0f);

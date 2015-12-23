@@ -9,7 +9,6 @@ using namespace yakc;
 //------------------------------------------------------------------------------
 void
 Draw::Setup(const GfxSetup& gfxSetup, int frame) {
-
     this->frameSize = frame;
     this->texUpdateAttrs.NumFaces = 1;
     this->texUpdateAttrs.NumMipMaps = 1;
@@ -46,6 +45,8 @@ Draw::Discard() {
 //------------------------------------------------------------------------------
 void
 Draw::Render(const kc85& kc) {
+    o_trace_scoped(yakc_draw);
+
     // copy decoded RGBA8 into texture
     Gfx::UpdateTexture(this->fsTextures.IRM, kc.video.LinearBuffer, this->texUpdateAttrs);
     this->applyViewport();

@@ -94,6 +94,8 @@ UI::OpenWindow(kc85& kc, const Ptr<WindowBase>& win) {
 //------------------------------------------------------------------------------
 void
 UI::OnFrame(kc85& kc) {
+    o_trace_scoped(yakc_ui);
+
     StringBuilder strBuilder;
     IMUI::NewFrame(Clock::LapTime(this->curTime));
     if (this->uiEnabled) {
