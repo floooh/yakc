@@ -236,7 +236,7 @@ memory::r8(uword addr) const {
 //------------------------------------------------------------------------------
 inline byte
 memory::rs8(uword addr) const {
-    return (char) this->pages[addr>>page::shift].ptr[addr&page::mask];
+    return (byte) this->pages[addr>>page::shift].ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------

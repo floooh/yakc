@@ -36,9 +36,9 @@
 namespace yakc {
 
 typedef unsigned char ubyte;
-typedef char byte;
+typedef signed char byte;
 typedef unsigned short uword;
-typedef short word;
+typedef signed short word;
 
 enum class kc85_model {
     kc85_2 = (1<<0),
