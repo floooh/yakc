@@ -108,16 +108,15 @@ YakcApp::OnRunning() {
         o_trace_begin(yakc_kc);
         this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs);
         o_trace_end();
-        this->draw.fsParams.CRTEffect = this->ui.Settings.crtEffect;
-        this->draw.fsParams.ColorTV = this->ui.Settings.colorTV;
-        this->draw.fsParams.CRTWarp = glm::vec2(this->ui.Settings.crtWarp);
+        this->draw.UpdateParams(
+            this->ui.Settings.crtEffect,
+            this->ui.Settings.colorTV,
+            glm::vec2(this->ui.Settings.crtWarp));
     #else
         o_trace_begin(yakc_kc);
         this->kc.onframe(1, micro_secs);
         o_trace_end();
-        this->draw.fsParams.CRTEffect = true;
-        this->draw.fsParams.ColorTV = true;
-        this->draw.fsParams.CRTWarp = glm::vec2(1.0f/64.0f);
+        this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
     this->draw.Render(this->kc);
     Synth::Update();

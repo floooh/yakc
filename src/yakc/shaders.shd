@@ -162,7 +162,6 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 @end
 
 @uniform_block fsParams FSParams
-@uniform bool crtEffect CRTEffect
 @uniform bool colorTV ColorTV
 @uniform vec2 crtWarp CRTWarp
 @end
@@ -174,13 +173,22 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 @use_uniform_block fsParams
 @in vec2 uv
 {
-    vec4 color;
-    if (crtEffect) {
-        color = tl_crt(iChannel0, _fragcoord, uv, crtWarp);
+    vec4 color = tl_crt(iChannel0, _fragcoord, uv, crtWarp);
+    if (!colorTV) {
+        float lum = dot(color.xyz, vec3(0.3, 0.59, 0.11));
+        color.xyz = vec3(lum, lum, lum);
     }
-    else {
-        color = tex2D(iChannel0, uv);
-    }
+    _color = color;
+}
+@end
+
+// this renders without the expensive CRT effect
+@fs nocrtFS
+@use_texture_block fsTextures
+@use_uniform_block fsParams
+@in vec2 uv
+{
+    vec4 color = tex2D(iChannel0, uv);
     if (!colorTV) {
         float lum = dot(color.xyz, vec3(0.3, 0.59, 0.11));
         color.xyz = vec3(lum, lum, lum);
@@ -192,3 +200,8 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 @bundle CRT
 @program vs crtFS
 @end
+
+@bundle NoCRT
+@program vs nocrtFS
+@end
+

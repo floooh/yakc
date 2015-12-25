@@ -9,6 +9,7 @@ using namespace yakc;
 //------------------------------------------------------------------------------
 void
 Draw::Setup(const GfxSetup& gfxSetup, int frame) {
+    this->crtEffectEnabled = false;
     this->frameSize = frame;
     this->texUpdateAttrs.NumFaces = 1;
     this->texUpdateAttrs.NumMipMaps = 1;
@@ -20,20 +21,26 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     irmSetup.Sampler.MagFilter = TextureFilterMode::Linear;
     irmSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
     irmSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
-    this->fsTextures.IRM = Gfx::CreateResource(irmSetup);
+    this->irmTexture = Gfx::CreateResource(irmSetup);
+    this->crtFsTextures.IRM = this->irmTexture;
+    this->nocrtFsTextures.IRM = this->irmTexture;
 
     Id msh = Gfx::CreateResource(MeshSetup::FullScreenQuad(true));
-    Id shd = Gfx::CreateResource(Shaders::CRT::Setup());
-    auto dss = DrawStateSetup::FromMeshAndShader(msh, shd);
+    Id crtShd = Gfx::CreateResource(Shaders::CRT::Setup());
+    Id nocrtShd = Gfx::CreateResource(Shaders::NoCRT::Setup());
+
+    auto dss = DrawStateSetup::FromMeshAndShader(msh, crtShd);
     dss.DepthStencilState.DepthWriteEnabled = false;
     dss.DepthStencilState.DepthCmpFunc = CompareFunc::Always;
     dss.BlendState.ColorFormat = gfxSetup.ColorFormat;
     dss.BlendState.DepthFormat = gfxSetup.DepthFormat;
     dss.RasterizerState.SampleCount = gfxSetup.SampleCount;
-    this->drawState = Gfx::CreateResource(dss);
+    this->crtDrawState = Gfx::CreateResource(dss);
+    dss.Shader = nocrtShd;
+    this->nocrtDrawState = Gfx::CreateResource(dss);
 
-    this->fsParams.CRTEffect = true;
-    this->fsParams.ColorTV = true;
+    this->crtFsParams.ColorTV = true;
+    this->nocrtFsParams.ColorTV = true;
 }
 
 //------------------------------------------------------------------------------
@@ -44,14 +51,28 @@ Draw::Discard() {
 
 //------------------------------------------------------------------------------
 void
+Draw::UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& crtWarp) {
+    this->crtEffectEnabled = enableCrtEffect;
+    this->crtFsParams.ColorTV = this->nocrtFsParams.ColorTV = colorTV;
+    this->crtFsParams.CRTWarp = this->nocrtFsParams.CRTWarp = crtWarp;
+}
+
+//------------------------------------------------------------------------------
+void
 Draw::Render(const kc85& kc) {
     o_trace_scoped(yakc_draw);
 
     // copy decoded RGBA8 into texture
-    Gfx::UpdateTexture(this->fsTextures.IRM, kc.video.LinearBuffer, this->texUpdateAttrs);
+    Gfx::UpdateTexture(this->irmTexture, kc.video.LinearBuffer, this->texUpdateAttrs);
     this->applyViewport();
-    Gfx::ApplyDrawState(this->drawState, this->fsTextures);
-    Gfx::ApplyUniformBlock(this->fsParams);
+    if (this->crtEffectEnabled) {
+        Gfx::ApplyDrawState(this->crtDrawState, this->crtFsTextures);
+        Gfx::ApplyUniformBlock(this->crtFsParams);
+    }
+    else {
+        Gfx::ApplyDrawState(this->nocrtDrawState, this->nocrtFsTextures);
+        Gfx::ApplyUniformBlock(this->nocrtFsParams);
+    }
     Gfx::Draw(0);
     this->restoreViewport();
 }
