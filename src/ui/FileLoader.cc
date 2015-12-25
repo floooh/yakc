@@ -192,8 +192,31 @@ FileLoader::patch(kc85* kc, const FileInfo& info) {
 void
 FileLoader::start(kc85* kc, const FileInfo& info) {
     if (info.HasExecAddr) {
-        // reset volume
-        kc->cpu.out(0x89, 0x9f);
+
+        // initialize registers
+        kc->cpu.A = 0x00;
+        kc->cpu.F = 0x10;
+        kc->cpu.BC = kc->cpu.BC_ = 0x0000;
+        kc->cpu.DE = kc->cpu.DE_ = 0x0000;
+        kc->cpu.HL = kc->cpu.HL_ = 0x0000;
+        kc->cpu.AF_ = 0x0000;
+        kc->cpu.SP = 0x01C2;
+
+        // delete ASCII video memory
+        for (uword addr = 0xb200; addr < 0xb700; addr++) {
+            kc->cpu.mem.w8(addr, 0);
+        }
+        kc->cpu.mem.w8(0xb7a0, 0);
+        if (kc->cur_model == kc85_model::kc85_3) {
+            kc->cpu.out(0x89, 0x9f);
+            kc->cpu.mem.w16(kc->cpu.SP, 0xf15c);
+        }
+        else if (kc->cur_model == kc85_model::kc85_4) {
+            kc->cpu.out(0x89, 0xFF);
+            kc->cpu.mem.w16(kc->cpu.SP, 0xf17e);
+        }
+
+        // start address
         kc->cpu.PC = info.ExecAddr;
     }
 }
