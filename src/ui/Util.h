@@ -25,8 +25,8 @@ public:
     /// convert an uword to a hex string
     static void UWordToStr(yakc::uword w, char* buf, int bufSize) {
         o_assert(bufSize >= 5);
-        UByteToStr(w>>8, buf, bufSize); buf+=2; bufSize-=2;
-        UByteToStr(w, buf, bufSize);
+        UByteToStr(w >> 8, buf, bufSize); buf+=2; bufSize-=2;
+        UByteToStr(w & 0xFF, buf, bufSize);
     }
 
     /// parse 4 hex characters into an uint16_t, return old value if failed

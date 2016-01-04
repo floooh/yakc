@@ -390,7 +390,7 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             break;
         case 0x89:
             self->pio.write(z80pio::B, val);
-            self->video.pio_blink_enable(val & PIO_B_BLINK_ENABLED);
+            self->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
             self->audio.update_volume(val & PIO_B_VOLUME_MASK);
             break;
         case 0x8A:

@@ -15,6 +15,10 @@ endif()
 fips_setup()
 fips_project(yakc)
 
+if (FIPS_MSVC)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 # manual imports
 fips_ide_group("Oryol")
 fips_import_oryol_Core()

@@ -77,7 +77,7 @@ z80pio::control(channel c, ubyte m) {
     }
     else if ((m & 0xF) == 0x3) {
         // interrupt enable/disable
-        channel_state[c].interrupt_enabled = m & 0x80;
+        channel_state[c].interrupt_enabled = (m & 0x80) != 0;
     }
     else if ((m & 0xF) == 0xF) {
         // set mode ('bidirectional'=2 and 'control'=3 not supported)

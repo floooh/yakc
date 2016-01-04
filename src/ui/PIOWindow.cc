@@ -51,13 +51,13 @@ PIOWindow::Draw(kc85& kc) {
             this->pioAData.Set8(kc.pio.read(z80pio::A));
         }
         const ubyte a = kc.pio.read(z80pio::A);
-        onOffLine("CAOS ROM:", a & kc85::PIO_A_CAOS_ROM);
-        onOffLine("RAM:", a & kc85::PIO_A_RAM);
-        onOffLine("IRM:", a & kc85::PIO_A_IRM);
-        onOffLine("RAM R/O:", a & kc85::PIO_A_RAM_RO);
-        onOffLine("TAPE LED:", a & kc85::PIO_A_TAPE_LED);
-        onOffLine("TAPE MOTOR:", a & kc85::PIO_A_TAPE_MOTOR);
-        onOffLine("BASIC ROM:", a & kc85::PIO_A_BASIC_ROM);
+        onOffLine("CAOS ROM:", 0 != (a & kc85::PIO_A_CAOS_ROM));
+        onOffLine("RAM:", 0 != (a & kc85::PIO_A_RAM));
+        onOffLine("IRM:", 0 != (a & kc85::PIO_A_IRM));
+        onOffLine("RAM R/O:", 0 != (a & kc85::PIO_A_RAM_RO));
+        onOffLine("TAPE LED:", 0 != (a & kc85::PIO_A_TAPE_LED));
+        onOffLine("TAPE MOTOR:", 0 != (a & kc85::PIO_A_TAPE_MOTOR));
+        onOffLine("BASIC ROM:", 0 != (a & kc85::PIO_A_BASIC_ROM));
         ImGui::Separator();
         
         if (this->pioBData.Draw()) {
@@ -69,7 +69,7 @@ PIOWindow::Draw(kc85& kc) {
         ImGui::PopItemWidth();
         const ubyte b = kc.pio.read(z80pio::B);
         ImGui::Text("VOLUME:"); ImGui::SameLine(96); ImGui::Text("%02X", b & kc85::PIO_B_VOLUME_MASK);
-        onOffLine("BLINKING", b & kc85::PIO_B_BLINK_ENABLED);
+        onOffLine("BLINKING", 0 != (b & kc85::PIO_B_BLINK_ENABLED));
         ImGui::Separator();
         ImGui::Text("PIO A Control (port 0x8A):");
         pioControlState(kc, z80pio::A);

@@ -300,12 +300,12 @@ kc85_snapshot::apply_cpu_state(const state_t& state, kc85& kc) {
     kc.cpu.I   = state.cpu.I;
     kc.cpu.R   = state.cpu.R;
     kc.cpu.IM  = state.cpu.IM;
-    kc.cpu.HALT = state.cpu.HALT;
-    kc.cpu.IFF1 = state.cpu.IFF1;
-    kc.cpu.IFF2 = state.cpu.IFF2;
-    kc.cpu.INV  = state.cpu.INV;
-    kc.cpu.irq_received = state.cpu.irq_received;
-    kc.cpu.enable_interrupt = state.cpu.enable_interrupt;
+    kc.cpu.HALT = 0 != state.cpu.HALT;
+    kc.cpu.IFF1 = 0 != state.cpu.IFF1;
+    kc.cpu.IFF2 = 0 != state.cpu.IFF2;
+    kc.cpu.INV  = 0 != state.cpu.INV;
+    kc.cpu.irq_received = 0 != state.cpu.irq_received;
+    kc.cpu.enable_interrupt = 0 != state.cpu.enable_interrupt;
 }
 
 //------------------------------------------------------------------------------
@@ -320,10 +320,10 @@ kc85_snapshot::write_intctrl_state(const z80int& src, state_t::intctrl_t& dst) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_intctrl_state(const state_t::intctrl_t& src, z80int& dst) {
-    dst.int_enabled = src.enabled;
-    dst.int_requested = src.requested;
+    dst.int_enabled = 0 != src.enabled;
+    dst.int_requested = 0 != src.requested;
     dst.int_request_data = src.request_data;
-    dst.int_pending = src.pending;
+    dst.int_pending = 0 != src.pending;
 }
 
 //------------------------------------------------------------------------------
@@ -352,7 +352,7 @@ kc85_snapshot::apply_ctc_state(const state_t& state, kc85& kc) {
         dst.down_counter = src.down_counter;
         dst.mode = src.mode;
         dst.constant = src.constant;
-        dst.waiting_for_trigger = src.waiting_for_trigger;
+        dst.waiting_for_trigger = 0 != src.waiting_for_trigger;
         dst.interrupt_vector = src.interrupt_vector;
         apply_intctrl_state(src.intctrl, dst.int_ctrl);
     }
@@ -381,7 +381,7 @@ kc85_snapshot::apply_pio_state(const state_t& state, kc85& kc) {
         const auto& src = state.pio.chn[c];
 
         dst.interrupt_vector = src.interrupt_vector;
-        dst.interrupt_enabled = src.interrupt_enabled;
+        dst.interrupt_enabled = 0 != src.interrupt_enabled;
         dst.mode = src.mode;
         kc.pio.channel_data[c] = src.data;
     }
@@ -403,8 +403,8 @@ kc85_snapshot::apply_video_state(const state_t& state, kc85& kc) {
     kc.video.model = (kc85_model) state.kc.model;
     kc.video.cur_pal_line = state.video.cur_pal_line;
     kc.video.irm_control = state.video.irm_control;
-    kc.video.pio_blink_flag = state.video.pio_blink_flag;
-    kc.video.ctc_blink_flag = state.video.ctc_blink_flag;
+    kc.video.pio_blink_flag = 0 != state.video.pio_blink_flag;
+    kc.video.ctc_blink_flag = 0 != state.video.ctc_blink_flag;
 }
 
 //------------------------------------------------------------------------------

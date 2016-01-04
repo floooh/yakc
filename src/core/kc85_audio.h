@@ -131,7 +131,7 @@ kc85_audio::update_channel(int channel) {
             int div = ctc_chn.constant * ((ctc_chn.mode & z80ctc::PRESCALER_256) ? 256 : 16);
             float hz = (float(1750000) / float(div)) / 2.0f;
             if (this->cb_sound) {
-                this->cb_sound(this->userdata, this->frame_t, channel, hz);
+                this->cb_sound(this->userdata, this->frame_t, channel, (int)hz);
             }
             this->channels[channel].ctc_constant = ctc_chn.constant;
             this->channels[channel].ctc_mode = ctc_chn.mode;
