@@ -21,8 +21,8 @@ cmake version 3.3.2
 > git clone https://github.com/floooh/yakc
 > cd yakc
 > ./fips gen
-> ./fips make yakc_app
-> ./fips run yakc_app
+> ./fips make yakc
+> ./fips run yakc
 ```
 
 This should work on OSX, Linux and Windows, but only OSX is really tested
