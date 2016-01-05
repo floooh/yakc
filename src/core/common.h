@@ -65,10 +65,23 @@ clear(void* ptr, int num_bytes) {
 inline void
 fill_random(void* ptr, int num_bytes) {
     YAKC_ASSERT((num_bytes & 0x03) == 0);
-    unsigned int* uptr = (unsigned int*)ptr;
-    int num_uints = num_bytes>>2;
-    for (int i = 0; i < num_uints; i++) {
-        *uptr++ = YAKC_RAND();
+
+    // RAND_MAX in Visual Studio is (1<<15)
+    if (RAND_MAX <= (1<<16)) {
+        unsigned short* uptr = (unsigned short*)ptr;
+        int num_ushorts = num_bytes >> 1;
+        for (int i = 0; i < num_ushorts; i++) {
+            unsigned short r = YAKC_RAND();
+            *uptr++ = r;
+        }
+    }
+    else {
+        unsigned int* uptr = (unsigned int*)ptr;
+        int num_uints = num_bytes >> 2;
+        for (int i = 0; i < num_uints; i++) {
+            unsigned int r = YAKC_RAND();
+            *uptr++ = r;
+        }
     }
 }
 
