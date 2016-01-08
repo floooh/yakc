@@ -21,14 +21,16 @@ public:
     };
 
     /// channel state
-    struct {
-        ubyte interrupt_vector = 0;
-        bool interrupt_enabled = false;
-        ubyte mode = 0;     // 0=out, 1=in, 2=bi, 3=control
+    struct channel_state_t {
+        channel_state_t() : interrupt_vector(0), interrupt_enabled(false), mode(0) {};
+
+        ubyte interrupt_vector;
+        bool interrupt_enabled;
+        ubyte mode;     // 0=out, 1=in, 2=bi, 3=control
     } channel_state[num_channels];
 
     /// channel data values
-    ubyte channel_data[num_channels]={0};
+    ubyte channel_data[num_channels];
     /// interrupt controller
     z80int int_ctrl;
 

@@ -11,6 +11,10 @@
 
 class HexInputWidget {
 public:
+    /// constructor
+    HexInputWidget() : value(0), modeUWord(true) {
+        YAKC_MEMSET(this->buf, 0, sizeof(this->buf));
+    }
     /// configure with 16-bit value
     void Configure16(const Oryol::StringAtom& label_, yakc::uword value_) {
         this->label = label_;
@@ -58,7 +62,7 @@ public:
 
     static const int bufSize = 5;
     Oryol::StringAtom label;
-    char buf[bufSize] = { 0 };
-    yakc::uword value = 0;
-    bool modeUWord = true;     // 16- or 8-bit mode
+    char buf[bufSize];
+    yakc::uword value;
+    bool modeUWord;
 };

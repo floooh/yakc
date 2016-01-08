@@ -39,9 +39,10 @@ public:
     int size(rom type) const;
 
 private:
-    struct {
-        int pos = -1;
-        int size = 0;
+    struct item {
+        item() : pos(-1), size(0) { };
+        int pos;
+        int size;
     } roms[num_roms];
 
     static const int buf_size = 256 * 1024;

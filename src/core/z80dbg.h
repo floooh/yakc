@@ -67,9 +67,10 @@ public:
 
 private:
     static const int max_breakpoints = 2;
-    struct {
-        bool enabled = false;
-        uword address = 0;
+    struct breakpoint {
+        breakpoint() : enabled(false), address(0) {};
+        bool enabled;
+        uword address;
     } breakpoints[max_breakpoints];
 };
 
