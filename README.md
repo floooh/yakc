@@ -3,11 +3,7 @@ Yet another KC emulator (WTF is a 'KC': https://en.wikipedia.org/wiki/KC_85)
 
 [![Build Status](https://travis-ci.org/floooh/yakc.svg)](https://travis-ci.org/floooh/yakc)
 
-** WORK IN PROGRESS!! **
-
 ### Live Demo:
-
-A 'mostly uptodate' emscripten-compiled version is here:
 
 http://floooh.github.io/virtualkc/
 
@@ -25,8 +21,7 @@ cmake version 3.3.2
 > ./fips run yakc
 ```
 
-This should work on OSX, Linux and Windows, but only OSX is really tested
-so far.
+If it doesn't work out of the box (e.g. on Windows if only VS2015 is installed instead of VS2013) you need to use a different fips build config (run './fips list configs' to see the list of configs).
 
 ### Screenshots
 
@@ -43,15 +38,15 @@ so far.
 - emulator core has hooks for keyboard-input, audio/video-output, load/save blocks of memory
 - Oryol as input/video/audio wrapper (https://github.com/floooh/oryol)
 - imgui (https://github.com/ocornut/imgui) as simple debugger overlay (view and edit registers, memory, asm/disasm)
-- emulate KC85/3 and KC85/4
+- emulate KC85/3 and KC85/4 (bonus: the final version also has KC85/2)
 - small and fast enough to feel good on browser and mobile 
 
 ### Non-Goals:
-- no complete hardware emulation ('display needling', I/O ports, modules, analog cassette interface, ...)
+- no complete hardware emulation ('display needling', I/O ports, modules, analog cassette interface, ...) (bonus: modules are in, yay(
 - no emulation of the tricky serial keyboard interface
 
 ### Potential goals:
-- CPU/memory state recording to allow rewind/replay in debugger (that would be cool!)
+- CPU/memory state recording to allow rewind/replay in debugger (that would be cool!) (snapshotting of current state is in, but no record/replay)
 - support for other East-German 8-bitters (Z9001, Z1013, LC80)
 - Speccy, CPC, KC-compact?
 
