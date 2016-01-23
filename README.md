@@ -23,7 +23,7 @@ cmake version 3.3.2
 > ./fips run yakc
 ```
 
-If it doesn't work out of the box (e.g. on Windows if only VS2015 is installed instead of VS2013) you need to use a different fips build config (run './fips list configs' to see the list of configs).
+If it doesn't work out of the box (e.g. on Windows if only VS2015 is installed instead of VS2013) you need to use a different fips build config (run './fips list configs' to see the list of configs, and then './fips set config [cfg]' before running './fips gen' again)
 
 ### Screenshots
 
