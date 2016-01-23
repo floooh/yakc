@@ -7,6 +7,8 @@ Yet another KC emulator (WTF is a 'KC': https://en.wikipedia.org/wiki/KC_85)
 
 http://floooh.github.io/virtualkc/
 
+(should work on all modern browsers with WebGL support except iOS Safari which reloads the page after a few seconds)
+
 ### How to Build:
 
 ```bash
