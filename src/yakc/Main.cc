@@ -3,7 +3,7 @@
 //  yakc app main source.
 //------------------------------------------------------------------------------
 #include "Pre.h"
-#include "Core/App.h"
+#include "Core/Main.h"
 #include "Gfx/Gfx.h"
 #include "Synth/Synth.h"
 #include "Input/Input.h"
