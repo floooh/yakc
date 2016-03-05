@@ -27,7 +27,7 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
         ImGui::OpenPopup("select");
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip(slot.mod.desc);
+        ImGui::SetTooltip("%s", slot.mod.desc);
     }
     ImGui::SameLine();
     ImGui::Text("type:%02X ctrl:%02X", slot.mod.id, slot.control_byte);

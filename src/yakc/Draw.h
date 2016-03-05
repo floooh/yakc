@@ -26,6 +26,7 @@ public:
 
     bool crtEffectEnabled;
 
+    Oryol::MeshBlock fsqMesh;
     Oryol::Id irmTexture;
     Oryol::Id crtDrawState;
     Oryol::Shaders::CRT::FSTextures crtFsTextures;

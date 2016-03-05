@@ -197,11 +197,6 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 }
 @end
 
-@bundle CRT
-@program vs crtFS
-@end
-
-@bundle NoCRT
-@program vs nocrtFS
-@end
+@program CRT vs crtFS
+@program NoCRT vs nocrtFS
 

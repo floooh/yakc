@@ -231,7 +231,7 @@ DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
 
         // print disassembled instruction
         ImGui::SameLine(line_start_x + cell_width * 4 + glyph_width * 2);
-        ImGui::Text(disasm.Result());
+        ImGui::Text("%s", disasm.Result());
         ImGui::PopStyleColor();
     }
     clipper.End();

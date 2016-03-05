@@ -24,7 +24,7 @@ PIOWindow::Setup(kc85& kc) {
 //------------------------------------------------------------------------------
 static void
 onOffLine(const char* text, bool on) {
-    ImGui::Text(text); ImGui::SameLine(96); ImGui::TextColored(on?green:red, on?"ON":"OFF");
+    ImGui::Text("%s", text); ImGui::SameLine(96); ImGui::TextColored(on?green:red, "%s", on?"ON":"OFF");
 }
 
 //------------------------------------------------------------------------------

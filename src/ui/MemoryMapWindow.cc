@@ -85,7 +85,7 @@ MemoryMapWindow::drawRect(int layer, uword addr, unsigned int len, const char* t
 
     if (ImGui::IsMouseHoveringRect(a, b)) {
         if (tooltip) {
-            ImGui::SetTooltip(tooltip);
+            ImGui::SetTooltip("%s", tooltip);
         }
     }
 }

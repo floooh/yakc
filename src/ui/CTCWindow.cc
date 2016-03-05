@@ -21,10 +21,10 @@ static void
 drawModeBit(const kc85& kc, int chn_index, ubyte mask, const char* name, const char* on_str, const char* off_str) {
     ImGui::Text("  %s:", name); ImGui::SameLine(128);
     if (kc.ctc.channels[chn_index].mode & mask) {
-        ImGui::Text(on_str);
+        ImGui::Text("%s", on_str);
     }
     else {
-        ImGui::Text(off_str);
+        ImGui::Text("%s", off_str);
     }
 }
 

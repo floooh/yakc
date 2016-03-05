@@ -25,11 +25,12 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     this->crtFsTextures.IRM = this->irmTexture;
     this->nocrtFsTextures.IRM = this->irmTexture;
 
-    Id msh = Gfx::CreateResource(MeshSetup::FullScreenQuad(true));
+    auto fsqSetup = MeshSetup::FullScreenQuad(true);
+    this->fsqMesh[0] = Gfx::CreateResource(fsqSetup);
     Id crtShd = Gfx::CreateResource(Shaders::CRT::Setup());
     Id nocrtShd = Gfx::CreateResource(Shaders::NoCRT::Setup());
 
-    auto dss = DrawStateSetup::FromMeshAndShader(msh, crtShd);
+    auto dss = DrawStateSetup::FromLayoutAndShader(fsqSetup.Layout, crtShd);
     dss.DepthStencilState.DepthWriteEnabled = false;
     dss.DepthStencilState.DepthCmpFunc = CompareFunc::Always;
     dss.BlendState.ColorFormat = gfxSetup.ColorFormat;
@@ -66,11 +67,11 @@ Draw::Render(const kc85& kc) {
     Gfx::UpdateTexture(this->irmTexture, kc.video.LinearBuffer, this->texUpdateAttrs);
     this->applyViewport();
     if (this->crtEffectEnabled) {
-        Gfx::ApplyDrawState(this->crtDrawState, this->crtFsTextures);
+        Gfx::ApplyDrawState(this->crtDrawState, this->fsqMesh, this->crtFsTextures);
         Gfx::ApplyUniformBlock(this->crtFsParams);
     }
     else {
-        Gfx::ApplyDrawState(this->nocrtDrawState, this->nocrtFsTextures);
+        Gfx::ApplyDrawState(this->nocrtDrawState, this->fsqMesh, this->nocrtFsTextures);
         Gfx::ApplyUniformBlock(this->nocrtFsParams);
     }
     Gfx::Draw(0);

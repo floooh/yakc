@@ -69,7 +69,7 @@ DisasmWindow::drawMainContent(const kc85& kc, uword start_addr, int num_lines) {
 
         // print disassembled instruction
         ImGui::SameLine(line_start_x + cell_width * 4 + glyph_width * 2);
-        ImGui::Text(disasm.Result());
+        ImGui::Text("%s", disasm.Result());
     }
     clipper.End();
     ImGui::PopStyleVar(2);
