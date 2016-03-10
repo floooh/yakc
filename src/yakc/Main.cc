@@ -69,7 +69,7 @@ YakcApp::OnInit() {
     auto gfxSetup = GfxSetup::Window(width, height, "KC85");
     gfxSetup.SetPoolSize(GfxResourceType::Mesh, 4);
     gfxSetup.SetPoolSize(GfxResourceType::Texture, 4);
-    gfxSetup.SetPoolSize(GfxResourceType::DrawState, 4);
+    gfxSetup.SetPoolSize(GfxResourceType::Pipeline, 4);
     gfxSetup.SetPoolSize(GfxResourceType::Shader, 4);
     Gfx::Setup(gfxSetup);
     Input::Setup();

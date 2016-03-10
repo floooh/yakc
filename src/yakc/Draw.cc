@@ -22,23 +22,25 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     irmSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
     irmSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
     this->irmTexture = Gfx::CreateResource(irmSetup);
-    this->crtFsTextures.IRM = this->irmTexture;
-    this->nocrtFsTextures.IRM = this->irmTexture;
+    this->crtDrawState.FSTexture[Textures::IRM] = irmTexture;
+    this->nocrtDrawState.FSTexture[Textures::IRM] = irmTexture;
 
     auto fsqSetup = MeshSetup::FullScreenQuad(true);
-    this->fsqMesh[0] = Gfx::CreateResource(fsqSetup);
-    Id crtShd = Gfx::CreateResource(Shaders::CRT::Setup());
-    Id nocrtShd = Gfx::CreateResource(Shaders::NoCRT::Setup());
+    Id fsq = Gfx::CreateResource(fsqSetup);
+    this->crtDrawState.Mesh[0] = fsq;
+    this->nocrtDrawState.Mesh[0] = fsq;
 
-    auto dss = DrawStateSetup::FromLayoutAndShader(fsqSetup.Layout, crtShd);
-    dss.DepthStencilState.DepthWriteEnabled = false;
-    dss.DepthStencilState.DepthCmpFunc = CompareFunc::Always;
-    dss.BlendState.ColorFormat = gfxSetup.ColorFormat;
-    dss.BlendState.DepthFormat = gfxSetup.DepthFormat;
-    dss.RasterizerState.SampleCount = gfxSetup.SampleCount;
-    this->crtDrawState = Gfx::CreateResource(dss);
-    dss.Shader = nocrtShd;
-    this->nocrtDrawState = Gfx::CreateResource(dss);
+    Id crtShd = Gfx::CreateResource(CRTShader::Setup());
+    Id nocrtShd = Gfx::CreateResource(NoCRTShader::Setup());
+    auto pips = PipelineSetup::FromLayoutAndShader(fsqSetup.Layout, crtShd);
+    pips.DepthStencilState.DepthWriteEnabled = false;
+    pips.DepthStencilState.DepthCmpFunc = CompareFunc::Always;
+    pips.BlendState.ColorFormat = gfxSetup.ColorFormat;
+    pips.BlendState.DepthFormat = gfxSetup.DepthFormat;
+    pips.RasterizerState.SampleCount = gfxSetup.SampleCount;
+    this->crtDrawState.Pipeline = Gfx::CreateResource(pips);
+    pips.Shader = nocrtShd;
+    this->nocrtDrawState.Pipeline = Gfx::CreateResource(pips);
 
     this->crtFsParams.ColorTV = true;
     this->nocrtFsParams.ColorTV = true;
@@ -67,11 +69,11 @@ Draw::Render(const kc85& kc) {
     Gfx::UpdateTexture(this->irmTexture, kc.video.LinearBuffer, this->texUpdateAttrs);
     this->applyViewport();
     if (this->crtEffectEnabled) {
-        Gfx::ApplyDrawState(this->crtDrawState, this->fsqMesh, this->crtFsTextures);
+        Gfx::ApplyDrawState(this->crtDrawState);
         Gfx::ApplyUniformBlock(this->crtFsParams);
     }
     else {
-        Gfx::ApplyDrawState(this->nocrtDrawState, this->fsqMesh, this->nocrtFsTextures);
+        Gfx::ApplyDrawState(this->nocrtDrawState);
         Gfx::ApplyUniformBlock(this->nocrtFsParams);
     }
     Gfx::Draw(0);

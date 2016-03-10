@@ -157,19 +157,19 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 }
 @end
 
-@texture_block fsTextures FSTextures
-@texture sampler2D iChannel0 IRM
+@texture_block textures Textures
+sampler2D iChannel0 IRM
 @end
 
 @uniform_block fsParams FSParams
-@uniform bool colorTV ColorTV
-@uniform vec2 crtWarp CRTWarp
+bool colorTV ColorTV
+vec2 crtWarp CRTWarp
 @end
 
 // this renders with expensive CRT effect
 @fs crtFS
 @use_code_block TL_CRT
-@use_texture_block fsTextures
+@use_texture_block textures
 @use_uniform_block fsParams
 @in vec2 uv
 {
@@ -184,7 +184,7 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 
 // this renders without the expensive CRT effect
 @fs nocrtFS
-@use_texture_block fsTextures
+@use_texture_block textures
 @use_uniform_block fsParams
 @in vec2 uv
 {
@@ -197,6 +197,6 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 }
 @end
 
-@program CRT vs crtFS
-@program NoCRT vs nocrtFS
+@program CRTShader vs crtFS
+@program NoCRTShader vs nocrtFS
 

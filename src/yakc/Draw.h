@@ -26,15 +26,12 @@ public:
 
     bool crtEffectEnabled;
 
-    Oryol::MeshBlock fsqMesh;
     Oryol::Id irmTexture;
-    Oryol::Id crtDrawState;
-    Oryol::Shaders::CRT::FSTextures crtFsTextures;
-    Oryol::Shaders::CRT::FSParams crtFsParams;
+    Oryol::DrawState crtDrawState;
+    Oryol::CRTShader::FSParams crtFsParams;
 
-    Oryol::Id nocrtDrawState;
-    Oryol::Shaders::NoCRT::FSTextures nocrtFsTextures;
-    Oryol::Shaders::NoCRT::FSParams nocrtFsParams;
+    Oryol::DrawState nocrtDrawState;
+    Oryol::NoCRTShader::FSParams nocrtFsParams;
 
     Oryol::ImageDataAttrs texUpdateAttrs;
     int frameSize = 0;
