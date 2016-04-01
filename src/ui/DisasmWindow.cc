@@ -79,10 +79,8 @@ DisasmWindow::drawMainContent(const kc85& kc, uword start_addr, int num_lines) {
 //------------------------------------------------------------------------------
 void
 DisasmWindow::drawControls() {
-    ImGui::PushItemWidth(32);
     this->startWidget.Draw();
     ImGui::SameLine();
     this->lengthWidget.Draw();
-    ImGui::PopItemWidth();
 }
 

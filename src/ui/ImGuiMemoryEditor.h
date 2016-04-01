@@ -194,7 +194,7 @@ struct MemoryEditor
             ImGui::Separator();
 
             ImGui::AlignFirstTextHeightToWidgets();
-            ImGui::PushItemWidth(50);
+            ImGui::PushItemWidth(56);
             ImGui::PushAllowKeyboardFocus(false);
             int rows_backup = Rows;
             if (ImGui::DragInt("##rows", &Rows, 0.2f, 4, 32, "%.0f rows"))
@@ -206,7 +206,7 @@ struct MemoryEditor
             ImGui::PopAllowKeyboardFocus();
             ImGui::PopItemWidth();
             ImGui::SameLine(96);
-            ImGui::PushItemWidth(32);
+            ImGui::PushItemWidth(38);
             if (ImGui::InputText("Start", MemAddrInput, 32, ImGuiInputTextFlags_CharsHexadecimal))
             {
                 int new_addr = MemAddr;

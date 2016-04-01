@@ -78,34 +78,26 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     const ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
     const ImVec4 green(0.0f, 1.0f, 0.0f, 1.0f);
 
-    ImGui::PushItemWidth(32);
-
     this->drawReg16(kc, z80dbg::AF); ImGui::SameLine(1 * 72);
     this->drawReg16(kc, z80dbg::BC); ImGui::SameLine(2 * 72);
     this->drawReg16(kc, z80dbg::DE); ImGui::SameLine(3 * 72);
     this->drawReg16(kc, z80dbg::HL); ImGui::SameLine(4 * 72);
-    ImGui::PushItemWidth(16);
     this->drawReg8(kc, z80dbg::I); ImGui::SameLine(4 * 72 + 48);
     ImGui::TextColored(kc.cpu.IFF1 ? green:red, "IFF1");
-    ImGui::PopItemWidth();
 
     this->drawReg16(kc, z80dbg::AF_); ImGui::SameLine(1 * 72);
     this->drawReg16(kc, z80dbg::BC_); ImGui::SameLine(2 * 72);
     this->drawReg16(kc, z80dbg::DE_); ImGui::SameLine(3 * 72);
     this->drawReg16(kc, z80dbg::HL_); ImGui::SameLine(4 * 72);
-    ImGui::PushItemWidth(16);
     this->drawReg8(kc, z80dbg::IM); ImGui::SameLine(4 * 72 + 48);
     ImGui::TextColored(kc.cpu.IFF2 ? green:red, "IFF2");
-    ImGui::PopItemWidth();
 
     this->drawReg16(kc, z80dbg::IX); ImGui::SameLine(1 * 72);
     this->drawReg16(kc, z80dbg::IY); ImGui::SameLine(2 * 72);
     this->drawReg16(kc, z80dbg::SP); ImGui::SameLine(3 * 72);
     this->drawReg16(kc, z80dbg::PC); ImGui::SameLine(4 * 72);
-    ImGui::PushItemWidth(16);
     this->drawReg8(kc, z80dbg::R); ImGui::SameLine(4 * 72 + 48);
     ImGui::TextColored(kc.cpu.HALT ? green:red, "HALT");
-    ImGui::PopItemWidth();
 
     char strFlags[9];
     const ubyte f = kc.cpu.F;
@@ -119,14 +111,11 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     strFlags[7] = (f & z80::CF) ? 'C':'-';
     strFlags[8] = 0;
     ImGui::Text("flags: %s", strFlags);
-    if (kc.cpu.INV)
-    ImGui::PopItemWidth();
 }
 
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawControls(kc85& kc) {
-    ImGui::PushItemWidth(32);
     if (kc.dbg.breakpoint_enabled(0)) {
         this->breakPointWidget.Set16(kc.dbg.breakpoint_addr(0));
     }
@@ -142,7 +131,6 @@ DebugWindow::drawControls(kc85& kc) {
             kc.dbg.disable_breakpoint(0);
         }
     }
-    ImGui::PopItemWidth();
     ImGui::SameLine();
     ImGui::Checkbox("break", &kc.paused);
     if (kc.paused) {

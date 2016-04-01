@@ -43,7 +43,6 @@ PIOWindow::Draw(kc85& kc) {
     ImGui::SetNextWindowSize(ImVec2(220, 384), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         ImGui::BeginChild("##child");
-        ImGui::PushItemWidth(16);
         if (this->pioAData.Draw()) {
             kc.cpu.out(0x88, this->pioAData.Get8());
         }
@@ -66,7 +65,6 @@ PIOWindow::Draw(kc85& kc) {
         else {
             this->pioBData.Set8(kc.pio.read(z80pio::B));
         }
-        ImGui::PopItemWidth();
         const ubyte b = kc.pio.read(z80pio::B);
         ImGui::Text("VOLUME:"); ImGui::SameLine(96); ImGui::Text("%02X", b & kc85::PIO_B_VOLUME_MASK);
         onOffLine("BLINKING", 0 != (b & kc85::PIO_B_BLINK_ENABLED));

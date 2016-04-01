@@ -23,7 +23,6 @@ bool
 CommandWindow::Draw(kc85& kc) {
     ImGui::SetNextWindowSize(ImVec2(200, 250), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
-        ImGui::PushItemWidth(16);
         this->prologByteWidget.Draw();
         ImGui::SameLine();
         if (ImGui::Button("Scan...")) {

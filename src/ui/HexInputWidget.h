@@ -47,6 +47,13 @@ public:
     }
     /// draw the widget, return if value was updated
     bool Draw() {
+        bool retval = false;
+        if (this->modeUWord) {
+            ImGui::PushItemWidth(38);
+        }
+        else {
+            ImGui::PushItemWidth(22);
+        }
         const int editFlags = ImGuiInputTextFlags_CharsHexadecimal|ImGuiInputTextFlags_CharsUppercase|ImGuiInputTextFlags_EnterReturnsTrue;
         if (ImGui::InputText(this->label.AsCStr(), this->buf, bufSize, editFlags)) {
             if (this->modeUWord) {
@@ -55,9 +62,10 @@ public:
             else {
                 this->Set8(Util::ParseUByte(this->buf, this->Get8()));
             }
-            return true;
+            retval = true;
         }
-        return false;
+        ImGui::PopItemWidth();
+        return retval;
     }
 
     static const int bufSize = 5;
