@@ -31,7 +31,6 @@ public:
     void initModules();
 
     ubyte last_ascii = 0;
-    Id drawState;
     kc85 kc;
     Draw draw;
     Audio audio;

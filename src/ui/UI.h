@@ -24,13 +24,19 @@ public:
     void OpenWindow(yakc::kc85& kc, const Oryol::Ptr<WindowBase>& window);
     /// toggle the UI on/off
     void Toggle();
+    /// switch to dark UI theme
+    void EnableDarkTheme();
+    /// switch to light UI theme
+    void EnableLightTheme();
 
-    static const ImVec4 ColorText;
-    static const ImVec4 ColorDetail;
-    static const ImVec4 ColorDetailBright;
-    static const ImVec4 ColorDetailDark;
-    static const ImVec4 ColorBackground;
-    static const ImVec4 ColorBackgroundLight;
+    static ImVec4 DefaultTextColor;
+    static ImVec4 EnabledColor;
+    static ImVec4 DisabledColor;
+    static ImVec4 EnabledBreakpointColor;
+    static ImVec4 DisabledBreakpointColor;
+    static ImVec4 InvalidOpCodeColor;
+    static ImU32 CanvasTextColor;
+    static ImU32 CanvasLineColor;
 
     struct settings {
         bool crtEffect = false;
@@ -46,4 +52,8 @@ private:
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;
     bool uiEnabled = false;
     bool helpOpen = true;
+    bool darkThemeEnabled = true;
+    bool lightThemeEnabled = false;
+    ImGuiStyle darkTheme;
+    ImGuiStyle lightTheme;
 };

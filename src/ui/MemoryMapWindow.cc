@@ -4,6 +4,7 @@
 #include "MemoryMapWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
+#include "UI/UI.h"
 
 OryolClassImpl(MemoryMapWindow);
 
@@ -27,31 +28,30 @@ MemoryMapWindow::drawGrid(bool is_kc85_4) {
     ImDrawList* l = ImGui::GetWindowDrawList();
     const ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
     const ImVec2 canvas_area = ImGui::GetContentRegionAvail();
-    const ImU32 white = 0xFFFFFFFF;
     const float glyph_width = ImGui::CalcTextSize("F").x;
     for (int i = 0; i < 5; i++) {
         const int addr = 0x4000 * i;
         const int x = addr / bank_div;
         const ImVec2 a(x+canvas_pos.x+left_padding, canvas_pos.y);
         const ImVec2 b(a.x, a.y+canvas_area.y+4-bank_height);
-        l->AddLine(a, b, white);
+        l->AddLine(a, b, UI::CanvasLineColor);
 
         strBuilder.Format(32, "%04X", addr == 0x10000 ? 0xFFFF:addr);
         float text_x = addr == 0x10000 ? b.x - 4*glyph_width : b.x;
-        l->AddText(ImVec2(text_x, b.y), white, strBuilder.AsCStr());
+        l->AddText(ImVec2(text_x, b.y), UI::CanvasTextColor, strBuilder.AsCStr());
     }
     const ImVec2 a(canvas_pos.x+left_padding, canvas_pos.y+canvas_area.y-bank_height);
     const ImVec2 b(a.x+0x10000/bank_div, a.y);
-    l->AddLine(a, b, white);
+    l->AddLine(a, b, UI::CanvasLineColor);
 
     ImVec2 text_pos(canvas_pos.x, canvas_pos.y + 2);
     for (int i = 0; i < (is_kc85_4 ? 6 : 1); i++) {
-        l->AddText(text_pos, white, "internal");
+        l->AddText(text_pos, UI::CanvasTextColor, "internal");
         text_pos.y += bank_height;
     }
-    l->AddText(text_pos, white, "slot 0x08");
+    l->AddText(text_pos, UI::CanvasTextColor, "slot 0x08");
     text_pos.y += bank_height;
-    l->AddText(text_pos, white, "slot 0x0C");
+    l->AddText(text_pos, UI::CanvasTextColor, "slot 0x0C");
 }
 
 //------------------------------------------------------------------------------

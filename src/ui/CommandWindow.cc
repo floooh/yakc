@@ -4,6 +4,7 @@
 #include "CommandWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
+#include "UI/UI.h"
 #include <ctype.h>
 
 OryolClassImpl(CommandWindow);
@@ -31,10 +32,10 @@ CommandWindow::Draw(kc85& kc) {
         for (int i = 0; i < this->commands.Size(); i++) {
             const Cmd& cmd = this->commands[i];
             if (kc.dbg.is_breakpoint(cmd.addr)) {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 1.0f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
             }
             else {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, UI::DisabledBreakpointColor);
             }
             ImGui::PushID(i);
             if (ImGui::Button(" B ")) {

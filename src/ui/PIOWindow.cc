@@ -4,14 +4,12 @@
 #include "PIOWindow.h"
 #include "IMUI/IMUI.h"
 #include "core/z80pio.h"
+#include "UI/UI.h"
 
 OryolClassImpl(PIOWindow);
 
 using namespace Oryol;
 using namespace yakc;
-
-static const ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
-static const ImVec4 green(0.0f, 1.0f, 0.0f, 1.0f);
 
 //------------------------------------------------------------------------------
 void
@@ -24,7 +22,9 @@ PIOWindow::Setup(kc85& kc) {
 //------------------------------------------------------------------------------
 static void
 onOffLine(const char* text, bool on) {
-    ImGui::Text("%s", text); ImGui::SameLine(96); ImGui::TextColored(on?green:red, "%s", on?"ON":"OFF");
+    ImGui::Text("%s", text);
+    ImGui::SameLine(96);
+    ImGui::TextColored(on?UI::EnabledColor:UI::DisabledColor, "%s", on?"ON":"OFF");
 }
 
 //------------------------------------------------------------------------------
@@ -32,9 +32,17 @@ static void
 pioControlState(const kc85& kc, z80pio::channel chn) {
     const auto& state = kc.pio.channel_state[chn];
     const bool en = state.interrupt_enabled;
-    ImGui::Text("Interrupt:"); ImGui::SameLine(128); ImGui::TextColored(en?green:red, en?"ENABLED":"DISABLED");
-    ImGui::Text("Interrupt Vector:"); ImGui::SameLine(128); ImGui::Text("%02X", state.interrupt_vector);
-    ImGui::Text("Mode:"); ImGui::SameLine(128); ImGui::Text("%02X", state.mode);
+    ImGui::Text("Interrupt:");
+    ImGui::SameLine(128);
+    ImGui::TextColored(en?UI::EnabledColor:UI::DisabledColor, en?"ENABLED":"DISABLED");
+
+    ImGui::Text("Interrupt Vector:");
+    ImGui::SameLine(128);
+    ImGui::Text("%02X", state.interrupt_vector);
+
+    ImGui::Text("Mode:");
+    ImGui::SameLine(128);
+    ImGui::Text("%02X", state.mode);
 }
 
 //------------------------------------------------------------------------------

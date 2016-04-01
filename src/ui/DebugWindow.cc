@@ -75,8 +75,8 @@ DebugWindow::drawReg8(kc85& kc, z80dbg::reg r) {
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawRegisterTable(kc85& kc) {
-    const ImVec4 red(1.0f, 0.0f, 0.0f, 1.0f);
-    const ImVec4 green(0.0f, 1.0f, 0.0f, 1.0f);
+    const ImVec4 red = UI::DisabledColor;
+    const ImVec4 green = UI::EnabledColor;
 
     this->drawReg16(kc, z80dbg::AF); ImGui::SameLine(1 * 72);
     this->drawReg16(kc, z80dbg::BC); ImGui::SameLine(2 * 72);
@@ -172,10 +172,10 @@ DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
             display_addr = kc.dbg.get_pc_history(line_i);
             num_bytes = disasm.Disassemble(kc, display_addr);
             if (kc.dbg.is_breakpoint(display_addr)) {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 1.0f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
             }
             else {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+                ImGui::PushStyleColor(ImGuiCol_Text, UI::DisabledBreakpointColor);
             }
         }
         else {
@@ -183,16 +183,16 @@ DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
             num_bytes = disasm.Disassemble(kc, display_addr);
                 if ((cur_addr == start_addr) && kc.cpu.INV) {
                     // invalid/non-implemented opcode hit
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_Text, UI::InvalidOpCodeColor);
                 }
                 else if (kc.dbg.is_breakpoint(cur_addr)) {
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 1.0f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
                 }
                 else if (cur_addr == start_addr) {
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledColor);
                 }
                 else {
-                    ImGui::PushStyleColor(ImGuiCol_Text, UI::ColorText);
+                    ImGui::PushStyleColor(ImGuiCol_Text, UI::DefaultTextColor);
                 }
             cur_addr += num_bytes;
         }
