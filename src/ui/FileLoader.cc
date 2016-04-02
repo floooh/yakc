@@ -33,13 +33,12 @@ FileLoader::Setup(kc85& kc) {
     this->Items.Add("Demo1", "demo1.kcc", kc85_model::kc85_4);
     this->Items.Add("Demo2", "demo2.kcc", kc85_model::kc85_4);
     this->Items.Add("Demo3", "demo3.kcc", kc85_model::kc85_4);
-    this->ioQueue.Start();
 }
 
 //------------------------------------------------------------------------------
 void
 FileLoader::Discard() {
-    this->ioQueue.Stop();
+    // empty
 }
 
 //------------------------------------------------------------------------------
@@ -88,9 +87,9 @@ FileLoader::load(kc85* kc, const Item& item, bool autostart) {
     strBuilder.Format(128, "kcc:%s", item.Filename.AsCStr());
     this->Url = strBuilder.GetString();
     this->State = Loading;
-    this->ioQueue.Add(strBuilder.GetString(),
+    IO::Load(strBuilder.GetString(),
         // load succeeded
-        [this, kc, autostart](IOQueue::Result ioResult) {
+        [this, kc, autostart](IO::LoadResult ioResult) {
             this->kccData = std::move(ioResult.Data);
             this->Info = parseHeader(this->kccData);
             this->State = Ready;

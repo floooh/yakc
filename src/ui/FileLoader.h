@@ -7,7 +7,7 @@
 #include "yakc/KC85Oryol.h"
 #include "Core/String/String.h"
 #include "Core/Containers/Array.h"
-#include "IO/Core/IOQueue.h"
+#include "IO/IO.h"
 
 class FileLoader {
 public:
@@ -102,6 +102,5 @@ private:
     };
     #pragma pack(pop)
 
-    Oryol::IOQueue ioQueue;
     Oryol::Buffer kccData;
 };

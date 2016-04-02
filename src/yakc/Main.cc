@@ -8,7 +8,6 @@
 #include "Synth/Synth.h"
 #include "Input/Input.h"
 #include "IO/IO.h"
-#include "IO/Core/IOQueue.h"
 #include "KC85Oryol.h"
 #include "Draw.h"
 #include "Audio.h"
@@ -37,7 +36,6 @@ public:
     #if YAKC_UI
     UI ui;
     #endif
-    IOQueue ioQueue;
     TimePoint lapTimePoint;
 };
 OryolMain(YakcApp);
@@ -123,18 +121,12 @@ YakcApp::OnRunning() {
     this->ui.OnFrame(this->kc);
     #endif
     Gfx::CommitFrame();
-    if (this->ioQueue.IsStarted() && this->ioQueue.Empty()) {
-        this->ioQueue.Stop();
-    }
     return Gfx::QuitRequested() ? AppState::Cleanup : AppState::Running;
 }
 
 //------------------------------------------------------------------------------
 AppState::Code
 YakcApp::OnCleanup() {
-    if (this->ioQueue.IsStarted()) {
-        this->ioQueue.Stop();
-    }
     this->audio.Discard();
     this->draw.Discard();
     #if YAKC_UI
@@ -238,20 +230,19 @@ YakcApp::initRoms() {
     this->kc.roms.add(kc85_roms::basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
 
     // async-load optional ROMs
-    this->ioQueue.Start();
-    this->ioQueue.Add("rom:hc900.852", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:hc900.852", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::hc900, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    this->ioQueue.Add("rom:caos22.852", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:caos22.852", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::caos22, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    this->ioQueue.Add("rom:caos34.853", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:caos34.853", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::caos34, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    this->ioQueue.Add("rom:caos42c.854", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:caos42c.854", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::caos42c, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    this->ioQueue.Add("rom:caos42e.854", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:caos42e.854", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }
@@ -285,7 +276,7 @@ YakcApp::initModules() {
         "...where [SLOT] is 08 or 0C.\n");
 
     // M026 FORTH
-    this->ioQueue.Add("rom:forth.853", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:forth.853", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::forth, ioRes.Data.Data(), ioRes.Data.Size());
         this->kc.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
             kc.roms.ptr(kc85_roms::forth), kc.roms.size(kc85_roms::forth),
@@ -298,7 +289,7 @@ YakcApp::initModules() {
     });
 
     // M027 DEVELOPMENT
-    this->ioQueue.Add("rom:develop.853", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:develop.853", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::develop, ioRes.Data.Data(), ioRes.Data.Size());
         this->kc.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
             kc.roms.ptr(kc85_roms::develop), kc.roms.size(kc85_roms::develop),
@@ -311,7 +302,7 @@ YakcApp::initModules() {
     });
 
     // M006 BASIC (+ HC-CAOS 901)
-    this->ioQueue.Add("rom:m006.rom", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:m006.rom", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
         this->kc.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
             kc.roms.ptr(kc85_roms::basic_mod), kc.roms.size(kc85_roms::basic_mod),
@@ -322,7 +313,7 @@ YakcApp::initModules() {
     });
 
     // M012 TEXOR
-    this->ioQueue.Add("rom:texor.rom", [this](IOQueue::Result ioRes) {
+    IO::Load("rom:texor.rom", [this](IO::LoadResult ioRes) {
         this->kc.roms.add(kc85_roms::texor, ioRes.Data.Data(), ioRes.Data.Size());
         this->kc.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
             kc.roms.ptr(kc85_roms::texor), kc.roms.size(kc85_roms::texor),
