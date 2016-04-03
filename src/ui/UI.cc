@@ -41,7 +41,7 @@ UI::Setup(kc85& kc) {
     style.WindowFillAlphaDefault = 1.0f;
     style.WindowTitleAlign = ImGuiAlign_Center;
     style.TouchExtraPadding = ImVec2(5.0f, 5.0f);
-    style.AntiAliasedLines = false;
+    style.AntiAliasedLines = this->imguiAntiAliasedLines;
     style.AntiAliasedShapes = false;
     this->darkTheme = style;
 
@@ -306,6 +306,11 @@ UI::OnFrame(kc85& kc) {
                 }
                 if (ImGui::MenuItem("Light UI Theme", nullptr, &this->lightThemeEnabled)) {
                     this->EnableLightTheme();
+                }
+                if (ImGui::MenuItem("(DBG) Line-Antialiasing in UI", nullptr, &this->imguiAntiAliasedLines)) {
+                    ImGui::GetStyle().AntiAliasedLines = this->imguiAntiAliasedLines;
+                    this->darkTheme.AntiAliasedLines = this->imguiAntiAliasedLines;
+                    this->lightTheme.AntiAliasedLines = this->imguiAntiAliasedLines;
                 }
                 ImGui::EndMenu();
             }

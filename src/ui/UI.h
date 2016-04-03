@@ -54,6 +54,7 @@ private:
     bool helpOpen = true;
     bool darkThemeEnabled = true;
     bool lightThemeEnabled = false;
+    bool imguiAntiAliasedLines = true;
     ImGuiStyle darkTheme;
     ImGuiStyle lightTheme;
 };
