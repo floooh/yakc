@@ -484,7 +484,7 @@ z80::in(uword port) {
 inline void
 z80::out(uword port, ubyte val) {
     if (out_func) {
-        return out_func(inout_userdata, port, val);
+        out_func(inout_userdata, port, val);
     }
 }
 
