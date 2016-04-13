@@ -4,7 +4,7 @@
 #include "PIOWindow.h"
 #include "IMUI/IMUI.h"
 #include "core/z80pio.h"
-#include "UI/UI.h"
+#include "ui/UI.h"
 
 OryolClassImpl(PIOWindow);
 

@@ -4,7 +4,7 @@
 #include "MemoryMapWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
-#include "UI/UI.h"
+#include "ui/UI.h"
 
 OryolClassImpl(MemoryMapWindow);
 
