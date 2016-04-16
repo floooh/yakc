@@ -22,11 +22,11 @@ namespace yakc {
 class kc85_audio {
 public:
     /// callback to start sound or change frequency (channel is 0 or 1)
-    typedef void (*sound_cb)(void* userdata, unsigned int delay_cycles, int channel, int hz);
+    typedef void (*sound_cb)(void* userdata, uint64_t cycle_count, int channel, int hz);
     /// callback to stop a sound
-    typedef void (*stop_cb)(void* userdata, unsigned int delay_cycles, int channel);
+    typedef void (*stop_cb)(void* userdata, uint64_t cycle_count, int channel);
     /// callback to set volume (0..31)
-    typedef void (*volume_cb)(void* userdata, unsigned int delay_cycles, int vol);
+    typedef void (*volume_cb)(void* userdata, uint64_t cycle_count, int vol);
 
     /// setup callbacks (call before anything else)
     void setup_callbacks(void* userdata, sound_cb cb_sound, volume_cb cb_volume, stop_cb cb_stop);
@@ -35,7 +35,7 @@ public:
     /// reset the audio hardware
     void reset();
     /// called from instruction execution loop to get correct T cycle in 60Hzframe
-    void update_t(unsigned int t);
+    void update_cycles(uint64_t cycle_count);
     /// update volume (0..1F, called from kc85 PIO-B handler)
     void update_volume(int vol);
 
@@ -47,8 +47,7 @@ public:
     static void ctc_write1(void* userdata);
 
     z80ctc* ctc = nullptr;
-
-    unsigned int frame_t = 0;           // current T cycle inside 60Hz frame
+    uint64_t cycle_count = 0;       // current absolute CPU cycle count
 
     int volume = 0;
     sound_cb cb_sound = nullptr;
@@ -95,8 +94,8 @@ kc85_audio::reset() {
 
 //------------------------------------------------------------------------------
 inline void
-kc85_audio::update_t(unsigned int t) {
-    this->frame_t = t;
+kc85_audio::update_cycles(uint64_t cycles) {
+    this->cycle_count = cycles;
 }
 
 //------------------------------------------------------------------------------
@@ -104,7 +103,7 @@ inline void
 kc85_audio::update_volume(int vol) {
     if (this->volume != vol) {
         if (this->cb_volume) {
-            this->cb_volume(this->userdata, this->frame_t, vol);
+            this->cb_volume(this->userdata, this->cycle_count, vol);
         }
     }
     this->volume = vol;
@@ -122,16 +121,18 @@ kc85_audio::update_channel(int channel) {
         if (!(this->channels[channel].ctc_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
             // CTC channel has become inactive, call the stop-callback
             if (this->cb_stop) {
-                this->cb_stop(this->userdata, this->frame_t, channel);
+                this->cb_stop(this->userdata, this->cycle_count, channel);
             }
             this->channels[channel].ctc_mode = ctc_chn.mode;
         }
         else if (!(ctc_chn.mode & z80ctc::RESET)) {
             // CTC channel has become active or constant has changed, call sound-callback
             int div = ctc_chn.constant * ((ctc_chn.mode & z80ctc::PRESCALER_256) ? 256 : 16);
-            float hz = (float(1750000) / float(div)) / 2.0f;
-            if (this->cb_sound) {
-                this->cb_sound(this->userdata, this->frame_t, channel, (int)hz);
+            if (div > 0) {
+                int hz = int((float(1750000) / float(div)) / 2.0f);
+                if (this->cb_sound) {
+                    this->cb_sound(this->userdata, this->cycle_count, channel, hz);
+                }
             }
             this->channels[channel].ctc_constant = ctc_chn.constant;
             this->channels[channel].ctc_mode = ctc_chn.mode;

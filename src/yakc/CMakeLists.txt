@@ -4,6 +4,7 @@ fips_begin_app(yakc windowed)
         Draw.h Draw.cc
         Audio.h Audio.cc
         KC85Oryol.h
+        kc85_audiosource.h kc85_audiosource.cc
     )
     oryol_shader(shaders.shd)
     if (YAKC_UI)

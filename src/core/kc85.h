@@ -100,6 +100,8 @@ public:
     kc85_model cur_model;
     kc85_caos cur_caos;
     bool on;
+    uint64_t cycle_count;       // total cycle count, reset at reboot
+    uint32_t leftover_cycles;   // left-over cycles from last frame
     ubyte key_code;
     const ubyte* caos_c_ptr;
     int caos_c_size;
@@ -115,6 +117,8 @@ paused(false),
 cur_model(kc85_model::kc85_3),
 cur_caos(kc85_caos::caos_3_1),
 on(false),
+cycle_count(0),
+leftover_cycles(0),
 key_code(0),
 caos_c_ptr(nullptr),
 caos_c_size(0),
@@ -132,6 +136,7 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->cur_model = m;
     this->cur_caos = os;
     this->on = true;
+    this->leftover_cycles = 0;
     this->key_code = 0;
     this->io84 = 0;
     this->io86 = 0;
@@ -173,7 +178,7 @@ kc85::poweron(kc85_model m, kc85_caos os) {
 
     // connect a timer with the duration of one PAL line
     // (~64ns) to the video scanline decoder callback
-    this->clck.config_timer(1, (unsigned int)(50.136*312), kc85_video::pal_line_cb, &this->video);
+    this->clck.config_timer(1, (uint32_t)(50.136*312), kc85_video::pal_line_cb, &this->video);
 
     // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
     this->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
@@ -204,6 +209,7 @@ kc85::reset() {
     this->cpu.reset();
     this->io84 = 0;
     this->io86 = 0;
+    this->leftover_cycles = 0;
     // execution after reset starts at 0xE000
     this->cpu.PC = 0xE000;
 }
@@ -267,20 +273,22 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
     this->handle_keyboard_input();
     if (!this->paused) {
         const int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
-        int cycles_frame = 0;
+        int cycles_frame = this->leftover_cycles;
         while (cycles_frame < num_cycles) {
             if (this->dbg.check_break(this->cpu)) {
                 this->paused = true;
                 break;
             }
             this->dbg.store_pc_history(this->cpu); // FIXME: only if debug window open?
-            int cycles_opcode = this->cpu.step();
-            cycles_opcode += this->cpu.handle_irq();
-            this->clck.update(cycles_opcode);
-            this->ctc.update_timers(cycles_opcode);
-            this->audio.update_t(cycles_frame);
-            cycles_frame += cycles_opcode;
+            int cycles_step = this->cpu.step();
+            cycles_step += this->cpu.handle_irq();
+            this->clck.update(cycles_step);
+            this->ctc.update_timers(cycles_step);
+            this->audio.update_cycles(this->cycle_count);
+            this->cycle_count += cycles_step;
+            cycles_frame += cycles_step;
         }
+        this->leftover_cycles = cycles_frame - num_cycles;
     }
 }
 

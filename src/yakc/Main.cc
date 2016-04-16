@@ -97,7 +97,6 @@ YakcApp::OnRunning() {
     Duration frameTime = Clock::LapTime(this->lapTimePoint);
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = (int) frameTime.AsMicroSeconds();
-micro_secs = int(1000000.0 / 60.0);
     this->handleInput();
     #if YAKC_UI
         o_trace_begin(yakc_kc);
@@ -113,12 +112,12 @@ micro_secs = int(1000000.0 / 60.0);
         o_trace_end();
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
+    this->audio.UpdateCpuCycles(this->kc.clck.base_freq_khz*1000, this->kc.cycle_count);
     this->draw.Render(this->kc);
     #if YAKC_UI
     this->ui.OnFrame(this->kc);
     #endif
     Gfx::CommitFrame();
-    this->audio.Update(micro_secs);
     return Gfx::QuitRequested() ? AppState::Cleanup : AppState::Running;
 }
 
