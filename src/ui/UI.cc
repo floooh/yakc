@@ -13,6 +13,7 @@
 #include "KeyboardWindow.h"
 #include "LoadWindow.h"
 #include "CommandWindow.h"
+#include "AudioWindow.h"
 #include "Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -32,7 +33,9 @@ ImU32 UI::CanvasLineColor;
 
 //------------------------------------------------------------------------------
 void
-UI::Setup(kc85& kc) {
+UI::Setup(kc85& kc, Audio* audio_) {
+
+    this->audio = audio_;
     IMUI::Setup();
 
     ImGuiStyle style = ImGui::GetStyle();
@@ -253,8 +256,11 @@ UI::OnFrame(kc85& kc) {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Debugging")) {
-                if (ImGui::MenuItem("Debugger")) {
+                if (ImGui::MenuItem("CPU Debugger")) {
                     this->OpenWindow(kc, DebugWindow::Create());
+                }
+                if (ImGui::MenuItem("Audio Debugger")) {
+                    this->OpenWindow(kc, AudioWindow::Create(this->audio));
                 }
                 if (ImGui::MenuItem("Disassembler")) {
                     this->OpenWindow(kc, DisasmWindow::Create());

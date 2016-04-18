@@ -17,6 +17,7 @@ fips_begin_module(ui)
         KeyboardWindow.cc KeyboardWindow.h
         LoadWindow.cc LoadWindow.h
         CommandWindow.cc CommandWindow.h
+        AudioWindow.cc AudioWindow.h
         FileLoader.cc FileLoader.h
         SnapshotStorage.cc SnapshotStorage.h
         z80dasm.cc z80dasm.h

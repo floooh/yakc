@@ -5,6 +5,7 @@
     @brief imgui-based debugger UI
 */
 #include "yakc/KC85Oryol.h"
+#include "yakc/Audio.h"
 #include "ui/WindowBase.h"
 #include "ui/FileLoader.h"
 #include "ui/SnapshotStorage.h"
@@ -12,10 +13,12 @@
 #include "Core/Containers/Array.h"
 #include "IMUI/IMUI.h"
 
+class Audio;
+
 class UI {
 public:
     /// setup the UI
-    void Setup(yakc::kc85& kc);
+    void Setup(yakc::kc85& kc, Audio* audio);
     /// discard the UI
     void Discard();
     /// do one frame
@@ -57,4 +60,5 @@ private:
     bool imguiAntiAliasedLines = true;
     ImGuiStyle darkTheme;
     ImGuiStyle lightTheme;
+    Audio* audio;
 };

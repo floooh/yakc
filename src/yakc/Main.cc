@@ -74,13 +74,13 @@ YakcApp::OnInit() {
     // initialize the ROM dumps and modules
     this->initRoms();
 
-    #if YAKC_UI
-    this->ui.Setup(this->kc);
-    #endif
     this->kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_1);
     this->draw.Setup(gfxSetup, frameSize);
     this->audio.Setup(this->kc);
     this->initModules();
+    #if YAKC_UI
+    this->ui.Setup(this->kc, &this->audio);
+    #endif
 
     // on KC85/3 put a 16kByte module into slot 8 by default, CAOS will initialize
     // this automatically on startup

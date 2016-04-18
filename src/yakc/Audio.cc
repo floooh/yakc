@@ -18,6 +18,7 @@ Audio::Setup(kc85& kc_) {
     #else
     this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF);
     #endif
+    this->soloud.setVisualizationEnable(true);
     this->audioSource.setSingleInstance(true);
     this->audioSource.setFilter(0, &this->filter);
     this->audioSource.sample_rate = this->soloud.getBackendSamplerate();
