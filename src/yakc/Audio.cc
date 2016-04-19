@@ -9,9 +9,8 @@ using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-Audio::Setup(kc85& kc_) {
-    this->kc = &kc_;
-    this->kc->audio.setup_callbacks(this, cb_sound, cb_volume, cb_stop);
+Audio::Setup(kc85& kc) {
+    kc.audio.setup_callbacks(this, cb_sound, cb_volume, cb_stop);
     this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, 3000.0f, 2.0f);
     #if ORYOL_EMSCRIPTEN
     this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 256, 2);
@@ -30,13 +29,18 @@ Audio::Setup(kc85& kc_) {
 void
 Audio::Discard() {
     this->soloud.deinit();
-    this->kc = nullptr;
 }
 
 //------------------------------------------------------------------------------
 void
-Audio::UpdateCpuCycles(uint32_t cpu_clock_speed, uint32_t cpu_cycles) {
-    this->audioSource.set_cpu_cycle_count_and_clock_speed(cpu_clock_speed, cpu_cycles);
+Audio::Update(kc85& kc) {
+    this->audioSource.cpu_clock_speed = kc.clck.base_freq_khz * 1000;
+}
+
+//------------------------------------------------------------------------------
+uint64_t
+Audio::GetProcessedCycles() const {
+    return this->audioSource.sample_cycle_count;
 }
 
 //------------------------------------------------------------------------------

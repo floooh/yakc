@@ -63,40 +63,15 @@ public:
                 out_op = this->ops[this->read_pos];
             }
         };
-        // reset everything, called when CPU and audio cycles have diverged, called from audio thread
-        void reset() {
-            Oryol::ScopedWriteLock l(this->lock);
-            this->write_pos = 0;
-            this->read_pos = 0;
-            this->ops[0] = op();
-            this->ops[1] = op();
-        };
     };
 
-    // set the current CPU cycle count, called from main thread
-    void set_cpu_cycle_count_and_clock_speed(uint32_t clock_speed, uint64_t cycles) {
-        Oryol::ScopedWriteLock l(this->cycle_lock);
-        this->cpu_clock_speed = clock_speed;
-        this->cur_cpu_cycle_count = cycles;
-    }
-    /// get the current CPU cycle count, called from audio thread
-    uint64_t get_cpu_cycle_count_and_clock_speed(uint32_t& out_clock_speed) {
-        Oryol::ScopedReadLock l(this->cycle_lock);
-        out_clock_speed = this->cpu_clock_speed;
-        return this->cur_cpu_cycle_count;
-    }
-    /// reset the audio source, called when CPU and audio cycles have diverged, called from audio thread
-    void reset() {
-        Oryol::ScopedReadLock l(this->cycle_lock);
-        this->cur_sample_cycle_count = this->cur_cpu_cycle_count;
-        this->channels[0].reset();
-        this->channels[1].reset();
-    }
-
-    uint32_t cpu_clock_speed = 17500000;      // cpu clock in Hz
-    uint32_t sample_rate = 44100;       // audio sample rate in Hz 
-    Oryol::RWLock cycle_lock;
-    uint64_t cur_sample_cycle_count = 0;
-    uint64_t cur_cpu_cycle_count = 0;
+    #if ORYOL_HAS_ATOMIC
+    std::atomic<uint32_t> cpu_clock_speed;
+    std::atomic<uint64_t> sample_cycle_count;
+    #else
+    uint32_t cpu_clock_speed;
+    uint64_t sample_cycle_count;
+    #endif
+    uint32_t sample_rate = 44100;               // audio sample rate in Hz
     channel channels[2];
 };

@@ -15,11 +15,11 @@ public:
     void Setup(yakc::kc85& kc);
     /// shutdown audio playback
     void Discard();
-    /// update the CPU cycle count, this is used to sync CPU time and audio time
-    void UpdateCpuCycles(uint32_t cpu_clock_speed, uint32_t cpu_cycles);
+    /// per-frame update
+    void Update(yakc::kc85& kc);
+    /// get the current max processed audio sample count in number of CPU cycles
+    uint64_t GetProcessedCycles() const;
 
-    /// convert 1.75MHz ticks to audio ticks, including a base delay
-    unsigned int asAudioTicks(unsigned int z80Cycles) const;
     /// callback to start sound or change frequency
     static void cb_sound(void* userdata, uint64_t cycle_count, int channel, int hz);
     /// callback to stop sound
@@ -27,7 +27,6 @@ public:
     /// callback to change volume
     static void cb_volume(void* userdata, uint64_t cycle_count, int vol);
 
-    yakc::kc85* kc = nullptr;
     SoLoud::Soloud soloud;
     SoLoud::BiquadResonantFilter filter;
     kc85_audiosource audioSource;

@@ -21,9 +21,7 @@ public:
 
     Audio* audio;
     bool paused;
-    uint64_t sample_cycle_count;
-    uint64_t cpu_cycle_count;
-    int diffIndex;
+    bool cpuAhead;
+    bool cpuBehind;
     float wavBuffer[256];
-    float diffBuffer[256];
 };

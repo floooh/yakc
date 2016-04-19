@@ -100,7 +100,13 @@ YakcApp::OnRunning() {
     this->handleInput();
     #if YAKC_UI
         o_trace_begin(yakc_kc);
-        this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs);
+        // allow CPU to run ahead of audio
+        const uint64_t cpu_min_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/20;
+        const uint64_t cpu_max_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/10;
+        const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
+        const uint64_t min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
+        const uint64_t max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
+        this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs, min_cycle_count, max_cycle_count);
         o_trace_end();
         this->draw.UpdateParams(
             this->ui.Settings.crtEffect,
@@ -112,7 +118,7 @@ YakcApp::OnRunning() {
         o_trace_end();
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
-    this->audio.UpdateCpuCycles(this->kc.clck.base_freq_khz*1000, this->kc.cycle_count);
+    this->audio.Update(this->kc);
     this->draw.Render(this->kc);
     #if YAKC_UI
     this->ui.OnFrame(this->kc);

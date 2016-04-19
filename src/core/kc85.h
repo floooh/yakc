@@ -81,8 +81,8 @@ public:
     /// get the CAOS version
     kc85_caos caos() const;
 
-    /// process one frame
-    void onframe(int speed_multiplier, int micro_secs);
+    /// process one frame, up to absolute number of cycles
+    void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
     /// put a key as ASCII code
     void put_key(ubyte ascii);
     /// handle keyboard input
@@ -100,7 +100,9 @@ public:
     kc85_model cur_model;
     kc85_caos cur_caos;
     bool on;
-    uint64_t cycle_count;       // total cycle count, reset at reboot
+    bool cpu_ahead;             // cpu would have been ahead of max_cycle_count
+    bool cpu_behind;            // cpu would have been behind of min_cycle_count
+    uint64_t abs_cycle_count;   // total cycle count, reset at reboot
     uint32_t leftover_cycles;   // left-over cycles from last frame
     ubyte key_code;
     const ubyte* caos_c_ptr;
@@ -117,7 +119,9 @@ paused(false),
 cur_model(kc85_model::kc85_3),
 cur_caos(kc85_caos::caos_3_1),
 on(false),
-cycle_count(0),
+cpu_ahead(false),
+cpu_behind(false),
+abs_cycle_count(0),
 leftover_cycles(0),
 key_code(0),
 caos_c_ptr(nullptr),
@@ -268,13 +272,26 @@ kc85::update_rom_pointers() {
 
 //------------------------------------------------------------------------------
 inline void
-kc85::onframe(int speed_multiplier, int micro_secs) {
+kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
     YAKC_ASSERT(speed_multiplier > 0);
+    this->cpu_ahead = false;
+    this->cpu_behind = false;
     this->handle_keyboard_input();
     if (!this->paused) {
-        const int num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
-        int cycles_frame = this->leftover_cycles;
-        while (cycles_frame < num_cycles) {
+        // compute the end-cycle-count for the current frame
+        const int64_t num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
+        uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
+        if (abs_end_cycles > max_cycle_count) {
+            abs_end_cycles = max_cycle_count;
+            this->cpu_ahead = true;
+        }
+        else if (abs_end_cycles < min_cycle_count) {
+            abs_end_cycles = min_cycle_count;
+            this->cpu_behind = true;
+        }
+
+//        int cycles_frame = this->leftover_cycles;
+        while (this->abs_cycle_count < abs_end_cycles) {
             if (this->dbg.check_break(this->cpu)) {
                 this->paused = true;
                 break;
@@ -284,11 +301,10 @@ kc85::onframe(int speed_multiplier, int micro_secs) {
             cycles_step += this->cpu.handle_irq();
             this->clck.update(cycles_step);
             this->ctc.update_timers(cycles_step);
-            this->audio.update_cycles(this->cycle_count);
-            this->cycle_count += cycles_step;
-            cycles_frame += cycles_step;
+            this->audio.update_cycles(this->abs_cycle_count);
+            this->abs_cycle_count += cycles_step;
         }
-        this->leftover_cycles = cycles_frame - num_cycles;
+        // this->leftover_cycles = cycles_frame - num_cycles;
     }
 }
 

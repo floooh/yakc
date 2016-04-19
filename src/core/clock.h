@@ -21,7 +21,7 @@ public:
     /// initialize the clock to a base frequency
     void init(int baseFreqKHz);
     /// return number of cycles for a given time-span in micro-seconds
-    int cycles(int micro_seconds) const;
+    int64_t cycles(int micro_seconds) const;
 
     /// configure a timer
     void config_timer(int index, int hz, cb_timer callback, void* userdata);
@@ -53,7 +53,7 @@ clock::init(int khz) {
 }
 
 //------------------------------------------------------------------------------
-inline int
+inline int64_t
 clock::cycles(int micro_seconds) const {
     return (this->base_freq_khz * micro_seconds) / 1000;
 }
