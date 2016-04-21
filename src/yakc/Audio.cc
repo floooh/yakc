@@ -15,12 +15,13 @@ Audio::Setup(kc85& kc) {
     #if ORYOL_EMSCRIPTEN
     this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 256, 2);
     #else
-    this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF);
-    #endif
+    this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 1024, 2);
+#endif
     this->soloud.setVisualizationEnable(true);
     this->audioSource.setSingleInstance(true);
     this->audioSource.setFilter(0, &this->filter);
     this->audioSource.sample_rate = this->soloud.getBackendSamplerate();
+    this->audioSource.cpu_clock_speed = kc.clck.base_freq_khz * 1000;
     this->audioHandle = this->soloud.play(this->audioSource, 1.0f);
     Log::Info("Soloud backend sample rate: %d\n", this->audioSource.sample_rate);
 }

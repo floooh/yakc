@@ -30,7 +30,7 @@ AudioWindow::Setup(kc85& kc) {
 //------------------------------------------------------------------------------
 bool
 AudioWindow::Draw(kc85& kc) {
-    ImGui::SetNextWindowSize(ImVec2(600, 300), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(600, 200), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         ImGui::Checkbox("Pause", &this->paused);
         if (!this->paused) {
@@ -38,6 +38,10 @@ AudioWindow::Draw(kc85& kc) {
             this->cpuAhead = kc.cpu_ahead;
             this->cpuBehind = kc.cpu_behind;
         }
+        ImGui::Text("Backend: %s", this->audio->soloud.getBackendString());
+        ImGui::Text("Backend sample rate: source=%d, actual=%d\n",  this->audio->audioSource.sample_rate, 
+            this->audio->soloud.getBackendSamplerate());
+        ImGui::Text("Backend sample buffer size: %d\n", this->audio->soloud.getBackendBufferSize());
         if (this->cpuAhead) {
             ImGui::TextColored(UI::DisabledColor, "*** CPU AHEAD ***");
         }

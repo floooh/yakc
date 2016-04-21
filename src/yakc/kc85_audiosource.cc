@@ -29,8 +29,8 @@ kc85_audioinstance::getAudio(float* aBuffer, unsigned int aSamples) {
 
     const int precision = 6;
 
-    const uint32_t cpu_clock_speed = this->parent->cpu_clock_speed;
-    const uint32_t sample_rate = this->parent->sample_rate;
+    const uint64_t cpu_clock_speed = this->parent->cpu_clock_speed;
+    const uint64_t sample_rate = this->parent->sample_rate;
     const uint64_t cycles_per_sample = ((cpu_clock_speed<<precision) / sample_rate);
     kc85_audiosource::op cur_op;
     uint64_t cur_cycle_count;

@@ -100,7 +100,7 @@ YakcApp::OnRunning() {
     this->handleInput();
     #if YAKC_UI
         o_trace_begin(yakc_kc);
-        // allow CPU to run ahead of audio
+        // keep CPU synchronized to a small time window ahead of audio playback (0.05 .. 0.1 sec ahead)
         const uint64_t cpu_min_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/20;
         const uint64_t cpu_max_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/10;
         const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
