@@ -304,7 +304,7 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
             this->audio.update_cycles(this->abs_cycle_count);
             this->abs_cycle_count += cycles_step;
         }
-        this->overflow_cycles = this->abs_cycle_count - abs_end_cycles;
+        this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
     }
 }
 

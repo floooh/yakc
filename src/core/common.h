@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #define YAKC_RAND() rand()
 #endif
+#include <stdint.h>
 
 namespace yakc {
 

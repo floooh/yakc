@@ -29,7 +29,7 @@ public:
         uint32_t vol = 0;
     };
     struct channel {
-        static const int size = 256;    // must be 2^N
+        static const int size = 512;    // must be 2^N
         Oryol::RWLock lock;
         uint32_t write_pos = 0;
         uint32_t read_pos = 0;
