@@ -55,7 +55,7 @@ clock::init(int khz) {
 //------------------------------------------------------------------------------
 inline int64_t
 clock::cycles(int micro_seconds) const {
-    return (this->base_freq_khz * micro_seconds) / 1000;
+    return (int64_t(this->base_freq_khz) * micro_seconds) / 1000;
 }
 
 //------------------------------------------------------------------------------

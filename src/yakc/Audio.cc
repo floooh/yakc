@@ -12,11 +12,7 @@ void
 Audio::Setup(kc85& kc) {
     kc.audio.setup_callbacks(this, cb_sound, cb_volume, cb_stop);
     this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, 3000.0f, 2.0f);
-    #if ORYOL_EMSCRIPTEN
-    this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 256, 2);
-    #else
     this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 1024, 2);
-#endif
     this->soloud.setVisualizationEnable(true);
     this->audioSource.setSingleInstance(true);
     this->audioSource.setFilter(0, &this->filter);

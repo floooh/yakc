@@ -102,8 +102,8 @@ public:
     bool on;
     bool cpu_ahead;             // cpu would have been ahead of max_cycle_count
     bool cpu_behind;            // cpu would have been behind of min_cycle_count
-    uint64_t abs_cycle_count;   // total cycle count, reset at reboot
-    uint32_t leftover_cycles;   // left-over cycles from last frame
+    uint64_t abs_cycle_count;   // total CPU cycle count
+    uint32_t overflow_cycles;   // cycles that have overflowed from last frame
     ubyte key_code;
     const ubyte* caos_c_ptr;
     int caos_c_size;
@@ -122,7 +122,7 @@ on(false),
 cpu_ahead(false),
 cpu_behind(false),
 abs_cycle_count(0),
-leftover_cycles(0),
+overflow_cycles(0),
 key_code(0),
 caos_c_ptr(nullptr),
 caos_c_size(0),
@@ -140,7 +140,7 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->cur_model = m;
     this->cur_caos = os;
     this->on = true;
-    this->leftover_cycles = 0;
+    this->overflow_cycles = 0;
     this->key_code = 0;
     this->io84 = 0;
     this->io86 = 0;
@@ -213,7 +213,7 @@ kc85::reset() {
     this->cpu.reset();
     this->io84 = 0;
     this->io86 = 0;
-    this->leftover_cycles = 0;
+    this->overflow_cycles = 0;
     // execution after reset starts at 0xE000
     this->cpu.PC = 0xE000;
 }
@@ -279,7 +279,7 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
     this->handle_keyboard_input();
     if (!this->paused) {
         // compute the end-cycle-count for the current frame
-        const int64_t num_cycles = this->clck.cycles(micro_secs*speed_multiplier);
+        const int64_t num_cycles = this->clck.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
         uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
         if (abs_end_cycles > max_cycle_count) {
             abs_end_cycles = max_cycle_count;
@@ -290,10 +290,10 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
             this->cpu_behind = true;
         }
 
-//        int cycles_frame = this->leftover_cycles;
         while (this->abs_cycle_count < abs_end_cycles) {
             if (this->dbg.check_break(this->cpu)) {
                 this->paused = true;
+                this->overflow_cycles = 0;
                 break;
             }
             this->dbg.store_pc_history(this->cpu); // FIXME: only if debug window open?
@@ -304,7 +304,7 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
             this->audio.update_cycles(this->abs_cycle_count);
             this->abs_cycle_count += cycles_step;
         }
-        // this->leftover_cycles = cycles_frame - num_cycles;
+        this->overflow_cycles = this->abs_cycle_count - abs_end_cycles;
     }
 }
 
