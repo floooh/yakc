@@ -18,7 +18,6 @@ Audio::Setup(kc85& kc) {
     this->audioSource.sample_rate = this->soloud.getBackendSamplerate();
     this->audioSource.cpu_clock_speed = kc.clck.base_freq_khz * 1000;
     this->audioHandle = this->soloud.play(this->audioSource, 1.0f);
-    Log::Info("Soloud backend sample rate: %d\n", this->audioSource.sample_rate);
 }
 
 //------------------------------------------------------------------------------
