@@ -34,6 +34,7 @@ public:
         uint32_t write_pos = 0;
         uint32_t read_pos = 0;
         uint16_t phase_counter = 0;
+        bool overflow = false;
         op ops[size];
 
         // push a new audio-op into the ringbuffer (called from main thread)
@@ -44,6 +45,10 @@ public:
             if (this->write_pos == this->read_pos) {
                 // ringbuffer overflow
                 this->read_pos = (this->read_pos+1) & (size-1);
+                this->overflow = true;
+            }
+            else {
+                this->overflow = false;
             }
             // always write a new 'infinity-op' past the newest write-pos
             this->ops[this->write_pos] = op();

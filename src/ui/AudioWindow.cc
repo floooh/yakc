@@ -30,7 +30,7 @@ AudioWindow::Setup(kc85& kc) {
 //------------------------------------------------------------------------------
 bool
 AudioWindow::Draw(kc85& kc) {
-    ImGui::SetNextWindowSize(ImVec2(600, 200), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(600, 220), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         ImGui::Checkbox("Pause", &this->paused);
         if (!this->paused) {
@@ -43,13 +43,21 @@ AudioWindow::Draw(kc85& kc) {
             this->audio->soloud.getBackendSamplerate());
         ImGui::Text("Backend sample buffer size: %d\n", this->audio->soloud.getBackendBufferSize());
         if (this->cpuAhead) {
-            ImGui::TextColored(UI::DisabledColor, "*** CPU AHEAD ***");
+            ImGui::TextColored(UI::WarnColor, "*** CPU AHEAD ***");
         }
         else if (this->cpuBehind) {
-            ImGui::TextColored(UI::DisabledColor, "*** CPU BEHIND ***");
+            ImGui::TextColored(UI::WarnColor, "*** CPU BEHIND ***");
         }
         else {
-            ImGui::TextColored(UI::EnabledColor, "CPU SYNCED");
+            ImGui::TextColored(UI::OkColor, "CPU SYNCED");
+        }
+        for (int chn=0; chn<2; chn++) {
+            if (this->audio->audioSource.channels[chn].overflow) {
+                ImGui::TextColored(UI::WarnColor, "*** CHANNEL %d: RINGBUFFER OVERFLOW***", chn);
+            }
+            else {
+                ImGui::TextColored(UI::OkColor, "Channel %d: ok", chn);
+            }
         }
         ImGui::PlotLines("Wave", this->wavBuffer, 256, 0, nullptr, -1, 1, ImVec2(512, 60));
     }

@@ -35,6 +35,8 @@ public:
     static ImVec4 DefaultTextColor;
     static ImVec4 EnabledColor;
     static ImVec4 DisabledColor;
+    static ImVec4 OkColor;
+    static ImVec4 WarnColor;
     static ImVec4 EnabledBreakpointColor;
     static ImVec4 DisabledBreakpointColor;
     static ImVec4 InvalidOpCodeColor;
