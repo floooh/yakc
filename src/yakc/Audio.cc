@@ -13,7 +13,6 @@ Audio::Setup(kc85& kc) {
     kc.audio.setup_callbacks(this, cb_sound, cb_volume, cb_stop);
     this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, 3000.0f, 2.0f);
     this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 1024, 2);
-    this->soloud.setVisualizationEnable(true);
     this->audioSource.setSingleInstance(true);
     this->audioSource.setFilter(0, &this->filter);
     this->audioSource.sample_rate = this->soloud.getBackendSamplerate();
