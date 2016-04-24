@@ -109,7 +109,7 @@ TEST(zexdoc) {
             running = false;
         }
     }
-    float64 dur = Clock::Since(startTime).AsSeconds();
+    double dur = Clock::Since(startTime).AsSeconds();
     printf("\n%llu cycles, %llu ops in %.3fsecs (%.2f MHz / %.2f MIPS)\n", t, num, dur, (t/dur)/1000000.0,(num/dur)/1000000.0);
 
     // did an error occur?
