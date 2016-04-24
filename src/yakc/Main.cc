@@ -14,7 +14,7 @@
 #include "ui/UI.h"
 #endif
 #include "HTTP/HTTPFileSystem.h"
-#include "Time/Clock.h"
+#include "Core/Time/Clock.h"
 
 using namespace Oryol;
 using namespace yakc;

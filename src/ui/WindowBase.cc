@@ -4,8 +4,6 @@
 #include "WindowBase.h"
 #include "Core/String/StringBuilder.h"
 
-OryolClassImpl(WindowBase);
-
 using namespace Oryol;
 using namespace yakc;
 

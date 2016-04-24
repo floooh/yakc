@@ -6,8 +6,6 @@
 #include "Core/String/StringBuilder.h"
 #include <string.h>
 
-OryolClassImpl(LoadWIndow);
-
 using namespace Oryol;
 using namespace yakc;
 

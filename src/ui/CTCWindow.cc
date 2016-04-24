@@ -5,8 +5,6 @@
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
 
-OryolClassImpl(CTCWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

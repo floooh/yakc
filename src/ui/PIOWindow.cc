@@ -6,8 +6,6 @@
 #include "core/z80pio.h"
 #include "ui/UI.h"
 
-OryolClassImpl(PIOWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

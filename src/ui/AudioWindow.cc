@@ -7,8 +7,6 @@
 #include "yakc/Audio.h"
 #include "ui/UI.h"
 
-OryolClassImpl(AudioWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

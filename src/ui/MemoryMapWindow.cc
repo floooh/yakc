@@ -6,8 +6,6 @@
 #include "Core/String/StringBuilder.h"
 #include "ui/UI.h"
 
-OryolClassImpl(MemoryMapWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

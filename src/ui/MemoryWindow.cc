@@ -4,8 +4,6 @@
 #include "MemoryWindow.h"
 #include "Input/Core/Key.h"
 
-OryolClassImpl(MemoryWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

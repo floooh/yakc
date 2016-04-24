@@ -5,8 +5,6 @@
 #include "IMUI/IMUI.h"
 #include "Disasm.h"
 
-OryolClassImpl(DisasmWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

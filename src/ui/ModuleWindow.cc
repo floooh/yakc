@@ -5,8 +5,6 @@
 #include "IMUI/IMUI.h"
 #include "roms/roms.h"
 
-OryolClassImpl(ModuleWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

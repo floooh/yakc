@@ -7,8 +7,6 @@
 #include "ui/UI.h"
 #include <ctype.h>
 
-OryolClassImpl(CommandWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

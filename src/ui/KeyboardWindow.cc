@@ -4,8 +4,6 @@
 #include "KeyboardWindow.h"
 #include "IMUI/IMUI.h"
 
-OryolClassImpl(KeyboardWindow);
-
 using namespace Oryol;
 using namespace yakc;
 

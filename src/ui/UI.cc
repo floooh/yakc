@@ -14,7 +14,7 @@
 #include "LoadWindow.h"
 #include "CommandWindow.h"
 #include "AudioWindow.h"
-#include "Time/Clock.h"
+#include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
 #include "roms/roms.h"

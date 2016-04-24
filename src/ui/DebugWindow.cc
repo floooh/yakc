@@ -6,8 +6,6 @@
 #include "UI.h"
 #include "Disasm.h"
 
-OryolClassImpl(DebugWindow);
-
 using namespace Oryol;
 using namespace yakc;
 
