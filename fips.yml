@@ -7,4 +7,7 @@ policies:
 imports:
     oryol:
         git: https://github.com/floooh/oryol.git
-
+    oryol-imgui:
+        git: https://github.com/floooh/oryol-imgui.git
+    fips-soloud:
+        git: https://github.com/floooh/fips-soloud.git
