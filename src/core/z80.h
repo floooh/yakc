@@ -76,14 +76,6 @@ public:
 
     /// flag lookup table for SZP flag combinations
     ubyte szp[256];
-    /// inc8 flags
-    ubyte inc8_flags[256];
-    /// dec8 flags
-    ubyte dec8_flags[256];
-    /// flag lookup table for add8
-    ubyte add8_flags[256][256];
-    /// flag lookup table for sub8
-    ubyte sub8_flags[256][256];
 
     /// memory map
     memory mem;
@@ -169,6 +161,8 @@ public:
     void add8(ubyte add);
     /// perform an 8-bit adc and update flags
     void adc8(ubyte add);
+    /// compute flags for sub8 operation (also cp8 and neg8)
+    ubyte sub8_flags(ubyte acc, ubyte sub);
     /// perform an 8-bit sub and update flags
     void sub8(ubyte sub);
     /// perform an 8-bit sbc and update flags
@@ -304,38 +298,6 @@ z80::init_flag_tables() {
         f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
         f |= p & 1 ? 0 : PF;
         this->szp[val] = f;
-    }
-    for (int val = 0; val < 256; val++) {
-        ubyte f = YAKC_SZ(val);
-        if ((val & 0xF) == 0) f |= HF;
-        if (val == 0x80) f |= VF;
-        this->inc8_flags[val] = f;
-    }
-    for (int val = 0; val < 256; val++) {
-        ubyte f = NF | YAKC_SZ(val);
-        if ((val & 0xF) == 0xF) f |= HF;
-        if (val == 0x7F) f |= VF;
-        this->dec8_flags[val] = f;
-    }
-    for (int acc = 0; acc < 256; acc++) {
-        for (int add = 0; add < 256; add++) {
-            int r = acc + add;
-            ubyte f = YAKC_SZ(r);
-            if (r > 0xFF) f |= CF;
-            if ((r & 0xF) < (acc & 0xF)) f |= HF;
-            if (((acc&0x80) == (add&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
-            this->add8_flags[acc][add] = f;
-        }
-    }
-    for (int acc = 0; acc < 256; acc++) {
-        for (int sub = 0; sub < 256; sub++) {
-            int r = int(acc) - int(sub);
-            ubyte f = NF | YAKC_SZ(r);
-            if (r < 0) f |= CF;
-            if ((r & 0xF) > (acc & 0xF)) f |= HF;
-            if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
-            this->sub8_flags[acc][sub] = f;
-        }
     }
 }
 
@@ -521,8 +483,13 @@ z80::sziff2(ubyte val, bool iff2) {
 //------------------------------------------------------------------------------
 inline void
 z80::add8(ubyte add) {
-    F = add8_flags[A][add];
-    A += add;
+    int r = A + add;
+    ubyte f = YAKC_SZ(r);
+    if (r > 0xFF) f |= CF;
+    if ((r & 0xF) < (A & 0xF)) f |= HF;
+    if (((A & 0x80) == (add & 0x80)) && ((r & 0x80) != (A & 0x80))) f |= VF;
+    F = f;
+    A = ubyte(r);
 }
 
 //------------------------------------------------------------------------------
@@ -544,22 +511,33 @@ z80::adc8(ubyte add) {
 }
 
 //------------------------------------------------------------------------------
+inline ubyte
+z80::sub8_flags(ubyte acc, ubyte sub) {
+    int r = int(acc) - int(sub);
+    ubyte f = NF | YAKC_SZ(r);
+    if (r < 0) f |= CF;
+    if ((r & 0xF) > (acc & 0xF)) f |= HF;
+    if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
+    return f;
+}
+
+//------------------------------------------------------------------------------
 inline void
 z80::sub8(ubyte sub) {
-    F = sub8_flags[A][sub];
+    F = sub8_flags(A, sub);
     A -= sub;
 }
 
 //------------------------------------------------------------------------------
 inline void
 z80::cp8(ubyte sub) {
-    F = sub8_flags[A][sub];
+    F = sub8_flags(A, sub);
 }
 
 //------------------------------------------------------------------------------
 inline void
 z80::neg8() {
-    F = sub8_flags[0][A];
+    F = sub8_flags(0, A);
     A = ubyte(0) - A;
 }
 
@@ -606,7 +584,10 @@ z80::xor8(ubyte val) {
 inline ubyte
 z80::inc8(ubyte val) {
     ubyte r = val + 1;
-    F = this->inc8_flags[r] | (F & CF);
+    ubyte f = YAKC_SZ(r);
+    if ((r & 0xF) == 0) f |= HF;
+    if (r == 0x80) f |= VF;
+    F = f | (F & CF);
     return r;
 }
 
@@ -614,7 +595,10 @@ z80::inc8(ubyte val) {
 inline ubyte
 z80::dec8(ubyte val) {
     ubyte r = val - 1;
-    F = this->dec8_flags[r] | (F & CF);
+    ubyte f = NF | YAKC_SZ(r);
+    if ((r & 0xF) == 0xF) f |= HF;
+    if (r == 0x7F) f |= VF;
+    F = f | (F & CF);
     return r;
 }
 
