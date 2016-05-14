@@ -3,7 +3,7 @@
 #   Code generator script for Z80 instructions.
 #-------------------------------------------------------------------------------
 
-Version = 1
+Version = 2
 
 from collections import namedtuple
 import genutil
@@ -1449,45 +1449,49 @@ def gen_source(f, ops, ext_ops) :
     f.write('// machine generated, do not edit!\n')
     f.write('#include "core/common.h"\n')
     f.write('namespace yakc {\n')
-    f.write('inline unsigned int z80::step() {\n')
-    f.write('    int d;\n')
+
+    # prefix instructions decoders
+    for prefix in [ 0xCB, 0xDD, 0xFD, 0xED ] :
+        f.write('inline uint32_t z80::do_op_{}(ubyte op) {{\n'.format(hex(prefix)))
+        if prefix in [0xDD, 0xFD] :
+            f.write('    int d; uword u16tmp;\n')
+        f.write('    switch (op) {\n')
+        for ext_op in range(0,256) :
+            if ext_op in ext_ops[prefix] :
+                has_return = False
+                f.write('        case {}:\n'.format(hex(ext_op)))
+                for line in ext_ops[prefix][ext_op] :
+                    f.write('            {}\n'.format(line))
+                    if 'return' in line :
+                        has_return = True
+                if not has_return :
+                    genutil.fmtError("ext {} opcode implementation without 'return':\n{}\n!".format(ext_ops[prefix][ext_op]))
+        f.write('        default:\n')
+        f.write('            return invalid_opcode(2);\n')
+        f.write('    }\n')
+        f.write('};\n');
+
+    # main decoder
+    f.write('inline uint32_t z80::do_op(ubyte op) {\n')
     f.write('    uword u16tmp;\n')
-    f.write('    INV = false;\n')
-    f.write('    if (enable_interrupt) {\n')
-    f.write('        IFF1 = IFF2 = true;\n')
-    f.write('        enable_interrupt = false;\n')
-    f.write('    }\n')
-    f.write('    switch (fetch_op()) {\n')
-    
-    # generate the switch case in sorted order
+    f.write('    switch (op) {\n')
     for op in range(0,256) :
         if op in ops :
-            f.write('    case {}:\n'.format(hex(op)))
+            f.write('        case {}:\n'.format(hex(op)))
             if op in [ 0xCB, 0xDD, 0xFD, 0xED ] :
-                f.write('        switch (fetch_op()) {\n')
-                for ext_op in range(0,256) :
-                    if ext_op in ext_ops[op] :
-                        f.write('        case {}:\n'.format(hex(ext_op)))
-                        for line in ext_ops[op][ext_op] :
-                            f.write('            {}\n'.format(line))
-                        f.write('            break;\n')
-                f.write('        default:\n')
-                f.write('            return invalid_opcode(2);\n')
-                f.write('            break;\n')
-                f.write('        }\n')
+                f.write('            return do_op_{}(fetch_op());\n'.format(hex(op)))
             else :
+                has_return = False
                 for line in ops[op] :
-                    f.write('        {}\n'.format(line))
-            f.write('        break;\n')
-    f.write('    default:\n')
-    f.write('       return invalid_opcode(1);\n')
-    f.write('       break;\n')
+                    f.write('            {}\n'.format(line))
+                    if 'return' in line :
+                        has_return = True
+                if not has_return :
+                    genutil.fmtError("opcode implementation without 'return':\n{}\n!".format(ops[op]))
+    f.write('        default:\n')
+    f.write('            return invalid_opcode(1);\n')
     f.write('    }\n')
-    f.write('#ifdef _DEBUG\n')
-    f.write('    YAKC_ASSERT(false);\n')
-    f.write('#endif\n')
-    f.write('    return 0;\n')
-    f.write('}\n')
+    f.write('};\n')
     f.write('} // namespace yakc\n')
 
 #-------------------------------------------------------------------------------

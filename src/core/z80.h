@@ -120,8 +120,18 @@ public:
     void connect_irq_device(z80int* device);
     /// perform a reset (RESET pin triggered)
     void reset();
+    /// decode 0xCB opcodes (generated)
+    uint32_t do_op_0xcb(ubyte op);
+    /// decode 0xDD opcodes (generated)
+    uint32_t do_op_0xdd(ubyte op);
+    /// decode 0xFD opcodes (generated)
+    uint32_t do_op_0xfd(ubyte op);
+    /// decode 0xED opcodes (generated)
+    uint32_t do_op_0xed(ubyte op);
+    /// top-level opcode decoder (generated)
+    uint32_t do_op(ubyte op);
     /// execute a single instruction, return number of cycles
-    unsigned int step();
+    uint32_t step();
 
     /// called when invalid opcode has been hit
     unsigned int invalid_opcode(uword opsize);
@@ -351,6 +361,24 @@ z80::reset() {
 }
 
 //------------------------------------------------------------------------------
+inline ubyte
+z80::fetch_op() {
+    R = (R + 1) & 0x7F;
+    return mem.r8(PC++);
+}
+
+//------------------------------------------------------------------------------
+inline uint32_t
+z80::step() {
+    INV = false;
+    if (enable_interrupt) {
+        IFF1 = IFF2 = true;
+        enable_interrupt = false;
+    }
+    return do_op(fetch_op());
+}
+
+//------------------------------------------------------------------------------
 inline void
 z80::halt() {
     this->HALT = true;
@@ -460,13 +488,6 @@ z80::test_flags(ubyte expected) const {
     // mask out undocumented flags
     ubyte undoc = ~(XF|YF);
     return (F & undoc) == expected;
-}
-
-//------------------------------------------------------------------------------
-inline ubyte
-z80::fetch_op() {
-    R = (R + 1) & 0x7F;
-    return mem.r8(PC++);
 }
 
 //------------------------------------------------------------------------------
