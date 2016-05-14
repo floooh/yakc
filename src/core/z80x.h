@@ -8,6 +8,8 @@
 #include "core/memory.h"
 #include "core/z80int.h"
 
+namespace yakc {
+
 class z80x {
 public:
     /// register indices and flag bits
@@ -118,6 +120,8 @@ public:
     uint32_t step();
 };
 
+#define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
+
 //------------------------------------------------------------------------------
 inline void
 z80x::halt() {
@@ -227,7 +231,7 @@ z80x::xor8(ubyte val) {
 
 //------------------------------------------------------------------------------
 inline void
-z80::rst(ubyte vec) {
+z80x::rst(ubyte vec) {
     SP -= 2;
     mem.w16(SP, PC);
     PC = (uword) vec;
@@ -284,14 +288,28 @@ z80x::step() {
     const ubyte y = (op>>3) & 7;
     const ubyte z = op & 7;
     if (x == 1) {
-        // 8-bit register/register load, or special case HALT for LD (HL),(HL)
-        if ((y == 6) && (z == 6)) {
-            halt();
+        // 8-bit load, or special case HALT for LD (HL),(HL)
+        if (y == 6) {
+            if (z == 6) {
+                halt();
+                return 4;
+            }
+            else {
+                // LD (HL),r
+                mem.w8(rr16(HL), r[z]);
+                return 7;
+            }
+        }
+        else if (z == 6) {
+            // LD r,(HL)
+            r[y] = mem.r8(rr16(HL));
+            return 7;
         }
         else {
+            // LD r,s
             r[y] = r[z];
+            return 4;
         }
-        return 4;
     }
     else if (x == 2) {
         // 8-bit ALU instruction with register or (HL)
