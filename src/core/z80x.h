@@ -108,11 +108,54 @@ public:
     void connect_irq_device(z80int* device);
     /// perform a reset (RESET pin triggered)
     void reset();
+    /// helper to test expected flag bitmask
+    bool test_flags(ubyte expected) const;
+
+    /// write a 16-bit register (index: BC=0, DE=1, HL=2, AF=3)
+    void rw16(int index, uword value);
+    /// read a 16-bit register (index: BC=0, DE=1, HL=2, AF=3)
+    uword rr16(int index) const;
 
     /// halt instruction
     void halt();
+    /// implement the EI instruction
+    void ei();
+    /// implement the DI instruction
+    void di();
+    /// call in-handler, return result
+    ubyte in(uword port);
+    /// call out-handler
+    void out(uword port, ubyte val);    
     /// rst instruction (vec is 0x00, 0x08, 0x10, ...)
     void rst(ubyte vec);
+    /// perform a general ALU op (add, adc, sub, sbc, cp, and, or, xor)
+    void alu8(ubyte alu, ubyte val);
+    /// check flag status for RET cc, JP cc, CALL cc, etc...
+    bool cc(ubyte y) const;
+
+    /// perform an 8-bit add and update flags
+    void add8(ubyte add);
+    /// perform an 8-bit adc and update flags
+    void adc8(ubyte add);
+    /// compute flags for sub8 operation (also cp8 and neg8)
+    ubyte sub8_flags(ubyte acc, ubyte sub);
+    /// perform an 8-bit sub and update flags
+    void sub8(ubyte sub);
+    /// perform an 8-bit sbc and update flags
+    void sbc8(ubyte sub);
+    /// perform 8-bit compare (identical with sub8 but throw result away)
+    void cp8(ubyte sub);
+    /// perform a neg and update flags
+    void neg8();
+    /// perform an 8-bit and and update flags
+    void and8(ubyte val);
+    /// perform an 8-bit or and update flags
+    void or8(ubyte val);
+    /// perform an 8-bit xor and update flags
+    void xor8(ubyte val);
+
+    /// perform an 16-bit add, update flags and return result
+    uword add16(uword acc, uword val);
 
     /// fetch an opcode byte and increment R register
     ubyte fetch_op();
@@ -123,10 +166,138 @@ public:
 #define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
 
 //------------------------------------------------------------------------------
+inline
+z80x::z80x() :
+IX(0), IY(0), SP(0), PC(0), I(0), R(0), IM(0),
+HALT(false), IFF1(false), IFF2(false), INV(false),
+in_func(nullptr),
+out_func(nullptr),
+inout_userdata(nullptr),
+irq_device(nullptr),
+irq_received(false),
+enable_interrupt(false),
+break_on_invalid_opcode(false) {
+    for (int i = 0; i < 8; i++) {
+        REG[i] = 0;
+        REG_[i] = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::init(cb_in func_in, cb_out func_out, void* userdata) {
+    YAKC_ASSERT(func_in && func_out);
+    this->init_flag_tables();
+    this->reset();
+    this->in_func = func_in;
+    this->out_func = func_out;
+    this->inout_userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+#define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
+inline void
+z80x::init_flag_tables() {
+    for (int val = 0; val < 256; val++) {
+        int p = 0;
+        if (val & (1<<0)) p++;
+        if (val & (1<<1)) p++;
+        if (val & (1<<2)) p++;
+        if (val & (1<<3)) p++;
+        if (val & (1<<4)) p++;
+        if (val & (1<<5)) p++;
+        if (val & (1<<6)) p++;
+        if (val & (1<<7)) p++;
+        ubyte f = val?(val&SF):ZF;
+        f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
+        f |= p & 1 ? 0 : PF;
+        this->szp[val] = f;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::connect_irq_device(z80int* device) {
+    YAKC_ASSERT(device);
+    this->irq_device = device;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::reset() {
+    this->PC = 0;
+    this->IM = 0;
+    this->HALT = false;
+    this->IFF1 = false;
+    this->IFF2 = false;
+    this->I = 0;
+    this->R = 0;
+    this->irq_received = false;
+    this->enable_interrupt = false;
+}
+
+//------------------------------------------------------------------------------
+inline bool
+z80x::test_flags(ubyte expected) const {
+    // mask out undocumented flags
+    ubyte undoc = ~(XF|YF);
+    return (REG[F] & undoc) == expected;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::rw16(int index, uword val) {
+    REG[index<<1] = val>>8;
+    REG[(index<<1)+1] = val & 0xFF;
+}
+
+//------------------------------------------------------------------------------
+inline uword
+z80x::rr16(int index) const {
+    uword val = REG[index<<1]<<8 | REG[(index<<1)+1];
+    return val;
+}
+
+//------------------------------------------------------------------------------
 inline void
 z80x::halt() {
     HALT = true;
     PC--;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::in(uword port) {
+    if (in_func) {
+        return in_func(inout_userdata, port);
+    }
+    else {
+        return 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::out(uword port, ubyte val) {
+    if (out_func) {
+        out_func(inout_userdata, port, val);
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::ei() {
+    // NOTE: interrupts are actually enabled *after the next instruction*,
+    // thus we only set a flag here, the IFF flags will then be changed
+    // during the next instruction decode in step()
+    this->enable_interrupt = true;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::di() {
+    this->IFF1 = false;
+    this->IFF2 = false;
 }
 
 //------------------------------------------------------------------------------
@@ -261,7 +432,7 @@ z80x::alu8(ubyte alu, ubyte val) {
 
 //------------------------------------------------------------------------------
 inline bool
-z80x::cc(ubyte y) {
+z80x::cc(ubyte y) const {
     switch (y) {
         case 0: return !(REG[F] & ZF);  // NZ
         case 1: return REG[F] & ZF;     // Z
@@ -270,8 +441,19 @@ z80x::cc(ubyte y) {
         case 4: return !(REG[F] & PF);  // PO
         case 5: return REG[F] & PF;     // PE
         case 6: return !(REG[F] & SF);  // P
-        case 7: return REG[F] & SF;     // M
+        default: return REG[F] & SF;     // M
     }
+}
+
+//------------------------------------------------------------------------------
+inline uword
+z80x::add16(uword acc, uword val) {
+    unsigned int res = acc + val;
+    // flag computation taken from MAME
+    REG[F] = (REG[F] & (SF|ZF|VF)) |
+        (((acc^res^val)>>8)&HF)|
+        ((res>>16) & CF) | ((res >> 8) & (YF|XF));
+    return (uword)res;
 }
 
 //------------------------------------------------------------------------------
@@ -296,51 +478,113 @@ z80x::step() {
             }
             else {
                 // LD (HL),r
-                mem.w8(rr16(HL), r[z]);
+                mem.w8(rr16(HL), REG[z]);
                 return 7;
             }
         }
         else if (z == 6) {
             // LD r,(HL)
-            r[y] = mem.r8(rr16(HL));
+            REG[y] = mem.r8(rr16(HL));
             return 7;
         }
         else {
             // LD r,s
-            r[y] = r[z];
+            REG[y] = REG[z];
             return 4;
         }
     }
     else if (x == 2) {
         // 8-bit ALU instruction with register or (HL)
-        ubyte val;
-        uint32_t cycles;
         if (z == 6) {
             alu8(y, mem.r8(rr16(HL)));
             return 7;
         }
         else {
-            alu8(y, r[z]);
+            alu8(y, REG[z]);
             return 4;
         }
     }
     else if (x == 0) {
+        const ubyte p = y >> 1;
+        const ubyte q = y & 1;
         switch (z) {
             case 0: break;
-            case 1: break;
-            case 2: break;
+
+            //--- 16-bit immediate load, and ADD HL,rr
+            case 1:
+                if (q == 0) {
+                    //--- LD rp[p],nn (LD BC,nn ..., LD SP,nn)
+                    if (p == 3) {
+                        SP = mem.r16(PC);
+                    }
+                    else {
+                        rw16(p, mem.r16(PC));
+                    }
+                    PC += 2;
+                    return 10;
+                }
+                else {
+                    // ADD HL,rr
+                    uword val = (p == 3) ? SP : rr16(p);
+                    rw16(HL, add16(rr16(HL), val));
+                    return 11;
+                }
+
+            //--- indirect loads
+            case 2:
+                switch (y) {
+                    case 0:
+                        mem.w8(rr16(BC), REG[A]);       // LD (BC),A
+                        return 7;
+                    case 1:
+                        REG[A] = mem.r8(rr16(BC));      // LD A,(BC)
+                        return 7;
+                    case 2:
+                        mem.w8(rr16(DE), REG[A]);       // LD (DE),A
+                        return 7;
+                    case 3:
+                        REG[A] = mem.r8(rr16(DE));      // LD A,(DE)
+                        return 7;
+                    case 4:
+                        mem.w16(mem.r16(PC), rr16(HL)); // LD (nn),HL
+                        PC += 2;
+                        return 16;
+                    case 5:
+                        rw16(HL, mem.r16(mem.r16(PC))); // LD HL,(nn)
+                        PC += 2;
+                        return 16;
+                    case 6:
+                        mem.w8(mem.r16(PC), REG[A]);    // LD (nn),A
+                        PC += 2;
+                        return 13;
+                    case 7:
+                        REG[A] = mem.r8(mem.r16(PC));   // LD A,(nn)
+                        PC += 2;
+                        return 13;
+                }
+
             case 3: break;
             case 4: break;
             case 5: break;
-            case 6: break;
+
+            //--- LD r[y],n
+            case 6:
+                if (y == 6) {
+                    mem.w8(rr16(HL), mem.r8(PC++));
+                    return 10;
+                }
+                else {
+                    REG[y] = mem.r8(PC++);
+                    return 7;
+                }
+                
             case 7: break;
         }
-        o_error("FIXME!");
+        YAKC_ASSERT(false);
     }
     else if (x == 3) {
         const ubyte p = y >> 1;
         const ubyte q = y & 1;
-
         switch (z) {
             //--- RET cc
             case 0:
@@ -369,9 +613,9 @@ z80x::step() {
                     else if (p == 1) {
                         //--- EXX (swap BC,DE,HL)
                         for (int i = 0; i < 6; i++) {
-                            ubyte tmp = r[i];
-                            r[i] = r_[i];
-                            r_[i] = r[i];
+                            ubyte tmp = REG[i];
+                            REG[i] = REG_[i];
+                            REG_[i] = tmp;
                         }
                         return 4;
                     }
@@ -453,7 +697,7 @@ z80x::step() {
                 if (q == 0) {
                     // PUSH rp2[p] (BC=0, DE=1, HL=2, AF=3)
                     SP -= 2;
-                    mem.w16(rr16(p));
+                    mem.w16(p, rr16(p));
                     return 11;
                 }
                 else {
@@ -465,15 +709,15 @@ z80x::step() {
                     }
                     else if (p == 1) {
                         // FIXME: DD prefix!
-                        o_error("FIXME: DD prefix");
+                        YAKC_ASSERT(false);
                     }
                     else if (p == 2) {
                         // FIXME: ED prefix!
-                        o_error("FIXME: ED prefix");
+                        YAKC_ASSERT(false);
                     }
                     else if (p == 3) {
                         // FIXME: FD prefix!
-                        o_error("FIXME: FD prefix");
+                        YAKC_ASSERT(false);
                     }
                 }
                 break;
@@ -489,7 +733,7 @@ z80x::step() {
                 return 11;
         }
     }
-    o_error("FIXME!\n");
+    YAKC_ASSERT(false);
 }
 
 } // namespace yakc
