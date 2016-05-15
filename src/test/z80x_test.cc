@@ -2277,9 +2277,10 @@ TEST(DI_EI_IM) {
     CHECK(8==cpu.step()); CHECK(2 == cpu.IM);
     CHECK(8==cpu.step()); CHECK(0 == cpu.IM);
 }
+*/
 
 TEST(JP_cc_nn) {
-    z80 cpu = init_z80();
+    z80x cpu = init_z80();
 
     ubyte prog[] = {
         0x97,               //          SUB A
@@ -2306,21 +2307,22 @@ TEST(JP_cc_nn) {
     cpu.mem.write(0x0204, prog, sizeof(prog));
     cpu.PC = 0x0204;
 
-    CHECK(4 ==cpu.step()); CHECK(0x00 == cpu.A); CHECK(cpu.test_flags(z80::ZF|z80::NF));
+    CHECK(4 ==cpu.step()); CHECK(0x00 == R8(A)); CHECK(cpu.test_flags(z80x::ZF|z80x::NF));
     CHECK(10==cpu.step()); CHECK(0x0208 == cpu.PC);
     CHECK(10==cpu.step()); CHECK(0x020C == cpu.PC);
-    CHECK(7 ==cpu.step()); CHECK(0x01 == cpu.A); CHECK(cpu.test_flags(0));
+    CHECK(7 ==cpu.step()); CHECK(0x01 == R8(A)); CHECK(cpu.test_flags(0));
     CHECK(10==cpu.step()); CHECK(0x0211 == cpu.PC);
     CHECK(10==cpu.step()); CHECK(0x0215 == cpu.PC);
-    CHECK(4 ==cpu.step()); CHECK(0x02 == cpu.A); CHECK(cpu.test_flags(0));
+    CHECK(4 ==cpu.step()); CHECK(0x02 == R8(A)); CHECK(cpu.test_flags(0));
     CHECK(10==cpu.step()); CHECK(0x0219 == cpu.PC);
     CHECK(10==cpu.step()); CHECK(0x021D == cpu.PC);
-    CHECK(7 ==cpu.step()); CHECK(0xFF == cpu.A); CHECK(cpu.test_flags(z80::SF));
+    CHECK(7 ==cpu.step()); CHECK(0xFF == R8(A)); CHECK(cpu.test_flags(z80x::SF));
     CHECK(10==cpu.step()); CHECK(0x0222 == cpu.PC);
     CHECK(10==cpu.step()); CHECK(0x0226 == cpu.PC);
     CHECK(10==cpu.step()); CHECK(0x022D == cpu.PC);
 }
 
+/*
 TEST(JP_JR) {
     z80 cpu = init_z80();
 

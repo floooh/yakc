@@ -153,6 +153,28 @@ public:
     void or8(ubyte val);
     /// perform an 8-bit xor and update flags
     void xor8(ubyte val);
+    /// rotate left, copy sign bit into CF,
+    ubyte rlc8(ubyte val, bool flags_szp);
+    /// rotate right, copy bit 0 into CF
+    ubyte rrc8(ubyte val, bool flags_szp);
+    /// rotate left through carry bit
+    ubyte rl8(ubyte val, bool flags_szp);
+    /// rotate right through carry bit
+    ubyte rr8(ubyte val, bool flags_szp);
+    /// shift left into carry bit and update flags
+    ubyte sla8(ubyte val);
+    /// undocumented: shift left into carry bit, update flags
+    ubyte sll8(ubyte val);
+    /// shift right into carry bit, preserve sign, update flags
+    ubyte sra8(ubyte val);
+    /// shift right into carry bit, update flags
+    ubyte srl8(ubyte val);
+    /// implements the RLD instruction
+    void rld();
+    /// implements the RRD instruction
+    void rrd();
+    /// implement the DAA instruction
+    void daa();
 
     /// perform an 16-bit add, update flags and return result
     uword add16(uword acc, uword val);
@@ -431,6 +453,145 @@ z80x::alu8(ubyte alu, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
+inline ubyte
+z80x::rlc8(ubyte val, bool flags_szp) {
+    ubyte r = val<<1|val>>7;
+    ubyte f = (val & 0x80) ? CF : 0;
+    if (flags_szp) {
+        REG[F] = f | szp[r];
+    }
+    else {
+        REG[F] = f | (REG[F] & (SF|ZF|PF));
+    }
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::rrc8(ubyte val, bool flags_szp) {
+    ubyte r = val>>1|val<<7;
+    ubyte f = val & CF;
+    if (flags_szp) {
+        REG[F] = f | szp[r];
+    }
+    else {
+        REG[F] = f | (REG[F] & (SF|ZF|PF));
+    }
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::rl8(ubyte val, bool flags_szp) {
+    ubyte r = val<<1 | ((REG[F] & CF) ? 0x01:0x00);
+    ubyte f = val & 0x80 ? CF : 0;
+    if (flags_szp) {
+        REG[F] = f | szp[r];
+    }
+    else {
+        REG[F] = f | (REG[F] & (SF|ZF|PF));
+    }
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::rr8(ubyte val, bool flags_szp) {
+    ubyte r = val>>1 | ((REG[F] & CF) ? 0x80:0x00);
+    ubyte f = val & CF;
+    if (flags_szp) {
+        REG[F] = f | szp[r];
+    }
+    else {
+        REG[F] = f | (REG[F] & (SF|ZF|PF));
+    }
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::sla8(ubyte val) {
+    ubyte r = val<<1;
+    REG[F] = (val & 0x80 ? CF : 0) | szp[r];
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::sll8(ubyte val) {
+    // undocument! sll8 is identical with sla8 but inserts a 1 into the LSB
+    ubyte r = (val<<1) | 1;
+    REG[F] = (val & 0x80 ? CF : 0) | szp[r];
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::sra8(ubyte val) {
+    ubyte r = (val>>1) | (val & 0x80);
+    REG[F] = (val & CF) | szp[r];
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::srl8(ubyte val) {
+    ubyte r = val>>1;
+    REG[F] = (val & CF) | szp[r];
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::rld() {
+    ubyte x = mem.r8(rr16(HL));
+    ubyte tmp = REG[A] & 0xF;               // store A low nibble
+    REG[A] = (REG[A] & 0xF0) | (x>>4);      // move (HL) high nibble into A low nibble
+    x = (x<<4) | tmp;   // move (HL) low to high nibble, move A low nibble to (HL) low nibble
+    mem.w8(rr16(HL), x);
+    REG[F] = szp[REG[A]] | (REG[F] & CF);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::rrd() {
+    ubyte x = mem.r8(rr16(HL));
+    ubyte tmp = REG[A] & 0xF;                   // store A low nibble
+    REG[A] = (REG[A] & 0xF0) | (x & 0x0F);      // move (HL) low nibble to A low nibble
+    x = (x >> 4) | (tmp << 4);  // move A low nibble to (HL) high nibble, and (HL) high nibble to (HL) low nibble
+    mem.w8(rr16(HL), x);
+    REG[F] = szp[REG[A]] | (REG[F] & CF);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::daa() {
+    // from MAME and http://www.z80.info/zip/z80-documented.pdf
+    ubyte val = REG[A];
+    if (REG[F] & NF) {
+        if (((REG[A] & 0xF) > 0x9) || (REG[F] & HF)) {
+            val -= 0x06;
+        }
+        if ((REG[A] > 0x99) || (REG[F] & CF)) {
+            val -= 0x60;
+        }
+    }
+    else {
+        if (((REG[A] & 0xF) > 0x9) || (REG[F] & HF)) {
+            val += 0x06;
+        }
+        if ((REG[A] > 0x99) || (REG[F] & CF)) {
+            val += 0x60;
+        }
+    }
+    REG[F] &= CF|NF;
+    REG[F] |= (REG[A] > 0x99) ? CF:0;
+    REG[F] |= (REG[A]^val) & HF;
+    REG[F] |= szp[val];
+    REG[A] = val;
+}
+
+//------------------------------------------------------------------------------
 inline bool
 z80x::cc(ubyte y) const {
     switch (y) {
@@ -441,7 +602,7 @@ z80x::cc(ubyte y) const {
         case 4: return !(REG[F] & PF);  // PO
         case 5: return REG[F] & PF;     // PE
         case 6: return !(REG[F] & SF);  // P
-        default: return REG[F] & SF;     // M
+        default: return REG[F] & SF;    // M
     }
 }
 
@@ -508,7 +669,46 @@ z80x::step() {
         const ubyte p = y >> 1;
         const ubyte q = y & 1;
         switch (z) {
-            case 0: break;
+            //--- relative jumps and assorted ops
+            case 0:
+                switch (y) {
+                    //--- NOP
+                    case 0:
+                        return 4;
+                    //--- EX AF,AF'
+                    case 1:
+                        for (int i = 6; i < 8; i++) {
+                            ubyte tmp = REG[i];
+                            REG[i] = REG_[i];
+                            REG_[i] = tmp;
+                        }
+                        return 4;
+                    //--- DJNZ d
+                    case 2:
+                        if (--REG[B] > 0) {
+                            PC += mem.rs8(PC) + 1;
+                            return 13;
+                        }
+                        else {
+                            PC++;
+                            return 8;
+                        }
+                    //--- JR d
+                    case 3:
+                        PC += mem.rs8(PC) + 1;
+                        return 12;
+                    //--- JR cc,d
+                    default:
+                        if (cc(y-4)) {
+                            PC += mem.rs8(PC) + 1;
+                            return 12;
+                        }
+                        else {
+                            PC++;
+                            return 7;
+                        }
+                }
+                break;
 
             //--- 16-bit immediate load, and ADD HL,rr
             case 1:
@@ -529,6 +729,7 @@ z80x::step() {
                     rw16(HL, add16(rr16(HL), val));
                     return 11;
                 }
+                break;
 
             //--- indirect loads
             case 2:
@@ -562,6 +763,7 @@ z80x::step() {
                         PC += 2;
                         return 13;
                 }
+                break;
 
             case 3: break;
             case 4: break;
@@ -577,8 +779,37 @@ z80x::step() {
                     REG[y] = mem.r8(PC++);
                     return 7;
                 }
-                
-            case 7: break;
+                break;
+
+            //--- assorted ops on accumulator and flags
+            case 7:
+                switch (y) {
+                    case 0:
+                        REG[A] = rlc8(REG[A], false);   // RLCA
+                        return 4;
+                    case 1:
+                        REG[A] = rrc8(REG[A], false);   // RRCA
+                        return 4;
+                    case 2:
+                        REG[A] = rl8(REG[A], false);    // RLA
+                        return 4;
+                    case 3:
+                        REG[A] = rr8(REG[A], false);    // RRA
+                        return 4;
+                    case 4:
+                        daa();                          // DAA
+                        return 4;
+                    case 5:
+                        REG[A] ^= 0xFF;                 // CPL
+                        REG[F] = (REG[F]&(SF|ZF|PF|CF)) | HF | NF | (REG[A]&(YF|XF));
+                        return 4;
+                    case 6:
+                        REG[F] = (REG[F]&(SF|ZF|YF|XF|PF))|CF|(REG[A]&(YF|XF)); // SCF
+                        return 4;
+                    case 7:
+                        REG[F] = ((REG[F]&(SF|ZF|YF|XF|PF|CF))|((REG[F]&CF)<<4)|(REG[A]&(YF|XF)))^CF;   // CCF
+                        return 4;
+                }
         }
         YAKC_ASSERT(false);
     }
@@ -633,7 +864,7 @@ z80x::step() {
                 break;
 
             //--- JP cc
-            case 2: break;
+            case 2:
                 if (cc(y)) {
                     PC = mem.r16(PC);
                 }
@@ -691,6 +922,7 @@ z80x::step() {
                     PC += 2;
                     return 10;
                 }
+                break;
 
             //--- PUSH and various ops
             case 5:
