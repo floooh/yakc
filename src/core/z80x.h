@@ -153,6 +153,10 @@ public:
     void or8(ubyte val);
     /// perform an 8-bit xor and update flags
     void xor8(ubyte val);
+    /// perform an 8-bit inc and set flags
+    ubyte inc8(ubyte val);
+    /// perform an 8-bit dec and set flags
+    ubyte dec8(ubyte val);
     /// rotate left, copy sign bit into CF,
     ubyte rlc8(ubyte val, bool flags_szp);
     /// rotate right, copy bit 0 into CF
@@ -175,12 +179,18 @@ public:
     void rrd();
     /// implement the DAA instruction
     void daa();
+    /// implements the BIT test instruction, updates flags
+    void bit(ubyte val, ubyte mask);
 
     /// perform an 16-bit add, update flags and return result
     uword add16(uword acc, uword val);
 
     /// fetch an opcode byte and increment R register
     ubyte fetch_op();
+    /// decode CB prefix instruction
+    uint32_t do_cb(ubyte op);
+    /// decode main instruction
+    uint32_t do_op(ubyte op);
     /// execute a single instruction, return number of cycles
     uint32_t step();
 };
@@ -423,18 +433,33 @@ z80x::xor8(ubyte val) {
 }
 
 //------------------------------------------------------------------------------
+inline ubyte
+z80x::inc8(ubyte val) {
+    ubyte r = val + 1;
+    ubyte f = YAKC_SZ(r);
+    if ((r & 0xF) == 0) f |= HF;
+    if (r == 0x80) f |= VF;
+    REG[F] = f | (REG[F] & CF);
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::dec8(ubyte val) {
+    ubyte r = val - 1;
+    ubyte f = NF | YAKC_SZ(r);
+    if ((r & 0xF) == 0xF) f |= HF;
+    if (r == 0x7F) f |= VF;
+    REG[F] = f | (REG[F] & CF);
+    return r;
+}
+
+//------------------------------------------------------------------------------
 inline void
 z80x::rst(ubyte vec) {
     SP -= 2;
     mem.w16(SP, PC);
     PC = (uword) vec;
-}
-
-//------------------------------------------------------------------------------
-inline ubyte
-z80x::fetch_op() {
-    R = (R + 1) & 0x7F;
-    return mem.r8(PC++);
 }
 
 //------------------------------------------------------------------------------
@@ -592,6 +617,15 @@ z80x::daa() {
 }
 
 //------------------------------------------------------------------------------
+inline void
+z80x::bit(ubyte val, ubyte mask) {
+    ubyte r = val & mask;
+    ubyte f = HF | (r ? (r & SF) : (ZF|PF));
+    f |= (val & (YF|XF));
+    REG[F] = f | (REG[F] & CF);
+}
+
+//------------------------------------------------------------------------------
 inline bool
 z80x::cc(ubyte y) const {
     switch (y) {
@@ -618,15 +652,94 @@ z80x::add16(uword acc, uword val) {
 }
 
 //------------------------------------------------------------------------------
+inline ubyte
+z80x::fetch_op() {
+    R = (R + 1) & 0x7F;
+    return mem.r8(PC++);
+}
+
+//------------------------------------------------------------------------------
 inline uint32_t
-z80x::step() {
-    // see: http://www.z80.info/decoding.htm
-    INV = false;
-    if (enable_interrupt) {
-        IFF1 = IFF2 = true;
-        enable_interrupt = false;
+z80x::do_cb(ubyte op) {
+    const ubyte x = op>>7;
+    const ubyte y = (op>>3) & 7;
+    const ubyte z = op & 7;
+    if (x == 0) {
+        // roll and shift ops
+        switch (y) {
+            case 0:
+                //--- RLC
+                REG[z] = rlc8(REG[z], true);
+                return 8;
+            case 1:
+                //--- RRC
+                REG[z] = rrc8(REG[z], true);
+                return 8;
+            case 2:
+                //--- RL
+                REG[z] = rl8(REG[z], true);
+                return 8;
+            case 3:
+                //--- RR
+                REG[z] = rr8(REG[z], true);
+                return 8;
+            case 4:
+                //--- SLA
+                REG[z] = sla8(REG[z]);
+                return 8;
+            case 5:
+                //--- SRA
+                REG[z] = sra8(REG[z]);
+                return 8;
+            case 6:
+                //--- SLL
+                REG[z] = sll8(REG[z]);
+                return 8;
+            case 7:
+                //--- SRL
+                REG[z] = srl8(REG[z]);
+                return 8;
+        }
     }
-    const ubyte op = fetch_op();
+    else if (x == 1) {
+        // BIT y,r[z]
+        if (z == 6) {
+            bit(mem.r8(rr16(HL)), 1<<y);
+            return 12;
+        }
+        else {
+            bit(REG[z], 1<<y);
+            return 8;
+        }
+    }
+    else if (x == 2) {
+        // RES y,r[z]
+        if (z == 6) {
+            mem.w8(rr16(HL), mem.r8(rr16(HL)) & ~(1<<y));
+            return 15;
+        }
+        else {
+            REG[z] &= ~(1<<y);
+            return 8;
+        }
+    }
+    else if (x == 3) {
+        // SET y,r[z]
+        if (z == 6) {
+            mem.w8(rr16(HL), mem.r8(rr16(HL)) | (1<<y));
+            return 15;
+        }
+        else {
+            REG[z] |= (1<<y);
+            return 8;
+        }
+    }
+    YAKC_ASSERT(false);
+}
+
+//------------------------------------------------------------------------------
+inline uint32_t
+z80x::do_op(ubyte op) {
     const ubyte x = op>>6;
     const ubyte y = (op>>3) & 7;
     const ubyte z = op & 7;
@@ -765,9 +878,51 @@ z80x::step() {
                 }
                 break;
 
-            case 3: break;
-            case 4: break;
-            case 5: break;
+            //--- DEC/INC rp[p] (16-bit)
+            case 3:
+                if (q == 0) {
+                    //--- INC rp[p]
+                    if (p == 3) {
+                        SP++;
+                    }
+                    else {
+                        rw16(p, rr16(p)+1);
+                    }
+                }
+                else {
+                    //--- DEC rp[p]
+                    if (p == 3) {
+                        SP--;
+                    }
+                    else {
+                        rw16(p, rr16(p)+1);
+                    }
+                }
+                return 6;
+
+            //--- INC r[y] (8-bit)
+            case 4:
+                if (z == 6) {
+                    mem.w8(rr16(HL), inc8(mem.r8(rr16(HL))));
+                    return 11;
+                }
+                else {
+                    REG[y] = inc8(REG[y]);
+                    return 4;
+                }
+                break;
+                
+            //--- DEC r[y] (8-bit)
+            case 5:
+                if (z == 6) {
+                    mem.w8(rr16(HL), dec8(mem.r8(rr16(HL))));
+                    return 11;
+                }
+                else {
+                    REG[y] = dec8(REG[y]);
+                    return 4;
+                }
+                break;
 
             //--- LD r[y],n
             case 6:
@@ -879,8 +1034,8 @@ z80x::step() {
                     case 0: // JP nn
                         PC = mem.r16(PC);
                         return 10;
-                    case 1: // FIXME: CB prefix!
-                        break;
+                    case 1: // CB prefix
+                        return do_cb(fetch_op());
                     case 2: // OUT (n),A
                         out((REG[A]<<8)|mem.r8(PC++), REG[A]);
                         return 11;
@@ -966,6 +1121,19 @@ z80x::step() {
         }
     }
     YAKC_ASSERT(false);
+}
+
+//------------------------------------------------------------------------------
+inline uint32_t
+z80x::step() {
+    // see: http://www.z80.info/decoding.htm
+    INV = false;
+    if (enable_interrupt) {
+        IFF1 = IFF2 = true;
+        enable_interrupt = false;
+    }
+    const ubyte op = fetch_op();
+    return do_op(op);
 }
 
 } // namespace yakc

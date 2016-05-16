@@ -74,7 +74,7 @@ inline uint32_t z80::do_op_0xcb(ubyte op) {
             B = rl8(B, true);
             return 8;
         case 0x11:
-            // RL C
+            // RR C
             C = rl8(C, true);
             return 8;
         case 0x12:
