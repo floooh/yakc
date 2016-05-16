@@ -22,11 +22,19 @@ public:
         L = 5,
         F = 6,
         A = 7,
+        IXH = 8,
+        IXL = 9,
+        IYH = 10,
+        IYL = 11,
+        NUM_R8 = 12,
 
         BC = 0,
         DE = 1,
         HL = 2,
         AF = 3,
+        IX = 4,
+        IY = 5,
+        NUM_R16 = 6,
 
         CF = (1<<0),        // carry flag
         NF = (1<<1),        // add/subtract
@@ -40,19 +48,9 @@ public:
     };
 
     /// main register set
-    ubyte REG[8];
+    ubyte REG[NUM_R8];
     /// shadow register set
-    ubyte REG_[8];
-    /// the IX index register
-    union {
-        struct { ubyte IXL, IXH; };
-        uword IX;
-    };
-    /// the IY index register
-    union {
-        struct { ubyte IYL, IYH; };
-        uword IY;
-    };
+    ubyte REG_[NUM_R8];
     /// stack pointer
     uword SP;
     /// instruction pointer
@@ -110,11 +108,15 @@ public:
     void reset();
     /// helper to test expected flag bitmask
     bool test_flags(ubyte expected) const;
+    /// called when invalid opcode has been hit
+    uint32_t invalid_opcode(uword opsize);
 
     /// write a 16-bit register (index: BC=0, DE=1, HL=2, AF=3)
     void rw16(int index, uword value);
     /// read a 16-bit register (index: BC=0, DE=1, HL=2, AF=3)
     uword rr16(int index) const;
+    /// read a 16-bit shadow register (index: BC=0, DE=1, HL=2, AF=3)
+    uword rr16_(int index) const;
 
     /// halt instruction
     void halt();
@@ -132,6 +134,8 @@ public:
     void alu8(ubyte alu, ubyte val);
     /// check flag status for RET cc, JP cc, CALL cc, etc...
     bool cc(ubyte y) const;
+    /// conditionally load d offset for (IX/IY+d) instructions
+    int d(bool load_d);
 
     /// perform an 8-bit add and update flags
     void add8(ubyte add);
@@ -188,9 +192,9 @@ public:
     /// fetch an opcode byte and increment R register
     ubyte fetch_op();
     /// decode CB prefix instruction
-    uint32_t do_cb(ubyte op);
+    uint32_t do_cb(ubyte op, int hl, bool ext, int off);
     /// decode main instruction
-    uint32_t do_op(ubyte op);
+    uint32_t do_op(ubyte op, int hl, bool ext);
     /// execute a single instruction, return number of cycles
     uint32_t step();
 };
@@ -200,7 +204,7 @@ public:
 //------------------------------------------------------------------------------
 inline
 z80x::z80x() :
-IX(0), IY(0), SP(0), PC(0), I(0), R(0), IM(0),
+SP(0), PC(0), I(0), R(0), IM(0),
 HALT(false), IFF1(false), IFF2(false), INV(false),
 in_func(nullptr),
 out_func(nullptr),
@@ -209,7 +213,7 @@ irq_device(nullptr),
 irq_received(false),
 enable_interrupt(false),
 break_on_invalid_opcode(false) {
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < NUM_R8; i++) {
         REG[i] = 0;
         REG_[i] = 0;
     }
@@ -277,16 +281,54 @@ z80x::test_flags(ubyte expected) const {
 }
 
 //------------------------------------------------------------------------------
+inline uint32_t
+z80x::invalid_opcode(uword opsize) {
+    if (this->break_on_invalid_opcode) {
+        INV = true;
+        PC -= opsize;     // stuck on invalid opcode
+    }
+    return 4;
+}
+
+//------------------------------------------------------------------------------
 inline void
 z80x::rw16(int index, uword val) {
-    REG[index<<1] = val>>8;
-    REG[(index<<1)+1] = val & 0xFF;
+    if (AF == index) {
+        // special case AF
+        REG[index<<1] = val & 0xFF;
+        REG[(index<<1)+1] = val>>8;
+    }
+    else {
+        REG[index<<1] = val>>8;
+        REG[(index<<1)+1] = val & 0xFF;
+    }
 }
 
 //------------------------------------------------------------------------------
 inline uword
 z80x::rr16(int index) const {
-    uword val = REG[index<<1]<<8 | REG[(index<<1)+1];
+    uword val;
+    if (AF == index) {
+        // special case AF
+        val = REG[(index<<1)+1]<<8 | REG[index<<1];
+    }
+    else {
+        val = REG[index<<1]<<8 | REG[(index<<1)+1];
+    }
+    return val;
+}
+
+//------------------------------------------------------------------------------
+inline uword
+z80x::rr16_(int index) const {
+    uword val;
+    if (AF == index) {
+        // special case AF
+        val = REG_[(index<<1)+1]<<8 | REG_[index<<1];
+    }
+    else {
+        val = REG_[index<<1]<<8 | REG_[(index<<1)+1];
+    }
     return val;
 }
 
@@ -348,7 +390,6 @@ z80x::add8(ubyte add) {
 inline void
 z80x::adc8(ubyte add) {
     if (REG[F] & CF) {
-        // don't waste flag table space for rarely used instructions
         int r = int(REG[A]) + int(add) + 1;
         ubyte f = YAKC_SZ(r);
         if (r > 0xFF) f |= CF;
@@ -659,53 +700,83 @@ z80x::fetch_op() {
 }
 
 //------------------------------------------------------------------------------
+inline int
+z80x::d(bool load_d) {
+    if (load_d) {
+        return mem.rs8(PC++);
+    }
+    else {
+        return 0;
+    }
+}
+
+//------------------------------------------------------------------------------
 inline uint32_t
-z80x::do_cb(ubyte op) {
+z80x::do_cb(ubyte op, int hl, bool ext, int off) {
     const ubyte x = op>>7;
     const ubyte y = (op>>3) & 7;
     const ubyte z = op & 7;
+    uint32_t ext_cycles = ext ? 4 : 0;
     if (x == 0) {
         // roll and shift ops
+        ubyte val;
+        uword addr;
+        if (z == 6) {
+            addr = rr16(hl)+off;
+            val = mem.r8(addr);
+        }
+        else {
+            val = REG[z];
+        }
         switch (y) {
             case 0:
                 //--- RLC
-                REG[z] = rlc8(REG[z], true);
-                return 8;
+                val = rlc8(val, true);
+                break;
             case 1:
                 //--- RRC
-                REG[z] = rrc8(REG[z], true);
-                return 8;
+                val = rrc8(val, true);
+                break;
             case 2:
                 //--- RL
-                REG[z] = rl8(REG[z], true);
-                return 8;
+                val = rl8(val, true);
+                break;
             case 3:
                 //--- RR
-                REG[z] = rr8(REG[z], true);
-                return 8;
+                val = rr8(val, true);
+                break;
             case 4:
                 //--- SLA
-                REG[z] = sla8(REG[z]);
-                return 8;
+                val = sla8(val);
+                break;
             case 5:
                 //--- SRA
-                REG[z] = sra8(REG[z]);
-                return 8;
+                val = sra8(val);
+                break;
             case 6:
                 //--- SLL
-                REG[z] = sll8(REG[z]);
-                return 8;
+                val = sll8(val);
+                break;
             case 7:
                 //--- SRL
-                REG[z] = srl8(REG[z]);
-                return 8;
+                val = srl8(val);
+                break;
+        }
+        if (z == 6) {
+            mem.w8(addr, val);
+            return 15 + ext_cycles;
+        }
+        else {
+            REG[z] = val;
+            return 8;
         }
     }
     else if (x == 1) {
         // BIT y,r[z]
         if (z == 6) {
-            bit(mem.r8(rr16(HL)), 1<<y);
-            return 12;
+            const uword addr = rr16(hl)+off;
+            bit(mem.r8(addr), 1<<y);
+            return 12 + ext_cycles;
         }
         else {
             bit(REG[z], 1<<y);
@@ -715,8 +786,9 @@ z80x::do_cb(ubyte op) {
     else if (x == 2) {
         // RES y,r[z]
         if (z == 6) {
-            mem.w8(rr16(HL), mem.r8(rr16(HL)) & ~(1<<y));
-            return 15;
+            const uword addr = rr16(hl)+off;
+            mem.w8(addr, mem.r8(addr) & ~(1<<y));
+            return 15 + ext_cycles;
         }
         else {
             REG[z] &= ~(1<<y);
@@ -726,8 +798,9 @@ z80x::do_cb(ubyte op) {
     else if (x == 3) {
         // SET y,r[z]
         if (z == 6) {
-            mem.w8(rr16(HL), mem.r8(rr16(HL)) | (1<<y));
-            return 15;
+            const uword addr = rr16(hl)+off;
+            mem.w8(addr, mem.r8(addr) | (1<<y));
+            return 15 + ext_cycles;
         }
         else {
             REG[z] |= (1<<y);
@@ -739,10 +812,11 @@ z80x::do_cb(ubyte op) {
 
 //------------------------------------------------------------------------------
 inline uint32_t
-z80x::do_op(ubyte op) {
+z80x::do_op(ubyte op, int hl, bool ext) {
     const ubyte x = op>>6;
     const ubyte y = (op>>3) & 7;
     const ubyte z = op & 7;
+    uint32_t ext_cycles = ext ? 8 : 0;
     if (x == 1) {
         // 8-bit load, or special case HALT for LD (HL),(HL)
         if (y == 6) {
@@ -751,15 +825,17 @@ z80x::do_op(ubyte op) {
                 return 4;
             }
             else {
-                // LD (HL),r
-                mem.w8(rr16(HL), REG[z]);
-                return 7;
+                // LD (HL),r; LD (IX+d),r; LD (IY+d),r
+                const uword addr = rr16(hl)+d(ext);
+                mem.w8(addr, REG[z]);
+                return 7 + ext_cycles;
             }
         }
         else if (z == 6) {
-            // LD r,(HL)
-            REG[y] = mem.r8(rr16(HL));
-            return 7;
+            // LD r,(HL); LD r,(IX+d); LD r,(IY+d)
+            const uword addr = rr16(hl)+d(ext);
+            REG[y] = mem.r8(addr);
+            return 7 + ext_cycles;
         }
         else {
             // LD r,s
@@ -770,8 +846,9 @@ z80x::do_op(ubyte op) {
     else if (x == 2) {
         // 8-bit ALU instruction with register or (HL)
         if (z == 6) {
-            alu8(y, mem.r8(rr16(HL)));
-            return 7;
+            const uword addr = rr16(hl)+d(ext);
+            alu8(y, mem.r8(addr));
+            return 7 + ext_cycles;
         }
         else {
             alu8(y, REG[z]);
@@ -830,6 +907,10 @@ z80x::do_op(ubyte op) {
                     if (p == 3) {
                         SP = mem.r16(PC);
                     }
+                    else if (p == 2) {
+                        // this can be LD HL,nn; LD IX,nn; LD IY,nn
+                        rw16(hl, mem.r16(PC));
+                    }
                     else {
                         rw16(p, mem.r16(PC));
                     }
@@ -837,9 +918,9 @@ z80x::do_op(ubyte op) {
                     return 10;
                 }
                 else {
-                    // ADD HL,rr
-                    uword val = (p == 3) ? SP : rr16(p);
-                    rw16(HL, add16(rr16(HL), val));
+                    // ADD HL,rr, ADD IX,rr, ADD IY,rr
+                    uword val = (p==3)?SP:((p==2)?rr16(hl):rr16(p));
+                    rw16(HL, add16(rr16(hl), val));
                     return 11;
                 }
                 break;
@@ -860,11 +941,11 @@ z80x::do_op(ubyte op) {
                         REG[A] = mem.r8(rr16(DE));      // LD A,(DE)
                         return 7;
                     case 4:
-                        mem.w16(mem.r16(PC), rr16(HL)); // LD (nn),HL
+                        mem.w16(mem.r16(PC), rr16(hl)); // LD (nn),HL
                         PC += 2;
                         return 16;
                     case 5:
-                        rw16(HL, mem.r16(mem.r16(PC))); // LD HL,(nn)
+                        rw16(hl, mem.r16(mem.r16(PC))); // LD HL,(nn)
                         PC += 2;
                         return 16;
                     case 6:
@@ -885,6 +966,9 @@ z80x::do_op(ubyte op) {
                     if (p == 3) {
                         SP++;
                     }
+                    else if (p == 2) {
+                        rw16(hl, rr16(hl)+1);
+                    }
                     else {
                         rw16(p, rr16(p)+1);
                     }
@@ -894,17 +978,21 @@ z80x::do_op(ubyte op) {
                     if (p == 3) {
                         SP--;
                     }
+                    else if (p == 2) {
+                        rw16(hl, rr16(hl)-1);
+                    }
                     else {
-                        rw16(p, rr16(p)+1);
+                        rw16(p, rr16(p)-1);
                     }
                 }
                 return 6;
 
             //--- INC r[y] (8-bit)
             case 4:
-                if (z == 6) {
-                    mem.w8(rr16(HL), inc8(mem.r8(rr16(HL))));
-                    return 11;
+                if (y == 6) {
+                    const uword addr = rr16(hl)+d(ext);
+                    mem.w8(addr, inc8(mem.r8(addr)));
+                    return 11 + ext_cycles;
                 }
                 else {
                     REG[y] = inc8(REG[y]);
@@ -914,9 +1002,10 @@ z80x::do_op(ubyte op) {
                 
             //--- DEC r[y] (8-bit)
             case 5:
-                if (z == 6) {
-                    mem.w8(rr16(HL), dec8(mem.r8(rr16(HL))));
-                    return 11;
+                if (y == 6) {
+                    const uword addr = rr16(hl)+d(ext);
+                    mem.w8(addr, dec8(mem.r8(addr)));
+                    return 11 + ext_cycles;
                 }
                 else {
                     REG[y] = dec8(REG[y]);
@@ -927,8 +1016,9 @@ z80x::do_op(ubyte op) {
             //--- LD r[y],n
             case 6:
                 if (y == 6) {
-                    mem.w8(rr16(HL), mem.r8(PC++));
-                    return 10;
+                    const uword addr = rr16(hl)+d(ext);
+                    mem.w8(addr, mem.r8(PC++));
+                    return ext ? 15 : 10;
                 }
                 else {
                     REG[y] = mem.r8(PC++);
@@ -985,7 +1075,12 @@ z80x::do_op(ubyte op) {
             case 1:
                 if (q == 0) {
                     // POP rp2[p] (BC=0, DE=1, HL=2, AF=3)
-                    rw16(p, mem.r16(SP));
+                    if (p == 2) {
+                        rw16(hl, mem.r16(SP));
+                    }
+                    else {
+                        rw16(p, mem.r16(SP));
+                    }
                     SP += 2;
                     return 10;
                 }
@@ -1006,13 +1101,13 @@ z80x::do_op(ubyte op) {
                         return 4;
                     }
                     else if (p == 2) {
-                        //--- JP HL
-                        PC = rr16(HL);
+                        //--- JP HL; JP IX; JP IY
+                        PC = rr16(hl);
                         return 4;
                     }
                     else if (p == 3) {
-                        //--- LD SP,HL
-                        SP = rr16(HL);
+                        //--- LD SP,HL; LD SP,IX; LD SP,IY
+                        SP = rr16(hl);
                         return 6;
                     }
                 }
@@ -1035,18 +1130,22 @@ z80x::do_op(ubyte op) {
                         PC = mem.r16(PC);
                         return 10;
                     case 1: // CB prefix
-                        return do_cb(fetch_op());
+                        {
+                            const int off = d(ext);
+                            const ubyte op = fetch_op();
+                            return do_cb(op, hl, ext, off);
+                        }
                     case 2: // OUT (n),A
                         out((REG[A]<<8)|mem.r8(PC++), REG[A]);
                         return 11;
                     case 3: // IN A,(n)
                         REG[A] = in((REG[A]<<8)|(mem.r8(PC++)));
                         return 11;
-                    case 4: // EX (SP),HL
+                    case 4: // EX (SP),HL; EX (SP),IX; EX (SP),IY
                         {
                             uword tmp = mem.r16(SP);
-                            mem.w16(SP, rr16(HL));
-                            rw16(HL, tmp);
+                            mem.w16(SP, rr16(hl));
+                            rw16(hl, tmp);
                         }
                         return 19;
                     case 5: // EX DE,HL
@@ -1066,7 +1165,7 @@ z80x::do_op(ubyte op) {
                 break;
 
             //--- CALL cc
-            case 4: break;
+            case 4:
                 if (cc(y)) {
                     SP -= 2;
                     mem.w16(SP, PC+2);
@@ -1082,9 +1181,14 @@ z80x::do_op(ubyte op) {
             //--- PUSH and various ops
             case 5:
                 if (q == 0) {
-                    // PUSH rp2[p] (BC=0, DE=1, HL=2, AF=3)
+                    // PUSH rp2[p] (BC=0, DE=1, HL=2, AF=3), IX, IY
                     SP -= 2;
-                    mem.w16(p, rr16(p));
+                    if (p == 2) {
+                        mem.w16(SP, rr16(hl));
+                    }
+                    else {
+                        mem.w16(SP, rr16(p));
+                    }
                     return 11;
                 }
                 else {
@@ -1093,18 +1197,29 @@ z80x::do_op(ubyte op) {
                         SP -= 2;
                         mem.w16(SP, PC+2);
                         PC = mem.r16(PC);
+                        return 17;
                     }
                     else if (p == 1) {
-                        // FIXME: DD prefix!
-                        YAKC_ASSERT(false);
+                        // DD prefix
+                        if (!ext) {
+                            return do_op(fetch_op(), IX, true) + 4;
+                        }
+                        else {
+                            return invalid_opcode(2);
+                        }
                     }
                     else if (p == 2) {
                         // FIXME: ED prefix!
                         YAKC_ASSERT(false);
                     }
                     else if (p == 3) {
-                        // FIXME: FD prefix!
-                        YAKC_ASSERT(false);
+                        // FD prefix
+                        if (!ext) {
+                            return do_op(fetch_op(), IY, true) + 4;
+                        }
+                        else {
+                            return invalid_opcode(2);
+                        }
                     }
                 }
                 break;
@@ -1133,7 +1248,7 @@ z80x::step() {
         enable_interrupt = false;
     }
     const ubyte op = fetch_op();
-    return do_op(op);
+    return do_op(op, HL, false);
 }
 
 } // namespace yakc
