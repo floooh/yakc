@@ -145,6 +145,8 @@ public:
     void ei();
     /// implement the DI instruction
     void di();
+    /// implement the RETI instruction
+    void reti();
     /// call in-handler, return result
     ubyte in(uword port);
     /// call out-handler
@@ -205,6 +207,10 @@ public:
 
     /// perform an 16-bit add, update flags and return result
     uword add16(uword acc, uword val);
+    /// perform an 16-bit adc, update flags and return result
+    uword adc16(uword acc, uword val);
+    /// perform an 16-bit sbc, update flags and return result
+    uword sbc16(uword acc, uword val);
     /// implement the LDI instruction
     void ldi();
     /// implement the LDIR instruction, return number of T-states
@@ -241,6 +247,8 @@ public:
     void outd();
     /// implement the OTDR instruction, return number of T-states
     int otdr();
+    /// get flags for the LD A,I and LD A,R instructions
+    static ubyte sziff2(ubyte val, bool iff2);
 
     /// fetch an opcode byte and increment R register
     ubyte fetch_op();
@@ -447,6 +455,18 @@ inline void
 z80x::di() {
     this->IFF1 = false;
     this->IFF2 = false;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::reti() {
+    // this is the same as RET
+    this->PC = mem.r16(SP);
+    this->SP += 2;
+    // ...notify daisy chain, if configured
+    if (this->irq_device) {
+        this->irq_device->reti();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -752,6 +772,32 @@ z80x::add16(uword acc, uword val) {
 }
 
 //------------------------------------------------------------------------------
+inline uword
+z80x::adc16(uword acc, uword val) {
+    unsigned int res = acc + val + (F & CF);
+    // flag computation taken from MAME
+    F = (((acc^res^val)>>8)&HF) |
+        ((res>>16)&CF) |
+        ((res>>8)&(SF|YF|XF)) |
+        ((res & 0xFFFF) ? 0 : ZF) |
+        (((val^acc^0x8000) & (val^res)&0x8000)>>13);
+    return res;
+}
+
+//------------------------------------------------------------------------------
+inline uword
+z80x::sbc16(uword acc, uword val) {
+    unsigned int res = acc - val - (F & CF);
+    // flag computation taken from MAME
+    F = (((acc^res^val)>>8)&HF) | NF |
+        ((res>>16)&CF) |
+        ((res>>8) & (SF|YF|XF)) |
+        ((res & 0xFFFF) ? 0 : ZF) |
+        (((val^acc) & (acc^res)&0x8000)>>13);
+    return res;
+}
+
+//------------------------------------------------------------------------------
 inline void
 z80x::ldi() {
     ubyte val = mem.r8(HL);
@@ -879,6 +925,131 @@ z80x::cpdr() {
 
 //------------------------------------------------------------------------------
 inline ubyte
+z80x::ini_ind_flags(ubyte io_val, int c_add) {
+    // NOTE: most INI flag settings are undocumented in the official
+    // docs, so this is taken from MAME, there's also more
+    // information here: http://www.z80.info/z80undoc3.txt
+    ubyte f = B ? B & SF : ZF;
+    if (io_val & SF) f |= NF;
+    unsigned int t = (unsigned int)((C+c_add)&0xFF) + (unsigned int)io_val;
+    if (t & 0x100) f |= HF|CF;
+    f |= szp[ubyte(t & 0x07)^B] & PF;
+    return f;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::ini() {
+    ubyte io_val = in(BC);
+    B--;
+    mem.w8(HL++, io_val);
+    F = ini_ind_flags(io_val, +1);
+}
+
+//------------------------------------------------------------------------------
+inline int
+z80x::inir() {
+    ini();
+    if (B != 0) {
+        PC -= 2;
+        return 21;
+    }
+    else {
+        return 16;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::ind() {
+    ubyte io_val = in(BC);
+    B--;
+    mem.w8(HL--, io_val);
+    F = ini_ind_flags(io_val, -1);
+}
+
+//------------------------------------------------------------------------------
+inline int
+z80x::indr() {
+    ind();
+    if (B != 0) {
+        PC -= 2;
+        return 21;
+    }
+    else {
+        return 16;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::outi_outd_flags(ubyte io_val) {
+    // NOTE: most OUTI flag settings are undocumented in the official
+    // docs, so this is taken from MAME, there's also more
+    // information here: http://www.z80.info/z80undoc3.txt
+    ubyte f = B ? B & SF : ZF;
+    if (io_val & SF) f |= NF;
+    unsigned int t = (unsigned int)L + (unsigned int)io_val;
+    if (t & 0x100) f |= HF|CF;
+    f |= szp[ubyte(t & 0x07)^B] & PF;
+    return f;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::outi() {
+    ubyte io_val = mem.r8(HL++);
+    B--;
+    out(BC, io_val);
+    F = outi_outd_flags(io_val);
+}
+
+//------------------------------------------------------------------------------
+inline int
+z80x::otir() {
+    outi();
+    if (B != 0) {
+        PC -= 2;
+        return 21;
+    }
+    else {
+        return 16;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80x::outd() {
+    ubyte io_val = mem.r8(HL--);
+    B--;
+    out(BC, io_val);
+    F = outi_outd_flags(io_val);
+}
+
+//------------------------------------------------------------------------------
+inline int
+z80x::otdr() {
+    outd();
+    if (B != 0) {
+        PC -= 2;
+        return 21;
+    }
+    else {
+        return 16;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80x::sziff2(ubyte val, bool iff2) {
+    ubyte f = YAKC_SZ(val);
+    f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
+    if (iff2) f |= PF;
+    return f;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
 z80x::fetch_op() {
     R = (R + 1) & 0x7F;
     return mem.r8(PC++);
@@ -990,24 +1161,76 @@ z80x::do_ed(ubyte op) {
     const ubyte x = op>>6;
     const ubyte y = (op>>3) & 7;
     const ubyte z = op & 7;
+    const ubyte p = y >> 1;
+    const ubyte q = y & 1;
     if (x == 1) {
         switch (z) {
             //--- IN
-            case 0: break;
+            case 0:
+                R8[r[y]] = in(BC);          // NOTE: IN F,(C) is undocumented
+                F = szp[R8[r[y]]]|(F&CF);
+                return 12;
             //-- OUT
-            case 1: break;
+            case 1:
+                out(BC, R8[r[y]]);
+                return 12;
             //--- SBC/ADC HL
-            case 2: break;
+            case 2:
+                if (q == 0) {
+                    HL = sbc16(HL,R16[rp[p]]);                        
+                }
+                else {
+                    HL = adc16(HL,R16[rp[p]]);
+                }
+                return 15;
             //--- load store 16-bit with immediate address
-            case 3: break;
+            case 3:
+                if (q == 0) {
+                    mem.w16(mem.r16(PC), R16[rp[p]]);
+                }
+                else {
+                    R16[rp[p]] = mem.r16(mem.r16(PC));
+                }
+                PC += 2;
+                return 20;
             //--- NEG
-            case 4: break;
+            case 4:
+                neg8();
+                return 8;
             //--- RETN, RETI
-            case 5: break;
+            case 5:
+                if (y == 1) {
+                    reti();
+                }
+                else {
+                    // RETN not implemented
+                    YAKC_ASSERT(false);
+                }
+                return 15;
+                    
             //--- IM
-            case 6: break;
+            case 6:
+                if ((y & 3) > 1) {
+                    IM = (y & 3) - 1;
+                }
+                else {
+                    IM = 0;
+                }
+                return 8;
+
             //--- assorted ops
-            case 7: break;
+            case 7:
+                switch (y) {
+                    case 0: I=A; return 9;          // LD I,A
+                    case 1: R=A; return 9;          // LD R,A
+                    case 2: A=I; F=sziff2(I,IFF2)|(F&CF); return 9; // LD A,I
+                    case 3: A=R; F=sziff2(R,IFF2)|(F&CF); return 9; // LD A,R
+                    case 4: rrd(); return 18;       // RRD
+                    case 5: rld(); return 18;       // RLD
+                    case 6: return 4;               // NOP
+                    case 7: return 4;               // NOP
+                }
+                break;
         }
     }
     else if (x == 2) {
@@ -1032,9 +1255,23 @@ z80x::do_ed(ubyte op) {
                 }
                 break;
             //--- INI,IND,INID,INDR
-            case 2: break;
+            case 2:
+                switch (y) {
+                    case 4: ini(); return 16;
+                    case 5: ind(); return 16;
+                    case 6: return inir();
+                    case 7: return indr();
+                }
+                break;
             //--- OUTI,OUTD,OTIR,OTDR
-            case 3: break;
+            case 3:
+                switch (y) {
+                    case 4: outi(); return 16;
+                    case 5: outd(); return 16;
+                    case 6: return otir();
+                    case 7: return otdr();
+                }
+                break;
             default:
                 return invalid_opcode(2);
         }
