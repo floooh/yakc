@@ -1010,17 +1010,33 @@ z80x::do_ed(ubyte op) {
             case 7: break;
         }
     }
-    else if (x == 3) {
+    else if (x == 2) {
         //--- block instructions
-        switch (y) {
+        switch (z) {
             //--- LDI,LDD,LDIR,LDDR
-            case 0: break;
+            case 0:
+                switch (y) {
+                    case 4: ldi(); return 16;
+                    case 5: ldd(); return 16;
+                    case 6: return ldir();
+                    case 7: return lddr();
+                }
+                break;
             //--- CPI,CPD,CPID,CPDR
-            case 1: break;
+            case 1:
+                switch (y) {
+                    case 4: cpi(); return 16;
+                    case 5: cpd(); return 16;
+                    case 6: return cpir();
+                    case 7: return cpdr();
+                }
+                break;
             //--- INI,IND,INID,INDR
             case 2: break;
             //--- OUTI,OUTD,OTIR,OTDR
             case 3: break;
+            default:
+                return invalid_opcode(2);
         }
     }
     else {
