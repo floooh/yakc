@@ -25,7 +25,7 @@ public:
         SF = (1<<7),        // sign flag
     };
 
-    /// main register set, accessible in various ways
+    /// main register bank, accessible in various ways
     union {
         ubyte R8[14];       // C, B, E, D, L, H, F, A, IXL, IXH, IYL, IYH, SP
         uword R16[7];       // BC, DE, HL, AF, IX, IY, SP
@@ -79,14 +79,14 @@ public:
     /// invalid instruction hit
     bool INV;
 
-    /// 8-bit register index map
+    /// 8-bit register index map into R8
     int r[8];
-    /// 16-bit register index map with SP
+    /// 16-bit register index map with SP into R16
     int rp[4];
-    /// 16-bit register index map with AF
+    /// 16-bit register index map with AF into R16
     int rp2[4];
 
-    /// access to HLIXIY slot
+    /// access to HL/IX/IY 16-bit register slot
     #define HLIXIY R16[rp[2]]
 
     /// memory map
@@ -134,8 +134,8 @@ public:
     bool cc(ubyte y) const;
     /// conditionally load d offset for (IX/IY+d) instructions
     int d(bool load_d);
-    /// get address of (HL), (IX+d), (IY+d)
-    uword iHL(bool ext);
+    /// get address for (HL), (IX+d), (IY+d)
+    uword iHLIXIYd(bool ext);
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
 
@@ -305,7 +305,7 @@ z80x::init_tables() {
         this->szp[val] = f;
     }
 
-    // 8-bit register mapping table (indices into R8[])
+    // 8-bit register index mapping table into R8[]
     r[0] = 1;   // B
     r[1] = 0;   // C
     r[2] = 3;   // D
@@ -315,13 +315,13 @@ z80x::init_tables() {
     r[6] = -1;  // (HL)
     r[7] = 7;   // A
 
-    // 16-bit register mapping table with SP (indices into r16[])
+    // 16-bit register index mapping table with SP into r16[]
     rp[0] = 0;  // BC
     rp[1] = 1;  // DE
     rp[2] = 2;  // HL
     rp[3] = 6;  // SP
 
-    // 16-bit register mapping table with AF (indices into r16[])
+    // 16-bit register index mapping table with AF into r16[]
     rp2[0] = 0; // BC
     rp2[1] = 1; // DE
     rp2[2] = 2; // HL
@@ -395,7 +395,7 @@ z80x::d(bool ext) {
 
 //------------------------------------------------------------------------------
 inline uword
-z80x::iHL(bool ext) {
+z80x::iHLIXIYd(bool ext) {
     return HLIXIY+d(ext);
 }
 
@@ -513,7 +513,6 @@ z80x::neg8() {
 inline void
 z80x::sbc8(ubyte sub) {
     if (F & CF) {
-        // don't waste flag table space for rarely used instructions
         int r = int(A) - int(sub) - 1;
         ubyte f = NF | YAKC_SZ(r);
         if (r < 0) f |= CF;
@@ -1046,13 +1045,13 @@ z80x::do_op(ubyte op, bool ext) {
             }
             else {
                 // LD (HL),r; LD (IX+d),r; LD (IY+d),r
-                mem.w8(iHL(ext), R8[r[z]]);
+                mem.w8(iHLIXIYd(ext), R8[r[z]]);
                 return 7 + ext_cycles;
             }
         }
         else if (z == 6) {
             // LD r,(HL); LD r,(IX+d); LD r,(IY+d)
-            R8[r[y]] = mem.r8(iHL(ext));
+            R8[r[y]] = mem.r8(iHLIXIYd(ext));
             return 7 + ext_cycles;
         }
         else {
@@ -1062,9 +1061,9 @@ z80x::do_op(ubyte op, bool ext) {
         }
     }
     else if (x == 2) {
-        // 8-bit ALU instruction with register or (HL)
+        // 8-bit ALU instruction with register or (HL), (IX+d), (IY+d)
         if (z == 6) {
-            alu8(y, mem.r8(iHL(ext)));
+            alu8(y, mem.r8(iHLIXIYd(ext)));
             return 7 + ext_cycles;
         }
         else {
@@ -1183,7 +1182,7 @@ z80x::do_op(ubyte op, bool ext) {
             case 4:
                 if (y == 6) {
                     // INC (HL), INC (IX+d), INC (IY+d)
-                    const uword addr = iHL(ext);
+                    const uword addr = iHLIXIYd(ext);
                     mem.w8(addr, inc8(mem.r8(addr)));
                     return 11 + ext_cycles;
                 }
@@ -1197,7 +1196,7 @@ z80x::do_op(ubyte op, bool ext) {
             case 5:
                 if (y == 6) {
                     // DEC (HL), INC (IX+d), INC (IY+d)
-                    const uword addr = iHL(ext);
+                    const uword addr = iHLIXIYd(ext);
                     mem.w8(addr, dec8(mem.r8(addr)));
                     return 11 + ext_cycles;
                 }
@@ -1210,7 +1209,7 @@ z80x::do_op(ubyte op, bool ext) {
             //--- LD r[y],n
             case 6:
                 if (y == 6) {
-                    mem.w8(iHL(ext), mem.r8(PC++));
+                    mem.w8(iHLIXIYd(ext), mem.r8(PC++));
                     return ext ? 15 : 10;
                 }
                 else {
@@ -1281,28 +1280,26 @@ z80x::do_op(ubyte op, bool ext) {
                     return 10;
                 }
                 else {
-                    if (p == 0) {
-                        //--- RET
-                        PC = mem.r16(SP);
-                        SP += 2;
-                        return 10;
-                    }
-                    else if (p == 1) {
-                        //--- EXX (swap BC,DE,HL)
-                        swap16(BC, BC_);
-                        swap16(DE, DE_);
-                        swap16(HL, HL_);
-                        return 4;
-                    }
-                    else if (p == 2) {
-                        //--- JP HL; JP IX; JP IY
-                        PC = HLIXIY;
-                        return 4;
-                    }
-                    else if (p == 3) {
-                        //--- LD SP,HL; LD SP,IX; LD SP,IY
-                        SP = HLIXIY;
-                        return 6;
+                    switch (p) {
+                        case 0:
+                            //--- RET
+                            PC = mem.r16(SP);
+                            SP += 2;
+                            return 10;
+                        case 1:
+                            //--- EXX (swap BC,DE,HL)
+                            swap16(BC, BC_);
+                            swap16(DE, DE_);
+                            swap16(HL, HL_);
+                            return 4;
+                        case 2:
+                            //--- JP HL; JP IX; JP IY
+                            PC = HLIXIY;
+                            return 4;
+                        case 3:
+                            //--- LD SP,HL; LD SP,IX; LD SP,IY
+                            SP = HLIXIY;
+                            return 6;
                     }
                 }
                 break;
@@ -1385,46 +1382,45 @@ z80x::do_op(ubyte op, bool ext) {
                     return 11;
                 }
                 else {
-                    if (p == 0) {
-                        // CALL nn
-                        SP -= 2;
-                        mem.w16(SP, PC+2);
-                        PC = mem.r16(PC);
-                        return 17;
-                    }
-                    else if (p == 1) {
-                        // DD prefix
-                        if (!ext) {
-                            // patch register lookup tables (HL->IX) and call self
-                            rp[2] = rp2[2] = 4;
-                            uint32_t cycles = do_op(fetch_op(), true) + 4;
-                            rp[2] = rp2[2] = 2;
-                            return cycles;
-                        }
-                        else {
-                            return invalid_opcode(2);
-                        }
-                    }
-                    else if (p == 2) {
-                        if (!ext) {
-                            return do_ed(fetch_op());
-                        }
-                        else {
-                            return invalid_opcode(2);
-                        }
-                    }
-                    else if (p == 3) {
-                        // FD prefix
-                        if (!ext) {
-                            // patch register lookup tables (HL->IY) and call self
-                            rp[2] = rp2[2] = 5;
-                            uint32_t cycles = do_op(fetch_op(), true) + 4;
-                            rp[2] = rp2[2] = 2;
-                            return cycles;
-                        }
-                        else {
-                            return invalid_opcode(2);
-                        }
+                    switch (p) {
+                        case 0:
+                            //--- CALL nn
+                            SP -= 2;
+                            mem.w16(SP, PC+2);
+                            PC = mem.r16(PC);
+                            return 17;
+                        case 1:
+                            //--- DD prefix
+                            if (!ext) {
+                                // patch register lookup tables (HL->IX) and call self
+                                rp[2] = rp2[2] = 4;
+                                uint32_t cycles = do_op(fetch_op(), true) + 4;
+                                rp[2] = rp2[2] = 2;
+                                return cycles;
+                            }
+                            else {
+                                return invalid_opcode(2);
+                            }
+                        case 2:
+                            //--- ED prefix
+                            if (!ext) {
+                                return do_ed(fetch_op());
+                            }
+                            else {
+                                return invalid_opcode(2);
+                            }
+                        case 3:
+                            // FD prefix
+                            if (!ext) {
+                                // patch register lookup tables (HL->IY) and call self
+                                rp[2] = rp2[2] = 5;
+                                uint32_t cycles = do_op(fetch_op(), true) + 4;
+                                rp[2] = rp2[2] = 2;
+                                return cycles;
+                            }
+                            else {
+                                return invalid_opcode(2);
+                            }
                     }
                 }
                 break;
