@@ -26,20 +26,9 @@ z80::cc(ubyte y) const {
 }
 
 //------------------------------------------------------------------------------
-inline int
-z80::d(bool ext) {
-    if (ext) {
-        return mem.rs8(PC++);
-    }
-    else {
-        return 0;
-    }
-}
-
-//------------------------------------------------------------------------------
 inline uword
 z80::iHLIXIYd(bool ext) {
-    return HLIXIY+d(ext);
+    return HLIXIY + (ext ? mem.rs8(PC++) : 0);
 }
 
 //------------------------------------------------------------------------------
@@ -60,6 +49,9 @@ z80::alu8(ubyte alu, ubyte val) {
 //------------------------------------------------------------------------------
 inline uint32_t
 z80::do_cb(ubyte op, bool ext, int off) {
+    // FIXME: if executed with DD/FD prefix, some of the CB instructions
+    // also copy the result to a register, these are undocumented so
+    // we don't care for now!
     const ubyte x = op>>6;
     const ubyte y = (op>>3) & 7;
     const ubyte z = op & 7;
@@ -76,38 +68,14 @@ z80::do_cb(ubyte op, bool ext, int off) {
             val = R8[r[z]];
         }
         switch (y) {
-            case 0:
-                //--- RLC
-                val = rlc8(val, true);
-                break;
-            case 1:
-                //--- RRC
-                val = rrc8(val, true);
-                break;
-            case 2:
-                //--- RL
-                val = rl8(val, true);
-                break;
-            case 3:
-                //--- RR
-                val = rr8(val, true);
-                break;
-            case 4:
-                //--- SLA
-                val = sla8(val);
-                break;
-            case 5:
-                //--- SRA
-                val = sra8(val);
-                break;
-            case 6:
-                //--- SLL
-                val = sll8(val);
-                break;
-            case 7:
-                //--- SRL
-                val = srl8(val);
-                break;
+            case 0: val = rlc8(val, true); break;   //--- RLC
+            case 1: val = rrc8(val, true); break;   //--- RRC
+            case 2: val = rl8(val, true); break;    //--- RL
+            case 3: val = rr8(val, true); break;    //--- RR
+            case 4: val = sla8(val); break;         //--- SLA
+            case 5: val = sra8(val); break;         //--- SRA
+            case 6: val = sll8(val); break;         //--- SLL
+            case 7: val = srl8(val); break;         //--- SRL
         }
         if (z == 6) {
             mem.w8(addr, val);
@@ -121,8 +89,7 @@ z80::do_cb(ubyte op, bool ext, int off) {
     else if (x == 1) {
         // BIT y,r[z]
         if (z == 6) {
-            const uword addr = HLIXIY+off;
-            bit(mem.r8(addr), 1<<y);
+            bit(mem.r8(HLIXIY+off), 1<<y);
             return 12 + ext_cycles;
         }
         else {
@@ -293,8 +260,9 @@ z80::do_op(ubyte op, bool ext) {
     const ubyte y = (op>>3) & 7;
     const ubyte z = op & 7;
     uint32_t ext_cycles = ext ? 8 : 0;
+
+    // 8-bit load, or special case HALT for LD (HL),(HL)
     if (x == 1) {
-        // 8-bit load, or special case HALT for LD (HL),(HL)
         if (y == 6) {
             if (z == 6) {
                 halt();
@@ -317,8 +285,9 @@ z80::do_op(ubyte op, bool ext) {
             return 4;
         }
     }
+
+    // 8-bit ALU instruction with register or (HL), (IX+d), (IY+d)
     else if (x == 2) {
-        // 8-bit ALU instruction with register or (HL), (IX+d), (IY+d)
         if (z == 6) {
             alu8(y, mem.r8(iHLIXIYd(ext)));
             return 7 + ext_cycles;
@@ -328,6 +297,8 @@ z80::do_op(ubyte op, bool ext) {
             return 4;
         }
     }
+
+    // misc opcodes
     else if (x == 0) {
         const ubyte p = y >> 1;
         const ubyte q = y & 1;
@@ -386,42 +357,14 @@ z80::do_op(ubyte op, bool ext) {
             //--- indirect loads
             case 2:
                 switch (y) {
-                    case 0:
-                        //--- LD (BC),A
-                        mem.w8(BC, A);
-                        return 7;
-                    case 1:
-                        //--- LD A,(BC)
-                        A = mem.r8(BC);
-                        return 7;
-                    case 2:
-                        //--- LD (DE),A
-                        mem.w8(DE, A);
-                        return 7;
-                    case 3:
-                        //--- LD A,(DE)
-                        A = mem.r8(DE);
-                        return 7;
-                    case 4:
-                        //--- LD (nn),HL; LD (nn),IX; LD (nn),IY
-                        mem.w16(mem.r16(PC), HLIXIY);
-                        PC += 2;
-                        return 16;
-                    case 5:
-                        //--- LD HL,(nn), LD IX,(nn), LD IY,(nn)
-                        HLIXIY = mem.r16(mem.r16(PC));
-                        PC += 2;
-                        return 16;
-                    case 6:
-                        //--- LD (nn),A
-                        mem.w8(mem.r16(PC), A);
-                        PC += 2;
-                        return 13;
-                    case 7:
-                        //--- LD A,(nn)
-                        A = mem.r8(mem.r16(PC));
-                        PC += 2;
-                        return 13;
+                    case 0: mem.w8(BC,A); return 7;     //--- LD (BC),A
+                    case 1: A=mem.r8(BC); return 7;     //--- LD A,(BC)
+                    case 2: mem.w8(DE,A); return 7;     //--- LD (DE),A
+                    case 3: A=mem.r8(DE); return 7;     //--- LD A,(DE)
+                    case 4: mem.w16(mem.r16(PC),HLIXIY); PC+=2; return 16;  //--- LD (nn),HL; LD (nn),IX; LD (nn),IY
+                    case 5: HLIXIY=mem.r16(mem.r16(PC)); PC+=2; return 16;  //--- LD HL,(nn), LD IX,(nn), LD IY,(nn)
+                    case 6: mem.w8(mem.r16(PC),A); PC+=2; return 13;        //--- LD (nn),A
+                    case 7: A=mem.r8(mem.r16(PC)); PC+=2; return 13;        //--- LD A,(nn)
                 }
                 break;
 
@@ -478,40 +421,16 @@ z80::do_op(ubyte op, bool ext) {
             //--- assorted ops on accumulator and flags
             case 7:
                 switch (y) {
-                    case 0:
-                        //--- RLCA
-                        A = rlc8(A, false);
-                        return 4;
-                    case 1:
-                        //--- RRCA
-                        A = rrc8(A, false);
-                        return 4;
-                    case 2:
-                        //--- RLA
-                        A = rl8(A, false);
-                        return 4;
-                    case 3:
-                        //--- RRA
-                        A = rr8(A, false);
-                        return 4;
-                    case 4:
-                        //--- DAA
-                        daa();
-                        return 4;
-                    case 5:
-                        //--- CPL
-                        A ^= 0xFF;
-                        F = (F&(SF|ZF|PF|CF)) | HF | NF | (A&(YF|XF));
-                        return 4;
-                    case 6:
-                        //--- SCF
-                        F = (F&(SF|ZF|YF|XF|PF))|CF|(A&(YF|XF));
-                        return 4;
-                    case 7:
-                        //--- CCF
-                        F = ((F&(SF|ZF|YF|XF|PF|CF))|((F&CF)<<4)|(A&(YF|XF)))^CF;   // CCF
-                        return 4;
+                    case 0: A=rlc8(A,false); break;  //--- RLCA
+                    case 1: A=rrc8(A,false); break;  //--- RRCA
+                    case 2: A=rl8(A,false); break;   //--- RLA
+                    case 3: A=rr8(A,false); break;   //--- RRA
+                    case 4: daa(); break;               //--- DAA
+                    case 5: A^=0xFF; F=(F&(SF|ZF|PF|CF))|HF|NF|(A&(YF|XF)); break;  //--- CPL
+                    case 6: F=(F&(SF|ZF|YF|XF|PF))|CF|(A&(YF|XF)); break;           //--- SCF
+                    case 7: F=((F&(SF|ZF|YF|XF|PF|CF))|((F&CF)<<4)|(A&(YF|XF)))^CF; break; //--- CCF
                 }
+                return 4;
         }
         YAKC_ASSERT(false);
     }
@@ -581,7 +500,7 @@ z80::do_op(ubyte op, bool ext) {
                     case 1:
                         //--- CB prefix
                         {
-                            const int off = d(ext);
+                            const int off = ext ? mem.rs8(PC++) : 0;
                             const ubyte op = fetch_op();
                             return do_cb(op, ext, off);
                         }

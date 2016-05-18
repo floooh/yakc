@@ -133,15 +133,13 @@ public:
     /// helper to test expected flag bitmask (FIXME: move to z80dbg?)
     bool test_flags(ubyte expected) const;
     /// called when invalid opcode has been hit
-    unsigned int invalid_opcode(uword opsize);
+    uint32_t invalid_opcode(uword opsize);
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
 
     #if YAKC_Z80_DECODER
     /// check flag status for RET cc, JP cc, CALL cc, etc...
     bool cc(ubyte y) const;
-    /// conditionally load d offset for (IX/IY+d) instructions
-    int d(bool load_d);
     /// get address for (HL), (IX+d), (IY+d)
     uword iHLIXIYd(bool ext);
     /// perform a general ALU op (add, adc, sub, sbc, cp, and, or, xor)
@@ -386,7 +384,7 @@ z80::reset() {
 }
 
 //------------------------------------------------------------------------------
-inline unsigned int
+inline uint32_t
 z80::invalid_opcode(uword opsize) {
     if (this->break_on_invalid_opcode) {
         INV = true;
@@ -542,7 +540,7 @@ inline void
 z80::adc8(ubyte add) {
     if (F & CF) {
         // don't waste flag table space for rarely used instructions
-        int r = int(A) + int(add) + 1;
+        int r = A + add + 1;
         ubyte f = YAKC_SZ(r);
         if (r > 0xFF) f |= CF;
         if ((r & 0xF) <= (A & 0xF)) f |= HF;
@@ -650,7 +648,7 @@ z80::dec8(ubyte val) {
 //------------------------------------------------------------------------------
 inline uword
 z80::add16(uword acc, uword val) {
-    unsigned int res = acc + val;
+    uint32_t res = acc + val;
     // flag computation taken from MAME
     F = (F & (SF|ZF|VF)) |
         (((acc^res^val)>>8)&HF)|
@@ -661,7 +659,7 @@ z80::add16(uword acc, uword val) {
 //------------------------------------------------------------------------------
 inline uword
 z80::adc16(uword acc, uword val) {
-    unsigned int res = acc + val + (F & CF);
+    uint32_t res = acc + val + (F & CF);
     // flag computation taken from MAME
     F = (((acc^res^val)>>8)&HF) |
         ((res>>16)&CF) |
@@ -674,7 +672,7 @@ z80::adc16(uword acc, uword val) {
 //------------------------------------------------------------------------------
 inline uword
 z80::sbc16(uword acc, uword val) {
-    unsigned int res = acc - val - (F & CF);
+    uint32_t res = acc - val - (F & CF);
     // flag computation taken from MAME
     F = (((acc^res^val)>>8)&HF) | NF |
         ((res>>16)&CF) |
@@ -818,7 +816,7 @@ z80::ini_ind_flags(ubyte io_val, int c_add) {
     // information here: http://www.z80.info/z80undoc3.txt
     ubyte f = B ? B & SF : ZF;
     if (io_val & SF) f |= NF;
-    unsigned int t = (unsigned int)((C+c_add)&0xFF) + (unsigned int)io_val;
+    uint32_t t = (uint32_t)((C+c_add)&0xFF) + (uint32_t)io_val;
     if (t & 0x100) f |= HF|CF;
     f |= szp[ubyte(t & 0x07)^B] & PF;
     return f;
@@ -876,7 +874,7 @@ z80::outi_outd_flags(ubyte io_val) {
     // information here: http://www.z80.info/z80undoc3.txt
     ubyte f = B ? B & SF : ZF;
     if (io_val & SF) f |= NF;
-    unsigned int t = (unsigned int)L + (unsigned int)io_val;
+    uint32_t t = (uint32_t)L + (uint32_t)io_val;
     if (t & 0x100) f |= HF|CF;
     f |= szp[ubyte(t & 0x07)^B] & PF;
     return f;
