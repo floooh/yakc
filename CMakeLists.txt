@@ -11,6 +11,10 @@ option(YAKC_UI "Include the debugger UI" ON)
 if (YAKC_UI)
     add_definitions("-DYAKC_UI=1")
 endif()
+option(YAKC_Z80_DECODER "Use the new algorithmic instruction decoder" ON)
+if (YAKC_Z80_DECODER)
+    add_definitions("-DYAKC_Z80_DECODER=1")
+endif()
 
 set(SOLOUD_LIBMODPLUG OFF CACHE BOOL "Do not use libmodplug")
 

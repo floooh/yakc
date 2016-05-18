@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  cpu_test.cc
+//  z80_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "core/z80.h"
@@ -293,7 +293,7 @@ TEST(LD_iHL_r) {
 }
 
 // LD (IX|IY + d),r
-TEST(LD_iIXY_d_r) {
+TEST(rIXY_d_r) {
     z80 cpu = init_z80();
     ubyte prog[] = {
         0xDD, 0x21, 0x03, 0x10,     // LD IX,0x1003

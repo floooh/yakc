@@ -273,6 +273,7 @@ kc85::update_rom_pointers() {
 //------------------------------------------------------------------------------
 inline void
 kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
+    // FIXME: the speed multiplier isn't currently working because of the min/max cycle count limiter!
     YAKC_ASSERT(speed_multiplier > 0);
     this->cpu_ahead = false;
     this->cpu_behind = false;

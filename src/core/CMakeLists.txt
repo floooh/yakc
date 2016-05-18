@@ -6,5 +6,10 @@ fips_begin_module(core)
         kc85.h kc85_video.h kc85_audio.h kc85_exp.h kc85_roms.h
         kc85_snapshot.h
     )
-    fips_generate(FROM opcodes.py HEADER opcodes.h)
+    if (NOT YAKC_Z80_DECODER)
+        fips_files(z80_switch.h)
+        fips_generate(FROM opcodes.py HEADER opcodes.h)
+    else()
+        fips_files(z80_decoder.h)
+    endif()
 fips_end_module()
