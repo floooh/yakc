@@ -98,14 +98,14 @@ YakcApp::OnRunning() {
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     this->handleInput();
+    const uint64_t cpu_min_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/100;
+    const uint64_t cpu_max_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/25;
+    const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
+    const uint64_t min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
+    const uint64_t max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
     #if YAKC_UI
         o_trace_begin(yakc_kc);
         // keep CPU synchronized to a small time window ahead of audio playback
-        const uint64_t cpu_min_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/100;
-        const uint64_t cpu_max_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/25;
-        const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
-        const uint64_t min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
-        const uint64_t max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
         this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs, min_cycle_count, max_cycle_count);
         o_trace_end();
         this->draw.UpdateParams(
@@ -114,7 +114,7 @@ YakcApp::OnRunning() {
             glm::vec2(this->ui.Settings.crtWarp));
     #else
         o_trace_begin(yakc_kc);
-        this->kc.onframe(1, micro_secs);
+        this->kc.onframe(1, micro_secs, min_cycle_count, max_cycle_count);
         o_trace_end();
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
@@ -145,9 +145,9 @@ YakcApp::OnCleanup() {
 void
 YakcApp::handleInput() {
     const Keyboard& kbd = Input::Keyboard();
-    const Touchpad& touch = Input::Touchpad();
 
     #if YAKC_UI
+    const Touchpad& touch = Input::Touchpad();
     // don't handle KC input if IMGUI has the keyboard focus
     if (ImGui::GetIO().WantCaptureKeyboard) {
         return;
