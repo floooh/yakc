@@ -12,9 +12,8 @@ namespace yakc {
 
 class z80 {
 public:
-
     /// flag bits
-    enum flag {
+    enum {
         CF = (1<<0),        // carry flag
         NF = (1<<1),        // add/subtract
         VF = (1<<2),        // parity/overflow
@@ -26,53 +25,72 @@ public:
         SF = (1<<7),        // sign flag
     };
 
-    /// main register set
+    /// main register bank, accessible in various ways
     union {
-        struct { ubyte F, A; };
-        uword AF;
-    };
-    union {
-        struct { ubyte C, B; };
-        uword BC;
-    };
-    union {
-        struct { ubyte E, D; };
-        uword DE;
-    };
-    union {
-        struct { ubyte L, H; };
-        uword HL;
+        ubyte R8[14];       // B, C, D, E, H, L, F, A, IXH, IXL, IYH, IYL, SPH, SPL
+        uword R16[7];       // BC, DE, HL, AF, IX, IY, SP
+        struct {
+            union {
+                struct { ubyte C, B; };
+                uword BC;
+            };
+            union {
+                struct { ubyte E, D; };
+                uword DE;
+            };
+            union {
+                struct { ubyte L, H; };
+                uword HL;
+            };
+            union {
+                struct { ubyte F, A; };
+                uword AF;
+            };
+            union {
+                struct { ubyte IXL, IXH; };
+                uword IX;
+            };
+            union {
+                struct { ubyte IYL, IYH; };
+                uword IY;
+            };
+            uword SP;
+        };
     };
 
     /// shadow register set
-    uword AF_;
     uword BC_;
     uword DE_;
     uword HL_;
-
-    /// special registers
-    ubyte I;
-    ubyte R;
-    union {
-        struct { ubyte IXL, IXH; };
-        uword IX;
-    };
-    union {
-        struct { ubyte IYL, IYH; };
-        uword IY;
-    };
-    uword SP;
+    uword AF_;
+    /// instruction pointer
     uword PC;
+    /// interrupt vector register
+    ubyte I;
+    /// memory refresh counter
+    ubyte R;
+    /// interrupt mode
+    ubyte IM;
 
     /// CPU is in HALT state
     bool HALT;
-    /// the interrupt-enable flip-flops
-    bool IFF1;
-    bool IFF2;
-    /// the interrupt mode (0, 1 or 2)
-    ubyte IM;
-    /// invalid or unknown instruction has been encountered
+    /// interrupt enable flipflops
+    bool IFF1, IFF2;
+    /// invalid instruction hit
     bool INV;
+
+    #if YAKC_Z80_DECODER
+    /// 8-bit register index map into R8
+    int r[8];
+    /// same as r[], but HL will never be patched to IX/IY
+    int r2[8];
+    /// 16-bit register index map with SP into R16
+    int rp[4];
+    /// 16-bit register index map with AF into R16
+    int rp2[4];
+    /// access to HL/IX/IY 16-bit register slot
+    #define HLIXIY R16[rp[2]]
+    #endif
 
     /// flag lookup table for SZP flag combinations
     ubyte szp[256];
@@ -106,27 +124,29 @@ public:
 
     /// one-time init
     void init(cb_in func_in, cb_out func_out, void* userdata);
-    /// initialize the flag lookup tables
-    void init_flag_tables();
+    /// initialize the lookup tables
+    void init_tables();
     /// connect the highest priority interrupt controller device
     void connect_irq_device(z80int* device);
     /// perform a reset (RESET pin triggered)
     void reset();
-    /// decode 0xCB opcodes (generated)
-    uint32_t do_op_0xcb(ubyte op);
-    /// decode 0xDD opcodes (generated)
-    uint32_t do_op_0xdd(ubyte op);
-    /// decode 0xFD opcodes (generated)
-    uint32_t do_op_0xfd(ubyte op);
-    /// decode 0xED opcodes (generated)
-    uint32_t do_op_0xed(ubyte op);
-    /// top-level opcode decoder (generated)
-    uint32_t do_op(ubyte op);
-    /// execute a single instruction, return number of cycles
-    uint32_t step();
-
+    /// helper to test expected flag bitmask (FIXME: move to z80dbg?)
+    bool test_flags(ubyte expected) const;
     /// called when invalid opcode has been hit
     unsigned int invalid_opcode(uword opsize);
+    /// helper method to swap 2 16-bit registers
+    static void swap16(uword& r0, uword& r1);
+
+    #if YAKC_Z80_DECODER
+    /// check flag status for RET cc, JP cc, CALL cc, etc...
+    bool cc(ubyte y) const;
+    /// conditionally load d offset for (IX/IY+d) instructions
+    int d(bool load_d);
+    /// get address for (HL), (IX+d), (IY+d)
+    uword iHLIXIYd(bool ext);
+    /// perform a general ALU op (add, adc, sub, sbc, cp, and, or, xor)
+    void alu8(ubyte alu, ubyte val);    
+    #endif
 
     /// receive an interrupt request
     static void irq(void* self);
@@ -139,12 +159,6 @@ public:
     /// implement the DI instruction
     void di();
 
-    /// helper method to swap 2 16-bit registers
-    static void swap16(uword& r0, uword& r1);
-    /// helper to test expected flag bitmask (FIXME: move to z80dbg?)
-    bool test_flags(ubyte expected) const;
-    /// fetch an opcode byte and increment R register
-    ubyte fetch_op();
     /// call in-handler, return result
     ubyte in(uword port);
     /// call out-handler
@@ -247,18 +261,43 @@ public:
     void rrd();
     /// implements the BIT test instruction, updates flags
     void bit(ubyte val, ubyte mask);
+
+    /// fetch an opcode byte and increment R register
+    ubyte fetch_op();
+    /// execute a single instruction, return number of cycles
+    uint32_t step();
+
+    #if YAKC_Z80_DECODER
+    /// decode CB prefix instruction
+    uint32_t do_cb(ubyte op, bool ext, int off);
+    /// decode ED prefix instruction
+    uint32_t do_ed(ubyte op);
+    /// decode main instruction
+    uint32_t do_op(ubyte op, bool ext);
+    #else
     /// undocumented register-autocopy for the DD/FD CB instructions
     void undoc_autocopy(ubyte reg, ubyte val);
     /// special handling for the FD/DD CB bit opcodes
     int dd_fd_cb(ubyte lead);
+    /// decode 0xCB opcodes (generated)
+    uint32_t do_op_0xcb(ubyte op);
+    /// decode 0xDD opcodes (generated)
+    uint32_t do_op_0xdd(ubyte op);
+    /// decode 0xFD opcodes (generated)
+    uint32_t do_op_0xfd(ubyte op);
+    /// decode 0xED opcodes (generated)
+    uint32_t do_op_0xed(ubyte op);
+    /// top-level opcode decoder (generated)
+    uint32_t do_op(ubyte op);
+    #endif
 };
 
 //------------------------------------------------------------------------------
 inline z80::z80() :
-AF(0), BC(0), DE(0), HL(0),
-AF_(0), BC_(0), DE_(0), HL_(0),
-I(0), R(0), IX(0), IY(0), SP(0), PC(0),
-HALT(false), IFF1(false), IFF2(false), IM(0), INV(false),
+BC(0), DE(0), HL(0), AF(0), IX(0), IY(0), SP(0),
+BC_(0), DE_(0), HL_(0), AF_(0),
+PC(0), I(0), R(0), IM(0),
+HALT(false), IFF1(false), IFF2(false), INV(false),
 in_func(nullptr),
 out_func(nullptr),
 inout_userdata(nullptr),
@@ -266,14 +305,14 @@ irq_device(nullptr),
 irq_received(false),
 enable_interrupt(false),
 break_on_invalid_opcode(false) {
-    // empty
+    this->init_tables();
 }
 
 //------------------------------------------------------------------------------
 inline void
 z80::init(cb_in func_in, cb_out func_out, void* userdata) {
     YAKC_ASSERT(func_in && func_out);
-    this->init_flag_tables();
+    this->init_tables();
     this->reset();
     this->in_func = func_in;
     this->out_func = func_out;
@@ -283,7 +322,7 @@ z80::init(cb_in func_in, cb_out func_out, void* userdata) {
 //------------------------------------------------------------------------------
 #define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
 inline void
-z80::init_flag_tables() {
+z80::init_tables() {
     for (int val = 0; val < 256; val++) {
         int p = 0;
         if (val & (1<<0)) p++;
@@ -299,6 +338,30 @@ z80::init_flag_tables() {
         f |= p & 1 ? 0 : PF;
         this->szp[val] = f;
     }
+
+    #if YAKC_Z80_DECODER
+    // 8-bit register index mapping table into R8[]
+    r[0] = r2[0] = 1;   // B
+    r[1] = r2[1] = 0;   // C
+    r[2] = r2[2] = 3;   // D
+    r[3] = r2[3] = 2;   // E
+    r[4] = r2[4] = 5;   // H
+    r[5] = r2[5] = 4;   // L
+    r[6] = r2[6] = -1;  // (HL)
+    r[7] = r2[7] = 7;   // A
+
+    // 16-bit register index mapping table with SP into r16[]
+    rp[0] = 0;  // BC
+    rp[1] = 1;  // DE
+    rp[2] = 2;  // HL
+    rp[3] = 6;  // SP
+
+    // 16-bit register index mapping table with AF into r16[]
+    rp2[0] = 0; // BC
+    rp2[1] = 1; // DE
+    rp2[2] = 2; // HL
+    rp2[3] = 3; // AF
+    #endif
 }
 
 //------------------------------------------------------------------------------
@@ -323,21 +386,29 @@ z80::reset() {
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::fetch_op() {
-    R = (R + 1) & 0x7F;
-    return mem.r8(PC++);
+inline unsigned int
+z80::invalid_opcode(uword opsize) {
+    if (this->break_on_invalid_opcode) {
+        INV = true;
+        PC -= opsize;     // stuck on invalid opcode
+    }
+    return 4;
 }
 
 //------------------------------------------------------------------------------
-inline uint32_t
-z80::step() {
-    INV = false;
-    if (enable_interrupt) {
-        IFF1 = IFF2 = true;
-        enable_interrupt = false;
-    }
-    return do_op(fetch_op());
+inline void
+z80::swap16(uword& r0, uword& r1) {
+    uword tmp = r0;
+    r0 = r1;
+    r1 = tmp;
+}
+
+//------------------------------------------------------------------------------
+inline bool
+z80::test_flags(ubyte expected) const {
+    // mask out undocumented flags
+    ubyte undoc = ~(XF|YF);
+    return (F & undoc) == expected;
 }
 
 //------------------------------------------------------------------------------
@@ -424,32 +495,6 @@ inline void
 z80::di() {
     this->IFF1 = false;
     this->IFF2 = false;
-}
-
-//------------------------------------------------------------------------------
-inline unsigned int
-z80::invalid_opcode(uword opsize) {
-    if (this->break_on_invalid_opcode) {
-        INV = true;
-        PC -= opsize;     // stuck on invalid opcode
-    }
-    return 4;
-}
-
-//------------------------------------------------------------------------------
-inline void
-z80::swap16(uword& r0, uword& r1) {
-    uword tmp = r0;
-    r0 = r1;
-    r1 = tmp;
-}
-
-//------------------------------------------------------------------------------
-inline bool
-z80::test_flags(ubyte expected) const {
-    // mask out undocumented flags
-    ubyte undoc = ~(XF|YF);
-    return (F & undoc) == expected;
 }
 
 //------------------------------------------------------------------------------
@@ -1030,178 +1075,30 @@ z80::bit(ubyte val, ubyte mask) {
 }
 
 //------------------------------------------------------------------------------
-inline void
-z80::undoc_autocopy(ubyte reg, ubyte val) {
-    // this is for the undocumented DD CB and FB CB instruction which autocopy
-    // the result into an 8-bit register (except for the F register)
-    switch (reg) {
-        case 0: B = val; break;
-        case 1: C = val; break;
-        case 2: D = val; break;
-        case 3: E = val; break;
-        case 4: H = val; break;
-        case 5: L = val; break;
-        case 7: A = val; break;
-    }
+inline ubyte
+z80::fetch_op() {
+    R = (R + 1) & 0x7F;
+    return mem.r8(PC++);
 }
 
 //------------------------------------------------------------------------------
-inline int
-z80::dd_fd_cb(ubyte lead) {
-    int d = mem.rs8(PC++);
-    uword addr;
-    if (lead == 0xDD) {
-        addr = IX + d;
+inline uint32_t
+z80::step() {
+    INV = false;
+    if (enable_interrupt) {
+        IFF1 = IFF2 = true;
+        enable_interrupt = false;
     }
-    else {
-        addr = IY + d;
-    }
-    ubyte val;
-    ubyte op = mem.r8(PC++);
-    switch (op) {
-        // RLC ([IX|IY]+d) -> r (except F)
-        case 0x00:
-        case 0x01:
-        case 0x02:
-        case 0x03:
-        case 0x04:
-        case 0x05:
-        case 0x06:
-        case 0x07:
-            val = rlc8(mem.r8(addr), true);
-            undoc_autocopy(op, val);
-            mem.w8(addr, val);
-            return 23;
-        // RRC ([IX|IY]+d)
-        case 0x08:
-        case 0x09:
-        case 0x0A:
-        case 0x0B:
-        case 0x0C:
-        case 0x0D:
-        case 0x0E:
-        case 0x0F:
-            val = rrc8(mem.r8(addr), true);
-            undoc_autocopy(op-0x08, val);
-            mem.w8(addr, val);
-            return 23;
-        // RL ([IX|IY]+d)
-        case 0x10:
-        case 0x11:
-        case 0x12:
-        case 0x13:
-        case 0x14:
-        case 0x15:
-        case 0x16:
-        case 0x17:
-            val = rl8(mem.r8(addr), true);
-            undoc_autocopy(op-0x10, val);
-            mem.w8(addr, val);
-            return 23;
-        // RR ([IX|IY]+d)
-        case 0x18:
-        case 0x19:
-        case 0x1A:
-        case 0x1B:
-        case 0x1C:
-        case 0x1D:
-        case 0x1E:
-        case 0x1F:
-            val = rr8(mem.r8(addr), true);
-            undoc_autocopy(op-0x18, val);
-            mem.w8(addr, val);
-            return 23;
-        // SLA ([IX|IY]+d)
-        case 0x20:
-        case 0x21:
-        case 0x22:
-        case 0x23:
-        case 0x24:
-        case 0x25:
-        case 0x26:
-        case 0x27:
-            val = sla8(mem.r8(addr));
-            undoc_autocopy(op-0x20, val);
-            mem.w8(addr, val);
-            return 23;
-        // SRA ([IX|IY]+d)
-        case 0x28:
-        case 0x29:
-        case 0x2A:
-        case 0x2B:
-        case 0x2C:
-        case 0x2D:
-        case 0x2E:
-        case 0x2F:
-            val = sra8(mem.r8(addr));
-            undoc_autocopy(op-0x28, val);
-            mem.w8(addr, val);
-            return 23;
-        // SLL ([IX|IY]+d)
-        case 0x30:
-        case 0x31:
-        case 0x32:
-        case 0x33:
-        case 0x34:
-        case 0x35:
-        case 0x36:
-        case 0x37:
-            val = sll8(mem.r8(addr));
-            undoc_autocopy(op-0x30, val);
-            mem.w8(addr, val);
-            return 23;
-        // SRL ([IX|IY]+d)
-        case 0x38:
-        case 0x39:
-        case 0x3A:
-        case 0x3B:
-        case 0x3C:
-        case 0x3D:
-        case 0x3E:
-        case 0x3F:
-            val = srl8(mem.r8(addr));
-            undoc_autocopy(op-0x38, val);
-            mem.w8(addr, val);
-            return 23;
-        // BIT b,([IX|IY]+d)
-        case 0x46 | (0<<3):
-        case 0x46 | (1<<3):
-        case 0x46 | (2<<3):
-        case 0x46 | (3<<3):
-        case 0x46 | (4<<3):
-        case 0x46 | (5<<3):
-        case 0x46 | (6<<3):
-        case 0x46 | (7<<3):
-            bit(mem.r8(addr), 1<<((op>>3)&7));
-            return 20;
-        // RES b,([IX|IY]+d)
-        case 0x86 | (0<<3):
-        case 0x86 | (1<<3):
-        case 0x86 | (2<<3):
-        case 0x86 | (3<<3):
-        case 0x86 | (4<<3):
-        case 0x86 | (5<<3):
-        case 0x86 | (6<<3):
-        case 0x86 | (7<<3):
-            mem.w8(addr, mem.r8(addr) & ~(1<<((op>>3)&7)));
-            return 23;
-        // SET b,([IX|IY]+d)
-        case 0xC6 | (0<<3):
-        case 0xC6 | (1<<3):
-        case 0xC6 | (2<<3):
-        case 0xC6 | (3<<3):
-        case 0xC6 | (4<<3):
-        case 0xC6 | (5<<3):
-        case 0xC6 | (6<<3):
-        case 0xC6 | (7<<3):
-            mem.w8(addr, mem.r8(addr) | (1<<((op>>3)&7)));
-            return 23;
-
-        // unknown opcode
-        default:
-            return invalid_opcode(4);
-    }
+    #if YAKC_Z80_DECODER
+    return do_op(fetch_op(), false);
+    #else
+    return do_op(fetch_op());
+    #endif
 }
 
 } // namespace
-#include "opcodes.h"
+#if YAKC_Z80_DECODER
+#include "core/z80_decoder.h"
+#else
+#include "core/z80_switch.h"
+#endif
