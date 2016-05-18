@@ -409,7 +409,8 @@ z80::do_op(ubyte op, bool ext) {
             //--- LD r[y],n
             case 6:
                 if (y == 6) {
-                    mem.w8(iHLIXIYd(ext), mem.r8(PC++));
+                    const uword addr = iHLIXIYd(ext);
+                    mem.w8(addr, mem.r8(PC++));
                     return ext ? 15 : 10;
                 }
                 else {
