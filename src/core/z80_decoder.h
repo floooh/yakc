@@ -72,10 +72,10 @@ z80::do_cb(ubyte op, bool ext, int off) {
             val = R8[r[z]];
         }
         switch (y) {
-            case 0: val = rlc8(val, true); break;   //--- RLC
-            case 1: val = rrc8(val, true); break;   //--- RRC
-            case 2: val = rl8(val, true); break;    //--- RL
-            case 3: val = rr8(val, true); break;    //--- RR
+            case 0: val = rlc8(val); break;   //--- RLC
+            case 1: val = rrc8(val); break;   //--- RRC
+            case 2: val = rl8(val); break;    //--- RL
+            case 3: val = rr8(val); break;    //--- RR
             case 4: val = sla8(val); break;         //--- SLA
             case 5: val = sra8(val); break;         //--- SRA
             case 6: val = sll8(val); break;         //--- SLL
@@ -426,10 +426,10 @@ z80::do_op(ubyte op, bool ext) {
             //--- assorted ops on accumulator and flags
             case 7:
                 switch (y) {
-                    case 0: A=rlc8(A,false); break;  //--- RLCA
-                    case 1: A=rrc8(A,false); break;  //--- RRCA
-                    case 2: A=rl8(A,false); break;   //--- RLA
-                    case 3: A=rr8(A,false); break;   //--- RRA
+                    case 0: rlca8(); break;  //--- RLCA
+                    case 1: rrca8(); break;  //--- RRCA
+                    case 2: rla8(); break;   //--- RLA
+                    case 3: rra8(); break;   //--- RRA
                     case 4: daa(); break;               //--- DAA
                     case 5: A^=0xFF; F=(F&(SF|ZF|PF|CF))|HF|NF|(A&(YF|XF)); break;  //--- CPL
                     case 6: F=(F&(SF|ZF|YF|XF|PF))|CF|(A&(YF|XF)); break;           //--- SCF

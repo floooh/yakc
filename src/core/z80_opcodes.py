@@ -10,6 +10,9 @@ Version = 1
 # tab-width for generated code
 TabWidth = 2
 
+# the target file handle
+Out = None
+
 # 8-bit register table, the 'HL' entry is for instructions that use
 # (HL), (IX+d) and (IY+d), and will be patched to 'IX' or 'IY' for
 # the DD/FD prefixed instructions
@@ -39,6 +42,15 @@ alu = [ 'add8', 'adc8', 'sub8', 'sbc8', 'and8', 'xor8', 'or8', 'cp8' ]
 
 # the same 'human readable' for comments
 alu_cmt = [ 'ADD', 'ADC', 'SUB', 'SBC', 'AND', 'XOR', 'OR', 'CP' ]
+
+# rot and shift instruction table (C++ method names)
+rot = [ 'rlc8', 'rrc8', 'rl8', 'rr8', 'sla8', 'sra8', 'sll8', 'srl8' ]
+
+# the same 'human readbla for comments
+rot_cmt = [ 'RLC', 'RRC', 'RL', 'RR', 'SLA', 'SRA', 'SLL', 'SRL' ]
+
+import sys
+import genutil  # fips code generator helpers
 
 # an 'opcode' wraps a generated comment (the assembly mnemonics) and the
 # C++ source which implements the instruction
@@ -119,8 +131,8 @@ def enc_op(op, cyc, ext) :
             o.src = '{}=mem.r8({}); return {};'.format(r2[y], iHLsrc(ext), 7+cyc+ext_cyc)
         else:
             # LD r,s
-            o.cmt = 'LD {},{}'.format(r2[y], r2[z])
-            o.src = '{}={}; return {};'.format(r2[y], r2[z], 4+cyc)
+            o.cmt = 'LD {},{}'.format(r[y], r[z])
+            o.src = '{}={}; return {};'.format(r[y], r[z], 4+cyc)
 
     #---- block 2: 8-bit ALU instructions (ADD, ADC, SUB, SBC, AND, XOR, OR, CP)
     elif x == 2:
@@ -172,8 +184,8 @@ def enc_op(op, cyc, ext) :
                 [ 'LD A,(BC)', 'A=mem.r8(BC); return {};'.format(7+cyc) ],
                 [ 'LD (DE),A', 'mem.w8(DE,A); return {};'.format(7+cyc) ],
                 [ 'LD A,(DE)', 'A=mem.r8(DE); return {};'.format(7+cyc) ],
-                [ 'LD (nn),{}'.format(rp[2]), 'mem.w16(mem.r16(PC),{}; PC+=2; return {};'.format(rp[2],16+cyc) ],
-                [ 'LD {},(nn)'.format(rp[2]), '{}=mem.r16(mem.r16(PC); PC+=2; return {};'.format(rp[2],16+cyc) ],
+                [ 'LD (nn),{}'.format(rp[2]), 'mem.w16(mem.r16(PC),{}); PC+=2; return {};'.format(rp[2],16+cyc) ],
+                [ 'LD {},(nn)'.format(rp[2]), '{}=mem.r16(mem.r16(PC)); PC+=2; return {};'.format(rp[2],16+cyc) ],
                 [ 'LD (nn),A', 'mem.w8(mem.r16(PC),A); PC+=2; return {};'.format(13+cyc) ],
                 [ 'LD A,(nn)', 'A=mem.r8(mem.r16(PC)); PC+=2; return {};'.format(13+cyc) ]
             ]
@@ -202,7 +214,7 @@ def enc_op(op, cyc, ext) :
             if y == 6:
                 # LD (HL),n; LD (IX+d),n; LD (IY+d),n
                 o.cmt = 'LD {},n'.format(iHLcmt(ext))
-                o.src = 'mem.w8({},mem.r8(PC++)); return {};'.format(iHLsrc(ext), (15 if ext else 10)+cyc)
+                o.src = '{{uword a={}; mem.w8(a,mem.r8(PC++));}} return {};'.format(iHLsrc(ext), (15 if ext else 10)+cyc)
             else:
                 # LD r,n
                 o.cmt = 'LD {},n'.format(r[y])
@@ -210,14 +222,14 @@ def enc_op(op, cyc, ext) :
         elif z == 7:
             # misc ops on A and F
             op_tbl = [
-                [ 'RLCA', 'A=rlc8(A,false);'],
-                [ 'RRCA', 'A=rrc8(A,false);'],
-                [ 'RLA', 'A=rl8(A,false);'],
-                [ 'RRA', 'A=rr8(A,false);'],
-                [ 'DAA', 'daa();'],
-                [ 'CPL', 'A^=0xFF; F=(F&(SF|ZF|PF|CF))|HF|NF|(A&(YF|XF));'],
-                [ 'SCF', 'F=(F&(SF|ZF|YF|XF|PF))|CF|(A&(YF|XF));'],
-                [ 'CCF', 'F=((F&(SF|ZF|YF|XF|PF|CF))|((F&CF)<<4)|(A&(YF|XF)))^CF;']
+                [ 'RLCA', 'rlca8();'],
+                [ 'RRCA', 'rrca8();'],
+                [ 'RLA',  'rla8();'],
+                [ 'RRA',  'rra8();'],
+                [ 'DAA',  'daa();'],
+                [ 'CPL',  'A^=0xFF; F=(F&(SF|ZF|PF|CF))|HF|NF|(A&(YF|XF));'],
+                [ 'SCF',  'F=(F&(SF|ZF|YF|XF|PF))|CF|(A&(YF|XF));'],
+                [ 'CCF',  'F=((F&(SF|ZF|YF|XF|PF|CF))|((F&CF)<<4)|(A&(YF|XF)))^CF;']
             ]
             o.cmt = op_tbl[y][0]
             o.src = op_tbl[y][1] + ' return {};'.format(4+cyc)
@@ -267,7 +279,7 @@ def enc_op(op, cyc, ext) :
         elif z == 4:
             # CALL cc,nn
             o.cmt = 'CALL {},nn'.format(cc_cmt[y])
-            o.src = 'if ({}) {{ SP-=2; mem.w16(SP,PC+2); PC=mem.r16(SP); return {}; }} else {{ PC+=2; return {}; }}'.format(cc[y], 17+cyc, 10+cyc)
+            o.src = 'if ({}) {{ SP-=2; mem.w16(SP,PC+2); PC=mem.r16(PC); return {}; }} else {{ PC+=2; return {}; }}'.format(cc[y], 17+cyc, 10+cyc)
         elif z == 5:
             if q == 0:
                 # PUSH BC,DE,HL,IX,IY,AF
@@ -307,36 +319,37 @@ def enc_ed_op(op) :
 
     if x == 2:
         # block instructions (LDIR etc)
-        op_tbl = [
-            [ 
-                [ 'LDI',    'ldi(); return 16;' ],
-                [ 'LDD',    'ldr(); return 16;' ],
-                [ 'LDIR',   'return ldir();' ],
-                [ 'LDDR',   'return lldr();' ]
-            ],
-            [
-                [ 'CPI',    'cpi(); return 16;' ],
-                [ 'CPD',    'cpd(); return 16;' ],
-                [ 'CPIR',   'return cpir();' ],
-                [ 'CPDR',   'return cpdr();' ]
-            ],
-            [
-                [ 'INI',    'ini(); return 16;' ],
-                [ 'IND',    'ind(); return 16;' ],
-                [ 'INIR',   'return inir();' ],
-                [ 'INDR',   'return indr();' ]
-            ],
-            [
-                [ 'OUTI',   'outi(); return 16;' ],
-                [ 'OUTD',   'outd(); return 16;' ],
-                [ 'OTID',   'return otir();' ],
-                [ 'OTDR',   'return otdr();' ]
+        if y >= 4 and z < 4 :
+            op_tbl = [
+                [ 
+                    [ 'LDI',    'ldi(); return 16;' ],
+                    [ 'LDD',    'ldd(); return 16;' ],
+                    [ 'LDIR',   'return ldir();' ],
+                    [ 'LDDR',   'return lddr();' ]
+                ],
+                [
+                    [ 'CPI',    'cpi(); return 16;' ],
+                    [ 'CPD',    'cpd(); return 16;' ],
+                    [ 'CPIR',   'return cpir();' ],
+                    [ 'CPDR',   'return cpdr();' ]
+                ],
+                [
+                    [ 'INI',    'ini(); return 16;' ],
+                    [ 'IND',    'ind(); return 16;' ],
+                    [ 'INIR',   'return inir();' ],
+                    [ 'INDR',   'return indr();' ]
+                ],
+                [
+                    [ 'OUTI',   'outi(); return 16;' ],
+                    [ 'OUTD',   'outd(); return 16;' ],
+                    [ 'OTID',   'return otir();' ],
+                    [ 'OTDR',   'return otdr();' ]
+                ]
             ]
-        ]
-        o.cmt = op_tbl[z&3][y&3][0]
-        o.src = op_tbl[z&3][y&3][1]
+            o.cmt = op_tbl[z][y-4][0]
+            o.src = op_tbl[z][y-4][1]
 
-    elif x == 3:
+    elif x == 1:
         # misc ops
         if z == 0:
             # IN r,(C)
@@ -423,7 +436,21 @@ def enc_cb_op(op, cyc, ext) :
     if ext :
         cyc += 4
 
-    if x == 1:
+    if x == 0:
+        # rotates and shifts
+        if z == 6:
+            # ROT (HL); ROT (IX+d); ROT (IY+d)
+            o.cmt = '{} {}'.format(rot_cmt[y],iHLcmt(ext))
+            o.src = '{{uword a={}; mem.w8(a,{}(mem.r8(a)));}} return {};'.format(iHLdsrc(ext), rot[y], 15+cyc)
+        elif ext:
+            # undocumented: ROT (IX+d),(IY+d),r (also stores result in a register)
+            o.cmt = '{} {},{}'.format(rot_cmt[y],iHLcmt(ext),r2[z])
+            o.src = '{{uword a={}; {}={}(mem.r8(a)); mem.w8(a,{});}} return {};'.format(iHLdsrc(ext), r2[z], rot[y], r2[z], 15+cyc)
+        else:
+            # ROT r
+            o.cmt = '{} {}'.format(rot_cmt[y],r2[z])
+            o.src = '{}={}({}); return {};'.format(r2[z], rot[y], r2[z], 8+cyc)
+    elif x == 1:
         # BIT n
         if z == 6 or ext:
             # BIT n,(HL); BIT n,(IX+d); BIT n,(IY+d)
@@ -461,6 +488,7 @@ def enc_cb_op(op, cyc, ext) :
             # SET n,r
             o.cmt = 'SET {},{}'.format(y,r2[z])
             o.src = '{}|={}; return {};'.format(r2[z], hex(1<<y), 8+cyc)
+
     return o
 
 #-------------------------------------------------------------------------------
@@ -484,14 +512,19 @@ def tab(indent) :
     return ' '*TabWidth*indent
 
 #-------------------------------------------------------------------------------
+# output a src line
+def l(s) :
+    Out.write(s+'\n')
+
+#-------------------------------------------------------------------------------
 # write source header
 #
 def write_header(f) :
-    print('#pragma once')
-    print('// #version:{}#'.format(Version))
-    print('// machine generated, do not edit!')
-    print('#include "core/common.h"')
-    print('inline uint32_t z80::do_op() {')
+    l('#pragma once')
+    l('// #version:{}#'.format(Version))
+    l('// machine generated, do not edit!')
+    l('#include "core/common.h"')
+    l('inline uint32_t yakc::z80::do_op() {')
 
 #-------------------------------------------------------------------------------
 # begin a new instruction group (begins a switch statement)
@@ -499,14 +532,14 @@ def write_header(f) :
 def write_begin_group(f, indent, ext_byte=None, read_offset=False) :
     if ext_byte :
         # this is a prefix instruction, need to write a case
-        print('{}case {}:'.format(tab(indent), hex(ext_byte)))
+        l('{}case {}:'.format(tab(indent), hex(ext_byte)))
     indent += 1
     # special case for DD/FD CB 'double extended' instructions,
     # these have the d offset after the CB byte and before
     # the actual instruction byte
     if read_offset :
-        print('{}{{ const int d = mem.rs8(PC++);'.format(tab(indent)))
-    print('{}switch (fetch_op()) {{'.format(tab(indent)))
+        l('{}{{ const int d = mem.rs8(PC++);'.format(tab(indent)))
+    l('{}switch (fetch_op()) {{'.format(tab(indent)))
     indent += 1
     return indent
 
@@ -515,19 +548,20 @@ def write_begin_group(f, indent, ext_byte=None, read_offset=False) :
 #
 def write_op(f, indent, op) :
     if op.src :
-        print('{}case {}: {} // {}'.format(tab(indent), hex(op.byte), op.src, op.cmt))
+        l('{}case {}: {} // {}'.format(tab(indent), hex(op.byte), op.src, op.cmt))
 
 #-------------------------------------------------------------------------------
 # finish an instruction group (ends current statement)
 #
-def write_end_group(f, indent, inv_op_bytes, read_offset=False) :
-    print('{}default: return invalid_opcode({});'.format(tab(indent), inv_op_bytes))
+def write_end_group(f, indent, inv_op_bytes, ext_byte=None, read_offset=False) :
+    l('{}default: return invalid_opcode({});'.format(tab(indent), inv_op_bytes))
     indent -= 1
-    print('{}}}'.format(tab(indent)))
+    l('{}}}'.format(tab(indent)))
     # if this was a prefix instruction, need to write a final break
-    print('{}break;'.format(tab(indent)))
+    if ext_byte:
+        l('{}break;'.format(tab(indent)))
     if read_offset :
-        print('{}}}'.format(tab(indent)))
+        l('{}}}'.format(tab(indent)))
     indent -= 1
     return indent
 
@@ -535,17 +569,20 @@ def write_end_group(f, indent, inv_op_bytes, read_offset=False) :
 # write source footer
 #
 def write_footer(f) :
-    print('BLA')
+    l('}')
 
 #-------------------------------------------------------------------------------
-# main encoder function, this populates all the opcode tables
+# main encoder function, this populates all the opcode tables and
+# generates the C++ source code into the file f
 #
-def main() :
+def do_it(f) :
 
-    f = None
+    global Out
+    Out = f
+
     write_header(f)
-
-    # loop over all instructions
+    
+    # loop over all instruction bytes
     indent = write_begin_group(f, 0)
     for i in range(0, 256) :
         # DD or FD prefix instruction?
@@ -555,36 +592,37 @@ def main() :
             for ii in range(0, 256) :
                 if ii == 0xCB:
                     # DD/FD CB prefix
-                    indent = write_begin_group(f, indent, i, True)
+                    indent = write_begin_group(f, indent, ii, True)
                     for iii in range(0, 256) :
                         write_op(f, indent, enc_cb_op(iii, 4, True))
-                    indent = write_end_group(f, indent, 4, True)
+                    indent = write_end_group(f, indent, 4, True, True)
                 else:
                     write_op(f, indent, enc_op(ii, 4, True))
             unpatch_reg_tables()
-            indent = write_end_group(f, indent, 2)
-
-        # ED prefix instructions?
+            indent = write_end_group(f, indent, 2, True)
+        # ED prefix instructions
         elif i == 0xED:
             indent = write_begin_group(f, indent, i)
             for ii in range(0, 256) :
                 write_op(f, indent, enc_ed_op(ii))
-            indent = write_end_group(f, indent, 2)
-
-        # CB prefix instructions?
+            indent = write_end_group(f, indent, 2, True)
+        # CB prefix instructions
         elif i == 0xCB:
             indent = write_begin_group(f, indent, i, False)
             for ii in range(0, 256) :
                 write_op(f, indent, enc_cb_op(ii, 0, False))
-            indent = write_end_group(f, indent, 2)
-
-        # main instruction
+            indent = write_end_group(f, indent, 2, True)
+        # non-prefixed instruction
         else:
             write_op(f, indent, enc_op(i, 0, False))
     write_end_group(f, indent, 1)
     write_footer(f)
 
-# __main__
-if __name__ == "__main__" :
-    main()
+#-------------------------------------------------------------------------------
+# fips code generator entry 
+#
+def generate(input, out_src, out_hdr) :
+    if genutil.isDirty(Version, [input], [out_hdr]) :
+        with open(out_hdr, 'w') as f:
+            do_it(f)
 

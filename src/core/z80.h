@@ -237,14 +237,22 @@ public:
     int otdr();
     /// implement the DAA instruction
     void daa();
-    /// rotate left, copy sign bit into CF,
-    ubyte rlc8(ubyte val, bool flags_szp);
+    /// rotate left, copy sign bit into CF
+    ubyte rlc8(ubyte val);
+    /// rotate A left, copy sign bit into CF
+    void rlca8();
     /// rotate right, copy bit 0 into CF
-    ubyte rrc8(ubyte val, bool flags_szp);
+    ubyte rrc8(ubyte val);
+    /// rotate A right, copy bit 0 into CF
+    void rrca8();
     /// rotate left through carry bit
-    ubyte rl8(ubyte val, bool flags_szp);
+    ubyte rl8(ubyte val);
+    /// rotate A left through carry bit
+    void rla8();
     /// rotate right through carry bit
-    ubyte rr8(ubyte val, bool flags_szp);
+    ubyte rr8(ubyte val);
+    /// rotate A right through carry bit
+    void rra8();
     /// shift left into carry bit and update flags
     ubyte sla8(ubyte val);
     /// undocumented: shift left into carry bit, update flags
@@ -273,20 +281,8 @@ public:
     /// decode main instruction
     uint32_t do_op(ubyte op, bool ext);
     #else
-    /// undocumented register-autocopy for the DD/FD CB instructions
-    void undoc_autocopy(ubyte reg, ubyte val);
-    /// special handling for the FD/DD CB bit opcodes
-    int dd_fd_cb(ubyte lead);
-    /// decode 0xCB opcodes (generated)
-    uint32_t do_op_0xcb(ubyte op);
-    /// decode 0xDD opcodes (generated)
-    uint32_t do_op_0xdd(ubyte op);
-    /// decode 0xFD opcodes (generated)
-    uint32_t do_op_0xfd(ubyte op);
-    /// decode 0xED opcodes (generated)
-    uint32_t do_op_0xed(ubyte op);
     /// top-level opcode decoder (generated)
-    uint32_t do_op(ubyte op);
+    uint32_t do_op();
     #endif
 };
 
@@ -954,58 +950,64 @@ z80::daa() {
 
 //------------------------------------------------------------------------------
 inline ubyte
-z80::rlc8(ubyte val, bool flags_szp) {
+z80::rlc8(ubyte val) {
     ubyte r = val<<1|val>>7;
-    ubyte f = (val & 0x80) ? CF : 0;
-    if (flags_szp) {
-        F = f | szp[r];
-    }
-    else {
-        F = f | (F & (SF|ZF|PF));
-    }
+    F = szp[r] | ((val & 0x80) ? CF : 0);
     return r;
 }
 
 //------------------------------------------------------------------------------
+inline void
+z80::rlca8() {
+    F = ((A & 0x80) ? CF : 0) | (F & (SF|ZF|PF));
+    A = A<<1|A>>7;
+}
+
+//------------------------------------------------------------------------------
 inline ubyte
-z80::rrc8(ubyte val, bool flags_szp) {
+z80::rrc8(ubyte val) {
     ubyte r = val>>1|val<<7;
-    ubyte f = val & CF;
-    if (flags_szp) {
-        F = f | szp[r];
-    }
-    else {
-        F = f | (F & (SF|ZF|PF));
-    }
+    F = szp[r] | (val & CF);
     return r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::rl8(ubyte val, bool flags_szp) {
-    ubyte r = val<<1 | ((F & CF) ? 0x01:0x00);
-    ubyte f = val & 0x80 ? CF : 0;
-    if (flags_szp) {
-        F = f | szp[r];
-    }
-    else {
-        F = f | (F & (SF|ZF|PF));
-    }
-    return r;
+inline void
+z80::rrca8() {
+    F = (A & CF) | (F & (SF|ZF|PF));
+    A = A>>1|A<<7;
 }
 
 //------------------------------------------------------------------------------
 inline ubyte
-z80::rr8(ubyte val, bool flags_szp) {
+z80::rl8(ubyte val) {
+    ubyte r = val<<1 | (F & CF);
+    F = (val & 0x80 ? CF : 0) | szp[r];
+    return r;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::rla8() {
+    ubyte r = A<<1 | (F & CF);
+    F = (A & 0x80 ? CF : 0) | (F & (SF|ZF|PF));
+    A = r;
+}
+
+//------------------------------------------------------------------------------
+inline ubyte
+z80::rr8(ubyte val) {
     ubyte r = val>>1 | ((F & CF) ? 0x80:0x00);
-    ubyte f = val & CF;
-    if (flags_szp) {
-        F = f | szp[r];
-    }
-    else {
-        F = f | (F & (SF|ZF|PF));
-    }
+    F = (val & CF) | szp[r];
     return r;
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::rra8() {
+    ubyte r = A>>1 | ((F & CF)<<7);
+    F = (A & CF) | (F & (SF|ZF|PF));
+    A = r;
 }
 
 //------------------------------------------------------------------------------
@@ -1090,7 +1092,7 @@ z80::step() {
     #if YAKC_Z80_DECODER
     return do_op(fetch_op(), false);
     #else
-    return do_op(fetch_op());
+    return do_op();
     #endif
 }
 
@@ -1098,5 +1100,5 @@ z80::step() {
 #if YAKC_Z80_DECODER
 #include "core/z80_decoder.h"
 #else
-#include "core/z80_switch.h"
+#include "core/z80_opcodes.h"
 #endif
