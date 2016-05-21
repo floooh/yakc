@@ -52,6 +52,10 @@ z80::do_cb(ubyte op, bool ext, int off) {
     // FIXME: if executed with DD/FD prefix, some of the CB instructions
     // also copy the result to a register, these are undocumented so
     // we don't care for now!
+    // FIXME 2: the behaviour of the undocumented 'extended' case is
+    // actually wrong here for the 'register case'. The DD CB and FD CB
+    // ALWAYS work on (IX/IY+d), and the 'register case' also
+    // copies the result to a register!
     const ubyte x = op>>6;
     const ubyte y = (op>>3) & 7;
     const ubyte z = op & 7;
