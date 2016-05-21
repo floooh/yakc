@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
 #   z80_opcodes.py
-#   Generate brute-force Z80 instruction decoder.
+#   Generate huge switch/case Z80 instruction decoder.
 #   See: http://www.z80.info/decoding.htm
 #-------------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ Out = None
 
 # 8-bit register table, the 'HL' entry is for instructions that use
 # (HL), (IX+d) and (IY+d), and will be patched to 'IX' or 'IY' for
-# the DD/FD prefixed instructions
+# the DD/FD prefix instructions
 r = [ 'B', 'C', 'D', 'E', 'H', 'L', 'HL', 'A' ]
 
 # the same, but the 'HL' item is never patched to IX/IY, this is
@@ -52,8 +52,8 @@ rot_cmt = [ 'RLC', 'RRC', 'RL', 'RR', 'SLA', 'SRA', 'SLL', 'SRL' ]
 import sys
 import genutil  # fips code generator helpers
 
-# an 'opcode' wraps a generated comment (the assembly mnemonics) and the
-# C++ source which implements the instruction
+# an 'opcode' wraps the instruction byte, human-readable asm mnemonics,
+# and the source code which implements the instruction
 class opcode :
     def __init__(self, op) :
         self.byte = op
@@ -61,7 +61,7 @@ class opcode :
         self.src = None
 
 #-------------------------------------------------------------------------------
-# helper function, return comment for (HL), (IX+d), (IY+d)
+# return comment string for (HL), (IX+d), (IY+d)
 #
 def iHLcmt(ext) :
     if (ext) :
@@ -70,7 +70,7 @@ def iHLcmt(ext) :
         return '({})'.format(r[6])
 
 #-------------------------------------------------------------------------------
-# helper function, return code for address of (HL), (IX+d), (IY+d)
+# return source code for (HL), (IX+d), (IY+d)
 #
 def iHLsrc(ext) :
     if (ext) :
@@ -81,7 +81,7 @@ def iHLsrc(ext) :
         return '{}'.format(r[6])
 
 #-------------------------------------------------------------------------------
-# helper function, return code for (HL), (IX+d), (IY+d) if d has already
+# return source code for (HL), (IX+d), (IY+d) if d has already
 # been loaded from memory into a C variable
 #
 def iHLdsrc(ext) :
@@ -93,15 +93,15 @@ def iHLdsrc(ext) :
         return '{}'.format(r[6])
 
 #-------------------------------------------------------------------------------
-# encode a main instruction, this may also be an DD or FD prefix instruction
-# takes an opcode byte and returns an opcode object, for invalid instructions
-# the opcode object will be in its default state (src==None)
+# Encode a main instruction, or an DD or FD prefix instruction.
+# Takes an opcode byte and returns an opcode object, for invalid instructions
+# the opcode object will be in its default state (opcode.src==None).
 #
 def enc_op(op, cyc, ext) :
 
     o = opcode(op)
 
-    # split opcode byte into bit groups, bit groups identify groups
+    # split opcode byte into bit groups, these identify groups
     # or subgroups of instructions, or serve as register indices 
     #
     #   |xx|yyy|zzz|
@@ -111,7 +111,7 @@ def enc_op(op, cyc, ext) :
     z = op&7
     p = y>>1
     q = y&1
-    # additional CPU cycles for indexed instructions (loading the the 'd' in (IX+d))
+    # additional CPU cycles for prefix instructions for loading the 'd' offset
     ext_cyc = 8 if ext else 0
 
     #---- block 1: 8-bit loads, and HALT
@@ -306,7 +306,7 @@ def enc_op(op, cyc, ext) :
     return o
 
 #-------------------------------------------------------------------------------
-#   ED prefix instruction
+#   ED prefix instructions
 #
 def enc_ed_op(op) :
     o = opcode(op)
