@@ -27,8 +27,7 @@ static void put_char(char c) {
     if (out_pos < output_size) {
         output[out_pos++] = c;
     }
-    putc(c, stdout);
-    fflush(stdout);
+    printf("%c", c);
 }
 
 static ubyte in_func(void* userdata, uword port) {
