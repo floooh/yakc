@@ -353,7 +353,7 @@ z80::init_tables() {
     rp[0] = 0;  // BC
     rp[1] = 1;  // DE
     rp[2] = 2;  // HL
-    rp[3] = 6;  // SP
+    rp[3] = 7;  // SP
 
     // 16-bit register index mapping table with AF into r16[]
     rp2[0] = 0; // BC
