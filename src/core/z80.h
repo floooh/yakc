@@ -374,6 +374,7 @@ z80::connect_irq_device(z80int* device) {
 inline void
 z80::reset() {
     this->PC = 0;
+    this->WZ = this->PC;
     this->IM = 0;
     this->HALT = false;
     this->IFF1 = false;
@@ -464,6 +465,7 @@ z80::handle_irq() {
                 tstates += 19;
             }
         }
+        this->WZ = this->PC;
     }
     return tstates;
 }
@@ -722,6 +724,7 @@ z80::ldir() {
     ldi();
     if (BC != 0) {
         PC -= 2;
+        WZ = PC + 1;
         return 21;
     }
     else {
@@ -753,6 +756,7 @@ z80::lddr() {
     ldd();
     if (BC != 0) {
         PC -= 2;
+        WZ = PC + 1;
         return 21;
     }
     else {
@@ -771,6 +775,7 @@ z80::cpi() {
     }
     if (r & 0x02) f |= YF;
     if (r & 0x08) f |= XF;
+    WZ++;
     HL++;
     BC--;
     if (BC) {
@@ -785,6 +790,7 @@ z80::cpir() {
     cpi();
     if ((BC != 0) && !(F & ZF)) {
         PC -= 2;
+        WZ = PC + 1;
         return 21;
     }
     else {
@@ -803,6 +809,7 @@ z80::cpd() {
     }
     if (r & 0x02) f |= YF;
     if (r & 0x08) f |= XF;
+    WZ--;
     HL--;
     BC--;
     if (BC) {
@@ -817,6 +824,7 @@ z80::cpdr() {
     cpd();
     if ((BC != 0) && !(F & ZF)) {
         PC -= 2;
+        WZ = PC + 1;
         return 21;
     }
     else {
@@ -842,6 +850,7 @@ z80::ini_ind_flags(ubyte io_val, int c_add) {
 inline void
 z80::ini() {
     ubyte io_val = in(BC);
+    WZ = BC + 1;
     B--;
     mem.w8(HL++, io_val);
     F = ini_ind_flags(io_val, +1);
@@ -864,6 +873,7 @@ z80::inir() {
 inline void
 z80::ind() {
     ubyte io_val = in(BC);
+    WZ = BC - 1;
     B--;
     mem.w8(HL--, io_val);
     F = ini_ind_flags(io_val, -1);
@@ -901,6 +911,7 @@ inline void
 z80::outi() {
     ubyte io_val = mem.r8(HL++);
     B--;
+    WZ = BC + 1;
     out(BC, io_val);
     F = outi_outd_flags(io_val);
 }
@@ -923,6 +934,7 @@ inline void
 z80::outd() {
     ubyte io_val = mem.r8(HL--);
     B--;
+    WZ = BC - 1;
     out(BC, io_val);
     F = outi_outd_flags(io_val);
 }
@@ -1094,7 +1106,7 @@ inline void
 z80::bit(ubyte val, ubyte mask) {
     ubyte r = val & mask;
     ubyte f = HF | (r ? (r & SF) : (ZF|PF));
-    f |= (r & (YF|XF));
+    f |= (val & (YF|XF));
     F = f | (F & CF);
 }
 

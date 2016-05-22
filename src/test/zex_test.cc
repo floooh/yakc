@@ -125,10 +125,7 @@ TEST(zexdoc) {
 }
 
 //------------------------------------------------------------------------------
-/*
 TEST(zexall) {
-
-FIXME: BIT n,(HL) not working yet
 
     memset(output, 0, sizeof(output));
     z80 cpu;
@@ -138,6 +135,5 @@ FIXME: BIT n,(HL) not working yet
     cpu.SP = 0xF000;  // no idea where the stack is located in CP/M
     cpu.PC = 0x0100;  // execution starts at 0x0100
     cpu.mem.write(0x0100, dump_zexall, sizeof(dump_zexall));
-    run_test(cpu, "ZEXDOC");
+    run_test(cpu, "ZEXALL");
 }
-*/
