@@ -401,7 +401,7 @@ z80::swap16(uword& r0, uword& r1) {
 inline bool
 z80::test_flags(ubyte expected) const {
     // mask out undocumented flags
-    ubyte undoc = ~(XF|YF);
+    ubyte undoc = ~(YF|XF);
     return (F & undoc) == expected;
 }
 
@@ -524,6 +524,7 @@ inline void
 z80::add8(ubyte add) {
     int r = A + add;
     ubyte f = YAKC_SZ(r);
+    f |= r&(YF|XF);
     if (r > 0xFF) f |= CF;
     if ((r & 0xF) < (A & 0xF)) f |= HF;
     if (((A & 0x80) == (add & 0x80)) && ((r & 0x80) != (A & 0x80))) f |= VF;
@@ -538,6 +539,7 @@ z80::adc8(ubyte add) {
         // don't waste flag table space for rarely used instructions
         int r = A + add + 1;
         ubyte f = YAKC_SZ(r);
+        f |= r&(YF|XF);
         if (r > 0xFF) f |= CF;
         if ((r & 0xF) <= (A & 0xF)) f |= HF;
         if (((A&0x80) == (add&0x80)) && ((r&0x80) != (A&0x80))) f |= VF;
@@ -554,6 +556,7 @@ inline ubyte
 z80::sub8_flags(ubyte acc, ubyte sub) {
     int r = int(acc) - int(sub);
     ubyte f = NF | YAKC_SZ(r);
+    f |= r&(YF|XF);
     if (r < 0) f |= CF;
     if ((r & 0xF) > (acc & 0xF)) f |= HF;
     if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
@@ -563,21 +566,40 @@ z80::sub8_flags(ubyte acc, ubyte sub) {
 //------------------------------------------------------------------------------
 inline void
 z80::sub8(ubyte sub) {
-    F = sub8_flags(A, sub);
-    A -= sub;
+    int r = int(A) - int(sub);
+    ubyte f = NF | YAKC_SZ(r);
+    f |= r&(YF|XF);
+    if (r < 0) f |= CF;
+    if ((r & 0xF) > (A & 0xF)) f |= HF;
+    if (((A&0x80) != (sub&0x80)) && ((r&0x80) != (A&0x80))) f |= VF;
+    F = f;
+    A = ubyte(r);
 }
 
 //------------------------------------------------------------------------------
 inline void
 z80::cp8(ubyte sub) {
-    F = sub8_flags(A, sub);
+    // NOTE: XF|YF are set from sub, not from result!
+    int r = int(A) - int(sub);
+    ubyte f = NF | YAKC_SZ(r);
+    f |= sub&(YF|XF);
+    if (r < 0) f |= CF;
+    if ((r & 0xF) > (A & 0xF)) f |= HF;
+    if (((A&0x80) != (sub&0x80)) && ((r&0x80) != (A&0x80))) f |= VF;
+    F = f;
 }
 
 //------------------------------------------------------------------------------
 inline void
 z80::neg8() {
-    F = sub8_flags(0, A);
-    A = ubyte(0) - A;
+    int r = -int(A);
+    ubyte f = NF | YAKC_SZ(r);
+    f |= r&(YF|XF);
+    if (r < 0) f |= CF;
+    if ((r & 0xF) > 0) f |= HF;
+    if ((0 != (A&0x80)) && ((r&0x80) != 0)) f |= VF;
+    F = f;
+    A = ubyte(r);
 }
 
 //------------------------------------------------------------------------------
@@ -587,6 +609,7 @@ z80::sbc8(ubyte sub) {
         // don't waste flag table space for rarely used instructions
         int r = int(A) - int(sub) - 1;
         ubyte f = NF | YAKC_SZ(r);
+        f |= r&(YF|XF);
         if (r < 0) f |= CF;
         if ((r & 0xF) >= (A & 0xF)) f |= HF;
         if (((A&0x80) != (sub&0x80)) && ((r&0x80) != (A&0x80))) f |= VF;
@@ -624,6 +647,7 @@ inline ubyte
 z80::inc8(ubyte val) {
     ubyte r = val + 1;
     ubyte f = YAKC_SZ(r);
+    f |= r&(XF|YF);
     if ((r & 0xF) == 0) f |= HF;
     if (r == 0x80) f |= VF;
     F = f | (F & CF);
@@ -635,6 +659,7 @@ inline ubyte
 z80::dec8(ubyte val) {
     ubyte r = val - 1;
     ubyte f = NF | YAKC_SZ(r);
+    f |= r&(XF|YF);    
     if ((r & 0xF) == 0xF) f |= HF;
     if (r == 0x7F) f |= VF;
     F = f | (F & CF);

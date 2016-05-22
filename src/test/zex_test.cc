@@ -65,21 +65,8 @@ static bool cpm_bdos(z80& cpu) {
     return retval;
 }
 
-TEST(zexdoc) {
-
-    memset(output, 0, sizeof(output));
-
-    // initialize the z80 cpu
-    z80 cpu;
-    memset(ram, 0, sizeof(ram));
-    cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
-    cpu.init(in_func, out_func, nullptr);
-    cpu.SP = 0xF000;  // no idea where the stack is located in CP/M
-    cpu.PC = 0x0100;  // execution starts at 0x0100
-
-    // load the test program dump at 0x100
-    cpu.mem.write(0x0100, dump_zexdoc, sizeof(dump_zexdoc));
-
+// runs the cpu through a previously configured test (zexdoc or zexall)
+static void run_test(z80& cpu, const char* name) {
     auto startTime = Clock::Now();
     bool running = true;
     std::uint64_t t = 0;
@@ -110,16 +97,46 @@ TEST(zexdoc) {
         }
     }
     double dur = Clock::Since(startTime).AsSeconds();
-    printf("\n%llu cycles, %llu ops in %.3fsecs (%.2f MHz / %.2f MIPS)\n", t, num, dur, (t/dur)/1000000.0,(num/dur)/1000000.0);
+    printf("\n%s: %llu cycles, %llu ops in %.3fsecs (%.2f MHz / %.2f MIPS)\n", name, t, num, dur, (t/dur)/1000000.0,(num/dur)/1000000.0);
 
     // did an error occur?
     output[output_size-1] = 0;
     if (strstr((const char*)output, "ERROR")!=nullptr) {
-        bool zexdoc_failed = false;
-        CHECK(zexdoc_failed);
+        bool zex_failed = false;
+        CHECK(zex_failed);
     }
     else {
-        printf("\n\nALL ZEXDOC TESTS PASSED!\n");
+        printf("\n\nALL %s TESTS PASSED!\n", name);
     }
+}
+
+//------------------------------------------------------------------------------
+/*
+TEST(zexdoc) {
+
+    memset(output, 0, sizeof(output));
+    z80 cpu;
+    memset(ram, 0, sizeof(ram));
+    cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
+    cpu.init(in_func, out_func, nullptr);
+    cpu.SP = 0xF000;  // no idea where the stack is located in CP/M
+    cpu.PC = 0x0100;  // execution starts at 0x0100
+    cpu.mem.write(0x0100, dump_zexdoc, sizeof(dump_zexdoc));
+    run_test(cpu, "ZEXDOC");
+}
+*/
+
+//------------------------------------------------------------------------------
+TEST(zexall) {
+
+    memset(output, 0, sizeof(output));
+    z80 cpu;
+    memset(ram, 0, sizeof(ram));
+    cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
+    cpu.init(in_func, out_func, nullptr);
+    cpu.SP = 0xF000;  // no idea where the stack is located in CP/M
+    cpu.PC = 0x0100;  // execution starts at 0x0100
+    cpu.mem.write(0x0100, dump_zexall, sizeof(dump_zexall));
+    run_test(cpu, "ZEXDOC");
 }
 
