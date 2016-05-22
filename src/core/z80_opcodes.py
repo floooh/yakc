@@ -1,7 +1,11 @@
 #-------------------------------------------------------------------------------
 #   z80_opcodes.py
 #   Generate huge switch/case Z80 instruction decoder.
-#   See: http://www.z80.info/decoding.htm
+#   See: 
+#       http://www.z80.info/decoding.htm
+#       http://www.righto.com/2014/10/how-z80s-registers-are-implemented-down.html
+#       http://www.z80.info/zip/z80-documented.pdf
+#       https://www.omnimaga.org/asm-language/bit-n-(hl)-flags/5/?wap2
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
@@ -70,27 +74,29 @@ def iHLcmt(ext) :
         return '({})'.format(r[6])
 
 #-------------------------------------------------------------------------------
-# return source code for (HL), (IX+d), (IY+d)
+# Return code to setup an address variable 'a' with the address of HL
+# or (IX+d), (IY+d). For the index instructions also update WZ with
+# IX+d or IY+d
 #
 def iHLsrc(ext) :
     if (ext) :
         # IX+d or IY+d
-        return '{}+mem.rs8(PC++)'.format(r[6])
+        return 'uword a=WZ={}+mem.rs8(PC++)'.format(r[6])
     else :
         # HL
-        return '{}'.format(r[6])
+        return 'uword a={}'.format(r[6])
 
 #-------------------------------------------------------------------------------
-# return source code for (HL), (IX+d), (IY+d) if d has already
-# been loaded from memory into a C variable
+# Return code to setup an variable 'a' with the address of HL or (IX+d), (IY+d).
+# For the index instructions, also update WZ with IX+d or IY+d
 #
 def iHLdsrc(ext) :
     if (ext) :
         # IX+d or IY+d
-        return '{}+d'.format(r[6])
+        return 'uword a=WZ={}+d;'.format(r[6])
     else :
         # HL
-        return '{}'.format(r[6])
+        return 'uword a={}'.format(r[6])
 
 #-------------------------------------------------------------------------------
 # Encode a main instruction, or an DD or FD prefix instruction.
@@ -124,11 +130,11 @@ def enc_op(op, cyc, ext) :
             else:
                 # LD (HL),r; LD (IX+d),r; LD (IX+d),r
                 o.cmt = 'LD {},{}'.format(iHLcmt(ext), r2[z])
-                o.src = 'mem.w8({},{}); return {};'.format(iHLsrc(ext), r2[z], 7+cyc+ext_cyc)
+                o.src = '{{ {}; mem.w8(a,{}); }} return {};'.format(iHLsrc(ext), r2[z], 7+cyc+ext_cyc)
         elif z == 6:
             # LD r,(HL); LD r,(IX+d); LD r,(IY+d)
             o.cmt = 'LD {},{}'.format(r2[y], iHLcmt(ext))
-            o.src = '{}=mem.r8({}); return {};'.format(r2[y], iHLsrc(ext), 7+cyc+ext_cyc)
+            o.src = '{{ {}; {}=mem.r8(a); }} return {};'.format(iHLsrc(ext), r2[y], 7+cyc+ext_cyc)
         else:
             # LD r,s
             o.cmt = 'LD {},{}'.format(r[y], r[z])
@@ -139,7 +145,7 @@ def enc_op(op, cyc, ext) :
         if z == 6:
             # ALU (HL); ALU (IX+d); ALU (IY+d)
             o.cmt = '{} {}'.format(alu_cmt[y], iHLcmt(ext))
-            o.src = '{}(mem.r8({})); return {};'.format(alu[y], iHLsrc(ext), 7+cyc+ext_cyc)
+            o.src = '{{ {}; {}(mem.r8(a)); }} return {};'.format(iHLsrc(ext), alu[y], 7+cyc+ext_cyc)
         else:
             # ALU r
             o.cmt = '{} {}'.format(alu_cmt[y], r[z])
@@ -159,15 +165,15 @@ def enc_op(op, cyc, ext) :
             elif y == 2:
                 # DJNZ d
                 o.cmt = 'DJNZ'
-                o.src = 'if (--B>0) {{ PC+=mem.rs8(PC)+1; return {}; }} else {{ PC++; return {}; }}'.format(13+cyc, 8+cyc)
+                o.src = 'if (--B>0) {{ WZ=PC=PC+mem.rs8(PC)+1; return {}; }} else {{ PC++; return {}; }}'.format(13+cyc, 8+cyc)
             elif  y == 3:
                 # JR d
                 o.cmt = 'JR d'
-                o.src = 'PC+=mem.rs8(PC)+1; return {};'.format(12+cyc)
+                o.src = 'WZ=PC=PC+mem.rs8(PC)+1; return {};'.format(12+cyc)
             else:
                 # JR cc,d
                 o.cmt = 'JR {},d'.format(cc_cmt[y-4])
-                o.src = 'if ({}) {{ PC+=mem.rs8(PC)+1; return {}; }} else {{ PC++; return {}; }}'.format(cc[y-4], 12+cyc, 7+cyc)
+                o.src = 'if ({}) {{ WZ=PC=PC+mem.rs8(PC)+1; return {}; }} else {{ PC++; return {}; }}'.format(cc[y-4], 12+cyc, 7+cyc)
         elif z == 1:
             if q == 0:
                 # 16-bit immediate loads
@@ -180,14 +186,14 @@ def enc_op(op, cyc, ext) :
         elif z == 2:
             # indirect loads
             op_tbl = [
-                [ 'LD (BC),A', 'mem.w8(BC,A); return {};'.format(7+cyc) ],
-                [ 'LD A,(BC)', 'A=mem.r8(BC); return {};'.format(7+cyc) ],
-                [ 'LD (DE),A', 'mem.w8(DE,A); return {};'.format(7+cyc) ],
-                [ 'LD A,(DE)', 'A=mem.r8(DE); return {};'.format(7+cyc) ],
-                [ 'LD (nn),{}'.format(rp[2]), 'mem.w16(mem.r16(PC),{}); PC+=2; return {};'.format(rp[2],16+cyc) ],
-                [ 'LD {},(nn)'.format(rp[2]), '{}=mem.r16(mem.r16(PC)); PC+=2; return {};'.format(rp[2],16+cyc) ],
-                [ 'LD (nn),A', 'mem.w8(mem.r16(PC),A); PC+=2; return {};'.format(13+cyc) ],
-                [ 'LD A,(nn)', 'A=mem.r8(mem.r16(PC)); PC+=2; return {};'.format(13+cyc) ]
+                [ 'LD (BC),A', 'mem.w8(BC,A); Z=C+1; W=A; return {};'.format(7+cyc) ],
+                [ 'LD A,(BC)', 'A=mem.r8(BC); WZ=BC+1; return {};'.format(7+cyc) ],
+                [ 'LD (DE),A', 'mem.w8(DE,A); Z=E+1; W=A; return {};'.format(7+cyc) ],
+                [ 'LD A,(DE)', 'A=mem.r8(DE); WZ=DE+1; return {};'.format(7+cyc) ],
+                [ 'LD (nn),{}'.format(rp[2]), 'WZ=mem.r16(PC); mem.w16(WZ++,{}); PC+=2; return {};'.format(rp[2],16+cyc) ],
+                [ 'LD {},(nn)'.format(rp[2]), 'WZ=mem.r16(PC); {}=mem.r16(WZ++); PC+=2; return {};'.format(rp[2],16+cyc) ],
+                [ 'LD (nn),A', 'WZ=mem.r16(PC); mem.w8(WZ++,A); W=A; PC+=2; return {};'.format(13+cyc) ],
+                [ 'LD A,(nn)', 'WZ=mem.r16(PC); A=mem.r8(WZ++); PC+=2; return {};'.format(13+cyc) ]
             ]
             o.cmt = op_tbl[y][0]
             o.src = op_tbl[y][1]
@@ -205,7 +211,7 @@ def enc_op(op, cyc, ext) :
             if y == 6:
                 # INC/DEC (HL)/(IX+d)/(IY+d)
                 o.cmt = '{} {}'.format(cmt, iHLcmt(ext))
-                o.src = '{{uword a={}; mem.w8(a,{}(mem.r8(a)));}} return {};'.format(iHLsrc(ext), fn, 11+cyc+ext_cyc)
+                o.src = '{{ {}; mem.w8(a,{}(mem.r8(a))); }} return {};'.format(iHLsrc(ext), fn, 11+cyc+ext_cyc)
             else:
                 # INC/DEC r
                 o.cmt = '{} {}'.format(cmt, r[y])
@@ -214,7 +220,7 @@ def enc_op(op, cyc, ext) :
             if y == 6:
                 # LD (HL),n; LD (IX+d),n; LD (IY+d),n
                 o.cmt = 'LD {},n'.format(iHLcmt(ext))
-                o.src = '{{uword a={}; mem.w8(a,mem.r8(PC++));}} return {};'.format(iHLsrc(ext), (15 if ext else 10)+cyc)
+                o.src = '{{ {}; mem.w8(a,mem.r8(PC++)); }} return {};'.format(iHLsrc(ext), (15 if ext else 10)+cyc)
             else:
                 # LD r,n
                 o.cmt = 'LD {},n'.format(r[y])
@@ -239,7 +245,7 @@ def enc_op(op, cyc, ext) :
         if z == 0:
             # RET cc
             o.cmt = 'RET {}'.format(cc_cmt[y])
-            o.src = 'if ({}) {{ PC=mem.r16(SP); SP+=2; return {}; }} else return {};'.format(cc[y], 11+cyc, 5+cyc)
+            o.src = 'if ({}) {{ WZ=PC=mem.r16(SP); SP+=2; return {}; }} else return {};'.format(cc[y], 11+cyc, 5+cyc)
         elif z == 1:
             if q == 0:
                 # POP BC,DE,HL,IX,IY,AF
@@ -248,8 +254,8 @@ def enc_op(op, cyc, ext) :
             else:
                 # misc ops
                 op_tbl = [
-                    [ 'RET', 'PC=mem.r16(SP); SP+=2; return {};'.format(10+cyc) ],
-                    [ 'EXX', 'swap16(BC,BC_); swap16(DE,DE_); swap16(HL,HL_); return {};'.format(4+cyc) ],
+                    [ 'RET', 'WZ=PC=mem.r16(SP); SP+=2; return {};'.format(10+cyc) ],
+                    [ 'EXX', 'swap16(BC,BC_); swap16(DE,DE_); swap16(HL,HL_); swap16(WZ,WZ_); return {};'.format(4+cyc) ],
                     [ 'JP {}'.format(rp[2]), 'PC={}; return {};'.format(rp[2], 4+cyc) ],
                     [ 'LD SP,{}'.format(rp[2]), 'SP={}; return {};'.format(rp[2], 6+cyc) ]
                 ]
@@ -258,17 +264,17 @@ def enc_op(op, cyc, ext) :
         elif z == 2:
             # JP cc,nn
             o.cmt = 'JP {},nn'.format(cc_cmt[y])
-            o.src = 'if ({}) {{ PC=mem.r16(PC); }} else {{ PC+=2; }}; return {};'.format(cc[y], 10+cyc)
+            o.src = 'WZ=mem.r16(PC); if ({}) {{ PC=WZ; }} else {{ PC+=2; }}; return {};'.format(cc[y], 10+cyc)
         elif z == 3:
             # misc ops
             op_tbl = [
-                [ 'JP nn', 'PC=mem.r16(PC); return {};'.format(10+cyc) ],
+                [ 'JP nn', 'WZ=PC=mem.r16(PC); return {};'.format(10+cyc) ],
                 [ None, None ], # CB prefix instructions
                 [ 'OUT (n),A', 'out((A<<8)|mem.r8(PC++),A); return {};'.format(11+cyc) ],
                 [ 'IN A,(n)', 'A=in((A<<8)|mem.r8(PC++)); return {};'.format(11+cyc) ],
                 [ 
                     'EX (SP),{}'.format(rp[2]), 
-                    '{{uword swp=mem.r16(SP); mem.w16(SP,{}); {}=swp;}} return {};'.format(rp[2], rp[2], 19+cyc)
+                    '{{uword swp=mem.r16(SP); mem.w16(SP,{}); {}=WZ=swp;}} return {};'.format(rp[2], rp[2], 19+cyc)
                 ],
                 [ 'EX DE,HL', 'swap16(DE,HL); return {};'.format(4+cyc) ],
                 [ 'DI', 'di(); return {};'.format(4+cyc) ],
@@ -279,7 +285,7 @@ def enc_op(op, cyc, ext) :
         elif z == 4:
             # CALL cc,nn
             o.cmt = 'CALL {},nn'.format(cc_cmt[y])
-            o.src = 'if ({}) {{ SP-=2; mem.w16(SP,PC+2); PC=mem.r16(PC); return {}; }} else {{ PC+=2; return {}; }}'.format(cc[y], 17+cyc, 10+cyc)
+            o.src = 'WZ=mem.r16(PC); PC+=2; if ({}) {{ SP-=2; mem.w16(SP,PC); PC=WZ; return {}; }} else {{ return {}; }}'.format(cc[y], 17+cyc, 10+cyc)
         elif z == 5:
             if q == 0:
                 # PUSH BC,DE,HL,IX,IY,AF
@@ -287,7 +293,7 @@ def enc_op(op, cyc, ext) :
                 o.src = 'SP-=2; mem.w16(SP,{}); return {};'.format(rp2[p], 11+cyc)
             else:
                 op_tbl = [
-                    [ 'CALL nn', 'SP-=2; mem.w16(SP,PC+2); PC=mem.r16(PC); return {};'.format(17+cyc) ],
+                    [ 'CALL nn', 'SP-=2; mem.w16(SP,PC+2); WZ=PC=mem.r16(PC); return {};'.format(17+cyc) ],
                     [ None, None ], # DD prefix instructions
                     [ None, None ], # ED prefix instructions
                     [ None, None ], # FD prefix instructions
@@ -379,10 +385,10 @@ def enc_ed_op(op) :
             # 16-bit immediate address load/store
             if q == 0:
                 o.cmt = 'LD (nn),{}'.format(rp[p])
-                o.src = 'mem.w16(mem.r16(PC),{}); PC+=2; return 20;'.format(rp[p])
+                o.src = 'WZ=mem.r16(PC); mem.w16(WZ++,{}); PC+=2; return 20;'.format(rp[p])
             else:
                 o.cmt = 'LD {},(nn)'.format(rp[p])
-                o.src = '{}=mem.r16(mem.r16(PC)); PC+=2; return 20;'.format(rp[p])
+                o.src = 'WZ=mem.r16(PC); {}=mem.r16(WZ++); PC+=2; return 20;'.format(rp[p])
         elif z == 4:
             # NEG
             o.cmt = 'NEG'
@@ -441,11 +447,11 @@ def enc_cb_op(op, cyc, ext) :
         if z == 6:
             # ROT (HL); ROT (IX+d); ROT (IY+d)
             o.cmt = '{} {}'.format(rot_cmt[y],iHLcmt(ext))
-            o.src = '{{uword a={}; mem.w8(a,{}(mem.r8(a)));}} return {};'.format(iHLdsrc(ext), rot[y], 15+cyc)
+            o.src = '{{ {}; mem.w8(a,{}(mem.r8(a))); }} return {};'.format(iHLdsrc(ext), rot[y], 15+cyc)
         elif ext:
             # undocumented: ROT (IX+d),(IY+d),r (also stores result in a register)
             o.cmt = '{} {},{}'.format(rot_cmt[y],iHLcmt(ext),r2[z])
-            o.src = '{{uword a={}; {}={}(mem.r8(a)); mem.w8(a,{});}} return {};'.format(iHLdsrc(ext), r2[z], rot[y], r2[z], 15+cyc)
+            o.src = '{{ {}; {}={}(mem.r8(a)); mem.w8(a,{}); }} return {};'.format(iHLdsrc(ext), r2[z], rot[y], r2[z], 15+cyc)
         else:
             # ROT r
             o.cmt = '{} {}'.format(rot_cmt[y],r2[z])
@@ -455,7 +461,7 @@ def enc_cb_op(op, cyc, ext) :
         if z == 6 or ext:
             # BIT n,(HL); BIT n,(IX+d); BIT n,(IY+d)
             o.cmt = 'BIT {},{}'.format(y,iHLcmt(ext))
-            o.src = 'bit(mem.r8({}),{}); return {};'.format(iHLdsrc(ext), hex(1<<y), 12+cyc)
+            o.src = '{{ {}; ibit(mem.r8(a),{}); }} return {};'.format(iHLdsrc(ext), hex(1<<y), 12+cyc)
         else:
             # BIT n,r
             o.cmt = 'BIT {},{}'.format(y,r2[z])
@@ -465,11 +471,11 @@ def enc_cb_op(op, cyc, ext) :
         if z == 6:
             # RES n,(HL); RES n,(IX+d); RES n,(IY+d)
             o.cmt = 'RES {},{}'.format(y,iHLcmt(ext))
-            o.src = '{{uword a={}; mem.w8(a,mem.r8(a)&~{});}} return {};'.format(iHLdsrc(ext), hex(1<<y), 15+cyc)
+            o.src = '{{ {}; mem.w8(a,mem.r8(a)&~{}); }} return {};'.format(iHLdsrc(ext), hex(1<<y), 15+cyc)
         elif ext:
             # undocumented: RES n,(IX+d),r; RES n,(IY+d),r
             o.cmt = 'RES {},{},{}'.format(y,iHLcmt(ext),r2[z])
-            o.src = '{{uword a={}; {}=mem.r8(a)&~{}; mem.w8(a,{});}} return {};'.format(iHLdsrc(ext), r2[z], hex(1<<y), r2[z], 15+cyc)
+            o.src = '{{ {}; {}=mem.r8(a)&~{}; mem.w8(a,{}); }} return {};'.format(iHLdsrc(ext), r2[z], hex(1<<y), r2[z], 15+cyc)
         else:
             # RES n,r
             o.cmt = 'RES {},{}'.format(y,r2[z])
@@ -479,11 +485,11 @@ def enc_cb_op(op, cyc, ext) :
         if z == 6:
             # SET n,(HL); RES n,(IX+d); RES n,(IY+d)
             o.cmt = 'SET {},{}'.format(y,iHLcmt(ext))
-            o.src = '{{uword a={}; mem.w8(a,mem.r8(a)|{});}} return {};'.format(iHLdsrc(ext), hex(1<<y), 15+cyc)
+            o.src = '{{ {}; mem.w8(a,mem.r8(a)|{});}} return {};'.format(iHLdsrc(ext), hex(1<<y), 15+cyc)
         elif ext:
             # undocumented: SET n,(IX+d),r; SET n,(IY+d),r
             o.cmt = 'SET {},{},{}'.format(y,iHLcmt(ext),r2[z])
-            o.src = '{{uword a={}; {}=mem.r8(a)|{}; mem.w8(a,{});}} return {};'.format(iHLdsrc(ext), r2[z], hex(1<<y), r[z], 15+cyc)
+            o.src = '{{ {}; {}=mem.r8(a)|{}; mem.w8(a,{});}} return {};'.format(iHLdsrc(ext), r2[z], hex(1<<y), r[z], 15+cyc)
         else:
             # SET n,r
             o.cmt = 'SET {},{}'.format(y,r2[z])

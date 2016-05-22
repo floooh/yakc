@@ -27,8 +27,8 @@ public:
 
     /// main register bank, accessible in various ways
     union {
-        ubyte R8[14];       // B, C, D, E, H, L, F, A, IXH, IXL, IYH, IYL, SPH, SPL
-        uword R16[7];       // BC, DE, HL, AF, IX, IY, SP
+        ubyte R8[16];       // B, C, D, E, H, L, F, A, IXH, IXL, IYH, IYL, W, Z, SPH, SPL,
+        uword R16[8];       // BC, DE, HL, AF, IX, IY, WZ, SP
         struct {
             union {
                 struct { ubyte C, B; };
@@ -54,6 +54,10 @@ public:
                 struct { ubyte IYL, IYH; };
                 uword IY;
             };
+            union {
+                struct { ubyte Z, W; };
+                uword WZ;
+            };
             uword SP;
         };
     };
@@ -63,6 +67,7 @@ public:
     uword DE_;
     uword HL_;
     uword AF_;
+    uword WZ_;
     /// instruction pointer
     uword PC;
     /// interrupt vector register
@@ -173,8 +178,6 @@ public:
     void add8(ubyte add);
     /// perform an 8-bit adc and update flags
     void adc8(ubyte add);
-    /// compute flags for sub8 operation (also cp8 and neg8)
-    ubyte sub8_flags(ubyte acc, ubyte sub);
     /// perform an 8-bit sub and update flags
     void sub8(ubyte sub);
     /// perform an 8-bit sbc and update flags
@@ -267,6 +270,8 @@ public:
     void rrd();
     /// implements the BIT test instruction, updates flags
     void bit(ubyte val, ubyte mask);
+    /// same as BIT, but take undocumented YF|XF flags from undocumented WZ register
+    void ibit(ubyte val, ubyte mask);
 
     /// fetch an opcode byte and increment R register
     ubyte fetch_op();
@@ -288,8 +293,8 @@ public:
 
 //------------------------------------------------------------------------------
 inline z80::z80() :
-BC(0), DE(0), HL(0), AF(0), IX(0), IY(0), SP(0),
-BC_(0), DE_(0), HL_(0), AF_(0),
+BC(0), DE(0), HL(0), AF(0), IX(0), IY(0), WZ(0), SP(0), 
+BC_(0), DE_(0), HL_(0), AF_(0), WZ_(0),
 PC(0), I(0), R(0), IM(0),
 HALT(false), IFF1(false), IFF2(false), INV(false),
 in_func(nullptr),
@@ -408,16 +413,16 @@ z80::test_flags(ubyte expected) const {
 //------------------------------------------------------------------------------
 inline void
 z80::halt() {
-    this->HALT = true;
-    this->PC--;
+    HALT = true;
+    PC--;
 }
 
 //------------------------------------------------------------------------------
 inline void
 z80::rst(ubyte vec) {
-    this->SP -= 2;
-    mem.w16(this->SP, this->PC);
-    this->PC = (uword) vec;
+    SP -= 2;
+    mem.w16(SP, PC);
+    WZ = PC = (uword) vec;
 }
 
 //------------------------------------------------------------------------------
@@ -467,8 +472,8 @@ z80::handle_irq() {
 inline void
 z80::reti() {
     // this is the same as RET
-    this->PC = mem.r16(SP);
-    this->SP += 2;
+    WZ = PC = mem.r16(SP);
+    SP += 2;
     // ...notify daisy chain, if configured
     if (this->irq_device) {
         this->irq_device->reti();
@@ -487,8 +492,8 @@ z80::ei() {
 //------------------------------------------------------------------------------
 inline void
 z80::di() {
-    this->IFF1 = false;
-    this->IFF2 = false;
+    IFF1 = false;
+    IFF2 = false;
 }
 
 //------------------------------------------------------------------------------
@@ -514,7 +519,7 @@ z80::out(uword port, ubyte val) {
 inline ubyte
 z80::sziff2(ubyte val, bool iff2) {
     ubyte f = YAKC_SZ(val);
-    f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
+    f |= (val & (YF|XF));
     if (iff2) f |= PF;
     return f;
 }
@@ -536,7 +541,6 @@ z80::add8(ubyte add) {
 inline void
 z80::adc8(ubyte add) {
     if (F & CF) {
-        // don't waste flag table space for rarely used instructions
         int r = A + add + 1;
         ubyte f = YAKC_SZ(r);
         f |= r&(YF|XF);
@@ -549,18 +553,6 @@ z80::adc8(ubyte add) {
     else {
         add8(add);
     }
-}
-
-//------------------------------------------------------------------------------
-inline ubyte
-z80::sub8_flags(ubyte acc, ubyte sub) {
-    int r = int(acc) - int(sub);
-    ubyte f = NF | YAKC_SZ(r);
-    f |= r&(YF|XF);
-    if (r < 0) f |= CF;
-    if ((r & 0xF) > (acc & 0xF)) f |= HF;
-    if (((acc&0x80) != (sub&0x80)) && ((r&0x80) != (acc&0x80))) f |= VF;
-    return f;
 }
 
 //------------------------------------------------------------------------------
@@ -669,6 +661,7 @@ z80::dec8(ubyte val) {
 //------------------------------------------------------------------------------
 inline uword
 z80::add16(uword acc, uword val) {
+    WZ = acc+1;
     uint32_t res = acc + val;
     // flag computation taken from MAME
     F = (F & (SF|ZF|VF)) |
@@ -680,6 +673,7 @@ z80::add16(uword acc, uword val) {
 //------------------------------------------------------------------------------
 inline uword
 z80::adc16(uword acc, uword val) {
+    WZ = acc+1;
     uint32_t res = acc + val + (F & CF);
     // flag computation taken from MAME
     F = (((acc^res^val)>>8)&HF) |
@@ -693,6 +687,7 @@ z80::adc16(uword acc, uword val) {
 //------------------------------------------------------------------------------
 inline uword
 z80::sbc16(uword acc, uword val) {
+    WZ = acc+1;
     uint32_t res = acc - val - (F & CF);
     // flag computation taken from MAME
     F = (((acc^res^val)>>8)&HF) | NF |
@@ -984,8 +979,9 @@ z80::rlc8(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 z80::rlca8() {
-    F = ((A & 0x80) ? CF : 0) | (F & (SF|ZF|PF));
-    A = A<<1|A>>7;
+    ubyte r = A<<1|A>>7;
+    F = ((A & 0x80) ? CF : 0) | (F & (SF|ZF|PF)) | (r&(XF|YF));
+    A = r;
 }
 
 //------------------------------------------------------------------------------
@@ -999,8 +995,9 @@ z80::rrc8(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 z80::rrca8() {
-    F = (A & CF) | (F & (SF|ZF|PF));
-    A = A>>1|A<<7;
+    ubyte r = A>>1|A<<7;
+    F = (A & CF) | (F & (SF|ZF|PF)) | (r&(YF|XF));
+    A = r;
 }
 
 //------------------------------------------------------------------------------
@@ -1015,7 +1012,7 @@ z80::rl8(ubyte val) {
 inline void
 z80::rla8() {
     ubyte r = A<<1 | (F & CF);
-    F = (A & 0x80 ? CF : 0) | (F & (SF|ZF|PF));
+    F = (A & 0x80 ? CF : 0) | (F & (SF|ZF|PF)) | (r&(YF|XF));
     A = r;
 }
 
@@ -1031,7 +1028,7 @@ z80::rr8(ubyte val) {
 inline void
 z80::rra8() {
     ubyte r = A>>1 | ((F & CF)<<7);
-    F = (A & CF) | (F & (SF|ZF|PF));
+    F = (A & CF) | (F & (SF|ZF|PF)) | (r&(YF|XF));
     A = r;
 }
 
@@ -1071,7 +1068,8 @@ z80::srl8(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 z80::rld() {
-    ubyte x = mem.r8(HL);
+    WZ = HL;
+    ubyte x = mem.r8(WZ++);
     ubyte tmp = A & 0xF;              // store A low nibble
     A = (A & 0xF0) | (x>>4);    // move (HL) high nibble into A low nibble
     x = (x<<4) | tmp;   // move (HL) low to high nibble, move A low nibble to (HL) low nibble
@@ -1082,7 +1080,8 @@ z80::rld() {
 //------------------------------------------------------------------------------
 inline void
 z80::rrd() {
-    ubyte x = mem.r8(HL);
+    WZ = HL;
+    ubyte x = mem.r8(WZ++);
     ubyte tmp = A & 0xF;                  // store A low nibble
     A = (A & 0xF0) | (x & 0x0F);    // move (HL) low nibble to A low nibble
     x = (x >> 4) | (tmp << 4);  // move A low nibble to (HL) high nibble, and (HL) high nibble to (HL) low nibble
@@ -1095,7 +1094,19 @@ inline void
 z80::bit(ubyte val, ubyte mask) {
     ubyte r = val & mask;
     ubyte f = HF | (r ? (r & SF) : (ZF|PF));
-    f |= (val & (YF|XF));
+    f |= (r & (YF|XF));
+    F = f | (F & CF);
+}
+
+//------------------------------------------------------------------------------
+inline void
+z80::ibit(ubyte val, ubyte mask) {
+    // this is the version for the BIT instruction for (HL), (IX+d), (IY+d),
+    // these set the undocumented YF and XF flags from high byte of HL+1
+    // or IX/IY+d
+    ubyte r = val & mask;
+    ubyte f = HF | (r ? (r & SF) : (ZF|PF));
+    f |= (W & (YF|XF));
     F = f | (F & CF);
 }
 
