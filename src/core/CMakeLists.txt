@@ -7,8 +7,6 @@ fips_begin_module(core)
         kc85_snapshot.h
     )
     if (NOT YAKC_Z80_DECODER)
-        fips_files(z80_switch.h)
-        # fips_generate(FROM opcodes.py HEADER opcodes.h)
         fips_generate(FROM z80_opcodes.py HEADER z80_opcodes.h)
     else()
         fips_files(z80_decoder.h)
