@@ -39,9 +39,9 @@ public:
 
         // cpu state
         struct cpu_t {
-            uword AF, BC, DE, HL;
-            uword AF_, BC_, DE_, HL_;
-            uword IX, IY, SP, PC;
+            uword AF, BC, DE, HL, IX, IY, WZ;
+            uword AF_, BC_, DE_, HL_, WZ_;
+            uword SP, PC;
             ubyte I, R, IM;
             ubyte HALT, IFF1, IFF2;
 
@@ -218,22 +218,24 @@ kc85_snapshot::apply_snapshot(const state_t& state, kc85& kc) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::write_clock_state(const kc85& kc, state_t& state) {
-    state.clock.base_freq_khz = kc.clck.base_freq_khz;
+    clock& clk = kc.board->clck;
+    state.clock.base_freq_khz = clk.base_freq_khz;
     for (int i = 0; i < 4; i++) {
-        state.clock.timers[i].freq_hz = kc.clck.timers[i].freq_hz;
-        state.clock.timers[i].count   = kc.clck.timers[i].count;
-        state.clock.timers[i].value   = kc.clck.timers[i].value;
+        state.clock.timers[i].freq_hz = clk.timers[i].freq_hz;
+        state.clock.timers[i].count   = clk.timers[i].count;
+        state.clock.timers[i].value   = clk.timers[i].value;
     }
 }
 
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_clock_state(const state_t& state, kc85& kc) {
-    kc.clck.base_freq_khz = state.clock.base_freq_khz;
+    clock& clk = kc.board->clck;
+    clk.base_freq_khz = state.clock.base_freq_khz;
     for (int i = 0; i < 4; i++) {
-        kc.clck.timers[i].freq_hz = state.clock.timers[i].freq_hz;
-        kc.clck.timers[i].count   = state.clock.timers[i].count;
-        kc.clck.timers[i].value   = state.clock.timers[i].value;
+        clk.timers[i].freq_hz = state.clock.timers[i].freq_hz;
+        clk.timers[i].count   = state.clock.timers[i].count;
+        clk.timers[i].value   = state.clock.timers[i].value;
     }
 }
 
@@ -259,53 +261,59 @@ kc85_snapshot::apply_kc_state(const state_t& state, kc85& kc) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::write_cpu_state(const kc85& kc, state_t& state) {
-    state.cpu.AF  = kc.cpu.AF;
-    state.cpu.BC  = kc.cpu.BC;
-    state.cpu.DE  = kc.cpu.DE;
-    state.cpu.HL  = kc.cpu.HL;
-    state.cpu.AF_ = kc.cpu.AF_;
-    state.cpu.BC_ = kc.cpu.BC_;
-    state.cpu.DE_ = kc.cpu.DE_;
-    state.cpu.HL_ = kc.cpu.HL_;
-    state.cpu.IX  = kc.cpu.IX;
-    state.cpu.IY  = kc.cpu.IY;
-    state.cpu.SP  = kc.cpu.SP;
-    state.cpu.PC  = kc.cpu.PC;
-    state.cpu.I   = kc.cpu.I;
-    state.cpu.R   = kc.cpu.R;
-    state.cpu.IM  = kc.cpu.IM;
-    state.cpu.HALT = kc.cpu.HALT;
-    state.cpu.IFF1 = kc.cpu.IFF1;
-    state.cpu.IFF2 = kc.cpu.IFF2;
-    state.cpu.INV  = kc.cpu.INV;
-    state.cpu.irq_received = kc.cpu.irq_received;
-    state.cpu.enable_interrupt = kc.cpu.enable_interrupt;
+    const z80& cpu = kc.board->cpu;
+    state.cpu.AF  = cpu.AF;
+    state.cpu.BC  = cpu.BC;
+    state.cpu.DE  = cpu.DE;
+    state.cpu.HL  = cpu.HL;
+    state.cpu.WZ  = cpu.WZ;
+    state.cpu.AF_ = cpu.AF_;
+    state.cpu.BC_ = cpu.BC_;
+    state.cpu.DE_ = cpu.DE_;
+    state.cpu.HL_ = cpu.HL_;
+    state.cpu.WZ_ = cpu.WZ_;
+    state.cpu.IX  = cpu.IX;
+    state.cpu.IY  = cpu.IY;
+    state.cpu.SP  = cpu.SP;
+    state.cpu.PC  = cpu.PC;
+    state.cpu.I   = cpu.I;
+    state.cpu.R   = cpu.R;
+    state.cpu.IM  = cpu.IM;
+    state.cpu.HALT = cpu.HALT;
+    state.cpu.IFF1 = cpu.IFF1;
+    state.cpu.IFF2 = cpu.IFF2;
+    state.cpu.INV  = cpu.INV;
+    state.cpu.irq_received = cpu.irq_received;
+    state.cpu.enable_interrupt = cpu.enable_interrupt;
 }
 
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_cpu_state(const state_t& state, kc85& kc) {
-    kc.cpu.AF = state.cpu.AF;
-    kc.cpu.BC = state.cpu.BC;
-    kc.cpu.DE = state.cpu.DE;
-    kc.cpu.HL = state.cpu.HL;
-    kc.cpu.AF_ = state.cpu.AF_;
-    kc.cpu.BC_ = state.cpu.BC_;
-    kc.cpu.DE_ = state.cpu.DE_;
-    kc.cpu.HL_ = state.cpu.HL_;
-    kc.cpu.IX  = state.cpu.IX;
-    kc.cpu.IY  = state.cpu.IY;
-    kc.cpu.SP  = state.cpu.SP;
-    kc.cpu.PC  = state.cpu.PC;
-    kc.cpu.I   = state.cpu.I;
-    kc.cpu.R   = state.cpu.R;
-    kc.cpu.IM  = state.cpu.IM;
-    kc.cpu.HALT = 0 != state.cpu.HALT;
-    kc.cpu.IFF1 = 0 != state.cpu.IFF1;
-    kc.cpu.IFF2 = 0 != state.cpu.IFF2;
-    kc.cpu.INV  = 0 != state.cpu.INV;
-    kc.cpu.irq_received = 0 != state.cpu.irq_received;
-    kc.cpu.enable_interrupt = 0 != state.cpu.enable_interrupt;
+    z80& cpu = kc.board->cpu;
+    cpu.AF = state.cpu.AF;
+    cpu.BC = state.cpu.BC;
+    cpu.DE = state.cpu.DE;
+    cpu.HL = state.cpu.HL;
+    cpu.WZ = state.cpu.WZ;
+    cpu.AF_ = state.cpu.AF_;
+    cpu.BC_ = state.cpu.BC_;
+    cpu.DE_ = state.cpu.DE_;
+    cpu.HL_ = state.cpu.HL_;
+    cpu.WZ_ = state.cpu.WZ_;
+    cpu.IX  = state.cpu.IX;
+    cpu.IY  = state.cpu.IY;
+    cpu.SP  = state.cpu.SP;
+    cpu.PC  = state.cpu.PC;
+    cpu.I   = state.cpu.I;
+    cpu.R   = state.cpu.R;
+    cpu.IM  = state.cpu.IM;
+    cpu.HALT = 0 != state.cpu.HALT;
+    cpu.IFF1 = 0 != state.cpu.IFF1;
+    cpu.IFF2 = 0 != state.cpu.IFF2;
+    cpu.INV  = 0 != state.cpu.INV;
+    cpu.irq_received = 0 != state.cpu.irq_received;
+    cpu.enable_interrupt = 0 != state.cpu.enable_interrupt;
 }
 
 //------------------------------------------------------------------------------
@@ -331,7 +339,7 @@ inline void
 kc85_snapshot::write_ctc_state(const kc85& kc, state_t& state) {
     for (int c = 0; c < 4; c++) {
         auto& dst = state.ctc.chn[c];
-        const auto& src = kc.ctc.channels[c];
+        const auto& src = kc.board->ctc.channels[c];
 
         dst.down_counter = src.down_counter;
         dst.mode = src.mode;
@@ -346,7 +354,7 @@ kc85_snapshot::write_ctc_state(const kc85& kc, state_t& state) {
 inline void
 kc85_snapshot::apply_ctc_state(const state_t& state, kc85& kc) {
     for (int c = 0; c < 4; c++) {
-        auto& dst = kc.ctc.channels[c];
+        auto& dst = kc.board->ctc.channels[c];
         const auto& src = state.ctc.chn[c];
 
         dst.down_counter = src.down_counter;
@@ -361,31 +369,33 @@ kc85_snapshot::apply_ctc_state(const state_t& state, kc85& kc) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::write_pio_state(const kc85& kc, state_t& state) {
+    const z80pio& pio = kc.board->pio;
     for (int c = 0; c < 2; c++) {
         auto& dst = state.pio.chn[c];
-        const auto& src = kc.pio.channel_state[c];
+        const auto& src = pio.channel_state[c];
 
         dst.interrupt_vector = src.interrupt_vector;
         dst.interrupt_enabled = src.interrupt_enabled;
         dst.mode = src.mode;
-        dst.data = kc.pio.channel_data[c];
+        dst.data = pio.channel_data[c];
     }
-    write_intctrl_state(kc.pio.int_ctrl, state.pio.intctrl);
+    write_intctrl_state(pio.int_ctrl, state.pio.intctrl);
 }
 
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_pio_state(const state_t& state, kc85& kc) {
+    z80pio& pio = kc.board->pio;
     for (int c = 0; c < 2; c++) {
-        auto& dst = kc.pio.channel_state[c];
+        auto& dst = pio.channel_state[c];
         const auto& src = state.pio.chn[c];
 
         dst.interrupt_vector = src.interrupt_vector;
         dst.interrupt_enabled = 0 != src.interrupt_enabled;
         dst.mode = src.mode;
-        kc.pio.channel_data[c] = src.data;
+        pio.channel_data[c] = src.data;
     }
-    apply_intctrl_state(state.pio.intctrl, kc.pio.int_ctrl);
+    apply_intctrl_state(state.pio.intctrl, pio.int_ctrl);
 }
 
 //------------------------------------------------------------------------------
@@ -447,7 +457,7 @@ kc85_snapshot::apply_exp_state(const state_t& state, kc85& kc) {
     for (int s = 0; s < 2; s++) {
         const auto& slot = state.exp.slots[s];
         if (kc.exp.slot_occupied(slot.slot_addr)) {
-            kc.exp.remove_module(slot.slot_addr, kc.cpu.mem);
+            kc.exp.remove_module(slot.slot_addr, kc.board->cpu.mem);
         }
         kc.exp.insert_module(slot.slot_addr, (kc85_exp::module_type)slot.module_type);
         kc.exp.update_control_byte(slot.slot_addr, slot.control_byte);

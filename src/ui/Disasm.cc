@@ -19,7 +19,7 @@ context(0) {
 ubyte
 Disasm::fetch(uword base, int offset, void* userdata) {
     Disasm* self = (Disasm*) userdata;
-    return self->context->cpu.mem.r8(base + offset);
+    return self->context->board->cpu.mem.r8(base + offset);
 }
 
 //------------------------------------------------------------------------------

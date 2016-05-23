@@ -4,11 +4,7 @@
     @class yakc::kc85
     @brief wrapper class for the entire KC85/3 or KC85/4 system
 */
-#include "core/clock.h"
-#include "core/z80.h"
-#include "core/z80dbg.h"
-#include "core/z80pio.h"
-#include "core/z80ctc.h"
+#include "core/breadboard.h"
 #include "roms/roms.h"
 #include "kc85/kc85_video.h"
 #include "kc85/kc85_audio.h"
@@ -52,10 +48,7 @@ public:
     };
 
     /// hardware components
-    clock clck;
-    z80 cpu;
-    z80pio pio;
-    z80ctc ctc;
+    class breadboard* board;
     kc85_video video;
     kc85_audio audio;
     kc85_exp exp;
@@ -64,11 +57,12 @@ public:
     ubyte io86;             // special KC85/4 io register
 
     /// debugging support
-    z80dbg dbg;
     bool paused;
 
     /// constructor
     kc85();
+    /// one-time setup
+    void setup(breadboard* board);
 
     /// power-on the device
     void poweron(kc85_model m, kc85_caos os);
@@ -113,6 +107,7 @@ public:
 
 //------------------------------------------------------------------------------
 inline kc85::kc85():
+board(nullptr),
 io84(0),
 io86(0),
 paused(false),
@@ -133,7 +128,14 @@ caos_e_size(0) {
 
 //------------------------------------------------------------------------------
 inline void
+kc85::setup(breadboard* b) {
+    this->board = b;
+}
+
+//------------------------------------------------------------------------------
+inline void
 kc85::poweron(kc85_model m, kc85_caos os) {
+    YAKC_ASSERT(this->board);
     YAKC_ASSERT(kc85_model::none != m);
     YAKC_ASSERT(!this->on);
 
@@ -149,23 +151,23 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->update_rom_pointers();
 
     // initialize the clock, the 85/4 runs at 1.77 MHz, the others at 1.75 MHz
-    this->clck.init((m == kc85_model::kc85_4) ? 1770 : 1750);
+    this->board->clck.init((m == kc85_model::kc85_4) ? 1770 : 1750);
 
     // initialize hardware components
-    this->pio.init();
-    this->ctc.init();
-    this->cpu.init(in_cb, out_cb, this);
+    this->board->pio.init();
+    this->board->ctc.init();
+    this->board->cpu.init(in_cb, out_cb, this);
     this->exp.init();
     this->video.init(m);
-    this->audio.init(&this->ctc);
+    this->audio.init(&this->board->ctc);
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
-    this->pio.int_ctrl.connect_cpu(z80::irq, &this->cpu);
+    this->board->pio.int_ctrl.connect_cpu(z80::irq, &this->board->cpu);
     for (int i = 0; i < z80ctc::num_channels; i++) {
-        this->ctc.channels[i].int_ctrl.connect_cpu(z80::irq, &this->cpu);
+        this->board->ctc.channels[i].int_ctrl.connect_cpu(z80::irq, &this->board->cpu);
     }
-    this->cpu.connect_irq_device(&this->ctc.channels[0].int_ctrl);
-    this->ctc.init_daisychain(&this->pio.int_ctrl);
+    this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
+    this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
 
     // fill RAM banks with noise (but not on KC85/4? at least the 4
     // doesn't have the random-color-pattern when switching it on)
@@ -178,27 +180,27 @@ kc85::poweron(kc85_model m, kc85_caos os) {
 
     // connect CTC2 trigger to a 50Hz vertical-blank-timer,
     // this controls the foreground color blinking flag
-    this->clck.config_timer(0, 50, z80ctc::ctrg2, &this->ctc);
+    this->board->clck.config_timer(0, 50, z80ctc::ctrg2, &this->board->ctc);
 
     // connect a timer with the duration of one PAL line
     // (~64ns) to the video scanline decoder callback
-    this->clck.config_timer(1, (uint32_t)(50.136*312), kc85_video::pal_line_cb, &this->video);
+    this->board->clck.config_timer(1, (uint32_t)(50.136*312), kc85_video::pal_line_cb, &this->video);
 
     // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
-    this->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
+    this->board->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
 
     // initial memory map
-    this->cpu.out(0x88, 0x9f);
+    this->board->cpu.out(0x88, 0x9f);
 
     // execution on power-on starts at 0xF000
-    this->cpu.PC = 0xF000;
+    this->board->cpu.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
 inline void
 kc85::poweroff() {
     YAKC_ASSERT(this->on);
-    this->cpu.mem.unmap_all();
+    this->board->cpu.mem.unmap_all();
     this->on = false;
 }
 
@@ -208,14 +210,14 @@ kc85::reset() {
     this->exp.reset();
     this->video.reset();
     this->audio.reset();
-    this->ctc.reset();
-    this->pio.reset();
-    this->cpu.reset();
+    this->board->ctc.reset();
+    this->board->pio.reset();
+    this->board->cpu.reset();
     this->io84 = 0;
     this->io86 = 0;
     this->overflow_cycles = 0;
     // execution after reset starts at 0xE000
-    this->cpu.PC = 0xE000;
+    this->board->cpu.PC = 0xE000;
 }
 
 //------------------------------------------------------------------------------
@@ -278,9 +280,14 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
     this->cpu_ahead = false;
     this->cpu_behind = false;
     this->handle_keyboard_input();
+    z80& cpu = this->board->cpu;
+    z80dbg& dbg = this->board->dbg;
+    z80ctc& ctc = this->board->ctc;
+    clock& clk = this->board->clck;
+
     if (!this->paused) {
         // compute the end-cycle-count for the current frame
-        const int64_t num_cycles = this->clck.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
+        const int64_t num_cycles = clk.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
         uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
         if (abs_end_cycles > max_cycle_count) {
             abs_end_cycles = max_cycle_count;
@@ -292,16 +299,16 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
         }
 
         while (this->abs_cycle_count < abs_end_cycles) {
-            if (this->dbg.check_break(this->cpu)) {
+            if (dbg.check_break(cpu)) {
                 this->paused = true;
                 this->overflow_cycles = 0;
                 break;
             }
-            this->dbg.store_pc_history(this->cpu); // FIXME: only if debug window open?
-            int cycles_step = this->cpu.step();
-            cycles_step += this->cpu.handle_irq();
-            this->clck.update(cycles_step);
-            this->ctc.update_timers(cycles_step);
+            dbg.store_pc_history(cpu); // FIXME: only if debug window open?
+            int cycles_step = cpu.step();
+            cycles_step += cpu.handle_irq();
+            clk.update(cycles_step);
+            ctc.update_timers(cycles_step);
             this->audio.update_cycles(this->abs_cycle_count);
             this->abs_cycle_count += cycles_step;
         }
@@ -328,7 +335,7 @@ kc85::handle_keyboard_input() {
 
     // don't do anything if interrupts disabled, IX might point
     // to the wrong base address!
-    if (!this->cpu.IFF1) {
+    if (!this->board->cpu.IFF1) {
         return;
     }
 
@@ -339,8 +346,8 @@ kc85::handle_keyboard_input() {
     static const ubyte short_repeat_count = 8;
     static const ubyte long_repeat_count = 60;
 
-    auto& mem = this->cpu.mem;
-    const uword ix = this->cpu.IX;
+    auto& mem = this->board->cpu.mem;
+    const uword ix = this->board->cpu.IX;
     if (0 == this->key_code) {
         // if keycode is 0, this basically means the CTC3 timeout was hit
         mem.a8(ix+0x8) |= timeout;      // set the CTC3 timeout bit
@@ -411,31 +418,31 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             }
             break;
         case 0x88:
-            self->pio.write(z80pio::A, val);
+            self->board->pio.write(z80pio::A, val);
             self->update_bank_switching();
             break;
         case 0x89:
-            self->pio.write(z80pio::B, val);
+            self->board->pio.write(z80pio::B, val);
             self->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
             self->audio.update_volume(val & PIO_B_VOLUME_MASK);
             break;
         case 0x8A:
-            self->pio.control(z80pio::A, val);
+            self->board->pio.control(z80pio::A, val);
             break;
         case 0x8B:
-            self->pio.control(z80pio::B, val);
+            self->board->pio.control(z80pio::B, val);
             break;
         case 0x8C:
-            self->ctc.write(z80ctc::CTC0, val);
+            self->board->ctc.write(z80ctc::CTC0, val);
             break;
         case 0x8D:
-            self->ctc.write(z80ctc::CTC1, val);
+            self->board->ctc.write(z80ctc::CTC1, val);
             break;
         case 0x8E:
-            self->ctc.write(z80ctc::CTC2, val);
+            self->board->ctc.write(z80ctc::CTC2, val);
             break;
         case 0x8F:
-            self->ctc.write(z80ctc::CTC3, val);
+            self->board->ctc.write(z80ctc::CTC3, val);
             break;
         default:
             break;
@@ -452,17 +459,17 @@ kc85::in_cb(void* userdata, uword port) {
         case 0x80:
             return self->exp.module_type_in_slot(port>>8);
         case 0x88:
-            return self->pio.read(z80pio::A);
+            return self->board->pio.read(z80pio::A);
         case 0x89:
-            return self->pio.read(z80pio::B);
+            return self->board->pio.read(z80pio::B);
         case 0x8C:
-            return self->ctc.read(z80ctc::CTC0);
+            return self->board->ctc.read(z80ctc::CTC0);
         case 0x8D:
-            return self->ctc.read(z80ctc::CTC1);
+            return self->board->ctc.read(z80ctc::CTC1);
         case 0x8E:
-            return self->ctc.read(z80ctc::CTC2);
+            return self->board->ctc.read(z80ctc::CTC2);
         case 0x8F:
-            return self->ctc.read(z80ctc::CTC3);
+            return self->board->ctc.read(z80ctc::CTC3);
         default:
             return 0xFF;
     }
@@ -471,30 +478,32 @@ kc85::in_cb(void* userdata, uword port) {
 //------------------------------------------------------------------------------
 inline void
 kc85::update_bank_switching() {
-    this->cpu.mem.unmap_layer(0);
-    const ubyte pio_a = this->pio.read(z80pio::A);
-    const ubyte pio_b = this->pio.read(z80pio::B);
+    z80& cpu = this->board->cpu;
+    z80pio& pio = this->board->pio;
+    cpu.mem.unmap_layer(0);
+    const ubyte pio_a = pio.read(z80pio::A);
+    const ubyte pio_b = pio.read(z80pio::B);
 
     if ((kc85_model::kc85_2 == this->cur_model) || (kc85_model::kc85_3 == this->cur_model)) {
         // ** KC85/3 or KC85/2 **
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
         if (pio_a & PIO_A_RAM) {
-            this->cpu.mem.map(0, 0x0000, 0x4000, ram[0], true);
+            cpu.mem.map(0, 0x0000, 0x4000, ram[0], true);
         }
         // 16 KByte video memory at 0x8000
         if (pio_a & PIO_A_IRM) {
-            this->cpu.mem.map(0, 0x8000, 0x4000, this->video.irm[0], true);
+            cpu.mem.map(0, 0x8000, 0x4000, this->video.irm[0], true);
         }
         // 8 KByte BASIC ROM at 0xC000 (only KC85/3)
         if (kc85_model::kc85_3 == this->cur_model) {
             if (pio_a & PIO_A_BASIC_ROM) {
-                this->cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
+                cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
             }
         }
         // 8 KByte CAOS ROM at 0xF000
         if (pio_a & PIO_A_CAOS_ROM) {
-            this->cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
+            cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
         }
     }
     else if (kc85_model::kc85_4 == this->cur_model) {
@@ -502,16 +511,16 @@ kc85::update_bank_switching() {
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
         if (pio_a & PIO_A_RAM) {
-            this->cpu.mem.map(0, 0x0000, 0x4000, ram[0], true);
+            cpu.mem.map(0, 0x0000, 0x4000, ram[0], true);
         }
         // 16 KByte RAM at 0x4000
         if (this->io86 & IO86_RAM4) {
-            this->cpu.mem.map(0, 0x4000, 0x4000, ram[1], true); // this->io86 & IO86_RAM4_RO);
+            cpu.mem.map(0, 0x4000, 0x4000, ram[1], true); // this->io86 & IO86_RAM4_RO);
         }
         // 16 KByte RAM at 0x8000 (2 banks)
         if (pio_b & PIO_B_RAM8) {
             ubyte* ram8_ptr = (this->io84 & IO84_SEL_RAM8) ? ram[3] : ram[2];
-            this->cpu.mem.map(0, 0x8000, 0x4000, ram8_ptr, true); // pio_b & PIO_B_RAM8_RO);
+            cpu.mem.map(0, 0x8000, 0x4000, ram8_ptr, true); // pio_b & PIO_B_RAM8_RO);
         }
         // IRM is 4 banks, 2 for pixels, 2 for color,
         // the area A800 to BFFF is always mapped to IRM0!
@@ -523,27 +532,27 @@ kc85::update_bank_switching() {
             // A800, memory access to the remaining 6 KBytes
             // (A800 to BFFF) is always forced to the first IRM bank
             // by the address decoder hardware (see KC85/4 service manual)
-            this->cpu.mem.map(0, 0x8000, 0x2800, irm_ptr, true);
+            cpu.mem.map(0, 0x8000, 0x2800, irm_ptr, true);
 
             // always force access to A800 and above to the first IRM bank
-            this->cpu.mem.map(0, 0xA800, 0x1800, this->video.irm[0]+0x2800, true);
+            cpu.mem.map(0, 0xA800, 0x1800, this->video.irm[0]+0x2800, true);
         }
         // 8 KByte BASIC ROM at 0xC000
         if (pio_a & PIO_A_BASIC_ROM) {
-            this->cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
+            cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
         }
         // 4 KByte CAOS ROM-C at 0xC000
         if (this->io86 & IO86_CAOS_ROM_C) {
-            this->cpu.mem.map(0, 0xC000, this->caos_c_size, (ubyte*)this->caos_c_ptr, false);
+            cpu.mem.map(0, 0xC000, this->caos_c_size, (ubyte*)this->caos_c_ptr, false);
         }
         // 8 KByte CAOS ROM-E at 0xE000
         if (pio_a & PIO_A_CAOS_ROM) {
-            this->cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
+            cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
         }
     }
 
     // map modules in base-device expansion slots
-    this->exp.update_memory_mappings(this->cpu.mem);
+    this->exp.update_memory_mappings(cpu.mem);
 }
 
 } // namespace yakc

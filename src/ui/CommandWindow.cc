@@ -29,7 +29,7 @@ CommandWindow::Draw(kc85& kc) {
         }
         for (int i = 0; i < this->commands.Size(); i++) {
             const Cmd& cmd = this->commands[i];
-            if (kc.dbg.is_breakpoint(cmd.addr)) {
+            if (kc.board->dbg.is_breakpoint(cmd.addr)) {
                 ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
             }
             else {
@@ -37,7 +37,7 @@ CommandWindow::Draw(kc85& kc) {
             }
             ImGui::PushID(i);
             if (ImGui::Button(" B ")) {
-                kc.dbg.toggle_breakpoint(0, cmd.addr);
+                kc.board->dbg.toggle_breakpoint(0, cmd.addr);
             }
             ImGui::PopID();
             ImGui::SameLine();
@@ -55,14 +55,14 @@ CommandWindow::scan(const kc85& kc, ubyte prologByte) {
     StringBuilder strBuilder;
 
     this->commands.Clear();
-    ubyte prevByte = kc.cpu.mem.r8(0x0000);
+    ubyte prevByte = kc.board->cpu.mem.r8(0x0000);
     for (unsigned int addr = 0x0001; addr < 0x10000; addr++) {
-        const ubyte curByte = kc.cpu.mem.r8(addr);
+        const ubyte curByte = kc.board->cpu.mem.r8(addr);
         if ((curByte == prologByte) && (prevByte == prologByte)) {
             // found a header, scan for 00 or 01 byte
             addr++;
             ubyte c;
-            while (isalnum(c = kc.cpu.mem.r8(addr++))) {
+            while (isalnum(c = kc.board->cpu.mem.r8(addr++))) {
                 strBuilder.Append(c);
             }
             // if it was a valid command, add it to commands array

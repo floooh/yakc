@@ -29,6 +29,7 @@ public:
     void initModules();
 
     ubyte last_ascii = 0;
+    breadboard board;
     kc85 kc;
     Draw draw;
     Audio audio;
@@ -74,6 +75,7 @@ YakcApp::OnInit() {
     // initialize the ROM dumps and modules
     this->initRoms();
 
+    this->kc.setup(&this->board);
     this->kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_1);
     this->draw.Setup(gfxSetup, frameSize);
     this->audio.Setup(this->kc);
@@ -98,8 +100,8 @@ YakcApp::OnRunning() {
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     this->handleInput();
-    const uint64_t cpu_min_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/100;
-    const uint64_t cpu_max_ahead_cycles = (this->kc.clck.base_freq_khz*1000)/25;
+    const uint64_t cpu_min_ahead_cycles = (this->kc.board->clck.base_freq_khz*1000)/100;
+    const uint64_t cpu_max_ahead_cycles = (this->kc.board->clck.base_freq_khz*1000)/25;
     const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
     const uint64_t min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
     const uint64_t max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;

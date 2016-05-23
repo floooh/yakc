@@ -16,7 +16,7 @@ Audio::Setup(kc85& kc) {
     this->audioSource.setSingleInstance(true);
     this->audioSource.setFilter(0, &this->filter);
     this->audioSource.sample_rate = this->soloud.getBackendSamplerate();
-    this->audioSource.cpu_clock_speed = kc.clck.base_freq_khz * 1000;
+    this->audioSource.cpu_clock_speed = kc.board->clck.base_freq_khz * 1000;
     this->audioHandle = this->soloud.play(this->audioSource, 1.0f);
 }
 
@@ -29,7 +29,7 @@ Audio::Discard() {
 //------------------------------------------------------------------------------
 void
 Audio::Update(kc85& kc) {
-    this->audioSource.cpu_clock_speed = kc.clck.base_freq_khz * 1000;
+    this->audioSource.cpu_clock_speed = kc.board->clck.base_freq_khz * 1000;
 }
 
 //------------------------------------------------------------------------------

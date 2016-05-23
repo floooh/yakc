@@ -105,8 +105,8 @@ MemoryMapWindow::Draw(kc85& kc) {
         // draw the background grid
         this->drawGrid(is_kc85_4);
 
-        const ubyte pio_a = kc.pio.read(z80pio::A);
-        const ubyte pio_b = kc.pio.read(z80pio::B);
+        const ubyte pio_a = kc.board->pio.read(z80pio::A);
+        const ubyte pio_b = kc.board->pio.read(z80pio::B);
 
         // built-in memory at 0x0000
         this->drawRect(0, 0x0000, 0x4000, "RAM 0", (pio_a & kc85::PIO_A_RAM) ? type::mapped : type::off) ;
@@ -185,7 +185,7 @@ MemoryMapWindow::Draw(kc85& kc) {
 
         // modules
         for (int mem_layer = 1; mem_layer < 3; mem_layer++) {
-            const memory& mem = kc.cpu.mem;
+            const memory& mem = kc.board->cpu.mem;
             const ubyte slot_addr = mem_layer == 1 ? 0x08 : 0x0C;
             if (kc.exp.slot_occupied(slot_addr)) {
                 const int draw_layer = (is_kc85_4 ? 5 : 0) + mem_layer;

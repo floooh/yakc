@@ -62,7 +62,7 @@ DisasmWindow::drawMainContent(const kc85& kc, uword start_addr, int num_lines) {
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            ImGui::Text("%02X ", kc.cpu.mem.r8(cur_addr++));
+            ImGui::Text("%02X ", kc.board->cpu.mem.r8(cur_addr++));
         }
 
         // print disassembled instruction

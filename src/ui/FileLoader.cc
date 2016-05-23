@@ -143,7 +143,7 @@ FileLoader::copy(kc85* kc, const FileInfo& info, const Buffer& data) {
         const ubyte* payload = data.Data() + info.PayloadOffset;
         if (FileType::KCC == info.Type) {
             // KCC payload is simply a continuous block of data
-            kc->cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
+            kc->board->cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
         }
         else {
             // TAP payload is 128 byte blocks, each with a single header byte
@@ -154,7 +154,7 @@ FileLoader::copy(kc85* kc, const FileInfo& info, const Buffer& data) {
                 ptr++;
                 // copy 128 bytes
                 for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
-                    kc->cpu.mem.w8(addr++, *ptr++);
+                    kc->board->cpu.mem.w8(addr++, *ptr++);
                 }
             }
         }
@@ -164,12 +164,13 @@ FileLoader::copy(kc85* kc, const FileInfo& info, const Buffer& data) {
 //------------------------------------------------------------------------------
 void
 FileLoader::patch(kc85* kc, const FileInfo& info) {
+    auto& mem = kc->board->cpu.mem;
+
     // FIXME: patch JUNGLE until I have time to do a proper
     // 'restoration', see Alexander Lang's KC emu here:
     // http://lanale.de/kc85_emu/KC85_Emu.html
     if (info.Name == "JUNGLE     ") {
         // patch start level 1 into memory
-        auto& mem = kc->cpu.mem;
         mem.w8(0x36b7, 1);
         mem.w8(0x3697, 1);
         for (int i = 0; i < 5; i++) {
@@ -178,12 +179,10 @@ FileLoader::patch(kc85* kc, const FileInfo& info) {
     }
     // FIXME: patch Digger (see http://lanale.de/kc85_emu/KC85_Emu.html)
     if (info.Name == "DIGGER  COM\x01") {
-        auto& mem = kc->cpu.mem;
         mem.w16(0x09AA, 0x0160);    // time for delay-loop 0160 instead of 0260
         mem.w8(0x3d3a, 0xB5);   // OR L instead of OR (HL)
     }
     if (info.Name == "DIGGERJ") {
-        auto& mem = kc->cpu.mem;
         mem.w16(0x09AA, 0x0260);
         mem.w8(0x3d3a, 0xB5);   // OR L instead of OR (HL)
     }
@@ -195,29 +194,30 @@ FileLoader::start(kc85* kc, const FileInfo& info) {
     if (info.HasExecAddr) {
 
         // initialize registers
-        kc->cpu.A = 0x00;
-        kc->cpu.F = 0x10;
-        kc->cpu.BC = kc->cpu.BC_ = 0x0000;
-        kc->cpu.DE = kc->cpu.DE_ = 0x0000;
-        kc->cpu.HL = kc->cpu.HL_ = 0x0000;
-        kc->cpu.AF_ = 0x0000;
-        kc->cpu.SP = 0x01C2;
+        z80& cpu = kc->board->cpu;
+        cpu.A = 0x00;
+        cpu.F = 0x10;
+        cpu.BC = cpu.BC_ = 0x0000;
+        cpu.DE = cpu.DE_ = 0x0000;
+        cpu.HL = cpu.HL_ = 0x0000;
+        cpu.AF_ = 0x0000;
+        cpu.SP = 0x01C2;
 
         // delete ASCII video memory
         for (uword addr = 0xb200; addr < 0xb700; addr++) {
-            kc->cpu.mem.w8(addr, 0);
+            cpu.mem.w8(addr, 0);
         }
-        kc->cpu.mem.w8(0xb7a0, 0);
+        cpu.mem.w8(0xb7a0, 0);
         if (kc->cur_model == kc85_model::kc85_3) {
-            kc->cpu.out(0x89, 0x9f);
-            kc->cpu.mem.w16(kc->cpu.SP, 0xf15c);
+            cpu.out(0x89, 0x9f);
+            cpu.mem.w16(cpu.SP, 0xf15c);
         }
         else if (kc->cur_model == kc85_model::kc85_4) {
-            kc->cpu.out(0x89, 0xFF);
-            kc->cpu.mem.w16(kc->cpu.SP, 0xf17e);
+            cpu.out(0x89, 0xFF);
+            cpu.mem.w16(cpu.SP, 0xf17e);
         }
 
         // start address
-        kc->cpu.PC = info.ExecAddr;
+        cpu.PC = info.ExecAddr;
     }
 }

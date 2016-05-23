@@ -25,10 +25,10 @@ DebugWindow::Setup(kc85& kc) {
 
     // setup register table widgets
     for (z80dbg::reg r : regs16) {
-        this->regWidget[r].Configure16(z80dbg::reg_name(r), z80dbg::get16(kc.cpu, r));
+        this->regWidget[r].Configure16(z80dbg::reg_name(r), z80dbg::get16(kc.board->cpu, r));
     }
     for (z80dbg::reg r : regs8) {
-        this->regWidget[r].Configure8(z80dbg::reg_name(r), z80dbg::get8(kc.cpu, r));
+        this->regWidget[r].Configure8(z80dbg::reg_name(r), z80dbg::get8(kc.board->cpu, r));
     }
     this->breakPointWidget.Configure16("##bp", 0xFFFF);
 }
@@ -40,7 +40,7 @@ DebugWindow::Draw(kc85& kc) {
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->drawRegisterTable(kc);
         ImGui::Separator();
-        this->drawMainContent(kc, kc.cpu.PC, 48);
+        this->drawMainContent(kc, kc.board->cpu.PC, 48);
         ImGui::Separator();
         this->drawControls(kc);
     }
@@ -52,10 +52,10 @@ DebugWindow::Draw(kc85& kc) {
 void
 DebugWindow::drawReg16(kc85& kc, z80dbg::reg r) {
     if (this->regWidget[r].Draw()) {
-        z80dbg::set16(kc.cpu, r, this->regWidget[r].Get16());
+        z80dbg::set16(kc.board->cpu, r, this->regWidget[r].Get16());
     }
     else {
-        this->regWidget[r].Set16(z80dbg::get16(kc.cpu, r));
+        this->regWidget[r].Set16(z80dbg::get16(kc.board->cpu, r));
     }
 }
 
@@ -63,10 +63,10 @@ DebugWindow::drawReg16(kc85& kc, z80dbg::reg r) {
 void
 DebugWindow::drawReg8(kc85& kc, z80dbg::reg r) {
     if (this->regWidget[r].Draw()) {
-        z80dbg::set8(kc.cpu, r, this->regWidget[r].Get8());
+        z80dbg::set8(kc.board->cpu, r, this->regWidget[r].Get8());
     }
     else {
-        this->regWidget[r].Set8(z80dbg::get8(kc.cpu, r));
+        this->regWidget[r].Set8(z80dbg::get8(kc.board->cpu, r));
     }
 }
 
@@ -81,24 +81,24 @@ DebugWindow::drawRegisterTable(kc85& kc) {
     this->drawReg16(kc, z80dbg::DE); ImGui::SameLine(3 * 72);
     this->drawReg16(kc, z80dbg::HL); ImGui::SameLine(4 * 72);
     this->drawReg8(kc, z80dbg::I); ImGui::SameLine(4 * 72 + 48);
-    ImGui::TextColored(kc.cpu.IFF1 ? green:red, "IFF1");
+    ImGui::TextColored(kc.board->cpu.IFF1 ? green:red, "IFF1");
 
     this->drawReg16(kc, z80dbg::AF_); ImGui::SameLine(1 * 72);
     this->drawReg16(kc, z80dbg::BC_); ImGui::SameLine(2 * 72);
     this->drawReg16(kc, z80dbg::DE_); ImGui::SameLine(3 * 72);
     this->drawReg16(kc, z80dbg::HL_); ImGui::SameLine(4 * 72);
     this->drawReg8(kc, z80dbg::IM); ImGui::SameLine(4 * 72 + 48);
-    ImGui::TextColored(kc.cpu.IFF2 ? green:red, "IFF2");
+    ImGui::TextColored(kc.board->cpu.IFF2 ? green:red, "IFF2");
 
     this->drawReg16(kc, z80dbg::IX); ImGui::SameLine(1 * 72);
     this->drawReg16(kc, z80dbg::IY); ImGui::SameLine(2 * 72);
     this->drawReg16(kc, z80dbg::SP); ImGui::SameLine(3 * 72);
     this->drawReg16(kc, z80dbg::PC); ImGui::SameLine(4 * 72);
     this->drawReg8(kc, z80dbg::R); ImGui::SameLine(4 * 72 + 48);
-    ImGui::TextColored(kc.cpu.HALT ? green:red, "HALT");
+    ImGui::TextColored(kc.board->cpu.HALT ? green:red, "HALT");
 
     char strFlags[9];
-    const ubyte f = kc.cpu.F;
+    const ubyte f = kc.board->cpu.F;
     strFlags[0] = (f & z80::SF) ? 'S':'-';
     strFlags[1] = (f & z80::ZF) ? 'Z':'-';
     strFlags[2] = (f & z80::YF) ? 'Y':'-';
@@ -114,8 +114,8 @@ DebugWindow::drawRegisterTable(kc85& kc) {
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawControls(kc85& kc) {
-    if (kc.dbg.breakpoint_enabled(0)) {
-        this->breakPointWidget.Set16(kc.dbg.breakpoint_addr(0));
+    if (kc.board->dbg.breakpoint_enabled(0)) {
+        this->breakPointWidget.Set16(kc.board->dbg.breakpoint_addr(0));
     }
     else {
         this->breakPointWidget.Set16(0xFFFF);
@@ -123,10 +123,10 @@ DebugWindow::drawControls(kc85& kc) {
     if (this->breakPointWidget.Draw()) {
         const uword bp_addr = this->breakPointWidget.Get16();
         if (bp_addr != 0xFFFF) {
-            kc.dbg.enable_breakpoint(0, this->breakPointWidget.Get16());
+            kc.board->dbg.enable_breakpoint(0, this->breakPointWidget.Get16());
         }
         else {
-            kc.dbg.disable_breakpoint(0);
+            kc.board->dbg.disable_breakpoint(0);
         }
     }
     ImGui::SameLine();
@@ -134,10 +134,10 @@ DebugWindow::drawControls(kc85& kc) {
     if (kc.paused) {
         ImGui::SameLine();
         if (ImGui::Button("step")) {
-            kc.dbg.step_pc_modified(kc.cpu);
+            kc.board->dbg.step_pc_modified(kc.board->cpu);
         }
     }
-    ImGui::Checkbox("break on invalid opcode", &kc.cpu.break_on_invalid_opcode);
+    ImGui::Checkbox("break on invalid opcode", &kc.board->cpu.break_on_invalid_opcode);
 }
 
 //------------------------------------------------------------------------------
@@ -167,9 +167,9 @@ DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
     for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
         uword display_addr, num_bytes;
         if (line_i < z80dbg::pc_history_size) {
-            display_addr = kc.dbg.get_pc_history(line_i);
+            display_addr = kc.board->dbg.get_pc_history(line_i);
             num_bytes = disasm.Disassemble(kc, display_addr);
-            if (kc.dbg.is_breakpoint(display_addr)) {
+            if (kc.board->dbg.is_breakpoint(display_addr)) {
                 ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
             }
             else {
@@ -179,11 +179,11 @@ DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
         else {
             display_addr = cur_addr;
             num_bytes = disasm.Disassemble(kc, display_addr);
-                if ((cur_addr == start_addr) && kc.cpu.INV) {
+                if ((cur_addr == start_addr) && kc.board->cpu.INV) {
                     // invalid/non-implemented opcode hit
                     ImGui::PushStyleColor(ImGuiCol_Text, UI::InvalidOpCodeColor);
                 }
-                else if (kc.dbg.is_breakpoint(cur_addr)) {
+                else if (kc.board->dbg.is_breakpoint(cur_addr)) {
                     ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
                 }
                 else if (cur_addr == start_addr) {
@@ -198,7 +198,7 @@ DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
         // set breakpoint
         ImGui::PushID(line_i);
         if (ImGui::Button(" B ")) {
-            kc.dbg.toggle_breakpoint(0, display_addr);
+            kc.board->dbg.toggle_breakpoint(0, display_addr);
             this->breakPointWidget.Set16(display_addr);
         }
         ImGui::PopID();
@@ -212,7 +212,7 @@ DebugWindow::drawMainContent(kc85& kc, uword start_addr, int num_lines) {
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            ImGui::Text("%02X ", kc.cpu.mem.r8(display_addr++));
+            ImGui::Text("%02X ", kc.board->cpu.mem.r8(display_addr++));
         }
 
         // print disassembled instruction

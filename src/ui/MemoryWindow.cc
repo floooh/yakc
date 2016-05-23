@@ -17,14 +17,14 @@ MemoryWindow::Setup(kc85& kc) {
 static ubyte
 read_func(void* userdata, uword addr) {
     kc85* kc = (kc85*) userdata;
-    return kc->cpu.mem.r8(addr);
+    return kc->board->cpu.mem.r8(addr);
 }
 
 //------------------------------------------------------------------------------
 static void
 write_func(void* userdata, uword addr, ubyte value) {
     kc85* kc = (kc85*) userdata;
-    kc->cpu.mem.w8(addr, value);
+    kc->board->cpu.mem.w8(addr, value);
 }
 
 //------------------------------------------------------------------------------
