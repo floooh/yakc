@@ -10,10 +10,10 @@
 #include "core/z80pio.h"
 #include "core/z80ctc.h"
 #include "roms/roms.h"
-#include "core/kc85_video.h"
-#include "core/kc85_audio.h"
-#include "core/kc85_exp.h"
-#include "core/kc85_roms.h"
+#include "kc85/kc85_video.h"
+#include "kc85/kc85_audio.h"
+#include "kc85/kc85_exp.h"
+#include "kc85/kc85_roms.h"
 
 namespace yakc {
 
