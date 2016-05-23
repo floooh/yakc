@@ -15,18 +15,19 @@ public:
     /// discard the renderer
     void Discard();
     /// render one frame
-    void Render(const yakc::kc85& kc);
+    void Render(const void* pixels, int width, int height);
     /// update rendering parameters
     void UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& crtWarp);
 
     /// apply view port to keep proper aspect ratio when fullscreen
-    void applyViewport();
+    void applyViewport(int width, int height);
     /// restore fullscreen viewport
     void restoreViewport();
 
     bool crtEffectEnabled;
 
-    Oryol::Id irmTexture;
+    Oryol::Id irmTexture320x256;
+    Oryol::Id irmTexture256x256;
     Oryol::DrawState crtDrawState;
     Oryol::CRTShader::FSParams crtFsParams;
 

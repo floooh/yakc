@@ -21,9 +21,9 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     irmSetup.Sampler.MagFilter = TextureFilterMode::Linear;
     irmSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
     irmSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
-    this->irmTexture = Gfx::CreateResource(irmSetup);
-    this->crtDrawState.FSTexture[Textures::IRM] = irmTexture;
-    this->nocrtDrawState.FSTexture[Textures::IRM] = irmTexture;
+    this->irmTexture320x256 = Gfx::CreateResource(irmSetup);
+    irmSetup.Width = 256;
+    this->irmTexture256x256 = Gfx::CreateResource(irmSetup);
 
     auto fsqSetup = MeshSetup::FullScreenQuad(true);
     Id fsq = Gfx::CreateResource(fsqSetup);
@@ -62,12 +62,17 @@ Draw::UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& crtWarp)
 
 //------------------------------------------------------------------------------
 void
-Draw::Render(const kc85& kc) {
+Draw::Render(const void* pixels, int width, int height) {
+    o_assert(((width == 256) || (width == 320)) && (height == 256));
     o_trace_scoped(yakc_draw);
 
     // copy decoded RGBA8 into texture
-    Gfx::UpdateTexture(this->irmTexture, kc.video.LinearBuffer, this->texUpdateAttrs);
-    this->applyViewport();
+    Id tex = (256 == width) ? this->irmTexture256x256 : this->irmTexture320x256;
+    this->crtDrawState.FSTexture[Textures::IRM] = tex;
+    this->nocrtDrawState.FSTexture[Textures::IRM] = tex;
+    this->texUpdateAttrs.Sizes[0][0] = width*height*4;
+    Gfx::UpdateTexture(tex, pixels, this->texUpdateAttrs);
+    this->applyViewport(width, height);
     if (this->crtEffectEnabled) {
         Gfx::ApplyDrawState(this->crtDrawState);
         Gfx::ApplyUniformBlock(this->crtFsParams);
@@ -82,8 +87,8 @@ Draw::Render(const kc85& kc) {
 
 //------------------------------------------------------------------------------
 void
-Draw::applyViewport() {
-    float aspect = float(320) / float(256);
+Draw::applyViewport(int width, int height) {
+    float aspect = float(width) / float(height);
     const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
     const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
     int viewPortY = this->frameSize;

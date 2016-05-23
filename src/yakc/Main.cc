@@ -136,12 +136,22 @@ YakcApp::OnRunning() {
             glm::vec2(this->ui.Settings.crtWarp));
     #else
         o_trace_begin(yakc_kc);
-        this->kc.onframe(1, micro_secs, min_cycle_count, max_cycle_count);
+        if (this->kc85.on) {
+            this->kc85.onframe(1, micro_secs, min_cycle_count, max_cycle_count);
+        }
+        else if (this->z1013.on) {
+            this->z1013.onframe(1, micro_secs, min_cycle_count, max_cycle_count);
+        }
         o_trace_end();
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
     this->audio.Update(this->board.clck);
-    this->draw.Render(this->kc85);
+    if (this->kc85.on) {
+        this->draw.Render(this->kc85.video.LinearBuffer, 320, 256);
+    }
+    else if (this->z1013.on) {
+        this->draw.Render(this->z1013.video.LinearBuffer, 256, 256);
+    }
     #if YAKC_UI
     this->ui.OnFrame(this->kc85);
     #endif

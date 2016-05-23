@@ -152,6 +152,7 @@ z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
         }
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
     }
+    this->video.decode();
 }
 
 //------------------------------------------------------------------------------
