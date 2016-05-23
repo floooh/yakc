@@ -10,29 +10,29 @@ using namespace yakc;
 //------------------------------------------------------------------------------
 void
 FileLoader::Setup(kc85& kc) {
-    this->Items.Add("Pengo", "pengo.kcc", kc85_model::kc85_3);
-    this->Items.Add("Pengo", "pengo4.kcc", kc85_model::kc85_4);
-    this->Items.Add("Cave", "cave.kcc", kc85_model::kc85_3);
-    this->Items.Add("Labyrinth", "labyrinth.kcc", kc85_model::kc85_3);
-    this->Items.Add("House", "house.kcc", kc85_model::kc85_3);
-    this->Items.Add("House", "house4.tap", kc85_model::kc85_4);
-    this->Items.Add("Jungle", "jungle.kcc", kc85_model::kc85_3);
-    this->Items.Add("Jungle", "jungle4.tap", kc85_model::kc85_4);
-    this->Items.Add("Pacman", "pacman.kcc", kc85_model::kc85_3);
-    this->Items.Add("Breakout", "breakout.kcc", kc85_model::kc85_3);
-    this->Items.Add("Mad Breakin", "breakin.853", kc85_model::kc85_3);
-    this->Items.Add("Boulderdash", "boulder3.tap", kc85_model::kc85_3);
-    this->Items.Add("Boulderdash", "boulder4.tap", kc85_model::kc85_4);
-    this->Items.Add("Digger", "digger3.tap", kc85_model::kc85_3);
-    this->Items.Add("Digger", "digger4.tap", kc85_model::kc85_4);
-    this->Items.Add("Tetris", "tetris.kcc", kc85_model::kc85_4);
-    this->Items.Add("Ladder", "ladder-3.kcc", kc85_model::kc85_3);
-    this->Items.Add("Enterprise", "enterpri.tap", kc85_model::any);
-    this->Items.Add("Chess", "chess.kcc", kc85_model::any);
-    this->Items.Add("Testbild", "testbild.kcc", kc85_model::kc85_3);
-    this->Items.Add("Demo1", "demo1.kcc", kc85_model::kc85_4);
-    this->Items.Add("Demo2", "demo2.kcc", kc85_model::kc85_4);
-    this->Items.Add("Demo3", "demo3.kcc", kc85_model::kc85_4);
+    this->Items.Add("Pengo", "pengo.kcc", device::kc85_3);
+    this->Items.Add("Pengo", "pengo4.kcc", device::kc85_4);
+    this->Items.Add("Cave", "cave.kcc", device::kc85_3);
+    this->Items.Add("Labyrinth", "labyrinth.kcc", device::kc85_3);
+    this->Items.Add("House", "house.kcc", device::kc85_3);
+    this->Items.Add("House", "house4.tap", device::kc85_4);
+    this->Items.Add("Jungle", "jungle.kcc", device::kc85_3);
+    this->Items.Add("Jungle", "jungle4.tap", device::kc85_4);
+    this->Items.Add("Pacman", "pacman.kcc", device::kc85_3);
+    this->Items.Add("Breakout", "breakout.kcc", device::kc85_3);
+    this->Items.Add("Mad Breakin", "breakin.853", device::kc85_3);
+    this->Items.Add("Boulderdash", "boulder3.tap", device::kc85_3);
+    this->Items.Add("Boulderdash", "boulder4.tap", device::kc85_4);
+    this->Items.Add("Digger", "digger3.tap", device::kc85_3);
+    this->Items.Add("Digger", "digger4.tap", device::kc85_4);
+    this->Items.Add("Tetris", "tetris.kcc", device::kc85_4);
+    this->Items.Add("Ladder", "ladder-3.kcc", device::kc85_3);
+    this->Items.Add("Enterprise", "enterpri.tap", device::any_kc85);
+    this->Items.Add("Chess", "chess.kcc", device::any_kc85);
+    this->Items.Add("Testbild", "testbild.kcc", device::kc85_3);
+    this->Items.Add("Demo1", "demo1.kcc", device::kc85_4);
+    this->Items.Add("Demo2", "demo2.kcc", device::kc85_4);
+    this->Items.Add("Demo3", "demo3.kcc", device::kc85_4);
 }
 
 //------------------------------------------------------------------------------
@@ -208,11 +208,11 @@ FileLoader::start(kc85* kc, const FileInfo& info) {
             cpu.mem.w8(addr, 0);
         }
         cpu.mem.w8(0xb7a0, 0);
-        if (kc->cur_model == kc85_model::kc85_3) {
+        if (kc->cur_model == device::kc85_3) {
             cpu.out(0x89, 0x9f);
             cpu.mem.w16(cpu.SP, 0xf15c);
         }
-        else if (kc->cur_model == kc85_model::kc85_4) {
+        else if (kc->cur_model == device::kc85_4) {
             cpu.out(0x89, 0xFF);
             cpu.mem.w16(cpu.SP, 0xf17e);
         }

@@ -5,11 +5,10 @@
     @brief implements banked Z80 memory mapped to host system memory
 
     Host system memory 'layers' up to 64 KByte size can be mapped
-    to Z80 memory with an 2KByte 'page-size' granularity as read-only
-    or read/write. The 2 KByte page size is needed because this is the
-    smallest memory block 'unit' required by the KC85/4 video memory
-    organization.
-    
+    to Z80 memory with an 1KByte 'page-size' granularity as read-only
+    or read/write. The 1 KByte page size is needed because this is the
+    smallest memory block 'unit' required by the emulated systems.
+
     Memory-mapping definition happens in 'stacked layers', where lower-priority
     mappings fill address-range holes in the higher priority mappings,
     for example:
@@ -42,14 +41,14 @@ public:
     /// 64 kByte addressable memory
     static const int addr_range = 1<<16;
     static const int addr_mask = addr_range - 1;
-    /// number of (2K) pages
-    static const int num_pages = 32;
+    /// number of (1K) pages
+    static const int num_pages = 64;
     /// max number of layers
     static const int num_layers = 4;
 
     /// a memory page mapping description
     struct page {
-        static const int shift = 11;
+        static const int shift = 10;
         static const uword size = 1<<shift;
         static const uword mask = size - 1;
         ubyte* ptr = nullptr;

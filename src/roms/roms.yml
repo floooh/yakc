@@ -2,4 +2,5 @@
 files:
     - 'basic_c0.853'
     - 'caos31.853'
-
+    - 'z1013_mon202.bin'
+    - 'z1013_font.bin'

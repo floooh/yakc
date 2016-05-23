@@ -27,6 +27,8 @@ public:
     int pc_history_pos;
     /// a history ringbuffer of previous PC addresses
     uword pc_history[pc_history_size];
+    /// execution paused (e.g. because in debugger)
+    bool paused;
 
     /// constructor
     z80dbg();
@@ -77,7 +79,8 @@ private:
 //------------------------------------------------------------------------------
 inline
 z80dbg::z80dbg() :
-pc_history_pos(0) {
+pc_history_pos(0),
+paused(false) {
     YAKC_MEMSET(&this->pc_history, 0, sizeof(this->pc_history));
 }
 

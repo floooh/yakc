@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 /**
     @class yakc::kc85
-    @brief wrapper class for the entire KC85/3 or KC85/4 system
+    @brief wrapper class for the KC85/2, /3, /4
 */
 #include "core/breadboard.h"
 #include "roms/roms.h"
@@ -48,7 +48,7 @@ public:
     };
 
     /// hardware components
-    class breadboard* board;
+    breadboard* board;
     kc85_video video;
     kc85_audio audio;
     kc85_exp exp;
@@ -56,24 +56,21 @@ public:
     ubyte io84;             // special KC85/4 io register
     ubyte io86;             // special KC85/4 io register
 
-    /// debugging support
-    bool paused;
-
     /// constructor
     kc85();
     /// one-time setup
     void setup(breadboard* board);
 
     /// power-on the device
-    void poweron(kc85_model m, kc85_caos os);
+    void poweron(device m, os_rom os);
     /// power-off the device
     void poweroff();
     /// reset the device
     void reset();
     /// get the KC model
-    kc85_model model() const;
+    device model() const;
     /// get the CAOS version
-    kc85_caos caos() const;
+    os_rom caos() const;
 
     /// process one frame, up to absolute number of cycles
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
@@ -91,8 +88,8 @@ public:
     /// update the rom pointers
     void update_rom_pointers();
 
-    kc85_model cur_model;
-    kc85_caos cur_caos;
+    device cur_model;
+    os_rom cur_caos;
     bool on;
     bool cpu_ahead;             // cpu would have been ahead of max_cycle_count
     bool cpu_behind;            // cpu would have been behind of min_cycle_count
@@ -110,9 +107,8 @@ inline kc85::kc85():
 board(nullptr),
 io84(0),
 io86(0),
-paused(false),
-cur_model(kc85_model::kc85_3),
-cur_caos(kc85_caos::caos_3_1),
+cur_model(device::kc85_3),
+cur_caos(os_rom::caos_3_1),
 on(false),
 cpu_ahead(false),
 cpu_behind(false),
@@ -134,9 +130,9 @@ kc85::setup(breadboard* b) {
 
 //------------------------------------------------------------------------------
 inline void
-kc85::poweron(kc85_model m, kc85_caos os) {
+kc85::poweron(device m, os_rom os) {
     YAKC_ASSERT(this->board);
-    YAKC_ASSERT(kc85_model::none != m);
+    YAKC_ASSERT(int(device::any_kc85) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
@@ -151,7 +147,7 @@ kc85::poweron(kc85_model m, kc85_caos os) {
     this->update_rom_pointers();
 
     // initialize the clock, the 85/4 runs at 1.77 MHz, the others at 1.75 MHz
-    this->board->clck.init((m == kc85_model::kc85_4) ? 1770 : 1750);
+    this->board->clck.init((m == device::kc85_4) ? 1770 : 1750);
 
     // initialize hardware components
     this->board->pio.init();
@@ -171,7 +167,7 @@ kc85::poweron(kc85_model m, kc85_caos os) {
 
     // fill RAM banks with noise (but not on KC85/4? at least the 4
     // doesn't have the random-color-pattern when switching it on)
-    if (kc85_model::kc85_4 == m) {
+    if (device::kc85_4 == m) {
         clear(this->ram, sizeof(this->ram));
     }
     else {
@@ -221,13 +217,13 @@ kc85::reset() {
 }
 
 //------------------------------------------------------------------------------
-inline kc85_model
+inline device
 kc85::model() const {
     return this->cur_model;
 }
 
 //------------------------------------------------------------------------------
-inline kc85_caos
+inline os_rom
 kc85::caos() const {
     return this->cur_caos;
 }
@@ -238,29 +234,29 @@ kc85::update_rom_pointers() {
     this->caos_c_ptr = nullptr;
     this->caos_c_size = 0;
     switch (this->cur_caos) {
-        case kc85_caos::caos_hc900:
+        case os_rom::caos_hc900:
             this->caos_e_ptr  = this->roms.ptr(kc85_roms::hc900);
             this->caos_e_size = this->roms.size(kc85_roms::hc900);
             break;
-        case kc85_caos::caos_2_2:
+        case os_rom::caos_2_2:
             this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos22);
             this->caos_e_size = this->roms.size(kc85_roms::caos22);
             break;
-        case kc85_caos::caos_3_1:
+        case os_rom::caos_3_1:
             this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos31);
             this->caos_e_size = this->roms.size(kc85_roms::caos31);
             break;
-        case kc85_caos::caos_3_4:
+        case os_rom::caos_3_4:
             this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos34);
             this->caos_e_size = this->roms.size(kc85_roms::caos34);
             break;
-        case kc85_caos::caos_4_1:
+        case os_rom::caos_4_1:
             this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos41e);
             this->caos_e_size = this->roms.size(kc85_roms::caos41e);
             this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos41c);
             this->caos_c_size = this->roms.size(kc85_roms::caos41c);
             break;
-        case kc85_caos::caos_4_2:
+        case os_rom::caos_4_2:
             this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos42e);
             this->caos_e_size = this->roms.size(kc85_roms::caos42e);
             this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos42c);
@@ -285,7 +281,7 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
     z80ctc& ctc = this->board->ctc;
     clock& clk = this->board->clck;
 
-    if (!this->paused) {
+    if (!dbg.paused) {
         // compute the end-cycle-count for the current frame
         const int64_t num_cycles = clk.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
         uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
@@ -300,7 +296,7 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
 
         while (this->abs_cycle_count < abs_end_cycles) {
             if (dbg.check_break(cpu)) {
-                this->paused = true;
+                dbg.paused = true;
                 this->overflow_cycles = 0;
                 break;
             }
@@ -405,14 +401,14 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             }
             break;
         case 0x84:
-            if (kc85_model::kc85_4 == self->cur_model) {
+            if (device::kc85_4 == self->cur_model) {
                 self->io84 = val;
                 self->video.kc85_4_irm_control(val);
                 self->update_bank_switching();
             }
             break;
         case 0x86:
-            if (kc85_model::kc85_4 == self->cur_model) {
+            if (device::kc85_4 == self->cur_model) {
                 self->io86 = val;
                 self->update_bank_switching();
             }
@@ -484,7 +480,7 @@ kc85::update_bank_switching() {
     const ubyte pio_a = pio.read(z80pio::A);
     const ubyte pio_b = pio.read(z80pio::B);
 
-    if ((kc85_model::kc85_2 == this->cur_model) || (kc85_model::kc85_3 == this->cur_model)) {
+    if ((device::kc85_2 == this->cur_model) || (device::kc85_3 == this->cur_model)) {
         // ** KC85/3 or KC85/2 **
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
@@ -496,7 +492,7 @@ kc85::update_bank_switching() {
             cpu.mem.map(0, 0x8000, 0x4000, this->video.irm[0], true);
         }
         // 8 KByte BASIC ROM at 0xC000 (only KC85/3)
-        if (kc85_model::kc85_3 == this->cur_model) {
+        if (device::kc85_3 == this->cur_model) {
             if (pio_a & PIO_A_BASIC_ROM) {
                 cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
             }
@@ -506,7 +502,7 @@ kc85::update_bank_switching() {
             cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
         }
     }
-    else if (kc85_model::kc85_4 == this->cur_model) {
+    else if (device::kc85_4 == this->cur_model) {
         // ** KC85/4 **
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)

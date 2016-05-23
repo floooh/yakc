@@ -130,8 +130,8 @@ DebugWindow::drawControls(kc85& kc) {
         }
     }
     ImGui::SameLine();
-    ImGui::Checkbox("break", &kc.paused);
-    if (kc.paused) {
+    ImGui::Checkbox("break", &kc.board->dbg.paused);
+    if (kc.board->dbg.paused) {
         ImGui::SameLine();
         if (ImGui::Button("step")) {
             kc.board->dbg.step_pc_modified(kc.board->cpu);

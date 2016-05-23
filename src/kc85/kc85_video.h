@@ -14,7 +14,7 @@ public:
     ubyte irm[4][0x4000];
 
     /// initialize the video hardware
-    void init(kc85_model m);
+    void init(device m);
     /// reset the video hardware
     void reset();
 
@@ -35,7 +35,7 @@ public:
     /// decode the next line
     void decode_one_line(unsigned int* ptr, int y, bool blink_bg);
 
-    kc85_model model = kc85_model::kc85_3;
+    enum device model = device::kc85_3;
     ubyte irm_control = 0;
     bool pio_blink_flag = true;
     bool ctc_blink_flag = true;
@@ -46,11 +46,11 @@ public:
 
 //------------------------------------------------------------------------------
 inline void
-kc85_video::init(kc85_model m) {
+kc85_video::init(device m) {
     this->model = m;
     this->irm_control = 0;
 
-    if (m == kc85_model::kc85_4) {
+    if (m == device::kc85_4) {
         clear(this->irm, sizeof(this->irm));
     }
     else {
@@ -160,7 +160,7 @@ inline void
 kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
     const int width = 320>>3;
     unsigned int* dst_ptr = &(dst_start[y*320]);
-    if (kc85_model::kc85_4 == this->model) {
+    if (device::kc85_4 == this->model) {
         // KC85/4
         int irm_index = (this->irm_control & 1) * 2;
         const ubyte* pixel_data = this->irm[irm_index];

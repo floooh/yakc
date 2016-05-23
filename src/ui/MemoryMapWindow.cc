@@ -96,8 +96,8 @@ MemoryMapWindow::Draw(kc85& kc) {
     static const ImVec4 light_green(0.0f, 1.0f, 0.0f, 1.0f);
     static const ImVec4 dark_green(0.0f, 0.5f, 0.0f, 1.0f);
     static const ImVec2 page_size(12, 0);
-    bool is_kc85_4 = kc.model() == kc85_model::kc85_4;
-    bool is_kc85_2 = kc.model() == kc85_model::kc85_2;
+    bool is_kc85_4 = kc.model() == device::kc85_4;
+    bool is_kc85_2 = kc.model() == device::kc85_2;
     const float window_height = is_kc85_4 ? 220.0f : 120.0f;
     ImGui::SetNextWindowSize(ImVec2(512.0f, window_height), ImGuiSetCond_Always);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {

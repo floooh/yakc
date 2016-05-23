@@ -9,14 +9,13 @@ using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-Audio::Setup(kc85& kc) {
-    kc.audio.setup_callbacks(this, cb_sound, cb_volume, cb_stop);
+Audio::Setup(const yakc::clock& clk) {
     this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, 3000.0f, 2.0f);
     this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 1024, 2);
     this->audioSource.setSingleInstance(true);
     this->audioSource.setFilter(0, &this->filter);
     this->audioSource.sample_rate = this->soloud.getBackendSamplerate();
-    this->audioSource.cpu_clock_speed = kc.board->clck.base_freq_khz * 1000;
+    this->audioSource.cpu_clock_speed = clk.base_freq_khz * 1000;
     this->audioHandle = this->soloud.play(this->audioSource, 1.0f);
 }
 
@@ -28,8 +27,8 @@ Audio::Discard() {
 
 //------------------------------------------------------------------------------
 void
-Audio::Update(kc85& kc) {
-    this->audioSource.cpu_clock_speed = kc.board->clck.base_freq_khz * 1000;
+Audio::Update(const yakc::clock& clk) {
+    this->audioSource.cpu_clock_speed = clk.base_freq_khz * 1000;
 }
 
 //------------------------------------------------------------------------------

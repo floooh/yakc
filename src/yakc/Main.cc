@@ -16,6 +16,8 @@
 #include "HTTP/HTTPFileSystem.h"
 #include "Core/Time/Clock.h"
 
+static const bool test_z1013 = false;
+
 using namespace Oryol;
 using namespace yakc;
 
@@ -30,7 +32,8 @@ public:
 
     ubyte last_ascii = 0;
     breadboard board;
-    kc85 kc;
+    class kc85 kc85;
+    class z1013 z1013;
     Draw draw;
     Audio audio;
     #if YAKC_UI
@@ -75,18 +78,30 @@ YakcApp::OnInit() {
     // initialize the ROM dumps and modules
     this->initRoms();
 
-    this->kc.setup(&this->board);
-    this->kc.poweron(kc85_model::kc85_3, kc85_caos::caos_3_1);
+    this->kc85.setup(&this->board);
+    this->z1013.setup(&this->board);
+
+    // FIXME!
+    if (test_z1013) {
+        this->z1013.poweron(device::z1013_01);
+    }
+    else {
+        this->kc85.poweron(device::kc85_3, os_rom::caos_3_1);
+    }
+
     this->draw.Setup(gfxSetup, frameSize);
-    this->audio.Setup(this->kc);
-    this->initModules();
+    this->audio.Setup(this->board.clck);
+    this->kc85.audio.setup_callbacks(&this->audio, Audio::cb_sound, Audio::cb_volume, Audio::cb_stop);
     #if YAKC_UI
-    this->ui.Setup(this->kc, &this->audio);
+    this->ui.Setup(this->kc85, &this->audio);
     #endif
 
     // on KC85/3 put a 16kByte module into slot 8 by default, CAOS will initialize
     // this automatically on startup
-    this->kc.exp.insert_module(0x08, kc85_exp::m022_16kbyte);
+    this->initModules();
+    if (this->kc85.on) {
+        this->kc85.exp.insert_module(0x08, kc85_exp::m022_16kbyte);
+    }
 
     this->lapTimePoint = Clock::Now();
 
@@ -100,15 +115,20 @@ YakcApp::OnRunning() {
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     this->handleInput();
-    const uint64_t cpu_min_ahead_cycles = (this->kc.board->clck.base_freq_khz*1000)/100;
-    const uint64_t cpu_max_ahead_cycles = (this->kc.board->clck.base_freq_khz*1000)/25;
+    const uint64_t cpu_min_ahead_cycles = (this->board.clck.base_freq_khz*1000)/100;
+    const uint64_t cpu_max_ahead_cycles = (this->board.clck.base_freq_khz*1000)/25;
     const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
     const uint64_t min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
     const uint64_t max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
     #if YAKC_UI
         o_trace_begin(yakc_kc);
         // keep CPU synchronized to a small time window ahead of audio playback
-        this->kc.onframe(this->ui.Settings.cpuSpeed, micro_secs, min_cycle_count, max_cycle_count);
+        if (this->kc85.on) {
+            this->kc85.onframe(this->ui.Settings.cpuSpeed, micro_secs, min_cycle_count, max_cycle_count);
+        }
+        else if (this->z1013.on) {
+            this->z1013.onframe(this->ui.Settings.cpuSpeed, micro_secs, min_cycle_count, max_cycle_count);
+        }
         o_trace_end();
         this->draw.UpdateParams(
             this->ui.Settings.crtEffect,
@@ -120,10 +140,10 @@ YakcApp::OnRunning() {
         o_trace_end();
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
-    this->audio.Update(this->kc);
-    this->draw.Render(this->kc);
+    this->audio.Update(this->board.clck);
+    this->draw.Render(this->kc85);
     #if YAKC_UI
-    this->ui.OnFrame(this->kc);
+    this->ui.OnFrame(this->kc85);
     #endif
     Gfx::CommitFrame();
     return Gfx::QuitRequested() ? AppState::Cleanup : AppState::Running;
@@ -222,7 +242,9 @@ YakcApp::handleInput() {
             break;
         }
     }
-    this->kc.put_key(ascii);
+    if (this->kc85.on) {
+        this->kc85.put_key(ascii);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -230,40 +252,44 @@ void
 YakcApp::initRoms() {
 
     // standard roms required for initial booting are built-in
-    this->kc.roms.add(kc85_roms::caos31, dump_caos31, sizeof(dump_caos31));
-    this->kc.roms.add(kc85_roms::basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
+    this->kc85.roms.add(kc85_roms::caos31, dump_caos31, sizeof(dump_caos31));
+    this->kc85.roms.add(kc85_roms::basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
+    this->z1013.roms.add(z1013_roms::mon202, dump_z1013_mon202, sizeof(dump_z1013_mon202));
 
     // async-load optional ROMs
     IO::Load("rom:hc900.852", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::hc900, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.roms.add(kc85_roms::hc900, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos22.852", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::caos22, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.roms.add(kc85_roms::caos22, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos34.853", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::caos34, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.roms.add(kc85_roms::caos34, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos42c.854", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::caos42c, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.roms.add(kc85_roms::caos42c, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos42e.854", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.roms.add(kc85_roms::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }
 
 //------------------------------------------------------------------------------
 void
 YakcApp::initModules() {
-    this->kc.exp.register_none_module("NO MODULE", "Click to insert module!");
-    if (!kc.exp.slot_occupied(0x08)) {
-        kc.exp.insert_module(0x08, kc85_exp::none);
+    if (!this->kc85.on) {
+        return;
     }
-    if (!kc.exp.slot_occupied(0x0C)) {
-        kc.exp.insert_module(0x0C, kc85_exp::none);
+    this->kc85.exp.register_none_module("NO MODULE", "Click to insert module!");
+    if (!kc85.exp.slot_occupied(0x08)) {
+        kc85.exp.insert_module(0x08, kc85_exp::none);
+    }
+    if (!kc85.exp.slot_occupied(0x0C)) {
+        kc85.exp.insert_module(0x0C, kc85_exp::none);
     }
 
     // M022 EXPANDER RAM
-    this->kc.exp.register_ram_module(kc85_exp::m022_16kbyte, 0xC0, 0x4000,
+    this->kc85.exp.register_ram_module(kc85_exp::m022_16kbyte, 0xC0, 0x4000,
         "16 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 43: map to address 0x4000\n"
         "SWITCH [SLOT] 83: map to address 0x8000\n"
@@ -271,7 +297,7 @@ YakcApp::initModules() {
         "...where [SLOT] is 08 or 0C");
 
     // M011 64 K RAM
-    this->kc.exp.register_ram_module(kc85_exp::m011_64kbyte, 0xC0, 0x10000,
+    this->kc85.exp.register_ram_module(kc85_exp::m011_64kbyte, 0xC0, 0x10000,
         "64 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 03: map 1st block to 0x0000\n"
         "SWITCH [SLOT] 43: map 1st block to 0x4000\n"
@@ -281,9 +307,9 @@ YakcApp::initModules() {
 
     // M026 FORTH
     IO::Load("rom:forth.853", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::forth, ioRes.Data.Data(), ioRes.Data.Size());
-        this->kc.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
-            kc.roms.ptr(kc85_roms::forth), kc.roms.size(kc85_roms::forth),
+        this->kc85.roms.add(kc85_roms::forth, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
+            this->kc85.roms.ptr(kc85_roms::forth), this->kc85.roms.size(kc85_roms::forth),
             "FORTH language expansion module.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"
@@ -294,9 +320,9 @@ YakcApp::initModules() {
 
     // M027 DEVELOPMENT
     IO::Load("rom:develop.853", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::develop, ioRes.Data.Data(), ioRes.Data.Size());
-        this->kc.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
-            kc.roms.ptr(kc85_roms::develop), kc.roms.size(kc85_roms::develop),
+        this->kc85.roms.add(kc85_roms::develop, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
+            this->kc85.roms.ptr(kc85_roms::develop), this->kc85.roms.size(kc85_roms::develop),
             "Assembler/disassembler expansion module.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"
@@ -307,9 +333,9 @@ YakcApp::initModules() {
 
     // M006 BASIC (+ HC-CAOS 901)
     IO::Load("rom:m006.rom", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
-        this->kc.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
-            kc.roms.ptr(kc85_roms::basic_mod), kc.roms.size(kc85_roms::basic_mod),
+        this->kc85.roms.add(kc85_roms::basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
+            this->kc85.roms.ptr(kc85_roms::basic_mod), this->kc85.roms.size(kc85_roms::basic_mod),
             "BASIC + HC-901 CAOS for KC85/2.\n\n"
             "Activate with:\n"
             "JUMP [SLOT]\n\n"
@@ -318,9 +344,9 @@ YakcApp::initModules() {
 
     // M012 TEXOR
     IO::Load("rom:texor.rom", [this](IO::LoadResult ioRes) {
-        this->kc.roms.add(kc85_roms::texor, ioRes.Data.Data(), ioRes.Data.Size());
-        this->kc.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
-            kc.roms.ptr(kc85_roms::texor), kc.roms.size(kc85_roms::texor),
+        this->kc85.roms.add(kc85_roms::texor, ioRes.Data.Data(), ioRes.Data.Size());
+        this->kc85.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
+            this->kc85.roms.ptr(kc85_roms::texor), this->kc85.roms.size(kc85_roms::texor),
             "TEXOR text processing software.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"

@@ -12,11 +12,11 @@
 class Audio {
 public:
     /// setup audio playback
-    void Setup(yakc::kc85& kc);
+    void Setup(const yakc::clock& clk);
     /// shutdown audio playback
     void Discard();
     /// per-frame update
-    void Update(yakc::kc85& kc);
+    void Update(const yakc::clock& clk);
     /// get the current max processed audio sample count in number of CPU cycles
     uint64_t GetProcessedCycles() const;
 

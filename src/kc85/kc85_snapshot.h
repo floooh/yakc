@@ -251,8 +251,8 @@ kc85_snapshot::write_kc_state(const kc85& kc, state_t& state) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_kc_state(const state_t& state, kc85& kc) {
-    kc.cur_model = (kc85_model) state.kc.model;
-    kc.cur_caos  = (kc85_caos) state.kc.caos;
+    kc.cur_model = (device) state.kc.model;
+    kc.cur_caos  = (os_rom) state.kc.caos;
     kc.io84      = state.kc.io84;
     kc.io86      = state.kc.io86;
     kc.update_rom_pointers();
@@ -410,7 +410,7 @@ kc85_snapshot::write_video_state(const kc85& kc, state_t& state) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::apply_video_state(const state_t& state, kc85& kc) {
-    kc.video.model = (kc85_model) state.kc.model;
+    kc.video.model = (device) state.kc.model;
     kc.video.cur_pal_line = state.video.cur_pal_line;
     kc.video.irm_control = state.video.irm_control;
     kc.video.pio_blink_flag = 0 != state.video.pio_blink_flag;

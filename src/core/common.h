@@ -41,21 +41,26 @@ typedef signed char byte;
 typedef unsigned short uword;
 typedef signed short word;
 
-enum class kc85_model {
+enum class device {
     kc85_2 = (1<<0),
     kc85_3 = (1<<1),
     kc85_4 = (1<<2),
+    z1013_01 = (1<<3),
+    z1013_16 = (1<<5),
+    z1013_64 = (1<<6),
     none = 0,
-    any = (kc85_2|kc85_3|kc85_4),
+    any_kc85 = (kc85_2|kc85_3|kc85_4),
+    any_z1013 = (z1013_01|z1013_16|z1013_64)
 };
 
-enum class kc85_caos {
+enum class os_rom {
     caos_hc900,
     caos_2_2,
     caos_3_1,
     caos_3_4,
     caos_4_1,
     caos_4_2,
+    z1013_mon202,
 };
 
 inline void
