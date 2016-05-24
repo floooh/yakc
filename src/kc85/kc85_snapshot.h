@@ -77,9 +77,13 @@ public:
         struct pio_t {
             struct chn_t {
                 ubyte interrupt_vector;
-                ubyte interrupt_enabled;
+                ubyte interrupt_control;
                 ubyte mode;
+                ubyte inout_select;
+                ubyte mask;
+                ubyte follows;
                 ubyte data;
+                ubyte pad[3];
             } chn[2];
             intctrl_t intctrl;
         } pio;
@@ -373,10 +377,12 @@ kc85_snapshot::write_pio_state(const kc85& kc, state_t& state) {
     for (int c = 0; c < 2; c++) {
         auto& dst = state.pio.chn[c];
         const auto& src = pio.channel_state[c];
-
         dst.interrupt_vector = src.interrupt_vector;
-        dst.interrupt_enabled = src.interrupt_enabled;
+        dst.interrupt_control = src.interrupt_control;
         dst.mode = src.mode;
+        dst.inout_select = src.inout_select;
+        dst.mask = src.mask;
+        dst.follows = src.follows;
         dst.data = pio.channel_data[c];
     }
     write_intctrl_state(pio.int_ctrl, state.pio.intctrl);
@@ -389,10 +395,12 @@ kc85_snapshot::apply_pio_state(const state_t& state, kc85& kc) {
     for (int c = 0; c < 2; c++) {
         auto& dst = pio.channel_state[c];
         const auto& src = state.pio.chn[c];
-
         dst.interrupt_vector = src.interrupt_vector;
-        dst.interrupt_enabled = 0 != src.interrupt_enabled;
+        dst.interrupt_control = src.interrupt_control;
         dst.mode = src.mode;
+        dst.inout_select = src.inout_select;
+        dst.mask = src.mask;
+        dst.follows = src.follows;
         pio.channel_data[c] = src.data;
     }
     apply_intctrl_state(state.pio.intctrl, pio.int_ctrl);

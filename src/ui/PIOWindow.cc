@@ -29,18 +29,30 @@ onOffLine(const char* text, bool on) {
 static void
 pioControlState(const kc85& kc, z80pio::channel chn) {
     const auto& state = kc.board->pio.channel_state[chn];
-    const bool en = state.interrupt_enabled;
-    ImGui::Text("Interrupt:");
-    ImGui::SameLine(128);
-    ImGui::TextColored(en?UI::EnabledColor:UI::DisabledColor, en?"ENABLED":"DISABLED");
+    ImGui::Text("Interrupt:"); ImGui::SameLine(128);
+    ImGui::Text("%02X", state.interrupt_control);
 
-    ImGui::Text("Interrupt Vector:");
-    ImGui::SameLine(128);
+    ImGui::Text("Interrupt Vector:"); ImGui::SameLine(128);
     ImGui::Text("%02X", state.interrupt_vector);
 
-    ImGui::Text("Mode:");
-    ImGui::SameLine(128);
+    ImGui::Text("Mode:"); ImGui::SameLine(128);
     ImGui::Text("%02X", state.mode);
+
+    ImGui::Text("I/O Select:"); ImGui::SameLine(128);
+    ImGui::Text("%02X", state.inout_select);
+
+    ImGui::Text("I/O Int Mask:"); ImGui::SameLine(128);
+    ImGui::Text("%02X", state.mask);
+
+    ImGui::Text("Expect:"); ImGui::SameLine(128);
+    const char* follows = "???";
+    switch (state.follows) {
+        case z80pio::channel_state_t::any_follows: follows = "ANY"; break;
+        case z80pio::channel_state_t::select_follows: follows = "SELECT"; break;
+        case z80pio::channel_state_t::mask_follows: follows = "MASK"; break;
+        default: break;
+    }
+    ImGui::Text("%s", follows);
 }
 
 //------------------------------------------------------------------------------
