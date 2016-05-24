@@ -96,7 +96,7 @@ UI::Setup(emu& emu, Audio* audio_) {
     style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
     this->lightTheme = style;
 
-    this->EnableDarkTheme();
+    this->EnableLightTheme();
 
     this->fileLoader.Setup(emu);
     this->curTime = Clock::Now();
