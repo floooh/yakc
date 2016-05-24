@@ -138,6 +138,7 @@ kc85::poweron(device m, os_rom os) {
     this->cur_model = m;
     this->cur_caos = os;
     this->on = true;
+    this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
     this->key_code = 0;
     this->io84 = 0;
@@ -283,6 +284,9 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
 
     if (!dbg.paused) {
         // compute the end-cycle-count for the current frame
+        if (this->abs_cycle_count == 0) {
+            this->abs_cycle_count = min_cycle_count;
+        }
         const int64_t num_cycles = clk.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
         uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
         if (abs_end_cycles > max_cycle_count) {
