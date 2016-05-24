@@ -14,13 +14,13 @@ public:
     /// constructor
     SnapshotStorage();
     /// take a snapshot
-    void TakeSnapshot(const yakc::kc85& kc, int slotIndex);
+    void TakeSnapshot(const yakc::emu& emu, int slotIndex);
     /// test if any valid snapshots exist
     bool HasSnapshots() const;
     /// test if a snapshot slot contains a snapshot
     bool HasSnapshot(int slotIndex) const;
     /// apply a snapshot
-    void ApplySnapshot(int slotIndex, yakc::kc85& kc);
+    void ApplySnapshot(int slotIndex, yakc::emu& emu);
 
     yakc::kc85_snapshot::state_t snapshots[MaxNumSnapshots];
 };

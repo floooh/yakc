@@ -61,6 +61,8 @@ enum class os_rom {
     caos_4_1,
     caos_4_2,
     z1013_mon202,
+
+    none,
 };
 
 inline void

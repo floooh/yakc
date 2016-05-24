@@ -10,7 +10,7 @@ using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-ModuleWindow::Setup(kc85& kc) {
+ModuleWindow::Setup(emu& emu) {
     this->setName("Expansion Slots");
 }
 
@@ -50,11 +50,11 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
 
 //------------------------------------------------------------------------------
 bool
-ModuleWindow::Draw(kc85& kc) {
+ModuleWindow::Draw(emu& emu) {
     ImGui::SetNextWindowSize(ImVec2(384, 116), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
-        this->drawModuleSlot(kc, 0x08);     // base device, right expansion slot
-        this->drawModuleSlot(kc, 0x0C);     // base device, left expansion slot
+        this->drawModuleSlot(emu.kc85, 0x08);     // base device, right expansion slot
+        this->drawModuleSlot(emu.kc85, 0x0C);     // base device, left expansion slot
         ImGui::TextWrapped("Hover over slot buttons to get help about inserted module!");
     }
     ImGui::End();

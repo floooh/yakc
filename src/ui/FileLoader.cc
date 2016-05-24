@@ -9,7 +9,7 @@ using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-FileLoader::Setup(kc85& kc) {
+FileLoader::Setup(emu& emu) {
     this->Items.Add("Pengo", "pengo.kcc", device::kc85_3);
     this->Items.Add("Pengo", "pengo4.kcc", device::kc85_4);
     this->Items.Add("Cave", "cave.kcc", device::kc85_3);
@@ -43,22 +43,22 @@ FileLoader::Discard() {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::Load(kc85& kc, const Item& item) {
-    this->load(&kc, item, false);
+FileLoader::Load(emu& emu, const Item& item) {
+    this->load(&emu, item, false);
 }
 
 //------------------------------------------------------------------------------
 void
-FileLoader::LoadAndStart(kc85& kc, const Item& item) {
-    this->load(&kc, item, true);
+FileLoader::LoadAndStart(emu& emu, const Item& item) {
+    this->load(&emu, item, true);
 }
 
 //------------------------------------------------------------------------------
 bool
-FileLoader::Copy(kc85& kc) {
+FileLoader::Copy(emu& emu) {
     if (Ready == this->State) {
-        copy(&kc, this->Info, this->kccData);
-        patch(&kc, this->Info);
+        copy(&emu, this->Info, this->kccData);
+        patch(&emu, this->Info);
         return true;
     }
     else {
@@ -68,11 +68,11 @@ FileLoader::Copy(kc85& kc) {
 
 //------------------------------------------------------------------------------
 bool
-FileLoader::Start(kc85& kc) {
+FileLoader::Start(emu& emu) {
     if (Ready == this->State) {
-        copy(&kc, this->Info, this->kccData);
-        patch(&kc, this->Info);
-        start(&kc, this->Info);
+        copy(&emu, this->Info, this->kccData);
+        patch(&emu, this->Info);
+        start(&emu, this->Info);
         return true;
     }
     else {
@@ -82,21 +82,21 @@ FileLoader::Start(kc85& kc) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::load(kc85* kc, const Item& item, bool autostart) {
+FileLoader::load(emu* emu, const Item& item, bool autostart) {
     StringBuilder strBuilder;
     strBuilder.Format(128, "kcc:%s", item.Filename.AsCStr());
     this->Url = strBuilder.GetString();
     this->State = Loading;
     IO::Load(strBuilder.GetString(),
         // load succeeded
-        [this, kc, autostart](IO::LoadResult ioResult) {
+        [this, emu, autostart](IO::LoadResult ioResult) {
             this->kccData = std::move(ioResult.Data);
             this->Info = parseHeader(this->kccData);
             this->State = Ready;
             if (autostart) {
-                copy(kc, this->Info, this->kccData);
-                patch(kc, this->Info);
-                start(kc, this->Info);
+                copy(emu, this->Info, this->kccData);
+                patch(emu, this->Info);
+                start(emu, this->Info);
             }
         },
         // load failed
@@ -138,12 +138,12 @@ FileLoader::parseHeader(const Buffer& data) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::copy(kc85* kc, const FileInfo& info, const Buffer& data) {
+FileLoader::copy(emu* emu, const FileInfo& info, const Buffer& data) {
     if (!info.FileSizeError) {
         const ubyte* payload = data.Data() + info.PayloadOffset;
         if (FileType::KCC == info.Type) {
             // KCC payload is simply a continuous block of data
-            kc->board->cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
+            emu->board.cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
         }
         else {
             // TAP payload is 128 byte blocks, each with a single header byte
@@ -154,7 +154,7 @@ FileLoader::copy(kc85* kc, const FileInfo& info, const Buffer& data) {
                 ptr++;
                 // copy 128 bytes
                 for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
-                    kc->board->cpu.mem.w8(addr++, *ptr++);
+                    emu->board.cpu.mem.w8(addr++, *ptr++);
                 }
             }
         }
@@ -163,8 +163,8 @@ FileLoader::copy(kc85* kc, const FileInfo& info, const Buffer& data) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::patch(kc85* kc, const FileInfo& info) {
-    auto& mem = kc->board->cpu.mem;
+FileLoader::patch(emu* emu, const FileInfo& info) {
+    auto& mem = emu->board.cpu.mem;
 
     // FIXME: patch JUNGLE until I have time to do a proper
     // 'restoration', see Alexander Lang's KC emu here:
@@ -190,11 +190,11 @@ FileLoader::patch(kc85* kc, const FileInfo& info) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::start(kc85* kc, const FileInfo& info) {
+FileLoader::start(emu* emu, const FileInfo& info) {
     if (info.HasExecAddr) {
 
         // initialize registers
-        z80& cpu = kc->board->cpu;
+        z80& cpu = emu->board.cpu;
         cpu.A = 0x00;
         cpu.F = 0x10;
         cpu.BC = cpu.BC_ = 0x0000;
@@ -208,11 +208,11 @@ FileLoader::start(kc85* kc, const FileInfo& info) {
             cpu.mem.w8(addr, 0);
         }
         cpu.mem.w8(0xb7a0, 0);
-        if (kc->cur_model == device::kc85_3) {
+        if (emu->model == device::kc85_3) {
             cpu.out(0x89, 0x9f);
             cpu.mem.w16(cpu.SP, 0xf15c);
         }
-        else if (kc->cur_model == device::kc85_4) {
+        else if (emu->model == device::kc85_4) {
             cpu.out(0x89, 0xFF);
             cpu.mem.w16(cpu.SP, 0xf17e);
         }

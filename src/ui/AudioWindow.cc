@@ -21,21 +21,21 @@ cpuBehind(false) {
 
 //------------------------------------------------------------------------------
 void
-AudioWindow::Setup(kc85& kc) {
+AudioWindow::Setup(emu& emu) {
     this->setName("Audio Debugger");
 }
 
 //------------------------------------------------------------------------------
 bool
-AudioWindow::Draw(kc85& kc) {
+AudioWindow::Draw(emu& emu) {
     ImGui::SetNextWindowSize(ImVec2(600, 220), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->audio->soloud.setVisualizationEnable(true);
         ImGui::Checkbox("Pause", &this->paused);
         if (!this->paused) {
             Memory::Copy(this->audio->soloud.getWave(), this->wavBuffer, 256*sizeof(float));
-            this->cpuAhead = kc.cpu_ahead;
-            this->cpuBehind = kc.cpu_behind;
+            this->cpuAhead = emu.kc85.cpu_ahead;
+            this->cpuBehind = emu.kc85.cpu_behind;
         }
         ImGui::Text("Backend: %s", this->audio->soloud.getBackendString());
         ImGui::Text("Backend sample rate: source=%d, actual=%d\n",  this->audio->audioSource.sample_rate, 

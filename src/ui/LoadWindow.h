@@ -13,9 +13,9 @@ public:
     /// set file loader
     void SetFileLoader(FileLoader* loader);
     /// setup the window
-    virtual void Setup(yakc::kc85& kc) override;
+    virtual void Setup(yakc::emu& emu) override;
     /// draw method
-    virtual bool Draw(yakc::kc85& kc) override;
+    virtual bool Draw(yakc::emu& emu) override;
 
 private:
     FileLoader* loader = nullptr;

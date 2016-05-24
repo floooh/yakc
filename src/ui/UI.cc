@@ -35,7 +35,7 @@ ImU32 UI::CanvasLineColor;
 
 //------------------------------------------------------------------------------
 void
-UI::Setup(kc85& kc, Audio* audio_) {
+UI::Setup(emu& emu, Audio* audio_) {
 
     this->audio = audio_;
     IMUI::Setup();
@@ -98,7 +98,7 @@ UI::Setup(kc85& kc, Audio* audio_) {
 
     this->EnableDarkTheme();
 
-    this->fileLoader.Setup(kc);
+    this->fileLoader.Setup(emu);
     this->curTime = Clock::Now();
 }
 
@@ -118,8 +118,8 @@ UI::Toggle() {
 
 //------------------------------------------------------------------------------
 void
-UI::OpenWindow(kc85& kc, const Ptr<WindowBase>& win) {
-    win->Setup(kc);
+UI::OpenWindow(emu& emu, const Ptr<WindowBase>& win) {
+    win->Setup(emu);
     this->windows.Add(win);
 }
 
@@ -157,7 +157,7 @@ UI::EnableLightTheme() {
 
 //------------------------------------------------------------------------------
 void
-UI::OnFrame(kc85& kc) {
+UI::OnFrame(emu& emu) {
     o_trace_scoped(yakc_ui);
 
     StringBuilder strBuilder;
@@ -165,75 +165,82 @@ UI::OnFrame(kc85& kc) {
     if (this->uiEnabled) {
         if (ImGui::BeginMainMenuBar()) {
             const char* model;
-            switch (kc.model()) {
-                case device::kc85_2: model = "KC85/2"; break;
-                case device::kc85_3: model = "KC85/3"; break;
-                case device::kc85_4: model = "KC85/4"; break;
+            switch (emu.model) {
+                case device::kc85_2:    model = "KC85/2"; break;
+                case device::kc85_3:    model = "KC85/3"; break;
+                case device::kc85_4:    model = "KC85/4"; break;
+                case device::z1013_01:  model = "Z1013.01"; break;
+                case device::z1013_16:  model = "Z1013.16"; break;
+                case device::z1013_64:  model = "Z1013.64"; break;
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
                 if (ImGui::MenuItem("Load File...")) {
                     auto loadWindow = LoadWindow::Create();
                     loadWindow->SetFileLoader(&this->fileLoader);
-                    this->OpenWindow(kc, loadWindow);
+                    this->OpenWindow(emu, loadWindow);
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
-                    kc.poweroff();
-                    kc.poweron(kc.model(), kc.caos());
+                    emu.poweroff();
+                    emu.poweron(emu.model, emu.os);
                 }
                 if (ImGui::MenuItem("Reset")) {
-                    kc.reset();
+                    emu.reset();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/2")) {
-                    if (kc.roms.has(kc85_roms::hc900)) {
+                    if (emu.kc85.roms.has(kc85_roms::hc900)) {
                         if (ImGui::MenuItem("HC900-CAOS")) {
-                            kc.poweroff();
-                            kc.poweron(device::kc85_2, os_rom::caos_hc900);
+                            emu.poweroff();
+                            emu.poweron(device::kc85_2, os_rom::caos_hc900);
                         }
                     }
-                    if (kc.roms.has(kc85_roms::caos22)) {
+                    if (emu.kc85.roms.has(kc85_roms::caos22)) {
                         if (ImGui::MenuItem("HC-CAOS 2.2")) {
-                            kc.poweroff();
-                            kc.poweron(device::kc85_2, os_rom::caos_2_2);
+                            emu.poweroff();
+                            emu.poweron(device::kc85_2, os_rom::caos_2_2);
                         }
                     }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/3")) {
                     if (ImGui::MenuItem("HC-CAOS 3.1")) {
-                        kc.poweroff();
-                        kc.poweron(device::kc85_3, os_rom::caos_3_1);
+                        emu.poweroff();
+                        emu.poweron(device::kc85_3, os_rom::caos_3_1);
                     }
-                    if (kc.roms.has(kc85_roms::caos34)) {
+                    if (emu.kc85.roms.has(kc85_roms::caos34)) {
                         if (ImGui::MenuItem("HC-CAOS 3.4i")) {
-                            kc.poweroff();
-                            kc.poweron(device::kc85_3, os_rom::caos_3_4);
+                            emu.poweroff();
+                            emu.poweron(device::kc85_3, os_rom::caos_3_4);
                         }
                     }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Boot to KC85/4")) {
-                    if (kc.roms.has(kc85_roms::caos41c) && kc.roms.has(kc85_roms::caos41e)) {
+                    if (emu.kc85.roms.has(kc85_roms::caos41c) && emu.kc85.roms.has(kc85_roms::caos41e)) {
                         if (ImGui::MenuItem("KC-CAOS 4.1")) {
-                            kc.poweroff();
-                            kc.poweron(device::kc85_4, os_rom::caos_4_1);
+                            emu.poweroff();
+                            emu.poweron(device::kc85_4, os_rom::caos_4_1);
                         }
                     }
-                    if (kc.roms.has(kc85_roms::caos42c) && kc.roms.has(kc85_roms::caos42e)) {
+                    if (emu.kc85.roms.has(kc85_roms::caos42c) && emu.kc85.roms.has(kc85_roms::caos42e)) {
                         if (ImGui::MenuItem("KC-CAOS 4.2")) {
-                            kc.poweroff();
-                            kc.poweron(device::kc85_4, os_rom::caos_4_2);
+                            emu.poweroff();
+                            emu.poweron(device::kc85_4, os_rom::caos_4_2);
                         }
                     }
                     ImGui::EndMenu();
+                }
+                if (ImGui::MenuItem("Boot to Z1013.01")) {
+                    emu.poweroff();
+                    emu.poweron(device::z1013_01, os_rom::z1013_mon202);
                 }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Games")) {
                 for (const auto& item : this->fileLoader.Items) {
-                    if (int(item.Compat) & int(kc.model())) {
+                    if (int(item.Compat) & int(emu.model)) {
                         if (ImGui::MenuItem(item.Name.AsCStr())) {
-                            this->fileLoader.LoadAndStart(kc, item);
+                            this->fileLoader.LoadAndStart(emu, item);
                         }
                     }
                 }
@@ -241,43 +248,43 @@ UI::OnFrame(kc85& kc) {
             }
             if (ImGui::BeginMenu("Hardware")) {
                 if (ImGui::MenuItem("Keyboard")) {
-                    this->OpenWindow(kc, KeyboardWindow::Create());
+                    this->OpenWindow(emu, KeyboardWindow::Create());
                 }
                 if (ImGui::MenuItem("Expansion Slots")) {
-                    this->OpenWindow(kc, ModuleWindow::Create());
+                    this->OpenWindow(emu, ModuleWindow::Create());
                 }
                 if (ImGui::MenuItem("Memory Map")) {
-                    this->OpenWindow(kc, MemoryMapWindow::Create());
+                    this->OpenWindow(emu, MemoryMapWindow::Create());
                 }
                 if (ImGui::MenuItem("Z80 PIO")) {
-                    this->OpenWindow(kc, PIOWindow::Create());
+                    this->OpenWindow(emu, PIOWindow::Create());
                 }
                 if (ImGui::MenuItem("Z80 CTC")) {
-                    this->OpenWindow(kc, CTCWindow::Create());
+                    this->OpenWindow(emu, CTCWindow::Create());
                 }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Debugging")) {
                 if (ImGui::MenuItem("CPU Debugger")) {
-                    this->OpenWindow(kc, DebugWindow::Create());
+                    this->OpenWindow(emu, DebugWindow::Create());
                 }
                 if (ImGui::MenuItem("Audio Debugger")) {
-                    this->OpenWindow(kc, AudioWindow::Create(this->audio));
+                    this->OpenWindow(emu, AudioWindow::Create(this->audio));
                 }
                 if (ImGui::MenuItem("Disassembler")) {
-                    this->OpenWindow(kc, DisasmWindow::Create());
+                    this->OpenWindow(emu, DisasmWindow::Create());
                 }
                 if (ImGui::MenuItem("Memory Editor")) {
-                    this->OpenWindow(kc, MemoryWindow::Create());
+                    this->OpenWindow(emu, MemoryWindow::Create());
                 }
                 if (ImGui::MenuItem("Scan for Commands...")) {
-                    this->OpenWindow(kc, CommandWindow::Create());
+                    this->OpenWindow(emu, CommandWindow::Create());
                 }
                 if (ImGui::BeginMenu("Take Snapshot")) {
                     for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
                         strBuilder.Format(32, "Snapshot %d", i);
                         if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                            this->snapshotStorage.TakeSnapshot(kc, i);
+                            this->snapshotStorage.TakeSnapshot(emu, i);
                         }
                     }
                     ImGui::EndMenu();
@@ -288,7 +295,7 @@ UI::OnFrame(kc85& kc) {
                             if (this->snapshotStorage.HasSnapshot(i)) {
                                 strBuilder.Format(32, "Snapshot %d", i);
                                 if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                    this->snapshotStorage.ApplySnapshot(i, kc);
+                                    this->snapshotStorage.ApplySnapshot(i, emu);
                                 }
                             }
                         }
@@ -328,7 +335,7 @@ UI::OnFrame(kc85& kc) {
 
         // draw open windows
         for (auto& win : this->windows) {
-            win->Draw(kc);
+            win->Draw(emu);
         }
     }
     else {

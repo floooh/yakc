@@ -55,13 +55,13 @@ static struct key layout[num_rows][num_cols] = {
 
 //------------------------------------------------------------------------------
 void
-KeyboardWindow::Setup(kc85& kc) {
+KeyboardWindow::Setup(emu& emu) {
     this->setName("Keyboard");
 }
 
 //------------------------------------------------------------------------------
 bool
-KeyboardWindow::Draw(kc85& kc) {
+KeyboardWindow::Draw(emu& emu) {
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.75f);
     ImGui::SetNextWindowSize(ImVec2(572, 196));
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
@@ -89,7 +89,7 @@ KeyboardWindow::Draw(kc85& kc) {
                             this->shift = true;
                         }
                         else {
-                            kc.put_key(this->shift ? k.shift_code:k.code);
+                            emu.put_key(this->shift ? k.shift_code:k.code);
 
                             // clear shift state after one key, unless caps_lock is on
                             if (!this->caps_lock) {
@@ -104,7 +104,7 @@ KeyboardWindow::Draw(kc85& kc) {
         // space bar
         ImGui::Dummy(ImVec2(80,0)); ImGui::SameLine();
         if (ImGui::Button("SPACE", ImVec2(224, 0))) {
-            kc.put_key(this->caps_lock ? 0x5B : 0x20);
+            emu.put_key(this->caps_lock ? 0x5B : 0x20);
         }
     }
     ImGui::End();

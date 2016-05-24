@@ -10,7 +10,7 @@ using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-DisasmWindow::Setup(kc85& kc) {
+DisasmWindow::Setup(emu& emu) {
     this->setName("Disassembler");
     this->startWidget.Configure16("Start", 0x0000);
     this->lengthWidget.Configure16("Num", 64);
@@ -18,10 +18,10 @@ DisasmWindow::Setup(kc85& kc) {
 
 //------------------------------------------------------------------------------
 bool
-DisasmWindow::Draw(kc85& kc) {
+DisasmWindow::Draw(emu& emu) {
     ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
-        this->drawMainContent(kc, this->startWidget.Get16(), this->lengthWidget.Get16());
+        this->drawMainContent(emu, this->startWidget.Get16(), this->lengthWidget.Get16());
         ImGui::Separator();
         this->drawControls();
     }
@@ -31,7 +31,7 @@ DisasmWindow::Draw(kc85& kc) {
 
 //------------------------------------------------------------------------------
 void
-DisasmWindow::drawMainContent(const kc85& kc, uword start_addr, int num_lines) {
+DisasmWindow::drawMainContent(const emu& emu, uword start_addr, int num_lines) {
     // this is a modified version of ImGuiMemoryEditor.h
     ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));
 
@@ -47,12 +47,12 @@ DisasmWindow::drawMainContent(const kc85& kc, uword start_addr, int num_lines) {
     Disasm disasm;
     uword cur_addr = start_addr;
     for (int line_i = 0; (line_i < clipper.DisplayStart) && (line_i < num_lines); line_i++) {
-        cur_addr += disasm.Disassemble(kc, cur_addr);
+        cur_addr += disasm.Disassemble(emu, cur_addr);
     }
 
     // display only visible items
     for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
-        const uword num_bytes = disasm.Disassemble(kc, cur_addr);
+        const uword num_bytes = disasm.Disassemble(emu, cur_addr);
 
         // draw the address
         ImGui::Text("%04X: ", cur_addr);
@@ -62,7 +62,7 @@ DisasmWindow::drawMainContent(const kc85& kc, uword start_addr, int num_lines) {
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            ImGui::Text("%02X ", kc.board->cpu.mem.r8(cur_addr++));
+            ImGui::Text("%02X ", emu.board.cpu.mem.r8(cur_addr++));
         }
 
         // print disassembled instruction

@@ -9,7 +9,7 @@ using namespace yakc;
 
 //------------------------------------------------------------------------------
 void
-MemoryWindow::Setup(kc85& kc) {
+MemoryWindow::Setup(emu& emu) {
     this->setName("Memory Editor");
 }
 
@@ -29,10 +29,10 @@ write_func(void* userdata, uword addr, ubyte value) {
 
 //------------------------------------------------------------------------------
 bool
-MemoryWindow::Draw(kc85& kc) {
+MemoryWindow::Draw(emu& emu) {
     this->edit.AllowEdits = true;
     ImGui::SetNextWindowSize(ImVec2(512, 256), ImGuiSetCond_Once);
-    if (this->edit.Draw(this->title.AsCStr(), read_func, write_func, &kc)) {
+    if (this->edit.Draw(this->title.AsCStr(), read_func, write_func, &emu)) {
         this->Visible = true;
     }
     else {

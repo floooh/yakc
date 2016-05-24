@@ -12,9 +12,9 @@ SnapshotStorage::SnapshotStorage() {
 
 //------------------------------------------------------------------------------
 void
-SnapshotStorage::TakeSnapshot(const kc85& kc, int slotIndex) {
+SnapshotStorage::TakeSnapshot(const emu& emu, int slotIndex) {
     YAKC_ASSERT((slotIndex >= 0) && (slotIndex < MaxNumSnapshots));
-    kc85_snapshot::take_snapshot(kc, this->snapshots[slotIndex]);
+    kc85_snapshot::take_snapshot(emu.kc85, this->snapshots[slotIndex]);
 }
 
 //------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ SnapshotStorage::HasSnapshots() const {
 
 //------------------------------------------------------------------------------
 void
-SnapshotStorage::ApplySnapshot(int slotIndex, kc85& kc) {
+SnapshotStorage::ApplySnapshot(int slotIndex, emu& emu) {
     YAKC_ASSERT((slotIndex >= 0) && (slotIndex < MaxNumSnapshots));
-    kc85_snapshot::apply_snapshot(this->snapshots[slotIndex], kc);
+    kc85_snapshot::apply_snapshot(this->snapshots[slotIndex], emu.kc85);
 }

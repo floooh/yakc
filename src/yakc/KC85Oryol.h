@@ -23,3 +23,4 @@
 #include "kc85/kc85_audio.h"
 #include "kc85/kc85_snapshot.h"
 #include "z1013/z1013.h"
+#include "emu/emu.h"

@@ -15,7 +15,7 @@ static const int bank_div = 160;
 
 //------------------------------------------------------------------------------
 void
-MemoryMapWindow::Setup(kc85& kc) {
+MemoryMapWindow::Setup(emu& emu) {
     this->setName("Memory Map");
 }
 
@@ -90,14 +90,14 @@ MemoryMapWindow::drawRect(int layer, uword addr, unsigned int len, const char* t
 
 //------------------------------------------------------------------------------
 bool
-MemoryMapWindow::Draw(kc85& kc) {
+MemoryMapWindow::Draw(emu& emu) {
     StringBuilder strBuilder;
     static const ImVec4 grey(0.25f, 0.25f, 0.25f, 1.0f);
     static const ImVec4 light_green(0.0f, 1.0f, 0.0f, 1.0f);
     static const ImVec4 dark_green(0.0f, 0.5f, 0.0f, 1.0f);
     static const ImVec2 page_size(12, 0);
-    bool is_kc85_4 = kc.model() == device::kc85_4;
-    bool is_kc85_2 = kc.model() == device::kc85_2;
+    bool is_kc85_4 = emu.model == device::kc85_4;
+    bool is_kc85_2 = emu.model == device::kc85_2;
     const float window_height = is_kc85_4 ? 220.0f : 120.0f;
     ImGui::SetNextWindowSize(ImVec2(512.0f, window_height), ImGuiSetCond_Always);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
@@ -105,15 +105,15 @@ MemoryMapWindow::Draw(kc85& kc) {
         // draw the background grid
         this->drawGrid(is_kc85_4);
 
-        const ubyte pio_a = kc.board->pio.read(z80pio::A);
-        const ubyte pio_b = kc.board->pio.read(z80pio::B);
+        const ubyte pio_a = emu.board.pio.read(z80pio::A);
+        const ubyte pio_b = emu.board.pio.read(z80pio::B);
 
         // built-in memory at 0x0000
         this->drawRect(0, 0x0000, 0x4000, "RAM 0", (pio_a & kc85::PIO_A_RAM) ? type::mapped : type::off) ;
 
         // built-in memory at 0x4000 (KC85/4 only)
         if (is_kc85_4) {
-            this->drawRect(0, 0x4000, 0x4000, "RAM 4", (kc.io86 & kc85::IO86_RAM4) ? type::mapped : type::off);
+            this->drawRect(0, 0x4000, 0x4000, "RAM 4", (emu.kc85.io86 & kc85::IO86_RAM4) ? type::mapped : type::off);
         }
 
         // video memory
@@ -121,7 +121,7 @@ MemoryMapWindow::Draw(kc85& kc) {
             if (is_kc85_4) {
                 for (int layer = 0; layer < 4; layer++) {
                     const uword len = (0 == layer) ? 0x4000 : 0x2800;
-                    const int irm_index = (kc.io84 & 6)>>1;
+                    const int irm_index = (emu.kc85.io84 & 6)>>1;
                     strBuilder.Format(32, "IRM %d", layer);
                     if (layer == irm_index) {
                         // KC85/4: irm0 mapped (image 0 pixel buffer)
@@ -157,7 +157,7 @@ MemoryMapWindow::Draw(kc85& kc) {
             type ram8_0 = (pio_a & kc85::PIO_A_IRM) ? type::hidden : type::mapped;
             type ram8_1 = ram8_0;
             if (pio_b & kc85::PIO_B_RAM8) {
-                if (kc.io84 & kc85::IO84_SEL_RAM8) {
+                if (emu.kc85.io84 & kc85::IO84_SEL_RAM8) {
                     ram8_0 = type::off;
                 }
                 else {
@@ -177,7 +177,7 @@ MemoryMapWindow::Draw(kc85& kc) {
             this->drawRect(0, 0xC000, 0x2000, "BASIC ROM", (pio_a & kc85::PIO_A_BASIC_ROM) ? type::mapped : type::off);
         }
         if (is_kc85_4) {
-            this->drawRect(1, 0xC000, 0x1000, "CAOS ROM C", (kc.io86 & kc85::IO86_CAOS_ROM_C) ? type::mapped : type::off);
+            this->drawRect(1, 0xC000, 0x1000, "CAOS ROM C", (emu.kc85.io86 & kc85::IO86_CAOS_ROM_C) ? type::mapped : type::off);
         }
 
         // CAOS-E bank
@@ -185,11 +185,11 @@ MemoryMapWindow::Draw(kc85& kc) {
 
         // modules
         for (int mem_layer = 1; mem_layer < 3; mem_layer++) {
-            const memory& mem = kc.board->cpu.mem;
+            const memory& mem = emu.board.cpu.mem;
             const ubyte slot_addr = mem_layer == 1 ? 0x08 : 0x0C;
-            if (kc.exp.slot_occupied(slot_addr)) {
+            if (emu.kc85.exp.slot_occupied(slot_addr)) {
                 const int draw_layer = (is_kc85_4 ? 5 : 0) + mem_layer;
-                const auto& slot = kc.exp.slot_by_addr(slot_addr);
+                const auto& slot = emu.kc85.exp.slot_by_addr(slot_addr);
                 YAKC_ASSERT(slot.mod.mem_size > 0);
 
                 // split modules > 16 KByte into multiple banks
@@ -199,7 +199,7 @@ MemoryMapWindow::Draw(kc85& kc) {
                 while (addr < end) {
                     type t = type::off;
                     if (slot.control_byte & 1) {
-                        t = kc.exp.module_in_slot_owns_pointer(slot_addr, mem.ptr(addr)) ? type::mapped : type::hidden;
+                        t = emu.kc85.exp.module_in_slot_owns_pointer(slot_addr, mem.ptr(addr)) ? type::mapped : type::hidden;
                     }
                     this->drawRect(draw_layer, addr, len >= 0x4000 ? 0x4000:(len&0x3FFF), slot.mod.name, t);
                     addr += 0x4000;

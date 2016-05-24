@@ -12,9 +12,9 @@ class ModuleWindow : public WindowBase {
     OryolClassDecl(ModuleWindow);
 public:
     /// setup the window
-    virtual void Setup(yakc::kc85& kc) override;
+    virtual void Setup(yakc::emu& emu) override;
     /// draw method
-    virtual bool Draw(yakc::kc85& kc) override;
+    virtual bool Draw(yakc::emu& emu) override;
     /// draw a single module slot
     void drawModuleSlot(yakc::kc85& kc, yakc::ubyte slot_addr);
 };

@@ -11,12 +11,12 @@ class CommandWindow : public WindowBase {
     OryolClassDecl(CommandWindow);
 public:
     /// setup the window
-    virtual void Setup(yakc::kc85& kc) override;
+    virtual void Setup(yakc::emu& emu) override;
     /// draw method
-    virtual bool Draw(yakc::kc85& kc) override;
+    virtual bool Draw(yakc::emu& emu) override;
 
     /// populate commands array
-    void scan(const yakc::kc85& kc, yakc::ubyte prologByte);
+    void scan(const yakc::emu& emu, yakc::ubyte prologByte);
 
     HexInputWidget prologByteWidget;
     struct Cmd {

@@ -11,7 +11,7 @@ public:
     /// constructor
     Disasm();
     /// disassemble instruction at addr, return new addr
-    yakc::uword Disassemble(const yakc::kc85& kc, yakc::uword addr);
+    yakc::uword Disassemble(const yakc::emu& emu, yakc::uword addr);
     /// get disassembled string
     const char* Result() const;
 
@@ -19,6 +19,6 @@ private:
     /// fetch next opcode byte for z80dasm
     static yakc::ubyte fetch(yakc::uword base, int offset, void* userdata);
 
-    const yakc::kc85* context;
+    const yakc::emu* context;
     char buffer[64];
 };

@@ -17,14 +17,14 @@ LoadWindow::SetFileLoader(FileLoader* fileLoader) {
 
 //------------------------------------------------------------------------------
 void
-LoadWindow::Setup(kc85& kc) {
+LoadWindow::Setup(emu& emu) {
     YAKC_ASSERT(this->loader);
     this->setName("Load File");
 }
 
 //------------------------------------------------------------------------------
 bool
-LoadWindow::Draw(kc85& kc) {
+LoadWindow::Draw(emu& emu) {
     YAKC_ASSERT(this->loader);
 
     ImGui::SetNextWindowSize(ImVec2(512, 256), ImGuiSetCond_Once);
@@ -35,10 +35,10 @@ LoadWindow::Draw(kc85& kc) {
         int curr = 0;
         ImGui::BeginChild("kcclist", ImVec2(250,0), true);
         for (const auto& item : this->loader->Items) {
-            if (int(item.Compat) & int(kc.model())) {
+            if (int(item.Compat) & int(emu.model)) {
                 if (ImGui::Selectable(item.Name.AsCStr(), selected == curr)) {
                     selected = curr;
-                    this->loader->Load(kc, item);
+                    this->loader->Load(emu, item);
                 }
                 curr++;
             }
@@ -74,13 +74,13 @@ LoadWindow::Draw(kc85& kc) {
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "File Size Error!");
             }
             if (ImGui::Button("Load")) {
-                this->loader->Copy(kc);
+                this->loader->Copy(emu);
                 this->Visible = false;
             }
             ImGui::SameLine();
             if (this->loader->Info.HasExecAddr) {
                 if (ImGui::Button("Load & Start")) {
-                    this->loader->Start(kc);
+                    this->loader->Start(emu);
                     this->Visible = false;
                 }
             }

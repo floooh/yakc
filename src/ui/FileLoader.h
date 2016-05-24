@@ -53,29 +53,29 @@ public:
     Oryol::IOStatus::Code FailedStatus = Oryol::IOStatus::OK;
 
     /// setup the file loader object
-    void Setup(yakc::kc85& kc);
+    void Setup(yakc::emu& emu);
     /// discard the loader object
     void Discard();
     /// load a file, and don't automatically start
-    void Load(yakc::kc85& kc, const Item& item);
+    void Load(yakc::emu& emu, const Item& item);
     /// load and auto-start a file
-    void LoadAndStart(yakc::kc85& kc, const Item& item);
+    void LoadAndStart(yakc::emu& emu, const Item& item);
     /// copy the previously loaded file into Z80 memory
-    bool Copy(yakc::kc85& kc);
+    bool Copy(yakc::emu& emu);
     /// copy to memory and start the previously loaded file
-    bool Start(yakc::kc85& kc);
+    bool Start(yakc::emu& emu);
 
 private:
     /// internal load method
-    void load(yakc::kc85* kc, const Item& item, bool autostart);
+    void load(yakc::emu* emu, const Item& item, bool autostart);
     /// get file info from loaded file data
     static FileInfo parseHeader(const Oryol::Buffer& data);
     /// copy data from loaded stream object into KC memory
-    static void copy(yakc::kc85* kc, const FileInfo& info, const Oryol::Buffer& data);
+    static void copy(yakc::emu* emu, const FileInfo& info, const Oryol::Buffer& data);
     /// special-case patch loaded files
-    static void patch(yakc::kc85* kc, const FileInfo& info);
+    static void patch(yakc::emu* emu, const FileInfo& info);
     /// auto-start the loaded program
-    static void start(yakc::kc85* kc, const FileInfo& info);
+    static void start(yakc::emu* emu, const FileInfo& info);
 
     /// KCC file format header block
     #pragma pack(push,1)

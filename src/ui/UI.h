@@ -18,13 +18,13 @@ class Audio;
 class UI {
 public:
     /// setup the UI
-    void Setup(yakc::kc85& kc, Audio* audio);
+    void Setup(yakc::emu& emu, Audio* audio);
     /// discard the UI
     void Discard();
     /// do one frame
-    void OnFrame(yakc::kc85& kc);
+    void OnFrame(yakc::emu& emu);
     /// open a window
-    void OpenWindow(yakc::kc85& kc, const Oryol::Ptr<WindowBase>& window);
+    void OpenWindow(yakc::emu& emu, const Oryol::Ptr<WindowBase>& window);
     /// toggle the UI on/off
     void Toggle();
     /// switch to dark UI theme
