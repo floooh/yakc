@@ -5,7 +5,7 @@
     @brief debug helper functions
 */
 #include "core/common.h"
-#include "core/z80.h"
+#include "z80/z80.h"
 
 namespace yakc {
 

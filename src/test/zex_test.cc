@@ -2,7 +2,7 @@
 //  zexdoc_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "core/z80.h"
+#include "z80/z80.h"
 #include "test/zex.h"
 #include "Core/Time/Clock.h"
 #include <string.h>

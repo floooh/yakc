@@ -6,7 +6,7 @@
 */
 #include "core/common.h"
 #include "core/memory.h"
-#include "core/z80int.h"
+#include "z80/z80int.h"
 
 namespace yakc {
 
@@ -84,19 +84,6 @@ public:
     /// invalid instruction hit
     bool INV;
 
-    #if YAKC_Z80_DECODER
-    /// 8-bit register index map into R8
-    int r[8];
-    /// same as r[], but HL will never be patched to IX/IY
-    int r2[8];
-    /// 16-bit register index map with SP into R16
-    int rp[4];
-    /// 16-bit register index map with AF into R16
-    int rp2[4];
-    /// access to HL/IX/IY 16-bit register slot
-    #define HLIXIY R16[rp[2]]
-    #endif
-
     /// flag lookup table for SZP flag combinations
     ubyte szp[256];
 
@@ -141,15 +128,6 @@ public:
     uint32_t invalid_opcode(uword opsize);
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
-
-    #if YAKC_Z80_DECODER
-    /// check flag status for RET cc, JP cc, CALL cc, etc...
-    bool cc(ubyte y) const;
-    /// get address for (HL), (IX+d), (IY+d)
-    uword iHLIXIYd(bool ext);
-    /// perform a general ALU op (add, adc, sub, sbc, cp, and, or, xor)
-    void alu8(ubyte alu, ubyte val);    
-    #endif
 
     /// receive an interrupt request
     static void irq(void* self);
@@ -277,18 +255,8 @@ public:
     ubyte fetch_op();
     /// execute a single instruction, return number of cycles
     uint32_t step();
-
-    #if YAKC_Z80_DECODER
-    /// decode CB prefix instruction
-    uint32_t do_cb(ubyte op, bool ext, int off);
-    /// decode ED prefix instruction
-    uint32_t do_ed(ubyte op);
-    /// decode main instruction
-    uint32_t do_op(ubyte op, bool ext);
-    #else
     /// top-level opcode decoder (generated)
     uint32_t do_op();
-    #endif
 };
 
 //------------------------------------------------------------------------------
@@ -337,30 +305,6 @@ z80::init_tables() {
         f |= p & 1 ? 0 : PF;
         this->szp[val] = f;
     }
-
-    #if YAKC_Z80_DECODER
-    // 8-bit register index mapping table into R8[]
-    r[0] = r2[0] = 1;   // B
-    r[1] = r2[1] = 0;   // C
-    r[2] = r2[2] = 3;   // D
-    r[3] = r2[3] = 2;   // E
-    r[4] = r2[4] = 5;   // H
-    r[5] = r2[5] = 4;   // L
-    r[6] = r2[6] = -1;  // (HL)
-    r[7] = r2[7] = 7;   // A
-
-    // 16-bit register index mapping table with SP into r16[]
-    rp[0] = 0;  // BC
-    rp[1] = 1;  // DE
-    rp[2] = 2;  // HL
-    rp[3] = 7;  // SP
-
-    // 16-bit register index mapping table with AF into r16[]
-    rp2[0] = 0; // BC
-    rp2[1] = 1; // DE
-    rp2[2] = 2; // HL
-    rp2[3] = 3; // AF
-    #endif
 }
 
 //------------------------------------------------------------------------------
@@ -1137,16 +1081,8 @@ z80::step() {
         IFF1 = IFF2 = true;
         enable_interrupt = false;
     }
-    #if YAKC_Z80_DECODER
-    return do_op(fetch_op(), false);
-    #else
     return do_op();
-    #endif
 }
 
 } // namespace
-#if YAKC_Z80_DECODER
-#include "core/z80_decoder.h"
-#else
-#include "core/z80_opcodes.h"
-#endif
+#include "z80/z80_opcodes.h"

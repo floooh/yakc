@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "PIOWindow.h"
 #include "IMUI/IMUI.h"
-#include "core/z80pio.h"
+#include "z80/z80pio.h"
 #include "ui/UI.h"
 
 using namespace Oryol;

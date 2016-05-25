@@ -9,8 +9,8 @@
     (see here: https://github.com/mamedev/mame/blob/dfa148ff8022e9f1a544c8603dd0e8c4aa469c1e/src/mame/machine/kc.cpp#L710)
 */
 #include "core/common.h"
-#include "core/z80.h"
-#include "core/z80int.h"
+#include "z80/z80.h"
+#include "z80/z80int.h"
 
 namespace yakc {
 

@@ -6,10 +6,10 @@
 */
 #include "core/common.h"
 #include "core/clock.h"
-#include "core/z80.h"
-#include "core/z80dbg.h"
-#include "core/z80pio.h"
-#include "core/z80ctc.h"
+#include "z80/z80.h"
+#include "z80/z80dbg.h"
+#include "z80/z80pio.h"
+#include "z80/z80ctc.h"
 
 namespace yakc {
 
