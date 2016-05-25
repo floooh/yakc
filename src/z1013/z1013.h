@@ -60,6 +60,8 @@ public:
     device cur_model;
     os_rom cur_os;
     bool on;
+    bool cpu_ahead;
+    bool cpu_behind;
     uint64_t abs_cycle_count;   // total CPU cycle count
     uint32_t overflow_cycles;   // cycles that have overflowed from last frame
     const ubyte* os_ptr;
@@ -78,6 +80,8 @@ board(nullptr),
 cur_model(device::z1013_01),
 cur_os(os_rom::z1013_mon202),
 on(false),
+cpu_ahead(false),
+cpu_behind(false),
 abs_cycle_count(0),
 overflow_cycles(0),
 os_ptr(nullptr),
@@ -156,14 +160,28 @@ inline void
 z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
     // FIXME: the speed multiplier isn't currently working because of the min/max cycle count limiter!
     YAKC_ASSERT(speed_multiplier > 0);
+    this->cpu_ahead = false;
+    this->cpu_behind = false;    
     z80& cpu = this->board->cpu;
     z80dbg& dbg = this->board->dbg;
     clock& clk = this->board->clck;
 
     if (!dbg.paused) {
         // compute the end-cycle-count for the current frame
+        // compute the end-cycle-count for the current frame
+        if (this->abs_cycle_count == 0) {
+            this->abs_cycle_count = min_cycle_count;
+        }
         const int64_t num_cycles = clk.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
         uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
+        if (abs_end_cycles > max_cycle_count) {
+            abs_end_cycles = max_cycle_count;
+            this->cpu_ahead = true;
+        }
+        else if (abs_end_cycles < min_cycle_count) {
+            abs_end_cycles = min_cycle_count;
+            this->cpu_behind = true;
+        }
         while (this->abs_cycle_count < abs_end_cycles) {
             if (dbg.check_break(cpu)) {
                 dbg.paused = true;
