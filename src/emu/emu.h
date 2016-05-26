@@ -5,7 +5,7 @@
     @brief simple wrapper class which bundles all the emulators
 */
 #include "core/common.h"
-#include "core/breadboard.h"
+#include "emu/breadboard.h"
 #include "kc85/kc85.h"
 #include "z1013/z1013.h"
 

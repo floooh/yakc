@@ -7,7 +7,7 @@
     http://hc-ddr.hucki.net/wiki/doku.php/z1013:hardware
     http://hc-ddr.hucki.net/wiki/doku.php/z1013:software:monitor:riesa202
 */
-#include "core/breadboard.h"
+#include "emu/breadboard.h"
 #include "roms/roms.h"
 #include "z1013/z1013_video.h"
 #include "z1013/z1013_roms.h"
