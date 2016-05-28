@@ -22,5 +22,5 @@ fips_begin_module(ui)
         SnapshotStorage.cc SnapshotStorage.h
         z80dasm.cc z80dasm.h
     )
-    fips_deps(core roms)
+    fips_deps(core roms soloud)
 fips_end_module()
