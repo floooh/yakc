@@ -6,7 +6,7 @@
 */
 #include "KC85Oryol.h"
 #include "Gfx/Gfx.h"
-#include "shaders.h"
+#include "glm/vec2.hpp"
 
 class Draw {
 public:
@@ -24,15 +24,14 @@ public:
     /// restore fullscreen viewport
     void restoreViewport();
 
-    bool crtEffectEnabled;
+    bool crtEffectEnabled = false;
+    bool crtColorEnabled = true;
+    glm::vec2 crtWarp;
 
     Oryol::Id irmTexture320x256;
     Oryol::Id irmTexture256x256;
     Oryol::DrawState crtDrawState;
-    Oryol::CRTShader::FSParams crtFsParams;
-
     Oryol::DrawState nocrtDrawState;
-    Oryol::NoCRTShader::FSParams nocrtFsParams;
 
     Oryol::ImageDataAttrs texUpdateAttrs;
     int frameSize = 0;

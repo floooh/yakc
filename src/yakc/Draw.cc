@@ -2,6 +2,7 @@
 //  Draw.cc
 //------------------------------------------------------------------------------
 #include "Draw.h"
+#include "shaders.h"
 
 using namespace Oryol;
 using namespace yakc;
@@ -10,6 +11,7 @@ using namespace yakc;
 void
 Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     this->crtEffectEnabled = false;
+    this->crtColorEnabled = true;
     this->frameSize = frame;
     this->texUpdateAttrs.NumFaces = 1;
     this->texUpdateAttrs.NumMipMaps = 1;
@@ -41,9 +43,6 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     this->crtDrawState.Pipeline = Gfx::CreateResource(pips);
     pips.Shader = nocrtShd;
     this->nocrtDrawState.Pipeline = Gfx::CreateResource(pips);
-
-    this->crtFsParams.ColorTV = true;
-    this->nocrtFsParams.ColorTV = true;
 }
 
 //------------------------------------------------------------------------------
@@ -54,10 +53,10 @@ Draw::Discard() {
 
 //------------------------------------------------------------------------------
 void
-Draw::UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& crtWarp) {
+Draw::UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& warp) {
     this->crtEffectEnabled = enableCrtEffect;
-    this->crtFsParams.ColorTV = this->nocrtFsParams.ColorTV = colorTV;
-    this->crtFsParams.CRTWarp = this->nocrtFsParams.CRTWarp = crtWarp;
+    this->crtColorEnabled = colorTV;
+    this->crtWarp = warp;
 }
 
 //------------------------------------------------------------------------------
@@ -74,12 +73,18 @@ Draw::Render(const void* pixels, int width, int height) {
     Gfx::UpdateTexture(tex, pixels, this->texUpdateAttrs);
     this->applyViewport(width, height);
     if (this->crtEffectEnabled) {
+        Oryol::CRTShader::FSParams fsParams;
+        fsParams.ColorTV = this->crtColorEnabled;
+        fsParams.CRTWarp = this->crtWarp;
         Gfx::ApplyDrawState(this->crtDrawState);
-        Gfx::ApplyUniformBlock(this->crtFsParams);
+        Gfx::ApplyUniformBlock(fsParams);
     }
     else {
+        Oryol::NoCRTShader::FSParams fsParams;
+        fsParams.ColorTV = this->crtColorEnabled;
+        fsParams.CRTWarp = this->crtWarp;
         Gfx::ApplyDrawState(this->nocrtDrawState);
-        Gfx::ApplyUniformBlock(this->nocrtFsParams);
+        Gfx::ApplyUniformBlock(fsParams);
     }
     Gfx::Draw(0);
     this->restoreViewport();
