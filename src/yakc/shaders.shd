@@ -147,7 +147,7 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 @end
 
 //------------------------------------------------------------------------------
-@vs vs
+@vs yakc_vs
 @in vec4 position
 @in vec2 texcoord0
 @out vec2 uv
@@ -167,7 +167,7 @@ vec2 crtWarp CRTWarp
 @end
 
 // this renders with expensive CRT effect
-@fs crtFS
+@fs yakc_crtFS
 @use_code_block TL_CRT
 @use_texture_block textures
 @use_uniform_block fsParams
@@ -183,7 +183,7 @@ vec2 crtWarp CRTWarp
 @end
 
 // this renders without the expensive CRT effect
-@fs nocrtFS
+@fs yakc_nocrtFS
 @use_texture_block textures
 @use_uniform_block fsParams
 @in vec2 uv
@@ -197,6 +197,6 @@ vec2 crtWarp CRTWarp
 }
 @end
 
-@program CRTShader vs crtFS
-@program NoCRTShader vs nocrtFS
+@program CRTShader yakc_vs yakc_crtFS
+@program NoCRTShader yakc_vs yakc_nocrtFS
 
