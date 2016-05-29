@@ -14,14 +14,13 @@ if (YAKC_UI)
     add_definitions("-DYAKC_UI=1")
 endif()
 
-set(SOLOUD_LIBMODPLUG OFF CACHE BOOL "Do not use libmodplug")
-
 if (FIPS_MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 # manual imports
 if (NOT FIPS_IMPORT)
+    set(SOLOUD_LIBMODPLUG OFF CACHE BOOL "Do not use libmodplug")
     fips_ide_group("Oryol")
     fips_import_oryol_Core()
     fips_import_oryol_Gfx()
