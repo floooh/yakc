@@ -5,7 +5,8 @@
 #include "Core/String/StringBuilder.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 int WindowBase::globalUniqueId = 0;
 
@@ -22,3 +23,6 @@ WindowBase::setName(const char* str) {
     strBuilder.Format(32, "%s##%d", str, ++globalUniqueId);
     this->title = strBuilder.GetString();
 }
+
+} // namespace yakc
+

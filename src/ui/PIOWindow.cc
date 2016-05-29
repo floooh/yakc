@@ -7,7 +7,8 @@
 #include "ui/UI.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -97,3 +98,6 @@ PIOWindow::Draw(emu& emu) {
     ImGui::End();
     return this->Visible;
 }
+
+} // namespace yakc
+

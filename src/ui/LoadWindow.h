@@ -7,6 +7,8 @@
 #include "ui/WindowBase.h"
 #include "ui/FileLoader.h"
 
+ namespace yakc {
+
 class LoadWindow : public WindowBase {
     OryolClassDecl(LoadWindow);
 public:
@@ -20,3 +22,5 @@ public:
 private:
     FileLoader* loader = nullptr;
 };
+
+} // namespace yakc

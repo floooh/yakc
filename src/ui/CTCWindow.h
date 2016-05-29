@@ -6,6 +6,8 @@
 */
 #include "ui/WindowBase.h"
 
+namespace yakc {
+
 class CTCWindow : public WindowBase {
     OryolClassDecl(CTCWindow);
 public:
@@ -15,3 +17,4 @@ public:
     virtual bool Draw(yakc::emu& emu) override;
 };
 
+} // namespace yakc

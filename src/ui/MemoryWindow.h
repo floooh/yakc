@@ -7,6 +7,8 @@
 #include "ui/WindowBase.h"
 #include "ui/ImGuiMemoryEditor.h"
 
+namespace yakc {
+
 class MemoryWindow : public WindowBase {
     OryolClassDecl(MemoryWindow);
 public:
@@ -17,3 +19,5 @@ public:
 
     MemoryEditor edit;
 };
+
+} // namespace yakc

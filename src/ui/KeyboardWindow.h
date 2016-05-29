@@ -6,6 +6,8 @@
 */
 #include "ui/WindowBase.h"
 
+namespace yakc {
+
 class KeyboardWindow : public WindowBase {
     OryolClassDecl(KeyboardWindow);
 public:
@@ -17,3 +19,5 @@ public:
     bool shift = false;
     bool caps_lock = false;
 };
+
+} // namespace yakc

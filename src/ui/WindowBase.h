@@ -8,6 +8,8 @@
 #include "Core/String/String.h"
 #include "yakc/KC85Oryol.h"
 
+namespace yakc {
+
 class WindowBase : public Oryol::RefCounted {
     OryolClassDecl(WindowBase);
 public:
@@ -27,3 +29,5 @@ protected:
     static int globalUniqueId;
     Oryol::String title;
 };
+
+} // namespace yakc

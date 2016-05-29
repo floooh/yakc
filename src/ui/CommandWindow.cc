@@ -8,7 +8,8 @@
 #include <ctype.h>
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -74,3 +75,6 @@ CommandWindow::scan(const emu& emu, ubyte prologByte) {
         prevByte = curByte;
     }
 }
+
+} // namespace yakc
+

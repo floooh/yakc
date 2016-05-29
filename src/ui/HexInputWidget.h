@@ -9,6 +9,8 @@
 #include "Core/String/StringAtom.h"
 #include "IMUI/IMUI.h"
 
+namespace yakc {
+
 class HexInputWidget {
 public:
     /// constructor
@@ -74,3 +76,5 @@ public:
     yakc::uword value;
     bool modeUWord;
 };
+
+} // namespace yakc

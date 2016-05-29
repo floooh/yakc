@@ -20,7 +20,8 @@
 #include "roms/roms.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 ImVec4 UI::DefaultTextColor;
 ImVec4 UI::EnabledColor;
@@ -362,3 +363,6 @@ UI::OnFrame(emu& emu) {
         }
     }
 }
+
+} // namespace yakc
+

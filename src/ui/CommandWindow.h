@@ -7,6 +7,8 @@
 #include "ui/HexInputWidget.h"
 #include "ui/WindowBase.h"
 
+namespace yakc {
+
 class CommandWindow : public WindowBase {
     OryolClassDecl(CommandWindow);
 public:
@@ -26,4 +28,7 @@ public:
     };
     Oryol::Array<Cmd> commands;
 };
+
+} // namespace yakc
+
 

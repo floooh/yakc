@@ -9,6 +9,8 @@
 #include "Core/Containers/Array.h"
 #include "IO/IO.h"
 
+namespace yakc {
+
 class FileLoader {
 public:
     /// a load item
@@ -104,3 +106,6 @@ private:
 
     Oryol::Buffer kccData;
 };
+
+} // namespace yakc
+

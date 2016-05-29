@@ -13,6 +13,8 @@
 #include "Core/Containers/Array.h"
 #include "IMUI/IMUI.h"
 
+namespace yakc {
+
 class Audio;
 
 class UI {
@@ -64,3 +66,6 @@ private:
     ImGuiStyle lightTheme;
     Audio* audio;
 };
+
+} // namespace yakc
+

@@ -6,7 +6,8 @@
 #include "Disasm.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -82,3 +83,4 @@ DisasmWindow::drawControls() {
     this->lengthWidget.Draw();
 }
 
+} // namespace yakc

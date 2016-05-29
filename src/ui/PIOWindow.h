@@ -7,6 +7,8 @@
 #include "ui/HexInputWidget.h"
 #include "ui/WindowBase.h"
 
+namespace yakc {
+
 class PIOWindow : public WindowBase {
     OryolClassDecl(PIOWindow);
 public:
@@ -18,3 +20,5 @@ public:
     HexInputWidget pioAData;
     HexInputWidget pioBData;
 };
+
+} // namespace yakc

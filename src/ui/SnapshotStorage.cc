@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "SnapshotStorage.h"
 
-using namespace yakc;
+namespace yakc {
 
 //------------------------------------------------------------------------------
 SnapshotStorage::SnapshotStorage() {
@@ -41,3 +41,5 @@ SnapshotStorage::ApplySnapshot(int slotIndex, emu& emu) {
     YAKC_ASSERT((slotIndex >= 0) && (slotIndex < MaxNumSnapshots));
     kc85_snapshot::apply_snapshot(this->snapshots[slotIndex], emu.kc85);
 }
+
+} // namespace yakc

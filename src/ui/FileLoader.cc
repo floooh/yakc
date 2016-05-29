@@ -5,7 +5,8 @@
 #include "Core/String/StringBuilder.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -221,3 +222,6 @@ FileLoader::start(emu* emu, const FileInfo& info) {
         cpu.PC = info.ExecAddr;
     }
 }
+
+} // namespace yakc
+

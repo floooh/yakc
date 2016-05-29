@@ -7,7 +7,8 @@
 #include <string.h>
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -91,4 +92,6 @@ LoadWindow::Draw(emu& emu) {
     ImGui::End();
     return this->Visible;
 }
+
+} // namespace yakc
 

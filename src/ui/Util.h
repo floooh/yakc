@@ -7,6 +7,8 @@
 #include "core/common.h"
 #include <stdio.h>
 
+namespace yakc {
+
 class Util {
 public:
     /// convert a single 4-bit nibble to a hex character (0..F)
@@ -51,3 +53,5 @@ public:
         }
     }
 };
+
+} // namespace yakc

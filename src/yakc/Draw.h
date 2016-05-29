@@ -8,6 +8,8 @@
 #include "Gfx/Gfx.h"
 #include "glm/vec2.hpp"
 
+namespace yakc {
+
 class Draw {
 public:
     /// setup the renderer
@@ -36,3 +38,6 @@ public:
     Oryol::ImageDataAttrs texUpdateAttrs;
     int frameSize = 0;
 };
+
+} // namespace yakc
+

@@ -4,6 +4,8 @@
 #include "kc85_audiosource.h"
 #include "Core/Log.h"
 
+namespace yakc {
+
 //------------------------------------------------------------------------------
 kc85_audiosource::kc85_audiosource() {
     this->mChannels = 2;
@@ -58,4 +60,7 @@ bool
 kc85_audioinstance::hasEnded() {
     return false;
 }
+
+} // namespace yakc
+
 

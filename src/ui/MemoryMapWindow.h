@@ -6,6 +6,8 @@
 */
 #include "ui/WindowBase.h"
 
+namespace yakc {
+
 class MemoryMapWindow : public WindowBase {
     OryolClassDecl(MemoryMapWindow);
 public:
@@ -33,3 +35,6 @@ public:
     /// get name for a memory layer and page
     pageInfo getPageInfo(yakc::kc85& kc, int layer_index, int page_index) const;
 };
+
+} // namespace yakc
+

@@ -345,3 +345,4 @@ YakcApp::initModules() {
             "...where [SLOT] is 08 or 0C");
     });
 }
+

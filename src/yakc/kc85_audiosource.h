@@ -7,6 +7,8 @@
 #include "soloud.h"
 #include "Core/Threading/RWLock.h"
 
+namespace yakc {
+
 class kc85_audiosource;
 
 class kc85_audioinstance : public SoLoud::AudioSourceInstance {
@@ -80,3 +82,6 @@ public:
     uint32_t sample_rate = 44100;               // audio sample rate in Hz
     channel channels[2];
 };
+
+} // namespace yakc
+

@@ -8,6 +8,8 @@
 #include "ui/WindowBase.h"
 #include "Core/Containers/Array.h"
 
+namespace yakc {
+
 class ModuleWindow : public WindowBase {
     OryolClassDecl(ModuleWindow);
 public:
@@ -18,3 +20,6 @@ public:
     /// draw a single module slot
     void drawModuleSlot(yakc::kc85& kc, yakc::ubyte slot_addr);
 };
+
+} // namespace yakc
+

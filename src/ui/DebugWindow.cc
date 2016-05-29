@@ -7,7 +7,8 @@
 #include "Disasm.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 static const z80dbg::reg regs16[] = {
     z80dbg::AF, z80dbg::BC, z80dbg::DE, z80dbg::HL,
@@ -224,3 +225,5 @@ DebugWindow::drawMainContent(emu& emu, uword start_addr, int num_lines) {
     ImGui::PopStyleVar(2);
     ImGui::EndChild();
 }
+
+} // namespace yakc

@@ -7,6 +7,8 @@
 #include "ui/HexInputWidget.h"
 #include "ui/WindowBase.h"
 
+namespace yakc {
+
 class DisasmWindow : public WindowBase {
     OryolClassDecl(DisasmWindow);
 public:
@@ -23,3 +25,6 @@ public:
     HexInputWidget startWidget;
     HexInputWidget lengthWidget;
 };
+
+} // namespace yakc
+

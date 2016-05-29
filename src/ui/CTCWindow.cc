@@ -6,7 +6,8 @@
 #include "Core/String/StringBuilder.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -54,3 +55,4 @@ CTCWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
+} // namespace yakc

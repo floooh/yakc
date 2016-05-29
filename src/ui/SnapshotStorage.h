@@ -6,6 +6,8 @@
 */
 #include "yakc/KC85Oryol.h"
 
+namespace yakc {
+
 class SnapshotStorage {
 public:
     /// max number of snapshots
@@ -24,3 +26,5 @@ public:
 
     yakc::kc85_snapshot::state_t snapshots[MaxNumSnapshots];
 };
+
+} // namespace yakc

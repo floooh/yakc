@@ -157,11 +157,11 @@ _func vec4 tl_crt(sampler2D iChannel0, vec4 fragCoord, vec2 uv, vec2 warp) {
 }
 @end
 
-@texture_block textures Textures
+@texture_block yakcTextures YAKCTextures
 sampler2D iChannel0 IRM
 @end
 
-@uniform_block fsParams FSParams
+@uniform_block yakcFSParams YAKCFSParams
 bool colorTV ColorTV
 vec2 crtWarp CRTWarp
 @end
@@ -169,8 +169,8 @@ vec2 crtWarp CRTWarp
 // this renders with expensive CRT effect
 @fs yakc_crtFS
 @use_code_block TL_CRT
-@use_texture_block textures
-@use_uniform_block fsParams
+@use_texture_block yakcTextures
+@use_uniform_block yakcFSParams
 @in vec2 uv
 {
     vec4 color = tl_crt(iChannel0, _fragcoord, uv, crtWarp);
@@ -184,8 +184,8 @@ vec2 crtWarp CRTWarp
 
 // this renders without the expensive CRT effect
 @fs yakc_nocrtFS
-@use_texture_block textures
-@use_uniform_block fsParams
+@use_texture_block yakcTextures
+@use_uniform_block yakcFSParams
 @in vec2 uv
 {
     vec4 color = tex2D(iChannel0, uv);

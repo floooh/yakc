@@ -7,7 +7,8 @@
 
 using namespace Oryol;
 using namespace z80dasm;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 Disasm::Disasm() :
@@ -35,3 +36,5 @@ const char*
 Disasm::Result() const {
     return this->buffer;
 }
+
+} // namespace yakc

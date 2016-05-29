@@ -2,10 +2,11 @@
 //  Draw.cc
 //------------------------------------------------------------------------------
 #include "Draw.h"
-#include "shaders.h"
+#include "yakc_shaders.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -67,20 +68,20 @@ Draw::Render(const void* pixels, int width, int height) {
 
     // copy decoded RGBA8 into texture
     Id tex = (256 == width) ? this->irmTexture256x256 : this->irmTexture320x256;
-    this->crtDrawState.FSTexture[Textures::IRM] = tex;
-    this->nocrtDrawState.FSTexture[Textures::IRM] = tex;
+    this->crtDrawState.FSTexture[YAKCTextures::IRM] = tex;
+    this->nocrtDrawState.FSTexture[YAKCTextures::IRM] = tex;
     this->texUpdateAttrs.Sizes[0][0] = width*height*4;
     Gfx::UpdateTexture(tex, pixels, this->texUpdateAttrs);
     this->applyViewport(width, height);
     if (this->crtEffectEnabled) {
-        Oryol::CRTShader::FSParams fsParams;
+        Oryol::CRTShader::YAKCFSParams fsParams;
         fsParams.ColorTV = this->crtColorEnabled;
         fsParams.CRTWarp = this->crtWarp;
         Gfx::ApplyDrawState(this->crtDrawState);
         Gfx::ApplyUniformBlock(fsParams);
     }
     else {
-        Oryol::NoCRTShader::FSParams fsParams;
+        Oryol::NoCRTShader::YAKCFSParams fsParams;
         fsParams.ColorTV = this->crtColorEnabled;
         fsParams.CRTWarp = this->crtWarp;
         Gfx::ApplyDrawState(this->nocrtDrawState);
@@ -110,3 +111,5 @@ Draw::restoreViewport() {
     const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
     Gfx::ApplyViewPort(0, 0, fbWidth, fbHeight);
 }
+
+} // namespace yakc

@@ -22,6 +22,8 @@
 // TODO: better resizing policy (ImGui doesn't have flexible window resizing constraints yet)
 #include <stdio.h>
 
+namespace yakc {
+
 struct MemoryEditor
 {
     typedef unsigned char ubyte;
@@ -233,3 +235,5 @@ struct MemoryEditor
         return this->Open;
     }
 };
+
+} // namespace yakc

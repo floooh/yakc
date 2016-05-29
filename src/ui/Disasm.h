@@ -6,6 +6,8 @@
 */
 #include "yakc/KC85Oryol.h"
 
+namespace yakc {
+
 class Disasm {
 public:
     /// constructor
@@ -22,3 +24,5 @@ private:
     const yakc::emu* context;
     char buffer[64];
 };
+
+} // namespace yakc

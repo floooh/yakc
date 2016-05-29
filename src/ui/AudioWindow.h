@@ -7,6 +7,8 @@
 #include "yakc/KC85Oryol.h"
 #include "ui/WindowBase.h"
 
+namespace yakc {
+
 class Audio;
 
 class AudioWindow : public WindowBase {
@@ -25,3 +27,5 @@ public:
     bool cpuBehind;
     float wavBuffer[256];
 };
+
+} // namespace yakc

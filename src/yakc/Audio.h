@@ -9,6 +9,8 @@
 #include "kc85_audiosource.h"
 #include "soloud_biquadresonantfilter.h"
 
+namespace yakc {
+
 class Audio {
 public:
     /// setup audio playback
@@ -32,3 +34,5 @@ public:
     kc85_audiosource audioSource;
     int audioHandle = 0;
 };
+
+} // namespace yakc

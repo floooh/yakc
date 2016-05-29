@@ -5,7 +5,8 @@
 #include "IMUI/IMUI.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 struct key {
     key() : pos(0.0f), name(nullptr), code(0), shift_code(0) { };
@@ -112,6 +113,7 @@ KeyboardWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
+} // namespace yakc
 
 
 

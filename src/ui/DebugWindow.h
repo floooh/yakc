@@ -8,6 +8,8 @@
 #include "ui/WindowBase.h"
 #include "Core/Containers/Array.h"
 
+namespace yakc {
+
 class DebugWindow : public WindowBase {
     OryolClassDecl(DebugWindow);
 public:
@@ -30,3 +32,5 @@ public:
     HexInputWidget regWidget[yakc::z80dbg::reg::num];
     HexInputWidget breakPointWidget;
 };
+
+} // namespace yakc

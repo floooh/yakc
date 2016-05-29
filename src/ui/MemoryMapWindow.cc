@@ -7,7 +7,8 @@
 #include "ui/UI.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 static const int bank_height = 20;
 static const int left_padding = 80;
@@ -211,3 +212,5 @@ MemoryMapWindow::Draw(emu& emu) {
     ImGui::End();
     return this->Visible;
 }
+
+} // namespace yakc

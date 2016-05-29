@@ -5,7 +5,8 @@
 #include "Input/Core/Key.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -40,3 +41,5 @@ MemoryWindow::Draw(emu& emu) {
     }
     return this->Visible;
 }
+
+} // namespace yakc

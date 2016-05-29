@@ -5,7 +5,8 @@
 #include "soloud.h"
 
 using namespace Oryol;
-using namespace yakc;
+
+namespace yakc {
 
 //------------------------------------------------------------------------------
 void
@@ -70,3 +71,6 @@ Audio::cb_volume(void* userdata, uint64_t cycle_pos, int vol) {
     seem to set the volume to 0, not sure yet what's up with that.
 */
 }
+
+} // namespace yakc
+

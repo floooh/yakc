@@ -6,7 +6,7 @@ fips_begin_app(yakc windowed)
         KC85Oryol.h
         kc85_audiosource.h kc85_audiosource.cc
     )
-    oryol_shader(shaders.shd)
+    oryol_shader(yakc_shaders.shd)
     if (YAKC_UI)
         fips_deps(ui IMUI)
     endif()
