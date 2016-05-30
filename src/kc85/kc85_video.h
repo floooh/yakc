@@ -35,7 +35,7 @@ public:
     /// decode the next line
     void decode_one_line(unsigned int* ptr, int y, bool blink_bg);
 
-    enum device model = device::kc85_3;
+    device model = device::kc85_3;
     ubyte irm_control = 0;
     bool pio_blink_flag = true;
     bool ctc_blink_flag = true;
