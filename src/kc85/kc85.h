@@ -197,6 +197,7 @@ kc85::poweron(device m, os_rom os) {
 inline void
 kc85::poweroff() {
     YAKC_ASSERT(this->on);
+    this->audio.reset();
     this->board->cpu.mem.unmap_all();
     this->on = false;
 }
