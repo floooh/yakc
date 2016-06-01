@@ -8,11 +8,11 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-PIOWindow::Setup(emu& emu) {
+PIOWindow::Setup(yakc& emu) {
     this->setName("Z80 PIO State");
     this->pioAData.Configure8("PIO A Data (port 0x88)", emu.board.pio.read(z80pio::A));
     this->pioBData.Configure8("PIO B Data (port 0x89)", emu.board.pio.read(z80pio::B));
@@ -28,7 +28,7 @@ onOffLine(const char* text, bool on) {
 
 //------------------------------------------------------------------------------
 static void
-pioControlState(const emu& emu, z80pio::channel chn) {
+pioControlState(const yakc& emu, z80pio::channel chn) {
     const auto& state = emu.board.pio.channel_state[chn];
     ImGui::Text("Interrupt:"); ImGui::SameLine(128);
     ImGui::Text("%02X", state.interrupt_control);
@@ -58,7 +58,7 @@ pioControlState(const emu& emu, z80pio::channel chn) {
 
 //------------------------------------------------------------------------------
 bool
-PIOWindow::Draw(emu& emu) {
+PIOWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(220, 384), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         ImGui::BeginChild("##child");
@@ -99,5 +99,5 @@ PIOWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
-} // namespace yakc
+} // namespace YAKC
 

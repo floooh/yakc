@@ -2,7 +2,7 @@
 //  zexdoc_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "z80/z80.h"
+#include "yakc/z80.h"
 #include "test/zex.h"
 #include "Core/Time/Clock.h"
 #include <string.h>
@@ -14,7 +14,7 @@ CP/M .COM executables, and we provide the minimal CP/M environment to
 make these work.
 */
 
-using namespace yakc;
+using namespace YAKC;
 using namespace Oryol;
 
 static ubyte ram[0x10000];

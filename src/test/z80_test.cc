@@ -2,9 +2,9 @@
 //  z80_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "z80/z80.h"
+#include "yakc/z80.h"
 
-using namespace yakc;
+using namespace YAKC;
 
 static ubyte ram0[0x4000];
 

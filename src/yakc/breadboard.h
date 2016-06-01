@@ -1,17 +1,17 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::breadboard
+    @class YAKC::breadboard
     @brief houses all the chips required by emulated systems
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 #include "yakc/clock.h"
 #include "yakc/z80.h"
 #include "yakc/z80dbg.h"
 #include "yakc/z80pio.h"
 #include "yakc/z80ctc.h"
 
-namespace yakc {
+namespace YAKC {
 
 class breadboard {
 public:
@@ -22,4 +22,4 @@ public:
     z80dbg dbg;
 };
 
-} // namespace yakc
+} // namespace YAKC

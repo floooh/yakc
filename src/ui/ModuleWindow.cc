@@ -7,11 +7,11 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-ModuleWindow::Setup(emu& emu) {
+ModuleWindow::Setup(yakc& emu) {
     this->setName("Expansion Slots");
 }
 
@@ -51,7 +51,7 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
 
 //------------------------------------------------------------------------------
 bool
-ModuleWindow::Draw(emu& emu) {
+ModuleWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(384, 116), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
         this->drawModuleSlot(emu.kc85, 0x08);     // base device, right expansion slot
@@ -62,5 +62,5 @@ ModuleWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
-} // namespace yakc
+} // namespace YAKC
 

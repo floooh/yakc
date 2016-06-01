@@ -3,16 +3,16 @@
 //------------------------------------------------------------------------------
 #include "SnapshotStorage.h"
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 SnapshotStorage::SnapshotStorage() {
-    YAKC_MEMSET(&this->snapshots, 0, sizeof(this->snapshots));
+    memset(&this->snapshots, 0, sizeof(this->snapshots));
 }
 
 //------------------------------------------------------------------------------
 void
-SnapshotStorage::TakeSnapshot(const emu& emu, int slotIndex) {
+SnapshotStorage::TakeSnapshot(const yakc& emu, int slotIndex) {
     YAKC_ASSERT((slotIndex >= 0) && (slotIndex < MaxNumSnapshots));
     kc85_snapshot::take_snapshot(emu.kc85, this->snapshots[slotIndex]);
 }
@@ -37,9 +37,9 @@ SnapshotStorage::HasSnapshots() const {
 
 //------------------------------------------------------------------------------
 void
-SnapshotStorage::ApplySnapshot(int slotIndex, emu& emu) {
+SnapshotStorage::ApplySnapshot(int slotIndex, yakc& emu) {
     YAKC_ASSERT((slotIndex >= 0) && (slotIndex < MaxNumSnapshots));
     kc85_snapshot::apply_snapshot(this->snapshots[slotIndex], emu.kc85);
 }
 
-} // namespace yakc
+} // namespace YAKC

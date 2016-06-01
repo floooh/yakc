@@ -6,11 +6,11 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-MemoryWindow::Setup(emu& emu) {
+MemoryWindow::Setup(yakc& emu) {
     this->setName("Memory Editor");
 }
 
@@ -30,7 +30,7 @@ write_func(void* userdata, uword addr, ubyte value) {
 
 //------------------------------------------------------------------------------
 bool
-MemoryWindow::Draw(emu& emu) {
+MemoryWindow::Draw(yakc& emu) {
     this->edit.AllowEdits = true;
     ImGui::SetNextWindowSize(ImVec2(512, 256), ImGuiSetCond_Once);
     if (this->edit.Draw(this->title.AsCStr(), read_func, write_func, &emu)) {
@@ -42,4 +42,4 @@ MemoryWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
-} // namespace yakc
+} // namespace YAKC

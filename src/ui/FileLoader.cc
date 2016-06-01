@@ -6,11 +6,11 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::Setup(emu& emu) {
+FileLoader::Setup(yakc& emu) {
     this->Items.Add("Pengo", "pengo.kcc", device::kc85_3);
     this->Items.Add("Pengo", "pengo4.kcc", device::kc85_4);
     this->Items.Add("Cave", "cave.kcc", device::kc85_3);
@@ -44,19 +44,19 @@ FileLoader::Discard() {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::Load(emu& emu, const Item& item) {
+FileLoader::Load(yakc& emu, const Item& item) {
     this->load(&emu, item, false);
 }
 
 //------------------------------------------------------------------------------
 void
-FileLoader::LoadAndStart(emu& emu, const Item& item) {
+FileLoader::LoadAndStart(yakc& emu, const Item& item) {
     this->load(&emu, item, true);
 }
 
 //------------------------------------------------------------------------------
 bool
-FileLoader::Copy(emu& emu) {
+FileLoader::Copy(yakc& emu) {
     if (Ready == this->State) {
         copy(&emu, this->Info, this->kccData);
         patch(&emu, this->Info);
@@ -69,7 +69,7 @@ FileLoader::Copy(emu& emu) {
 
 //------------------------------------------------------------------------------
 bool
-FileLoader::Start(emu& emu) {
+FileLoader::Start(yakc& emu) {
     if (Ready == this->State) {
         copy(&emu, this->Info, this->kccData);
         patch(&emu, this->Info);
@@ -83,7 +83,7 @@ FileLoader::Start(emu& emu) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::load(emu* emu, const Item& item, bool autostart) {
+FileLoader::load(yakc* emu, const Item& item, bool autostart) {
     StringBuilder strBuilder;
     strBuilder.Format(128, "kcc:%s", item.Filename.AsCStr());
     this->Url = strBuilder.GetString();
@@ -139,7 +139,7 @@ FileLoader::parseHeader(const Buffer& data) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::copy(emu* emu, const FileInfo& info, const Buffer& data) {
+FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (!info.FileSizeError) {
         const ubyte* payload = data.Data() + info.PayloadOffset;
         if (FileType::KCC == info.Type) {
@@ -164,7 +164,7 @@ FileLoader::copy(emu* emu, const FileInfo& info, const Buffer& data) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::patch(emu* emu, const FileInfo& info) {
+FileLoader::patch(yakc* emu, const FileInfo& info) {
     auto& mem = emu->board.cpu.mem;
 
     // FIXME: patch JUNGLE until I have time to do a proper
@@ -191,7 +191,7 @@ FileLoader::patch(emu* emu, const FileInfo& info) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::start(emu* emu, const FileInfo& info) {
+FileLoader::start(yakc* emu, const FileInfo& info) {
     if (info.HasExecAddr) {
 
         // initialize registers
@@ -223,5 +223,5 @@ FileLoader::start(emu* emu, const FileInfo& info) {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC
 

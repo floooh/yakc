@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::kc85
+    @class YAKC::kc85
     @brief wrapper class for the KC85/2, /3, /4
 */
 #include "yakc/breadboard.h"
@@ -11,7 +11,7 @@
 #include "yakc/kc85_exp.h"
 #include "yakc/kc85_roms.h"
 
-namespace yakc {
+namespace YAKC {
 
 class kc85 {
 public:
@@ -556,5 +556,5 @@ kc85::update_bank_switching() {
     this->exp.update_memory_mappings(cpu.mem);
 }
 
-} // namespace yakc
+} // namespace YAKC
 

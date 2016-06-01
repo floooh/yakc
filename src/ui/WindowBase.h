@@ -8,7 +8,7 @@
 #include "Core/String/String.h"
 #include "yakcapp/KC85Oryol.h"
 
-namespace yakc {
+namespace YAKC {
 
 class WindowBase : public Oryol::RefCounted {
     OryolClassDecl(WindowBase);
@@ -16,9 +16,9 @@ public:
     /// destructor
     virtual ~WindowBase();
     /// setup the window
-    virtual void Setup(yakc::emu& emu) = 0;
+    virtual void Setup(yakc& emu) = 0;
     /// draw method, return false if window closed
-    virtual bool Draw(yakc::emu& emu) = 0;
+    virtual bool Draw(yakc& emu) = 0;
     /// false if window had been closed by user
     bool Visible = true;
 
@@ -30,4 +30,4 @@ protected:
     Oryol::String title;
 };
 
-} // namespace yakc
+} // namespace YAKC

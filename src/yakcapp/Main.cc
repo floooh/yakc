@@ -17,7 +17,7 @@
 #include "Core/Time/Clock.h"
 
 using namespace Oryol;
-using namespace yakc;
+using namespace YAKC;
 
 class YakcApp : public App {
 public:
@@ -28,8 +28,8 @@ public:
     void initRoms();
     void initModules();
 
-    ubyte last_ascii = 0;
-    class emu emu;
+    uint8_t last_ascii = 0;
+    yakc emu;
     Draw draw;
     Audio audio;
     #if YAKC_UI
@@ -71,10 +71,17 @@ YakcApp::OnInit() {
     Input::Setup();
     Input::BeginCaptureText();
 
+    // initialize the emulator
+    ext_funcs funcs;
+    funcs.assertmsg_func = Log::AssertMsg;
+    funcs.malloc_func = oryol_malloc;
+    funcs.free_func = oryol_free;
+    this->emu.init(funcs);
+
     // initialize the ROM dumps and modules
     this->initRoms();
 
-    this->emu.init();
+    // switch the emulator on
     this->emu.poweron(device::kc85_3, os_rom::caos_3_1);
 
     this->draw.Setup(gfxSetup, frameSize);

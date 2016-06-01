@@ -1,13 +1,13 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::z80dbg
+    @class YAKC::z80dbg
     @brief debug helper functions
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 #include "yakc/z80.h"
 
-namespace yakc {
+namespace YAKC {
 
 class z80dbg {
 public:
@@ -81,7 +81,7 @@ inline
 z80dbg::z80dbg() :
 pc_history_pos(0),
 paused(false) {
-    YAKC_MEMSET(&this->pc_history, 0, sizeof(this->pc_history));
+    memset(&this->pc_history, 0, sizeof(this->pc_history));
 }
 
 //------------------------------------------------------------------------------
@@ -288,4 +288,4 @@ z80dbg::reg_name(reg r) {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC

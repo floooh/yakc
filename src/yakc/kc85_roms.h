@@ -1,12 +1,12 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    class yakc::kc85_roms
+    class YAKC::kc85_roms
     @brief manage KC85 ROM blobs
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class kc85_roms {
 public:
@@ -57,7 +57,7 @@ kc85_roms::add(rom type, const ubyte* ptr, int size) {
     YAKC_ASSERT(!this->has(type));
     YAKC_ASSERT((cur_pos + size) <= buf_size);
 
-    YAKC_MEMCPY(&this->buffer[cur_pos], ptr, size);
+    memcpy(&this->buffer[cur_pos], ptr, size);
     this->roms[type].pos = this->cur_pos;
     this->roms[type].size = size;
     this->cur_pos += size;
@@ -84,4 +84,4 @@ kc85_roms::size(rom type) const {
     return this->roms[type].size;
 }
 
-} // namespace yakc
+} // namespace YAKC

@@ -6,23 +6,23 @@
 */
 #include "yakcapp/KC85Oryol.h"
 
-namespace yakc {
+namespace YAKC {
 
 class Disasm {
 public:
     /// constructor
     Disasm();
     /// disassemble instruction at addr, return new addr
-    yakc::uword Disassemble(const yakc::emu& emu, yakc::uword addr);
+    uword Disassemble(const yakc& emu, uword addr);
     /// get disassembled string
     const char* Result() const;
 
 private:
     /// fetch next opcode byte for z80dasm
-    static yakc::ubyte fetch(yakc::uword base, int offset, void* userdata);
+    static ubyte fetch(uword base, int offset, void* userdata);
 
-    const yakc::emu* context;
+    const yakc* emu;
     char buffer[64];
 };
 
-} // namespace yakc
+} // namespace YAKC

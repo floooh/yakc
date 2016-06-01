@@ -529,8 +529,8 @@ def write_header(f) :
     l('#pragma once')
     l('// #version:{}#'.format(Version))
     l('// machine generated, do not edit!')
-    l('#include "yakc/common.h"')
-    l('inline uint32_t yakc::z80::do_op() {')
+    l('#include "yakc/core.h"')
+    l('inline uint32_t YAKC::z80::do_op() {')
 
 #-------------------------------------------------------------------------------
 # begin a new instruction group (begins a switch statement)

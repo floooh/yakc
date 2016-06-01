@@ -4,10 +4,10 @@
     @class kc85_snapshot
     @brief helper functions for taking and applying machine state snapshots
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 #include "yakc/kc85.h"
 
-namespace yakc {
+namespace YAKC {
 
 class kc85_snapshot {
 public:
@@ -190,7 +190,7 @@ kc85_snapshot::is_snapshot(const state_t& state) {
 //------------------------------------------------------------------------------
 inline void
 kc85_snapshot::take_snapshot(const kc85& kc, state_t& state) {
-    YAKC_MEMSET(&state, 0, sizeof(state));
+    memset(&state, 0, sizeof(state));
     state.magic = 'YAKC';
     state.version = 1;
     write_clock_state(kc, state);
@@ -478,17 +478,17 @@ kc85_snapshot::write_memory_state(const kc85& kc, state_t& state) {
     static_assert(sizeof(kc.ram) == sizeof(state.ram), "general RAM size mismatch");
     static_assert(sizeof(kc.video.irm) == sizeof(state.irm), "video RAM size mismatch");
 
-    YAKC_MEMCPY(state.ram, kc.ram, sizeof(kc.ram));
-    YAKC_MEMCPY(state.irm, kc.video.irm, sizeof(kc.video.irm));
+    memcpy(state.ram, kc.ram, sizeof(kc.ram));
+    memcpy(state.irm, kc.video.irm, sizeof(kc.video.irm));
 
     // copy content of RAM modules
     const auto& slot08 = kc.exp.slot_by_addr(0x08);
     if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
-        YAKC_MEMCPY(state.ram8, slot08.mod.mem_ptr, slot08.mod.mem_size);
+        memcpy(state.ram8, slot08.mod.mem_ptr, slot08.mod.mem_size);
     }
     const auto& slot0C = kc.exp.slot_by_addr(0x0C);
     if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
-        YAKC_MEMCPY(state.ramC, slot0C.mod.mem_ptr, slot0C.mod.mem_size);
+        memcpy(state.ramC, slot0C.mod.mem_ptr, slot0C.mod.mem_size);
     }
 }
 
@@ -498,17 +498,17 @@ kc85_snapshot::apply_memory_state(const state_t& state, kc85& kc) {
     static_assert(sizeof(kc.ram) == sizeof(state.ram), "general RAM size mismatch");
     static_assert(sizeof(kc.video.irm) == sizeof(state.irm), "video RAM size mismatch");
 
-    YAKC_MEMCPY(kc.ram, state.ram, sizeof(state.ram));
-    YAKC_MEMCPY(kc.video.irm, state.irm, sizeof(state.irm));
+    memcpy(kc.ram, state.ram, sizeof(state.ram));
+    memcpy(kc.video.irm, state.irm, sizeof(state.irm));
     const auto& slot08 = kc.exp.slot_by_addr(0x08);
     if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
-        YAKC_MEMCPY(slot08.mod.mem_ptr, state.ram8, slot08.mod.mem_size);
+        memcpy(slot08.mod.mem_ptr, state.ram8, slot08.mod.mem_size);
     }
     const auto& slot0C = kc.exp.slot_by_addr(0x0C);
     if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
-        YAKC_MEMCPY(slot0C.mod.mem_ptr, state.ramC, slot0C.mod.mem_size);
+        memcpy(slot0C.mod.mem_ptr, state.ramC, slot0C.mod.mem_size);
     }
     kc.update_bank_switching();
 }
 
-} // namespace yakc
+} // namespace YAKC

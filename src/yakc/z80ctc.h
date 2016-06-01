@@ -1,18 +1,18 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::z80ctc
+    @class YAKC::z80ctc
     @brief incomplete Z80 CTC emulation (only what's needed for KC85)
     
     CTC channels 0 and 1 seem to be triggered per video scanline,
     and channels 2 and 3 once per vertical refresh @50Hz 
     (see here: https://github.com/mamedev/mame/blob/dfa148ff8022e9f1a544c8603dd0e8c4aa469c1e/src/mame/machine/kc.cpp#L710)
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 #include "yakc/z80.h"
 #include "yakc/z80int.h"
 
-namespace yakc {
+namespace YAKC {
 
 class z80ctc {
 public:
@@ -335,5 +335,5 @@ z80ctc::ctrg3(void* userdata) {
     self->update_counter(self->channels[CTC3]);
 }
 
-} // namespace yakc
+} // namespace YAKC
     

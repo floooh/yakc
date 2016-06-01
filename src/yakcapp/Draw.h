@@ -8,7 +8,7 @@
 #include "Gfx/Gfx.h"
 #include "glm/vec2.hpp"
 
-namespace yakc {
+namespace YAKC {
 
 class Draw {
 public:
@@ -39,5 +39,5 @@ public:
     int frameSize = 0;
 };
 
-} // namespace yakc
+} // namespace YAKC
 

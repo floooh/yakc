@@ -6,15 +6,15 @@
 */
 #include "ui/WindowBase.h"
 
-namespace yakc {
+namespace YAKC {
 
 class MemoryMapWindow : public WindowBase {
     OryolClassDecl(MemoryMapWindow);
 public:
     /// setup the window
-    virtual void Setup(yakc::emu& emu) override;
+    virtual void Setup(yakc& emu) override;
     /// draw method
-    virtual bool Draw(yakc::emu& emu) override;
+    virtual bool Draw(yakc& emu) override;
 
     struct pageInfo {
         const char* name = nullptr;
@@ -31,10 +31,10 @@ public:
     /// draw background grid
     void drawGrid(bool is_kc85_4);
     /// draw a 'memory rectangle'
-    void drawRect(int layer, yakc::uword addr, unsigned int len, const char* tooltip, type t);
+    void drawRect(int layer, uword addr, unsigned int len, const char* tooltip, type t);
     /// get name for a memory layer and page
-    pageInfo getPageInfo(yakc::kc85& kc, int layer_index, int page_index) const;
+    pageInfo getPageInfo(kc85& kc, int layer_index, int page_index) const;
 };
 
-} // namespace yakc
+} // namespace YAKC
 

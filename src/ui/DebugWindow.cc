@@ -8,7 +8,7 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 static const z80dbg::reg regs16[] = {
     z80dbg::AF, z80dbg::BC, z80dbg::DE, z80dbg::HL,
@@ -21,7 +21,7 @@ static const z80dbg::reg regs8[] = {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::Setup(emu& emu) {
+DebugWindow::Setup(yakc& emu) {
     this->setName("Debugger");
 
     // setup register table widgets
@@ -36,7 +36,7 @@ DebugWindow::Setup(emu& emu) {
 
 //------------------------------------------------------------------------------
 bool
-DebugWindow::Draw(emu& emu) {
+DebugWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->drawRegisterTable(emu);
@@ -51,7 +51,7 @@ DebugWindow::Draw(emu& emu) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawReg16(emu& emu, z80dbg::reg r) {
+DebugWindow::drawReg16(yakc& emu, z80dbg::reg r) {
     if (this->regWidget[r].Draw()) {
         z80dbg::set16(emu.board.cpu, r, this->regWidget[r].Get16());
     }
@@ -62,7 +62,7 @@ DebugWindow::drawReg16(emu& emu, z80dbg::reg r) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawReg8(emu& emu, z80dbg::reg r) {
+DebugWindow::drawReg8(yakc& emu, z80dbg::reg r) {
     if (this->regWidget[r].Draw()) {
         z80dbg::set8(emu.board.cpu, r, this->regWidget[r].Get8());
     }
@@ -73,7 +73,7 @@ DebugWindow::drawReg8(emu& emu, z80dbg::reg r) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawRegisterTable(emu& emu) {
+DebugWindow::drawRegisterTable(yakc& emu) {
     const ImVec4 red = UI::DisabledColor;
     const ImVec4 green = UI::EnabledColor;
 
@@ -114,7 +114,7 @@ DebugWindow::drawRegisterTable(emu& emu) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawControls(emu& emu) {
+DebugWindow::drawControls(yakc& emu) {
     if (emu.board.dbg.breakpoint_enabled(0)) {
         this->breakPointWidget.Set16(emu.board.dbg.breakpoint_addr(0));
     }
@@ -143,7 +143,7 @@ DebugWindow::drawControls(emu& emu) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawMainContent(emu& emu, uword start_addr, int num_lines) {
+DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
     // this is a modified version of ImGuiMemoryEditor.h
     ImGui::BeginChild("##scrolling", ImVec2(0, -2 * ImGui::GetItemsLineHeightWithSpacing()));
 
@@ -226,4 +226,4 @@ DebugWindow::drawMainContent(emu& emu, uword start_addr, int num_lines) {
     ImGui::EndChild();
 }
 
-} // namespace yakc
+} // namespace YAKC

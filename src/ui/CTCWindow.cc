@@ -7,17 +7,17 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-CTCWindow::Setup(emu& emu) {
+CTCWindow::Setup(yakc& emu) {
     this->setName("Z80 CTC State");
 }
 
 //------------------------------------------------------------------------------
 static void
-drawModeBit(const emu& emu, int chn_index, ubyte mask, const char* name, const char* on_str, const char* off_str) {
+drawModeBit(const yakc& emu, int chn_index, ubyte mask, const char* name, const char* on_str, const char* off_str) {
     ImGui::Text("  %s:", name); ImGui::SameLine(128);
     if (emu.board.ctc.channels[chn_index].mode & mask) {
         ImGui::Text("%s", on_str);
@@ -30,7 +30,7 @@ drawModeBit(const emu& emu, int chn_index, ubyte mask, const char* name, const c
 
 //------------------------------------------------------------------------------
 bool
-CTCWindow::Draw(emu& emu) {
+CTCWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         StringBuilder strBuilder;
@@ -55,4 +55,4 @@ CTCWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
-} // namespace yakc
+} // namespace YAKC

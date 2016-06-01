@@ -4,10 +4,10 @@
     @class z1013_video
     @brief Z1013 video decoding hardware
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 #include "yakc/roms.h"
 
-namespace yakc {
+namespace YAKC {
 
 class z1013_video {
 public:
@@ -54,4 +54,4 @@ z1013_video::decode() {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC

@@ -1,12 +1,12 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::kc85_exp
+    @class YAKC::kc85_exp
     @brief emulate the KC85 expansion slot system
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class kc85_exp {
 public:
@@ -329,4 +329,4 @@ kc85_exp::update_memory_mappings(memory& mem) {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC

@@ -8,18 +8,18 @@
 #include "ui/WindowBase.h"
 #include "Core/Containers/Array.h"
 
-namespace yakc {
+namespace YAKC {
 
 class ModuleWindow : public WindowBase {
     OryolClassDecl(ModuleWindow);
 public:
     /// setup the window
-    virtual void Setup(yakc::emu& emu) override;
+    virtual void Setup(yakc& emu) override;
     /// draw method
-    virtual bool Draw(yakc::emu& emu) override;
+    virtual bool Draw(yakc& emu) override;
     /// draw a single module slot
-    void drawModuleSlot(yakc::kc85& kc, yakc::ubyte slot_addr);
+    void drawModuleSlot(kc85& kc, ubyte slot_addr);
 };
 
-} // namespace yakc
+} // namespace YAKC
 

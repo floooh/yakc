@@ -2,10 +2,10 @@
 //  daisychain_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "z80/z80.h"
-#include "z80/z80int.h"
+#include "yakc/z80.h"
+#include "yakc/z80int.h"
 
-using namespace yakc;
+using namespace YAKC;
 
 static ubyte ram[0x4000];
 

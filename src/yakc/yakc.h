@@ -1,17 +1,17 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::emu
-    @brief simple wrapper class which bundles all the emulators
+    @class YAKC::yakc
+    @brief main emulator class
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 #include "yakc/breadboard.h"
 #include "yakc/kc85.h"
 #include "yakc/z1013.h"
 
-namespace yakc {
+namespace YAKC {
 
-class emu {
+class yakc {
 public:
     device model = device::none;
     os_rom os = os_rom::none;
@@ -20,7 +20,7 @@ public:
     class z1013 z1013;
 
     /// one-time init
-    void init();
+    void init(const ext_funcs& funcs);
     /// poweron one of the emus
     void poweron(device m, os_rom os);
     /// poweroff the emu
@@ -35,14 +35,15 @@ public:
 
 //------------------------------------------------------------------------------
 inline void
-emu::init() {
+yakc::init(const ext_funcs& funcs) {
+    func = funcs;
     this->kc85.setup(&this->board);
     this->z1013.setup(&this->board);
 }
 
 //------------------------------------------------------------------------------
 inline void
-emu::poweron(device m, os_rom rom) {
+yakc::poweron(device m, os_rom rom) {
     YAKC_ASSERT(!this->kc85.on && !this->z1013.on);
     this->model = m;
     this->os = rom;
@@ -56,7 +57,7 @@ emu::poweron(device m, os_rom rom) {
 
 //------------------------------------------------------------------------------
 inline void
-emu::poweroff() {
+yakc::poweroff() {
     if (this->kc85.on) {
         this->kc85.poweroff();
     }
@@ -67,7 +68,7 @@ emu::poweroff() {
 
 //------------------------------------------------------------------------------
 inline void
-emu::reset() {
+yakc::reset() {
     if (this->kc85.on) {
         this->kc85.reset();
     }
@@ -78,7 +79,7 @@ emu::reset() {
 
 //------------------------------------------------------------------------------
 inline void
-emu::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
+yakc::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
     if (this->kc85.on) {
         this->kc85.onframe(speed_multiplier, micro_secs, min_cycle_count, max_cycle_count);
     }
@@ -89,7 +90,7 @@ emu::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uin
 
 //------------------------------------------------------------------------------
 inline void
-emu::put_key(ubyte ascii) {
+yakc::put_key(ubyte ascii) {
     if (this->kc85.on) {
         this->kc85.put_key(ascii);
     }
@@ -98,4 +99,4 @@ emu::put_key(ubyte ascii) {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC

@@ -7,7 +7,7 @@
 #include "yakcapp/KC85Oryol.h"
 #include "ui/WindowBase.h"
 
-namespace yakc {
+namespace YAKC {
 
 class Audio;
 
@@ -17,9 +17,9 @@ public:
     /// constructor
     AudioWindow(Audio* audio);
     /// setup the window
-    virtual void Setup(yakc::emu& emu) override;
+    virtual void Setup(yakc& emu) override;
     /// draw method
-    virtual bool Draw(yakc::emu& emu) override;
+    virtual bool Draw(yakc& emu) override;
 
     Audio* audio;
     bool paused;
@@ -28,4 +28,4 @@ public:
     float wavBuffer[256];
 };
 
-} // namespace yakc
+} // namespace YAKC

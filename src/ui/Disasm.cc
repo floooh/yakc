@@ -8,11 +8,11 @@
 using namespace Oryol;
 using namespace z80dasm;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 Disasm::Disasm() :
-context(0) {
+emu(0) {
     Memory::Clear(this->buffer, sizeof(this->buffer));
 }
 
@@ -20,13 +20,13 @@ context(0) {
 ubyte
 Disasm::fetch(uword base, int offset, void* userdata) {
     Disasm* self = (Disasm*) userdata;
-    return self->context->board.cpu.mem.r8(base + offset);
+    return self->emu->board.cpu.mem.r8(base + offset);
 }
 
 //------------------------------------------------------------------------------
 uword
-Disasm::Disassemble(const emu& emu, uword addr) {
-    this->context = &emu;
+Disasm::Disassemble(const yakc& emu, uword addr) {
+    this->emu = &emu;
     int res = z80disasm(fetch, addr, this->buffer, this);
     return (res & 0xFFFF);
 }
@@ -37,4 +37,4 @@ Disasm::Result() const {
     return this->buffer;
 }
 
-} // namespace yakc
+} // namespace YAKC

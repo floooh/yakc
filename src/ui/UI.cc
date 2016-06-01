@@ -21,7 +21,7 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 ImVec4 UI::DefaultTextColor;
 ImVec4 UI::EnabledColor;
@@ -36,7 +36,7 @@ ImU32 UI::CanvasLineColor;
 
 //------------------------------------------------------------------------------
 void
-UI::Setup(emu& emu, Audio* audio_) {
+UI::Setup(yakc& emu, Audio* audio_) {
 
     this->audio = audio_;
     IMUI::Setup();
@@ -119,7 +119,7 @@ UI::Toggle() {
 
 //------------------------------------------------------------------------------
 void
-UI::OpenWindow(emu& emu, const Ptr<WindowBase>& win) {
+UI::OpenWindow(yakc& emu, const Ptr<WindowBase>& win) {
     win->Setup(emu);
     this->windows.Add(win);
 }
@@ -158,7 +158,7 @@ UI::EnableLightTheme() {
 
 //------------------------------------------------------------------------------
 void
-UI::OnFrame(emu& emu) {
+UI::OnFrame(yakc& emu) {
     o_trace_scoped(yakc_ui);
 
     StringBuilder strBuilder;
@@ -364,5 +364,5 @@ UI::OnFrame(emu& emu) {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC
 

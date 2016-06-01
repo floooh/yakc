@@ -15,9 +15,9 @@
     - volume_cb: change the volume of one channel
     - stop_cb: stop a sound with delay in sample ticks
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class kc85_audio {
 public:
@@ -154,4 +154,4 @@ kc85_audio::ctc_write1(void* userdata) {
     self->update_channel(1);
 }
 
-} // namespace yakc
+} // namespace YAKC

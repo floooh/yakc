@@ -4,9 +4,9 @@
     @class kc85_video
     @brief wraps the KC85 video RAM (IRM) and video decoding hardware
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class kc85_video {
 public:
@@ -200,4 +200,4 @@ kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC

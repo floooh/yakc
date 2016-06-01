@@ -2,14 +2,15 @@
 //  mem_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "core/memory.h"
+#include "yakc/memory.h"
 #include <string.h>
 
-using namespace yakc;
+using namespace YAKC;
 
 TEST(memory) {
 
     memory mem;
+    mem.init();
     CHECK(mem.r8(0x0000) == 0xFF);
     CHECK(mem.r8(0xFFFF) == 0xFF);
     CHECK(mem.r8(0x4567) == 0xFF);

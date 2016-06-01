@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::clock
+    @class YAKC::clock
     @brief system clock generator and counters
     
     Can be used to generate the main system clock and counters that can
@@ -9,9 +9,9 @@
     used to generate the CPU clock at 1.75MHz(KC85/3) or 1.77MHz (KC85/4),
     the vertical blank and video scan line timings.
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class clock {
 public:
@@ -86,4 +86,4 @@ clock::update(int num_cycles) {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC

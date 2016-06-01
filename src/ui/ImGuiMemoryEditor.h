@@ -22,7 +22,7 @@
 // TODO: better resizing policy (ImGui doesn't have flexible window resizing constraints yet)
 #include <stdio.h>
 
-namespace yakc {
+namespace YAKC {
 
 struct MemoryEditor
 {
@@ -236,4 +236,4 @@ struct MemoryEditor
     }
 };
 
-} // namespace yakc
+} // namespace YAKC

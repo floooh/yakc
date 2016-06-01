@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::z80int
+    @class YAKC::z80int
     @brief building block to implement an interrupt daisy-chain
     
     See here: 
@@ -13,17 +13,14 @@
     embedded which implements the daisy-chain protocol to prioritize
     interrupt requests.
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class z80int {
 public:
     /// interrupt request callback (/INT pin on CPU), returns false if CPU interrupts disabled
     typedef void (*cb_int)(void* userdata);
-
-    /// enable/disable logging
-    void enable_logging(bool b);
 
     /// connect to CPU /INT pin callback, called when device requests interrupt
     void connect_cpu(cb_int int_cb, void* userdata);
@@ -58,17 +55,10 @@ public:
     bool int_pending = false;
 
 private:
-    bool logging_enabled = false;
     cb_int int_cb = nullptr;
     void* int_cb_userdata = nullptr;
     z80int* downstream_device = nullptr;
 };
-
-//------------------------------------------------------------------------------
-inline void
-z80int::enable_logging(bool b) {
-    this->logging_enabled = b;
-}
 
 //------------------------------------------------------------------------------
 inline void
@@ -103,9 +93,6 @@ z80int::request_interrupt(ubyte data) {
 
     YAKC_ASSERT(this->int_cb);
     if (this->int_enabled) {
-        if (this->logging_enabled) {
-            YAKC_PRINTF("z80int: interrupt requested\n");
-        }
         this->int_enabled = false;
         this->int_cb(this->int_cb_userdata);
         this->int_requested = true;
@@ -116,9 +103,6 @@ z80int::request_interrupt(ubyte data) {
         return true;
     }
     else {
-        if (this->logging_enabled) {
-            YAKC_PRINTF("z80int: interrupt requested, but disabled!\n");
-        }
         return false;
     }
 }
@@ -129,10 +113,6 @@ z80int::interrupt_acknowledged() {
     if (this->int_requested) {
         // it's our turn, return the interrupt-request data byte,
         // downstream interrupts remain disabled until RETI
-        if (this->logging_enabled) {
-            YAKC_PRINTF("z80int: interrupt acknowledged, returning 0x%02X\n",
-                this->int_request_data);
-        }
         this->int_requested = false;
         this->int_pending = true;
         return this->int_request_data;
@@ -157,9 +137,6 @@ inline void
 z80int::interrupt_cancelled() {
     // this is called by the CPU after an interrupt-request
     // if the CPU is in an interrupt-disabled state
-    if (this->logging_enabled) {
-        YAKC_PRINTF("z80int: interrupt denied by CPU\n");
-    }
     this->int_enabled = true;
     if (this->int_requested) {
         this->int_requested = false;
@@ -183,9 +160,6 @@ z80int::reti() {
     if (this->int_pending) {
         // this was our interrupt service routine that has finished,
         // enable interrupt on downstream device
-        if (this->logging_enabled) {
-            YAKC_PRINTF("z80int: reti received, enabling interrupt\n");
-        }
         this->int_pending = false;
         if (this->downstream_device) {
             this->downstream_device->enable_interrupt();
@@ -220,4 +194,4 @@ z80int::disable_interrupt() {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC

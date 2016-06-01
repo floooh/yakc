@@ -9,16 +9,16 @@
 #include "kc85_audiosource.h"
 #include "soloud_biquadresonantfilter.h"
 
-namespace yakc {
+namespace YAKC {
 
 class Audio {
 public:
     /// setup audio playback
-    void Setup(const yakc::clock& clk);
+    void Setup(const clock& clk);
     /// shutdown audio playback
     void Discard();
     /// per-frame update
-    void Update(const yakc::clock& clk);
+    void Update(const clock& clk);
     /// get the current max processed audio sample count in number of CPU cycles
     uint64_t GetProcessedCycles() const;
 
@@ -35,4 +35,4 @@ public:
     int audioHandle = 0;
 };
 
-} // namespace yakc
+} // namespace YAKC

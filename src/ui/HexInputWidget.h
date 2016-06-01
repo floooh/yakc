@@ -9,43 +9,43 @@
 #include "Core/String/StringAtom.h"
 #include "IMUI/IMUI.h"
 
-namespace yakc {
+namespace YAKC {
 
 class HexInputWidget {
 public:
     /// constructor
     HexInputWidget() : value(0), modeUWord(true) {
-        YAKC_MEMSET(this->buf, 0, sizeof(this->buf));
+        memset(this->buf, 0, sizeof(this->buf));
     }
     /// configure with 16-bit value
-    void Configure16(const Oryol::StringAtom& label_, yakc::uword value_) {
+    void Configure16(const Oryol::StringAtom& label_, uword value_) {
         this->label = label_;
         this->Set16(value_);
     }
     /// configure with 8-bit value
-    void Configure8(const Oryol::StringAtom& label_, yakc::ubyte value_) {
+    void Configure8(const Oryol::StringAtom& label_, ubyte value_) {
         this->label = label_;
         this->Set8(value_);
     }
     /// set 16-bit value (updates text buffers)
-    void Set16(yakc::uword value) {
+    void Set16(uword value) {
         this->modeUWord = true;
         this->value = value;
         Util::UWordToStr(value, this->buf, sizeof(this->buf));
     }
     /// get 16-bit value
-    yakc::uword Get16() const {
+    uword Get16() const {
         return this->value;
     }
     /// set 8-bit value
-    void Set8(yakc::ubyte value) {
+    void Set8(ubyte value) {
         this->modeUWord = false;
-        this->value = (yakc::uword) value;
+        this->value = (uword) value;
         Util::UByteToStr(value, this->buf, sizeof(this->buf));
     }
     /// get 8-bit value
-    yakc::ubyte Get8() const {
-        return (yakc::ubyte) this->value;
+    ubyte Get8() const {
+        return (ubyte) this->value;
     }
     /// draw the widget, return if value was updated
     bool Draw() {
@@ -73,8 +73,8 @@ public:
     static const int bufSize = 5;
     Oryol::StringAtom label;
     char buf[bufSize];
-    yakc::uword value;
+    uword value;
     bool modeUWord;
 };
 
-} // namespace yakc
+} // namespace YAKC

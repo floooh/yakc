@@ -9,7 +9,7 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 AudioWindow::AudioWindow(Audio* audio_) :
@@ -22,13 +22,13 @@ cpuBehind(false) {
 
 //------------------------------------------------------------------------------
 void
-AudioWindow::Setup(emu& emu) {
+AudioWindow::Setup(yakc& emu) {
     this->setName("Audio Debugger");
 }
 
 //------------------------------------------------------------------------------
 bool
-AudioWindow::Draw(emu& emu) {
+AudioWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(600, 220), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->audio->soloud.setVisualizationEnable(true);
@@ -68,4 +68,4 @@ AudioWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
-} // namespace yakc
+} // namespace YAKC

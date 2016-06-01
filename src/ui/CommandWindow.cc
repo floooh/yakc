@@ -9,18 +9,18 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-CommandWindow::Setup(emu& emu) {
+CommandWindow::Setup(yakc& emu) {
     this->setName("Find Commands");
     this->prologByteWidget.Configure8("Prolog Byte", 0x7F);
 }
 
 //------------------------------------------------------------------------------
 bool
-CommandWindow::Draw(emu& emu) {
+CommandWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 250), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->prologByteWidget.Draw();
@@ -52,7 +52,7 @@ CommandWindow::Draw(emu& emu) {
 
 //------------------------------------------------------------------------------
 void
-CommandWindow::scan(const emu& emu, ubyte prologByte) {
+CommandWindow::scan(const yakc& emu, ubyte prologByte) {
     StringBuilder strBuilder;
 
     this->commands.Clear();
@@ -76,5 +76,5 @@ CommandWindow::scan(const emu& emu, ubyte prologByte) {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC
 

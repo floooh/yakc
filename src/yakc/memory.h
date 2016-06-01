@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::memory
+    @class YAKC::memory
     @brief implements banked Z80 memory mapped to host system memory
 
     Host system memory 'layers' up to 64 KByte size can be mapped
@@ -32,9 +32,9 @@
     the hole 4000-7FFF. 3/4 of the 64KByte expansion memory remains
     culled and is not visible to the CPU.
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class memory {
 public:
@@ -64,7 +64,6 @@ public:
 
     /// constructor
     memory();
-
     /// map a range of memory
     void map(int layer, uword addr, unsigned int size, ubyte* ptr, bool writable);
     /// unmap a range of memory
@@ -105,9 +104,8 @@ private:
 //------------------------------------------------------------------------------
 inline
 memory::memory() {
-    YAKC_MEMSET(this->unmapped_page, 0xFF, sizeof(this->unmapped_page));
+    memset(this->unmapped_page, 0xFF, sizeof(this->unmapped_page));
     this->unmap_all();
-    this->update_mapping();
 }
 
 //------------------------------------------------------------------------------
@@ -277,4 +275,4 @@ memory::write(uword addr, const ubyte* src, int num) const {
     }
 }
 
-} // namespace yakc
+} // namespace YAKC

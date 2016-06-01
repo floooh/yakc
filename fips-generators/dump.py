@@ -3,7 +3,7 @@
 #   Dump binary files into C arrays.
 #-------------------------------------------------------------------------------
 
-Version = 2
+Version = 3 
 
 import os.path
 import yaml
@@ -28,7 +28,7 @@ def gen_header(out_hdr, files) :
         f.write('#pragma once\n')
         f.write('// #version:{}#\n'.format(Version))
         f.write('// machine generated, do not edit!\n')
-        f.write('namespace yakc {\n')
+        f.write('namespace YAKC {\n')
         for file in files :
             file_path = get_file_path(file, out_hdr)
             if os.path.isfile(file_path) :
@@ -37,7 +37,7 @@ def gen_header(out_hdr, files) :
                 f.write('extern unsigned char {}[{}];\n'.format(file_name, file_size))
             else :
                 genutil.fmtError("Input file not found: '{}'".format(file_path))
-        f.write('} // namespace yakc\n')
+        f.write('} // namespace YAKC\n')
 
 #-------------------------------------------------------------------------------
 def gen_source(out_src, files) :
@@ -46,7 +46,7 @@ def gen_source(out_src, files) :
         f.write('// #version:{}#\n'.format(Version))
         f.write('// machine generated, do not edit!\n')
         f.write('#include "{}.h"\n'.format(os.path.splitext(os.path.basename(out_src))[0]))
-        f.write('namespace yakc {\n')
+        f.write('namespace YAKC {\n')
         for file in files :
             file_path = get_file_path(file, out_src)
             if os.path.isfile(file_path) :
@@ -64,7 +64,7 @@ def gen_source(out_src, files) :
                     f.write('\n};\n')
             else :
                 genutil.fmtError("Input file not found: '{}'".format(file_path))
-        f.write('} // namespace yakc\n')
+        f.write('} // namespace YAKC\n')
 
 #-------------------------------------------------------------------------------
 def generate(input, out_src, out_hdr) :

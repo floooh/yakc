@@ -4,9 +4,9 @@
     @class yakc::z1013_roms
     @brief manage z1013 ROM data blobs
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class z1013_roms {
 public:
@@ -46,7 +46,7 @@ z1013_roms::add(rom type, const ubyte* ptr, int size) {
     YAKC_ASSERT(!this->has(type));
     YAKC_ASSERT((cur_pos + size) <= buf_size);
 
-    YAKC_MEMCPY(&this->buffer[cur_pos], ptr, size);
+    memcpy(&this->buffer[cur_pos], ptr, size);
     this->roms[type].pos = this->cur_pos;
     this->roms[type].size = size;
     this->cur_pos += size;
@@ -73,4 +73,4 @@ z1013_roms::size(rom type) const {
     return this->roms[type].size;
 }
 
-} // namespace yakc
+} // namespace YAKC

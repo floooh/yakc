@@ -8,7 +8,7 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
@@ -18,14 +18,14 @@ LoadWindow::SetFileLoader(FileLoader* fileLoader) {
 
 //------------------------------------------------------------------------------
 void
-LoadWindow::Setup(emu& emu) {
+LoadWindow::Setup(yakc& emu) {
     YAKC_ASSERT(this->loader);
     this->setName("Load File");
 }
 
 //------------------------------------------------------------------------------
 bool
-LoadWindow::Draw(emu& emu) {
+LoadWindow::Draw(yakc& emu) {
     YAKC_ASSERT(this->loader);
 
     ImGui::SetNextWindowSize(ImVec2(512, 256), ImGuiSetCond_Once);
@@ -93,5 +93,5 @@ LoadWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
-} // namespace yakc
+} // namespace YAKC
 

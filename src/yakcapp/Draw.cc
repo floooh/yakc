@@ -6,7 +6,7 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
@@ -112,4 +112,4 @@ Draw::restoreViewport() {
     Gfx::ApplyViewPort(0, 0, fbWidth, fbHeight);
 }
 
-} // namespace yakc
+} // namespace YAKC

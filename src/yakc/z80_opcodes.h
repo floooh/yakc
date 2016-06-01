@@ -1,8 +1,8 @@
 #pragma once
 // #version:1#
 // machine generated, do not edit!
-#include "yakc/common.h"
-inline uint32_t yakc::z80::do_op() {
+#include "yakc/core.h"
+inline uint32_t YAKC::z80::do_op() {
   switch (fetch_op()) {
     case 0x0: return 4; // NOP
     case 0x1: BC=mem.r16(PC); PC+=2; return 10; // LD BC,nn

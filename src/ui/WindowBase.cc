@@ -6,7 +6,7 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 int WindowBase::globalUniqueId = 0;
 
@@ -24,5 +24,5 @@ WindowBase::setName(const char* str) {
     this->title = strBuilder.GetString();
 }
 
-} // namespace yakc
+} // namespace YAKC
 

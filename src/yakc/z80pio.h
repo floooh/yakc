@@ -1,15 +1,15 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::z80pio
+    @class YAKC::z80pio
     @brief incomplete Z80 PIO emulation (only what needed for KC85)
     
     FIXME: control mode 0x7 is currently not supported
     http://www.cpcwiki.eu/index.php/Z80_PIO
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 
-namespace yakc {
+namespace YAKC {
 
 class z80pio {
 public:
@@ -141,4 +141,4 @@ z80pio::read(channel c) const {
     return channel_data[c];
 }
 
-} // namespace yakc
+} // namespace YAKC

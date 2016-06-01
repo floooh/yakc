@@ -6,18 +6,18 @@
 */
 #include "ui/WindowBase.h"
 
-namespace yakc {
+namespace YAKC {
 
 class KeyboardWindow : public WindowBase {
     OryolClassDecl(KeyboardWindow);
 public:
     /// setup the window
-    virtual void Setup(yakc::emu& emu) override;
+    virtual void Setup(yakc& emu) override;
     /// draw method
-    virtual bool Draw(yakc::emu& emu) override;
+    virtual bool Draw(yakc& emu) override;
 
     bool shift = false;
     bool caps_lock = false;
 };
 
-} // namespace yakc
+} // namespace YAKC

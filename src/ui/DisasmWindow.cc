@@ -7,11 +7,11 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-DisasmWindow::Setup(emu& emu) {
+DisasmWindow::Setup(yakc& emu) {
     this->setName("Disassembler");
     this->startWidget.Configure16("Start", 0x0000);
     this->lengthWidget.Configure16("Num", 64);
@@ -19,7 +19,7 @@ DisasmWindow::Setup(emu& emu) {
 
 //------------------------------------------------------------------------------
 bool
-DisasmWindow::Draw(emu& emu) {
+DisasmWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->drawMainContent(emu, this->startWidget.Get16(), this->lengthWidget.Get16());
@@ -32,7 +32,7 @@ DisasmWindow::Draw(emu& emu) {
 
 //------------------------------------------------------------------------------
 void
-DisasmWindow::drawMainContent(const emu& emu, uword start_addr, int num_lines) {
+DisasmWindow::drawMainContent(const yakc& emu, uword start_addr, int num_lines) {
     // this is a modified version of ImGuiMemoryEditor.h
     ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));
 
@@ -83,4 +83,4 @@ DisasmWindow::drawControls() {
     this->lengthWidget.Draw();
 }
 
-} // namespace yakc
+} // namespace YAKC

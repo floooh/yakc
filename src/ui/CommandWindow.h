@@ -7,28 +7,28 @@
 #include "ui/HexInputWidget.h"
 #include "ui/WindowBase.h"
 
-namespace yakc {
+namespace YAKC {
 
 class CommandWindow : public WindowBase {
     OryolClassDecl(CommandWindow);
 public:
     /// setup the window
-    virtual void Setup(yakc::emu& emu) override;
+    virtual void Setup(yakc& emu) override;
     /// draw method
-    virtual bool Draw(yakc::emu& emu) override;
+    virtual bool Draw(yakc& emu) override;
 
     /// populate commands array
-    void scan(const yakc::emu& emu, yakc::ubyte prologByte);
+    void scan(const yakc& emu, ubyte prologByte);
 
     HexInputWidget prologByteWidget;
     struct Cmd {
-        Cmd(const Oryol::String& n, yakc::uword a) : name(n), addr(a) {};
+        Cmd(const Oryol::String& n, uword a) : name(n), addr(a) {};
         Oryol::String name;
-        yakc::uword addr;
+        uword addr;
     };
     Oryol::Array<Cmd> commands;
 };
 
-} // namespace yakc
+} // namespace YAKC
 
 

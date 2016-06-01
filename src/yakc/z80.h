@@ -1,14 +1,14 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::z80
+    @class YAKC::z80
     @brief the Z80 (or rather U880) cpu
 */
-#include "yakc/common.h"
+#include "yakc/core.h"
 #include "yakc/memory.h"
 #include "yakc/z80int.h"
 
-namespace yakc {
+namespace YAKC {
 
 class z80 {
 public:
@@ -278,8 +278,6 @@ break_on_invalid_opcode(false) {
 //------------------------------------------------------------------------------
 inline void
 z80::init(cb_in func_in, cb_out func_out, void* userdata) {
-    YAKC_ASSERT(func_in && func_out);
-    this->init_tables();
     this->reset();
     this->in_func = func_in;
     this->out_func = func_out;
@@ -1084,5 +1082,5 @@ z80::step() {
     return do_op();
 }
 
-} // namespace
+}
 #include "yakc/z80_opcodes.h"

@@ -8,7 +8,7 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 static const int bank_height = 20;
 static const int left_padding = 80;
@@ -16,7 +16,7 @@ static const int bank_div = 160;
 
 //------------------------------------------------------------------------------
 void
-MemoryMapWindow::Setup(emu& emu) {
+MemoryMapWindow::Setup(yakc& emu) {
     this->setName("Memory Map");
 }
 
@@ -91,7 +91,7 @@ MemoryMapWindow::drawRect(int layer, uword addr, unsigned int len, const char* t
 
 //------------------------------------------------------------------------------
 bool
-MemoryMapWindow::Draw(emu& emu) {
+MemoryMapWindow::Draw(yakc& emu) {
     StringBuilder strBuilder;
     static const ImVec4 grey(0.25f, 0.25f, 0.25f, 1.0f);
     static const ImVec4 light_green(0.0f, 1.0f, 0.0f, 1.0f);
@@ -213,4 +213,4 @@ MemoryMapWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
-} // namespace yakc
+} // namespace YAKC

@@ -13,20 +13,20 @@
 #include "Core/Containers/Array.h"
 #include "IMUI/IMUI.h"
 
-namespace yakc {
+namespace YAKC {
 
 class Audio;
 
 class UI {
 public:
     /// setup the UI
-    void Setup(yakc::emu& emu, Audio* audio);
+    void Setup(yakc& emu, Audio* audio);
     /// discard the UI
     void Discard();
     /// do one frame
-    void OnFrame(yakc::emu& emu);
+    void OnFrame(yakc& emu);
     /// open a window
-    void OpenWindow(yakc::emu& emu, const Oryol::Ptr<WindowBase>& window);
+    void OpenWindow(yakc& emu, const Oryol::Ptr<WindowBase>& window);
     /// toggle the UI on/off
     void Toggle();
     /// switch to dark UI theme
@@ -67,5 +67,5 @@ private:
     Audio* audio;
 };
 
-} // namespace yakc
+} // namespace YAKC
 

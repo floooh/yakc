@@ -7,7 +7,7 @@
 #include "soloud.h"
 #include "Core/Threading/RWLock.h"
 
-namespace yakc {
+namespace YAKC {
 
 class kc85_audiosource;
 
@@ -83,5 +83,5 @@ public:
     channel channels[2];
 };
 
-} // namespace yakc
+} // namespace YAKC
 

@@ -4,7 +4,7 @@
 #include "kc85_audiosource.h"
 #include "Core/Log.h"
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 kc85_audiosource::kc85_audiosource() {
@@ -61,6 +61,6 @@ kc85_audioinstance::hasEnded() {
     return false;
 }
 
-} // namespace yakc
+} // namespace YAKC
 
 

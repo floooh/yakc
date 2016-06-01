@@ -6,7 +6,7 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 struct key {
     key() : pos(0.0f), name(nullptr), code(0), shift_code(0) { };
@@ -56,13 +56,13 @@ static struct key layout[num_rows][num_cols] = {
 
 //------------------------------------------------------------------------------
 void
-KeyboardWindow::Setup(emu& emu) {
+KeyboardWindow::Setup(yakc& emu) {
     this->setName("Keyboard");
 }
 
 //------------------------------------------------------------------------------
 bool
-KeyboardWindow::Draw(emu& emu) {
+KeyboardWindow::Draw(yakc& emu) {
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.75f);
     ImGui::SetNextWindowSize(ImVec2(572, 196));
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
@@ -113,8 +113,4 @@ KeyboardWindow::Draw(emu& emu) {
     return this->Visible;
 }
 
-} // namespace yakc
-
-
-
-
+} // namespace YAKC

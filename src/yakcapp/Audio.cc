@@ -6,11 +6,11 @@
 
 using namespace Oryol;
 
-namespace yakc {
+namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-Audio::Setup(const yakc::clock& clk) {
+Audio::Setup(const clock& clk) {
     this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, 3000.0f, 2.0f);
     this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 1024, 2);
     this->audioSource.setSingleInstance(true);
@@ -28,7 +28,7 @@ Audio::Discard() {
 
 //------------------------------------------------------------------------------
 void
-Audio::Update(const yakc::clock& clk) {
+Audio::Update(const clock& clk) {
     this->audioSource.cpu_clock_speed = clk.base_freq_khz * 1000;
 }
 
@@ -72,5 +72,5 @@ Audio::cb_volume(void* userdata, uint64_t cycle_pos, int vol) {
 */
 }
 
-} // namespace yakc
+} // namespace YAKC
 

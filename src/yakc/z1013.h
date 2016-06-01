@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class yakc::z1013
+    @class YAKC::z1013
     @brief wrapper class for Z1013 system
     
     http://hc-ddr.hucki.net/wiki/doku.php/z1013:hardware
@@ -12,7 +12,7 @@
 #include "yakc/z1013_video.h"
 #include "yakc/z1013_roms.h"
 
-namespace yakc {
+namespace YAKC {
 
 class z1013 {
 public:
@@ -288,7 +288,7 @@ z1013::init_key(ubyte ascii, int col, int line, int shift) {
 //------------------------------------------------------------------------------
 inline void
 z1013::init_key_map() {
-    YAKC_MEMSET(this->key_map, 0, sizeof(this->key_map));
+    memset(this->key_map, 0, sizeof(this->key_map));
 
     // keyboard layers (no shift key, plus the 4 shift keys)
     // use space as special placeholder
@@ -336,4 +336,4 @@ z1013::init_key_map() {
     this->init_key(0x0D, 7, 3, 0);  // Enter
 }
 
-} // namespace yakc
+} // namespace YAKC
