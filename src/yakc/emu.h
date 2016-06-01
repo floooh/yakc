@@ -4,10 +4,10 @@
     @class yakc::emu
     @brief simple wrapper class which bundles all the emulators
 */
-#include "core/common.h"
-#include "emu/breadboard.h"
-#include "kc85/kc85.h"
-#include "z1013/z1013.h"
+#include "yakc/common.h"
+#include "yakc/breadboard.h"
+#include "yakc/kc85.h"
+#include "yakc/z1013.h"
 
 namespace yakc {
 

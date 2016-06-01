@@ -4,12 +4,12 @@
     @class yakc::kc85
     @brief wrapper class for the KC85/2, /3, /4
 */
-#include "emu/breadboard.h"
-#include "roms/roms.h"
-#include "kc85/kc85_video.h"
-#include "kc85/kc85_audio.h"
-#include "kc85/kc85_exp.h"
-#include "kc85/kc85_roms.h"
+#include "yakc/breadboard.h"
+#include "yakc/roms.h"
+#include "yakc/kc85_video.h"
+#include "yakc/kc85_audio.h"
+#include "yakc/kc85_exp.h"
+#include "yakc/kc85_roms.h"
 
 namespace yakc {
 

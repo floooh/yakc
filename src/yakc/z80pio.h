@@ -7,7 +7,7 @@
     FIXME: control mode 0x7 is currently not supported
     http://www.cpcwiki.eu/index.php/Z80_PIO
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 

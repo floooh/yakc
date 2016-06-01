@@ -15,7 +15,7 @@
     - volume_cb: change the volume of one channel
     - stop_cb: stop a sound with delay in sample ticks
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 

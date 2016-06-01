@@ -17,7 +17,7 @@
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
-#include "roms/roms.h"
+#include "yakc/roms.h"
 
 using namespace Oryol;
 

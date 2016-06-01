@@ -1,14 +1,12 @@
-fips_begin_app(yakc windowed)
+fips_begin_module(yakc)
+    fips_vs_warning_level(3)
     fips_files(
-        Main.cc
-        Draw.h Draw.cc
-        Audio.h Audio.cc
-        KC85Oryol.h
-        kc85_audiosource.h kc85_audiosource.cc
+        memory.h clock.h common.h
+        z80.h z80int.h z80pio.h z80ctc.h z80dbg.h
+        kc85.h kc85_video.h kc85_audio.h kc85_exp.h kc85_roms.h kc85_snapshot.h
+        z1013.h z1013_video.h
+        breadboard.h emu.h
     )
-    oryol_shader(yakc_shaders.shd)
-    if (YAKC_UI)
-        fips_deps(ui IMUI)
-    endif()
-    fips_deps(Gfx HTTP Input Assets soloud roms)
-fips_end_app()
+    fips_generate(FROM roms.yml TYPE dump)
+    fips_generate(FROM z80_opcodes.py HEADER z80_opcodes.h)
+fips_end_module()

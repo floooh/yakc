@@ -4,7 +4,7 @@
     @class SnapshotStorage
     @brief simple class to store machine state snapshots
 */
-#include "yakc/KC85Oryol.h"
+#include "yakcapp/KC85Oryol.h"
 
 namespace yakc {
 

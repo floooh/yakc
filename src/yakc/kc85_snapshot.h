@@ -4,8 +4,8 @@
     @class kc85_snapshot
     @brief helper functions for taking and applying machine state snapshots
 */
-#include "core/common.h"
-#include "kc85/kc85.h"
+#include "yakc/common.h"
+#include "yakc/kc85.h"
 
 namespace yakc {
 

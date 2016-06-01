@@ -13,7 +13,7 @@
     embedded which implements the daisy-chain protocol to prioritize
     interrupt requests.
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 

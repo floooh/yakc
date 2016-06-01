@@ -4,8 +4,8 @@
     @class z1013_video
     @brief Z1013 video decoding hardware
 */
-#include "core/common.h"
-#include "roms/roms.h"
+#include "yakc/common.h"
+#include "yakc/roms.h"
 
 namespace yakc {
 

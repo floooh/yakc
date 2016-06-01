@@ -529,7 +529,7 @@ def write_header(f) :
     l('#pragma once')
     l('// #version:{}#'.format(Version))
     l('// machine generated, do not edit!')
-    l('#include "core/common.h"')
+    l('#include "yakc/common.h"')
     l('inline uint32_t yakc::z80::do_op() {')
 
 #-------------------------------------------------------------------------------

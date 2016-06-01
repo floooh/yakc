@@ -4,9 +4,9 @@
     @class yakc::z80
     @brief the Z80 (or rather U880) cpu
 */
-#include "core/common.h"
-#include "core/memory.h"
-#include "z80/z80int.h"
+#include "yakc/common.h"
+#include "yakc/memory.h"
+#include "yakc/z80int.h"
 
 namespace yakc {
 
@@ -1085,4 +1085,4 @@ z80::step() {
 }
 
 } // namespace
-#include "z80/z80_opcodes.h"
+#include "yakc/z80_opcodes.h"

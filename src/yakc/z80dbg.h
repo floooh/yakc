@@ -4,8 +4,8 @@
     @class yakc::z80dbg
     @brief debug helper functions
 */
-#include "core/common.h"
-#include "z80/z80.h"
+#include "yakc/common.h"
+#include "yakc/z80.h"
 
 namespace yakc {
 

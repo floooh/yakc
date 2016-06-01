@@ -4,7 +4,7 @@
     @class yakc::kc85_exp
     @brief emulate the KC85 expansion slot system
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 

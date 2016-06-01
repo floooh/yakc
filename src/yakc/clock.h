@@ -9,7 +9,7 @@
     used to generate the CPU clock at 1.75MHz(KC85/3) or 1.77MHz (KC85/4),
     the vertical blank and video scan line timings.
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 

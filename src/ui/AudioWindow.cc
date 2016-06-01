@@ -4,7 +4,7 @@
 #include "AudioWindow.h"
 #include "IMUI/IMUI.h"
 #include "soloud.h"
-#include "yakc/Audio.h"
+#include "yakcapp/Audio.h"
 #include "ui/UI.h"
 
 using namespace Oryol;

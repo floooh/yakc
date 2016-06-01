@@ -32,7 +32,7 @@
     the hole 4000-7FFF. 3/4 of the 64KByte expansion memory remains
     culled and is not visible to the CPU.
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 

@@ -1,7 +1,7 @@
 #pragma once
 // #version:1#
 // machine generated, do not edit!
-#include "core/common.h"
+#include "yakc/common.h"
 inline uint32_t yakc::z80::do_op() {
   switch (fetch_op()) {
     case 0x0: return 4; // NOP

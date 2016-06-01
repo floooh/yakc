@@ -4,7 +4,7 @@
     class yakc::kc85_roms
     @brief manage KC85 ROM blobs
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 

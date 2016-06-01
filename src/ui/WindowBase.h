@@ -6,7 +6,7 @@
 */
 #include "Core/RefCounted.h"
 #include "Core/String/String.h"
-#include "yakc/KC85Oryol.h"
+#include "yakcapp/KC85Oryol.h"
 
 namespace yakc {
 

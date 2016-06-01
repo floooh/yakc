@@ -4,7 +4,7 @@
     @class HexInputWidget
     @brief wrapper class for a hex-input widget
 */
-#include "yakc/KC85Oryol.h"
+#include "yakcapp/KC85Oryol.h"
 #include "ui/Util.h"
 #include "Core/String/StringAtom.h"
 #include "IMUI/IMUI.h"

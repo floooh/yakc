@@ -4,7 +4,7 @@
     @class yakc::z1013_roms
     @brief manage z1013 ROM data blobs
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 

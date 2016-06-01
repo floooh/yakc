@@ -4,7 +4,7 @@
     @class Disasm
     @brief YAKC wrapper for z80dasm.cc
 */
-#include "yakc/KC85Oryol.h"
+#include "yakcapp/KC85Oryol.h"
 
 namespace yakc {
 

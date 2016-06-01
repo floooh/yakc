@@ -4,7 +4,7 @@
     @class kc85_video
     @brief wraps the KC85 video RAM (IRM) and video decoding hardware
 */
-#include "core/common.h"
+#include "yakc/common.h"
 
 namespace yakc {
 
