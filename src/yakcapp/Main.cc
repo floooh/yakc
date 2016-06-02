@@ -4,16 +4,17 @@
 //------------------------------------------------------------------------------
 #include "Pre.h"
 #include "Core/Main.h"
+#include "Core/Time/Clock.h"
 #include "Gfx/Gfx.h"
 #include "Input/Input.h"
 #include "IO/IO.h"
+#include "HTTP/HTTPFileSystem.h"
+#include "yakc/yakc.h"
 #include "yakc_oryol/Draw.h"
 #include "yakc_oryol/Audio.h"
 #if YAKC_UI
 #include "yakc_ui/UI.h"
 #endif
-#include "HTTP/HTTPFileSystem.h"
-#include "Core/Time/Clock.h"
 
 using namespace Oryol;
 using namespace YAKC;
