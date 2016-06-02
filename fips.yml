@@ -16,5 +16,6 @@ exports:
     header-dirs:
         - src
     modules:
-        yakc: .
+        yakc: src/yakc
+        yakc_oryol: src/yakc_oryol
 
