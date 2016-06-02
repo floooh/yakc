@@ -7,7 +7,6 @@
 #include "Gfx/Gfx.h"
 #include "Input/Input.h"
 #include "IO/IO.h"
-#include "yakc_oryol/KC85Oryol.h"
 #include "yakc_oryol/Draw.h"
 #include "yakc_oryol/Audio.h"
 #if YAKC_UI
@@ -74,8 +73,8 @@ YakcApp::OnInit() {
     // initialize the emulator
     ext_funcs funcs;
     funcs.assertmsg_func = Log::AssertMsg;
-    funcs.malloc_func = oryol_malloc;
-    funcs.free_func = oryol_free;
+    funcs.malloc_func = [] (size_t s) -> void* { return Oryol::Memory::Alloc((int)s); };
+    funcs.free_func = [] (void* p) { Oryol::Memory::Free(p); };
     this->emu.init(funcs);
 
     // initialize the ROM dumps and modules

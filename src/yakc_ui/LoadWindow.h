@@ -5,7 +5,7 @@
     @brief UI for loading KCC files from web server
 */
 #include "yakc_ui/WindowBase.h"
-#include "yakc_ui/FileLoader.h"
+#include "yakc_oryol/FileLoader.h"
 
 namespace YAKC {
 

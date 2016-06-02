@@ -3,8 +3,8 @@
 //------------------------------------------------------------------------------
 #include "DebugWindow.h"
 #include "IMUI/IMUI.h"
-#include "UI.h"
-#include "Disasm.h"
+#include "yakc_ui/UI.h"
+#include "yakc_oryol/Disasm.h"
 
 using namespace Oryol;
 

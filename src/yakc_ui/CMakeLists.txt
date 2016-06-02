@@ -8,7 +8,6 @@ fips_begin_module(yakc_ui)
         MemoryMapWindow.cc MemoryMapWindow.h
         WindowBase.cc WindowBase.h
         ImGuiMemoryEditor.h
-        Disasm.cc Disasm.h
         DebugWindow.cc DebugWindow.h
         DisasmWindow.cc DisasmWindow.h
         PIOWindow.cc PIOWindow.h
@@ -18,9 +17,6 @@ fips_begin_module(yakc_ui)
         LoadWindow.cc LoadWindow.h
         CommandWindow.cc CommandWindow.h
         AudioWindow.cc AudioWindow.h
-        FileLoader.cc FileLoader.h
-        SnapshotStorage.cc SnapshotStorage.h
-        z80dasm.cc z80dasm.h
     )
     fips_deps(IMUI yakc yakc_oryol soloud)
 fips_end_module()

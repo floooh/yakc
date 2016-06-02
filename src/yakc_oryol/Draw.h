@@ -4,7 +4,6 @@
     @class Draw
     @brief render the KC video memory via Oryol Gfx module
 */
-#include "KC85Oryol.h"
 #include "Gfx/Gfx.h"
 #include "glm/vec2.hpp"
 

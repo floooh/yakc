@@ -4,7 +4,7 @@
     @class Audio.h
     @brief implement audio playback callback
 */
-#include "KC85Oryol.h"
+#include "yakc/clock.h"
 #include "Core/Containers/Queue.h"
 #include "kc85_audiosource.h"
 #include "soloud_biquadresonantfilter.h"
