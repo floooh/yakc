@@ -4,8 +4,7 @@
     @class AudioWindow
     @brief audio debugging window
 */
-#include "yakcapp/KC85Oryol.h"
-#include "ui/WindowBase.h"
+#include "yakc_ui/WindowBase.h"
 
 namespace YAKC {
 

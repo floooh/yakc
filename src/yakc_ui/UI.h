@@ -4,11 +4,10 @@
     @class UI
     @brief imgui-based debugger UI
 */
-#include "yakcapp/KC85Oryol.h"
-#include "yakcapp/Audio.h"
-#include "ui/WindowBase.h"
-#include "ui/FileLoader.h"
-#include "ui/SnapshotStorage.h"
+#include "yakc_oryol/Audio.h"
+#include "yakc_ui/WindowBase.h"
+#include "yakc_ui/FileLoader.h"
+#include "yakc_ui/SnapshotStorage.h"
 #include "Core/Time/TimePoint.h"
 #include "Core/Containers/Array.h"
 #include "IMUI/IMUI.h"

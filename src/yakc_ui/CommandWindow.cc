@@ -4,7 +4,7 @@
 #include "CommandWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
-#include "ui/UI.h"
+#include "yakc_ui/UI.h"
 #include <ctype.h>
 
 using namespace Oryol;

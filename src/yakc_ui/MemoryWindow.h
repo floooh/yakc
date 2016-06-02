@@ -1,24 +1,23 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class PIOWindow
-    @brief visualize the current PIO state
+    @class MemoryWindow
+    @brief memory dump and edit window
 */
-#include "ui/HexInputWidget.h"
-#include "ui/WindowBase.h"
+#include "yakc_ui/WindowBase.h"
+#include "yakc_ui/ImGuiMemoryEditor.h"
 
 namespace YAKC {
 
-class PIOWindow : public WindowBase {
-    OryolClassDecl(PIOWindow);
+class MemoryWindow : public WindowBase {
+    OryolClassDecl(MemoryWindow);
 public:
     /// setup the window
     virtual void Setup(yakc& emu) override;
     /// draw method
     virtual bool Draw(yakc& emu) override;
 
-    HexInputWidget pioAData;
-    HexInputWidget pioBData;
+    MemoryEditor edit;
 };
 
 } // namespace YAKC

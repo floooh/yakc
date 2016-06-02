@@ -1,8 +1,8 @@
-#pragma once
-// #version:1#
+// #version:2#
 // machine generated, do not edit!
-#include "yakc/core.h"
-inline uint32_t YAKC::z80::do_op() {
+#include "z80.h"
+namespace YAKC {
+uint32_t z80::do_op() {
   switch (fetch_op()) {
     case 0x0: return 4; // NOP
     case 0x1: BC=mem.r16(PC); PC+=2; return 10; // LD BC,nn
@@ -1638,3 +1638,4 @@ inline uint32_t YAKC::z80::do_op() {
     default: return invalid_opcode(1);
   }
 }
+} // namespace YAKC

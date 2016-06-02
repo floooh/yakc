@@ -1,4 +1,4 @@
-fips_begin_module(ui)
+fips_begin_module(yakc_ui)
     fips_vs_warning_level(3)
     fips_files(
         Util.h
@@ -22,5 +22,5 @@ fips_begin_module(ui)
         SnapshotStorage.cc SnapshotStorage.h
         z80dasm.cc z80dasm.h
     )
-    fips_deps(yakc soloud)
+    fips_deps(IMUI yakc yakc_oryol soloud)
 fips_end_module()

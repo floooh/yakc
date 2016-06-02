@@ -7,11 +7,11 @@
 #include "Gfx/Gfx.h"
 #include "Input/Input.h"
 #include "IO/IO.h"
-#include "KC85Oryol.h"
-#include "Draw.h"
-#include "Audio.h"
+#include "yakc_oryol/KC85Oryol.h"
+#include "yakc_oryol/Draw.h"
+#include "yakc_oryol/Audio.h"
 #if YAKC_UI
-#include "ui/UI.h"
+#include "yakc_ui/UI.h"
 #endif
 #include "HTTP/HTTPFileSystem.h"
 #include "Core/Time/Clock.h"

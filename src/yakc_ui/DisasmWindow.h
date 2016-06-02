@@ -4,8 +4,8 @@
     @class DisasmWindow
     @brief a disassembler window
 */
-#include "ui/HexInputWidget.h"
-#include "ui/WindowBase.h"
+#include "yakc_ui/HexInputWidget.h"
+#include "yakc_ui/WindowBase.h"
 
 namespace YAKC {
 

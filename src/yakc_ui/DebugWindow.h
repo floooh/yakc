@@ -4,9 +4,8 @@
     @class DebugWindow
     @brief implement the step-debugger window
 */
-#include "ui/HexInputWidget.h"
-#include "ui/WindowBase.h"
-#include "Core/Containers/Array.h"
+#include "yakc_ui/HexInputWidget.h"
+#include "yakc_ui/WindowBase.h"
 
 namespace YAKC {
 

@@ -4,8 +4,9 @@
     @class CommandWindow
     @brief scan memory for commands
 */
-#include "ui/HexInputWidget.h"
-#include "ui/WindowBase.h"
+#include "yakc_ui/WindowBase.h"
+#include "yakc_ui/HexInputWidget.h"
+#include "Core/Containers/Array.h"
 
 namespace YAKC {
 

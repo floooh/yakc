@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
-Version = 1
+Version = 2
 
 # tab-width for generated code
 TabWidth = 2
@@ -526,11 +526,11 @@ def l(s) :
 # write source header
 #
 def write_header(f) :
-    l('#pragma once')
     l('// #version:{}#'.format(Version))
     l('// machine generated, do not edit!')
-    l('#include "yakc/core.h"')
-    l('inline uint32_t YAKC::z80::do_op() {')
+    l('#include "z80.h"')
+    l('namespace YAKC {')
+    l('uint32_t z80::do_op() {')
 
 #-------------------------------------------------------------------------------
 # begin a new instruction group (begins a switch statement)
@@ -576,6 +576,7 @@ def write_end_group(f, indent, inv_op_bytes, ext_byte=None, read_offset=False) :
 #
 def write_footer(f) :
     l('}')
+    l('} // namespace YAKC');
 
 #-------------------------------------------------------------------------------
 # main encoder function, this populates all the opcode tables and
@@ -628,7 +629,7 @@ def do_it(f) :
 # fips code generator entry 
 #
 def generate(input, out_src, out_hdr) :
-    if genutil.isDirty(Version, [input], [out_hdr]) :
-        with open(out_hdr, 'w') as f:
+    if genutil.isDirty(Version, [input], [out_src]) :
+        with open(out_src, 'w') as f:
             do_it(f)
 

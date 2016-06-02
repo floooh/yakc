@@ -4,8 +4,8 @@
     @class LoadWindow
     @brief UI for loading KCC files from web server
 */
-#include "ui/WindowBase.h"
-#include "ui/FileLoader.h"
+#include "yakc_ui/WindowBase.h"
+#include "yakc_ui/FileLoader.h"
 
 namespace YAKC {
 

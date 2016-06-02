@@ -1,23 +1,20 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class KeyboardWindow
-    @brief implements an onscreen keyboard
+    @class CTCWindow
+    @brief visualize Z80 CTC state
 */
-#include "ui/WindowBase.h"
+#include "yakc_ui/WindowBase.h"
 
 namespace YAKC {
 
-class KeyboardWindow : public WindowBase {
-    OryolClassDecl(KeyboardWindow);
+class CTCWindow : public WindowBase {
+    OryolClassDecl(CTCWindow);
 public:
     /// setup the window
     virtual void Setup(yakc& emu) override;
     /// draw method
     virtual bool Draw(yakc& emu) override;
-
-    bool shift = false;
-    bool caps_lock = false;
 };
 
 } // namespace YAKC

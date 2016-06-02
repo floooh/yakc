@@ -4,9 +4,7 @@
     @class ModuleWindow
     @brief allows to attach or remove expansion modules to KC device
 */
-#include "yakcapp/KC85Oryol.h"
-#include "ui/WindowBase.h"
-#include "Core/Containers/Array.h"
+#include "yakc_ui/WindowBase.h"
 
 namespace YAKC {
 

@@ -4,7 +4,7 @@
     @class MemoryMapWindow
     @brief visualize the current memory map configuration
 */
-#include "ui/WindowBase.h"
+#include "yakc_ui/WindowBase.h"
 
 namespace YAKC {
 

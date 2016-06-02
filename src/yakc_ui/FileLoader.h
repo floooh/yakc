@@ -4,7 +4,7 @@
     @class FileLoader
     @brief helper class to load KCC files
 */
-#include "yakcapp/KC85Oryol.h"
+#include "yakc/yakc.h"
 #include "Core/String/String.h"
 #include "Core/Containers/Array.h"
 #include "IO/IO.h"
