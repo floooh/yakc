@@ -7,9 +7,9 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 z80::z80() :
-BC(0), DE(0), HL(0), AF(0), IX(0), IY(0), WZ(0), SP(0), 
+BC(0), DE(0), HL(0), AF(0), IX(0), IY(0), WZ(0),
 BC_(0), DE_(0), HL_(0), AF_(0), WZ_(0),
-PC(0), I(0), R(0), IM(0),
+SP(0), PC(0), I(0), R(0), IM(0),
 HALT(false), IFF1(false), IFF2(false), INV(false),
 in_func(nullptr),
 out_func(nullptr),

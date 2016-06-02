@@ -12,7 +12,6 @@ namespace YAKC {
 
 class z80 {
 public:
-    /// flag bits
     enum {
         CF = (1<<0),        // carry flag
         NF = (1<<1),        // add/subtract
@@ -25,62 +24,48 @@ public:
         SF = (1<<7),        // sign flag
     };
 
-    /// main register bank, accessible in various ways
     union {
-        struct {
-            union {
-                struct { ubyte C, B; };
-                uword BC;
-            };
-            union {
-                struct { ubyte E, D; };
-                uword DE;
-            };
-            union {
-                struct { ubyte L, H; };
-                uword HL;
-            };
-            union {
-                struct { ubyte F, A; };
-                uword AF;
-            };
-            union {
-                struct { ubyte IXL, IXH; };
-                uword IX;
-            };
-            union {
-                struct { ubyte IYL, IYH; };
-                uword IY;
-            };
-            union {
-                struct { ubyte Z, W; };
-                uword WZ;
-            };
-            uword SP;
-        };
+        struct { ubyte C, B; };
+        uword BC;
     };
-
-    /// shadow register set
+    union {
+        struct { ubyte E, D; };
+        uword DE;
+    };
+    union {
+        struct { ubyte L, H; };
+        uword HL;
+    };
+    union {
+        struct { ubyte F, A; };
+        uword AF;
+    };
+    union {
+        struct { ubyte IXL, IXH; };
+        uword IX;
+    };
+    union {
+        struct { ubyte IYL, IYH; };
+        uword IY;
+    };
+    union {
+        struct { ubyte Z, W; };
+        uword WZ;
+    };
     uword BC_;
     uword DE_;
     uword HL_;
     uword AF_;
     uword WZ_;
-    /// instruction pointer
+    uword SP;
     uword PC;
-    /// interrupt vector register
     ubyte I;
-    /// memory refresh counter
     ubyte R;
-    /// interrupt mode
     ubyte IM;
 
-    /// CPU is in HALT state
     bool HALT;
-    /// interrupt enable flipflops
     bool IFF1, IFF2;
-    /// invalid instruction hit
-    bool INV;
+    bool INV;   // invalid instruction hit
 
     /// flag lookup table for SZP flag combinations
     ubyte szp[256];
