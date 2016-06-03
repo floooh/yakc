@@ -120,7 +120,7 @@ z1013::out_cb(void* userdata, uword port, ubyte val) {
     switch (port & 0xFF) {
         case 0x00:
             // PIO A, data
-            self->board->pio.write(z80pio::A, val);
+            self->board->pio.write_data(z80pio::A, val);
             break;
         case 0x01:
             // PIO A, control
@@ -128,7 +128,7 @@ z1013::out_cb(void* userdata, uword port, ubyte val) {
             break;
         case 0x02:
             // PIO B, data
-            self->board->pio.write(z80pio::B, val);
+            self->board->pio.write_data(z80pio::B, val);
             break;
         case 0x03:
             // PIO B, control
@@ -152,7 +152,7 @@ z1013::in_cb(void* userdata, uword port) {
     z1013* self = (z1013*)userdata;
     switch (port & 0xFF) {
         case 0x00:
-            return self->board->pio.read(z80pio::A);
+            return self->board->pio.read_data(z80pio::A);
             break;
         case 0x02:
             // FIXME: directly lookup keyboard matrix column bits,

@@ -198,16 +198,8 @@ kc85_snapshot::apply_ctc_state(const state_t& state, kc85& kc) {
 void
 kc85_snapshot::write_pio_state(const kc85& kc, state_t& state) {
     const z80pio& pio = kc.board->pio;
-    for (int c = 0; c < 2; c++) {
-        auto& dst = state.pio.chn[c];
-        const auto& src = pio.channel_state[c];
-        dst.interrupt_vector = src.interrupt_vector;
-        dst.interrupt_control = src.interrupt_control;
-        dst.mode = src.mode;
-        dst.inout_select = src.inout_select;
-        dst.mask = src.mask;
-        dst.follows = src.follows;
-        dst.data = pio.channel_data[c];
+    for (int i = 0; i < 2; i++) {
+        state.pio.port[i] = pio.port[i];
     }
     write_intctrl_state(pio.int_ctrl, state.pio.intctrl);
 }
@@ -216,16 +208,8 @@ kc85_snapshot::write_pio_state(const kc85& kc, state_t& state) {
 void
 kc85_snapshot::apply_pio_state(const state_t& state, kc85& kc) {
     z80pio& pio = kc.board->pio;
-    for (int c = 0; c < 2; c++) {
-        auto& dst = pio.channel_state[c];
-        const auto& src = state.pio.chn[c];
-        dst.interrupt_vector = src.interrupt_vector;
-        dst.interrupt_control = src.interrupt_control;
-        dst.mode = src.mode;
-        dst.inout_select = src.inout_select;
-        dst.mask = src.mask;
-        dst.follows = src.follows;
-        pio.channel_data[c] = src.data;
+    for (int i = 0; i < 2; i++) {
+        pio.port[i] = state.pio.port[i];
     }
     apply_intctrl_state(state.pio.intctrl, pio.int_ctrl);
 }

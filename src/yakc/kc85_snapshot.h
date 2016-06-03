@@ -75,16 +75,7 @@ public:
 
         // pio state
         struct pio_t {
-            struct chn_t {
-                ubyte interrupt_vector;
-                ubyte interrupt_control;
-                ubyte mode;
-                ubyte inout_select;
-                ubyte mask;
-                ubyte follows;
-                ubyte data;
-                ubyte pad[3];
-            } chn[2];
+            z80pio::port_t port[z80pio::num_ports];
             intctrl_t intctrl;
         } pio;
         static_assert((sizeof(pio_t)&3)==0, "pio_t odd size!");

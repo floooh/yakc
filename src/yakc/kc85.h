@@ -53,6 +53,8 @@ public:
     kc85_audio audio;
     kc85_exp exp;
     kc85_roms roms;
+    ubyte pio_a = 0;         // backing for PIO-A data
+    ubyte pio_b = 0;         // backing for PIO-B data
     ubyte io84 = 0;         // special KC85/4 io register
     ubyte io86 = 0;         // special KC85/4 io register
 

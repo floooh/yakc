@@ -302,11 +302,13 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             }
             break;
         case 0x88:
-            self->board->pio.write(z80pio::A, val);
+            self->pio_a = val;  // FIXME: this should be handled as PIO 'peripheral device'
+            self->board->pio.write_data(z80pio::A, val);
             self->update_bank_switching();
             break;
         case 0x89:
-            self->board->pio.write(z80pio::B, val);
+            self->pio_b = val; // FIXME: this should be handled as PIO 'peripheral device'
+            self->board->pio.write_data(z80pio::B, val);
             self->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
             self->audio.update_volume(val & PIO_B_VOLUME_MASK);
             break;
@@ -343,9 +345,11 @@ kc85::in_cb(void* userdata, uword port) {
         case 0x80:
             return self->exp.module_type_in_slot(port>>8);
         case 0x88:
-            return self->board->pio.read(z80pio::A);
+            // FIXME: this should be handled as PIO 'peripheral device'
+            return self->pio_a;
         case 0x89:
-            return self->board->pio.read(z80pio::B);
+            // FIXME: this should be handled as PIO 'peripheral device'
+            return self->pio_b;
         case 0x8C:
             return self->board->ctc.read(z80ctc::CTC0);
         case 0x8D:
@@ -363,10 +367,7 @@ kc85::in_cb(void* userdata, uword port) {
 void
 kc85::update_bank_switching() {
     z80& cpu = this->board->cpu;
-    z80pio& pio = this->board->pio;
     cpu.mem.unmap_layer(0);
-    const ubyte pio_a = pio.read(z80pio::A);
-    const ubyte pio_b = pio.read(z80pio::B);
 
     if ((device::kc85_2 == this->cur_model) || (device::kc85_3 == this->cur_model)) {
         // ** KC85/3 or KC85/2 **

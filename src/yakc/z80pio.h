@@ -13,39 +13,49 @@ namespace YAKC {
 
 class z80pio {
 public:
-    /// channels
-    enum channel {
+    /// port identifiers
+    enum {
         A = 0,
-        B,
-        num_channels,
+        B = 1,
+        num_ports = 2,
     };
 
-    /// channel state
-    struct channel_state_t {
-        channel_state_t() :
-            interrupt_vector(0),
-            interrupt_control(0),
-            mode(0),
-            inout_select(0),
-            mask(0),
-            follows(any_follows)
-        { };
+    /// port modes
+    enum : ubyte {
+        mode_output = 0,
+        mode_input,
+        mode_bidirectional,
+        mode_bitcontrol,
+    };
 
-        ubyte interrupt_vector;
-        ubyte interrupt_control;    // D7=enabled, D7=and/or, D5=high/low, D4=mask follows
-        ubyte mode;                 // 0=output, 1=input, 2=bidirectional, 3=bit-control
-        ubyte inout_select;         // input/output control select (1-bit: in, 0-bit: out)
-        ubyte mask;                 // mask in bit-control mode
-        ubyte follows;
-        enum : ubyte {
-            any_follows = 0,        // general control word
-            select_follows = 1,     // inout_select expected
-            mask_follows = 2,       // interrupr mask expected
-        };
-    } channel_state[num_channels];
+    /// interrupt control bits
+    enum : ubyte {
+        intctrl_enable_int   = (1<<7),
+        intctrl_and_or       = (1<<6),
+        intctrl_high_low     = (1<<5),
+        intctrl_mask_follows = (1<<4)
+    };
 
-    /// channel data values
-    ubyte channel_data[num_channels];
+    /// port expect mode (what is the next control word)
+    enum : ubyte {
+        expect_any = 0,
+        expect_io_select = 1,
+        expect_int_mask = 2,
+    };
+
+    /// port state
+    struct port_t {
+        ubyte output = 0;       // output register
+        ubyte input = 0;        // input register
+        ubyte io_select = 0;    // i/o select bits (for bit-control mode)
+        ubyte mode = 0;         // 0=output, 1=input, 2=bidirection, 3=bit-control
+        ubyte int_mask = 0xFF;
+        ubyte int_vector = 0;
+        ubyte int_control = 0;
+        ubyte expect = 0;       // next expected control byte
+    };
+    port_t port[num_ports];
+
     /// interrupt controller
     z80int int_ctrl;
 
@@ -55,11 +65,11 @@ public:
     void reset();
 
     /// write control register
-    void control(channel c, ubyte m);
+    void control(int port_id, ubyte val);
     /// write data register
-    void write(channel c, ubyte d);
+    void write_data(int port_id, ubyte data);
     /// read data register
-    ubyte read(channel c) const;
+    ubyte read_data(int port_id) const;
 };
 
 } // namespace YAKC
