@@ -84,7 +84,6 @@ public:
     /// update the CTC for a number of ticks, a tick is equal to a Z80 T-cycle
     void update_timers(int ticks);
 
-
     /// set callback for ZC/TO0 line (zero-count/time-out)
     void connect_zcto0(ctc_cb cb, void* userdata);
     /// set callback for ZC/TO1 line

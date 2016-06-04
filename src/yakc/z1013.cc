@@ -19,6 +19,9 @@ z1013::poweron(device m) {
     YAKC_ASSERT(int(device::any_z1013) & int(m));
     YAKC_ASSERT(!this->on);
 
+    z80& cpu = this->board->cpu;
+    z80pio& pio = this->board->pio;
+
     this->cur_model = m;
     this->cur_os = os_rom::z1013_mon202;
     this->on = true;
@@ -27,20 +30,24 @@ z1013::poweron(device m) {
     this->kbd_column_bits = 0;
 
     // map memory
-    this->board->cpu.mem.map(0, 0x0000, 0x4000, this->ram[0], true);            // RAM
-    this->board->cpu.mem.map(0, 0xEC00, 0x0400, this->video.irm, true);         // video mem
-    this->board->cpu.mem.map(0, 0xF000, 0x0800, (ubyte*)this->roms.ptr(z1013_roms::mon202), false);   // OS ROM
+    cpu.mem.map(0, 0x0000, 0x4000, this->ram[0], true);    // RAM
+    cpu.mem.map(0, 0xEC00, 0x0400, this->irm, true);       // video mem
+    cpu.mem.map(0, 0xF000, 0x0800, (ubyte*)this->roms.ptr(z1013_roms::mon202), false);   // OS ROM
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
     this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
 
     // initialize hardware components
-    this->board->pio.init();
-    this->board->cpu.init(in_cb, out_cb, this);
-    this->video.init();
+    cpu.init(in_cb, out_cb, this);
+    pio.init();
+    pio.connect_out_cb(z80pio::A, this, pio_a_out_cb);
+    pio.connect_out_cb(z80pio::B, this, pio_b_out_cb);
+    pio.connect_in_cb(z80pio::A, this, pio_a_in_cb);
+    pio.connect_in_cb(z80pio::B, this, pio_b_in_cb);
 
-    // clear RAM
+    // clear system RAM and video RAM
     clear(this->ram, sizeof(this->ram));
+    clear(this->irm, sizeof(this->irm));    
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -57,7 +64,6 @@ z1013::poweroff() {
 //------------------------------------------------------------------------------
 void
 z1013::reset() {
-    this->video.reset();
     this->board->pio.reset();
     this->board->cpu.reset();
     this->kbd_column_nr_requested = 0;
@@ -81,8 +87,6 @@ z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
     clock& clk = this->board->clck;
 
     if (!dbg.paused) {
-        // compute the end-cycle-count for the current frame
-        // compute the end-cycle-count for the current frame
         if (this->abs_cycle_count == 0) {
             this->abs_cycle_count = min_cycle_count;
         }
@@ -110,7 +114,7 @@ z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
         }
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
     }
-    this->video.decode();
+    this->decode_video();
 }
 
 //------------------------------------------------------------------------------
@@ -120,7 +124,7 @@ z1013::out_cb(void* userdata, uword port, ubyte val) {
     switch (port & 0xFF) {
         case 0x00:
             // PIO A, data
-            self->board->pio.write(z80pio::A, val);
+            self->board->pio.write_data(z80pio::A, val);
             break;
         case 0x01:
             // PIO A, control
@@ -128,7 +132,7 @@ z1013::out_cb(void* userdata, uword port, ubyte val) {
             break;
         case 0x02:
             // PIO B, data
-            self->board->pio.write(z80pio::B, val);
+            self->board->pio.write_data(z80pio::B, val);
             break;
         case 0x03:
             // PIO B, control
@@ -152,15 +156,42 @@ z1013::in_cb(void* userdata, uword port) {
     z1013* self = (z1013*)userdata;
     switch (port & 0xFF) {
         case 0x00:
-            return self->board->pio.read(z80pio::A);
-            break;
+            return self->board->pio.read_data(z80pio::A);
         case 0x02:
-            // FIXME: directly lookup keyboard matrix column bits,
-            // normally these would have to be read from PIO B
-            return 0xF & ~self->get_kbd_column_bits(self->kbd_column_nr_requested & 7);
+            return self->board->pio.read_data(z80pio::B);
         default:
             return 0xFF;
     }
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::pio_a_out_cb(void* userdata, ubyte val) {
+    // nothing happening here, PIO-A is for user devices
+}
+
+//------------------------------------------------------------------------------
+ubyte
+z1013::pio_a_in_cb(void* userdata) {
+    // nothing to return here, PIO-A is for user devices
+    return 0xFF;
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::pio_b_out_cb(void* userdata, ubyte val) {
+    // FIXME: for z1013a2, bit 4 is for additional keyboard matrix column,
+    // bit 7 is for cassette output
+}
+
+//------------------------------------------------------------------------------
+ubyte
+z1013::pio_b_in_cb(void* userdata) {
+    z1013* self = (z1013*) userdata;
+
+    // FIXME: handle bit 7 for cassette input
+    // read keyboard matrix state into lower 4 bits
+    return 0xF & ~self->get_kbd_column_bits(self->kbd_column_nr_requested & 7);
 }
 
 //------------------------------------------------------------------------------
@@ -212,12 +243,12 @@ z1013::init_key_map() {
         // Shift 1:
         "XYZ[\\]^-"
         "01234567"
-        "89:.<=>?"
+        "89:;<=>?"
         "        "
         // Shift 2:
         "   {|}~ "
         " !\"#$%&'"
-        "()*+,-,/"
+        "()*+,-./"
         "        "
         // Shift 3:
         " abcdefg"
@@ -246,6 +277,23 @@ z1013::init_key_map() {
     this->init_key(0x08, 4, 3, 0);  // Cursor Left
     this->init_key(0x09, 6, 3, 0);  // Cursor Right
     this->init_key(0x0D, 7, 3, 0);  // Enter
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::decode_video() {
+    uint32_t* dst = RGBA8Buffer;
+    for (int y = 0; y < 32; y++) {
+        for (int py = 0; py < 8; py++) {
+            for (int x = 0; x < 32; x++) {
+                ubyte ascii = this->irm[(y<<5) + x];
+                ubyte bits = dump_z1013_font[(ascii<<3)|py];
+                for (int px = 7; px >=0; px--) {
+                    *dst++ = bits & (1<<px) ? 0xFFFFFFFF : 0xFF000000;
+                }
+            }
+        }
+    }
 }
 
 } // namespace YAKC

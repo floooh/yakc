@@ -14,8 +14,8 @@ namespace YAKC {
 void
 PIOWindow::Setup(yakc& emu) {
     this->setName("Z80 PIO State");
-    this->pioAData.Configure8("PIO A Data (port 0x88)", emu.board.pio.read(z80pio::A));
-    this->pioBData.Configure8("PIO B Data (port 0x89)", emu.board.pio.read(z80pio::B));
+    this->pioAData.Configure8("PIO A Data (port 0x88)", emu.board.pio.read_data(z80pio::A));
+    this->pioBData.Configure8("PIO B Data (port 0x89)", emu.board.pio.read_data(z80pio::B));
 }
 
 //------------------------------------------------------------------------------
@@ -28,32 +28,32 @@ onOffLine(const char* text, bool on) {
 
 //------------------------------------------------------------------------------
 static void
-pioControlState(const yakc& emu, z80pio::channel chn) {
-    const auto& state = emu.board.pio.channel_state[chn];
+pioControlState(const yakc& emu, int port_id) {
+    const auto& state = emu.board.pio.port[port_id];
     ImGui::Text("Interrupt:"); ImGui::SameLine(128);
-    ImGui::Text("%02X", state.interrupt_control);
+    ImGui::Text("%02X", state.int_control);
 
     ImGui::Text("Interrupt Vector:"); ImGui::SameLine(128);
-    ImGui::Text("%02X", state.interrupt_vector);
+    ImGui::Text("%02X", state.int_vector);
 
     ImGui::Text("Mode:"); ImGui::SameLine(128);
     ImGui::Text("%02X", state.mode);
 
     ImGui::Text("I/O Select:"); ImGui::SameLine(128);
-    ImGui::Text("%02X", state.inout_select);
+    ImGui::Text("%02X", state.io_select);
 
     ImGui::Text("I/O Int Mask:"); ImGui::SameLine(128);
-    ImGui::Text("%02X", state.mask);
+    ImGui::Text("%02X", state.int_mask);
 
     ImGui::Text("Expect:"); ImGui::SameLine(128);
-    const char* follows = "???";
-    switch (state.follows) {
-        case z80pio::channel_state_t::any_follows: follows = "ANY"; break;
-        case z80pio::channel_state_t::select_follows: follows = "SELECT"; break;
-        case z80pio::channel_state_t::mask_follows: follows = "MASK"; break;
+    const char* expect = "???";
+    switch (state.expect) {
+        case z80pio::expect_any: expect = "ANY"; break;
+        case z80pio::expect_io_select: expect = "SELECT"; break;
+        case z80pio::expect_int_mask: expect = "MASK"; break;
         default: break;
     }
-    ImGui::Text("%s", follows);
+    ImGui::Text("%s", expect);
 }
 
 //------------------------------------------------------------------------------
@@ -66,9 +66,9 @@ PIOWindow::Draw(yakc& emu) {
             emu.board.cpu.out(0x88, this->pioAData.Get8());
         }
         else {
-            this->pioAData.Set8(emu.board.pio.read(z80pio::A));
+            this->pioAData.Set8(emu.board.pio.read_data(z80pio::A));
         }
-        const ubyte a = emu.board.pio.read(z80pio::A);
+        const ubyte a = emu.board.pio.read_data(z80pio::A);
         onOffLine("CAOS ROM:", 0 != (a & kc85::PIO_A_CAOS_ROM));
         onOffLine("RAM:", 0 != (a & kc85::PIO_A_RAM));
         onOffLine("IRM:", 0 != (a & kc85::PIO_A_IRM));
@@ -82,9 +82,9 @@ PIOWindow::Draw(yakc& emu) {
             emu.board.cpu.out(0x89, this->pioBData.Get8());
         }
         else {
-            this->pioBData.Set8(emu.board.pio.read(z80pio::B));
+            this->pioBData.Set8(emu.board.pio.read_data(z80pio::B));
         }
-        const ubyte b = emu.board.pio.read(z80pio::B);
+        const ubyte b = emu.board.pio.read_data(z80pio::B);
         ImGui::Text("VOLUME:"); ImGui::SameLine(96); ImGui::Text("%02X", b & kc85::PIO_B_VOLUME_MASK);
         onOffLine("BLINKING", 0 != (b & kc85::PIO_B_BLINK_ENABLED));
         ImGui::Separator();

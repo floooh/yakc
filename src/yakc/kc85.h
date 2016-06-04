@@ -53,6 +53,8 @@ public:
     kc85_audio audio;
     kc85_exp exp;
     kc85_roms roms;
+    ubyte pio_a = 0;        // backing for PIO-A data
+    ubyte pio_b = 0;        // backing for PIO-B data
     ubyte io84 = 0;         // special KC85/4 io register
     ubyte io86 = 0;         // special KC85/4 io register
 
@@ -78,9 +80,18 @@ public:
     void handle_keyboard_input();
 
     /// the z80 out callback
-    static void out_cb(void* userdata, uword port, ubyte val);
+    static void z80_out_cb(void* userdata, uword port, ubyte val);
     /// the z80 in callback
-    static ubyte in_cb(void* userdata, uword port);
+    static ubyte z80_in_cb(void* userdata, uword port);
+    /// PIO-A out callback
+    static void pio_a_out_cb(void* userdata, ubyte val);
+    /// PIO-A in callback
+    static ubyte pio_a_in_cb(void* userdata);
+    /// PIO-B out callback
+    static void pio_b_out_cb(void* userdata, ubyte val);
+    /// PIO-B in callback
+    static ubyte pio_b_in_cb(void* userdata);
+
     /// update module/memory mapping
     void update_bank_switching();
     /// update the rom pointers

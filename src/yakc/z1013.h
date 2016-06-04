@@ -9,7 +9,6 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/roms.h"
-#include "yakc/z1013_video.h"
 #include "yakc/z1013_roms.h"
 
 namespace YAKC {
@@ -18,10 +17,11 @@ class z1013 {
 public:
     /// ram banks
     ubyte ram[4][0x4000];
+    /// 1 Kbyte separate video memory
+    ubyte irm[0x400];
 
     /// hardware components
     breadboard* board = nullptr;
-    z1013_video video;
     z1013_roms roms;
 
     /// one-time setup
@@ -45,6 +45,14 @@ public:
     static void out_cb(void* userdata, uword port, ubyte val);
     /// the z80 in callback
     static ubyte in_cb(void* userdata, uword port);
+    /// PIO-A out callback
+    static void pio_a_out_cb(void* userdata, ubyte val);
+    /// PIO-A in callback
+    static ubyte pio_a_in_cb(void* userdata);
+    /// PIO-B out callback
+    static void pio_b_out_cb(void* userdata, ubyte val);
+    /// PIO-B in callback
+    static ubyte pio_b_in_cb(void* userdata);
 
     /// initialize the key translation table
     void init_key_map();
@@ -54,6 +62,9 @@ public:
     uint32_t kbd_bit(int col, int line);
     /// get keyboard matrix column bits
     ubyte get_kbd_column_bits(int col) const;
+
+    /// decode an entire frame into RGBA8Buffer
+    void decode_video();
 
     device cur_model = device::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;
@@ -68,7 +79,9 @@ public:
     uint32_t next_kbd_column_bits = 0;
     uint32_t kbd_column_bits = 0;
     static const int max_num_keys = 128;
-    uint32_t key_map[max_num_keys] = { };         // map ASCII code to keyboard matrix bits
+    uint32_t key_map[max_num_keys] = { };   // map ASCII code to keyboard matrix bits
+
+    uint32_t RGBA8Buffer[256*256];          // decoded linear RGBA8 video buffer
 };
 
 } // namespace YAKC
