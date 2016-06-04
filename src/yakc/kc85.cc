@@ -48,6 +48,7 @@ kc85::poweron(device m, os_rom os) {
     z80& cpu = this->board->cpu;
     z80pio& pio = this->board->pio;
     z80ctc& ctc = this->board->ctc;
+    cpu.mem.unmap_all();
     pio.init();
     ctc.init();
     cpu.init(z80_in_cb, z80_out_cb, this);

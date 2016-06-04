@@ -13,6 +13,7 @@ public:
     /// existing ROM blobs
     enum rom {
         mon202 = 0,
+        mon_a2,
         font,
 
         num_roms

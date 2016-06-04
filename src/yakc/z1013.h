@@ -54,14 +54,18 @@ public:
     /// PIO-B in callback
     static ubyte pio_b_in_cb(void* userdata);
 
-    /// initialize the key translation table
-    void init_key_map();
+    /// initialize the key translation table for the basic 8x4 keyboard (z1013.01)
+    void init_keymap_8x4();
+    /// initialize the key translation table for the 8x8 keyboard (z1013.16/64)
+    void init_keymap_8x8();
     /// add a single key to the key map with the keyboard matrix column/line and shift key (0..4)
-    void init_key(ubyte ascii, int col, int line, int shift=0);
+    void init_key_8x4(ubyte ascii, int col, int line, int shift=0);
     /// get keyboard matrix bit mask by column and line
-    uint32_t kbd_bit(int col, int line);
-    /// get keyboard matrix column bits
-    ubyte get_kbd_column_bits(int col) const;
+    uint64_t kbd_bit_8x4(int col, int line);
+    /// add a single key to the key map for 8x8 keyboard
+    void init_key_8x8(ubyte ascii, int col, int line, int shift=0);
+    /// get keyboard matrix bit mask by column and line for 8x8 keyboard
+    uint64_t kbd_bit_8x8(int col, int line);
 
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
@@ -76,10 +80,11 @@ public:
     const ubyte* os_ptr = nullptr;
     int os_size = 0;
     ubyte kbd_column_nr_requested = 0;
+    bool kbd_8x8_requested = false;
     uint32_t next_kbd_column_bits = 0;
-    uint32_t kbd_column_bits = 0;
+    uint64_t kbd_column_bits = 0;
     static const int max_num_keys = 128;
-    uint32_t key_map[max_num_keys] = { };   // map ASCII code to keyboard matrix bits
+    uint64_t key_map[max_num_keys] = { };   // map ASCII code to keyboard matrix bits
 
     uint32_t RGBA8Buffer[256*256];          // decoded linear RGBA8 video buffer
 };

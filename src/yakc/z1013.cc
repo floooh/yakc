@@ -9,7 +9,6 @@ namespace YAKC {
 void
 z1013::init(breadboard* b) {
     this->board = b;
-    this->init_key_map();
 }
 
 //------------------------------------------------------------------------------
@@ -23,16 +22,37 @@ z1013::poweron(device m) {
     z80pio& pio = this->board->pio;
 
     this->cur_model = m;
-    this->cur_os = os_rom::z1013_mon202;
+    if (m == device::z1013_01) {
+        this->cur_os = os_rom::z1013_mon202;
+        this->init_keymap_8x4();
+    }
+    else {
+        this->cur_os = os_rom::z1013_mon_a2;
+        this->init_keymap_8x8();
+    }
     this->on = true;
     this->kbd_column_nr_requested = 0;
+    this->kbd_8x8_requested = false;
     this->next_kbd_column_bits = 0;
     this->kbd_column_bits = 0;
 
     // map memory
-    cpu.mem.map(0, 0x0000, 0x4000, this->ram[0], true);    // RAM
+    cpu.mem.unmap_all();
+    if (m == device::z1013_64) {
+        // 64 kByte RAM
+        cpu.mem.map(1, 0x0000, 0x10000, this->ram[0], true);
+    }
+    else {
+        // 16 kByte RAM
+        cpu.mem.map(1, 0x0000, 0x4000, this->ram[0], true);
+    }
     cpu.mem.map(0, 0xEC00, 0x0400, this->irm, true);       // video mem
-    cpu.mem.map(0, 0xF000, 0x0800, (ubyte*)this->roms.ptr(z1013_roms::mon202), false);   // OS ROM
+    if (os_rom::z1013_mon202 == this->cur_os) {
+        cpu.mem.map(0, 0xF000, 0x0800, (ubyte*)this->roms.ptr(z1013_roms::mon202), false);
+    }
+    else {
+        cpu.mem.map(0, 0xF000, 0x0800, (ubyte*)this->roms.ptr(z1013_roms::mon_a2), false);
+    }
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
     this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
@@ -180,8 +200,12 @@ z1013::pio_a_in_cb(void* userdata) {
 //------------------------------------------------------------------------------
 void
 z1013::pio_b_out_cb(void* userdata, ubyte val) {
-    // FIXME: for z1013a2, bit 4 is for additional keyboard matrix column,
-    // bit 7 is for cassette output
+
+    // for z1013a2, bit 4 is for monitor A.2 with 8x8 keyboard
+    z1013* self = (z1013*)userdata;
+    self->kbd_8x8_requested = val & (1<<4);
+
+    // FIXME: bit 7 is for cassette output
 }
 
 //------------------------------------------------------------------------------
@@ -191,13 +215,20 @@ z1013::pio_b_in_cb(void* userdata) {
 
     // FIXME: handle bit 7 for cassette input
     // read keyboard matrix state into lower 4 bits
-    return 0xF & ~self->get_kbd_column_bits(self->kbd_column_nr_requested & 7);
-}
-
-//------------------------------------------------------------------------------
-ubyte
-z1013::get_kbd_column_bits(int col) const {
-    return (this->kbd_column_bits >> (col*4)) & 0xF;
+    ubyte val = 0;
+    if (device::z1013_01 == self->cur_model) {
+        ubyte col = self->kbd_column_nr_requested & 7;
+        val = 0xF & ~((self->kbd_column_bits >> (col*4)) & 0xF);
+    }
+    else {
+        ubyte col = (self->kbd_column_nr_requested & 7);
+        val = self->kbd_column_bits >> (col*8);
+        if (self->kbd_8x8_requested) {
+            val >>= 4;
+        }
+        val = 0xF & ~(val & 0xF);
+    }
+    return val;
 }
 
 //------------------------------------------------------------------------------
@@ -212,30 +243,30 @@ z1013::put_key(ubyte ascii) {
 }
 
 //------------------------------------------------------------------------------
-uint32_t
-z1013::kbd_bit(int col, int line) {
+uint64_t
+z1013::kbd_bit_8x4(int col, int line) {
     return (1<<line)<<(col*4);
 }
 
 //------------------------------------------------------------------------------
 void
-z1013::init_key(ubyte ascii, int col, int line, int shift) {
+z1013::init_key_8x4(ubyte ascii, int col, int line, int shift) {
     YAKC_ASSERT((ascii < 128) && (col>=0) && (col<8) && (line>=0) && (line<4) && (shift>=0) && (shift<5));
-    uint32_t mask = kbd_bit(col, line);
+    uint32_t mask = kbd_bit_8x4(col, line);
     if (shift != 0) {
-        mask |= kbd_bit(shift-1, 3);
+        mask |= kbd_bit_8x4(shift-1, 3);
     }
     this->key_map[ascii] = mask;
 }
 
 //------------------------------------------------------------------------------
 void
-z1013::init_key_map() {
+z1013::init_keymap_8x4() {
     memset(this->key_map, 0, sizeof(this->key_map));
 
-    // keyboard layers (no shift key, plus the 4 shift keys)
+    // keyboard layers for the 4x4 keyboard (no shift key, plus the 4 shift keys)
     // use space as special placeholder
-    const char* layers =
+    const char* layers_8x4 =
         "@ABCDEFG"
         "HIJKLMNO"
         "PQRSTUVW"
@@ -264,19 +295,64 @@ z1013::init_key_map() {
     for (int shift = 0; shift < 5; shift++) {
         for (int line = 0; line < 4; line++) {
             for (int col = 0; col < 8; col++) {
-                ubyte c = layers[shift*32 + line*8 + col];
+                ubyte c = layers_8x4[shift*32 + line*8 + col];
                 if (c != 0x20) {
-                    this->init_key(c, col, line, shift);
+                    this->init_key_8x4(c, col, line, shift);
                 }
             }
         }
     }
 
     // special keys
-    this->init_key(' ', 5, 3, 0);   // Space
-    this->init_key(0x08, 4, 3, 0);  // Cursor Left
-    this->init_key(0x09, 6, 3, 0);  // Cursor Right
-    this->init_key(0x0D, 7, 3, 0);  // Enter
+    this->init_key_8x4(' ', 5, 3, 0);   // Space
+    this->init_key_8x4(0x08, 4, 3, 0);  // Cursor Left
+    this->init_key_8x4(0x09, 6, 3, 0);  // Cursor Right
+    this->init_key_8x4(0x0D, 7, 3, 0);  // Enter
+}
+
+//------------------------------------------------------------------------------
+uint64_t
+z1013::kbd_bit_8x8(int col, int line) {
+    return (1<<line)<<(col*8);
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::init_key_8x8(ubyte ascii, int col, int line, int shift) {
+    YAKC_ASSERT((ascii < 128) && (col>=0) && (col<8) && (line>=0) && (line<8) && (shift>=0) && (shift<2));
+    uint32_t mask = kbd_bit_8x8(col, line);
+    /*
+    if (shift != 0) {
+        mask |= kbd_bit_8x4(shift-1, 3);
+    }
+    */
+    this->key_map[ascii] = mask;
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::init_keymap_8x8() {
+    memset(this->key_map, 0, sizeof(this->key_map));
+
+    // keyboard layers for the 8x8 keyboard
+    const char* layers_8x8 =
+        "13579-  "
+        "QETUO@  "
+        "ADGJL*  "
+        "YCBM.^  "
+        "24680[  "
+        "WRZIP]  "
+        "SFHK+\\  "
+        "XVN,/_  ";
+
+    for (int line = 0; line < 8; line++) {
+        for (int col = 0; col < 8; col++) {
+            ubyte c = layers_8x8[line*8 + col];
+            if (c != 0x20) {
+                this->init_key_8x8(c, col, line, 0);
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
