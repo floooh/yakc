@@ -313,6 +313,7 @@ z1013::init_keymap_8x4() {
     this->init_key(0x08, 4, 3, 0, 4);  // Cursor Left
     this->init_key(0x09, 6, 3, 0, 4);  // Cursor Right
     this->init_key(0x0D, 7, 3, 0, 4);  // Enter
+    this->init_key(0x03, 3, 1, 4, 4);  // Break/Escape
 }
 
 //------------------------------------------------------------------------------
@@ -360,6 +361,7 @@ z1013::init_keymap_8x8() {
     this->init_key(0x0A, 6, 7, 0, 8);   // Cursor Down
     this->init_key(0x0B, 6, 6, 0, 8);   // Cursor Up
     this->init_key(0x0D, 6, 1, 0, 8);   // Enter
+    this->key_map[0x03] = kbd_bit(6, 5, 8) | kbd_bit(1, 3, 8); // Ctrl+C (== STOP/BREAK)
 }
 
 //------------------------------------------------------------------------------

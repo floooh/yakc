@@ -11,29 +11,33 @@ namespace YAKC {
 //------------------------------------------------------------------------------
 void
 FileLoader::Setup(yakc& emu) {
-    this->Items.Add("Pengo", "pengo.kcc", device::kc85_3);
-    this->Items.Add("Pengo", "pengo4.kcc", device::kc85_4);
-    this->Items.Add("Cave", "cave.kcc", device::kc85_3);
-    this->Items.Add("Labyrinth", "labyrinth.kcc", device::kc85_3);
-    this->Items.Add("House", "house.kcc", device::kc85_3);
-    this->Items.Add("House", "house4.tap", device::kc85_4);
-    this->Items.Add("Jungle", "jungle.kcc", device::kc85_3);
-    this->Items.Add("Jungle", "jungle4.tap", device::kc85_4);
-    this->Items.Add("Pacman", "pacman.kcc", device::kc85_3);
-    this->Items.Add("Breakout", "breakout.kcc", device::kc85_3);
-    this->Items.Add("Mad Breakin", "breakin.853", device::kc85_3);
-    this->Items.Add("Boulderdash", "boulder3.tap", device::kc85_3);
-    this->Items.Add("Boulderdash", "boulder4.tap", device::kc85_4);
-    this->Items.Add("Digger", "digger3.tap", device::kc85_3);
-    this->Items.Add("Digger", "digger4.tap", device::kc85_4);
-    this->Items.Add("Tetris", "tetris.kcc", device::kc85_4);
-    this->Items.Add("Ladder", "ladder-3.kcc", device::kc85_3);
-    this->Items.Add("Enterprise", "enterpri.tap", device::any_kc85);
-    this->Items.Add("Chess", "chess.kcc", device::any_kc85);
-    this->Items.Add("Testbild", "testbild.kcc", device::kc85_3);
-    this->Items.Add("Demo1", "demo1.kcc", device::kc85_4);
-    this->Items.Add("Demo2", "demo2.kcc", device::kc85_4);
-    this->Items.Add("Demo3", "demo3.kcc", device::kc85_4);
+    this->Items.Add("Pengo", "pengo.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("Pengo", "pengo4.kcc", FileType::KCC, device::kc85_4);
+    this->Items.Add("Cave", "cave.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("Labyrinth", "labyrinth.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("House", "house.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("House", "house4.tap", FileType::TAP, device::kc85_4);
+    this->Items.Add("Jungle", "jungle.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("Jungle", "jungle4.tap", FileType::TAP, device::kc85_4);
+    this->Items.Add("Pacman", "pacman.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("Breakout", "breakout.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("Mad Breakin", "breakin.853", FileType::KCC, device::kc85_3);
+    this->Items.Add("Boulderdash", "boulder3.tap", FileType::TAP, device::kc85_3);
+    this->Items.Add("Boulderdash", "boulder4.tap", FileType::TAP, device::kc85_4);
+    this->Items.Add("Digger", "digger3.tap", FileType::TAP, device::kc85_3);
+    this->Items.Add("Digger", "digger4.tap", FileType::TAP, device::kc85_4);
+    this->Items.Add("Tetris", "tetris.kcc", FileType::KCC, device::kc85_4);
+    this->Items.Add("Ladder", "ladder-3.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("Enterprise", "enterpri.tap", FileType::TAP, device::any_kc85);
+    this->Items.Add("Chess", "chess.kcc", FileType::KCC, device::any_kc85);
+    this->Items.Add("Testbild", "testbild.kcc", FileType::KCC, device::kc85_3);
+    this->Items.Add("Demo1", "demo1.kcc", FileType::KCC, device::kc85_4);
+    this->Items.Add("Demo2", "demo2.kcc", FileType::KCC, device::kc85_4);
+    this->Items.Add("Demo3", "demo3.kcc", FileType::KCC, device::kc85_4);
+    this->Items.Add("Tiny-Basic 3.01", "tinybasic-3.01.z80", FileType::Z80, device::z1013_01);
+    this->Items.Add("KC-Basic", "kc_basic.z80", FileType::Z80, device::any_z1013);
+    this->Items.Add("Z1013 Forth", "z1013_forth.z80", FileType::Z80, device::any_z1013);
+    this->Items.Add("Boulderdash", "boulderdash_1_0.z80", FileType::Z80, device(int(device::z1013_16)|int(device::z1013_64)));
 }
 
 //------------------------------------------------------------------------------
@@ -58,7 +62,7 @@ FileLoader::LoadAndStart(yakc& emu, const Item& item) {
 bool
 FileLoader::Copy(yakc& emu) {
     if (Ready == this->State) {
-        copy(&emu, this->Info, this->kccData);
+        copy(&emu, this->Info, this->FileData);
         patch(&emu, this->Info);
         return true;
     }
@@ -71,7 +75,7 @@ FileLoader::Copy(yakc& emu) {
 bool
 FileLoader::Start(yakc& emu) {
     if (Ready == this->State) {
-        copy(&emu, this->Info, this->kccData);
+        copy(&emu, this->Info, this->FileData);
         patch(&emu, this->Info);
         start(&emu, this->Info);
         return true;
@@ -88,14 +92,15 @@ FileLoader::load(yakc* emu, const Item& item, bool autostart) {
     strBuilder.Format(128, "kcc:%s", item.Filename.AsCStr());
     this->Url = strBuilder.GetString();
     this->State = Loading;
+    const FileType fileType = item.Type;
     IO::Load(strBuilder.GetString(),
         // load succeeded
-        [this, emu, autostart](IO::LoadResult ioResult) {
-            this->kccData = std::move(ioResult.Data);
-            this->Info = parseHeader(this->kccData);
+        [this, emu, fileType, autostart](IO::LoadResult ioResult) {
+            this->FileData = std::move(ioResult.Data);
+            this->Info = parseHeader(this->FileData, fileType);
             this->State = Ready;
             if (autostart) {
-                copy(emu, this->Info, this->kccData);
+                copy(emu, this->Info, this->FileData);
                 patch(emu, this->Info);
                 start(emu, this->Info);
             }
@@ -109,30 +114,37 @@ FileLoader::load(yakc* emu, const Item& item, bool autostart) {
 
 //------------------------------------------------------------------------------
 FileLoader::FileInfo
-FileLoader::parseHeader(const Buffer& data) {
+FileLoader::parseHeader(const Buffer& data, FileType fileType) {
     FileInfo info;
     const ubyte* start = data.Data();
     const ubyte* ptr = start;
-
-    // first check whether this is a KCC or TAP file
-    const char* tap_header_string = "\xC3KC-TAPE by AF. ";
-    if (0 == memcmp(ptr, tap_header_string, strlen(tap_header_string))) {
-        // it's a TAP!
-        info.Type = FileType::TAP;
-        ptr = (const ubyte*)&(((tap_header*)ptr)->kcc);
+    info.Type = fileType;
+    if ((FileType::TAP == fileType) || (FileType::KCC == fileType)) {
+        if (FileType::TAP == fileType) {
+            ptr = (const ubyte*)&(((tap_header*)ptr)->kcc);
+        }
+        const kcc_header* kcc_hdr = (const kcc_header*) ptr;
+        info.Name = String((const char*)kcc_hdr->name, 0, 16);
+        info.StartAddr = kcc_hdr->load_addr_h<<8 | kcc_hdr->load_addr_l;
+        info.EndAddr = kcc_hdr->end_addr_h<<8 | kcc_hdr->end_addr_l;
+        info.ExecAddr = kcc_hdr->exec_addr_h<<8 | kcc_hdr->exec_addr_l;
+        info.HasExecAddr = kcc_hdr->num_addr > 2;
+        info.PayloadOffset = int((ptr + sizeof(kcc_header)) - start);
+        if ((info.EndAddr-info.StartAddr) > data.Size()-128) {
+            info.FileSizeError = true;
+        }
     }
-    else {
-        info.Type = FileType::KCC;
-    }
-    const kcc_header* kcc_hdr = (const kcc_header*) ptr;
-    info.Name = String((const char*)kcc_hdr->name, 0, 16);
-    info.StartAddr = kcc_hdr->load_addr_h<<8 | kcc_hdr->load_addr_l;
-    info.EndAddr = kcc_hdr->end_addr_h<<8 | kcc_hdr->end_addr_l;
-    info.ExecAddr = kcc_hdr->exec_addr_h<<8 | kcc_hdr->exec_addr_l;
-    info.HasExecAddr = kcc_hdr->num_addr > 2;
-    info.PayloadOffset = int((ptr + sizeof(kcc_header)) - start);
-    if ((info.EndAddr-info.StartAddr) > data.Size()-128) {
-        info.FileSizeError = true;
+    else if (FileType::Z80 == fileType) {
+        const z80_header* z80_hdr = (const z80_header*) ptr;
+        info.Name = String((const char*)z80_hdr->name, 0, 16);
+        info.StartAddr = z80_hdr->load_addr_h<<8 | z80_hdr->load_addr_l;
+        info.EndAddr = z80_hdr->end_addr_h<<8 | z80_hdr->end_addr_l;
+        info.ExecAddr = z80_hdr->exec_addr_h<<8 | z80_hdr->exec_addr_l;
+        info.HasExecAddr = true;
+        info.PayloadOffset = sizeof(z80_header);
+        if ((info.EndAddr-info.StartAddr) > data.Size()-32) {
+            info.FileSizeError = true;
+        }
     }
     return info;
 }
@@ -142,8 +154,8 @@ void
 FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (!info.FileSizeError) {
         const ubyte* payload = data.Data() + info.PayloadOffset;
-        if (FileType::KCC == info.Type) {
-            // KCC payload is simply a continuous block of data
+        if (FileType::TAP != info.Type) {
+            // KCC and Z80 file type payload is simply a continuous block of data
             emu->board.cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
         }
         else {

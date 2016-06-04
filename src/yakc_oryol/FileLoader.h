@@ -13,11 +13,21 @@ namespace YAKC {
 
 class FileLoader {
 public:
+    /// file types
+    enum class FileType {
+        None,
+        KCC,
+        TAP,
+        Z80,
+    };
+
     /// a load item
     struct Item {
-        Item(const char* n, const char* fn, device compat) : Name(n), Filename(fn), Compat(compat) {};
+        Item(const char* n, const char* fn, FileType t, device compat) :
+            Name(n), Filename(fn), Type(t), Compat(compat) {};
         Oryol::String Name;
         Oryol::String Filename;
+        FileType Type;
         device Compat;
     };
     /// available items
@@ -31,13 +41,6 @@ public:
         Failed,
     } State = Waiting;
 
-    /// file types
-    enum class FileType {
-        None,
-        KCC,
-        TAP,
-    };
-
     /// file info of last loaded file
     struct FileInfo {
         Oryol::String Name;
@@ -48,6 +51,15 @@ public:
         bool FileSizeError = false;
         FileType Type = FileType::None;
         int PayloadOffset = 0;
+
+        const char* TypeAsString() const {
+            switch (this->Type) {
+                case FileType::KCC: return "KCC";
+                case FileType::TAP: return "TAP";
+                case FileType::Z80: return "Z80";
+                default:            return "???";
+            }
+        };
     } Info;
     /// url of last loaded file
     Oryol::URL Url;
@@ -71,7 +83,7 @@ private:
     /// internal load method
     void load(yakc* emu, const Item& item, bool autostart);
     /// get file info from loaded file data
-    static FileInfo parseHeader(const Oryol::Buffer& data);
+    static FileInfo parseHeader(const Oryol::Buffer& data, FileType fileType);
     /// copy data from loaded stream object into KC memory
     static void copy(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
     /// special-case patch loaded files
@@ -104,7 +116,23 @@ private:
     };
     #pragma pack(pop)
 
-    Oryol::Buffer kccData;
+    /// Z80 file format header block
+    #pragma pack(push,1)
+    struct z80_header {
+        ubyte load_addr_l;
+        ubyte load_addr_h;
+        ubyte end_addr_l;
+        ubyte end_addr_h;
+        ubyte exec_addr_l;
+        ubyte exec_addr_h;
+        ubyte free[6];
+        ubyte typ;
+        ubyte d3[3];        // d3 d3 d3
+        ubyte name[16];
+    };
+    #pragma pack(pop)
+
+    Oryol::Buffer FileData;
 };
 
 } // namespace YAKC

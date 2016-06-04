@@ -249,7 +249,7 @@ UI::OnFrame(yakc& emu) {
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Games")) {
+            if (ImGui::BeginMenu("Software")) {
                 for (const auto& item : this->fileLoader.Items) {
                     if (int(item.Compat) & int(emu.model)) {
                         if (ImGui::MenuItem(item.Name.AsCStr())) {

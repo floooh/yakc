@@ -6,6 +6,7 @@
     
     http://hc-ddr.hucki.net/wiki/doku.php/z1013:hardware
     http://hc-ddr.hucki.net/wiki/doku.php/z1013:software:monitor:riesa202
+    http://www.z1013.de/hardware-uebersicht.html    
     
     On keyboard input:
     This is the only tricky part of the emulation. The original Z1013
