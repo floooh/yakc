@@ -69,8 +69,12 @@ public:
     typedef ubyte(*in_cb)(void* userdata);
 
     template<typename CBTYPE> struct callback {
-        CBTYPE func = nullptr;
-        void* userdata = nullptr;
+        callback() :
+            func(0),
+            userdata(nullptr)
+        { };
+        CBTYPE func;
+        void* userdata;
     };
     callback<out_cb> out_callback[num_ports];
     callback<in_cb> in_callback [num_ports];
