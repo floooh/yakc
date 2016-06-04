@@ -35,7 +35,7 @@ CTCWindow::Draw(yakc& emu) {
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         StringBuilder strBuilder;
         for (int i = 0; i < z80ctc::num_channels; i++) {
-            strBuilder.Format(32, "Channel %d (port 0x%02X)", i, i+0x8C);
+            strBuilder.Format(32, "CTC %d", i);
             if (ImGui::CollapsingHeader(strBuilder.AsCStr())) {
                 ImGui::Text("Time Constant: %02X", emu.board.ctc.channels[i].constant);
                 ImGui::Text("Interrupt Vector: %02X", emu.board.ctc.channels[i].interrupt_vector);

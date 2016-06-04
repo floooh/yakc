@@ -14,6 +14,7 @@
 #include "LoadWindow.h"
 #include "CommandWindow.h"
 #include "AudioWindow.h"
+#include "KC85IOWindow.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -257,6 +258,9 @@ UI::OnFrame(yakc& emu) {
                     }
                     if (ImGui::MenuItem("Memory Map")) {
                         this->OpenWindow(emu, MemoryMapWindow::Create());
+                    }
+                    if (ImGui::MenuItem("KC85 IO Ports")) {
+                        this->OpenWindow(emu, KC85IOWindow::Create());
                     }
                 }
                 if (ImGui::MenuItem("Z80 PIO")) {

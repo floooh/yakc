@@ -17,6 +17,7 @@ fips_begin_module(yakc_ui)
         LoadWindow.cc LoadWindow.h
         CommandWindow.cc CommandWindow.h
         AudioWindow.cc AudioWindow.h
+        KC85IOWindow.cc KC85IOWindow.h
     )
     fips_deps(IMUI yakc yakc_oryol soloud)
 fips_end_module()

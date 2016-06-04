@@ -1,16 +1,15 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class PIOWindow
-    @brief visualize the current PIO state
+    @class YAKC::KC85IOWindow
+    @brief KC85 specific IO port information
 */
-#include "yakc_ui/HexInputWidget.h"
 #include "yakc_ui/WindowBase.h"
 
 namespace YAKC {
 
-class PIOWindow : public WindowBase {
-    OryolClassDecl(PIOWindow);
+class KC85IOWindow : public WindowBase {
+    OryolClassDecl(KC85IOWindow);
 public:
     /// setup the window
     virtual void Setup(yakc& emu) override;
