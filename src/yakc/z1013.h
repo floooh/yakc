@@ -6,6 +6,31 @@
     
     http://hc-ddr.hucki.net/wiki/doku.php/z1013:hardware
     http://hc-ddr.hucki.net/wiki/doku.php/z1013:software:monitor:riesa202
+    
+    On keyboard input:
+    This is the only tricky part of the emulation. The original Z1013
+    has a 8x4 keyboard matrix with 4 shift keys. The ROM will activate
+    every column of the keyboard matrix by outputting the column
+    number on port 8, and expects the active line bits of the
+    keyboard matrix in the low 4 bits of PIO-B.
+    
+    The Z1013.16 and Z1013.64 with ROM A2 support a 8x8 keyboard
+    matrix, but still only reads 4 bits from PIO-B to get the matrix
+    line state (but needs 8). Writing bit 4 of PIO-B is used to
+    select whether the lower 4 or higher 4 bit of the 8 keyboard 
+    matrix lines is selected. A set bit 4 in PIO-B means that
+    the high-4-bits are requested, otherwise the low-4-bits.
+
+    For the 8x8 keyboard matrix layout, see here: 
+    http://www.z1013.de/images/21.gif
+    
+    The keyboard matrix state for each ASCII key is encoded in a
+    lookup table with 64-bit entries (of which only 32 bits are
+    used for the old 8x4 keyboard matrix). For each ASCII code,
+    the associated keyboard matrix state (either 32 bit for the 8x4
+    or 64 bit for the 8x8 keyboard) is stored in the lookup table
+    'key_map'. The full bit mask is necessary because an ASCII code
+    can require more than one key to be set (e.g. shift keys).
 */
 #include "yakc/breadboard.h"
 #include "yakc/roms.h"
@@ -59,13 +84,9 @@ public:
     /// initialize the key translation table for the 8x8 keyboard (z1013.16/64)
     void init_keymap_8x8();
     /// add a single key to the key map with the keyboard matrix column/line and shift key (0..4)
-    void init_key_8x4(ubyte ascii, int col, int line, int shift=0);
+    void init_key(ubyte ascii, int col, int line, int shift, int num_lines);
     /// get keyboard matrix bit mask by column and line
-    uint64_t kbd_bit_8x4(int col, int line);
-    /// add a single key to the key map for 8x8 keyboard
-    void init_key_8x8(ubyte ascii, int col, int line, int shift=0);
-    /// get keyboard matrix bit mask by column and line for 8x8 keyboard
-    uint64_t kbd_bit_8x8(int col, int line);
+    uint64_t kbd_bit(int col, int line, int num_lines);
 
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
@@ -79,9 +100,9 @@ public:
     uint32_t overflow_cycles = 0;
     const ubyte* os_ptr = nullptr;
     int os_size = 0;
-    ubyte kbd_column_nr_requested = 0;
-    bool kbd_8x8_requested = false;
-    uint32_t next_kbd_column_bits = 0;
+    ubyte kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
+    bool kbd_8x8_requested = false;         // bit 4 in PIO-B written
+    uint64_t next_kbd_column_bits = 0;
     uint64_t kbd_column_bits = 0;
     static const int max_num_keys = 128;
     uint64_t key_map[max_num_keys] = { };   // map ASCII code to keyboard matrix bits

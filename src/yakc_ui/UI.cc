@@ -232,9 +232,20 @@ UI::OnFrame(yakc& emu) {
                     }
                     ImGui::EndMenu();
                 }
-                if (ImGui::MenuItem("Boot to Z1013.01")) {
-                    emu.poweroff();
-                    emu.poweron(device::z1013_01, os_rom::z1013_mon202);
+                if (ImGui::BeginMenu("Boot to Z1013")) {
+                    if (ImGui::MenuItem("Z1013.01 (1 MHz, 16KB RAM)")) {
+                        emu.poweroff();
+                        emu.poweron(device::z1013_01, os_rom::z1013_mon202);
+                    }
+                    if (ImGui::MenuItem("Z1013.16 (2 MHz, 16KB RAM)")) {
+                        emu.poweroff();
+                        emu.poweron(device::z1013_16, os_rom::z1013_mon202);
+                    }
+                    if (ImGui::MenuItem("Z1013.64 (2 MHz, 64KB RAM)")) {
+                        emu.poweroff();
+                        emu.poweron(device::z1013_64, os_rom::z1013_mon202);
+                    }
+                    ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
             }

@@ -244,17 +244,22 @@ z1013::put_key(ubyte ascii) {
 
 //------------------------------------------------------------------------------
 uint64_t
-z1013::kbd_bit_8x4(int col, int line) {
-    return (1<<line)<<(col*4);
+z1013::kbd_bit(int col, int line, int num_lines) {
+    return (1UL<<line)<<(col*num_lines);
 }
 
 //------------------------------------------------------------------------------
 void
-z1013::init_key_8x4(ubyte ascii, int col, int line, int shift) {
-    YAKC_ASSERT((ascii < 128) && (col>=0) && (col<8) && (line>=0) && (line<4) && (shift>=0) && (shift<5));
-    uint32_t mask = kbd_bit_8x4(col, line);
+z1013::init_key(ubyte ascii, int col, int line, int shift, int num_lines) {
+    YAKC_ASSERT((ascii < 128) && (col>=0) && (col<8) && (line>=0) && (line<num_lines) && (shift>=0) && (shift<5));
+    uint64_t mask = kbd_bit(col, line, num_lines);
     if (shift != 0) {
-        mask |= kbd_bit_8x4(shift-1, 3);
+        if (device::z1013_01 == this->cur_model) {
+            mask |= kbd_bit(shift-1, 3, num_lines);
+        }
+        else {
+            mask |= kbd_bit(7, 6, num_lines);
+        }
     }
     this->key_map[ascii] = mask;
 }
@@ -297,41 +302,23 @@ z1013::init_keymap_8x4() {
             for (int col = 0; col < 8; col++) {
                 ubyte c = layers_8x4[shift*32 + line*8 + col];
                 if (c != 0x20) {
-                    this->init_key_8x4(c, col, line, shift);
+                    this->init_key(c, col, line, shift, 4);
                 }
             }
         }
     }
 
     // special keys
-    this->init_key_8x4(' ', 5, 3, 0);   // Space
-    this->init_key_8x4(0x08, 4, 3, 0);  // Cursor Left
-    this->init_key_8x4(0x09, 6, 3, 0);  // Cursor Right
-    this->init_key_8x4(0x0D, 7, 3, 0);  // Enter
-}
-
-//------------------------------------------------------------------------------
-uint64_t
-z1013::kbd_bit_8x8(int col, int line) {
-    return (1<<line)<<(col*8);
-}
-
-//------------------------------------------------------------------------------
-void
-z1013::init_key_8x8(ubyte ascii, int col, int line, int shift) {
-    YAKC_ASSERT((ascii < 128) && (col>=0) && (col<8) && (line>=0) && (line<8) && (shift>=0) && (shift<2));
-    uint32_t mask = kbd_bit_8x8(col, line);
-    /*
-    if (shift != 0) {
-        mask |= kbd_bit_8x4(shift-1, 3);
-    }
-    */
-    this->key_map[ascii] = mask;
+    this->init_key(' ', 5, 3, 0, 4);   // Space
+    this->init_key(0x08, 4, 3, 0, 4);  // Cursor Left
+    this->init_key(0x09, 6, 3, 0, 4);  // Cursor Right
+    this->init_key(0x0D, 7, 3, 0, 4);  // Enter
 }
 
 //------------------------------------------------------------------------------
 void
 z1013::init_keymap_8x8() {
+    // see: http://www.z1013.de/images/21.gif
     memset(this->key_map, 0, sizeof(this->key_map));
 
     // keyboard layers for the 8x8 keyboard
@@ -343,16 +330,36 @@ z1013::init_keymap_8x8() {
         "24680[  "
         "WRZIP]  "
         "SFHK+\\  "
-        "XVN,/_  ";
+        "XVN,/_  "
 
-    for (int line = 0; line < 8; line++) {
-        for (int col = 0; col < 8; col++) {
-            ubyte c = layers_8x8[line*8 + col];
-            if (c != 0x20) {
-                this->init_key_8x8(c, col, line, 0);
+        // shift layer
+        "!#%')=  "
+        "qetuo`  "
+        "adgjl:  "
+        "ycbm>~  "
+        "\"$&( {  "
+        "wrzip}  "
+        "sfhk;|  "
+        "xvn<?   ";
+
+    for (int shift = 0; shift < 2; shift++) {
+        for (int line = 0; line < 8; line++) {
+            for (int col = 0; col < 8; col++) {
+                ubyte c = layers_8x8[shift*64 + line*8 + col];
+                if (c != 0x20) {
+                    this->init_key(c, col, line, shift, 8);
+                }
             }
         }
     }
+
+    // special keys
+    this->init_key(' ', 6, 4, 0, 8);    // Space
+    this->init_key(0x08, 6, 2, 0, 8);   // Cursor Left
+    this->init_key(0x09, 6, 3, 0, 8);   // Cursor Right
+    this->init_key(0x0A, 6, 7, 0, 8);   // Cursor Down
+    this->init_key(0x0B, 6, 6, 0, 8);   // Cursor Up
+    this->init_key(0x0D, 6, 1, 0, 8);   // Enter
 }
 
 //------------------------------------------------------------------------------
