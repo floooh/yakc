@@ -9,7 +9,6 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/roms.h"
-#include "yakc/z1013_video.h"
 #include "yakc/z1013_roms.h"
 
 namespace YAKC {
@@ -18,10 +17,11 @@ class z1013 {
 public:
     /// ram banks
     ubyte ram[4][0x4000];
+    /// 1 Kbyte separate video memory
+    ubyte irm[0x400];
 
     /// hardware components
     breadboard* board = nullptr;
-    z1013_video video;
     z1013_roms roms;
 
     /// one-time setup
@@ -55,6 +55,9 @@ public:
     /// get keyboard matrix column bits
     ubyte get_kbd_column_bits(int col) const;
 
+    /// decode an entire frame into LinearBuffer
+    void decode_video();
+
     device cur_model = device::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;
     bool on = false;
@@ -68,7 +71,9 @@ public:
     uint32_t next_kbd_column_bits = 0;
     uint32_t kbd_column_bits = 0;
     static const int max_num_keys = 128;
-    uint32_t key_map[max_num_keys] = { };         // map ASCII code to keyboard matrix bits
+    uint32_t key_map[max_num_keys] = { };   // map ASCII code to keyboard matrix bits
+
+    uint32_t RGBA8Buffer[256*256];          // decoded linear RGBA8 video buffer
 };
 
 } // namespace YAKC

@@ -27,8 +27,8 @@ z1013::poweron(device m) {
     this->kbd_column_bits = 0;
 
     // map memory
-    this->board->cpu.mem.map(0, 0x0000, 0x4000, this->ram[0], true);            // RAM
-    this->board->cpu.mem.map(0, 0xEC00, 0x0400, this->video.irm, true);         // video mem
+    this->board->cpu.mem.map(0, 0x0000, 0x4000, this->ram[0], true);    // RAM
+    this->board->cpu.mem.map(0, 0xEC00, 0x0400, this->irm, true);       // video mem
     this->board->cpu.mem.map(0, 0xF000, 0x0800, (ubyte*)this->roms.ptr(z1013_roms::mon202), false);   // OS ROM
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
@@ -37,10 +37,10 @@ z1013::poweron(device m) {
     // initialize hardware components
     this->board->pio.init();
     this->board->cpu.init(in_cb, out_cb, this);
-    this->video.init();
 
-    // clear RAM
+    // clear system RAM and video RAM
     clear(this->ram, sizeof(this->ram));
+    clear(this->irm, sizeof(this->irm));    
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -57,7 +57,6 @@ z1013::poweroff() {
 //------------------------------------------------------------------------------
 void
 z1013::reset() {
-    this->video.reset();
     this->board->pio.reset();
     this->board->cpu.reset();
     this->kbd_column_nr_requested = 0;
@@ -110,7 +109,7 @@ z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
         }
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
     }
-    this->video.decode();
+    this->decode_video();
 }
 
 //------------------------------------------------------------------------------
@@ -246,6 +245,23 @@ z1013::init_key_map() {
     this->init_key(0x08, 4, 3, 0);  // Cursor Left
     this->init_key(0x09, 6, 3, 0);  // Cursor Right
     this->init_key(0x0D, 7, 3, 0);  // Enter
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::decode_video() {
+    uint32_t* dst = RGBA8Buffer;
+    for (int y = 0; y < 32; y++) {
+        for (int py = 0; py < 8; py++) {
+            for (int x = 0; x < 32; x++) {
+                ubyte ascii = this->irm[(y<<5) + x];
+                ubyte bits = dump_z1013_font[(ascii<<3)|py];
+                for (int px = 7; px >=0; px--) {
+                    *dst++ = bits & (1<<px) ? 0xFFFFFFFF : 0xFF000000;
+                }
+            }
+        }
+    }
 }
 
 } // namespace YAKC

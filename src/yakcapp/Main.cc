@@ -137,7 +137,7 @@ YakcApp::OnRunning() {
         this->draw.Render(this->emu.kc85.video.LinearBuffer, 320, 256);
     }
     else if (this->emu.z1013.on) {
-        this->draw.Render(this->emu.z1013.video.LinearBuffer, 256, 256);
+        this->draw.Render(this->emu.z1013.RGBA8Buffer, 256, 256);
     }
     #if YAKC_UI
     this->ui.OnFrame(this->emu);
