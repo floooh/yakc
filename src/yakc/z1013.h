@@ -45,6 +45,14 @@ public:
     static void out_cb(void* userdata, uword port, ubyte val);
     /// the z80 in callback
     static ubyte in_cb(void* userdata, uword port);
+    /// PIO-A out callback
+    static void pio_a_out_cb(void* userdata, ubyte val);
+    /// PIO-A in callback
+    static ubyte pio_a_in_cb(void* userdata);
+    /// PIO-B out callback
+    static void pio_b_out_cb(void* userdata, ubyte val);
+    /// PIO-B in callback
+    static ubyte pio_b_in_cb(void* userdata);
 
     /// initialize the key translation table
     void init_key_map();
@@ -55,7 +63,7 @@ public:
     /// get keyboard matrix column bits
     ubyte get_kbd_column_bits(int col) const;
 
-    /// decode an entire frame into LinearBuffer
+    /// decode an entire frame into RGBA8Buffer
     void decode_video();
 
     device cur_model = device::z1013_01;
