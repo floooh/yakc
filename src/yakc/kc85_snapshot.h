@@ -34,6 +34,9 @@ public:
             ubyte caos;
             ubyte io84;
             ubyte io86;
+            ubyte pio_a;
+            ubyte pio_b;
+            ubyte pad[2];
         } kc;
         static_assert((sizeof(kc_t)&3)==0, "kc_t odd size!");
 

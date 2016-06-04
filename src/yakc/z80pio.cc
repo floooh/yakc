@@ -5,16 +5,15 @@
 
 namespace YAKC {
 
-// TODO:
-//  - read from and write to peripheral device
-//  - RDY callbacks to notify peripheral device
-//  - interrupt handling
-
 //------------------------------------------------------------------------------
 void
 z80pio::init() {
     for (int i = 0; i < num_ports; i++) {
         this->port[i] = port_t();
+        this->out_callback[i].func = nullptr;
+        this->out_callback[i].userdata = nullptr;
+        this->in_callback[i].func = nullptr;
+        this->in_callback[i].userdata = nullptr;
     }
 }
 
@@ -29,6 +28,22 @@ z80pio::reset() {
         p.io_select = 0;
         p.expect = expect_any;
     }
+}
+
+//------------------------------------------------------------------------------
+void
+z80pio::connect_out_cb(int port_id, void* userdata, out_cb cb) {
+    YAKC_ASSERT((port_id>=0)&&(port_id<num_ports));
+    this->out_callback[port_id].func = cb;
+    this->out_callback[port_id].userdata = userdata;
+}
+
+//------------------------------------------------------------------------------
+void
+z80pio::connect_in_cb(int port_id, void* userdata, in_cb cb) {
+    YAKC_ASSERT((port_id>=0)&&(port_id<num_ports));
+    this->in_callback[port_id].func = cb;
+    this->in_callback[port_id].userdata = userdata;
 }
 
 //------------------------------------------------------------------------------
@@ -89,29 +104,57 @@ void
 z80pio::write_data(int port_id, ubyte data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     auto& p = this->port[port_id];
-    p.output = data;
-    // FIXME: depending on current mode, write data to 'peripheral device'
+    const auto& cb = this->out_callback[port_id];
+    switch (p.mode) {
+        case mode_output:
+            p.output = data;
+            if (cb.func) {
+                cb.func(cb.userdata, data);
+            }
+            break;
+        case mode_input:
+            p.output = data;
+            break;
+        case mode_bidirectional:
+            // FIXME (write data to peripheral, how)
+            p.output = data;
+            break;
+        case mode_bitcontrol:
+            p.output = data;
+            if (cb.func) {
+                cb.func(cb.userdata, p.io_select | (p.output & ~p.io_select));
+            }
+            break;
+        default:
+            YAKC_ASSERT(false);
+    }
 }
 
 //------------------------------------------------------------------------------
 ubyte
-z80pio::read_data(int port_id) const {
+z80pio::read_data(int port_id) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     ubyte data = 0;
     auto& p = this->port[port_id];
+    const auto& cb = this->in_callback[port_id];
     switch (p.mode) {
         case mode_output:
             data = p.output;
             break;
         case mode_input:
-            // FIXME: p.input written from peripheral device
+            if (cb.func) {
+                p.input = cb.func(cb.userdata);
+            }
             data = p.input;
             break;
         case mode_bidirectional:
-            // FIXME: p.input written from peripheral device
+            // FIXME: p.input written from peripheral device?
             data = p.input;
             break;
         case mode_bitcontrol:
+            if (cb.func) {
+                p.input = cb.func(cb.userdata);
+            }
             data = (p.input & p.io_select) | (p.output & ~p.io_select);
             break;
         default:

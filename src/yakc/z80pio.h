@@ -4,8 +4,13 @@
     @class YAKC::z80pio
     @brief incomplete Z80 PIO emulation (only what needed for KC85)
     
-    FIXME: control mode 0x7 is currently not supported
-    http://www.cpcwiki.eu/index.php/Z80_PIO
+    TODO:
+    - STROBE/READY handshake callbacks
+    - trigger interrupt
+
+    Resources & References:
+        - http://www.z80.info/zip/z80piomn.pdf
+        - MAME z80 pio emulation (https://github.com/mamedev/mame/blob/master/src/devices/machine/z80pio.cpp)
 */
 #include "yakc/z80int.h"
 
@@ -59,6 +64,22 @@ public:
     /// interrupt controller
     z80int int_ctrl;
 
+    /// callback definitions
+    typedef void(*out_cb)(void* userdata, ubyte val);
+    typedef ubyte(*in_cb)(void* userdata);
+
+    template<typename CBTYPE> struct callback {
+        CBTYPE func = nullptr;
+        void* userdata = nullptr;
+    };
+    callback<out_cb> out_callback[num_ports];
+    callback<in_cb> in_callback [num_ports];
+
+    /// connect out-callback for port A
+    void connect_out_cb(int port_id, void* userdata, out_cb cb);
+    /// connect in-callback for port A
+    void connect_in_cb(int port_id, void* userdata, in_cb cb);
+
     /// initialize the pio
     void init();
     /// reset the pio
@@ -69,7 +90,7 @@ public:
     /// write data register
     void write_data(int port_id, ubyte data);
     /// read data register
-    ubyte read_data(int port_id) const;
+    ubyte read_data(int port_id);
 };
 
 } // namespace YAKC

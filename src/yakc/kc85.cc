@@ -26,28 +26,8 @@ kc85::poweron(device m, os_rom os) {
     this->key_code = 0;
     this->io84 = 0;
     this->io86 = 0;
-
-    // set operating system pointers
-    this->update_rom_pointers();
-
-    // initialize the clock, the 85/4 runs at 1.77 MHz, the others at 1.75 MHz
-    this->board->clck.init((m == device::kc85_4) ? 1770 : 1750);
-
-    // initialize hardware components
-    this->board->pio.init();
-    this->board->ctc.init();
-    this->board->cpu.init(in_cb, out_cb, this);
-    this->exp.init();
-    this->video.init(m);
-    this->audio.init(&this->board->ctc);
-
-    // setup interrupt controller daisy chain (CTC has highest priority before PIO)
-    this->board->pio.int_ctrl.connect_cpu(z80::irq, &this->board->cpu);
-    for (int i = 0; i < z80ctc::num_channels; i++) {
-        this->board->ctc.channels[i].int_ctrl.connect_cpu(z80::irq, &this->board->cpu);
-    }
-    this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
-    this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
+    this->pio_a = 0;
+    this->pio_b = 0;
 
     // fill RAM banks with noise (but not on KC85/4? at least the 4
     // doesn't have the random-color-pattern when switching it on)
@@ -57,6 +37,37 @@ kc85::poweron(device m, os_rom os) {
     else {
         fill_random(this->ram, sizeof(this->ram));
     }
+
+    // set operating system pointers
+    this->update_rom_pointers();
+
+    // initialize the clock, the 85/4 runs at 1.77 MHz, the others at 1.75 MHz
+    this->board->clck.init((m == device::kc85_4) ? 1770 : 1750);
+
+    // initialize hardware components
+    z80& cpu = this->board->cpu;
+    z80pio& pio = this->board->pio;
+    z80ctc& ctc = this->board->ctc;
+    pio.init();
+    ctc.init();
+    cpu.init(z80_in_cb, z80_out_cb, this);
+    this->exp.init();
+    this->video.init(m);
+    this->audio.init(&this->board->ctc);
+
+    // setup interrupt controller daisy chain (CTC has highest priority before PIO)
+    pio.int_ctrl.connect_cpu(z80::irq, &this->board->cpu);
+    for (int i = 0; i < z80ctc::num_channels; i++) {
+        ctc.channels[i].int_ctrl.connect_cpu(z80::irq, &this->board->cpu);
+    }
+    cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
+    ctc.init_daisychain(&this->board->pio.int_ctrl);
+
+    // connect the PIO in/out callbacks
+    pio.connect_out_cb(z80pio::A, this, pio_a_out_cb);
+    pio.connect_out_cb(z80pio::B, this, pio_b_out_cb);
+    pio.connect_in_cb(z80pio::A, this, pio_a_in_cb);
+    pio.connect_in_cb(z80pio::B, this, pio_b_in_cb);
 
     // connect CTC2 trigger to a 50Hz vertical-blank-timer,
     // this controls the foreground color blinking flag
@@ -279,7 +290,7 @@ kc85::handle_keyboard_input() {
 
 //------------------------------------------------------------------------------
 void
-kc85::out_cb(void* userdata, uword port, ubyte val) {
+kc85::z80_out_cb(void* userdata, uword port, ubyte val) {
     kc85* self = (kc85*)userdata;
     switch (port & 0xFF) {
         case 0x80:
@@ -302,15 +313,10 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
             }
             break;
         case 0x88:
-            self->pio_a = val;  // FIXME: this should be handled as PIO 'peripheral device'
             self->board->pio.write_data(z80pio::A, val);
-            self->update_bank_switching();
             break;
         case 0x89:
-            self->pio_b = val; // FIXME: this should be handled as PIO 'peripheral device'
             self->board->pio.write_data(z80pio::B, val);
-            self->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
-            self->audio.update_volume(val & PIO_B_VOLUME_MASK);
             break;
         case 0x8A:
             self->board->pio.control(z80pio::A, val);
@@ -337,7 +343,7 @@ kc85::out_cb(void* userdata, uword port, ubyte val) {
 
 //------------------------------------------------------------------------------
 ubyte
-kc85::in_cb(void* userdata, uword port) {
+kc85::z80_in_cb(void* userdata, uword port) {
     // NOTE: on KC85/4, the hardware doesn't provide a way to read-back
     // the additional IO ports at 0x84 and 0x86 (see KC85/4 service manual)
     kc85* self = (kc85*)userdata;
@@ -345,11 +351,9 @@ kc85::in_cb(void* userdata, uword port) {
         case 0x80:
             return self->exp.module_type_in_slot(port>>8);
         case 0x88:
-            // FIXME: this should be handled as PIO 'peripheral device'
-            return self->pio_a;
+            return self->board->pio.read_data(z80pio::A);
         case 0x89:
-            // FIXME: this should be handled as PIO 'peripheral device'
-            return self->pio_b;
+            return self->board->pio.read_data(z80pio::B);
         case 0x8C:
             return self->board->ctc.read(z80ctc::CTC0);
         case 0x8D:
@@ -361,6 +365,37 @@ kc85::in_cb(void* userdata, uword port) {
         default:
             return 0xFF;
     }
+}
+
+//------------------------------------------------------------------------------
+void
+kc85::pio_a_out_cb(void* userdata, ubyte val) {
+    kc85* self = (kc85*) userdata;
+    self->pio_a = val;
+    self->update_bank_switching();
+}
+
+//------------------------------------------------------------------------------
+ubyte
+kc85::pio_a_in_cb(void* userdata) {
+    kc85* self = (kc85*) userdata;
+    return self->pio_a;
+}
+
+//------------------------------------------------------------------------------
+void
+kc85::pio_b_out_cb(void* userdata, ubyte val) {
+    kc85* self = (kc85*) userdata;
+    self->pio_b = val;
+    self->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
+    self->audio.update_volume(val & PIO_B_VOLUME_MASK);
+}
+
+//------------------------------------------------------------------------------
+ubyte
+kc85::pio_b_in_cb(void* userdata) {
+    kc85* self = (kc85*) userdata;
+    return self->pio_b;
 }
 
 //------------------------------------------------------------------------------

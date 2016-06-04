@@ -74,6 +74,8 @@ kc85_snapshot::write_kc_state(const kc85& kc, state_t& state) {
     state.kc.caos  = (ubyte) kc.cur_caos;
     state.kc.io84 = kc.io84;
     state.kc.io86 = kc.io86;
+    state.kc.pio_a = kc.pio_a;
+    state.kc.pio_b = kc.pio_b;
 }
 
 //------------------------------------------------------------------------------
@@ -83,6 +85,8 @@ kc85_snapshot::apply_kc_state(const state_t& state, kc85& kc) {
     kc.cur_caos  = (os_rom) state.kc.caos;
     kc.io84      = state.kc.io84;
     kc.io86      = state.kc.io86;
+    kc.pio_a     = state.kc.pio_a;
+    kc.pio_b     = state.kc.pio_b;
     kc.update_rom_pointers();
 }
 
