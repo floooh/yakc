@@ -245,7 +245,7 @@ z1013::put_key(ubyte ascii) {
 //------------------------------------------------------------------------------
 uint64_t
 z1013::kbd_bit(int col, int line, int num_lines) {
-    return (1UL<<line)<<(col*num_lines);
+    return uint64_t(1<<line)<<(col*num_lines);
 }
 
 //------------------------------------------------------------------------------
