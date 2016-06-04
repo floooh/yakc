@@ -17,15 +17,15 @@ MemoryWindow::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 static ubyte
 read_func(void* userdata, uword addr) {
-    kc85* kc = (kc85*) userdata;
-    return kc->board->cpu.mem.r8(addr);
+    yakc* emu = (yakc*) userdata;
+    return emu->board.cpu.mem.r8(addr);
 }
 
 //------------------------------------------------------------------------------
 static void
 write_func(void* userdata, uword addr, ubyte value) {
-    kc85* kc = (kc85*) userdata;
-    kc->board->cpu.mem.w8(addr, value);
+    yakc* emu = (yakc*) userdata;
+    emu->board.cpu.mem.w8(addr, value);
 }
 
 //------------------------------------------------------------------------------

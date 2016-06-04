@@ -251,17 +251,21 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Keyboard")) {
                     this->OpenWindow(emu, KeyboardWindow::Create());
                 }
-                if (ImGui::MenuItem("Expansion Slots")) {
-                    this->OpenWindow(emu, ModuleWindow::Create());
-                }
-                if (ImGui::MenuItem("Memory Map")) {
-                    this->OpenWindow(emu, MemoryMapWindow::Create());
+                if (emu.is_device(device::any_kc85)) {
+                    if (ImGui::MenuItem("Expansion Slots")) {
+                        this->OpenWindow(emu, ModuleWindow::Create());
+                    }
+                    if (ImGui::MenuItem("Memory Map")) {
+                        this->OpenWindow(emu, MemoryMapWindow::Create());
+                    }
                 }
                 if (ImGui::MenuItem("Z80 PIO")) {
                     this->OpenWindow(emu, PIOWindow::Create());
                 }
-                if (ImGui::MenuItem("Z80 CTC")) {
-                    this->OpenWindow(emu, CTCWindow::Create());
+                if (!emu.is_device(device::any_z1013)) {
+                    if (ImGui::MenuItem("Z80 CTC")) {
+                        this->OpenWindow(emu, CTCWindow::Create());
+                    }
                 }
                 ImGui::EndMenu();
             }
@@ -269,8 +273,10 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("CPU Debugger")) {
                     this->OpenWindow(emu, DebugWindow::Create());
                 }
-                if (ImGui::MenuItem("Audio Debugger")) {
-                    this->OpenWindow(emu, AudioWindow::Create(this->audio));
+                if (emu.is_device(device::any_kc85)) {
+                    if (ImGui::MenuItem("Audio Debugger")) {
+                        this->OpenWindow(emu, AudioWindow::Create(this->audio));
+                    }
                 }
                 if (ImGui::MenuItem("Disassembler")) {
                     this->OpenWindow(emu, DisasmWindow::Create());
@@ -278,29 +284,31 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Memory Editor")) {
                     this->OpenWindow(emu, MemoryWindow::Create());
                 }
-                if (ImGui::MenuItem("Scan for Commands...")) {
-                    this->OpenWindow(emu, CommandWindow::Create());
-                }
-                if (ImGui::BeginMenu("Take Snapshot")) {
-                    for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                        strBuilder.Format(32, "Snapshot %d", i);
-                        if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                            this->snapshotStorage.TakeSnapshot(emu, i);
-                        }
+                if (emu.is_device(device::any_kc85)) {
+                    if (ImGui::MenuItem("Scan for Commands...")) {
+                        this->OpenWindow(emu, CommandWindow::Create());
                     }
-                    ImGui::EndMenu();
-                }
-                if (this->snapshotStorage.HasSnapshots()) {
-                    if (ImGui::BeginMenu("Apply Snapshot")) {
+                    if (ImGui::BeginMenu("Take Snapshot")) {
                         for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                            if (this->snapshotStorage.HasSnapshot(i)) {
-                                strBuilder.Format(32, "Snapshot %d", i);
-                                if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                    this->snapshotStorage.ApplySnapshot(i, emu);
-                                }
+                            strBuilder.Format(32, "Snapshot %d", i);
+                            if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                                this->snapshotStorage.TakeSnapshot(emu, i);
                             }
                         }
                         ImGui::EndMenu();
+                    }
+                    if (this->snapshotStorage.HasSnapshots()) {
+                        if (ImGui::BeginMenu("Apply Snapshot")) {
+                            for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
+                                if (this->snapshotStorage.HasSnapshot(i)) {
+                                    strBuilder.Format(32, "Snapshot %d", i);
+                                    if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                                        this->snapshotStorage.ApplySnapshot(i, emu);
+                                    }
+                                }
+                            }
+                            ImGui::EndMenu();
+                        }
                     }
                 }
                 ImGui::EndMenu();

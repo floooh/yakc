@@ -50,6 +50,12 @@ yakc::reset() {
 }
 
 //------------------------------------------------------------------------------
+bool
+yakc::is_device(device mask) {
+    return (int(this->model) & int(mask));
+}
+
+//------------------------------------------------------------------------------
 void
 yakc::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
     if (this->kc85.on) {
