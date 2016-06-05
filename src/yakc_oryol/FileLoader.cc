@@ -38,6 +38,10 @@ FileLoader::Setup(yakc& emu) {
     this->Items.Add("KC-Basic", "kc_basic.z80", FileType::Z80, device::any_z1013);
     this->Items.Add("Z1013 Forth", "z1013_forth.z80", FileType::Z80, device::any_z1013);
     this->Items.Add("Boulderdash", "boulderdash_1_0.z80", FileType::Z80, device(int(device::z1013_16)|int(device::z1013_64)));
+    this->Items.Add("Demolation (doesn't work)", "demolation.z80", FileType::Z80, device::any_z1013);
+    this->Items.Add("Cosmic Ball", "cosmic_ball.z80", FileType::Z80, device::z1013_01);
+    this->Items.Add("Galactica", "galactica.z80", FileType::Z80, device::any_z1013);
+    this->Items.Add("Mazogs (no worki)", "mazog_deutsch.z80", FileType::Z80, device::any_z1013);
 }
 
 //------------------------------------------------------------------------------
