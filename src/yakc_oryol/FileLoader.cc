@@ -38,10 +38,10 @@ FileLoader::Setup(yakc& emu) {
     this->Items.Add("KC-Basic", "kc_basic.z80", FileType::Z80, device::any_z1013);
     this->Items.Add("Z1013 Forth", "z1013_forth.z80", FileType::Z80, device::any_z1013);
     this->Items.Add("Boulderdash", "boulderdash_1_0.z80", FileType::Z80, device(int(device::z1013_16)|int(device::z1013_64)));
-    this->Items.Add("Demolation (doesn't work)", "demolation.z80", FileType::Z80, device::any_z1013);
+    this->Items.Add("Demolation", "demolation.z80", FileType::Z80, device::any_z1013);
     this->Items.Add("Cosmic Ball", "cosmic_ball.z80", FileType::Z80, device::z1013_01);
     this->Items.Add("Galactica", "galactica.z80", FileType::Z80, device::any_z1013);
-    this->Items.Add("Mazogs (no worki)", "mazog_deutsch.z80", FileType::Z80, device::any_z1013);
+    this->Items.Add("Mazogs", "mazog_deutsch.z80", FileType::Z80, device::any_z1013);
 }
 
 //------------------------------------------------------------------------------
@@ -210,7 +210,6 @@ void
 FileLoader::start(yakc* emu, const FileInfo& info) {
     if (info.HasExecAddr) {
 
-        // initialize registers
         z80& cpu = emu->board.cpu;
         cpu.A = 0x00;
         cpu.F = 0x10;
@@ -218,20 +217,24 @@ FileLoader::start(yakc* emu, const FileInfo& info) {
         cpu.DE = cpu.DE_ = 0x0000;
         cpu.HL = cpu.HL_ = 0x0000;
         cpu.AF_ = 0x0000;
-        cpu.SP = 0x01C2;
+        if (emu->is_device(device::any_kc85)) {
 
-        // delete ASCII video memory
-        for (uword addr = 0xb200; addr < 0xb700; addr++) {
-            cpu.mem.w8(addr, 0);
-        }
-        cpu.mem.w8(0xb7a0, 0);
-        if (emu->model == device::kc85_3) {
-            cpu.out(0x89, 0x9f);
-            cpu.mem.w16(cpu.SP, 0xf15c);
-        }
-        else if (emu->model == device::kc85_4) {
-            cpu.out(0x89, 0xFF);
-            cpu.mem.w16(cpu.SP, 0xf17e);
+            // initialize registers
+            cpu.SP = 0x01C2;
+
+            // delete ASCII video memory
+            for (uword addr = 0xb200; addr < 0xb700; addr++) {
+                cpu.mem.w8(addr, 0);
+            }
+            cpu.mem.w8(0xb7a0, 0);
+            if (emu->model == device::kc85_3) {
+                cpu.out(0x89, 0x9f);
+                cpu.mem.w16(cpu.SP, 0xf15c);
+            }
+            else if (emu->model == device::kc85_4) {
+                cpu.out(0x89, 0xFF);
+                cpu.mem.w16(cpu.SP, 0xf17e);
+            }
         }
 
         // start address
