@@ -15,6 +15,7 @@
 #include "CommandWindow.h"
 #include "AudioWindow.h"
 #include "KC85IOWindow.h"
+#include "InfoWindow.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -177,6 +178,9 @@ UI::OnFrame(yakc& emu) {
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
+                if (ImGui::MenuItem("System Info...")) {
+                    this->OpenWindow(emu, InfoWindow::Create());
+                }
                 if (ImGui::MenuItem("Load File...")) {
                     auto loadWindow = LoadWindow::Create();
                     loadWindow->SetFileLoader(&this->fileLoader);

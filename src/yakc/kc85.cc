@@ -476,5 +476,93 @@ kc85::update_bank_switching() {
     this->exp.update_memory_mappings(cpu.mem);
 }
 
+//------------------------------------------------------------------------------
+const char*
+kc85::system_info() const {
+    if (this->cur_model == device::kc85_2) {
+        return
+            "The KC85/2 was originally named HC900 (HC: Home Computer), "
+            "but it soon became clear that the system would be too expensive "
+            "and too few could be built to be sold as a 'home computer'.\n\n"
+            "It was renamed to KC85/2 (KC: Kleincomputer, small computer) and "
+            "made available only to schools, 'people-owned' companies and "
+            "the military.\n\n"
+            "On paper, the KC85 computer line had impressive color graphics "
+            "capabilities (slightly better than the ZX Spectrum), but with "
+            "its slow CPU speed and lack of custom chips it was hard to "
+            "achieve the impressive graphics and audio effects known from "
+            "8-bit Commodore or Atari machines of the time."
+            "\n\n\n"
+            "Manufacturer:      VEB Mikroelektronik Mühlhausen \n"
+            "Release Date:      1985\n"
+            "OS:                HC-CAOS 2.2 in ROM\n"
+            "CPU:               U880 @ 1.75 MHz (unlicensed Z80 clone)\n"
+            "                   U855 (Z80 PIO clone)\n"
+            "                   U857 (Z80 CTC clone)\n"
+            "Memory:            16 KB RAM\n"
+            "                   16 KB video memory\n"
+            "                    8 KB ROM\n"
+            "Graphics:          320x256 display resolution\n"
+            "                   40x64 color attribute resolution\n"
+            "                   16 foreground and 8 background colors\n"
+            "Audio:             CTC-controlled beeper, mono\n"
+            "Special Power:     great graphics for an 8-bitter without custom chips";
+
+    }
+    else if (this->cur_model == device::kc85_3) {
+        return
+            "The hardware of the KC85/3 was identical to it's "
+            "predecessor KC85/2, except for an additional 8 KByte "
+            "of ROM for a built-in BASIC interpreter.\n\n"
+            "The only other difference is the new OS "
+            "version HC-CAOS 3.1 which added a few more commands."
+            "\n\n\n"
+            "Manufacturer:      VEB Mikroelektronik Mühlhausen \n"
+            "Release Date:      1986\n"
+            "OS:                HC-CAOS 3.1, HC-BASIC in ROM\n"
+            "CPU:               U880 @ 1.75 MHz (unlicensed Z80 clone)\n"
+            "                   U855 (Z80 PIO clone)\n"
+            "                   U857 (Z80 CTC clone)\n"
+            "Memory:            16 KB RAM\n"
+            "                   16 KB video memory\n"
+            "                   16 KB ROM (8 KB BASIC, 8 KB CAOS)\n"
+            "Graphics:          320x256 display resolution\n"
+            "                   40x64 color attribute resolution\n"
+            "                   16 foreground and 8 background colors\n"
+            "Audio:             CTC-controlled beeper, stereo\n"
+            "Special Power:     built-in BASIC interpreter";
+    }
+    else {
+        return
+            "The KC85/4 was the pinnacle of East German 8-bit computer "
+            "development, and a massive improvement to the KC85/3 with "
+            "64 KByte RAM and a huge 64 KByte banked video memory.\n\n"
+            "The big video memory allowed a greatly improved color resolution "
+            "(8x1 pixels instead of 8x4), and true double buffering was "
+            "possible by allowing the CPU to write to hidden video memory banks.\n\n"
+            "The video memory layout was rotated by 90 degrees which "
+            "simplified address computations on the CPU and allowed faster "
+            "scrolling.\n\n"
+            "There was also a little used 'hicolor' mode where each pixel could "
+            "be assigned one out of 4 colors."
+            "\n\n\n"
+            "Manufacturer:      VEB Mikroelektronik Mühlhausen \n"
+            "Release Date:      1989\n"
+            "OS:                KC-CAOS 4.2, HC-BASIC in ROM\n"
+            "CPU:               U880 @ 1.77 MHz (unlicensed Z80 clone)\n"
+            "                   U855 (Z80 PIO clone)\n"
+            "                   U857 (Z80 CTC clone)\n"
+            "Memory:            64 KB RAM\n"
+            "                   64 KB video memory\n"
+            "                   20 KB ROM (8 KB BASIC, 12 KB CAOS)\n"
+            "Graphics:          320x256 display resolution\n"
+            "                   40x256 color attribute resolution\n"
+            "                   16 foreground and 8 background colors\n"
+            "                   special per-pixel color mode with 4 colors\n"
+            "Audio:             CTC-controlled beeper, stereo\n"
+            "Special Power:     90-degree rotated video memory layout";
+    }
+}
+
 } // namespace YAKC
 

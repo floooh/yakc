@@ -381,4 +381,66 @@ z1013::decode_video() {
     }
 }
 
+//------------------------------------------------------------------------------
+const char*
+z1013::system_info() const {
+    if (this->cur_model == device::z1013_01) {
+        return
+            "The Z1013 was the only East German home computer that was "
+            "available to the general public and cheap enough to be "
+            "affordable by hobbyists.\n\n"
+            "It was delivered as kit (just the main board and separate membrane keyboard) "
+            "and had to be assembled at home, with some soldering required to attach the "
+            "keyboard."
+            "\n\n\n"
+            "Manufacturer:      VEB Robotron-Elektronik Riesa\n"
+            "Release Date:      1985\n"
+            "OS:                Monitor 2.02 in ROM\n"
+            "Chips:             U880 CPU @ 1 MHz (unlicensed Z80 clone)\n"
+            "                   U855 PIO (Z80 PIO clone)\n"
+            "Memory:            16 KByte RAM\n"
+            "                    1 KByte video memory\n"
+            "                    2 KByte ROM\n"
+            "Display:           32x32 ASCII, monochrome\n"
+            "Special Power:     the keyboard has 4 shift keys";
+    }
+    else if (this->cur_model == device::z1013_16) {
+        return
+            "The Z1013.16 was an improved version of the original Z1013 "
+            "hobbyist kit. It had a CPU with higher quality-rating allowing "
+            "it to run at twice the speed of the original.\n\n"
+            "While the Z1013.16 was still delivered with the same terrible "
+            "8x4 membrane keyboard, the system was prepared for adding a "
+            "proper mechanical keyboard with an 8x8 key matrix."
+            "\n\n\n"
+            "Manufacturer:      VEB Robotron-Elektronik Riesa\n"
+            "Release Date:      1987\n"
+            "OS:                Monitor A.2 in ROM\n"
+            "Chipd:             U880 @ 2 MHz (unlicensed Z80 clone)\n"
+            "                   U855 (Z80 PIO clone)\n"
+            "Memory:            16 KB RAM\n"
+            "                    1 KB video memory\n"
+            "                    2 KB ROM\n"
+            "Display:           32x32 ASCII, monochrome\n"
+            "Special Power:     support for proper keyboards";
+    }
+    else {
+        return
+            "The Z1013.64 is identical to the improved Z1013.16, but "
+            "came equipped with 64 KByte RAM. Not all of this was usable "
+            "though because it was overlapped by the 1KB video memory and 2KB ROM."
+            "\n\n\n"
+            "Manufacturer:      VEB Robotron-Elektronik Riesa\n"
+            "Release Date:      1987\n"
+            "OS:                Monitor A.2 in ROM\n"
+            "CPU:               U880 @ 2 MHz (unlicensed Z80 clone)\n"
+            "                   U855 (Z80 PIO clone)\n"
+            "Memory:            64 KB RAM\n"
+            "                    1 KB video memory\n"
+            "                    2 KB ROM\n"
+            "Display:           32x32 ASCII, monochrome\n"
+            "Special Power:     61 KB usable RAM without bank switching";
+    }
+}
+
 } // namespace YAKC

@@ -28,11 +28,13 @@ public:
     /// reset the emu
     void reset();
     /// check if currently emulated device matches
-    bool is_device(device mask);
+    bool is_device(device mask) const;
     /// process one frame, up to absolute number of cycles
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
     /// put a key as ASCII code
     void put_key(ubyte ascii);
+    /// get human-readable info about current system
+    const char* system_info() const;
 };
 
 } // namespace YAKC

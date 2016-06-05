@@ -51,7 +51,7 @@ yakc::reset() {
 
 //------------------------------------------------------------------------------
 bool
-yakc::is_device(device mask) {
+yakc::is_device(device mask) const {
     return (int(this->model) & int(mask));
 }
 
@@ -74,6 +74,20 @@ yakc::put_key(ubyte ascii) {
     }
     if (this->z1013.on) {
         this->z1013.put_key(ascii);
+    }
+}
+
+//------------------------------------------------------------------------------
+const char*
+yakc::system_info() const {
+    if (this->kc85.on) {
+        return this->kc85.system_info();
+    }
+    else if (this->z1013.on) {
+        return this->z1013.system_info();
+    }
+    else {
+        return "no info available";
     }
 }
 

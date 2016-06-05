@@ -61,6 +61,8 @@ public:
     void reset();
     /// get the Z1013 model
     device model() const;
+    /// get info about emulated system
+    const char* system_info() const;
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);
