@@ -175,6 +175,8 @@ UI::OnFrame(yakc& emu) {
                 case device::z1013_01:  model = "Z1013.01"; break;
                 case device::z1013_16:  model = "Z1013.16"; break;
                 case device::z1013_64:  model = "Z1013.64"; break;
+                case device::z9001:     model = "Z9001"; break;
+                case device::kc87:      model = "KC87"; break;
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
@@ -239,15 +241,22 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::BeginMenu("Boot to Z1013")) {
                     if (ImGui::MenuItem("Z1013.01 (1 MHz, 16KB RAM)")) {
                         emu.poweroff();
-                        emu.poweron(device::z1013_01, os_rom::z1013_mon202);
+                        emu.poweron(device::z1013_01, os_rom::none);
                     }
                     if (ImGui::MenuItem("Z1013.16 (2 MHz, 16KB RAM)")) {
                         emu.poweroff();
-                        emu.poweron(device::z1013_16, os_rom::z1013_mon202);
+                        emu.poweron(device::z1013_16, os_rom::none);
                     }
                     if (ImGui::MenuItem("Z1013.64 (2 MHz, 64KB RAM)")) {
                         emu.poweroff();
-                        emu.poweron(device::z1013_64, os_rom::z1013_mon202);
+                        emu.poweron(device::z1013_64, os_rom::none);
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Boot to Z9001")) {
+                    if (ImGui::MenuItem("KC87")) {
+                        emu.poweroff();
+                        emu.poweron(device::kc87, os_rom::kc87_os_2);
                     }
                     ImGui::EndMenu();
                 }

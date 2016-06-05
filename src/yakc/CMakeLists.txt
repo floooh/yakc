@@ -7,6 +7,7 @@ fips_begin_module(yakc)
         kc85_exp.h kc85_exp.cc kc85_roms.h kc85_roms.cc
         kc85_snapshot.h kc85_snapshot.cc
         z1013.h z1013.cc
+        z9001.h z9001.cc
         breadboard.h
         yakc.h yakc.cc
     )

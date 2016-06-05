@@ -41,11 +41,11 @@ namespace YAKC {
 class z1013 {
 public:
     /// ram banks
-    ubyte ram[4][0x4000];
+    ubyte ram[4*0x4000];
     /// 1 Kbyte separate video memory
     ubyte irm[0x400];
 
-    /// hardware components
+    /// the main board
     breadboard* board = nullptr;
 
     /// one-time setup
@@ -99,8 +99,6 @@ public:
     bool cpu_behind = false;
     uint64_t abs_cycle_count = 0;
     uint32_t overflow_cycles = 0;
-    const ubyte* os_ptr = nullptr;
-    int os_size = 0;
     ubyte kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
     bool kbd_8x8_requested = false;         // bit 4 in PIO-B written
     uint64_t next_kbd_column_bits = 0;

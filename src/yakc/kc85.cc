@@ -9,6 +9,7 @@ namespace YAKC {
 void
 kc85::init(breadboard* b) {
     this->board = b;
+    this->exp.init();
 }
 
 //------------------------------------------------------------------------------

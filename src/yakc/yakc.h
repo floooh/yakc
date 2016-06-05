@@ -8,6 +8,7 @@
 #include "yakc/breadboard.h"
 #include "yakc/kc85.h"
 #include "yakc/z1013.h"
+#include "yakc/z9001.h"
 
 namespace YAKC {
 
@@ -18,6 +19,7 @@ public:
     breadboard board;
     class kc85 kc85;
     class z1013 z1013;
+    class z9001 z9001;
 
     /// one-time init
     void init(const ext_funcs& funcs);

@@ -37,14 +37,16 @@ z1013::poweron(device m) {
     this->kbd_column_bits = 0;
 
     // map memory
+    clear(this->ram, sizeof(this->ram));
+    clear(this->irm, sizeof(this->irm));    
     cpu.mem.unmap_all();
     if (m == device::z1013_64) {
         // 64 kByte RAM
-        cpu.mem.map(1, 0x0000, 0x10000, this->ram[0], true);
+        cpu.mem.map(1, 0x0000, 0x10000, this->ram, true);
     }
     else {
         // 16 kByte RAM
-        cpu.mem.map(1, 0x0000, 0x4000, this->ram[0], true);
+        cpu.mem.map(1, 0x0000, 0x4000, this->ram, true);
     }
     // 1 kByte video memory
     cpu.mem.map(0, 0xEC00, 0x0400, this->irm, true);
@@ -55,7 +57,7 @@ z1013::poweron(device m) {
     else {
         cpu.mem.map(0, 0xF000, sizeof(dump_z1013_mon_a2), dump_z1013_mon_a2, false);
     }
-
+    
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
     this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
 
@@ -66,10 +68,6 @@ z1013::poweron(device m) {
     pio.connect_out_cb(z80pio::B, this, pio_b_out_cb);
     pio.connect_in_cb(z80pio::A, this, pio_a_in_cb);
     pio.connect_in_cb(z80pio::B, this, pio_b_in_cb);
-
-    // clear system RAM and video RAM
-    clear(this->ram, sizeof(this->ram));
-    clear(this->irm, sizeof(this->irm));    
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -373,8 +371,8 @@ z1013::decode_video() {
     for (int y = 0; y < 32; y++) {
         for (int py = 0; py < 8; py++) {
             for (int x = 0; x < 32; x++) {
-                ubyte ascii = this->irm[(y<<5) + x];
-                ubyte bits = dump_z1013_font[(ascii<<3)|py];
+                ubyte chr = this->irm[(y<<5) + x];
+                ubyte bits = dump_z1013_font[(chr<<3)|py];
                 for (int px = 7; px >=0; px--) {
                     *dst++ = bits & (1<<px) ? 0xFFFFFFFF : 0xFF000000;
                 }

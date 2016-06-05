@@ -25,7 +25,10 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame) {
     irmSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
     irmSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
     this->irmTexture320x256 = Gfx::CreateResource(irmSetup);
+    irmSetup.Height = 192;
+    this->irmTexture320x192 = Gfx::CreateResource(irmSetup);
     irmSetup.Width = 256;
+    irmSetup.Height = 256;
     this->irmTexture256x256 = Gfx::CreateResource(irmSetup);
 
     auto fsqSetup = MeshSetup::FullScreenQuad(true);
@@ -63,11 +66,22 @@ Draw::UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& warp) {
 //------------------------------------------------------------------------------
 void
 Draw::Render(const void* pixels, int width, int height) {
-    o_assert(((width == 256) || (width == 320)) && (height == 256));
     o_trace_scoped(yakc_draw);
 
     // copy decoded RGBA8 into texture
-    Id tex = (256 == width) ? this->irmTexture256x256 : this->irmTexture320x256;
+    Id tex;
+    if ((320 == width) && (256 == height)) {
+        tex = this->irmTexture320x256;
+    }
+    else if ((320 == width) && (192 == height)) {
+        tex = this->irmTexture320x192;
+    }
+    else if ((256 == width) && (256 == height)) {
+        tex = this->irmTexture256x256;
+    }
+    else {
+        o_error("Draw::Render(): invalid display size!\n");
+    }
     this->crtDrawState.FSTexture[YAKCTextures::IRM] = tex;
     this->nocrtDrawState.FSTexture[YAKCTextures::IRM] = tex;
     this->texUpdateAttrs.Sizes[0][0] = width*height*4;
@@ -95,6 +109,9 @@ Draw::Render(const void* pixels, int width, int height) {
 void
 Draw::applyViewport(int width, int height) {
     float aspect = float(width) / float(height);
+    if (aspect > (5.0f/4.0f)) {
+        aspect = (5.0f/4.0f);
+    }
     const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
     const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
     int viewPortY = this->frameSize;
