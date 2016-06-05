@@ -46,12 +46,14 @@ z1013::poweron(device m) {
         // 16 kByte RAM
         cpu.mem.map(1, 0x0000, 0x4000, this->ram[0], true);
     }
-    cpu.mem.map(0, 0xEC00, 0x0400, this->irm, true);       // video mem
+    // 1 kByte video memory
+    cpu.mem.map(0, 0xEC00, 0x0400, this->irm, true);
+    // 2 kByte system rom
     if (os_rom::z1013_mon202 == this->cur_os) {
-        cpu.mem.map(0, 0xF000, 0x0800, (ubyte*)this->roms.ptr(z1013_roms::mon202), false);
+        cpu.mem.map(0, 0xF000, sizeof(dump_z1013_mon202), dump_z1013_mon202, false);
     }
     else {
-        cpu.mem.map(0, 0xF000, 0x0800, (ubyte*)this->roms.ptr(z1013_roms::mon_a2), false);
+        cpu.mem.map(0, 0xF000, sizeof(dump_z1013_mon_a2), dump_z1013_mon_a2, false);
     }
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz

@@ -35,7 +35,6 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/roms.h"
-#include "yakc/z1013_roms.h"
 
 namespace YAKC {
 
@@ -48,7 +47,6 @@ public:
 
     /// hardware components
     breadboard* board = nullptr;
-    z1013_roms roms;
 
     /// one-time setup
     void init(breadboard* board);

@@ -44,15 +44,18 @@ extern void fill_random(void* ptr, int num_bytes);
 #endif
 
 enum class device {
-    kc85_2 = (1<<0),
-    kc85_3 = (1<<1),
-    kc85_4 = (1<<2),
+    kc85_2   = (1<<0),
+    kc85_3   = (1<<1),
+    kc85_4   = (1<<2),
     z1013_01 = (1<<3),
     z1013_16 = (1<<5),
     z1013_64 = (1<<6),
+    z9001    = (1<<7),
+    kc87     = (1<<8),
     none = 0,
     any_kc85 = (kc85_2|kc85_3|kc85_4),
-    any_z1013 = (z1013_01|z1013_16|z1013_64)
+    any_z1013 = (z1013_01|z1013_16|z1013_64),
+    any_z9001 = (z9001|kc87)
 };
 
 enum class os_rom {

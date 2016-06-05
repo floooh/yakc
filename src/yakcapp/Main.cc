@@ -249,8 +249,6 @@ YakcApp::initRoms() {
     // standard roms required for initial booting are built-in
     this->emu.kc85.roms.add(kc85_roms::caos31, dump_caos31, sizeof(dump_caos31));
     this->emu.kc85.roms.add(kc85_roms::basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
-    this->emu.z1013.roms.add(z1013_roms::mon202, dump_z1013_mon202, sizeof(dump_z1013_mon202));
-    this->emu.z1013.roms.add(z1013_roms::mon_a2, dump_z1013_mon_a2, sizeof(dump_z1013_mon_a2));
 
     // async-load optional ROMs
     IO::Load("rom:hc900.852", [this](IO::LoadResult ioRes) {
