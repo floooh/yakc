@@ -56,6 +56,7 @@ public:
     uint64_t abs_cycle_count = 0;
     uint32_t overflow_cycles = 0;
 
+    uint32_t frame_count = 0;
     uint32_t fg_pal[8];
     uint32_t bg_pal[8];
     uint32_t RGBA8Buffer[320*192];          // decoded linear RGBA8 video buffer

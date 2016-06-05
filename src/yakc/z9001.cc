@@ -22,14 +22,14 @@ z9001::init(breadboard* b) {
 
     // setup background color palette
     // FIXME: are background colors exactly identical to foreground?
-    this->fg_pal[0] = 0xFF000000;     // black
-    this->fg_pal[1] = 0xFF0000FF;     // red
-    this->fg_pal[2] = 0xFF00FF00;     // green
-    this->fg_pal[3] = 0xFF00FFFF;     // yellow
-    this->fg_pal[4] = 0xFFFF0000;     // blue
-    this->fg_pal[5] = 0xFFFF00FF;     // purple
-    this->fg_pal[6] = 0xFFFFFF00;     // cyan
-    this->fg_pal[7] = 0xFFFFFFFF;     // white
+    this->bg_pal[0] = 0xFF000000;     // black
+    this->bg_pal[1] = 0xFF0000FF;     // red
+    this->bg_pal[2] = 0xFF00FF00;     // green
+    this->bg_pal[3] = 0xFF00FFFF;     // yellow
+    this->bg_pal[4] = 0xFFFF0000;     // blue
+    this->bg_pal[5] = 0xFFFF00FF;     // purple
+    this->bg_pal[6] = 0xFFFFFF00;     // cyan
+    this->bg_pal[7] = 0xFFFFFFFF;     // white
 }
 
 //------------------------------------------------------------------------------
@@ -57,8 +57,8 @@ z9001::poweron(device m, os_rom os) {
     cpu.mem.map(0, 0xE800, 0x0400, this->color_ram, true);
     cpu.mem.map(0, 0xEC00, 0x0400, this->video_ram, true);
 
-    // initialize the clock at ca 2.45 MHz
-    this->board->clck.init(2450);
+    // initialize the clock at 2.4576 MHz
+    this->board->clck.init(2458);
 
     // initialize hardware components
     cpu.init(in_cb, out_cb, this);
@@ -168,6 +168,8 @@ void
 z9001::decode_video() {
 
     // FIXME: there's also a 40x20 display mode
+    // FIXME: how is blinking implemented? similar to KC85/2 via CTC line?
+    this->frame_count++;
     uint32_t* dst = RGBA8Buffer;
     ubyte* font;
     if (device::kc87 == this->cur_model) {
@@ -177,16 +179,22 @@ z9001::decode_video() {
         font = dump_z9001_font;
     }
     int off = 0;
+    uint32_t fg, bg;
     for (int y = 0; y < 24; y++) {
         for (int py = 0; py < 8; py++) {
             for (int x = 0; x < 40; x++) {
                 ubyte chr = this->video_ram[off+x];
                 ubyte pixels = dump_kc87_font_2[(chr<<3)|py];
-                ubyte color = this->color_ram[off];
-                uint32_t fg = this->fg_pal[(color>>4)&7];
-                uint32_t bg = this->bg_pal[color&7];
-
-                // FIXME flashing
+                ubyte color = this->color_ram[off+x];
+                if ((color & 0x80) && (frame_count & 0x10)) {
+                    // implement blinking, swap bg and fg
+                    fg = this->bg_pal[color&7];
+                    bg = this->fg_pal[(color>>4)&7];
+                }
+                else {
+                    fg = this->fg_pal[(color>>4)&7];
+                    bg = this->bg_pal[color&7];
+                }
                 for (int px = 7; px >=0; px--) {
                     *dst++ = pixels & (1<<px) ? fg:bg;
                 }
