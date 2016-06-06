@@ -186,11 +186,11 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
         }
         const int64_t num_cycles = clk.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
         uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
-        if (abs_end_cycles > max_cycle_count) {
+        if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
             abs_end_cycles = max_cycle_count;
             this->cpu_ahead = true;
         }
-        else if (abs_end_cycles < min_cycle_count) {
+        else if ((min_cycle_count != 0) && (abs_end_cycles < min_cycle_count)) {
             abs_end_cycles = min_cycle_count;
             this->cpu_behind = true;
         }
