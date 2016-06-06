@@ -13,9 +13,18 @@ namespace YAKC {
 static const int offset = 128;
 
 //------------------------------------------------------------------------------
+PIOWindow::PIOWindow(const char* name, z80pio* pio) :
+Name(name),
+PIO(pio) {
+    // empty
+}
+
+
+//------------------------------------------------------------------------------
 void
 PIOWindow::Setup(yakc& emu) {
-    this->setName("Z80 PIO State");
+    o_assert(this->Name && this->PIO);
+    this->setName(this->Name);
 }
 
 //------------------------------------------------------------------------------
@@ -26,8 +35,8 @@ status(const char* name, ubyte val) {
 
 //------------------------------------------------------------------------------
 static void
-pioStatus(const yakc& emu, int port_id) {
-    const auto& p = emu.board.pio.port[port_id];
+pioStatus(z80pio* pio, int port_id) {
+    const auto& p = pio->port[port_id];
     status("mode:", p.mode);
     status("output:", p.output);
     status("input:", p.input);
@@ -49,13 +58,14 @@ pioStatus(const yakc& emu, int port_id) {
 //------------------------------------------------------------------------------
 bool
 PIOWindow::Draw(yakc& emu) {
+    o_assert(this->PIO);
     ImGui::SetNextWindowSize(ImVec2(220, 384), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         if (ImGui::CollapsingHeader("PIO A", "#pio_a", true, true)) {
-            pioStatus(emu, z80pio::A);
+            pioStatus(this->PIO, z80pio::A);
         }
         if (ImGui::CollapsingHeader("PIO B", "#pio_b", true, true)) {
-            pioStatus(emu, z80pio::B);
+            pioStatus(this->PIO, z80pio::B);
         }
     }
     ImGui::End();

@@ -287,8 +287,20 @@ UI::OnFrame(yakc& emu) {
                         this->OpenWindow(emu, KC85IOWindow::Create());
                     }
                 }
-                if (ImGui::MenuItem("Z80 PIO")) {
-                    this->OpenWindow(emu, PIOWindow::Create());
+                if (emu.is_device(device::any_z9001)) {
+                    // the Z9001 has 2 PIOs
+                    if (ImGui::MenuItem("Z80 PIO 1")) {
+                        this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.pio));
+                    }
+                    if (ImGui::MenuItem("Z80 PIO 2")) {
+                        this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.pio2));
+                    }
+                }
+                else {
+                    // all others have 1 PIO
+                    if (ImGui::MenuItem("Z80 PIO")) {
+                        this->OpenWindow(emu, PIOWindow::Create("PIO", &emu.board.pio));
+                    }
                 }
                 if (!emu.is_device(device::any_z1013)) {
                     if (ImGui::MenuItem("Z80 CTC")) {

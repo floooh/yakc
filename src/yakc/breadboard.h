@@ -18,6 +18,7 @@ public:
     clock clck;
     z80 cpu;
     z80pio pio;
+    z80pio pio2;        // Z9001 has 2 PIOs
     z80ctc ctc;
     z80dbg dbg;
 };
