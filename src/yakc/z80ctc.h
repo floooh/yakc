@@ -101,13 +101,13 @@ public:
     void connect_write3(ctc_cb cb, void* userdata);
 
     /// trigger line for CTC0
-    static void ctrg0(void* self);
+    static void ctrg0(void* userdata);
     /// trigger line for CTC1
-    static void ctrg1(void* self);
+    static void ctrg1(void* userdata);
     /// trigger line for CTC2
-    static void ctrg2(void* self);
+    static void ctrg2(void* userdata);
     /// trigger line for CTC3
-    static void ctrg3(void* self);
+    static void ctrg3(void* userdata);
 
     /// write value to channel
     void write(channel c, ubyte v);
