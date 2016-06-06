@@ -10,26 +10,15 @@ void
 z9001::init(breadboard* b) {
     this->board = b;
 
-    // setup color palette
-    this->fg_pal[0] = 0xFF000000;     // black
-    this->fg_pal[1] = 0xFF0000FF;     // red
-    this->fg_pal[2] = 0xFF00FF00;     // green
-    this->fg_pal[3] = 0xFF00FFFF;     // yellow
-    this->fg_pal[4] = 0xFFFF0000;     // blue
-    this->fg_pal[5] = 0xFFFF00FF;     // purple
-    this->fg_pal[6] = 0xFFFFFF00;     // cyan
-    this->fg_pal[7] = 0xFFFFFFFF;     // white
-
-    // setup background color palette
-    // FIXME: are background colors exactly identical to foreground?
-    this->bg_pal[0] = 0xFF000000;     // black
-    this->bg_pal[1] = 0xFF0000FF;     // red
-    this->bg_pal[2] = 0xFF00FF00;     // green
-    this->bg_pal[3] = 0xFF00FFFF;     // yellow
-    this->bg_pal[4] = 0xFFFF0000;     // blue
-    this->bg_pal[5] = 0xFFFF00FF;     // purple
-    this->bg_pal[6] = 0xFFFFFF00;     // cyan
-    this->bg_pal[7] = 0xFFFFFFFF;     // white
+    // setup color palette (FIXME: fore- and background colors are identical?)
+    this->pal[0] = 0xFF000000;     // black
+    this->pal[1] = 0xFF0000FF;     // red
+    this->pal[2] = 0xFF00FF00;     // green
+    this->pal[3] = 0xFF00FFFF;     // yellow
+    this->pal[4] = 0xFFFF0000;     // blue
+    this->pal[5] = 0xFFFF00FF;     // purple
+    this->pal[6] = 0xFFFFFF00;     // cyan
+    this->pal[7] = 0xFFFFFFFF;     // white
 }
 
 //------------------------------------------------------------------------------
@@ -39,15 +28,17 @@ z9001::poweron(device m, os_rom os) {
     YAKC_ASSERT(int(device::any_z9001) & int(m));
     YAKC_ASSERT(!this->on);
 
-    z80& cpu = this->board->cpu;
     this->cur_model = m;
     this->cur_os = os;
     this->on = true;
+    this->abs_cycle_count = 0;
+    this->overflow_cycles = 0;
 
     // map memory
     clear(this->ram, sizeof(this->ram));
     clear(this->color_ram, sizeof(this->color_ram));
     clear(this->video_ram, sizeof(this->video_ram));
+    z80& cpu = this->board->cpu;
     cpu.mem.unmap_all();
     if (device::kc87 == m) {
         cpu.mem.map(0, 0x0000, 0x4000, this->ram, true);
@@ -61,7 +52,32 @@ z9001::poweron(device m, os_rom os) {
     this->board->clck.init(2458);
 
     // initialize hardware components
+    z80pio& pio1 = this->board->pio;
+    z80pio& pio2 = this->board->pio2;
+    z80ctc& ctc = this->board->ctc;
     cpu.init(in_cb, out_cb, this);
+    pio1.init();
+    pio2.init();
+    ctc.init();
+
+    // setup interrupt daisy chain, from highest to lowest priority:
+    //  CPU -> PIO1 -> PIO2 -> CTC
+    pio1.int_ctrl.connect_cpu(z80::irq, &cpu);
+    pio2.int_ctrl.connect_cpu(z80::irq, &cpu);
+    for (int i = 0; i < z80ctc::num_channels; i++) {
+        ctc.channels[i].int_ctrl.connect_cpu(z80::irq, &cpu);
+    }
+    cpu.connect_irq_device(&pio1.int_ctrl);
+    pio1.int_ctrl.connect_irq_device(&pio2.int_ctrl);
+    pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
+    ctc.init_daisychain(nullptr);
+
+    // CTC2 is configured as timer and triggers CTC3, which is configured
+    // as counter, CTC3 triggers an interrupt which drives the system clock
+    ctc.connect_zcto2(z80ctc::ctrg3, &ctc);
+
+    // configure a hardware counter to control the video blink attribute
+    this->board->clck.config_timer(0, 50, blink_cb, this);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -80,6 +96,7 @@ void
 z9001::reset() {
     this->board->ctc.reset();
     this->board->pio.reset();
+    this->board->pio2.reset();
     this->board->cpu.reset();
     this->overflow_cycles = 0;
 
@@ -96,6 +113,7 @@ z9001::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
     this->cpu_behind = false;    
     z80& cpu = this->board->cpu;
     z80dbg& dbg = this->board->dbg;
+    z80ctc& ctc = this->board->ctc;
     clock& clk = this->board->clck;
 
     if (!dbg.paused) {
@@ -122,6 +140,7 @@ z9001::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
             int cycles_step = cpu.step();
             cycles_step += cpu.handle_irq();
             clk.update(cycles_step);
+            ctc.update_timers(cycles_step);
             this->abs_cycle_count += cycles_step;
         }
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
@@ -132,9 +151,60 @@ z9001::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
 //------------------------------------------------------------------------------
 void
 z9001::out_cb(void* userdata, uword port, ubyte val) {
+    // NOTE: there are 2 port numbers each for all CTC and PIO ports!
     z9001* self = (z9001*)userdata;
+    z80pio& pio1 = self->board->pio;
+    z80pio& pio2 = self->board->pio2;
+    z80ctc& ctc = self->board->ctc;
     switch (port & 0xFF) {
-        // FIXME
+        case 0x80:
+        case 0x84:
+            ctc.write(z80ctc::CTC0, val);
+            break;
+        case 0x81:
+        case 0x85:
+            ctc.write(z80ctc::CTC1, val);
+            break;
+        case 0x82:
+        case 0x86:
+            ctc.write(z80ctc::CTC2, val);
+            break;
+        case 0x83:
+        case 0x87:
+            ctc.write(z80ctc::CTC3, val);
+            break;
+        case 0x88:
+        case 0x8C:
+            pio1.write_data(z80pio::A, val);
+            break;
+        case 0x89:
+        case 0x8D:
+            pio1.write_data(z80pio::B, val);
+            break;
+        case 0x8A:
+        case 0x8E:
+            pio1.control(z80pio::A, val);
+            break;
+        case 0x8B:
+        case 0x8F:
+            pio1.control(z80pio::B, val);
+            break;
+        case 0x90:
+        case 0x94:
+            pio2.write_data(z80pio::A, val);
+            break;
+        case 0x91:
+        case 0x95:
+            pio2.write_data(z80pio::B, val);
+            break;
+        case 0x92:
+        case 0x96:
+            pio2.control(z80pio::A, val);
+            break;
+        case 0x93:
+        case 0x97:
+            pio2.control(z80pio::B, val);
+            break;
         default:
             break;
     }
@@ -144,8 +214,36 @@ z9001::out_cb(void* userdata, uword port, ubyte val) {
 ubyte
 z9001::in_cb(void* userdata, uword port) {
     z9001* self = (z9001*)userdata;
+    z80pio& pio1 = self->board->pio;
+    z80pio& pio2 = self->board->pio2;
+    z80ctc& ctc = self->board->ctc;
     switch (port & 0xFF) {
-        // FIXME
+        case 0x80:
+        case 0x84:
+            return ctc.read(z80ctc::CTC0);
+        case 0x81:
+        case 0x85:
+            return ctc.read(z80ctc::CTC1);
+        case 0x82:
+        case 0x86:
+            return ctc.read(z80ctc::CTC2);
+        case 0x83:
+        case 0x87:
+            return ctc.read(z80ctc::CTC3);
+        case 0x88:
+        case 0x8C:
+            return pio1.read_data(z80pio::A);
+        case 0x89:
+        case 0x8D:
+            return pio1.read_data(z80pio::B);
+        case 0x90:
+        case 0x94:
+            return pio2.read_data(z80pio::A);
+            break;
+        case 0x91:
+        case 0x95:
+            return pio2.read_data(z80pio::B);
+            break;
         default:
             return 0xFF;
     }
@@ -165,11 +263,17 @@ z9001::put_key(ubyte ascii) {
 
 //------------------------------------------------------------------------------
 void
+z9001::blink_cb(void* userdata) {
+    z9001* self = (z9001*)userdata;
+    // FIXME: what is the exact blink frequency?
+    self->blink_flipflop = self->blink_counter++ & 0x10;
+}
+
+//------------------------------------------------------------------------------
+void
 z9001::decode_video() {
 
     // FIXME: there's also a 40x20 display mode
-    // FIXME: how is blinking implemented? similar to KC85/2 via CTC line?
-    this->frame_count++;
     uint32_t* dst = RGBA8Buffer;
     ubyte* font;
     if (device::kc87 == this->cur_model) {
@@ -186,14 +290,14 @@ z9001::decode_video() {
                 ubyte chr = this->video_ram[off+x];
                 ubyte pixels = dump_kc87_font_2[(chr<<3)|py];
                 ubyte color = this->color_ram[off+x];
-                if ((color & 0x80) && (frame_count & 0x10)) {
+                if ((color & 0x80) && this->blink_flipflop) {
                     // implement blinking, swap bg and fg
-                    fg = this->bg_pal[color&7];
-                    bg = this->fg_pal[(color>>4)&7];
+                    fg = this->pal[color&7];
+                    bg = this->pal[(color>>4)&7];
                 }
                 else {
-                    fg = this->fg_pal[(color>>4)&7];
-                    bg = this->bg_pal[color&7];
+                    fg = this->pal[(color>>4)&7];
+                    bg = this->pal[color&7];
                 }
                 for (int px = 7; px >=0; px--) {
                     *dst++ = pixels & (1<<px) ? fg:bg;

@@ -44,6 +44,8 @@ public:
     static void out_cb(void* userdata, uword port, ubyte val);
     /// the z80 in callback
     static ubyte in_cb(void* userdata, uword port);
+    /// blink counter callback
+    static void blink_cb(void* userdata);
 
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
@@ -56,9 +58,9 @@ public:
     uint64_t abs_cycle_count = 0;
     uint32_t overflow_cycles = 0;
 
-    uint32_t frame_count = 0;
-    uint32_t fg_pal[8];
-    uint32_t bg_pal[8];
+    bool blink_flipflop = false;
+    uint32_t blink_counter = 0;
+    uint32_t pal[8];
     uint32_t RGBA8Buffer[320*192];          // decoded linear RGBA8 video buffer
 };
 
