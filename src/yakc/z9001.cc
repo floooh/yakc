@@ -266,7 +266,7 @@ void
 z9001::blink_cb(void* userdata) {
     z9001* self = (z9001*)userdata;
     // FIXME: what is the exact blink frequency?
-    self->blink_flipflop = self->blink_counter++ & 0x10;
+    self->blink_flipflop = 0 != (self->blink_counter++ & 0x10);
 }
 
 //------------------------------------------------------------------------------

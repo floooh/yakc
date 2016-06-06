@@ -205,7 +205,7 @@ z1013::pio_b_out_cb(void* userdata, ubyte val) {
 
     // for z1013a2, bit 4 is for monitor A.2 with 8x8 keyboard
     z1013* self = (z1013*)userdata;
-    self->kbd_8x8_requested = val & (1<<4);
+    self->kbd_8x8_requested = 0 != (val & (1<<4));
 
     // FIXME: bit 7 is for cassette output
 }
@@ -224,7 +224,7 @@ z1013::pio_b_in_cb(void* userdata) {
     }
     else {
         ubyte col = (self->kbd_column_nr_requested & 7);
-        val = self->kbd_column_bits >> (col*8);
+        val = ubyte(self->kbd_column_bits >> (col*8));
         if (self->kbd_8x8_requested) {
             val >>= 4;
         }
@@ -247,7 +247,7 @@ z1013::put_key(ubyte ascii) {
 //------------------------------------------------------------------------------
 uint64_t
 z1013::kbd_bit(int col, int line, int num_lines) {
-    return uint64_t(1<<line)<<(col*num_lines);
+    return (uint64_t(1)<<line)<<(col*num_lines);
 }
 
 //------------------------------------------------------------------------------

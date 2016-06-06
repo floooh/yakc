@@ -30,7 +30,7 @@ PIOWindow::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 static void
 status(const char* name, ubyte val) {
-    ImGui::Text("%s", name); ImGui::SameLine(offset); ImGui::Text("%02X", val);
+    ImGui::Text("%s", name); ImGui::SameLine(float(offset)); ImGui::Text("%02X", val);
 }
 
 //------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ pioStatus(z80pio* pio, int port_id) {
     status("int control:", p.int_control);
     status("int vector:", p.int_vector);
     status("int mask:", p.int_mask);
-    ImGui::Text("expect:"); ImGui::SameLine(offset);
+    ImGui::Text("expect:"); ImGui::SameLine(float(offset));
     const char* expect = "???";
     switch (p.expect) {
         case z80pio::expect_any: expect = "ANY"; break;
