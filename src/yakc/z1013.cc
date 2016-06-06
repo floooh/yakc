@@ -31,6 +31,8 @@ z1013::poweron(device m) {
         this->init_keymap_8x8();
     }
     this->on = true;
+    this->abs_cycle_count = 0;
+    this->overflow_cycles = 0;
     this->kbd_column_nr_requested = 0;
     this->kbd_8x8_requested = false;
     this->next_kbd_column_bits = 0;
