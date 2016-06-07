@@ -321,10 +321,10 @@ kc85::z80_out_cb(void* userdata, uword port, ubyte val) {
             self->board->pio.write_data(z80pio::B, val);
             break;
         case 0x8A:
-            self->board->pio.control(z80pio::A, val);
+            self->board->pio.write_control(z80pio::A, val);
             break;
         case 0x8B:
-            self->board->pio.control(z80pio::B, val);
+            self->board->pio.write_control(z80pio::B, val);
             break;
         case 0x8C:
             self->board->ctc.write(z80ctc::CTC0, val);
@@ -356,6 +356,9 @@ kc85::z80_in_cb(void* userdata, uword port) {
             return self->board->pio.read_data(z80pio::A);
         case 0x89:
             return self->board->pio.read_data(z80pio::B);
+        case 0x8A:
+        case 0x8B:
+            return self->board->pio.read_control();
         case 0x8C:
             return self->board->ctc.read(z80ctc::CTC0);
         case 0x8D:

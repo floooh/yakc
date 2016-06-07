@@ -25,8 +25,25 @@ z80pio::reset() {
         p.output = 0;
         p.mode = mode_input;
         p.int_mask = 0xFF;
+        p.int_control &= ~0x80; // clear interrupt enabled bit
         p.io_select = 0;
         p.expect = expect_any;
+        p.rdy = false;
+        p.stb = false;
+        p.bctrl_match = false;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+z80pio::set_rdy(int port_id, bool active) {
+    auto& p = this->port[port_id];
+    auto& cb = this->rdy_callback[port_id];
+    if (p.rdy != active) {
+        p.rdy = active;
+        if (cb.func) {
+            cb.func(cb.userdata, active);
+        }
     }
 }
 
@@ -48,12 +65,16 @@ z80pio::connect_in_cb(int port_id, void* userdata, in_cb cb) {
 
 //------------------------------------------------------------------------------
 void
-z80pio::control(int port_id, ubyte val) {
+z80pio::connect_rdy_cb(int port_id, void* userdata, rdy_cb cb) {
     YAKC_ASSERT((port_id>=0)&&(port_id<num_ports));
+    this->rdy_callback[port_id].func = cb;
+    this->rdy_callback[port_id].userdata = userdata;
+}
 
-    // FIXME: this lacks the finer details of interrupt handling,
-    // for instance, interrupts are disabled while the PIO
-    // expects a followup control word
+//------------------------------------------------------------------------------
+void
+z80pio::write_control(int port_id, ubyte val) {
+    YAKC_ASSERT((port_id>=0)&&(port_id<num_ports));
 
     auto& p = this->port[port_id];
     if (expect_io_select == p.expect) {
@@ -79,14 +100,16 @@ z80pio::control(int port_id, ubyte val) {
                 p.mode = m;
                 if (m == mode_bitcontrol) {
                     p.expect = expect_io_select;
+                    p.bctrl_match = false;
                 }
             }
         }
         else if ((val & 0xF) == 7) {
             // set interrupt control word
-            p.int_control = val & 0xF0;
+            p.int_control = (val & 0xF0);
             if (val & intctrl_mask_follows) {
                 p.expect = expect_int_mask;
+                p.bctrl_match = false;
             }
         }
         else if ((val & 0xF) == 3) {
@@ -100,6 +123,15 @@ z80pio::control(int port_id, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
+ubyte
+z80pio::read_control() {
+    // I haven't found any information what is really returned when
+    // reading the control port so I'm going with MAME, which returns
+    // a combination of interrupt control word bits from both interrupt channels
+    return (this->port[A].int_control & 0xC0) | (this->port[B].int_control>>4);
+}
+
+//------------------------------------------------------------------------------
 void
 z80pio::write_data(int port_id, ubyte data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
@@ -107,17 +139,25 @@ z80pio::write_data(int port_id, ubyte data) {
     const auto& cb = this->out_callback[port_id];
     switch (p.mode) {
         case mode_output:
+            this->set_rdy(port_id, false);
             p.output = data;
             if (cb.func) {
                 cb.func(cb.userdata, data);
             }
+            this->set_rdy(port_id, true);
             break;
         case mode_input:
             p.output = data;
             break;
         case mode_bidirectional:
-            // FIXME (write data to peripheral, how)
+            this->set_rdy(port_id, false);
             p.output = data;
+            if (!p.stb) {
+                if (cb.func) {
+                    cb.func(cb.userdata, data);
+                }
+            }
+            this->set_rdy(port_id, true);
             break;
         case mode_bitcontrol:
             p.output = data;
@@ -142,14 +182,19 @@ z80pio::read_data(int port_id) {
             data = p.output;
             break;
         case mode_input:
-            if (cb.func) {
-                p.input = cb.func(cb.userdata);
+            if (!p.stb) {
+                if (cb.func) {
+                    p.input = cb.func(cb.userdata);
+                }
             }
             data = p.input;
+            this->set_rdy(port_id, false);
+            this->set_rdy(port_id, true);
             break;
         case mode_bidirectional:
-            // FIXME: p.input written from peripheral device?
             data = p.input;
+            this->set_rdy(port_id, false);
+            this->set_rdy(port_id, true);
             break;
         case mode_bitcontrol:
             if (cb.func) {
@@ -162,6 +207,30 @@ z80pio::read_data(int port_id) {
             break;
     }
     return data;
+}
+
+//------------------------------------------------------------------------------
+void
+z80pio::write(int port_id, ubyte data) {
+    YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
+    auto& p = this->port[port_id];
+    if (mode_bitcontrol == p.mode) {
+        p.input = data;
+        ubyte val = (p.input & p.io_select) | (p.output & ~p.io_select);
+        ubyte mask = ~p.int_mask;
+        bool match = false;
+        val &= mask;
+
+        const ubyte ictrl = p.int_control & 0x60;
+        if ((ictrl == 0) && (val != mask)) match = true;
+        else if ((ictrl == 0x20) && (val != 0)) match = true;
+        else if ((ictrl == 0x40) && (val == 0)) match = true;
+        else if ((ictrl == 0x60) && (val == mask)) match = true;
+        if (!p.bctrl_match && match && (p.int_control & 0x80)) {
+            this->int_ctrl.request_interrupt(p.int_vector);
+        }
+        p.bctrl_match = match;
+    }
 }
 
 } // namespace YAKC

@@ -72,6 +72,9 @@ z9001::poweron(device m, os_rom os) {
     pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
     ctc.init_daisychain(nullptr);
 
+    // connect PIO callbacks
+    pio2.connect_in_cb(z80pio::A, this, pio2_a_in_cb);
+
     // CTC2 is configured as timer and triggers CTC3, which is configured
     // as counter, CTC3 triggers an interrupt which drives the system clock
     ctc.connect_zcto2(z80ctc::ctrg3, &ctc);
@@ -183,11 +186,11 @@ z9001::out_cb(void* userdata, uword port, ubyte val) {
             break;
         case 0x8A:
         case 0x8E:
-            pio1.control(z80pio::A, val);
+            pio1.write_control(z80pio::A, val);
             break;
         case 0x8B:
         case 0x8F:
-            pio1.control(z80pio::B, val);
+            pio1.write_control(z80pio::B, val);
             break;
         case 0x90:
         case 0x94:
@@ -199,11 +202,11 @@ z9001::out_cb(void* userdata, uword port, ubyte val) {
             break;
         case 0x92:
         case 0x96:
-            pio2.control(z80pio::A, val);
+            pio2.write_control(z80pio::A, val);
             break;
         case 0x93:
         case 0x97:
-            pio2.control(z80pio::B, val);
+            pio2.write_control(z80pio::B, val);
             break;
         default:
             break;
@@ -236,6 +239,11 @@ z9001::in_cb(void* userdata, uword port) {
         case 0x89:
         case 0x8D:
             return pio1.read_data(z80pio::B);
+        case 0x8A:
+        case 0x8E:
+        case 0x8B:
+        case 0x8F:
+            return pio1.read_control();
         case 0x90:
         case 0x94:
             return pio2.read_data(z80pio::A);
@@ -244,21 +252,44 @@ z9001::in_cb(void* userdata, uword port) {
         case 0x95:
             return pio2.read_data(z80pio::B);
             break;
+        case 0x92:
+        case 0x96:
+        case 0x93:
+        case 0x97:
+            return pio2.read_control();
         default:
             return 0xFF;
     }
 }
 
 //------------------------------------------------------------------------------
+ubyte
+z9001::pio2_a_in_cb(void* userdata) {
+//    z9001* self = (z9001*)userdata;
+    return 0x40;
+}
+
+
+//------------------------------------------------------------------------------
 void
 z9001::put_key(ubyte ascii) {
+
+    if (ascii == 'A') {
+        this->board->pio2.write(z80pio::B, 0x40);
+    }
+    else {
+//        this->board->pio2.write(z80pio::B, 0x00);
+    }
+
     // FIXME: HACK!
+/*
     static ubyte chr = 0;
     if (ascii != chr) {
         chr = ascii;
         this->board->cpu.mem.w8(0x0025, ascii);
     }
     this->board->cpu.mem.w8(0x006A, 0);
+*/
 }
 
 //------------------------------------------------------------------------------

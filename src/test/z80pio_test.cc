@@ -27,63 +27,72 @@ TEST(z80pio_control) {
     }
 
     // load interrupt vector
-    pio.control(z80pio::A, 0xE4);
+    pio.write_control(z80pio::A, 0xE4);
     CHECK(0xE4 == pio.port[z80pio::A].int_vector);
-    pio.control(z80pio::B, 0xE6);
+    pio.write_control(z80pio::B, 0xE6);
     CHECK(0xE6 == pio.port[z80pio::B].int_vector);
 
     // select OUTPUT mode
-    pio.control(z80pio::A, (0<<6)|0xF);
+    pio.write_control(z80pio::A, (0<<6)|0xF);
     CHECK(z80pio::mode_output == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
 
     // select INPUT mode
-    pio.control(z80pio::A, (1<<6)|0xF);
+    pio.write_control(z80pio::A, (1<<6)|0xF);
     CHECK(z80pio::mode_input == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
 
     // select BIDIRECTIONAL mode (only allowed on port A)
-    pio.control(z80pio::A, (2<<6)|0xF);
+    pio.write_control(z80pio::A, (2<<6)|0xF);
     CHECK(z80pio::mode_bidirectional == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
 
     // select BITCONTROL mode, must be followed by io-select mask
-    pio.control(z80pio::A, (3<<6)|0xF);
+    pio.write_control(z80pio::A, (3<<6)|0xF);
     CHECK(z80pio::mode_bitcontrol == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_io_select == pio.port[z80pio::A].expect);
     CHECK(0 == pio.port[z80pio::A].io_select);
-    pio.control(z80pio::A, 0xAA);
+    pio.write_control(z80pio::A, 0xAA);
     CHECK(z80pio::mode_bitcontrol == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
     CHECK(0xAA == pio.port[z80pio::A].io_select);
 
     // set interrupt control word (no interrupt control mask)
-    pio.control(z80pio::A, (1<<7)|(6<<4)|7);
+    pio.write_control(z80pio::A, (1<<7)|(6<<4)|7);
     CHECK(z80pio::mode_bitcontrol == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
     CHECK(0xE0 == pio.port[z80pio::A].int_control);
 
     // just flip the interrupt-enabled flag
-    pio.control(z80pio::A, (0<<7)|3);
+    pio.write_control(z80pio::A, (0<<7)|3);
     CHECK(z80pio::mode_bitcontrol == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
     CHECK(0x60 == pio.port[z80pio::A].int_control);
-    pio.control(z80pio::A, (1<<7)|3);
+    pio.write_control(z80pio::A, (1<<7)|3);
     CHECK(z80pio::mode_bitcontrol == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
     CHECK(0xE0 == pio.port[z80pio::A].int_control);
 
     // set the mode 3 interrupt control mask
-    pio.control(z80pio::A, (1<<7)|(7<<4)|7);
+    pio.write_control(z80pio::A, (1<<7)|(7<<4)|7);
     CHECK(z80pio::mode_bitcontrol == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_int_mask == pio.port[z80pio::A].expect);
     CHECK(0xF0 == pio.port[z80pio::A].int_control);
     CHECK(0xFF == pio.port[z80pio::A].int_mask);
-    pio.control(z80pio::A, 0x55);
+    pio.write_control(z80pio::A, 0x55);
     CHECK(z80pio::mode_bitcontrol == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
     CHECK(0xF0 == pio.port[z80pio::A].int_control);
     CHECK(0x55 == pio.port[z80pio::A].int_mask);
+
+    // read back the control port, FIXME: is this undocumented?
+    pio.write_control(z80pio::A, (1<<7)|(1<<4)|7);
+    pio.write_control(z80pio::A, 0x55);
+    pio.write_control(z80pio::B, (1<<7)|(1<<6)|(1<<5)|7);
+    ubyte val_a = pio.read_control();
+    ubyte val_b = pio.read_control();
+    CHECK(val_a == val_b);
+    CHECK(val_a == ((1<<7)|(1<<3)|(1<<2)|(1<<1)));
 
     // reset the pio
     pio.reset();
@@ -121,10 +130,10 @@ TEST(z80pio_output_input) {
         return in_value_b;
     });
 
-    pio.control(z80pio::A, (0<<6)|0xF);
+    pio.write_control(z80pio::A, (0<<6)|0xF);
     CHECK(z80pio::mode_output == pio.port[z80pio::A].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::A].expect);
-    pio.control(z80pio::B, (1<<6)|0xF);
+    pio.write_control(z80pio::B, (1<<6)|0xF);
     CHECK(z80pio::mode_input == pio.port[z80pio::B].mode);
     CHECK(z80pio::expect_any == pio.port[z80pio::B].expect);
 

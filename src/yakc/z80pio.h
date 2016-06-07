@@ -10,6 +10,7 @@
 
     Resources & References:
         - http://www.z80.info/zip/z80piomn.pdf
+        - http://www.z80.info/zip/um0081.pdf
         - MAME z80 pio emulation (https://github.com/mamedev/mame/blob/master/src/devices/machine/z80pio.cpp)
 */
 #include "yakc/z80int.h"
@@ -57,7 +58,10 @@ public:
         ubyte int_mask = 0xFF;
         ubyte int_vector = 0;
         ubyte int_control = 0;
-        ubyte expect = 0;       // next expected control byte
+        ubyte expect = 0;           // next expected control byte
+        bool rdy = false;           // ready line active
+        bool stb = false;           // strobe line active
+        bool bctrl_match = false;   // bitcontrol logic equation result
     };
     port_t port[num_ports];
 
@@ -67,6 +71,7 @@ public:
     /// callback definitions
     typedef void(*out_cb)(void* userdata, ubyte val);
     typedef ubyte(*in_cb)(void* userdata);
+    typedef void(*rdy_cb)(void* userdata, bool active);
 
     template<typename CBTYPE> struct callback {
         callback() :
@@ -77,12 +82,15 @@ public:
         void* userdata;
     };
     callback<out_cb> out_callback[num_ports];
-    callback<in_cb> in_callback [num_ports];
+    callback<in_cb> in_callback[num_ports];
+    callback<rdy_cb> rdy_callback[num_ports];
 
-    /// connect out-callback for port A
+    /// connect out-callback (called when sending data to peripheral)
     void connect_out_cb(int port_id, void* userdata, out_cb cb);
-    /// connect in-callback for port A
+    /// connect in-callback (called when requesting data from peripheral)
     void connect_in_cb(int port_id, void* userdata, in_cb cb);
+    /// connect rdy-callback (called when ARDY/BRDY line goes high/low)
+    void connect_rdy_cb(int port_id, void* userdata, rdy_cb cb);
 
     /// initialize the pio
     void init();
@@ -90,11 +98,23 @@ public:
     void reset();
 
     /// write control register
-    void control(int port_id, ubyte val);
+    void write_control(int port_id, ubyte val);
+    /// read control register (same result for both ports)
+    ubyte read_control();
     /// write data register
     void write_data(int port_id, ubyte data);
     /// read data register
     ubyte read_data(int port_id);
+    /// strobe signal on PIO-A from peripheral
+    void astb(bool active);
+    /// strobe signal on PIO-B from peripheral
+    void bstb(bool active);
+    /// write data from peripheral into PIO
+    void write(int port_id, ubyte val);
+
+private:
+    /// set a port's ready line
+    void set_rdy(int port_id, bool active);
 };
 
 } // namespace YAKC

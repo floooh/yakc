@@ -44,6 +44,8 @@ public:
     static void out_cb(void* userdata, uword port, ubyte val);
     /// the z80 in callback
     static ubyte in_cb(void* userdata, uword port);
+    /// PIO2-A IN callback for keyboard input
+    static ubyte pio2_a_in_cb(void* userdata);
     /// blink counter callback
     static void blink_cb(void* userdata);
 

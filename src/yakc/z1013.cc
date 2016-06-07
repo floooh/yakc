@@ -150,7 +150,7 @@ z1013::out_cb(void* userdata, uword port, ubyte val) {
             break;
         case 0x01:
             // PIO A, control
-            self->board->pio.control(z80pio::A, val);
+            self->board->pio.write_control(z80pio::A, val);
             break;
         case 0x02:
             // PIO B, data
@@ -158,7 +158,7 @@ z1013::out_cb(void* userdata, uword port, ubyte val) {
             break;
         case 0x03:
             // PIO B, control
-            self->board->pio.control(z80pio::B, val);
+            self->board->pio.write_control(z80pio::B, val);
             break;
         case 0x08:
             // keyboard column
@@ -179,8 +179,12 @@ z1013::in_cb(void* userdata, uword port) {
     switch (port & 0xFF) {
         case 0x00:
             return self->board->pio.read_data(z80pio::A);
+        case 0x01:
+            return self->board->pio.read_control();
         case 0x02:
             return self->board->pio.read_data(z80pio::B);
+        case 0x03:
+            return self->board->pio.read_control();
         default:
             return 0xFF;
     }
