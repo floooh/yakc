@@ -108,20 +108,26 @@ YakcApp::OnInit() {
 //------------------------------------------------------------------------------
 AppState::Code
 YakcApp::OnRunning() {
+    #if ORYOL_DEBUG
+    Duration frameTime = Duration::FromSeconds(1.0/60.0);
+    #else
     Duration frameTime = Clock::LapTime(this->lapTimePoint);
+    #endif
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     this->handleInput();
-    const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
     uint64_t min_cycle_count = 0;
     uint64_t max_cycle_count = 0;
+    #if !ORYOL_DEBUG
+    const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
     if (audio_cycle_count > 0) {
         const uint64_t cpu_min_ahead_cycles = (this->emu.board.clck.base_freq_khz*1000)/100;
         const uint64_t cpu_max_ahead_cycles = (this->emu.board.clck.base_freq_khz*1000)/25;
         min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
         max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
     }
-    
+    #endif
+
     #if YAKC_UI
         o_trace_begin(yakc_kc);
         // keep CPU synchronized to a small time window ahead of audio playback

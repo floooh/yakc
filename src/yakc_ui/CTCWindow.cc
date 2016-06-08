@@ -37,9 +37,10 @@ CTCWindow::Draw(yakc& emu) {
         for (int i = 0; i < z80ctc::num_channels; i++) {
             strBuilder.Format(32, "CTC %d", i);
             if (ImGui::CollapsingHeader(strBuilder.AsCStr())) {
-                ImGui::Text("Time Constant: %02X", emu.board.ctc.channels[i].constant);
-                ImGui::Text("Interrupt Vector: %02X", emu.board.ctc.channels[i].interrupt_vector);
-                ImGui::Text("Mode Bits: %02X", emu.board.ctc.channels[i].mode);
+                ImGui::Text("constant: %02X", emu.board.ctc.channels[i].constant);
+                ImGui::Text("downcounter: %X", emu.board.ctc.channels[i].down_counter);
+                ImGui::Text("int vector: %02X", emu.board.ctc.channels[i].interrupt_vector);
+                ImGui::Text("mode bits: %02X", emu.board.ctc.channels[i].mode);
                 drawModeBit(emu, i, z80ctc::INTERRUPT, "INTERRUPT", "Enabled", "Disabled");
                 drawModeBit(emu, i, z80ctc::MODE, "MODE", "Counter", "Timer");
                 drawModeBit(emu, i, z80ctc::PRESCALER, "PRESCALER", "256", "16");

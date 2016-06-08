@@ -34,14 +34,29 @@ status(const char* name, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
+static const char*
+modeAsString(ubyte m) {
+    switch (m) {
+        case 0: return "output";
+        case 1: return "input";
+        case 2: return "bidirectional";
+        case 3: return "bitcontrol";
+        default: return "invalid";
+    };
+}
+
+//------------------------------------------------------------------------------
 static void
 pioStatus(z80pio* pio, int port_id) {
     const auto& p = pio->port[port_id];
-    status("mode:", p.mode);
+    status("mode:", p.mode); ImGui::SameLine(); ImGui::Text("%s", modeAsString(p.mode));
     status("output:", p.output);
     status("input:", p.input);
     status("io select:", p.io_select);
     status("int control:", p.int_control);
+    ImGui::Text("    int enabled: %s", (p.int_control & 0x80) ? "ENABLED":"DISABLED");
+    ImGui::Text("    and/or:      %s", (p.int_control & 0x40) ? "AND":"OR");
+    ImGui::Text("    high/low:    %s", (p.int_control & 0x20) ? "HIGH":"LOW");
     status("int vector:", p.int_vector);
     status("int mask:", p.int_mask);
     ImGui::Text("expect:"); ImGui::SameLine(float(offset));
@@ -59,7 +74,7 @@ pioStatus(z80pio* pio, int port_id) {
 bool
 PIOWindow::Draw(yakc& emu) {
     o_assert(this->PIO);
-    ImGui::SetNextWindowSize(ImVec2(220, 384), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(220, 420), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         if (ImGui::CollapsingHeader("PIO A", "#pio_a", true, true)) {
             pioStatus(this->PIO, z80pio::A);

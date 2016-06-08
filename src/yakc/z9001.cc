@@ -73,7 +73,10 @@ z9001::poweron(device m, os_rom os) {
     ctc.init_daisychain(nullptr);
 
     // connect PIO callbacks
+    pio2.connect_out_cb(z80pio::A, this, pio2_a_out_cb);
+    pio2.connect_out_cb(z80pio::B, this, pio2_b_out_cb);
     pio2.connect_in_cb(z80pio::A, this, pio2_a_in_cb);
+    pio2.connect_in_cb(z80pio::B, this, pio2_b_in_cb);
 
     // CTC2 is configured as timer and triggers CTC3, which is configured
     // as counter, CTC3 triggers an interrupt which drives the system clock
@@ -247,11 +250,9 @@ z9001::in_cb(void* userdata, uword port) {
         case 0x90:
         case 0x94:
             return pio2.read_data(z80pio::A);
-            break;
         case 0x91:
         case 0x95:
             return pio2.read_data(z80pio::B);
-            break;
         case 0x92:
         case 0x96:
         case 0x93:
@@ -263,23 +264,45 @@ z9001::in_cb(void* userdata, uword port) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-z9001::pio2_a_in_cb(void* userdata) {
-//    z9001* self = (z9001*)userdata;
-    return 0x40;
+void
+z9001::pio2_a_out_cb(void* userdata, ubyte val) {
+    z9001* self = (z9001*) userdata;
+    self->kbd_column_mask = ~val;
 }
 
+//------------------------------------------------------------------------------
+void
+z9001::pio2_b_out_cb(void* userdata, ubyte val) {
+    z9001* self = (z9001*) userdata;
+    self->kbd_line_mask = ~val;
+}
+
+//------------------------------------------------------------------------------
+ubyte
+z9001::pio2_a_in_cb(void* userdata) {
+    z9001* self = (z9001*)userdata;
+    return ~(self->kbd_line_mask & (1<<1));
+}
+
+//------------------------------------------------------------------------------
+ubyte
+z9001::pio2_b_in_cb(void* userdata) {
+    z9001* self = (z9001*)userdata;
+    return ~(self->kbd_column_mask & (1<<2));
+}
 
 //------------------------------------------------------------------------------
 void
 z9001::put_key(ubyte ascii) {
 
-    if (ascii == 'A') {
-        this->board->pio2.write(z80pio::B, 0x40);
-    }
-    else {
+//    if (ascii == 'A') {
+        // FIXME: just do a strobe here, which then requests an interrupt,
+        // and initiates an IN?
+        this->board->pio2.write(z80pio::B, (1<<2));
+//    }
+//    else {
 //        this->board->pio2.write(z80pio::B, 0x00);
-    }
+//    }
 
     // FIXME: HACK!
 /*

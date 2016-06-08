@@ -30,7 +30,6 @@ extern void fill_random(void* ptr, int num_bytes);
 
 #define YAKC_MALLOC(s) func.malloc_func(s)
 #define YAKC_FREE(p) func.free_func(p)
-#define YAKC_RAND() func.rand()
 
 #if __clang_analyzer__
 #include <assert.h>
