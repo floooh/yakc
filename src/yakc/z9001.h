@@ -5,11 +5,12 @@
     @brief wrapper class for Z9001, KC85/1 and KC87
     
     KEYBOARD MATRIX:
-        PIO2-A is connected to matrix columns (active low)
-        PIO2-B is connected to matrix lines (ditto)
+        PIO2-A => kbd matrix columns
+        PIO2-B => kbd matrix lines
         
-        Simple returning the ~column on PIO2-A and ~line on PIO2-B
-        will start outputting that character to the console.
+        Writing to PIO2-B to trigger an interrupt and then returning the 
+        ~column on PIO2-A and ~line on PIO2-B will start outputting that 
+        character to the console.
         
           | 0   1   2   3   4   5   6   7
         --+------------------------------
