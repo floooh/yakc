@@ -91,6 +91,7 @@ z9001::poweron(device m, os_rom os) {
     this->on = true;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
+    this->next_key_mask = 0;
     this->key_mask = 0;
     this->kbd_column_mask = 0;
     this->kbd_line_mask = 0;
@@ -183,6 +184,7 @@ z9001::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
     z80ctc& ctc = this->board->ctc;
     clock& clk = this->board->clck;
 
+    this->handle_key();
     if (!dbg.paused) {
         if (this->abs_cycle_count == 0) {
             this->abs_cycle_count = min_cycle_count;
@@ -372,9 +374,14 @@ z9001::pio2_b_in_cb(void* userdata) {
 //------------------------------------------------------------------------------
 void
 z9001::put_key(ubyte ascii) {
-    uint64_t new_key_mask = this->key_map[ascii & (max_num_keys-1)];
-    if (new_key_mask != this->key_mask) {
-        this->key_mask = new_key_mask;
+    this->next_key_mask = this->key_map[ascii & (max_num_keys-1)];
+}
+
+//------------------------------------------------------------------------------
+void
+z9001::handle_key() {
+    if (this->next_key_mask != this->key_mask) {
+        this->key_mask = this->next_key_mask;
 
         // PIO2-A is connected to keyboard matrix columns, PIO2-B to lines
         // send the line bits (active-low) to PIOB, this will trigger
