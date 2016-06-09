@@ -7,43 +7,13 @@
     KEYBOARD MATRIX:
         PIO2-A => kbd matrix columns
         PIO2-B => kbd matrix lines
-        
+
         Writing to PIO2-B to trigger an interrupt and then returning the 
         ~column on PIO2-A and ~line on PIO2-B will start outputting that 
         character to the console.
         
-          | 0   1   2   3   4   5   6   7
-        --+------------------------------
-        0 | 0   1   2   3   4   5   6   7
-          |
-        1 | 8   9   :   ;   ,   =   .   ?
-          |
-        2 | @   A   B   C   D   E   F   G
-          |
-        3 | H   I   J   K   L   M   N   O
-          |
-        4 | P   Q   R   S   T   U   V   W
-          |
-        5 | X   Y   Z  $19 $13 $1A  ^  $7F
-          |
-        6 |$08 $09 $0A $0B $1B $0D $03?$20
-          |
-        7 |[S] $14 $7F $00 $1C $1D $00 $AB
-
-        [S]     shift key(?)
-        $03:    stop
-        $08:    cursor left
-        $09:    cursor right
-        $0A:    cursor up
-        $0B:    cursor down
-        $0D:    enter
-        $13:    pause
-        $14:    color
-        $19:    home
-        $1A:    insert
-        $1B:    esc
-        $1C:    list
-        $1D:    run
+        http://www.sax.de/~zander/z9001/z9sch_5.pdf
+        http://www.sax.de/~zander/z9001/z9sch_1.pdf
 */
 #include "yakc/breadboard.h"
 #include "yakc/roms.h"
@@ -76,8 +46,6 @@ public:
     /// get info about emulated system
     const char* system_info() const;
 
-    /// put a key as ASCII code
-    void put_key(ubyte ascii);
     /// process one frame, up to absolute number of cycles
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
 
@@ -96,6 +64,9 @@ public:
     /// blink counter callback
     static void blink_cb(void* userdata);
 
+    /// put a key as ASCII code
+    void put_key(ubyte ascii);
+
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
 
@@ -107,8 +78,11 @@ public:
     uint64_t abs_cycle_count = 0;
     uint32_t overflow_cycles = 0;
 
-    ubyte kbd_column_mask = 0;
-    ubyte kbd_line_mask = 0;
+    uint64_t key_mask = 0;              // (column<<8)|line bits for currently pressed key
+    uint8_t kbd_column_mask = 0;        // PIO2-A keyboard matrix column mask
+    uint8_t kbd_line_mask = 0;          // PIO2-B keyboard matrix line mask
+    static const int max_num_keys = 128;
+    uint64_t key_map[max_num_keys];     // complete keyboard matrix state for each ascii code
 
     bool blink_flipflop = false;
     uint32_t blink_counter = 0;

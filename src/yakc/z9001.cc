@@ -6,6 +6,11 @@
 namespace YAKC {
 
 //------------------------------------------------------------------------------
+static uint64_t kbd_bits(int col, int line) {
+    return (uint64_t(1)<<line)<<(col*8);
+}
+
+//------------------------------------------------------------------------------
 void
 z9001::init(breadboard* b) {
     this->board = b;
@@ -19,6 +24,59 @@ z9001::init(breadboard* b) {
     this->pal[5] = 0xFFFF00FF;     // purple
     this->pal[6] = 0xFFFFFF00;     // cyan
     this->pal[7] = 0xFFFFFFFF;     // white
+
+    // setup the key map which translates ASCII to keyboard matrix bits
+    const char* kbd_matrix =
+        // no shift key pressed
+        "01234567"
+        "89:;,=.?"
+        "@ABCDEFG"
+        "HIJKLMNO"
+        "PQRSTUVW"
+        "XYZ   ^ "
+        "        "
+        "        "
+        // shift key pressed
+        "_!\"#$%&'"
+        "()*+<->/"
+        " abcdefg"
+        "hijklmno"
+        "pqrstuvw"
+        "xyz     "
+        "        "
+        "        ";
+
+    for (int shift=0; shift<2; shift++) { // shift layer
+        for (int line=0; line<8; line++) {
+            for (int col=0; col<8; col++) {
+                ubyte c = kbd_matrix[shift*64 + line*8 + col];
+                if (c != 0x20) {
+                    uint64_t mask = kbd_bits(col, line);
+                    if (shift) {
+                        mask |= kbd_bits(0, 7);
+                    }
+                    this->key_map[c] = mask;
+                }
+            }
+        }
+    }
+
+    // special keys
+    this->key_map[0x00] = 0;
+    this->key_map[0x03] = kbd_bits(6, 6);       // stop
+    this->key_map[0x08] = kbd_bits(0, 6);       // cursor left
+    this->key_map[0x09] = kbd_bits(1, 6);       // cursor right
+    this->key_map[0x0A] = kbd_bits(2, 6);       // cursor up
+    this->key_map[0x0B] = kbd_bits(3, 6);       // cursor down
+    this->key_map[0x0D] = kbd_bits(5, 6);       // enter
+    this->key_map[0x13] = kbd_bits(4, 5);       // pause
+    this->key_map[0x14] = kbd_bits(1, 7);       // color
+    this->key_map[0x19] = kbd_bits(3, 5);       // home
+    this->key_map[0x1A] = kbd_bits(5, 5);       // insert
+    this->key_map[0x1B] = kbd_bits(4, 6);       // esc
+    this->key_map[0x1C] = kbd_bits(4, 7);       // list
+    this->key_map[0x1D] = kbd_bits(5, 7);       // run
+    this->key_map[0x20] = kbd_bits(7, 6);       // space
 }
 
 //------------------------------------------------------------------------------
@@ -33,6 +91,9 @@ z9001::poweron(device m, os_rom os) {
     this->on = true;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
+    this->key_mask = 0;
+    this->kbd_column_mask = 0;
+    this->kbd_line_mask = 0;
 
     // map memory
     clear(this->ram, sizeof(this->ram));
@@ -281,38 +342,51 @@ z9001::pio2_b_out_cb(void* userdata, ubyte val) {
 ubyte
 z9001::pio2_a_in_cb(void* userdata) {
     z9001* self = (z9001*)userdata;
-    return ~(self->kbd_line_mask & (1<<1));
+
+    // return column bits for requested line bits of currently pressed key
+    ubyte column_bits = 0;
+    for (int col=0; col<8; col++) {
+        const ubyte line_bits = (self->key_mask>>(col*8)) & 0xFF;
+        if (line_bits & self->kbd_line_mask) {
+            column_bits |= (1<<col);
+        }
+    }
+    return ~column_bits;
 }
 
 //------------------------------------------------------------------------------
 ubyte
 z9001::pio2_b_in_cb(void* userdata) {
     z9001* self = (z9001*)userdata;
-    return ~(self->kbd_column_mask & (1<<2));
+
+    // return line bits for requested column bits of currently pressed key
+    ubyte line_bits = 0;
+    for (int col=0; col<8; col++) {
+        if ((1<<col) & self->kbd_column_mask) {
+            line_bits |= (self->key_mask>>(col*8)) & 0xFF;
+        }
+    }
+    return ~line_bits;
 }
 
 //------------------------------------------------------------------------------
 void
 z9001::put_key(ubyte ascii) {
+    uint64_t new_key_mask = this->key_map[ascii & (max_num_keys-1)];
+    if (new_key_mask != this->key_mask) {
+        this->key_mask = new_key_mask;
 
-//    if (ascii == 'A') {
-        // FIXME: just do a strobe here, which then requests an interrupt,
-        // and initiates an IN?
-        this->board->pio2.write(z80pio::B, (1<<2));
-//    }
-//    else {
-//        this->board->pio2.write(z80pio::B, 0x00);
-//    }
-
-    // FIXME: HACK!
-/*
-    static ubyte chr = 0;
-    if (ascii != chr) {
-        chr = ascii;
-        this->board->cpu.mem.w8(0x0025, ascii);
+        // PIO2-A is connected to keyboard matrix columns, PIO2-B to lines
+        // send the line bits (active-low) to PIOB, this will trigger
+        // an interrupt which initiates the keyboard input procedure
+        ubyte line_bits = 0;
+        for (int col=0; col<8; col++) {
+            if ((1<<col) & this->kbd_column_mask) {
+                line_bits |= (this->key_mask>>(col*8)) & 0xFF;
+            }
+        }
+        this->board->pio2.write(z80pio::B, ~line_bits);
     }
-    this->board->cpu.mem.w8(0x006A, 0);
-*/
 }
 
 //------------------------------------------------------------------------------
