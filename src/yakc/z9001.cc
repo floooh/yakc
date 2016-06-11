@@ -423,7 +423,7 @@ z9001::decode_video() {
         for (int py = 0; py < 8; py++) {
             for (int x = 0; x < 40; x++) {
                 ubyte chr = this->video_ram[off+x];
-                ubyte pixels = dump_kc87_font_2[(chr<<3)|py];
+                ubyte pixels = font[(chr<<3)|py];
                 ubyte color = this->color_ram[off+x];
                 if ((color & 0x80) && this->blink_flipflop) {
                     // implement blinking, swap bg and fg
