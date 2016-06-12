@@ -110,4 +110,15 @@ yakc::system_info() const {
     }
 }
 
+//------------------------------------------------------------------------------
+void
+yakc::border_color(float& out_red, float& out_green, float& out_blue) {
+    if (this->z9001.on) {
+        this->z9001.border_color(out_red, out_green, out_blue);
+    }
+    else {
+        out_red = out_green = out_blue = 0.0f;
+    }
+}
+
 } // namespace YAKC

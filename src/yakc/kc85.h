@@ -5,7 +5,7 @@
     @brief wrapper class for the KC85/2, /3, /4
 */
 #include "yakc/breadboard.h"
-#include "yakc/roms.h"
+#include "yakc/roms/roms.h"
 #include "yakc/kc85_video.h"
 #include "yakc/kc85_audio.h"
 #include "yakc/kc85_exp.h"

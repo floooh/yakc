@@ -17,7 +17,7 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/keybuffer.h"
-#include "yakc/roms.h"
+#include "yakc/roms/roms.h"
 
 namespace YAKC {
 
@@ -46,6 +46,8 @@ public:
     device model() const;
     /// get info about emulated system
     const char* system_info() const;
+    /// get current border color
+    void border_color(float& out_red, float& out_green, float& out_blue);
 
     /// process one frame, up to absolute number of cycles
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
@@ -54,6 +56,8 @@ public:
     static void out_cb(void* userdata, uword port, ubyte val);
     /// the z80 in callback
     static ubyte in_cb(void* userdata, uword port);
+    /// PIO1-A OUT callback (display mode, border color, etc)
+    static void pio1_a_out_cb(void* userdata, ubyte val);
     /// PIO2-A OUT callback (triggers keyboard matrix columns)
     static void pio2_a_out_cb(void* userdata, ubyte val);
     /// PIO2-A OUT callback (triggers keyboard matrix lines
@@ -89,6 +93,7 @@ public:
     uint64_t key_map[max_num_keys];     // complete keyboard matrix state for each ascii code
 
     bool blink_flipflop = false;
+    uint8_t brd_color = 0;              //
     uint32_t blink_counter = 0;
     uint32_t pal[8];
     uint32_t RGBA8Buffer[320*192];          // decoded linear RGBA8 video buffer

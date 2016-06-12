@@ -59,9 +59,10 @@ YakcApp::OnInit() {
     IO::Setup(ioSetup);
 
     // we only need few resources, so don't waste memory
-    const int frameSize = 10;
-    const int width = 2*frameSize + 2*320;
-    const int height = 2*frameSize + 2*256;
+    const int frameSizeX = 32;
+    const int frameSizeY = 16;
+    const int width = 2*frameSizeX + 2*320;
+    const int height = 2*frameSizeY + 2*256;
     auto gfxSetup = GfxSetup::Window(width, height, "KC85");
     gfxSetup.SetPoolSize(GfxResourceType::Mesh, 4);
     gfxSetup.SetPoolSize(GfxResourceType::Texture, 4);
@@ -83,7 +84,7 @@ YakcApp::OnInit() {
     // switch the emulator on
     this->emu.poweron(device::kc85_3, os_rom::caos_3_1);
 
-    this->draw.Setup(gfxSetup, frameSize);
+    this->draw.Setup(gfxSetup, frameSizeX, frameSizeY);
     this->audio.Setup(this->emu.board.clck);
     if (this->emu.kc85.on) {
         this->emu.kc85.audio.setup_callbacks(&this->audio, Audio::cb_sound, Audio::cb_volume, Audio::cb_stop);
@@ -127,7 +128,10 @@ YakcApp::OnRunning() {
     this->keyboard.HandleInput(this->emu);
     #endif
 
-    Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
+    glm::vec4 clear;
+    this->emu.border_color(clear.x, clear.y, clear.z);
+    clear.w = 1.0f;
+    Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(clear));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     uint64_t min_cycle_count = 0;
     uint64_t max_cycle_count = 0;

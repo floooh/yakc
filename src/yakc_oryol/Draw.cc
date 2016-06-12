@@ -10,10 +10,11 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-Draw::Setup(const GfxSetup& gfxSetup, int frame) {
+Draw::Setup(const GfxSetup& gfxSetup, int frame_x, int frame_y) {
     this->crtEffectEnabled = false;
     this->crtColorEnabled = true;
-    this->frameSize = frame;
+    this->frameSizeX = frame_x;
+    this->frameSizeY = frame_y;
     this->texUpdateAttrs.NumFaces = 1;
     this->texUpdateAttrs.NumMipMaps = 1;
     this->texUpdateAttrs.Sizes[0][0] = 320*256*4;
@@ -114,9 +115,9 @@ Draw::applyViewport(int width, int height) {
     }
     const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
     const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
-    int viewPortY = this->frameSize;
-    int viewPortH = fbHeight - 2*frameSize;
-    int viewPortW = (const int) (fbHeight * aspect) - 2*this->frameSize;
+    int viewPortY = this->frameSizeY;
+    int viewPortH = fbHeight - 2*frameSizeY;
+    int viewPortW = (const int) (fbHeight * aspect) - 2*this->frameSizeX;
     int viewPortX = (fbWidth - viewPortW) / 2;
     Gfx::ApplyViewPort(viewPortX, viewPortY, viewPortW, viewPortH);
 }

@@ -42,6 +42,9 @@ FileLoader::Setup(yakc& emu) {
     this->Items.Add("Cosmic Ball", "cosmic_ball.z80", FileType::Z80, device::z1013_01);
     this->Items.Add("Galactica", "galactica.z80", FileType::Z80, device::any_z1013);
     this->Items.Add("Mazogs", "mazog_deutsch.z80", FileType::Z80, device::any_z1013);
+    this->Items.Add("Monitor ZM30 (start with 'ZM')", "zm30.kcc", FileType::KCC, device::any_z9001);
+    this->Items.Add("Forth 83 (start with 'F83')", "F83_COM.TAP", FileType::TAP, device::any_z9001);
+    this->Items.Add("Pretty-C", "prettyc_com.tap", FileType::TAP, device::any_z9001);
 }
 
 //------------------------------------------------------------------------------
@@ -96,12 +99,11 @@ FileLoader::load(yakc* emu, const Item& item, bool autostart) {
     strBuilder.Format(128, "kcc:%s", item.Filename.AsCStr());
     this->Url = strBuilder.GetString();
     this->State = Loading;
-    const FileType fileType = item.Type;
     IO::Load(strBuilder.GetString(),
         // load succeeded
-        [this, emu, fileType, autostart](IO::LoadResult ioResult) {
+        [this, emu, item, autostart](IO::LoadResult ioResult) {
             this->FileData = std::move(ioResult.Data);
-            this->Info = parseHeader(this->FileData, fileType);
+            this->Info = parseHeader(this->FileData, item);
             this->State = Ready;
             if (autostart) {
                 copy(emu, this->Info, this->FileData);
@@ -118,13 +120,13 @@ FileLoader::load(yakc* emu, const Item& item, bool autostart) {
 
 //------------------------------------------------------------------------------
 FileLoader::FileInfo
-FileLoader::parseHeader(const Buffer& data, FileType fileType) {
+FileLoader::parseHeader(const Buffer& data, const Item& item) {
     FileInfo info;
     const ubyte* start = data.Data();
     const ubyte* ptr = start;
-    info.Type = fileType;
-    if ((FileType::TAP == fileType) || (FileType::KCC == fileType)) {
-        if (FileType::TAP == fileType) {
+    info.Type = item.Type;
+    if ((FileType::TAP == item.Type) || (FileType::KCC == item.Type)) {
+        if (FileType::TAP == item.Type) {
             ptr = (const ubyte*)&(((tap_header*)ptr)->kcc);
         }
         const kcc_header* kcc_hdr = (const kcc_header*) ptr;
@@ -138,7 +140,7 @@ FileLoader::parseHeader(const Buffer& data, FileType fileType) {
             info.FileSizeError = true;
         }
     }
-    else if (FileType::Z80 == fileType) {
+    else if (FileType::Z80 == item.Type) {
         const z80_header* z80_hdr = (const z80_header*) ptr;
         info.Name = String((const char*)z80_hdr->name, 0, 16);
         info.StartAddr = z80_hdr->load_addr_h<<8 | z80_hdr->load_addr_l;
@@ -150,6 +152,14 @@ FileLoader::parseHeader(const Buffer& data, FileType fileType) {
             info.FileSizeError = true;
         }
     }
+    else if (FileType::BIN == item.Type) {
+        info.Name = item.Name;
+        info.StartAddr = item.StartAddr;
+        info.EndAddr = item.StartAddr + data.Size();
+        info.ExecAddr = item.ExecAddr;
+        info.HasExecAddr = item.ExecAddr != 0;
+        info.PayloadOffset = 0;
+    }
     return info;
 }
 
@@ -159,7 +169,7 @@ FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (!info.FileSizeError) {
         const ubyte* payload = data.Data() + info.PayloadOffset;
         if (FileType::TAP != info.Type) {
-            // KCC and Z80 file type payload is simply a continuous block of data
+            // KCC, Z80 and BIN file type payload is simply a continuous block of data
             emu->board.cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
         }
         else {

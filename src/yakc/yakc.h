@@ -37,6 +37,8 @@ public:
     void put_key(ubyte ascii);
     /// get human-readable info about current system
     const char* system_info() const;
+    /// get current border color
+    void border_color(float& out_red, float& out_green, float& out_blue);
 };
 
 } // namespace YAKC

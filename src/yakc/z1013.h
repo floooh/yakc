@@ -34,7 +34,7 @@
     can require more than one key to be set (e.g. shift keys).
 */
 #include "yakc/breadboard.h"
-#include "yakc/roms.h"
+#include "yakc/roms/roms.h"
 
 namespace YAKC {
 

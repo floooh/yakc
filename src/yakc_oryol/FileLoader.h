@@ -19,16 +19,21 @@ public:
         KCC,
         TAP,
         Z80,
+        BIN,        // raw file, requires start address
     };
 
     /// a load item
     struct Item {
         Item(const char* n, const char* fn, FileType t, device compat) :
-            Name(n), Filename(fn), Type(t), Compat(compat) {};
+            Name(n), Filename(fn), Type(t), Compat(compat), StartAddr(0), ExecAddr(0) {};
+        Item(const char* n, const char* fn, FileType t, device compat, uword startAddr, uword execAddr) :
+            Name(n), Filename(fn), Type(t), Compat(compat), StartAddr(startAddr), ExecAddr(execAddr) {};
         Oryol::String Name;
         Oryol::String Filename;
         FileType Type;
         device Compat;
+        uword StartAddr;
+        uword ExecAddr;
     };
     /// available items
     Oryol::Array<Item> Items;
@@ -83,7 +88,7 @@ private:
     /// internal load method
     void load(yakc* emu, const Item& item, bool autostart);
     /// get file info from loaded file data
-    static FileInfo parseHeader(const Oryol::Buffer& data, FileType fileType);
+    static FileInfo parseHeader(const Oryol::Buffer& data, const Item& item);
     /// copy data from loaded stream object into KC memory
     static void copy(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
     /// special-case patch loaded files

@@ -98,12 +98,13 @@ z9001::poweron(device m, os_rom os) {
 
     // map memory
     clear(this->ram, sizeof(this->ram));
-    clear(this->color_ram, sizeof(this->color_ram));
-    clear(this->video_ram, sizeof(this->video_ram));
+    fill_random(this->color_ram, sizeof(this->color_ram));
+    fill_random(this->video_ram, sizeof(this->video_ram));
     z80& cpu = this->board->cpu;
     cpu.mem.unmap_all();
     if (device::kc87 == m) {
-        cpu.mem.map(0, 0x0000, 0x4000, this->ram, true);
+        // 48 KByte RAM
+        cpu.mem.map(0, 0x0000, 0xC000, this->ram, true);
         cpu.mem.map(1, 0xC000, 0x2000, dump_z9001_basic, false);
         cpu.mem.map(1, 0xE000, 0x2000, dump_kc87_os_2, false);
     }
@@ -135,6 +136,7 @@ z9001::poweron(device m, os_rom os) {
     ctc.init_daisychain(nullptr);
 
     // connect PIO callbacks
+    pio1.connect_out_cb(z80pio::A, this, pio1_a_out_cb);
     pio2.connect_out_cb(z80pio::A, this, pio2_a_out_cb);
     pio2.connect_out_cb(z80pio::B, this, pio2_b_out_cb);
     pio2.connect_in_cb(z80pio::A, this, pio2_a_in_cb);
@@ -329,6 +331,20 @@ z9001::in_cb(void* userdata, uword port) {
 
 //------------------------------------------------------------------------------
 void
+z9001::pio1_a_out_cb(void* userdata, ubyte val) {
+    z9001* self = (z9001*) userdata;
+
+    // PIO1-A bits:
+    // 0..1:    unused
+    // 2:       display mode (0: 24 lines, 1: 20 lines)
+    // 3..5:    border color
+    // 6:       graphics LED on keyboard (0: off)
+    // 7:       enable audio output (1: enabled)
+    self->brd_color = (val>>3) & 7;
+}
+
+//------------------------------------------------------------------------------
+void
 z9001::pio2_a_out_cb(void* userdata, ubyte val) {
     z9001* self = (z9001*) userdata;
     self->kbd_column_mask = ~val;
@@ -375,6 +391,10 @@ z9001::pio2_b_in_cb(void* userdata) {
 //------------------------------------------------------------------------------
 void
 z9001::put_key(ubyte ascii) {
+    // replace BREAK with STOP
+    if (ascii == 0x13) {
+        ascii = 0x3;
+    }
     this->keybuf.write(ascii);
 }
 
@@ -403,8 +423,21 @@ z9001::handle_key() {
 void
 z9001::blink_cb(void* userdata) {
     z9001* self = (z9001*)userdata;
-    // FIXME: what is the exact blink frequency?
     self->blink_flipflop = 0 != (self->blink_counter++ & 0x10);
+}
+
+//------------------------------------------------------------------------------
+void
+z9001::border_color(float& out_red, float& out_green, float& out_blue) {
+    if (device::kc87 == this->cur_model) {
+        uint32_t bc = this->pal[this->brd_color & 7];
+        out_red   = float(bc & 0xFF) / 255.0f;
+        out_green = float((bc>>8)&0xFF) / 255.0f;
+        out_blue  = float((bc>>16)&0xFF) / 255.0f;
+    }
+    else {
+        out_red = out_blue = out_green = 0.0f;
+    }
 }
 
 //------------------------------------------------------------------------------

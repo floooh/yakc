@@ -19,7 +19,7 @@
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
-#include "yakc/roms.h"
+#include "yakc/roms/roms.h"
 
 using namespace Oryol;
 
@@ -253,12 +253,9 @@ UI::OnFrame(yakc& emu) {
                     }
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("Boot to Z9001")) {
-                    if (ImGui::MenuItem("KC87")) {
-                        emu.poweroff();
-                        emu.poweron(device::kc87, os_rom::kc87_os_2);
-                    }
-                    ImGui::EndMenu();
+                if (ImGui::MenuItem("Boot to KC87 (48KB RAM)")) {
+                    emu.poweroff();
+                    emu.poweron(device::kc87, os_rom::kc87_os_2);
                 }
                 ImGui::EndMenu();
             }

@@ -12,7 +12,7 @@ namespace YAKC {
 class Draw {
 public:
     /// setup the renderer
-    void Setup(const Oryol::GfxSetup& setup, int frameSize);
+    void Setup(const Oryol::GfxSetup& setup, int frameSizeX, int frameSizeY);
     /// discard the renderer
     void Discard();
     /// render one frame
@@ -36,7 +36,8 @@ public:
     Oryol::DrawState nocrtDrawState;
 
     Oryol::ImageDataAttrs texUpdateAttrs;
-    int frameSize = 0;
+    int frameSizeX = 0;
+    int frameSizeY = 0;
 };
 
 } // namespace YAKC

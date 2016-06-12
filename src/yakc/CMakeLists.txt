@@ -12,6 +12,7 @@ fips_begin_module(yakc)
         breadboard.h
         yakc.h yakc.cc
     )
-    fips_generate(FROM roms.yml TYPE dump)
     fips_generate(FROM z80_opcodes.py SOURCE z80_opcodes.cc)
+    fips_dir(roms)
+    fips_generate(FROM roms.yml TYPE dump)
 fips_end_module()
