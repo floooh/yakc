@@ -145,7 +145,7 @@ z9001::poweron(device m, os_rom os) {
     ctc.connect_zcto2(z80ctc::ctrg3, &ctc);
 
     // configure a hardware counter to control the video blink attribute
-    this->board->clck.config_timer(0, 50, blink_cb, this);
+    this->board->clck.config_timer(0, 100, blink_cb, this);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
