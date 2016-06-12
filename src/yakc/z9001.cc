@@ -91,10 +91,10 @@ z9001::poweron(device m, os_rom os) {
     this->on = true;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
-    this->next_key_mask = 0;
     this->key_mask = 0;
     this->kbd_column_mask = 0;
     this->kbd_line_mask = 0;
+    this->keybuf.init(4);
 
     // map memory
     clear(this->ram, sizeof(this->ram));
@@ -167,6 +167,7 @@ z9001::reset() {
     this->board->pio2.reset();
     this->board->cpu.reset();
     this->overflow_cycles = 0;
+    this->keybuf.reset();
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
     this->board->cpu.PC = 0xF000;
@@ -374,14 +375,16 @@ z9001::pio2_b_in_cb(void* userdata) {
 //------------------------------------------------------------------------------
 void
 z9001::put_key(ubyte ascii) {
-    this->next_key_mask = this->key_map[ascii & (max_num_keys-1)];
+    this->keybuf.write(ascii);
 }
 
 //------------------------------------------------------------------------------
 void
 z9001::handle_key() {
-    if (this->next_key_mask != this->key_mask) {
-        this->key_mask = this->next_key_mask;
+    this->keybuf.advance();
+    uint64_t new_key_mask = this->key_map[this->keybuf.read() & (max_num_keys-1)];
+    if (new_key_mask != this->key_mask) {
+        this->key_mask = new_key_mask;
 
         // PIO2-A is connected to keyboard matrix columns, PIO2-B to lines
         // send the line bits (active-low) to PIOB, this will trigger

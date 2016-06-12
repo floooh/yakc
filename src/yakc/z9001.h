@@ -16,6 +16,7 @@
         http://www.sax.de/~zander/z9001/z9sch_1.pdf
 */
 #include "yakc/breadboard.h"
+#include "yakc/keybuffer.h"
 #include "yakc/roms.h"
 
 namespace YAKC {
@@ -34,7 +35,7 @@ public:
 
     /// one-time setup
     void init(breadboard* board);
-    
+
     /// power-on the device
     void poweron(device m, os_rom os);
     /// power-off the device
@@ -80,7 +81,7 @@ public:
     uint64_t abs_cycle_count = 0;
     uint32_t overflow_cycles = 0;
 
-    uint64_t next_key_mask = 0;
+    keybuffer keybuf;
     uint64_t key_mask = 0;              // (column<<8)|line bits for currently pressed key
     uint8_t kbd_column_mask = 0;        // PIO2-A keyboard matrix column mask
     uint8_t kbd_line_mask = 0;          // PIO2-B keyboard matrix line mask
