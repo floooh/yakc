@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class SnapshotStorage
+    @class YAKC::SnapshotStorage
     @brief simple class to store machine state snapshots
 */
 #include "yakc/yakc.h"

@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class Disasm
+    @class YAKC::Disasm
     @brief YAKC wrapper for z80dasm.cc
 */
 #include "yakc/yakc.h"

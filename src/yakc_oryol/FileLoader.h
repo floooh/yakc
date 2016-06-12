@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class FileLoader
+    @class YAKC::FileLoader
     @brief helper class to load KCC files
 */
 #include "yakc/yakc.h"

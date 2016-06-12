@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class Audio.h
+    @class YAKC::Audio
     @brief implement audio playback callback
 */
 #include "yakc/clock.h"

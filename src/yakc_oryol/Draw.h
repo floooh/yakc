@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class Draw
+    @class YAKC::Draw
     @brief render the KC video memory via Oryol Gfx module
 */
 #include "Gfx/Gfx.h"

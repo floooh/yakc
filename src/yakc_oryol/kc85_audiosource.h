@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class kc85_audiosource.h
+    @class YAKC::kc85_audiosource.h
     @brief implements a custom SoLoud audio source for KC85 sound generation
 */
 #include "soloud.h"
