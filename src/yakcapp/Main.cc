@@ -12,6 +12,7 @@
 #include "yakc/yakc.h"
 #include "yakc_oryol/Draw.h"
 #include "yakc_oryol/Audio.h"
+#include "yakc_oryol/Keyboard.h"
 #if YAKC_UI
 #include "yakc_ui/UI.h"
 #endif
@@ -24,14 +25,13 @@ public:
     AppState::Code OnInit();
     AppState::Code OnRunning();
     AppState::Code OnCleanup();
-    void handleInput();
     void initRoms();
     void initModules();
 
-    uint8_t last_ascii = 0;
     yakc emu;
     Draw draw;
     Audio audio;
+    Keyboard keyboard;
     #if YAKC_UI
     UI ui;
     #endif
@@ -88,6 +88,7 @@ YakcApp::OnInit() {
     if (this->emu.kc85.on) {
         this->emu.kc85.audio.setup_callbacks(&this->audio, Audio::cb_sound, Audio::cb_volume, Audio::cb_stop);
     }
+    this->keyboard.Setup(this->emu);
     #if YAKC_UI
     this->ui.Setup(this->emu, &this->audio);
     #endif
@@ -112,9 +113,22 @@ YakcApp::OnRunning() {
     #else
     Duration frameTime = Clock::LapTime(this->lapTimePoint);
     #endif
+
+    #if YAKC_UI
+    // toggle UI?
+    if (Input::KeyDown(Key::Tab) || Input::TouchDoubleTapped()) {
+        this->ui.Toggle();
+    }
+    // don't handle KC input if IMGUI has the keyboard focus
+    if (!ImGui::GetIO().WantCaptureKeyboard) {
+        this->keyboard.HandleInput();
+    }
+    #else
+    this->keyboard.HandleInput(this->emu);
+    #endif
+
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = (int) frameTime.AsMicroSeconds();
-    this->handleInput();
     uint64_t min_cycle_count = 0;
     uint64_t max_cycle_count = 0;
     #if !ORYOL_DEBUG
@@ -162,6 +176,7 @@ YakcApp::OnRunning() {
 //------------------------------------------------------------------------------
 AppState::Code
 YakcApp::OnCleanup() {
+    this->keyboard.Discard();
     this->audio.Discard();
     this->draw.Discard();
     #if YAKC_UI
@@ -171,85 +186,6 @@ YakcApp::OnCleanup() {
     Gfx::Discard();
     IO::Discard();
     return App::OnCleanup();
-}
-
-//------------------------------------------------------------------------------
-void
-YakcApp::handleInput() {
-    #if YAKC_UI
-    // don't handle KC input if IMGUI has the keyboard focus
-    if (ImGui::GetIO().WantCaptureKeyboard) {
-        return;
-    }
-    // toggle UI?
-    if (Input::KeyDown(Key::Tab) || Input::TouchDoubleTapped()) {
-        this->ui.Toggle();
-    }
-    #endif
-
-    const wchar_t* text = Input::Text();
-    ubyte ascii = 0;
-
-    // alpha-numerics
-    if (text[0] && (text[0] >= 32) && (text[0] < 127)) {
-        ascii = (ubyte) text[0];
-        // shift is inverted on KC
-        if (islower(ascii)) {
-            ascii = toupper(ascii);
-        }
-        else if (isupper(ascii)) {
-            ascii = tolower(ascii);
-        }
-    }
-    if ((ascii == 0) && (Input::AnyKeyPressed())) {
-        ascii = this->last_ascii;
-    }
-    this->last_ascii = ascii;
-
-    // special keys
-    struct toAscii {
-        Key::Code key;
-        ubyte ascii;
-    };
-    const static toAscii keyTable[] = {
-        // FIXME:
-        //  HOME, PAGE UP/DOWN, START/END of line, INSERT,
-        { Key::Left, 0x08 },
-        { Key::Right, 0x09 },
-        { Key::Down, 0x0A },
-        { Key::Up, 0x0B },
-        { Key::Enter, 0x0D },
-        { Key::BackSpace, 0x01 },
-        { Key::Escape, 0x03 },
-        { Key::F1, 0xF1 },
-        { Key::F2, 0xF2 },
-        { Key::F3, 0xF3 },
-        { Key::F4, 0xF4 },
-        { Key::F5, 0xF5 },
-        { Key::F6, 0xF6 },
-        { Key::F7, 0xF7 },
-        { Key::F8, 0xF8 },
-        { Key::F9, 0xF9 },
-        { Key::F10, 0xFA },
-        { Key::F11, 0xFB },
-        { Key::F12, 0xFC },
-    };
-    for (const auto& key : keyTable) {
-        if (Input::KeyPressed(key.key)) {
-            // special case: shift-backspace clears screen shift-escape is STP
-            if (Input::KeyPressed(Key::LeftShift) && (key.key == Key::BackSpace)) {
-                ascii = 0x0C;
-            }
-            else if (Input::KeyPressed(Key::LeftShift) && (key.key == Key::Escape)) {
-                ascii = 0x13;
-            }
-            else {
-                ascii = key.ascii;
-            }
-            break;
-        }
-    }
-    this->emu.put_key(ascii);
 }
 
 //------------------------------------------------------------------------------
