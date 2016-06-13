@@ -44,7 +44,6 @@ FileLoader::Setup(yakc& emu) {
     this->Items.Add("Mazogs", "mazog_deutsch.z80", FileType::Z80, device::any_z1013);
     this->Items.Add("Monitor ZM30 (start with 'ZM')", "zm30.kcc", FileType::KCC, device::any_z9001);
     this->Items.Add("Forth 83 (start with 'F83')", "F83_COM.TAP", FileType::TAP, device::any_z9001);
-    this->Items.Add("Pretty-C", "prettyc_com.tap", FileType::TAP, device::any_z9001);
 }
 
 //------------------------------------------------------------------------------

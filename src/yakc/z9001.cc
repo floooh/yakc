@@ -108,13 +108,20 @@ z9001::poweron(device m, os_rom os) {
     fill_random(this->video_ram, sizeof(this->video_ram));
     z80& cpu = this->board->cpu;
     cpu.mem.unmap_all();
-    if (device::kc87 == m) {
-        // 48 KByte RAM
+    if (device::z9001 == m) {
+        // emulate a Z9001 with 16 KByte RAM module and BASIC module
+        cpu.mem.map(0, 0x0000, 0x8000, this->ram, true);
+        cpu.mem.map(1, 0xC000, 0x2800, dump_basic_507_511, false);
+        cpu.mem.map(1, 0xF000, 0x0800, dump_z9001_os12_1, false);
+        cpu.mem.map(1, 0xF800, 0x0800, dump_z9001_os12_2, false);
+    }
+    else if (device::kc87 == m) {
+        // emulate a KC87 with 48 KByte RAM
         cpu.mem.map(0, 0x0000, 0xC000, this->ram, true);
         cpu.mem.map(1, 0xC000, 0x2000, dump_z9001_basic, false);
         cpu.mem.map(1, 0xE000, 0x2000, dump_kc87_os_2, false);
+        cpu.mem.map(0, 0xE800, 0x0400, this->color_ram, true);
     }
-    cpu.mem.map(0, 0xE800, 0x0400, this->color_ram, true);
     cpu.mem.map(0, 0xEC00, 0x0400, this->video_ram, true);
 
     // initialize the clock at 2.4576 MHz
@@ -497,35 +504,100 @@ z9001::decode_video() {
         font = dump_z9001_font;
     }
     int off = 0;
-    uint32_t fg, bg;
-    for (int y = 0; y < 24; y++) {
-        for (int py = 0; py < 8; py++) {
-            for (int x = 0; x < 40; x++) {
-                ubyte chr = this->video_ram[off+x];
-                ubyte pixels = font[(chr<<3)|py];
-                ubyte color = this->color_ram[off+x];
-                if ((color & 0x80) && this->blink_flipflop) {
-                    // implement blinking, swap bg and fg
-                    fg = this->pal[color&7];
-                    bg = this->pal[(color>>4)&7];
-                }
-                else {
-                    fg = this->pal[(color>>4)&7];
-                    bg = this->pal[color&7];
-                }
-                for (int px = 7; px >=0; px--) {
-                    *dst++ = pixels & (1<<px) ? fg:bg;
+    if (device::kc87 == this->cur_model) {
+        uint32_t fg, bg;
+        for (int y = 0; y < 24; y++) {
+            for (int py = 0; py < 8; py++) {
+                for (int x = 0; x < 40; x++) {
+                    ubyte chr = this->video_ram[off+x];
+                    ubyte pixels = font[(chr<<3)|py];
+                    ubyte color = this->color_ram[off+x];
+                    if ((color & 0x80) && this->blink_flipflop) {
+                        // blinking: swap bg and fg
+                        fg = this->pal[color&7];
+                        bg = this->pal[(color>>4)&7];
+                    }
+                    else {
+                        fg = this->pal[(color>>4)&7];
+                        bg = this->pal[color&7];
+                    }
+                    for (int px = 7; px >=0; px--) {
+                        *dst++ = pixels & (1<<px) ? fg:bg;
+                    }
                 }
             }
+            off += 40;
         }
-        off += 40;
+    }
+    else {
+        for (int y = 0; y < 24; y++) {
+            for (int py = 0; py < 8; py++) {
+                for (int x = 0; x < 40; x++) {
+                    ubyte chr = this->video_ram[off+x];
+                    ubyte pixels = font[(chr<<3)|py];
+                    for (int px = 7; px >=0; px--) {
+                        *dst++ = pixels & (1<<px) ? 0xFFFFFFFF : 0x00000000;
+                    }
+                }
+            }
+            off += 40;
+        }
     }
 }
 
 //------------------------------------------------------------------------------
 const char*
 z9001::system_info() const {
-    return "Z9001 FIXME";
+    if (device::z9001 == this->cur_model) {
+        return
+            "The Z9001 (later retconned to KC85/1) was independently developed "
+            "to the HC900 (aka KC85/2) by Robotron Dresden. It had a pretty "
+            "slick design with an integrated keyboard which was legendary for "
+            "how hard it was to type on.\n\nThe standard model had 16 KByte RAM, "
+            "a monochrome 40x24 character display, and a 2.5 MHz U880 CPU "
+            "(making it the fastest East German 8-bitter). The Z9001 could "
+            "be extended by up to 4 expansion modules, usually one or two "
+            "16 KByte RAM modules, and a 10 KByte ROM BASIC module (the "
+            "version emulated here comes with 32 KByte RAM and a BASIC module) "
+            "\n\n\n"
+            "Manufacturer:      VEB Messelektronik \"Otto Schön\" Dresden\n"
+            "Release Date:      1984\n"
+            "OS:                OS 1.1 (Z9001), OS 1.2 (KC85/1)\n"
+            "CPU:               U880 @ 2.5 MHz (unlicensed Z80 clone)\n"
+            "                   2x U855 (Z80 PIO clone)\n"
+            "                   U857 (Z80 CTC clone)\n"
+            "Memory:            16 KB RAM\n"
+            "                    1 KB video memory\n"
+            "                    4 KB ROM\n"
+            "Graphics:          40x24 or 40x20 chars, monochrome\n"
+            "Audio:             CTC-controlled beeper, mono\n"
+            "Special Power:     2 PIO chips (one exclusively for keyboard input)";
+
+    }
+    else {
+        return
+            "The KC87 was the successor to the KC85/1. The only real difference "
+            "was the built-in BASIC interpreter in ROM. The KC87 emulated here "
+            "has 48 KByte RAM and the video color extension which could "
+            "assign 8 foreground and 8 (identical) background colors per character, "
+            "plus a blinking flag. This video extension was already available on the "
+            "Z9001 though."
+            "\n\n\n"
+            "Manufacturer:      VEB Messelektronik \"Otto Schön\" Dresden\n"
+            "Release Date:      1987\n"
+            "OS:                OS 1.3\n"
+            "CPU:               U880 @ 2.5 MHz (unlicensed Z80 clone)\n"
+            "                   2x U855 (Z80 PIO clone)\n"
+            "                   U857 (Z80 CTC clone)\n"
+            "Memory:            16 KB RAM\n"
+            "                    2 KB video memory (1+1 KB for chars+color)\n"
+            "                   10 KB BASIC+OS ROM\n"
+            "                    4 KB OS ROM\n"
+            "Graphics:          40x24 or 40x20 chars\n"
+            "                   1-of-8 foreground and background colors\n"
+            "Audio:             CTC-controlled beeper, mono\n"
+            "Special Power:     fastest 8-bitter this side of the Iron Curtain";
+    }
 }
 
 } // namespace YAKC

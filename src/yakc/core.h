@@ -78,7 +78,6 @@ enum class os_rom {
     caos_4_2,
     z1013_mon202,
     z1013_mon_a2,
-    z9001_os_1_1,
     z9001_os_1_2,
     kc87_os_2,
     none,

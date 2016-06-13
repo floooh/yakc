@@ -253,7 +253,11 @@ UI::OnFrame(yakc& emu) {
                     }
                     ImGui::EndMenu();
                 }
-                if (ImGui::MenuItem("Boot to KC87 (48KB RAM)")) {
+                if (ImGui::MenuItem("Boot to Z9001 (32KB)")) {
+                    emu.poweroff();
+                    emu.poweron(device::z9001, os_rom::z9001_os_1_2);
+                }
+                if (ImGui::MenuItem("Boot to KC87  (48KB)")) {
                     emu.poweroff();
                     emu.poweron(device::kc87, os_rom::kc87_os_2);
                 }
