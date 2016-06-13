@@ -44,7 +44,7 @@ Audio::cb_sound(void* userdata, uint64_t cycle_pos, int channel, int hz) {
     o_assert_range_dbg(channel, 2);
     o_assert_dbg(hz >= 0);
     Audio* self = (Audio*) userdata;
-    kc85_audiosource::op op;
+    AudioSource::op op;
     op.cycle_pos = cycle_pos;
     op.hz = hz;
     op.vol = 0x1f;
@@ -56,7 +56,7 @@ void
 Audio::cb_stop(void* userdata, uint64_t cycle_pos, int channel) {
     o_assert_range_dbg(channel, 2);
     Audio* self = (Audio*) userdata;
-    kc85_audiosource::op op;
+    AudioSource::op op;
     op.cycle_pos = cycle_pos;
     op.hz = 0;
     op.vol = 0;

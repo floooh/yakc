@@ -6,7 +6,7 @@
 */
 #include "yakc/clock.h"
 #include "Core/Containers/Queue.h"
-#include "kc85_audiosource.h"
+#include "AudioSource.h"
 #include "soloud_biquadresonantfilter.h"
 
 namespace YAKC {
@@ -31,7 +31,7 @@ public:
 
     SoLoud::Soloud soloud;
     SoLoud::BiquadResonantFilter filter;
-    kc85_audiosource audioSource;
+    AudioSource audioSource;
     int audioHandle = 0;
 };
 

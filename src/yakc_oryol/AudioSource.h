@@ -1,28 +1,28 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class YAKC::kc85_audiosource.h
-    @brief implements a custom SoLoud audio source for KC85 sound generation
+    @class YAKC::AudioSource
+    @brief implements a custom SoLoud audio source for sound generation
 */
 #include "soloud.h"
 #include "Core/Threading/RWLock.h"
 
 namespace YAKC {
 
-class kc85_audiosource;
+class AudioSource;
 
-class kc85_audioinstance : public SoLoud::AudioSourceInstance {
+class AudioSourceInstance : public SoLoud::AudioSourceInstance {
 public:
-    kc85_audioinstance(kc85_audiosource* aParent);
+    AudioSourceInstance(AudioSource* aParent);
     virtual void getAudio(float* aBuffer, unsigned int aSamples);
     virtual bool hasEnded();
 
-    kc85_audiosource* parent;
+    AudioSource* parent;
 };
 
-class kc85_audiosource : public SoLoud::AudioSource {
+class AudioSource : public SoLoud::AudioSource {
 public:
-    kc85_audiosource();
+    AudioSource();
     virtual SoLoud::AudioSourceInstance* createInstance();
 
     struct op {

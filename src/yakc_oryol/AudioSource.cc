@@ -1,31 +1,31 @@
 //------------------------------------------------------------------------------
-//  kc85_audiosource.cc
+//  AudioSource.cc
 //------------------------------------------------------------------------------
-#include "kc85_audiosource.h"
+#include "AudioSource.h"
 #include "Core/Log.h"
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
-kc85_audiosource::kc85_audiosource() {
+AudioSource::AudioSource() {
     this->mChannels = 2;
 }
 
 //------------------------------------------------------------------------------
 SoLoud::AudioSourceInstance*
-kc85_audiosource::createInstance() {
-    return new kc85_audioinstance(this);
+AudioSource::createInstance() {
+    return new AudioSourceInstance(this);
 }
 
 //------------------------------------------------------------------------------
-kc85_audioinstance::kc85_audioinstance(kc85_audiosource* aParent) :
+AudioSourceInstance::AudioSourceInstance(AudioSource* aParent) :
 parent(aParent) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-kc85_audioinstance::getAudio(float* aBuffer, unsigned int aSamples) {
+AudioSourceInstance::getAudio(float* aBuffer, unsigned int aSamples) {
     // NOTE: this may be called from a thread, depending on
     // SoLoud backend and platform
 
@@ -34,7 +34,7 @@ kc85_audioinstance::getAudio(float* aBuffer, unsigned int aSamples) {
     const uint64_t cpu_clock_speed = this->parent->cpu_clock_speed;
     const uint64_t sample_rate = this->parent->sample_rate;
     const uint64_t cycles_per_sample = ((cpu_clock_speed<<precision) / sample_rate);
-    kc85_audiosource::op cur_op;
+    AudioSource::op cur_op;
     uint64_t cur_cycle_count = 0;
     for (auto& chn : this->parent->channels) {
         cur_cycle_count = this->parent->sample_cycle_count<<precision;
@@ -57,7 +57,7 @@ kc85_audioinstance::getAudio(float* aBuffer, unsigned int aSamples) {
 
 //------------------------------------------------------------------------------
 bool
-kc85_audioinstance::hasEnded() {
+AudioSourceInstance::hasEnded() {
     return false;
 }
 
