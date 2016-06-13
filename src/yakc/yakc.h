@@ -22,7 +22,7 @@ public:
     class z9001 z9001;
 
     /// one-time init
-    void init(const ext_funcs& funcs);
+    void init(const ext_funcs& funcs, const sound_funcs& snd_funcs);
     /// poweron one of the emus
     void poweron(device m, os_rom os);
     /// poweroff the emu

@@ -28,6 +28,18 @@ extern void clear(void* ptr, int num_bytes);
 /// helper to fill a chunk of memory with random noise
 extern void fill_random(void* ptr, int num_bytes);
 
+/// sound callback functions
+struct sound_funcs {
+    /// userdata field
+    void* userdata = nullptr;
+    /// start or update sound
+    void (*sound)(void* userdata, uint64_t cycle_count, int channel, int hz) = nullptr;
+    /// stop sound
+    void (*stop)(void* userdata, uint64_t cycle_count, int channel) = nullptr;
+    /// set volume
+    void (*volume)(void* userdata, uint64_t cycle_count, int vol) = nullptr;
+};
+
 #define YAKC_MALLOC(s) func.malloc_func(s)
 #define YAKC_FREE(p) func.free_func(p)
 

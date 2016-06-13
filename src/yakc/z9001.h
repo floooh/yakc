@@ -35,6 +35,8 @@ public:
 
     /// one-time setup
     void init(breadboard* board);
+    /// setup audio callbacks
+    void setup_sound_funcs(const sound_funcs& funcs);
 
     /// power-on the device
     void poweron(device m, os_rom os);
@@ -66,6 +68,9 @@ public:
     static ubyte pio2_a_in_cb(void* userdata);
     /// PIO2-B IN callback for keyboard input (keyboard matrix line)
     static ubyte pio2_b_in_cb(void* userdata);
+    /// ctc0 callback for audio
+    static void ctc0_write(void* userdata);
+     
     /// blink counter callback
     static void blink_cb(void* userdata);
 
@@ -93,10 +98,14 @@ public:
     uint64_t key_map[max_num_keys];     // complete keyboard matrix state for each ascii code
 
     bool blink_flipflop = false;
-    uint8_t brd_color = 0;              //
+    uint8_t brd_color = 0;              // border color byte extracted from PIO1-A
     uint32_t blink_counter = 0;
     uint32_t pal[8];
-    uint32_t RGBA8Buffer[320*192];          // decoded linear RGBA8 video buffer
+    uint32_t RGBA8Buffer[320*192];      // decoded linear RGBA8 video buffer
+
+    sound_funcs sound_cb;               // external sound callbacks
+    ubyte ctc0_mode = z80ctc::RESET;    // CTC0 state for audio output
+    ubyte ctc0_constant = 0;
 };
 
 } // namespace YAKC

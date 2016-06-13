@@ -22,15 +22,8 @@ namespace YAKC {
 
 class kc85_audio {
 public:
-    /// callback to start sound or change frequency (channel is 0 or 1)
-    typedef void (*sound_cb)(void* userdata, uint64_t cycle_count, int channel, int hz);
-    /// callback to stop a sound
-    typedef void (*stop_cb)(void* userdata, uint64_t cycle_count, int channel);
-    /// callback to set volume (0..31)
-    typedef void (*volume_cb)(void* userdata, uint64_t cycle_count, int vol);
-
     /// setup callbacks (call before anything else)
-    void setup_callbacks(void* userdata, sound_cb cb_sound, volume_cb cb_volume, stop_cb cb_stop);
+    void setup_callbacks(const sound_funcs& funcs);
     /// initialize the audio hardware (we need access to the ctc
     void init(z80ctc* ctc);
     /// reset the audio hardware
@@ -51,10 +44,7 @@ public:
     uint64_t cycle_count = 0;       // current absolute CPU cycle count
 
     int volume = 0;
-    sound_cb cb_sound = nullptr;
-    volume_cb cb_volume = nullptr;
-    stop_cb cb_stop = nullptr;
-    void* userdata = nullptr;
+    sound_funcs funcs;
 
     static const int num_channels = 2;
     struct channel_state {

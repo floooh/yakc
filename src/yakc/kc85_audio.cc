@@ -7,11 +7,8 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-kc85_audio::setup_callbacks(void* ud, sound_cb cb_snd, volume_cb cb_vol, stop_cb cb_stp) {
-    this->userdata = ud;
-    this->cb_sound = cb_snd;
-    this->cb_volume = cb_vol;
-    this->cb_stop = cb_stp;
+kc85_audio::setup_callbacks(const sound_funcs& funcs_) {
+    this->funcs = funcs_;
 }
 
 //------------------------------------------------------------------------------
@@ -27,9 +24,9 @@ kc85_audio::init(z80ctc* ctc_) {
 //------------------------------------------------------------------------------
 void
 kc85_audio::reset() {
-    if (this->cb_stop) {
-        this->cb_stop(userdata, 0, 0);
-        this->cb_stop(userdata, 0, 1);
+    if (this->funcs.stop) {
+        this->funcs.stop(this->funcs.userdata, 0, 0);
+        this->funcs.stop(this->funcs.userdata, 0, 1);
     }
     this->channels[0] = channel_state();
     this->channels[1] = channel_state();
@@ -45,8 +42,8 @@ kc85_audio::update_cycles(uint64_t cycles) {
 void
 kc85_audio::update_volume(int vol) {
     if (this->volume != vol) {
-        if (this->cb_volume) {
-            this->cb_volume(this->userdata, this->cycle_count, vol);
+        if (this->funcs.volume) {
+            this->funcs.volume(this->funcs.userdata, this->cycle_count, vol);
         }
     }
     this->volume = vol;
@@ -63,8 +60,8 @@ kc85_audio::update_channel(int channel) {
 
         if (!(this->channels[channel].ctc_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
             // CTC channel has become inactive, call the stop-callback
-            if (this->cb_stop) {
-                this->cb_stop(this->userdata, this->cycle_count, channel);
+            if (this->funcs.stop) {
+                this->funcs.stop(this->funcs.userdata, this->cycle_count, channel);
             }
             this->channels[channel].ctc_mode = ctc_chn.mode;
         }
@@ -73,8 +70,8 @@ kc85_audio::update_channel(int channel) {
             int div = ctc_chn.constant * ((ctc_chn.mode & z80ctc::PRESCALER_256) ? 256 : 16);
             if (div > 0) {
                 int hz = int((float(1750000) / float(div)) / 2.0f);
-                if (this->cb_sound) {
-                    this->cb_sound(this->userdata, this->cycle_count, channel, hz);
+                if (this->funcs.sound) {
+                    this->funcs.sound(this->funcs.userdata, this->cycle_count, channel, hz);
                 }
             }
             this->channels[channel].ctc_constant = ctc_chn.constant;

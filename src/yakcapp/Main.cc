@@ -72,11 +72,16 @@ YakcApp::OnInit() {
     Input::Setup();
 
     // initialize the emulator
-    ext_funcs funcs;
-    funcs.assertmsg_func = Log::AssertMsg;
-    funcs.malloc_func = [] (size_t s) -> void* { return Oryol::Memory::Alloc((int)s); };
-    funcs.free_func = [] (void* p) { Oryol::Memory::Free(p); };
-    this->emu.init(funcs);
+    ext_funcs sys_funcs;
+    sys_funcs.assertmsg_func = Log::AssertMsg;
+    sys_funcs.malloc_func = [] (size_t s) -> void* { return Oryol::Memory::Alloc((int)s); };
+    sys_funcs.free_func = [] (void* p) { Oryol::Memory::Free(p); };
+    sound_funcs snd_funcs;
+    snd_funcs.userdata = &this->audio;
+    snd_funcs.sound = Audio::cb_sound;
+    snd_funcs.volume = Audio::cb_volume;
+    snd_funcs.stop = Audio::cb_stop;
+    this->emu.init(sys_funcs, snd_funcs);
 
     // initialize the ROM dumps and modules
     this->initRoms();
@@ -86,9 +91,6 @@ YakcApp::OnInit() {
 
     this->draw.Setup(gfxSetup, frameSizeX, frameSizeY);
     this->audio.Setup(this->emu.board.clck);
-    if (this->emu.kc85.on) {
-        this->emu.kc85.audio.setup_callbacks(&this->audio, Audio::cb_sound, Audio::cb_volume, Audio::cb_stop);
-    }
     this->keyboard.Setup(this->emu);
     #if YAKC_UI
     this->ui.Setup(this->emu, &this->audio);
@@ -135,7 +137,6 @@ YakcApp::OnRunning() {
     int micro_secs = (int) frameTime.AsMicroSeconds();
     uint64_t min_cycle_count = 0;
     uint64_t max_cycle_count = 0;
-    #if !ORYOL_DEBUG
     const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
     if (audio_cycle_count > 0) {
         const uint64_t cpu_min_ahead_cycles = (this->emu.board.clck.base_freq_khz*1000)/100;
@@ -143,7 +144,6 @@ YakcApp::OnRunning() {
         min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
         max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
     }
-    #endif
 
     #if YAKC_UI
         o_trace_begin(yakc_kc);

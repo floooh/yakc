@@ -7,11 +7,13 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-yakc::init(const ext_funcs& funcs) {
-    func = funcs;
+yakc::init(const ext_funcs& sys_funcs, const sound_funcs& snd_funcs) {
+    func = sys_funcs;
     this->kc85.init(&this->board);
     this->z1013.init(&this->board);
     this->z9001.init(&this->board);
+    this->kc85.audio.setup_callbacks(snd_funcs);
+    this->z9001.setup_sound_funcs(snd_funcs);
 }
 
 //------------------------------------------------------------------------------

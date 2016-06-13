@@ -81,6 +81,12 @@ z9001::init(breadboard* b) {
 
 //------------------------------------------------------------------------------
 void
+z9001::setup_sound_funcs(const sound_funcs& funcs) {
+    this->sound_cb = funcs;
+}
+
+//------------------------------------------------------------------------------
+void
 z9001::poweron(device m, os_rom os) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(device::any_z9001) & int(m));
@@ -141,6 +147,9 @@ z9001::poweron(device m, os_rom os) {
     pio2.connect_out_cb(z80pio::B, this, pio2_b_out_cb);
     pio2.connect_in_cb(z80pio::A, this, pio2_a_in_cb);
     pio2.connect_in_cb(z80pio::B, this, pio2_b_in_cb);
+
+    // connect CTC0 callback, this is used for audio
+    ctc.connect_write0(ctc0_write, this);
 
     // CTC2 is configured as timer and triggers CTC3, which is configured
     // as counter, CTC3 triggers an interrupt which drives the system clock
@@ -386,6 +395,40 @@ z9001::pio2_b_in_cb(void* userdata) {
         }
     }
     return ~line_bits;
+}
+
+//------------------------------------------------------------------------------
+void
+z9001::ctc0_write(void* userdata) {
+    // this is the same as in the KC85/3 emu
+    z9001* self = (z9001*)userdata;
+    z80ctc& ctc = self->board->ctc;
+
+    // has the CTC channel state changed since last time?
+    const auto& ctc_chn = ctc.channels[0];
+    if ((ctc_chn.constant != self->ctc0_constant) ||
+        (ctc_chn.mode ^ self->ctc0_mode)) {
+
+        if (!(self->ctc0_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
+            // CTC channel has become inactive, call the stop-callback
+            if (self->sound_cb.stop) {
+                self->sound_cb.stop(self->sound_cb.userdata, self->abs_cycle_count, 0);
+            }
+            self->ctc0_mode = ctc_chn.mode;
+        }
+        else if (!(ctc_chn.mode & z80ctc::RESET)) {
+            // CTC channel has become active or constant has changed, call sound-callback
+            int div = ctc_chn.constant * ((ctc_chn.mode & z80ctc::PRESCALER_256) ? 256 : 16);
+            if (div > 0) {
+                int hz = int((float(2457600) / float(div)) / 2.0f);
+                if (self->sound_cb.sound) {
+                    self->sound_cb.sound(self->sound_cb.userdata, self->abs_cycle_count, 0, hz);
+                }
+            }
+            self->ctc0_constant = ctc_chn.constant;
+            self->ctc0_mode = ctc_chn.mode;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
