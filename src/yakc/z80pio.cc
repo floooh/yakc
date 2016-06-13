@@ -8,6 +8,7 @@ namespace YAKC {
 //------------------------------------------------------------------------------
 void
 z80pio::init() {
+    this->int_ctrl = z80int();
     for (int i = 0; i < num_ports; i++) {
         this->port[i] = port_t();
         this->out_callback[i].func = nullptr;
