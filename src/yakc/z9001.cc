@@ -536,7 +536,7 @@ z9001::decode_video() {
                     ubyte chr = this->video_ram[off+x];
                     ubyte pixels = font[(chr<<3)|py];
                     for (int px = 7; px >=0; px--) {
-                        *dst++ = pixels & (1<<px) ? 0xFFFFFFFF : 0x00000000;
+                        *dst++ = pixels & (1<<px) ? 0xFFFFFFFF : 0xFF000000;
                     }
                 }
             }
