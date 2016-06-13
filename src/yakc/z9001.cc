@@ -591,7 +591,7 @@ z9001::system_info() const {
             "                   U857 (Z80 CTC clone)\n"
             "Memory:            16 KB RAM\n"
             "                    2 KB video memory (1+1 KB for chars+color)\n"
-            "                   10 KB BASIC+OS ROM\n"
+            "                   10 KB BASIC ROM\n"
             "                    4 KB OS ROM\n"
             "Graphics:          40x24 or 40x20 chars\n"
             "                   1-of-8 foreground and background colors\n"
