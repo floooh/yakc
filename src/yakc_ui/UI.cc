@@ -149,8 +149,8 @@ UI::EnableLightTheme() {
     this->darkThemeEnabled = false;
     ImGui::GetStyle() = this->lightTheme;
     DefaultTextColor = this->lightTheme.Colors[ImGuiCol_Text];
-    EnabledColor = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
-    DisabledColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+    EnabledColor = OkColor = ImVec4(0.0f, 0.0f, 1.0f, 1.0f);
+    DisabledColor = WarnColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
     EnabledBreakpointColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
     DisabledBreakpointColor = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
     InvalidOpCodeColor = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
@@ -314,10 +314,8 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("CPU Debugger")) {
                     this->OpenWindow(emu, DebugWindow::Create());
                 }
-                if (emu.is_device(device::any_kc85)) {
-                    if (ImGui::MenuItem("Audio Debugger")) {
-                        this->OpenWindow(emu, AudioWindow::Create(this->audio));
-                    }
+                if (ImGui::MenuItem("Audio Debugger")) {
+                    this->OpenWindow(emu, AudioWindow::Create(this->audio));
                 }
                 if (ImGui::MenuItem("Disassembler")) {
                     this->OpenWindow(emu, DisasmWindow::Create());
