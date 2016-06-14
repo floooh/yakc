@@ -11,8 +11,8 @@ using namespace Oryol;
 namespace YAKC {
 
 static const z80dbg::reg regs16[] = {
-    z80dbg::AF, z80dbg::BC, z80dbg::DE, z80dbg::HL,
-    z80dbg::AF_, z80dbg::BC_, z80dbg::DE_, z80dbg::HL_,
+    z80dbg::AF, z80dbg::BC, z80dbg::DE, z80dbg::HL, z80dbg::WZ,
+    z80dbg::AF_, z80dbg::BC_, z80dbg::DE_, z80dbg::HL_, z80dbg::WZ_,
     z80dbg::IX, z80dbg::IY, z80dbg::SP, z80dbg::PC
 };
 static const z80dbg::reg regs8[] = {
@@ -37,7 +37,7 @@ DebugWindow::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 bool
 DebugWindow::Draw(yakc& emu) {
-    ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(460, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         this->drawRegisterTable(emu);
         ImGui::Separator();
@@ -81,22 +81,24 @@ DebugWindow::drawRegisterTable(yakc& emu) {
     this->drawReg16(emu, z80dbg::BC); ImGui::SameLine(2 * 72);
     this->drawReg16(emu, z80dbg::DE); ImGui::SameLine(3 * 72);
     this->drawReg16(emu, z80dbg::HL); ImGui::SameLine(4 * 72);
-    this->drawReg8(emu, z80dbg::I); ImGui::SameLine(4 * 72 + 48);
+    this->drawReg16(emu, z80dbg::WZ); ImGui::SameLine(5 * 72);
+    this->drawReg8(emu, z80dbg::I); ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.cpu.IFF1 ? green:red, "IFF1");
 
     this->drawReg16(emu, z80dbg::AF_); ImGui::SameLine(1 * 72);
     this->drawReg16(emu, z80dbg::BC_); ImGui::SameLine(2 * 72);
     this->drawReg16(emu, z80dbg::DE_); ImGui::SameLine(3 * 72);
     this->drawReg16(emu, z80dbg::HL_); ImGui::SameLine(4 * 72);
-    this->drawReg8(emu, z80dbg::IM); ImGui::SameLine(4 * 72 + 48);
+    this->drawReg16(emu, z80dbg::WZ_); ImGui::SameLine(5 * 72);
+    
+    this->drawReg8(emu, z80dbg::IM); ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.cpu.IFF2 ? green:red, "IFF2");
 
     this->drawReg16(emu, z80dbg::IX); ImGui::SameLine(1 * 72);
     this->drawReg16(emu, z80dbg::IY); ImGui::SameLine(2 * 72);
     this->drawReg16(emu, z80dbg::SP); ImGui::SameLine(3 * 72);
     this->drawReg16(emu, z80dbg::PC); ImGui::SameLine(4 * 72);
-    this->drawReg8(emu, z80dbg::R); ImGui::SameLine(4 * 72 + 48);
-    ImGui::TextColored(emu.board.cpu.HALT ? green:red, "HALT");
+    this->drawReg8(emu, z80dbg::R); ImGui::SameLine();
 
     char strFlags[9];
     const ubyte f = emu.board.cpu.F;
@@ -109,7 +111,9 @@ DebugWindow::drawRegisterTable(yakc& emu) {
     strFlags[6] = (f & z80::NF) ? 'N':'-';
     strFlags[7] = (f & z80::CF) ? 'C':'-';
     strFlags[8] = 0;
-    ImGui::Text("flags: %s", strFlags);
+    ImGui::Text(" %s ", strFlags);
+    ImGui::SameLine(5 * 72 + 48);
+    ImGui::TextColored(emu.board.cpu.HALT ? green:red, "HALT");
 }
 
 //------------------------------------------------------------------------------

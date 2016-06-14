@@ -14,8 +14,8 @@ public:
     /// register enum for set_reg/get_reg methods
     enum reg {
         A=0, F, B, C, D, E, H, L,
-        AF, BC, DE, HL,
-        AF_, BC_, DE_, HL_,
+        AF, BC, DE, HL, WZ,
+        AF_, BC_, DE_, HL_, WZ_,
         I, R, IX, IY, SP, PC,
         IM,
         num

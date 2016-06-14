@@ -151,10 +151,12 @@ z80dbg::set16(z80& cpu, reg r, uword v) {
         case BC:   cpu.BC = v; break;
         case DE:   cpu.DE = v; break;
         case HL:   cpu.HL = v; break;
+        case WZ:   cpu.WZ = v; break;
         case AF_:  cpu.AF_ = v; break;
         case BC_:  cpu.BC_ = v; break;
         case DE_:  cpu.DE_ = v; break;
         case HL_:  cpu.HL_ = v; break;
+        case WZ_:  cpu.WZ_ = v; break;
         case IX:   cpu.IX = v; break;
         case IY:   cpu.IY = v; break;
         case SP:   cpu.SP = v; break;
@@ -171,10 +173,12 @@ z80dbg::get16(const z80& cpu, reg r) {
         case BC:    return cpu.BC;
         case DE:    return cpu.DE;
         case HL:    return cpu.HL;
+        case WZ:    return cpu.WZ;
         case AF_:   return cpu.AF_;
         case BC_:   return cpu.BC_;
         case DE_:   return cpu.DE_;
         case HL_:   return cpu.HL_;
+        case WZ_:   return cpu.WZ_;
         case IX:    return cpu.IX;
         case IY:    return cpu.IY;
         case SP:    return cpu.SP;
@@ -201,10 +205,12 @@ z80dbg::reg_name(reg r) {
         case BC: return "BC";
         case DE: return "DE";
         case HL: return "HL";
+        case WZ: return "WZ";
         case AF_: return "AF'";
         case BC_: return "BC'";
         case DE_: return "DE'";
         case HL_: return "HL'";
+        case WZ_: return "WZ'";
         case I: return "I";
         case R: return "R";
         case IX: return "IX";
