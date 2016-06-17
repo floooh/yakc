@@ -463,7 +463,7 @@ z80::ibit(ubyte val, ubyte mask) {
 }
 
 //------------------------------------------------------------------------------
-uword
+inline uword
 z80::add16(uword acc, uword val) {
     WZ = acc+1;
     uint32_t res = acc + val;
