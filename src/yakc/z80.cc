@@ -61,7 +61,7 @@ z80::connect_irq_device(z80int* device) {
 void
 z80::reset() {
     this->PC = 0;
-    this->WZ = this->PC;
+    this->WZ = 0;
     this->IM = 0;
     this->HALT = false;
     this->IFF1 = false;
@@ -77,7 +77,7 @@ uint32_t
 z80::invalid_opcode(uword opsize) {
     if (this->break_on_invalid_opcode) {
         INV = true;
-        PC -= opsize;     // stuck on invalid opcode
+        PC -= opsize;     // stay stuck on invalid opcode
     }
     return 4;
 }
@@ -203,46 +203,6 @@ z80::sziff2(ubyte val, bool iff2) {
     f |= (val & (YF|XF));
     if (iff2) f |= PF;
     return f;
-}
-
-//------------------------------------------------------------------------------
-uword
-z80::add16(uword acc, uword val) {
-    WZ = acc+1;
-    uint32_t res = acc + val;
-    // flag computation taken from MAME
-    F = (F & (SF|ZF|VF)) |
-        (((acc^res^val)>>8)&HF)|
-        ((res>>16) & CF) | ((res >> 8) & (YF|XF));
-    return (uword)res;
-}
-
-//------------------------------------------------------------------------------
-uword
-z80::adc16(uword acc, uword val) {
-    WZ = acc+1;
-    uint32_t res = acc + val + (F & CF);
-    // flag computation taken from MAME
-    F = (((acc^res^val)>>8)&HF) |
-        ((res>>16)&CF) |
-        ((res>>8)&(SF|YF|XF)) |
-        ((res & 0xFFFF) ? 0 : ZF) |
-        (((val^acc^0x8000) & (val^res)&0x8000)>>13);
-    return res;
-}
-
-//------------------------------------------------------------------------------
-uword
-z80::sbc16(uword acc, uword val) {
-    WZ = acc+1;
-    uint32_t res = acc - val - (F & CF);
-    // flag computation taken from MAME
-    F = (((acc^res^val)>>8)&HF) | NF |
-        ((res>>16)&CF) |
-        ((res>>8) & (SF|YF|XF)) |
-        ((res & 0xFFFF) ? 0 : ZF) |
-        (((val^acc) & (acc^res)&0x8000)>>13);
-    return res;
 }
 
 //------------------------------------------------------------------------------
