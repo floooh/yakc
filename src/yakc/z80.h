@@ -244,8 +244,6 @@ public:
 
 #define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
 #define YAKC_SZYXCH(acc,val,res) (YAKC_SZ(res)|(res&(YF|XF))|((res>>8)&CF)|((acc^val^res)&HF))
-#define YAKC_ADD_FLAGS(acc,val,res) (YAKC_SZYXCH(acc,val,res)|((((val^acc^0x80)&(val^res))>>5)&VF))
-#define YAKC_SUB_FLAGS(acc,val,res) (NF|YAKC_SZYXCH(acc,val,res)|((((sub^acc)&(res^acc))>>5)&VF))
 
 //------------------------------------------------------------------------------
 inline void
@@ -256,6 +254,7 @@ z80::swap16(uword& r0, uword& r1) {
 }
 
 //------------------------------------------------------------------------------
+#define YAKC_ADD_FLAGS(acc,val,res) (YAKC_SZYXCH(acc,val,res)|((((val^acc^0x80)&(val^res))>>5)&VF))
 inline void
 z80::add8(ubyte add) {
     int r = A + add;
@@ -272,6 +271,7 @@ z80::adc8(ubyte add) {
 }
 
 //------------------------------------------------------------------------------
+#define YAKC_SUB_FLAGS(acc,val,res) (NF|YAKC_SZYXCH(acc,val,res)|((((val^acc)&(res^acc))>>5)&VF))
 inline void
 z80::sub8(ubyte sub) {
     int r = int(A) - int(sub);
@@ -280,11 +280,12 @@ z80::sub8(ubyte sub) {
 }
 
 //------------------------------------------------------------------------------
+#define YAKC_CP_FLAGS(acc,val,res) (NF|(YAKC_SZ(res)|(val&(YF|XF))|((res>>8)&CF)|((acc^val^res)&HF))|((((val^acc)&(res^acc))>>5)&VF))
 inline void
 z80::cp8(ubyte sub) {
     // NOTE: XF|YF are set from sub, not from result!
     int r = int(A) - int(sub);
-    F = (YAKC_SUB_FLAGS(A,sub,r) & ~(XF|YF)) | (sub&(YF|XF));
+    F = YAKC_CP_FLAGS(A,sub,r);
 }
 
 //------------------------------------------------------------------------------
