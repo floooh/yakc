@@ -41,10 +41,6 @@ public:
     /// 64 kByte addressable memory
     static const int addr_range = 1<<16;
     static const int addr_mask = addr_range - 1;
-    /// number of (1K) pages
-    static const int num_pages = 64;
-    /// max number of layers
-    static const int num_layers = 4;
 
     /// a memory page mapping description
     struct page {
@@ -54,6 +50,11 @@ public:
         ubyte* ptr = nullptr;
         bool writable = false;
     };
+    /// number of pages
+    static const int num_pages = addr_range / page::size;
+    static_assert(num_pages * page::size == addr_range, "page::size must be 2^N and < 64kByte!");
+    /// max number of layers
+    static const int num_layers = 4;
 
     /// memory mapping layers, layer 0 has highest priority
     page layers[num_layers][num_pages];

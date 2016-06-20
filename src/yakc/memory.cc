@@ -74,7 +74,7 @@ memory::unmap_all() {
 //------------------------------------------------------------------------------
 void
 memory::update_mapping() {
-    // for each 8KByte memory page, find the highest priority layer
+    // for each memory page, find the highest priority layer
     // which maps this memory range
     for (int page_index = 0; page_index < num_pages; page_index++) {
         int layer_index;
