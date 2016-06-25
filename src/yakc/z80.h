@@ -349,7 +349,7 @@ z80::dec8(ubyte val) {
 inline ubyte
 z80::rlc8(ubyte val) {
     ubyte r = val<<1|val>>7;
-    F = szp[r] | ((val & 0x80) ? CF : 0);
+    F = szp[r] | (val>>7 & CF);
     return r;
 }
 
@@ -357,7 +357,7 @@ z80::rlc8(ubyte val) {
 inline void
 z80::rlca8() {
     ubyte r = A<<1|A>>7;
-    F = ((A & 0x80) ? CF : 0) | (F & (SF|ZF|PF)) | (r&(XF|YF));
+    F = (A>>7 & CF) | (F & (SF|ZF|PF)) | (r&(XF|YF));
     A = r;
 }
 
@@ -381,7 +381,7 @@ z80::rrca8() {
 inline ubyte
 z80::rl8(ubyte val) {
     ubyte r = val<<1 | (F & CF);
-    F = (val & 0x80 ? CF : 0) | szp[r];
+    F = (val>>7 & CF) | szp[r];
     return r;
 }
 
@@ -389,14 +389,14 @@ z80::rl8(ubyte val) {
 inline void
 z80::rla8() {
     ubyte r = A<<1 | (F & CF);
-    F = (A & 0x80 ? CF : 0) | (F & (SF|ZF|PF)) | (r&(YF|XF));
+    F = (A>>7 & CF) | (F & (SF|ZF|PF)) | (r&(YF|XF));
     A = r;
 }
 
 //------------------------------------------------------------------------------
 inline ubyte
 z80::rr8(ubyte val) {
-    ubyte r = val>>1 | ((F & CF) ? 0x80:0x00);
+    ubyte r = val>>1 | ((F & CF)<<7);
     F = (val & CF) | szp[r];
     return r;
 }
@@ -413,7 +413,7 @@ z80::rra8() {
 inline ubyte
 z80::sla8(ubyte val) {
     ubyte r = val<<1;
-    F = (val & 0x80 ? CF : 0) | szp[r];
+    F = (val>>7 & CF) | szp[r];
     return r;
 }
 
@@ -422,7 +422,7 @@ inline ubyte
 z80::sll8(ubyte val) {
     // undocument! sll8 is identical with sla8 but inserts a 1 into the LSB
     ubyte r = (val<<1) | 1;
-    F = (val & 0x80 ? CF : 0) | szp[r];
+    F = (val>>7 & CF) | szp[r];
     return r;
 }
 
