@@ -82,13 +82,10 @@ kc85_video::pal_line_cb(void* userdata) {
         self->decode_one_line(self->LinearBuffer, self->cur_pal_line, blink_bg);
     }
     self->cur_pal_line++;
-    // 326 wrap-around is a magic value to make the Digger ultra-fast
-    // flash look somewhat right, the diamond-scrolling is very sensitive
-    // to this value, and also changes depending on what instructions
-    // the CPU executes, there must be some remaining precision problem
-    // in the CTC counters/timers (probably some 'left-over' cycles
-    // are not accounted for correctly?
-    if (self->cur_pal_line >= 326) {
+    // wraparound pal line counter at 312 lines (see KC85/3 service manual),
+    // plus there are very slight timing differences between a 85/3 and 85/4
+    const int wrap_around = device::kc85_3 == self->model ? 312 : 310;
+    if (self->cur_pal_line > wrap_around) {
         self->cur_pal_line = 0;
     }
 }

@@ -104,7 +104,7 @@ z80ctc::update_timers(int ticks) {
         channel_state& chn = channels[i];
         if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
             if (((chn.mode & MODE) == MODE_TIMER) && !chn.waiting_for_trigger) {
-                chn.down_counter -= (ticks * 2);
+                chn.down_counter -= ticks;
                 while (chn.down_counter <= 0) {
                     down_counter_callback(chn);
                     chn.down_counter += down_counter_init(chn);
@@ -121,6 +121,7 @@ z80ctc::update_counter(channel_state& chn) {
         if ((chn.mode & MODE) == MODE_COUNTER) {
             if (--chn.down_counter == 0) {
                 down_counter_callback(chn);
+                chn.down_counter = down_counter_init(chn);
             }
         }
         chn.waiting_for_trigger = false;
@@ -136,7 +137,6 @@ z80ctc::down_counter_callback(channel_state& chn) {
     if (chn.zcto_callback) {
         chn.zcto_callback(chn.zcto_userdata);
     }
-    chn.down_counter = down_counter_init(chn);
 }
 
 //------------------------------------------------------------------------------
