@@ -127,7 +127,7 @@ YakcApp::OnRunning() {
         this->keyboard.HandleInput();
     }
     #else
-    this->keyboard.HandleInput(this->emu);
+    this->keyboard.HandleInput();
     #endif
 
     glm::vec4 clear;
