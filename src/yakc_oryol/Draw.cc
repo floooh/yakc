@@ -102,7 +102,7 @@ Draw::Render(const void* pixels, int width, int height) {
         Gfx::ApplyDrawState(this->nocrtDrawState);
         Gfx::ApplyUniformBlock(fsParams);
     }
-    Gfx::Draw(0);
+    Gfx::Draw();
     this->restoreViewport();
 }
 
