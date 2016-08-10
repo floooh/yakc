@@ -27,6 +27,8 @@ public:
     void poweron(device m, os_rom os);
     /// poweroff the emu
     void poweroff();
+    /// return true if switched on
+    bool switchedon() const;
     /// reset the emu
     void reset();
     /// check if currently emulated device matches
