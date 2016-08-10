@@ -86,6 +86,9 @@ Keyboard::Setup(yakc& emu_) {
     o_assert_dbg(!this->emu);
     this->emu = &emu_;
     Input::SubscribeEvents([this](const InputEvent& e) {
+        if (!this->hasInputFocus) {
+            return;
+        }
         if (e.Type == InputEvent::WChar) {
             if ((e.WCharCode >= 32) && (e.WCharCode < 127)) {
                 uint8_t ascii = (uint8_t) e.WCharCode;
@@ -133,7 +136,12 @@ Keyboard::Discard() {
 void
 Keyboard::HandleInput() {
     o_assert_dbg(this->emu);
-    this->emu->put_key(this->cur_char);
+    if (this->hasInputFocus) {
+        this->emu->put_key(this->cur_char);
+    }
+    else {
+        this->emu->put_key(0);
+    }
 }
 
 } // namespace YAKC

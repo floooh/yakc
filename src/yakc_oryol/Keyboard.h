@@ -18,6 +18,7 @@ public:
     /// handle keyboard input, call this once per frame
     void HandleInput();
 
+    bool hasInputFocus = true;
     yakc* emu = nullptr;
     uint8_t cur_char = 0;
     Oryol::Input::CallbackId callbackId = 0;

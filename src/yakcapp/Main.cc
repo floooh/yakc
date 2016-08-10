@@ -64,10 +64,10 @@ YakcApp::OnInit() {
     const int width = 2*frameSizeX + 2*320;
     const int height = 2*frameSizeY + 2*256;
     auto gfxSetup = GfxSetup::Window(width, height, "KC85");
-    gfxSetup.SetPoolSize(GfxResourceType::Mesh, 4);
-    gfxSetup.SetPoolSize(GfxResourceType::Texture, 4);
-    gfxSetup.SetPoolSize(GfxResourceType::Pipeline, 4);
-    gfxSetup.SetPoolSize(GfxResourceType::Shader, 4);
+    gfxSetup.SetPoolSize(GfxResourceType::Mesh, 8);
+    gfxSetup.SetPoolSize(GfxResourceType::Texture, 8);
+    gfxSetup.SetPoolSize(GfxResourceType::Pipeline, 8);
+    gfxSetup.SetPoolSize(GfxResourceType::Shader, 8);
     Gfx::Setup(gfxSetup);
     Input::Setup();
 
@@ -199,6 +199,8 @@ YakcApp::initRoms() {
     // standard roms required for initial booting are built-in
     this->emu.kc85.roms.add(kc85_roms::caos31, dump_caos31, sizeof(dump_caos31));
     this->emu.kc85.roms.add(kc85_roms::basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
+    this->emu.kc85.roms.add(kc85_roms::caos42c, dump_caos42c, sizeof(dump_caos42c));
+    this->emu.kc85.roms.add(kc85_roms::caos42e, dump_caos42e, sizeof(dump_caos42e));
 
     // async-load optional ROMs
     IO::Load("rom:hc900.852", [this](IO::LoadResult ioRes) {
@@ -209,12 +211,6 @@ YakcApp::initRoms() {
     });
     IO::Load("rom:caos34.853", [this](IO::LoadResult ioRes) {
         this->emu.kc85.roms.add(kc85_roms::caos34, ioRes.Data.Data(), ioRes.Data.Size());
-    });
-    IO::Load("rom:caos42c.854", [this](IO::LoadResult ioRes) {
-        this->emu.kc85.roms.add(kc85_roms::caos42c, ioRes.Data.Data(), ioRes.Data.Size());
-    });
-    IO::Load("rom:caos42e.854", [this](IO::LoadResult ioRes) {
-        this->emu.kc85.roms.add(kc85_roms::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }
 
