@@ -8,22 +8,34 @@ using namespace Oryol;
 
 namespace YAKC {
 
+SoLoud::Soloud* Audio::soloud = nullptr;
+int Audio::soloud_open_count = 0;
+
 //------------------------------------------------------------------------------
 void
 Audio::Setup(const clock& clk) {
+    if (nullptr == soloud) {
+        soloud = Memory::New<SoLoud::Soloud>();
+        soloud->init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 1024, 2);
+    }
+    soloud_open_count++;
     this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, 3000.0f, 2.0f);
-    this->soloud.init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 1024, 2);
     this->audioSource.setSingleInstance(true);
     this->audioSource.setFilter(0, &this->filter);
-    this->audioSource.sample_rate = this->soloud.getBackendSamplerate();
+    this->audioSource.sample_rate = soloud->getBackendSamplerate();
     this->audioSource.cpu_clock_speed = clk.base_freq_khz * 1000;
-    this->audioHandle = this->soloud.play(this->audioSource, 1.0f);
+    this->audioHandle = soloud->play(this->audioSource, 1.0f);
 }
 
 //------------------------------------------------------------------------------
 void
 Audio::Discard() {
-    this->soloud.deinit();
+    soloud_open_count--;
+    if (soloud_open_count == 0) {
+        soloud->deinit();
+        Memory::Delete(soloud);
+        soloud = nullptr;
+    }
 }
 
 //------------------------------------------------------------------------------

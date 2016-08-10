@@ -29,7 +29,8 @@ public:
     /// callback to change volume
     static void cb_volume(void* userdata, uint64_t cycle_count, int vol);
 
-    SoLoud::Soloud soloud;
+    static SoLoud::Soloud* soloud;
+    static int soloud_open_count;
     SoLoud::BiquadResonantFilter filter;
     AudioSource audioSource;
     int audioHandle = 0;
