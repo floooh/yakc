@@ -19,8 +19,8 @@ cmake version 3.3.2
 > git clone https://github.com/floooh/yakc
 > cd yakc
 > ./fips gen
-> ./fips make yakc
-> ./fips run yakc
+> ./fips make yakcapp
+> ./fips run yakcapp
 ```
 
 If it doesn't work out of the box (e.g. on Windows if only VS2015 is installed instead of VS2013) you need to use a different fips build config (run './fips list configs' to see the list of configs, and then './fips set config [cfg]' before running './fips gen' again)
