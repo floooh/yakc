@@ -42,7 +42,7 @@ AudioSourceInstance::getAudio(float* aBuffer, unsigned int aSamples) {
         for (uint32_t i = 0; i < aSamples; i++) {
             chn.peek_next(cur_cycle_count>>precision, cur_op);
             if ((cur_op.vol > 0) && (cur_op.hz > 0)) {
-                uint16_t phase_add = (0x10000 * cur_op.hz) / sample_rate;
+                uint16_t phase_add = uint16_t((0x10000 * cur_op.hz) / sample_rate);
                 chn.phase_counter = (chn.phase_counter + phase_add) & 0xFFFF;
                 *aBuffer++ = chn.phase_counter < 0x8000 ? 0.5f : -0.5f;
             }
