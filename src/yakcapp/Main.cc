@@ -119,7 +119,7 @@ YakcApp::OnRunning() {
 
     #if YAKC_UI
     // toggle UI?
-    if (Input::KeyDown(Key::Tab) || Input::TouchDoubleTapped()) {
+    if (Input::KeyDown(Key::Tab)) {
         this->ui.Toggle();
     }
     // don't handle KC input if IMGUI has the keyboard focus

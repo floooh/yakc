@@ -165,6 +165,17 @@ UI::OnFrame(yakc& emu) {
 
     StringBuilder strBuilder;
     IMUI::NewFrame(Clock::LapTime(this->curTime));
+    // render a single button to enable UI
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 40, 16));
+    if (ImGui::Begin("Menu", nullptr, ImVec2(0,0), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize))
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        if (ImGui::Button("UI")) {
+            this->uiEnabled = !this->uiEnabled;
+        }
+        ImGui::PopStyleColor();
+    }
+    ImGui::End();
     if (this->uiEnabled) {
         if (ImGui::BeginMainMenuBar()) {
             const char* model;
@@ -353,6 +364,16 @@ UI::OnFrame(yakc& emu) {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Settings")) {
+                #if ORYOL_EMSCRIPTEN
+                if (ImGui::MenuItem("Soft Fullscreen", nullptr, is_soft_fullscreen_active())) {
+                    if (is_soft_fullscreen_active()) {
+                        leave_soft_fullscreen();
+                    }
+                    else {
+                        enter_soft_fullscreen();
+                    }
+                }
+                #endif
                 if (ImGui::MenuItem("CRT Effect", nullptr, this->Settings.crtEffect)) {
                     this->Settings.crtEffect = !this->Settings.crtEffect;
                 }
@@ -384,21 +405,6 @@ UI::OnFrame(yakc& emu) {
         // draw open windows
         for (auto& win : this->windows) {
             win->Draw(emu);
-        }
-    }
-    else {
-        // if UI is disabled, draw a simple overlay with help on how to toggle UI
-        if (helpOpen) {
-            ImGui::SetNextWindowPosCenter();
-            if (ImGui::Begin("Help", &this->helpOpen, ImVec2(0,0), 0.75f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders))
-            {
-                ImGui::Text("Press TAB or double-tap to toggle UI!");
-                ImGui::Dummy(ImVec2(96,0)); ImGui::SameLine();
-                if (ImGui::Button("Got it!")) {
-                    this->helpOpen = false;
-                }
-            }
-            ImGui::End();
         }
     }
     ImGui::Render();

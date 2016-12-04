@@ -57,7 +57,6 @@ private:
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;
     bool uiEnabled = false;
-    bool helpOpen = true;
     bool darkThemeEnabled = true;
     bool lightThemeEnabled = false;
     bool imguiAntiAliasedLines = true;
