@@ -56,6 +56,7 @@ private:
     SnapshotStorage snapshotStorage;
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;
+    Oryol::Ptr<WindowBase> keyboardWindow;
     bool uiEnabled = false;
     bool darkThemeEnabled = true;
     bool lightThemeEnabled = false;

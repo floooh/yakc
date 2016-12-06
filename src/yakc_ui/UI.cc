@@ -170,9 +170,30 @@ UI::OnFrame(yakc& emu) {
     if (ImGui::Begin("Menu", nullptr, ImVec2(0,0), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize))
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-        if (ImGui::Button("UI")) {
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 15.0f));
+        if (ImGui::Button("UI ")) {
             this->uiEnabled = !this->uiEnabled;
         }
+        if (ImGui::Button("KBD")) {
+            if (this->keyboardWindow) {
+                this->keyboardWindow = nullptr;
+            }
+            else {
+                this->keyboardWindow = KeyboardWindow::Create();
+                this->keyboardWindow->Setup(emu);
+            }
+        }
+        #if ORYOL_EMSCRIPTEN
+        if (ImGui::Button("FS ")) {
+            if (is_soft_fullscreen_active()) {
+                leave_soft_fullscreen();
+            }
+            else {
+                enter_soft_fullscreen();
+            }
+        }
+        #endif
+        ImGui::PopStyleVar();
         ImGui::PopStyleColor();
     }
     ImGui::End();
@@ -285,9 +306,6 @@ UI::OnFrame(yakc& emu) {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Hardware")) {
-                if (ImGui::MenuItem("Keyboard")) {
-                    this->OpenWindow(emu, KeyboardWindow::Create());
-                }
                 if (emu.is_device(device::any_kc85)) {
                     if (ImGui::MenuItem("Expansion Slots")) {
                         this->OpenWindow(emu, ModuleWindow::Create());
@@ -364,16 +382,6 @@ UI::OnFrame(yakc& emu) {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Settings")) {
-                #if ORYOL_EMSCRIPTEN
-                if (ImGui::MenuItem("Soft Fullscreen", nullptr, is_soft_fullscreen_active())) {
-                    if (is_soft_fullscreen_active()) {
-                        leave_soft_fullscreen();
-                    }
-                    else {
-                        enter_soft_fullscreen();
-                    }
-                }
-                #endif
                 if (ImGui::MenuItem("CRT Effect", nullptr, this->Settings.crtEffect)) {
                     this->Settings.crtEffect = !this->Settings.crtEffect;
                 }
@@ -406,6 +414,9 @@ UI::OnFrame(yakc& emu) {
         for (auto& win : this->windows) {
             win->Draw(emu);
         }
+    }
+    if (this->keyboardWindow) {
+        this->keyboardWindow->Draw(emu);
     }
     ImGui::Render();
 

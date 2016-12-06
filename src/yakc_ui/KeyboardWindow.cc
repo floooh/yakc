@@ -49,7 +49,7 @@ static struct key layout[num_rows][num_cols] = {
     // YXCV row (NOTE: shift-key has special code which is not forwarded as key!
     {10,"SHI",0xFF,0xFF}, {0,"Y",'Y','y'}, {0,"X",'X','y'}, {0,"C",'C','c'}, {0,"V",'V','v'}, {0,"B",'B','b'},
     {0,"N",'N','n'}, {0,"M",'M','m'}, {0,", <",',','<'}, {0,". >",'.','>'}, {0,"/ ?",'/','?'},
-    {36,"RET",0x0D,0x0D}
+    {44,"RET",0x0D,0x0D}
 }
 
 };
@@ -63,12 +63,15 @@ KeyboardWindow::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 bool
 KeyboardWindow::Draw(yakc& emu) {
-    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.75f);
-    ImGui::SetNextWindowSize(ImVec2(572, 196));
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
-
+    const float width = 676.0f;
+    const float height = 180.0f;
+    const ImVec2& dispSize = ImGui::GetIO().DisplaySize;
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::SetNextWindowPos(ImVec2((dispSize.x-width)/2, dispSize.y-height-20), ImGuiSetCond_FirstUseEver);
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImVec2(676, 180), 0.25f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
+        ImGui::PushButtonRepeat(true);
         // main section keys
-        const ImVec2 size(32,24);
+        const ImVec2 size(40,24);
         for (int row = 0; row < num_rows; row++) {
             for (int col = 0; col < num_cols; col++) {
                 const key& k = layout[row][col];
@@ -104,12 +107,13 @@ KeyboardWindow::Draw(yakc& emu) {
 
         // space bar
         ImGui::Dummy(ImVec2(80,0)); ImGui::SameLine();
-        if (ImGui::Button("SPACE", ImVec2(224, 0))) {
+        if (ImGui::Button("SPACE", ImVec2(400, 24))) {
             emu.put_key(this->caps_lock ? 0x5B : 0x20);
         }
+        ImGui::PopButtonRepeat();
     }
     ImGui::End();
-    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
     return this->Visible;
 }
 
