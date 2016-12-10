@@ -83,21 +83,17 @@ public:
     void handle_keyboard_input();
 
     /// the z80 out callback
-    virtual void cpu_out(uword port, ubyte val);
+    virtual void cpu_out(uword port, ubyte val) override;
     /// the z80 in callback
-    virtual ubyte cpu_in(uword port);
+    virtual ubyte cpu_in(uword port) override;
     /// CTC write callback
-    virtual void ctc_write(int chn_id);
+    virtual void ctc_write(int ctc_id, int chn_id) override;
     /// CTC zcto callback
-    virtual void ctc_zcto(int chn_id);
-    /// PIO-A out callback
-    static void pio_a_out_cb(void* userdata, ubyte val);
-    /// PIO-A in callback
-    static ubyte pio_a_in_cb(void* userdata);
-    /// PIO-B out callback
-    static void pio_b_out_cb(void* userdata, ubyte val);
-    /// PIO-B in callback
-    static ubyte pio_b_in_cb(void* userdata);
+    virtual void ctc_zcto(int ctc_id, int chn_id) override;
+    /// Z80 PIO input callback
+    virtual ubyte pio_in(int pio_id, int port_id) override;
+    /// Z80 PIO output callback
+    virtual void pio_out(int pio_id, int port_id, ubyte val) override;
 
     /// update module/memory mapping
     void update_bank_switching();

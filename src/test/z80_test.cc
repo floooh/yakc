@@ -9,7 +9,7 @@ using namespace YAKC;
 
 static ubyte ram0[0x4000];
 
-class testBus : public z80bus {
+class cpuTestBus : public z80bus {
 public:
     uword out_port = 0;
     ubyte out_byte = 0xFF;
@@ -21,7 +21,7 @@ public:
         return (port & 0xFF) * 2;
     }
 };
-static testBus bus;
+static cpuTestBus bus;
 
 static z80 init_z80() {
     z80 cpu;

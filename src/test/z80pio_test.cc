@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/z80pio.h"
+#include "yakc/z80bus.h"
 
 using namespace YAKC;
 
@@ -10,10 +11,11 @@ using namespace YAKC;
 TEST(z80pio_control) {
 
     // this roughly follows the Z80 PIO user's manual
-    // (http://www.z80.info/zip/z80piomn.pdf)
+    // (http://www.z80.info/zip/z80piomn.pdf )
 
+    z80bus bus;
     z80pio pio;
-    pio.init();
+    pio.init(0, &bus);
 
     for (int i = 0; i < z80pio::num_ports; i++) {
         CHECK(0 == pio.port[i].output);
@@ -108,27 +110,37 @@ TEST(z80pio_control) {
 }
 
 //------------------------------------------------------------------------------
+class pioTestBus : public z80bus {
+public:
+    ubyte out_value_a = 0;
+    ubyte in_value_a = 0;
+    ubyte out_value_b = 0;
+    ubyte in_value_b = 0;
+
+    virtual ubyte pio_in(int pio_id, int port_id) override {
+        if (z80pio::A == port_id) {
+            return this->in_value_a;
+        }
+        else {
+            return this->in_value_b;
+        }
+    }
+    virtual void pio_out(int pio_id, int port_id, ubyte val) override {
+        if (z80pio::A == port_id) {
+            this->out_value_a = val;
+        }
+        else {
+            this->out_value_b = val;
+        }
+    }
+};
+
 TEST(z80pio_output_input) {
 
     // init port A to output mode and port B to input mode
-    static ubyte out_value_a = 0;
-    static ubyte in_value_a = 0;
-    static ubyte out_value_b = 0;
-    static ubyte in_value_b = 0;
+    pioTestBus bus;
     z80pio pio;
-    pio.init();
-    pio.connect_out_cb(z80pio::A, nullptr, [](void* userdata, ubyte val) {
-        out_value_a = val;
-    });
-    pio.connect_in_cb(z80pio::A, nullptr, [](void* userdata)->ubyte {
-        return in_value_a;
-    });
-    pio.connect_out_cb(z80pio::B, nullptr, [](void* userdata, ubyte val) {
-        out_value_b = val;
-    });
-    pio.connect_in_cb(z80pio::B, nullptr, [](void* userdata)->ubyte {
-        return in_value_b;
-    });
+    pio.init(0, &bus);
 
     pio.write_control(z80pio::A, (0<<6)|0xF);
     CHECK(z80pio::mode_output == pio.port[z80pio::A].mode);
@@ -142,36 +154,36 @@ TEST(z80pio_output_input) {
     pio.write_data(z80pio::A, 0x54);
     CHECK(0x54 == pio.port[z80pio::A].output);
     CHECK(0 == pio.port[z80pio::A].input);
-    CHECK(0x54 == out_value_a);
+    CHECK(0x54 == bus.out_value_a);
 
     // reading a value in output mode should not call the input callbacks
     // but simply return the value of the output register
-    out_value_a = 0;
-    in_value_a = 0x23;
+    bus.out_value_a = 0;
+    bus.in_value_a = 0x23;
     ubyte read_val = pio.read_data(z80pio::A);
     CHECK(0x54 == read_val);
-    CHECK(0 == out_value_a);
-    CHECK(0x23 == in_value_a);
+    CHECK(0 == bus.out_value_a);
+    CHECK(0x23 == bus.in_value_a);
     CHECK(0x54 == pio.port[z80pio::A].output);
     CHECK(0 == pio.port[z80pio::A].input);
 
     // read data value from PIO-B, in input mode, this should invoke
     // the input-callback to fetch a value
-    out_value_b = 0x11;
-    in_value_b = 0x45;
+    bus.out_value_b = 0x11;
+    bus.in_value_b = 0x45;
     read_val = pio.read_data(z80pio::B);
     CHECK(0x45 == read_val);
     CHECK(0x45 == pio.port[z80pio::B].input);
     CHECK(0 == pio.port[z80pio::B].output);
-    CHECK(0x11 == out_value_b);
+    CHECK(0x11 == bus.out_value_b);
 
     // writing data in input mode writes to the output register
     // (not the input register, but doesn't any callbacks to be called)
-    out_value_b = 0;
-    in_value_b = 0;
+    bus.out_value_b = 0;
+    bus.in_value_b = 0;
     pio.write_data(z80pio::B, 0x78);
-    CHECK(0 == out_value_b);
-    CHECK(0 == in_value_b);
+    CHECK(0 == bus.out_value_b);
+    CHECK(0 == bus.in_value_b);
     CHECK(0x78 == pio.port[z80pio::B].output);
     CHECK(0x45 == pio.port[z80pio::B].input);
 

@@ -17,6 +17,8 @@
 
 namespace YAKC {
 
+class z80bus;
+
 class z80pio {
 public:
     /// port identifiers
@@ -68,32 +70,8 @@ public:
     /// interrupt controller
     z80int int_ctrl;
 
-    /// callback definitions
-    typedef void(*out_cb)(void* userdata, ubyte val);
-    typedef ubyte(*in_cb)(void* userdata);
-    typedef void(*rdy_cb)(void* userdata, bool active);
-
-    template<typename CBTYPE> struct callback {
-        callback() :
-            func(0),
-            userdata(nullptr)
-        { };
-        CBTYPE func;
-        void* userdata;
-    };
-    callback<out_cb> out_callback[num_ports];
-    callback<in_cb> in_callback[num_ports];
-    callback<rdy_cb> rdy_callback[num_ports];
-
-    /// connect out-callback (called when sending data to peripheral)
-    void connect_out_cb(int port_id, void* userdata, out_cb cb);
-    /// connect in-callback (called when requesting data from peripheral)
-    void connect_in_cb(int port_id, void* userdata, in_cb cb);
-    /// connect rdy-callback (called when ARDY/BRDY line goes high/low)
-    void connect_rdy_cb(int port_id, void* userdata, rdy_cb cb);
-
     /// initialize the pio
-    void init();
+    void init(int id, z80bus* bus);
     /// reset the pio
     void reset();
 
@@ -115,6 +93,9 @@ public:
 private:
     /// set a port's ready line
     void set_rdy(int port_id, bool active);
+
+    int id = 0;
+    z80bus* bus = nullptr;
 };
 
 } // namespace YAKC

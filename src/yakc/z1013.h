@@ -69,17 +69,13 @@ public:
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
 
     /// the z80 out callback
-    virtual void cpu_out(uword port, ubyte val);
+    virtual void cpu_out(uword port, ubyte val) override;
     /// the z80 in callback
-    virtual ubyte cpu_in(uword port);
-    /// PIO-A out callback
-    static void pio_a_out_cb(void* userdata, ubyte val);
-    /// PIO-A in callback
-    static ubyte pio_a_in_cb(void* userdata);
-    /// PIO-B out callback
-    static void pio_b_out_cb(void* userdata, ubyte val);
-    /// PIO-B in callback
-    static ubyte pio_b_in_cb(void* userdata);
+    virtual ubyte cpu_in(uword port) override;
+    /// PIO out callback
+    virtual void pio_out(int pio_id, int port_id, ubyte val) override;
+    /// PIO in callback
+    virtual ubyte pio_in(int pio_id, int port_id) override;
 
     /// initialize the key translation table for the basic 8x4 keyboard (z1013.01)
     void init_keymap_8x4();

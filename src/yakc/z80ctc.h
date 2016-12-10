@@ -73,7 +73,7 @@ public:
     } channels[num_channels];
 
     /// initialize the ctc
-    void init(z80bus* bus);
+    void init(int id, z80bus* bus);
     /// initialize the downstream daisy chain
     void init_daisychain(z80int* downstream);
 
@@ -107,6 +107,7 @@ private:
     /// external trigger, called from trg0..trg3
     void update_counter(int chn_index);
 
+    int id = 0;
     z80bus* bus = nullptr;
 };
 

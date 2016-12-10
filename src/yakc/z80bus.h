@@ -16,16 +16,16 @@ public:
     virtual void cpu_out(uword port, ubyte val);
 
     /// Z80 PIO input callback
-    virtual ubyte pio_in(int port_id);
+    virtual ubyte pio_in(int pio_id, int port_id);
     /// Z80 PIO output callback
-    virtual void pio_out(int port_id, ubyte val);
+    virtual void pio_out(int pio_id, int port_id, ubyte val);
     /// Z80 PIO ready callback
-    virtual void pio_rdy(int port_id, bool active);
+    virtual void pio_rdy(int pio_id, int port_id, bool active);
 
     /// Z80 CTC write callback
-    virtual void ctc_write(int chn_id);
+    virtual void ctc_write(int ctc_id, int chn_id);
     /// Z80 CTC ZCTO callback
-    virtual void ctc_zcto(int chn_id);
+    virtual void ctc_zcto(int ctc_id, int chn_id);
 };
 
 } // namespace YAKC

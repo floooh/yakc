@@ -65,11 +65,7 @@ z1013::poweron(device m) {
 
     // initialize hardware components
     cpu.init(this);
-    pio.init();
-    pio.connect_out_cb(z80pio::A, this, pio_a_out_cb);
-    pio.connect_out_cb(z80pio::B, this, pio_b_out_cb);
-    pio.connect_in_cb(z80pio::A, this, pio_a_in_cb);
-    pio.connect_in_cb(z80pio::B, this, pio_b_in_cb);
+    pio.init(0, this);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -190,49 +186,39 @@ z1013::cpu_in(uword port) {
 
 //------------------------------------------------------------------------------
 void
-z1013::pio_a_out_cb(void* userdata, ubyte val) {
-    // nothing happening here, PIO-A is for user devices
+z1013::pio_out(int pio_id, int port_id, ubyte val) {
+    if (z80pio::B == port_id) {
+        // for z1013a2, bit 4 is for monitor A.2 with 8x8 keyboard
+        this->kbd_8x8_requested = 0 != (val & (1<<4));
+        // FIXME: bit 7 is for cassette output
+    }
 }
 
 //------------------------------------------------------------------------------
 ubyte
-z1013::pio_a_in_cb(void* userdata) {
-    // nothing to return here, PIO-A is for user devices
-    return 0xFF;
-}
-
-//------------------------------------------------------------------------------
-void
-z1013::pio_b_out_cb(void* userdata, ubyte val) {
-
-    // for z1013a2, bit 4 is for monitor A.2 with 8x8 keyboard
-    z1013* self = (z1013*)userdata;
-    self->kbd_8x8_requested = 0 != (val & (1<<4));
-
-    // FIXME: bit 7 is for cassette output
-}
-
-//------------------------------------------------------------------------------
-ubyte
-z1013::pio_b_in_cb(void* userdata) {
-    z1013* self = (z1013*) userdata;
-
-    // FIXME: handle bit 7 for cassette input
-    // read keyboard matrix state into lower 4 bits
-    ubyte val = 0;
-    if (device::z1013_01 == self->cur_model) {
-        ubyte col = self->kbd_column_nr_requested & 7;
-        val = 0xF & ~((self->kbd_column_bits >> (col*4)) & 0xF);
+z1013::pio_in(int pio_id, int port_id) {
+    if (z80pio::A == port_id) {
+        // nothing to return here, PIO-A is for user devices
+        return 0xFF;
     }
     else {
-        ubyte col = (self->kbd_column_nr_requested & 7);
-        val = ubyte(self->kbd_column_bits >> (col*8));
-        if (self->kbd_8x8_requested) {
-            val >>= 4;
+        // FIXME: handle bit 7 for cassette input
+        // read keyboard matrix state into lower 4 bits
+        ubyte val = 0;
+        if (device::z1013_01 == this->cur_model) {
+            ubyte col = this->kbd_column_nr_requested & 7;
+            val = 0xF & ~((this->kbd_column_bits >> (col*4)) & 0xF);
         }
-        val = 0xF & ~(val & 0xF);
+        else {
+            ubyte col = (this->kbd_column_nr_requested & 7);
+            val = ubyte(this->kbd_column_bits >> (col*8));
+            if (this->kbd_8x8_requested) {
+                val >>= 4;
+            }
+            val = 0xF & ~(val & 0xF);
+        }
+        return val;
     }
-    return val;
 }
 
 //------------------------------------------------------------------------------

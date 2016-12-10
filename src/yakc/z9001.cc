@@ -132,9 +132,9 @@ z9001::poweron(device m, os_rom os) {
     z80pio& pio2 = this->board->pio2;
     z80ctc& ctc = this->board->ctc;
     cpu.init(this);
-    pio1.init();
-    pio2.init();
-    ctc.init(this);
+    pio1.init(0, this);
+    pio2.init(1, this);
+    ctc.init(0, this);
 
     // setup interrupt daisy chain, from highest to lowest priority:
     //  CPU -> PIO1 -> PIO2 -> CTC
@@ -147,13 +147,6 @@ z9001::poweron(device m, os_rom os) {
     pio1.int_ctrl.connect_irq_device(&pio2.int_ctrl);
     pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
     ctc.init_daisychain(nullptr);
-
-    // connect PIO callbacks
-    pio1.connect_out_cb(z80pio::A, this, pio1_a_out_cb);
-    pio2.connect_out_cb(z80pio::A, this, pio2_a_out_cb);
-    pio2.connect_out_cb(z80pio::B, this, pio2_b_out_cb);
-    pio2.connect_in_cb(z80pio::A, this, pio2_a_in_cb);
-    pio2.connect_in_cb(z80pio::B, this, pio2_b_in_cb);
 
     // configure a hardware counter to control the video blink attribute
     this->board->clck.config_timer(0, 100, blink_cb, this);
@@ -338,66 +331,65 @@ z9001::cpu_in(uword port) {
 
 //------------------------------------------------------------------------------
 void
-z9001::pio1_a_out_cb(void* userdata, ubyte val) {
-    z9001* self = (z9001*) userdata;
+z9001::pio_out(int pio_id, int port_id, ubyte val) {
+    if (0 == pio_id) {
+        if (z80pio::A == port_id) {
+            // PIO1-A bits:
+            // 0..1:    unused
+            // 2:       display mode (0: 24 lines, 1: 20 lines)
+            // 3..5:    border color
+            // 6:       graphics LED on keyboard (0: off)
+            // 7:       enable audio output (1: enabled)
+            this->brd_color = (val>>3) & 7;
+        }
+        else {
 
-    // PIO1-A bits:
-    // 0..1:    unused
-    // 2:       display mode (0: 24 lines, 1: 20 lines)
-    // 3..5:    border color
-    // 6:       graphics LED on keyboard (0: off)
-    // 7:       enable audio output (1: enabled)
-    self->brd_color = (val>>3) & 7;
-}
-
-//------------------------------------------------------------------------------
-void
-z9001::pio2_a_out_cb(void* userdata, ubyte val) {
-    z9001* self = (z9001*) userdata;
-    self->kbd_column_mask = ~val;
-}
-
-//------------------------------------------------------------------------------
-void
-z9001::pio2_b_out_cb(void* userdata, ubyte val) {
-    z9001* self = (z9001*) userdata;
-    self->kbd_line_mask = ~val;
+        }
+    }
+    else {
+        if (z80pio::A == port_id) {
+            this->kbd_column_mask = ~val;
+        }
+        else {
+            this->kbd_line_mask = ~val;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
 ubyte
-z9001::pio2_a_in_cb(void* userdata) {
-    z9001* self = (z9001*)userdata;
-
-    // return column bits for requested line bits of currently pressed key
-    ubyte column_bits = 0;
-    for (int col=0; col<8; col++) {
-        const ubyte line_bits = (self->key_mask>>(col*8)) & 0xFF;
-        if (line_bits & self->kbd_line_mask) {
-            column_bits |= (1<<col);
+z9001::pio_in(int pio_id, int port_id) {
+    if (0 == pio_id) {
+        return 0;
+    }
+    else {
+        if (z80pio::A == port_id) {
+            // return column bits for requested line bits of currently pressed key
+            ubyte column_bits = 0;
+            for (int col=0; col<8; col++) {
+                const ubyte line_bits = (this->key_mask>>(col*8)) & 0xFF;
+                if (line_bits & this->kbd_line_mask) {
+                    column_bits |= (1<<col);
+                }
+            }
+            return ~column_bits;
+        }
+        else {
+            // return line bits for requested column bits of currently pressed key
+            ubyte line_bits = 0;
+            for (int col=0; col<8; col++) {
+                if ((1<<col) & this->kbd_column_mask) {
+                    line_bits |= (this->key_mask>>(col*8)) & 0xFF;
+                }
+            }
+            return ~line_bits;
         }
     }
-    return ~column_bits;
-}
-
-//------------------------------------------------------------------------------
-ubyte
-z9001::pio2_b_in_cb(void* userdata) {
-    z9001* self = (z9001*)userdata;
-
-    // return line bits for requested column bits of currently pressed key
-    ubyte line_bits = 0;
-    for (int col=0; col<8; col++) {
-        if ((1<<col) & self->kbd_column_mask) {
-            line_bits |= (self->key_mask>>(col*8)) & 0xFF;
-        }
-    }
-    return ~line_bits;
 }
 
 //------------------------------------------------------------------------------
 void
-z9001::ctc_write(int chn_id) {
+z9001::ctc_write(int ctc_id, int chn_id) {
     // this is the same as in the KC85/3 emu
     z80ctc& ctc = this->board->ctc;
     if (0 == chn_id) {
@@ -431,7 +423,7 @@ z9001::ctc_write(int chn_id) {
 
 //------------------------------------------------------------------------------
 void
-z9001::ctc_zcto(int chn_id) {
+z9001::ctc_zcto(int ctc_id, int chn_id) {
     // CTC2 is configured as timer and triggers CTC3, which is configured
     // as counter, CTC3 triggers an interrupt which drives the system clock
     if (2 == chn_id) {

@@ -2,19 +2,19 @@
 //  z80pio.cc
 //------------------------------------------------------------------------------
 #include "z80pio.h"
+#include "z80bus.h"
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-z80pio::init() {
+z80pio::init(int id_, z80bus* bus_) {
+    YAKC_ASSERT(bus_);
+    this->id = id_;
+    this->bus = bus_;
     this->int_ctrl = z80int();
     for (int i = 0; i < num_ports; i++) {
         this->port[i] = port_t();
-        this->out_callback[i].func = nullptr;
-        this->out_callback[i].userdata = nullptr;
-        this->in_callback[i].func = nullptr;
-        this->in_callback[i].userdata = nullptr;
     }
 }
 
@@ -39,37 +39,10 @@ z80pio::reset() {
 void
 z80pio::set_rdy(int port_id, bool active) {
     auto& p = this->port[port_id];
-    auto& cb = this->rdy_callback[port_id];
     if (p.rdy != active) {
         p.rdy = active;
-        if (cb.func) {
-            cb.func(cb.userdata, active);
-        }
+        this->bus->pio_rdy(this->id, port_id, active);
     }
-}
-
-//------------------------------------------------------------------------------
-void
-z80pio::connect_out_cb(int port_id, void* userdata, out_cb cb) {
-    YAKC_ASSERT((port_id>=0)&&(port_id<num_ports));
-    this->out_callback[port_id].func = cb;
-    this->out_callback[port_id].userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-void
-z80pio::connect_in_cb(int port_id, void* userdata, in_cb cb) {
-    YAKC_ASSERT((port_id>=0)&&(port_id<num_ports));
-    this->in_callback[port_id].func = cb;
-    this->in_callback[port_id].userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-void
-z80pio::connect_rdy_cb(int port_id, void* userdata, rdy_cb cb) {
-    YAKC_ASSERT((port_id>=0)&&(port_id<num_ports));
-    this->rdy_callback[port_id].func = cb;
-    this->rdy_callback[port_id].userdata = userdata;
 }
 
 //------------------------------------------------------------------------------
@@ -137,14 +110,11 @@ void
 z80pio::write_data(int port_id, ubyte data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     auto& p = this->port[port_id];
-    const auto& cb = this->out_callback[port_id];
     switch (p.mode) {
         case mode_output:
             this->set_rdy(port_id, false);
             p.output = data;
-            if (cb.func) {
-                cb.func(cb.userdata, data);
-            }
+            this->bus->pio_out(this->id, port_id, data);
             this->set_rdy(port_id, true);
             break;
         case mode_input:
@@ -154,17 +124,13 @@ z80pio::write_data(int port_id, ubyte data) {
             this->set_rdy(port_id, false);
             p.output = data;
             if (!p.stb) {
-                if (cb.func) {
-                    cb.func(cb.userdata, data);
-                }
+                this->bus->pio_out(this->id, port_id, data);
             }
             this->set_rdy(port_id, true);
             break;
         case mode_bitcontrol:
             p.output = data;
-            if (cb.func) {
-                cb.func(cb.userdata, p.io_select | (p.output & ~p.io_select));
-            }
+            this->bus->pio_out(this->id, port_id, p.io_select | (p.output & ~p.io_select));
             break;
         default:
             YAKC_ASSERT(false);
@@ -177,16 +143,13 @@ z80pio::read_data(int port_id) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     ubyte data = 0;
     auto& p = this->port[port_id];
-    const auto& cb = this->in_callback[port_id];
     switch (p.mode) {
         case mode_output:
             data = p.output;
             break;
         case mode_input:
             if (!p.stb) {
-                if (cb.func) {
-                    p.input = cb.func(cb.userdata);
-                }
+                p.input = this->bus->pio_in(this->id, port_id);
             }
             data = p.input;
             this->set_rdy(port_id, false);
@@ -198,9 +161,7 @@ z80pio::read_data(int port_id) {
             this->set_rdy(port_id, true);
             break;
         case mode_bitcontrol:
-            if (cb.func) {
-                p.input = cb.func(cb.userdata);
-            }
+            p.input = this->bus->pio_in(this->id, port_id);
             data = (p.input & p.io_select) | (p.output & ~p.io_select);
             break;
         default:

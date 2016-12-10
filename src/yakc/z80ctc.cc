@@ -8,8 +8,9 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::init(z80bus* bus_) {
+z80ctc::init(int id_, z80bus* bus_) {
     YAKC_ASSERT(bus_);
+    this->id = id_;
     this->bus = bus_;
     for (auto& chn : channels) {
         chn = channel_state();
@@ -53,13 +54,13 @@ z80ctc::write(channel c, ubyte v) {
         if ((chn.mode & MODE) == MODE_TIMER) {
             chn.waiting_for_trigger = (chn.mode & TRIGGER) == TRIGGER_PULSE;
         }
-        this->bus->ctc_write(c);
+        this->bus->ctc_write(this->id, c);
     }
     else if ((v & CONTROL) == CONTROL_WORD) {
         // a control word
         chn.mode = v;
         if (!(chn.mode & CONSTANT_FOLLOWS)) {
-            this->bus->ctc_write(c);
+            this->bus->ctc_write(this->id, c);
         }
     }
     else {
@@ -135,7 +136,7 @@ z80ctc::down_counter_callback(int chn_index) {
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
         chn.int_ctrl.request_interrupt(chn.interrupt_vector);
     }
-    this->bus->ctc_zcto(chn_index);
+    this->bus->ctc_zcto(this->id, chn_index);
 }
 
 //------------------------------------------------------------------------------

@@ -50,8 +50,8 @@ kc85::poweron(device m, os_rom os) {
     z80pio& pio = this->board->pio;
     z80ctc& ctc = this->board->ctc;
     cpu.mem.unmap_all();
-    pio.init();
-    ctc.init(this);
+    pio.init(0, this);
+    ctc.init(0, this);
     cpu.init(this);
     this->exp.init();
     this->video.init(m);
@@ -64,12 +64,6 @@ kc85::poweron(device m, os_rom os) {
     }
     cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
     ctc.init_daisychain(&this->board->pio.int_ctrl);
-
-    // connect the PIO in/out callbacks
-    pio.connect_out_cb(z80pio::A, this, pio_a_out_cb);
-    pio.connect_out_cb(z80pio::B, this, pio_b_out_cb);
-    pio.connect_in_cb(z80pio::A, this, pio_a_in_cb);
-    pio.connect_in_cb(z80pio::B, this, pio_b_in_cb);
 
     // connect CTC2 trigger to a 50Hz vertical-blank-timer,
     // this controls the foreground color blinking flag
@@ -369,7 +363,7 @@ kc85::cpu_in(uword port) {
 
 //------------------------------------------------------------------------------
 void
-kc85::ctc_write(int chn_id) {
+kc85::ctc_write(int ctc_id, int chn_id) {
     if (chn_id < 2) {
         this->audio.ctc_write(chn_id);
     }
@@ -377,41 +371,30 @@ kc85::ctc_write(int chn_id) {
 
 //------------------------------------------------------------------------------
 void
-kc85::ctc_zcto(int chn_id) {
+kc85::ctc_zcto(int ctc_id, int chn_id) {
     if (chn_id == 2) {
         this->video.ctc_blink();
     }
 }
 
 //------------------------------------------------------------------------------
-void
-kc85::pio_a_out_cb(void* userdata, ubyte val) {
-    kc85* self = (kc85*) userdata;
-    self->pio_a = val;
-    self->update_bank_switching();
-}
-
-//------------------------------------------------------------------------------
 ubyte
-kc85::pio_a_in_cb(void* userdata) {
-    kc85* self = (kc85*) userdata;
-    return self->pio_a;
+kc85::pio_in(int pio_id, int port_id) {
+    return z80pio::A == port_id ? this->pio_a : this->pio_b;
 }
 
 //------------------------------------------------------------------------------
 void
-kc85::pio_b_out_cb(void* userdata, ubyte val) {
-    kc85* self = (kc85*) userdata;
-    self->pio_b = val;
-    self->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
-    self->audio.update_volume(val & PIO_B_VOLUME_MASK);
-}
-
-//------------------------------------------------------------------------------
-ubyte
-kc85::pio_b_in_cb(void* userdata) {
-    kc85* self = (kc85*) userdata;
-    return self->pio_b;
+kc85::pio_out(int pio_id, int port_id, ubyte val) {
+    if (z80pio::A == port_id) {
+        this->pio_a = val;
+        this->update_bank_switching();
+    }
+    else {
+        this->pio_b = val;
+        this->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
+        this->audio.update_volume(val & PIO_B_VOLUME_MASK);
+    }
 }
 
 //------------------------------------------------------------------------------

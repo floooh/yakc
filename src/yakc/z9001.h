@@ -56,24 +56,18 @@ public:
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
 
     /// the z80 out callback
-    virtual void cpu_out(uword port, ubyte val);
+    virtual void cpu_out(uword port, ubyte val) override;
     /// the z80 in callback
-    virtual ubyte cpu_in(uword port);
+    virtual ubyte cpu_in(uword port) override;
     /// CTC write callback (used for audio)
-    virtual void ctc_write(int chn_id);
+    virtual void ctc_write(int ctc_id, int chn_id) override;
     /// CTC ZCTO callback (used to trigger CTC channel 3)
-    virtual void ctc_zcto(int chn_id);
-    /// PIO1-A OUT callback (display mode, border color, etc)
-    static void pio1_a_out_cb(void* userdata, ubyte val);
-    /// PIO2-A OUT callback (triggers keyboard matrix columns)
-    static void pio2_a_out_cb(void* userdata, ubyte val);
-    /// PIO2-A OUT callback (triggers keyboard matrix lines
-    static void pio2_b_out_cb(void* userdata, ubyte val);
-    /// PIO2-A IN callback for keyboard input (keyboard matrix column)
-    static ubyte pio2_a_in_cb(void* userdata);
-    /// PIO2-B IN callback for keyboard input (keyboard matrix line)
-    static ubyte pio2_b_in_cb(void* userdata);
-     
+    virtual void ctc_zcto(int ctc_id, int chn_id) override;
+    /// PIO output callback
+    virtual void pio_out(int pio_id, int port_id, ubyte val) override;
+    /// PIO input callback
+    virtual ubyte pio_in(int pio_id, int port_id) override;
+
     /// blink counter callback
     static void blink_cb(void* userdata);
 

@@ -19,31 +19,31 @@ z80bus::cpu_out(uword port, ubyte val) {
 
 //------------------------------------------------------------------------------
 ubyte
-z80bus::pio_in(int port_id) {
+z80bus::pio_in(int pio_id, int port_id) {
     return 0;
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::pio_out(int port_id, ubyte val) {
+z80bus::pio_out(int pio_id, int port_id, ubyte val) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::pio_rdy(int port_id, bool active) {
+z80bus::pio_rdy(int pio_id, int port_id, bool active) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::ctc_write(int chn_id) {
+z80bus::ctc_write(int ctc_id, int chn_id) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::ctc_zcto(int chn_id) {
+z80bus::ctc_zcto(int ctc_id, int chn_id) {
     // empty
 }
 
