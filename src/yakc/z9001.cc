@@ -131,10 +131,10 @@ z9001::poweron(device m, os_rom os) {
     z80pio& pio1 = this->board->pio;
     z80pio& pio2 = this->board->pio2;
     z80ctc& ctc = this->board->ctc;
-    cpu.init(in_cb, out_cb, this);
+    cpu.init(this);
     pio1.init();
     pio2.init();
-    ctc.init();
+    ctc.init(this);
 
     // setup interrupt daisy chain, from highest to lowest priority:
     //  CPU -> PIO1 -> PIO2 -> CTC
@@ -154,13 +154,6 @@ z9001::poweron(device m, os_rom os) {
     pio2.connect_out_cb(z80pio::B, this, pio2_b_out_cb);
     pio2.connect_in_cb(z80pio::A, this, pio2_a_in_cb);
     pio2.connect_in_cb(z80pio::B, this, pio2_b_in_cb);
-
-    // connect CTC0 callback, this is used for audio
-    ctc.connect_write0(ctc0_write, this);
-
-    // CTC2 is configured as timer and triggers CTC3, which is configured
-    // as counter, CTC3 triggers an interrupt which drives the system clock
-    ctc.connect_zcto2(z80ctc::ctrg3, &ctc);
 
     // configure a hardware counter to control the video blink attribute
     this->board->clck.config_timer(0, 100, blink_cb, this);
@@ -238,12 +231,11 @@ z9001::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
 
 //------------------------------------------------------------------------------
 void
-z9001::out_cb(void* userdata, uword port, ubyte val) {
+z9001::cpu_out(uword port, ubyte val) {
     // NOTE: there are 2 port numbers each for all CTC and PIO ports!
-    z9001* self = (z9001*)userdata;
-    z80pio& pio1 = self->board->pio;
-    z80pio& pio2 = self->board->pio2;
-    z80ctc& ctc = self->board->ctc;
+    z80pio& pio1 = this->board->pio;
+    z80pio& pio2 = this->board->pio2;
+    z80ctc& ctc = this->board->ctc;
     switch (port & 0xFF) {
         case 0x80:
         case 0x84:
@@ -300,11 +292,10 @@ z9001::out_cb(void* userdata, uword port, ubyte val) {
 
 //------------------------------------------------------------------------------
 ubyte
-z9001::in_cb(void* userdata, uword port) {
-    z9001* self = (z9001*)userdata;
-    z80pio& pio1 = self->board->pio;
-    z80pio& pio2 = self->board->pio2;
-    z80ctc& ctc = self->board->ctc;
+z9001::cpu_in(uword port) {
+    z80pio& pio1 = this->board->pio;
+    z80pio& pio2 = this->board->pio2;
+    z80ctc& ctc = this->board->ctc;
     switch (port & 0xFF) {
         case 0x80:
         case 0x84:
@@ -406,35 +397,45 @@ z9001::pio2_b_in_cb(void* userdata) {
 
 //------------------------------------------------------------------------------
 void
-z9001::ctc0_write(void* userdata) {
+z9001::ctc_write(int chn_id) {
     // this is the same as in the KC85/3 emu
-    z9001* self = (z9001*)userdata;
-    z80ctc& ctc = self->board->ctc;
+    z80ctc& ctc = this->board->ctc;
+    if (0 == chn_id) {
+        // has the CTC channel state changed since last time?
+        const auto& ctc_chn = ctc.channels[0];
+        if ((ctc_chn.constant != this->ctc0_constant) ||
+            (ctc_chn.mode ^ this->ctc0_mode)) {
 
-    // has the CTC channel state changed since last time?
-    const auto& ctc_chn = ctc.channels[0];
-    if ((ctc_chn.constant != self->ctc0_constant) ||
-        (ctc_chn.mode ^ self->ctc0_mode)) {
-
-        if (!(self->ctc0_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
-            // CTC channel has become inactive, call the stop-callback
-            if (self->sound_cb.stop) {
-                self->sound_cb.stop(self->sound_cb.userdata, self->abs_cycle_count, 0);
-            }
-            self->ctc0_mode = ctc_chn.mode;
-        }
-        else if (!(ctc_chn.mode & z80ctc::RESET)) {
-            // CTC channel has become active or constant has changed, call sound-callback
-            int div = ctc_chn.constant * ((ctc_chn.mode & z80ctc::PRESCALER_256) ? 256 : 16);
-            if (div > 0) {
-                int hz = int((float(2457600) / float(div)) / 2.0f);
-                if (self->sound_cb.sound) {
-                    self->sound_cb.sound(self->sound_cb.userdata, self->abs_cycle_count, 0, hz);
+            if (!(this->ctc0_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
+                // CTC channel has become inactive, call the stop-callback
+                if (this->sound_cb.stop) {
+                    this->sound_cb.stop(this->sound_cb.userdata, this->abs_cycle_count, 0);
                 }
+                this->ctc0_mode = ctc_chn.mode;
             }
-            self->ctc0_constant = ctc_chn.constant;
-            self->ctc0_mode = ctc_chn.mode;
+            else if (!(ctc_chn.mode & z80ctc::RESET)) {
+                // CTC channel has become active or constant has changed, call sound-callback
+                int div = ctc_chn.constant * ((ctc_chn.mode & z80ctc::PRESCALER_256) ? 256 : 16);
+                if (div > 0) {
+                    int hz = int((float(2457600) / float(div)) / 2.0f);
+                    if (this->sound_cb.sound) {
+                        this->sound_cb.sound(this->sound_cb.userdata, this->abs_cycle_count, 0, hz);
+                    }
+                }
+                this->ctc0_constant = ctc_chn.constant;
+                this->ctc0_mode = ctc_chn.mode;
+            }
         }
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+z9001::ctc_zcto(int chn_id) {
+    // CTC2 is configured as timer and triggers CTC3, which is configured
+    // as counter, CTC3 triggers an interrupt which drives the system clock
+    if (2 == chn_id) {
+        this->board->ctc.ctrg(z80ctc::CTC3);
     }
 }
 

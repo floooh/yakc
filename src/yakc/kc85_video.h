@@ -18,10 +18,10 @@ public:
     /// reset the video hardware
     void reset();
 
-    /// enable/disable blinkg based on PIO B bit 7
+    /// enable/disable blinking based on PIO B bit 7
     void pio_blink_enable(bool b);
     /// toggle blink flag, must be connected to CTC ZC/TO2 line
-    static void ctc_blink_cb(void* userdata);
+    void ctc_blink();
     /// PAL-line callback, scan-converts one video memory line
     static void pal_line_cb(void* userdata);
     /// update the KC85/4 IRM control byte (written to port 84)

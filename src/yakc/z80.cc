@@ -2,6 +2,7 @@
 //  z80.cc
 //------------------------------------------------------------------------------
 #include "z80.h"
+#include "z80bus.h"
 
 namespace YAKC {
 
@@ -11,9 +12,7 @@ BC(0), DE(0), HL(0), AF(0), IX(0), IY(0), WZ(0),
 BC_(0), DE_(0), HL_(0), AF_(0), WZ_(0),
 SP(0), PC(0), I(0), R(0), IM(0),
 HALT(false), IFF1(false), IFF2(false), INV(false),
-in_func(nullptr),
-out_func(nullptr),
-inout_userdata(nullptr),
+bus(nullptr),
 irq_device(nullptr),
 irq_received(false),
 enable_interrupt(false),
@@ -23,11 +22,10 @@ break_on_invalid_opcode(false) {
 
 //------------------------------------------------------------------------------
 void
-z80::init(cb_in func_in, cb_out func_out, void* userdata) {
+z80::init(z80bus* bus_) {
+    YAKC_ASSERT(bus_);
     this->reset();
-    this->in_func = func_in;
-    this->out_func = func_out;
-    this->inout_userdata = userdata;
+    this->bus = bus_;
 }
 
 //------------------------------------------------------------------------------
@@ -180,20 +178,13 @@ z80::di() {
 //------------------------------------------------------------------------------
 ubyte
 z80::in(uword port) {
-    if (in_func) {
-        return in_func(inout_userdata, port);
-    }
-    else {
-        return 0;
-    }
+    return this->bus->cpu_in(port);
 }
 
 //------------------------------------------------------------------------------
 void
 z80::out(uword port, ubyte val) {
-    if (out_func) {
-        out_func(inout_userdata, port, val);
-    }
+    this->bus->cpu_out(port, val);
 }
 
 //------------------------------------------------------------------------------

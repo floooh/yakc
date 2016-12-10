@@ -14,6 +14,8 @@
 
 namespace YAKC {
 
+class z80bus;
+
 class z80ctc {
 public:
     /// channels
@@ -67,15 +69,11 @@ public:
         int down_counter = 0;           // current down-counter value
         bool waiting_for_trigger = false;
         ubyte interrupt_vector = 0;
-        ctc_cb zcto_callback = nullptr;
-        void* zcto_userdata = nullptr;
-        ctc_cb write_callback = nullptr;
-        void* write_userdata = nullptr;
         z80int int_ctrl;
     } channels[num_channels];
 
     /// initialize the ctc
-    void init();
+    void init(z80bus* bus);
     /// initialize the downstream daisy chain
     void init_daisychain(z80int* downstream);
 
@@ -84,29 +82,16 @@ public:
     /// update the CTC for a number of ticks, a tick is equal to a Z80 T-cycle
     void update_timers(int ticks);
 
-    /// set callback for ZC/TO0 line (zero-count/time-out)
-    void connect_zcto0(ctc_cb cb, void* userdata);
-    /// set callback for ZC/TO1 line
-    void connect_zcto1(ctc_cb cb, void* userdata);
-    /// set callback for ZC/TO2 line
-    void connect_zcto2(ctc_cb cb, void* userdata);
+    /// trigger one of the CTC channel lines
+    void ctrg(channel c);
 
-    /// connect a write callback to channel0 (on mode or constant written)
-    void connect_write0(ctc_cb cb, void* userdata);
-    /// connect a write callback to channel1
-    void connect_write1(ctc_cb cb, void* userdata);
-    /// connect a write callback to channel2
-    void connect_write2(ctc_cb cb, void* userdata);
-    /// connect a write callback to channel3
-    void connect_write3(ctc_cb cb, void* userdata);
-
-    /// trigger line for CTC0
+    /// OBSOLETE: trigger line for CTC0
     static void ctrg0(void* userdata);
-    /// trigger line for CTC1
+    /// OBSOLETE: trigger line for CTC1
     static void ctrg1(void* userdata);
-    /// trigger line for CTC2
+    /// OBSOLETE: trigger line for CTC2
     static void ctrg2(void* userdata);
-    /// trigger line for CTC3
+    /// OBSOLETE: trigger line for CTC3
     static void ctrg3(void* userdata);
 
     /// write value to channel
@@ -118,9 +103,11 @@ private:
     /// get the counter/timer cycle count (prescaler * constant)
     int down_counter_init(const channel_state& chn) const;
     /// execute actions when down_counter reaches zero
-    void down_counter_callback(channel_state& c);
+    void down_counter_callback(int chn_index);
     /// external trigger, called from trg0..trg3
-    void update_counter(channel_state& chn);
+    void update_counter(int chn_index);
+
+    z80bus* bus = nullptr;
 };
 
 } // namespace YAKC

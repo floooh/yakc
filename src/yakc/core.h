@@ -10,10 +10,10 @@
 
 namespace YAKC {
 
-typedef unsigned char ubyte;
-typedef signed char byte;
-typedef unsigned short uword;
-typedef signed short word;
+typedef uint8_t ubyte;
+typedef int8_t byte;
+typedef uint16_t uword;
+typedef int16_t word;
 
 struct ext_funcs {
     void (*assertmsg_func)(const char* cond, const char* msg, const char* file, int line, const char* func) = nullptr;

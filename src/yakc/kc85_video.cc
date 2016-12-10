@@ -61,9 +61,8 @@ kc85_video::pio_blink_enable(bool b) {
 
 //------------------------------------------------------------------------------
 void
-kc85_video::ctc_blink_cb(void* userdata) {
-    kc85_video* self = (kc85_video*) userdata;
-    self->ctc_blink_flag = !self->ctc_blink_flag;
+kc85_video::ctc_blink() {
+    this->ctc_blink_flag = !this->ctc_blink_flag;
 }
 
 //------------------------------------------------------------------------------

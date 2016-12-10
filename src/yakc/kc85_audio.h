@@ -35,10 +35,8 @@ public:
 
     /// update a sound channel when ctc state has changed
     void update_channel(int channel);
-    /// must be connected to z80ctc::connect_write0()
-    static void ctc_write0(void* userdata);
-    /// must be connected to z80ctc::connect_write1()
-    static void ctc_write1(void* userdata);
+    /// must be called from z80bus::ctc_write() for CTC channel 0 or 1
+    void ctc_write(int ctc_channel);
 
     z80ctc* ctc = nullptr;
     uint64_t cycle_count = 0;       // current absolute CPU cycle count

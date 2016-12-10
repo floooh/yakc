@@ -64,7 +64,7 @@ z1013::poweron(device m) {
     this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
 
     // initialize hardware components
-    cpu.init(in_cb, out_cb, this);
+    cpu.init(this);
     pio.init();
     pio.connect_out_cb(z80pio::A, this, pio_a_out_cb);
     pio.connect_out_cb(z80pio::B, this, pio_b_out_cb);
@@ -141,31 +141,30 @@ z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
 
 //------------------------------------------------------------------------------
 void
-z1013::out_cb(void* userdata, uword port, ubyte val) {
-    z1013* self = (z1013*)userdata;
+z1013::cpu_out(uword port, ubyte val) {
     switch (port & 0xFF) {
         case 0x00:
             // PIO A, data
-            self->board->pio.write_data(z80pio::A, val);
+            this->board->pio.write_data(z80pio::A, val);
             break;
         case 0x01:
             // PIO A, control
-            self->board->pio.write_control(z80pio::A, val);
+            this->board->pio.write_control(z80pio::A, val);
             break;
         case 0x02:
             // PIO B, data
-            self->board->pio.write_data(z80pio::B, val);
+            this->board->pio.write_data(z80pio::B, val);
             break;
         case 0x03:
             // PIO B, control
-            self->board->pio.write_control(z80pio::B, val);
+            this->board->pio.write_control(z80pio::B, val);
             break;
         case 0x08:
             // keyboard column
             if (val == 0) {
-                self->kbd_column_bits = self->next_kbd_column_bits;
+                this->kbd_column_bits = this->next_kbd_column_bits;
             }
-            self->kbd_column_nr_requested = val;
+            this->kbd_column_nr_requested = val;
             break;
         default:
             break;
@@ -174,17 +173,16 @@ z1013::out_cb(void* userdata, uword port, ubyte val) {
 
 //------------------------------------------------------------------------------
 ubyte
-z1013::in_cb(void* userdata, uword port) {
-    z1013* self = (z1013*)userdata;
+z1013::cpu_in(uword port) {
     switch (port & 0xFF) {
         case 0x00:
-            return self->board->pio.read_data(z80pio::A);
+            return this->board->pio.read_data(z80pio::A);
         case 0x01:
-            return self->board->pio.read_control();
+            return this->board->pio.read_control();
         case 0x02:
-            return self->board->pio.read_data(z80pio::B);
+            return this->board->pio.read_data(z80pio::B);
         case 0x03:
-            return self->board->pio.read_control();
+            return this->board->pio.read_control();
         default:
             return 0xFF;
     }

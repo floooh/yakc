@@ -3,27 +3,31 @@
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/z80.h"
+#include "yakc/z80bus.h"
 
 using namespace YAKC;
 
 static ubyte ram0[0x4000];
 
-static ubyte in_func(void* userdata, uword port) {
-    return (port & 0xFF) * 2;
-}
-
-static uword out_port = 0;
-static ubyte out_byte = 0xFF;
-static void out_func(void* userdata, uword port, ubyte val) {
-    out_port = port;
-    out_byte = val;
-}
+class testBus : public z80bus {
+public:
+    uword out_port = 0;
+    ubyte out_byte = 0xFF;
+    void cpu_out(uword port, ubyte val) {
+        this->out_port = port;
+        this->out_byte  = val;
+    }
+    ubyte cpu_in(uword port) {
+        return (port & 0xFF) * 2;
+    }
+};
+static testBus bus;
 
 static z80 init_z80() {
     z80 cpu;
     memset(ram0, 0, sizeof(ram0));
     cpu.mem.map(0, 0x0000, sizeof(ram0), ram0, true);
-    cpu.init(in_func, out_func, nullptr);
+    cpu.init(&bus);
     return cpu;
 }
 
@@ -2585,18 +2589,18 @@ TEST(OUT) {
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
     CHECK(7 ==cpu.step()); CHECK(0x01 == cpu.A);
-    CHECK(11==cpu.step()); CHECK(0x0101 == out_port); CHECK(0x01 == out_byte);
-    CHECK(11==cpu.step()); CHECK(0x0102 == out_port); CHECK(0x01 == out_byte);
+    CHECK(11==cpu.step()); CHECK(0x0101 == bus.out_port); CHECK(0x01 == bus.out_byte);
+    CHECK(11==cpu.step()); CHECK(0x0102 == bus.out_port); CHECK(0x01 == bus.out_byte);
     CHECK(10==cpu.step()); CHECK(0x1234 == cpu.BC);
     CHECK(10==cpu.step()); CHECK(0x5678 == cpu.DE);
     CHECK(10==cpu.step()); CHECK(0xABCD == cpu.HL);
-    CHECK(12==cpu.step()); CHECK(0x1234 == out_port); CHECK(0x01 == out_byte);
-    CHECK(12==cpu.step()); CHECK(0x1234 == out_port); CHECK(0x12 == out_byte);
-    CHECK(12==cpu.step()); CHECK(0x1234 == out_port); CHECK(0x34 == out_byte);
-    CHECK(12==cpu.step()); CHECK(0x1234 == out_port); CHECK(0x56 == out_byte);
-    CHECK(12==cpu.step()); CHECK(0x1234 == out_port); CHECK(0x78 == out_byte);
-    CHECK(12==cpu.step()); CHECK(0x1234 == out_port); CHECK(0xAB == out_byte);
-    CHECK(12==cpu.step()); CHECK(0x1234 == out_port); CHECK(0xCD == out_byte);
+    CHECK(12==cpu.step()); CHECK(0x1234 == bus.out_port); CHECK(0x01 == bus.out_byte);
+    CHECK(12==cpu.step()); CHECK(0x1234 == bus.out_port); CHECK(0x12 == bus.out_byte);
+    CHECK(12==cpu.step()); CHECK(0x1234 == bus.out_port); CHECK(0x34 == bus.out_byte);
+    CHECK(12==cpu.step()); CHECK(0x1234 == bus.out_port); CHECK(0x56 == bus.out_byte);
+    CHECK(12==cpu.step()); CHECK(0x1234 == bus.out_port); CHECK(0x78 == bus.out_byte);
+    CHECK(12==cpu.step()); CHECK(0x1234 == bus.out_port); CHECK(0xAB == bus.out_byte);
+    CHECK(12==cpu.step()); CHECK(0x1234 == bus.out_port); CHECK(0xCD == bus.out_byte);
 }
 
 TEST(OTIR_OTDR) {
@@ -2621,34 +2625,34 @@ TEST(OTIR_OTDR) {
     CHECK(21==cpu.step());
     CHECK(0x1001 == cpu.HL);
     CHECK(0x0202 == cpu.BC);
-    CHECK(0x0202 == out_port); CHECK(0x01 == out_byte);
+    CHECK(0x0202 == bus.out_port); CHECK(0x01 == bus.out_byte);
     CHECK(!(cpu.F & z80::ZF));
     CHECK(21==cpu.step());
     CHECK(0x1002 == cpu.HL);
     CHECK(0x0102 == cpu.BC);
-    CHECK(0x0102 == out_port); CHECK(0x02 == out_byte);
+    CHECK(0x0102 == bus.out_port); CHECK(0x02 == bus.out_byte);
     CHECK(!(cpu.F & z80::ZF));
     CHECK(16==cpu.step());
     CHECK(0x1003 == cpu.HL);
     CHECK(0x0002 == cpu.BC);
-    CHECK(0x0002 == out_port); CHECK(0x03 == out_byte);
+    CHECK(0x0002 == bus.out_port); CHECK(0x03 == bus.out_byte);
     CHECK(cpu.F & z80::ZF);
 
     CHECK(10 == cpu.step()); CHECK(0x0303 == cpu.BC);
     CHECK(21==cpu.step());
     CHECK(0x1002 == cpu.HL);
     CHECK(0x0203 == cpu.BC);
-    CHECK(0x0203 == out_port); CHECK(0x04 == out_byte);
+    CHECK(0x0203 == bus.out_port); CHECK(0x04 == bus.out_byte);
     CHECK(!(cpu.F & z80::ZF));
     CHECK(21==cpu.step());
     CHECK(0x1001 == cpu.HL);
     CHECK(0x0103 == cpu.BC);
-    CHECK(0x0103 == out_port); CHECK(0x03 == out_byte);
+    CHECK(0x0103 == bus.out_port); CHECK(0x03 == bus.out_byte);
     CHECK(!(cpu.F & z80::ZF));
     CHECK(16==cpu.step());
     CHECK(0x1000 == cpu.HL);
     CHECK(0x0003 == cpu.BC);
-    CHECK(0x0003 == out_port); CHECK(0x02 == out_byte);
+    CHECK(0x0003 == bus.out_port); CHECK(0x02 == bus.out_byte);
     CHECK(cpu.F & z80::ZF);
 }
 

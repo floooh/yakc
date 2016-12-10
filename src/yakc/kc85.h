@@ -5,6 +5,7 @@
     @brief wrapper class for the KC85/2, /3, /4
 */
 #include "yakc/breadboard.h"
+#include "yakc/z80bus.h"
 #include "yakc/roms/roms.h"
 #include "yakc/kc85_video.h"
 #include "yakc/kc85_audio.h"
@@ -13,7 +14,7 @@
 
 namespace YAKC {
 
-class kc85 {
+class kc85 : public z80bus {
 public:
     /// ram banks
     ubyte ram[4][0x4000];
@@ -82,9 +83,13 @@ public:
     void handle_keyboard_input();
 
     /// the z80 out callback
-    static void z80_out_cb(void* userdata, uword port, ubyte val);
+    virtual void cpu_out(uword port, ubyte val);
     /// the z80 in callback
-    static ubyte z80_in_cb(void* userdata, uword port);
+    virtual ubyte cpu_in(uword port);
+    /// CTC write callback
+    virtual void ctc_write(int chn_id);
+    /// CTC zcto callback
+    virtual void ctc_zcto(int chn_id);
     /// PIO-A out callback
     static void pio_a_out_cb(void* userdata, ubyte val);
     /// PIO-A in callback

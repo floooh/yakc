@@ -51,8 +51,8 @@ kc85::poweron(device m, os_rom os) {
     z80ctc& ctc = this->board->ctc;
     cpu.mem.unmap_all();
     pio.init();
-    ctc.init();
-    cpu.init(z80_in_cb, z80_out_cb, this);
+    ctc.init(this);
+    cpu.init(this);
     this->exp.init();
     this->video.init(m);
     this->audio.init(&this->board->ctc);
@@ -78,9 +78,6 @@ kc85::poweron(device m, os_rom os) {
     // connect a timer with the duration of one PAL line
     // (~64ns) to the video scanline decoder callback
     this->board->clck.config_timer(1, (uint32_t)(50.136*312), kc85_video::pal_line_cb, &this->video);
-
-    // connect the CTC2 ZC/TO2 output line to the video decoder blink flag
-    this->board->ctc.connect_zcto2(kc85_video::ctc_blink_cb, &this->video);
 
     // initial memory map
     this->board->cpu.out(0x88, 0x9f);
@@ -292,51 +289,50 @@ kc85::handle_keyboard_input() {
 
 //------------------------------------------------------------------------------
 void
-kc85::z80_out_cb(void* userdata, uword port, ubyte val) {
-    kc85* self = (kc85*)userdata;
+kc85::cpu_out(uword port, ubyte val) {
     switch (port & 0xFF) {
         case 0x80:
-            if (self->exp.slot_exists(port>>8)) {
-                self->exp.update_control_byte(port>>8, val);
-                self->update_bank_switching();
+            if (this->exp.slot_exists(port>>8)) {
+                this->exp.update_control_byte(port>>8, val);
+                this->update_bank_switching();
             }
             break;
         case 0x84:
-            if (device::kc85_4 == self->cur_model) {
-                self->io84 = val;
-                self->video.kc85_4_irm_control(val);
-                self->update_bank_switching();
+            if (device::kc85_4 == this->cur_model) {
+                this->io84 = val;
+                this->video.kc85_4_irm_control(val);
+                this->update_bank_switching();
             }
             break;
         case 0x86:
-            if (device::kc85_4 == self->cur_model) {
-                self->io86 = val;
-                self->update_bank_switching();
+            if (device::kc85_4 == this->cur_model) {
+                this->io86 = val;
+                this->update_bank_switching();
             }
             break;
         case 0x88:
-            self->board->pio.write_data(z80pio::A, val);
+            this->board->pio.write_data(z80pio::A, val);
             break;
         case 0x89:
-            self->board->pio.write_data(z80pio::B, val);
+            this->board->pio.write_data(z80pio::B, val);
             break;
         case 0x8A:
-            self->board->pio.write_control(z80pio::A, val);
+            this->board->pio.write_control(z80pio::A, val);
             break;
         case 0x8B:
-            self->board->pio.write_control(z80pio::B, val);
+            this->board->pio.write_control(z80pio::B, val);
             break;
         case 0x8C:
-            self->board->ctc.write(z80ctc::CTC0, val);
+            this->board->ctc.write(z80ctc::CTC0, val);
             break;
         case 0x8D:
-            self->board->ctc.write(z80ctc::CTC1, val);
+            this->board->ctc.write(z80ctc::CTC1, val);
             break;
         case 0x8E:
-            self->board->ctc.write(z80ctc::CTC2, val);
+            this->board->ctc.write(z80ctc::CTC2, val);
             break;
         case 0x8F:
-            self->board->ctc.write(z80ctc::CTC3, val);
+            this->board->ctc.write(z80ctc::CTC3, val);
             break;
         default:
             break;
@@ -345,30 +341,45 @@ kc85::z80_out_cb(void* userdata, uword port, ubyte val) {
 
 //------------------------------------------------------------------------------
 ubyte
-kc85::z80_in_cb(void* userdata, uword port) {
+kc85::cpu_in(uword port) {
     // NOTE: on KC85/4, the hardware doesn't provide a way to read-back
     // the additional IO ports at 0x84 and 0x86 (see KC85/4 service manual)
-    kc85* self = (kc85*)userdata;
     switch (port & 0xFF) {
         case 0x80:
-            return self->exp.module_type_in_slot(port>>8);
+            return this->exp.module_type_in_slot(port>>8);
         case 0x88:
-            return self->board->pio.read_data(z80pio::A);
+            return this->board->pio.read_data(z80pio::A);
         case 0x89:
-            return self->board->pio.read_data(z80pio::B);
+            return this->board->pio.read_data(z80pio::B);
         case 0x8A:
         case 0x8B:
-            return self->board->pio.read_control();
+            return this->board->pio.read_control();
         case 0x8C:
-            return self->board->ctc.read(z80ctc::CTC0);
+            return this->board->ctc.read(z80ctc::CTC0);
         case 0x8D:
-            return self->board->ctc.read(z80ctc::CTC1);
+            return this->board->ctc.read(z80ctc::CTC1);
         case 0x8E:
-            return self->board->ctc.read(z80ctc::CTC2);
+            return this->board->ctc.read(z80ctc::CTC2);
         case 0x8F:
-            return self->board->ctc.read(z80ctc::CTC3);
+            return this->board->ctc.read(z80ctc::CTC3);
         default:
             return 0xFF;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+kc85::ctc_write(int chn_id) {
+    if (chn_id < 2) {
+        this->audio.ctc_write(chn_id);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+kc85::ctc_zcto(int chn_id) {
+    if (chn_id == 2) {
+        this->video.ctc_blink();
     }
 }
 

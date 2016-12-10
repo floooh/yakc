@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/z80.h"
+#include "yakc/z80bus.h"
 #include "test/zex.h"
 #include "Core/Time/Clock.h"
 #include <string.h>
@@ -28,14 +29,6 @@ static void put_char(char c) {
         output[out_pos++] = c;
     }
     printf("%c", c);
-}
-
-static ubyte in_func(void* userdata, uword port) {
-    return 0;
-}
-
-static void out_func(void* userdata, uword port, ubyte val) {
-    // empty
 }
 
 static bool cpm_bdos(z80& cpu) {
@@ -113,10 +106,11 @@ static void run_test(z80& cpu, const char* name) {
 TEST(zexdoc) {
 
     memset(output, 0, sizeof(output));
+    z80bus bus;
     z80 cpu;
     memset(ram, 0, sizeof(ram));
     cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
-    cpu.init(in_func, out_func, nullptr);
+    cpu.init(&bus);
     cpu.SP = 0xF000;  // no idea where the stack is located in CP/M
     cpu.PC = 0x0100;  // execution starts at 0x0100
     cpu.mem.write(0x0100, dump_zexdoc, sizeof(dump_zexdoc));
@@ -127,10 +121,11 @@ TEST(zexdoc) {
 TEST(zexall) {
 
     memset(output, 0, sizeof(output));
+    z80bus bus;
     z80 cpu;
     memset(ram, 0, sizeof(ram));
     cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
-    cpu.init(in_func, out_func, nullptr);
+    cpu.init(&bus);
     cpu.SP = 0xF000;  // no idea where the stack is located in CP/M
     cpu.PC = 0x0100;  // execution starts at 0x0100
     cpu.mem.write(0x0100, dump_zexall, sizeof(dump_zexall));

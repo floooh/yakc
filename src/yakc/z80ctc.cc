@@ -2,12 +2,15 @@
 //  z80ctc.cc
 //------------------------------------------------------------------------------
 #include "z80ctc.h"
+#include "z80bus.h"
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::init() {
+z80ctc::init(z80bus* bus_) {
+    YAKC_ASSERT(bus_);
+    this->bus = bus_;
     for (auto& chn : channels) {
         chn = channel_state();
     }
@@ -50,17 +53,13 @@ z80ctc::write(channel c, ubyte v) {
         if ((chn.mode & MODE) == MODE_TIMER) {
             chn.waiting_for_trigger = (chn.mode & TRIGGER) == TRIGGER_PULSE;
         }
-        if (chn.write_callback) {
-            chn.write_callback(chn.write_userdata);
-        }
+        this->bus->ctc_write(c);
     }
     else if ((v & CONTROL) == CONTROL_WORD) {
         // a control word
         chn.mode = v;
         if (!(chn.mode & CONSTANT_FOLLOWS)) {
-            if (chn.write_callback) {
-                chn.write_callback(chn.write_userdata);
-            }
+            this->bus->ctc_write(c);
         }
     }
     else {
@@ -100,13 +99,13 @@ z80ctc::down_counter_init(const channel_state& chn) const {
 //------------------------------------------------------------------------------
 void
 z80ctc::update_timers(int ticks) {
-    for (int i = 0; i < num_channels; i++) {
-        channel_state& chn = channels[i];
+    for (int c = 0; c < num_channels; c++) {
+        channel_state& chn = channels[c];
         if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
             if (((chn.mode & MODE) == MODE_TIMER) && !chn.waiting_for_trigger) {
                 chn.down_counter -= ticks;
                 while (chn.down_counter <= 0) {
-                    down_counter_callback(chn);
+                    down_counter_callback(c);
                     chn.down_counter += down_counter_init(chn);
                 }
             }
@@ -116,11 +115,12 @@ z80ctc::update_timers(int ticks) {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::update_counter(channel_state& chn) {
+z80ctc::update_counter(int chn_index) {
+    channel_state& chn = this->channels[chn_index];
     if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
         if ((chn.mode & MODE) == MODE_COUNTER) {
             if (--chn.down_counter == 0) {
-                down_counter_callback(chn);
+                down_counter_callback(chn_index);
                 chn.down_counter = down_counter_init(chn);
             }
         }
@@ -130,90 +130,46 @@ z80ctc::update_counter(channel_state& chn) {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::down_counter_callback(channel_state& chn) {
+z80ctc::down_counter_callback(int chn_index) {
+    channel_state& chn = this->channels[chn_index];
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
         chn.int_ctrl.request_interrupt(chn.interrupt_vector);
     }
-    if (chn.zcto_callback) {
-        chn.zcto_callback(chn.zcto_userdata);
-    }
+    this->bus->ctc_zcto(chn_index);
 }
 
 //------------------------------------------------------------------------------
 void
-z80ctc::connect_zcto0(ctc_cb cb, void* userdata) {
-    channels[CTC0].zcto_callback = cb;
-    channels[CTC0].zcto_userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::connect_zcto1(ctc_cb cb, void* userdata) {
-    channels[CTC1].zcto_callback = cb;
-    channels[CTC1].zcto_userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::connect_zcto2(ctc_cb cb, void* userdata) {
-    channels[CTC2].zcto_callback = cb;
-    channels[CTC2].zcto_userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::connect_write0(ctc_cb cb, void* userdata) {
-    channels[CTC0].write_callback = cb;
-    channels[CTC0].write_userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::connect_write1(ctc_cb cb, void* userdata) {
-    channels[CTC1].write_callback = cb;
-    channels[CTC1].write_userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::connect_write2(ctc_cb cb, void* userdata) {
-    channels[CTC2].write_callback = cb;
-    channels[CTC2].write_userdata = userdata;
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::connect_write3(ctc_cb cb, void* userdata) {
-    channels[CTC3].write_callback = cb;
-    channels[CTC3].write_userdata = userdata;
+z80ctc::ctrg(channel c) {
+    this->update_counter(c);
 }
 
 //------------------------------------------------------------------------------
 void
 z80ctc::ctrg0(void* userdata) {
     z80ctc* self = (z80ctc*)userdata;
-    self->update_counter(self->channels[CTC0]);
+    self->update_counter(CTC0);
 }
 
 //------------------------------------------------------------------------------
 void
 z80ctc::ctrg1(void* userdata) {
     z80ctc* self = (z80ctc*)userdata;
-    self->update_counter(self->channels[CTC1]);
+    self->update_counter(CTC1);
 }
 
 //------------------------------------------------------------------------------
 void
 z80ctc::ctrg2(void* userdata) {
     z80ctc* self = (z80ctc*)userdata;
-    self->update_counter(self->channels[CTC2]);
+    self->update_counter(CTC2);
 }
 
 //------------------------------------------------------------------------------
 void
 z80ctc::ctrg3(void* userdata) {
     z80ctc* self = (z80ctc*)userdata;
-    self->update_counter(self->channels[CTC3]);
+    self->update_counter(CTC3);
 }
 
 } // namespace YAKC

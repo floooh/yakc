@@ -35,10 +35,11 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/roms/roms.h"
+#include "yakc/z80bus.h"
 
 namespace YAKC {
 
-class z1013 {
+class z1013 : public z80bus {
 public:
     /// ram banks
     ubyte ram[4*0x4000];
@@ -68,9 +69,9 @@ public:
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
 
     /// the z80 out callback
-    static void out_cb(void* userdata, uword port, ubyte val);
+    virtual void cpu_out(uword port, ubyte val);
     /// the z80 in callback
-    static ubyte in_cb(void* userdata, uword port);
+    virtual ubyte cpu_in(uword port);
     /// PIO-A out callback
     static void pio_a_out_cb(void* userdata, ubyte val);
     /// PIO-A in callback

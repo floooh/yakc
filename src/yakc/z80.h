@@ -10,6 +10,7 @@
 
 namespace YAKC {
 
+class z80bus;
 class z80 {
 public:
     enum {
@@ -72,18 +73,8 @@ public:
 
     /// memory map
     memory mem;
-
-    /// input hook typedef, take a port number, return value at that port
-    typedef ubyte (*cb_in)(void* userdata, uword port);
-    /// output hook typedef, write 8-bit value to output port
-    typedef void (*cb_out)(void* userdata, uword port, ubyte val);
-
-    /// user-provided in-handler
-    cb_in in_func;
-    /// user-provided out-handler
-    cb_out out_func;
-    /// input/output userdata
-    void* inout_userdata;
+    /// bus callback object
+    z80bus* bus;
 
     /// highest priority interrupt controller in daisy chain
     z80int* irq_device;
@@ -98,7 +89,7 @@ public:
     z80();
 
     /// one-time init
-    void init(cb_in func_in, cb_out func_out, void* userdata);
+    void init(z80bus* bus);
     /// initialize the lookup tables
     void init_tables();
     /// connect the highest priority interrupt controller device

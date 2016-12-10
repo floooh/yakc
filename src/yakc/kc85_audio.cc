@@ -16,8 +16,6 @@ void
 kc85_audio::init(z80ctc* ctc_) {
     YAKC_ASSERT(ctc_);
     this->ctc = ctc_;
-    this->ctc->connect_write0(ctc_write0, this);
-    this->ctc->connect_write1(ctc_write1, this);
     this->reset();
 }
 
@@ -82,16 +80,8 @@ kc85_audio::update_channel(int channel) {
 
 //------------------------------------------------------------------------------
 void
-kc85_audio::ctc_write0(void* userdata) {
-    kc85_audio* self = (kc85_audio*)userdata;
-    self->update_channel(0);
-}
-
-//------------------------------------------------------------------------------
-void
-kc85_audio::ctc_write1(void* userdata) {
-    kc85_audio* self = (kc85_audio*)userdata;
-    self->update_channel(1);
+kc85_audio::ctc_write(int ctc_channel) {
+    this->update_channel(ctc_channel);
 }
 
 } // namespace YAKC
