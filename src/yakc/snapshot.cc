@@ -123,7 +123,7 @@ snapshot::write_kc_state(const yakc& emu, state_t& state) {
 void
 snapshot::apply_kc_state(const state_t& state, yakc& emu) {
     kc85& kc = emu.kc85;
-    kc.on = (bool) state.kc.on;
+    kc.on = 0 != state.kc.on;
     kc.cur_model = (device) state.kc.model;
     kc.cur_caos  = (os_rom) state.kc.caos;
     kc.io84      = state.kc.io84;
@@ -166,11 +166,11 @@ snapshot::write_z1013_state(const yakc& emu, state_t& state) {
 //------------------------------------------------------------------------------
 void
 snapshot::apply_z1013_state(const state_t& state, yakc& emu) {
-    emu.z1013.on = (bool) state.z1013.on;
+    emu.z1013.on = 0 != state.z1013.on;
     emu.z1013.cur_model = (device) state.z1013.model;
     emu.z1013.cur_os = (os_rom) state.z1013.os;
     emu.z1013.kbd_column_nr_requested = state.z1013.kbd_column_nr_requested;
-    emu.z1013.kbd_8x8_requested = (bool) state.z1013.kbd_8x8_requested;
+    emu.z1013.kbd_8x8_requested = 0 != state.z1013.kbd_8x8_requested;
     emu.z1013.next_kbd_column_bits = state.z1013.next_kbd_column_bits;
     emu.z1013.kbd_column_bits = emu.z1013.kbd_column_bits;
 }
@@ -178,7 +178,7 @@ snapshot::apply_z1013_state(const state_t& state, yakc& emu) {
 //------------------------------------------------------------------------------
 void
 snapshot::write_z9001_state(const yakc& emu, state_t& state) {
-    state.z9001.on = (bool) emu.z9001.on;
+    state.z9001.on = 0 != emu.z9001.on;
     state.z9001.model = (uword) emu.z9001.cur_model;
     state.z9001.os = (ubyte) emu.z9001.cur_os;
     state.z9001.ctc0_mode = emu.z9001.ctc0_mode;
@@ -194,13 +194,13 @@ snapshot::write_z9001_state(const yakc& emu, state_t& state) {
 //------------------------------------------------------------------------------
 void
 snapshot::apply_z9001_state(const state_t& state, yakc& emu) {
-    emu.z9001.on = (bool) state.z9001.on;
+    emu.z9001.on = 0 != state.z9001.on;
     emu.z9001.cur_model = (device) state.z9001.model;
     emu.z9001.cur_os = (os_rom) state.z9001.os;
     emu.z9001.ctc0_mode = state.z9001.ctc0_mode;
     emu.z9001.kbd_column_mask = state.z9001.kbd_column_mask;
     emu.z9001.kbd_line_mask = state.z9001.kbd_line_mask;
-    emu.z9001.blink_flipflop = (bool) state.z9001.blink_flipflop;
+    emu.z9001.blink_flipflop = 0 != state.z9001.blink_flipflop;
     emu.z9001.brd_color = state.z9001.brd_color;
     emu.z9001.key_mask = state.z9001.key_mask;
     emu.z9001.blink_counter = state.z9001.blink_counter;
