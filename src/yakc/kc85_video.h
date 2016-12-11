@@ -27,13 +27,13 @@ public:
     /// update the KC85/4 IRM control byte (written to port 84)
     void kc85_4_irm_control(ubyte val);
 
-    /// decoded linear RGBA8 video buffer
-    unsigned int LinearBuffer[320*256];
-
     /// decode 8 pixels
     void decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_off) const;
     /// decode the next line
     void decode_one_line(unsigned int* ptr, int y, bool blink_bg);
+
+    /// decoded linear RGBA8 video buffer
+    unsigned int rgba8_buffer[320*256];
 
     device model = device::kc85_3;
     ubyte irm_control = 0;

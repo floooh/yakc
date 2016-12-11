@@ -104,7 +104,7 @@ public:
     static void swap16(uword& r0, uword& r1);
 
     /// receive an interrupt request
-    static void irq(void* self);
+    void irq();
     /// handle an interrupt request, must be called after step(), return num tstates taken
     int handle_irq();
     /// implement the RETI instruction

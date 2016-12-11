@@ -67,6 +67,8 @@ public:
     virtual void pio_out(int pio_id, int port_id, ubyte val) override;
     /// PIO input callback
     virtual ubyte pio_in(int pio_id, int port_id) override;
+    /// request a CPU interrupt
+    virtual void irq() override;
 
     /// blink counter callback
     static void blink_cb(void* userdata);
@@ -98,7 +100,7 @@ public:
     uint8_t brd_color = 0;              // border color byte extracted from PIO1-A
     uint32_t blink_counter = 0;
     uint32_t pal[8];
-    uint32_t RGBA8Buffer[320*192];      // decoded linear RGBA8 video buffer
+    uint32_t rgba8_buffer[320*192];     // decoded linear RGBA8 video buffer
 
     sound_funcs sound_cb;               // external sound callbacks
     ubyte ctc0_mode = z80ctc::RESET;    // CTC0 state for audio output

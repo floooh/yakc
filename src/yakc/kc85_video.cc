@@ -78,7 +78,7 @@ kc85_video::pal_line_cb(void* userdata) {
     kc85_video* self = (kc85_video*) userdata;
     if (self->cur_pal_line < 256) {
         const bool blink_bg = self->ctc_blink_flag && self->pio_blink_flag;
-        self->decode_one_line(self->LinearBuffer, self->cur_pal_line, blink_bg);
+        self->decode_one_line(self->rgba8_buffer, self->cur_pal_line, blink_bg);
     }
     self->cur_pal_line++;
     // wraparound pal line counter at 312 lines (see KC85/3 service manual),

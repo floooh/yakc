@@ -17,13 +17,9 @@
 
 namespace YAKC {
 
+class z80bus;
 class z80int {
 public:
-    /// interrupt request callback (/INT pin on CPU), returns false if CPU interrupts disabled
-    typedef void (*cb_int)(void* userdata);
-
-    /// connect to CPU /INT pin callback, called when device requests interrupt
-    void connect_cpu(cb_int int_cb, void* userdata);
     /// connect to downstream (lower-pri) device in daisy chain
     void connect_irq_device(z80int* downstream_device);
 
@@ -31,7 +27,7 @@ public:
     void reset();
 
     /// called by device to request an interrupt
-    bool request_interrupt(ubyte data);
+    bool request_interrupt(z80bus* bus, ubyte data);
     /// called by CPU to acknowldge interrupt request, return data byte (usually interrupt vector)
     ubyte interrupt_acknowledged();
     /// NOTE: interrupt_cancelled is currently not called by CPU, this
@@ -55,8 +51,6 @@ public:
     bool int_pending = false;
 
 private:
-    cb_int int_cb = nullptr;
-    void* int_cb_userdata = nullptr;
     z80int* downstream_device = nullptr;
 };
 

@@ -58,10 +58,6 @@ kc85::poweron(device m, os_rom os) {
     this->audio.init(&this->board->ctc);
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
-    pio.int_ctrl.connect_cpu(z80::irq, &cpu);
-    for (int i = 0; i < z80ctc::num_channels; i++) {
-        ctc.channels[i].int_ctrl.connect_cpu(z80::irq, &cpu);
-    }
     cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
     ctc.init_daisychain(&this->board->pio.int_ctrl);
 
@@ -395,6 +391,13 @@ kc85::pio_out(int pio_id, int port_id, ubyte val) {
         this->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
         this->audio.update_volume(val & PIO_B_VOLUME_MASK);
     }
+}
+
+//------------------------------------------------------------------------------
+void
+kc85::irq() {
+    // forward interrupt request to CPU
+    this->board->cpu.irq();
 }
 
 //------------------------------------------------------------------------------

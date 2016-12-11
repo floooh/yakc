@@ -26,6 +26,9 @@ public:
     virtual void ctc_write(int ctc_id, int chn_id);
     /// Z80 CTC ZCTO callback
     virtual void ctc_zcto(int ctc_id, int chn_id);
+
+    /// request a CPU interrupt
+    virtual void irq();
 };
 
 } // namespace YAKC

@@ -138,11 +138,6 @@ z9001::poweron(device m, os_rom os) {
 
     // setup interrupt daisy chain, from highest to lowest priority:
     //  CPU -> PIO1 -> PIO2 -> CTC
-    pio1.int_ctrl.connect_cpu(z80::irq, &cpu);
-    pio2.int_ctrl.connect_cpu(z80::irq, &cpu);
-    for (int i = 0; i < z80ctc::num_channels; i++) {
-        ctc.channels[i].int_ctrl.connect_cpu(z80::irq, &cpu);
-    }
     cpu.connect_irq_device(&pio1.int_ctrl);
     pio1.int_ctrl.connect_irq_device(&pio2.int_ctrl);
     pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
@@ -433,6 +428,13 @@ z9001::ctc_zcto(int ctc_id, int chn_id) {
 
 //------------------------------------------------------------------------------
 void
+z9001::irq() {
+    // forward interrupt request to CPU
+    this->board->cpu.irq();
+}
+
+//------------------------------------------------------------------------------
+void
 z9001::put_key(ubyte ascii) {
     // replace BREAK with STOP
     if (ascii == 0x13) {
@@ -488,7 +490,7 @@ void
 z9001::decode_video() {
 
     // FIXME: there's also a 40x20 display mode
-    uint32_t* dst = RGBA8Buffer;
+    uint32_t* dst = this->rgba8_buffer;
     ubyte* font;
     if (device::kc87 == this->cur_model) {
         font = dump_kc87_font_2;

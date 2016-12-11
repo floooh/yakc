@@ -2,15 +2,9 @@
 //  z80int.cc
 //------------------------------------------------------------------------------
 #include "z80int.h"
+#include "z80bus.h"
 
 namespace YAKC {
-
-//------------------------------------------------------------------------------
-void
-z80int::connect_cpu(cb_int cb, void* userdata) {
-    this->int_cb = cb;
-    this->int_cb_userdata = userdata;
-}
 
 //------------------------------------------------------------------------------
 void
@@ -29,17 +23,16 @@ z80int::reset() {
 
 //------------------------------------------------------------------------------
 bool
-z80int::request_interrupt(ubyte data) {
+z80int::request_interrupt(z80bus* bus, ubyte data) {
 
     // FIXME: hmm can we interrupt ourselves? what happens if our device
     // requests an interrupt, but we're currently also being serviced
     // by the cpu?
     // CURRENTLY, ASSUME THAT WE CANNOT INTERRUPT OURSELF
 
-    YAKC_ASSERT(this->int_cb);
     if (this->int_enabled) {
         this->int_enabled = false;
-        this->int_cb(this->int_cb_userdata);
+        bus->irq();
         this->int_requested = true;
         this->int_request_data = data;
         if (this->downstream_device) {

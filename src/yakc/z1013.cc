@@ -223,6 +223,13 @@ z1013::pio_in(int pio_id, int port_id) {
 
 //------------------------------------------------------------------------------
 void
+z1013::irq() {
+    // forward interrupt request to CPU
+    this->board->cpu.irq();
+}
+
+//------------------------------------------------------------------------------
+void
 z1013::put_key(ubyte ascii) {
     if (ascii) {
         this->next_kbd_column_bits = this->key_map[ascii & (max_num_keys-1)];
@@ -357,7 +364,7 @@ z1013::init_keymap_8x8() {
 //------------------------------------------------------------------------------
 void
 z1013::decode_video() {
-    uint32_t* dst = RGBA8Buffer;
+    uint32_t* dst = rgba8_buffer;
     for (int y = 0; y < 32; y++) {
         for (int py = 0; py < 8; py++) {
             for (int x = 0; x < 32; x++) {

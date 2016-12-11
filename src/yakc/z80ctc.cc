@@ -134,7 +134,7 @@ void
 z80ctc::down_counter_callback(int chn_index) {
     channel_state& chn = this->channels[chn_index];
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
-        chn.int_ctrl.request_interrupt(chn.interrupt_vector);
+        chn.int_ctrl.request_interrupt(this->bus, chn.interrupt_vector);
     }
     this->bus->ctc_zcto(this->id, chn_index);
 }

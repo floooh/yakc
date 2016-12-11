@@ -94,6 +94,8 @@ public:
     virtual ubyte pio_in(int pio_id, int port_id) override;
     /// Z80 PIO output callback
     virtual void pio_out(int pio_id, int port_id, ubyte val) override;
+    /// interrupt request callback
+    virtual void irq() override;
 
     /// update module/memory mapping
     void update_bank_switching();

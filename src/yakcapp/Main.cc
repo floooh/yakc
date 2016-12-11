@@ -162,13 +162,13 @@ YakcApp::OnRunning() {
     #endif
     this->audio.Update(this->emu.board.clck);
     if (this->emu.kc85.on) {
-        this->draw.Render(this->emu.kc85.video.LinearBuffer, 320, 256);
+        this->draw.Render(this->emu.kc85.video.rgba8_buffer, 320, 256);
     }
     else if (this->emu.z9001.on) {
-        this->draw.Render(this->emu.z9001.RGBA8Buffer, 320, 192);
+        this->draw.Render(this->emu.z9001.rgba8_buffer, 320, 192);
     }
     else if (this->emu.z1013.on) {
-        this->draw.Render(this->emu.z1013.RGBA8Buffer, 256, 256);
+        this->draw.Render(this->emu.z1013.rgba8_buffer, 256, 256);
     }
     #if YAKC_UI
     this->ui.OnFrame(this->emu);

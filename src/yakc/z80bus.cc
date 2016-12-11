@@ -47,4 +47,10 @@ z80bus::ctc_zcto(int ctc_id, int chn_id) {
     // empty
 }
 
+//------------------------------------------------------------------------------
+void
+z80bus::irq() {
+    // empty
+}
+
 } // namespace YAKC

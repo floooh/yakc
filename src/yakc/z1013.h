@@ -76,6 +76,8 @@ public:
     virtual void pio_out(int pio_id, int port_id, ubyte val) override;
     /// PIO in callback
     virtual ubyte pio_in(int pio_id, int port_id) override;
+    /// interrupt request callback
+    virtual void irq() override;
 
     /// initialize the key translation table for the basic 8x4 keyboard (z1013.01)
     void init_keymap_8x4();
@@ -103,7 +105,7 @@ public:
     static const int max_num_keys = 128;
     uint64_t key_map[max_num_keys] = { };   // map ASCII code to keyboard matrix bits
 
-    uint32_t RGBA8Buffer[256*256];          // decoded linear RGBA8 video buffer
+    uint32_t rgba8_buffer[256*256];          // decoded linear RGBA8 video buffer
 };
 
 } // namespace YAKC

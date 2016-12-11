@@ -189,7 +189,7 @@ z80pio::write(int port_id, ubyte data) {
         else if ((ictrl == 0x40) && (val == 0)) match = true;
         else if ((ictrl == 0x60) && (val == mask)) match = true;
         if (!p.bctrl_match && match && (p.int_control & 0x80)) {
-            this->int_ctrl.request_interrupt(p.int_vector);
+            this->int_ctrl.request_interrupt(this->bus, p.int_vector);
         }
         p.bctrl_match = match;
     }
