@@ -1,15 +1,14 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class kc85_snapshot
+    @class snapshot
     @brief helper functions for taking and applying machine state snapshots
 */
-#include "yakc/core.h"
-#include "yakc/kc85.h"
+#include "yakc/yakc.h"
 
 namespace YAKC {
 
-class kc85_snapshot {
+class snapshot {
 public:
     /// snapshot state
     #pragma pack(push,1)
@@ -81,8 +80,10 @@ public:
             z80pio::port_t port[z80pio::num_ports];
             ubyte pad[2];
             intctrl_t intctrl;
-        } pio;
+        };
         static_assert((sizeof(pio_t)&3)==0, "pio_t odd size!");
+        pio_t pio1;
+        pio_t pio2;
 
         // video state
         struct video_t {
@@ -128,52 +129,52 @@ public:
     #pragma pack(pop)
 
     /// record a snapshot into a memory buffer
-    static void take_snapshot(const kc85& kc, state_t& state);
+    static void take_snapshot(const yakc& emu, state_t& state);
     /// apply a snapshot from memory buffer
-    static void apply_snapshot(const state_t& state, kc85& kc);
+    static void apply_snapshot(const state_t& state, yakc& emu);
     /// test if state_t contains a valid snapshot
     static bool is_snapshot(const state_t& state);
 
     /// write the clock state
-    static void write_clock_state(const kc85& kc, state_t& state);
+    static void write_clock_state(const yakc& emu, state_t& state);
     /// apply clock state
-    static void apply_clock_state(const state_t& state, kc85& kc);
+    static void apply_clock_state(const state_t& state, yakc& emu);
     /// write the toplevel KC state
-    static void write_kc_state(const kc85& kc, state_t& state);
+    static void write_kc_state(const yakc& emu, state_t& state);
     /// apply toplevel KC state
-    static void apply_kc_state(const state_t& state, kc85& kc);
+    static void apply_kc_state(const state_t& state, yakc& emu);
     /// write the cpu state
-    static void write_cpu_state(const kc85& kc, state_t& state);
+    static void write_cpu_state(const yakc& emu, state_t& state);
     /// apply cpu state
-    static void apply_cpu_state(const state_t& state, kc85& kc);
+    static void apply_cpu_state(const state_t& state, yakc& emu);
     /// write interrupt controller state
     static void write_intctrl_state(const z80int& src, state_t::intctrl_t& dst);
     /// apply interrupt controller state
     static void apply_intctrl_state(const state_t::intctrl_t& src, z80int& dst);
     /// write the ctc state
-    static void write_ctc_state(const kc85& kc, state_t& state);
+    static void write_ctc_state(const yakc& emu, state_t& state);
     /// apply ctc state
-    static void apply_ctc_state(const state_t& state, kc85& kc);
+    static void apply_ctc_state(const state_t& state, yakc& emu);
     /// write the pio state
-    static void write_pio_state(const kc85& kc, state_t& state);
+    static void write_pio_state(const yakc& emu, state_t& state);
     /// apply pio state
-    static void apply_pio_state(const state_t& state, kc85& kc);
+    static void apply_pio_state(const state_t& state, yakc& emu);
     /// write the video state
-    static void write_video_state(const kc85& kc, state_t& state);
+    static void write_video_state(const yakc& emu, state_t& state);
     /// apply video state
-    static void apply_video_state(const state_t& state, kc85& kc);
+    static void apply_video_state(const state_t& state, yakc& emu);
     /// write the audio state
-    static void write_audio_state(const kc85& kc, state_t& state);
+    static void write_audio_state(const yakc& emu, state_t& state);
     /// apply audio state
-    static void apply_audio_state(const state_t& state, kc85& kc);
+    static void apply_audio_state(const state_t& state, yakc& emu);
     /// write the expansion system state
-    static void write_exp_state(const kc85& kc, state_t& state);
+    static void write_exp_state(const yakc& emu, state_t& state);
     /// apply expansion system state
-    static void apply_exp_state(const state_t& state, kc85& kc);
+    static void apply_exp_state(const state_t& state, yakc& emu);
     /// write memory state
-    static void write_memory_state(const kc85& kc, state_t& state);
+    static void write_memory_state(const yakc& emu, state_t& state);
     /// apply memory state
-    static void apply_memory_state(const state_t& state, kc85& kc);
+    static void apply_memory_state(const state_t& state, yakc& emu);
 };
 
 } // namespace YAKC
