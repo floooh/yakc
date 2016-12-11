@@ -51,7 +51,6 @@ z80::init_tables() {
 //------------------------------------------------------------------------------
 void
 z80::connect_irq_device(z80int* device) {
-    YAKC_ASSERT(device);
     this->irq_device = device;
 }
 

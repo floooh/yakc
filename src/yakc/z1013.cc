@@ -53,6 +53,8 @@ z1013::after_apply_snapshot() {
     this->overflow_cycles = 0;
     this->init_keymaps();
     this->init_memory_mapping();
+    this->board->cpu.bus = this;
+    this->board->cpu.connect_irq_device(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -92,6 +94,7 @@ z1013::poweron(device m) {
     // initialize hardware components
     cpu.init(this);
     pio.init(0);
+    cpu.connect_irq_device(nullptr);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;

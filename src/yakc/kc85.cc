@@ -15,10 +15,14 @@ kc85::init(breadboard* b) {
 //------------------------------------------------------------------------------
 void
 kc85::after_apply_snapshot() {
+    YAKC_ASSERT(this->board);
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
     this->update_rom_pointers();
     this->update_bank_switching();
+    this->board->cpu.bus = this;
+    this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
+    this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
 }
 
 //------------------------------------------------------------------------------
