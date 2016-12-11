@@ -132,9 +132,9 @@ z9001::poweron(device m, os_rom os) {
     z80pio& pio2 = this->board->pio2;
     z80ctc& ctc = this->board->ctc;
     cpu.init(this);
-    pio1.init(0, this);
-    pio2.init(1, this);
-    ctc.init(0, this);
+    pio1.init(0);
+    pio2.init(1);
+    ctc.init(0);
 
     // setup interrupt daisy chain, from highest to lowest priority:
     //  CPU -> PIO1 -> PIO2 -> CTC
@@ -144,7 +144,7 @@ z9001::poweron(device m, os_rom os) {
     ctc.init_daisychain(nullptr);
 
     // configure a hardware counter to control the video blink attribute
-    this->board->clck.config_timer(0, 100, blink_cb, this);
+    this->board->clck.config_timer(0, 100);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -208,8 +208,8 @@ z9001::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
             dbg.store_pc_history(cpu); // FIXME: only if debug window open?
             int cycles_step = cpu.step();
             cycles_step += cpu.handle_irq();
-            clk.update(cycles_step);
-            ctc.update_timers(cycles_step);
+            clk.update(this, cycles_step);
+            ctc.update_timers(this, cycles_step);
             this->abs_cycle_count += cycles_step;
         }
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
@@ -227,27 +227,27 @@ z9001::cpu_out(uword port, ubyte val) {
     switch (port & 0xFF) {
         case 0x80:
         case 0x84:
-            ctc.write(z80ctc::CTC0, val);
+            ctc.write(this, z80ctc::CTC0, val);
             break;
         case 0x81:
         case 0x85:
-            ctc.write(z80ctc::CTC1, val);
+            ctc.write(this, z80ctc::CTC1, val);
             break;
         case 0x82:
         case 0x86:
-            ctc.write(z80ctc::CTC2, val);
+            ctc.write(this, z80ctc::CTC2, val);
             break;
         case 0x83:
         case 0x87:
-            ctc.write(z80ctc::CTC3, val);
+            ctc.write(this, z80ctc::CTC3, val);
             break;
         case 0x88:
         case 0x8C:
-            pio1.write_data(z80pio::A, val);
+            pio1.write_data(this, z80pio::A, val);
             break;
         case 0x89:
         case 0x8D:
-            pio1.write_data(z80pio::B, val);
+            pio1.write_data(this, z80pio::B, val);
             break;
         case 0x8A:
         case 0x8E:
@@ -259,11 +259,11 @@ z9001::cpu_out(uword port, ubyte val) {
             break;
         case 0x90:
         case 0x94:
-            pio2.write_data(z80pio::A, val);
+            pio2.write_data(this, z80pio::A, val);
             break;
         case 0x91:
         case 0x95:
-            pio2.write_data(z80pio::B, val);
+            pio2.write_data(this, z80pio::B, val);
             break;
         case 0x92:
         case 0x96:
@@ -299,10 +299,10 @@ z9001::cpu_in(uword port) {
             return ctc.read(z80ctc::CTC3);
         case 0x88:
         case 0x8C:
-            return pio1.read_data(z80pio::A);
+            return pio1.read_data(this, z80pio::A);
         case 0x89:
         case 0x8D:
-            return pio1.read_data(z80pio::B);
+            return pio1.read_data(this, z80pio::B);
         case 0x8A:
         case 0x8E:
         case 0x8B:
@@ -310,10 +310,10 @@ z9001::cpu_in(uword port) {
             return pio1.read_control();
         case 0x90:
         case 0x94:
-            return pio2.read_data(z80pio::A);
+            return pio2.read_data(this, z80pio::A);
         case 0x91:
         case 0x95:
-            return pio2.read_data(z80pio::B);
+            return pio2.read_data(this, z80pio::B);
         case 0x92:
         case 0x96:
         case 0x93:
@@ -422,7 +422,7 @@ z9001::ctc_zcto(int ctc_id, int chn_id) {
     // CTC2 is configured as timer and triggers CTC3, which is configured
     // as counter, CTC3 triggers an interrupt which drives the system clock
     if (2 == chn_id) {
-        this->board->ctc.ctrg(z80ctc::CTC3);
+        this->board->ctc.ctrg(this, z80ctc::CTC3);
     }
 }
 
@@ -432,6 +432,15 @@ z9001::irq() {
     // forward interrupt request to CPU
     this->board->cpu.irq();
 }
+
+//------------------------------------------------------------------------------
+void
+z9001::timer(int timer_id) {
+    if (0 == timer_id) {
+        this->blink_flipflop = 0 != (this->blink_counter++ & 0x10);
+    }
+}
+
 
 //------------------------------------------------------------------------------
 void
@@ -460,15 +469,8 @@ z9001::handle_key() {
                 line_bits |= (this->key_mask>>(col*8)) & 0xFF;
             }
         }
-        this->board->pio2.write(z80pio::B, ~line_bits);
+        this->board->pio2.write(this, z80pio::B, ~line_bits);
     }
-}
-
-//------------------------------------------------------------------------------
-void
-z9001::blink_cb(void* userdata) {
-    z9001* self = (z9001*)userdata;
-    self->blink_flipflop = 0 != (self->blink_counter++ & 0x10);
 }
 
 //------------------------------------------------------------------------------

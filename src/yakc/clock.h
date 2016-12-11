@@ -13,20 +13,19 @@
 
 namespace YAKC {
 
+class z80bus;
+
 class clock {
 public:
-    /// a timer callback
-    typedef void (*cb_timer)(void* userdata);
-
     /// initialize the clock to a base frequency
     void init(int baseFreqKHz);
     /// return number of cycles for a given time-span in micro-seconds
     int64_t cycles(int micro_seconds) const;
 
     /// configure a timer
-    void config_timer(int index, int hz, cb_timer callback, void* userdata);
+    void config_timer(int index, int hz);
     /// advance the timers by a number of cycles
-    void update(int num_cycles);
+    void update(z80bus* bus, int num_cycles);
 
     /// the clock main frequency in KHz
     int base_freq_khz = 0;
@@ -37,8 +36,6 @@ public:
         int freq_hz = 0;       // timer frequency in Hz
         int count = 0;         // how often the counter went through 0
         int value = 0;         // current counter value
-        cb_timer callback = nullptr;
-        void* userdata = nullptr;
     } timers[num_timers];
 };
 

@@ -2,6 +2,7 @@
 //  clock.cc
 //------------------------------------------------------------------------------
 #include "clock.h"
+#include "z80bus.h"
 
 namespace YAKC {
 
@@ -23,27 +24,28 @@ clock::cycles(int micro_seconds) const {
 
 //------------------------------------------------------------------------------
 void
-clock::config_timer(int index, int hz, cb_timer callback, void* userdata) {
+clock::config_timer(int index, int hz) {
     YAKC_ASSERT((index >= 0) && (index < num_timers));
     YAKC_ASSERT(hz > 0);
     auto& t = this->timers[index];
     t.freq_hz = hz;
     t.count = 0;
     t.value = (this->base_freq_khz*1000)/t.freq_hz;
-    t.callback = callback;
-    t.userdata = userdata;
 }
 
 //------------------------------------------------------------------------------
 void
-clock::update(int num_cycles) {
-    for (auto& t : this->timers) {
-        if (t.callback) {
+clock::update(z80bus* bus, int num_cycles) {
+    for (int i = 0; i < num_timers; i++) {
+        auto& t = this->timers[i];
+        if (t.freq_hz != 0) {
             t.value -= num_cycles;
             while (t.value <= 0) {
                 t.count++;
                 t.value += (this->base_freq_khz*1000)/t.freq_hz;
-                t.callback(t.userdata);
+                if (bus) {
+                    bus->timer(i);
+                }
             }
         }
     }

@@ -65,7 +65,7 @@ z1013::poweron(device m) {
 
     // initialize hardware components
     cpu.init(this);
-    pio.init(0, this);
+    pio.init(0);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -127,7 +127,7 @@ z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
             dbg.store_pc_history(cpu); // FIXME: only if debug window open?
             int cycles_step = cpu.step();
             cycles_step += cpu.handle_irq();
-            clk.update(cycles_step);
+            clk.update(this, cycles_step);
             this->abs_cycle_count += cycles_step;
         }
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
@@ -141,7 +141,7 @@ z1013::cpu_out(uword port, ubyte val) {
     switch (port & 0xFF) {
         case 0x00:
             // PIO A, data
-            this->board->pio.write_data(z80pio::A, val);
+            this->board->pio.write_data(this, z80pio::A, val);
             break;
         case 0x01:
             // PIO A, control
@@ -149,7 +149,7 @@ z1013::cpu_out(uword port, ubyte val) {
             break;
         case 0x02:
             // PIO B, data
-            this->board->pio.write_data(z80pio::B, val);
+            this->board->pio.write_data(this, z80pio::B, val);
             break;
         case 0x03:
             // PIO B, control
@@ -172,11 +172,11 @@ ubyte
 z1013::cpu_in(uword port) {
     switch (port & 0xFF) {
         case 0x00:
-            return this->board->pio.read_data(z80pio::A);
+            return this->board->pio.read_data(this, z80pio::A);
         case 0x01:
             return this->board->pio.read_control();
         case 0x02:
-            return this->board->pio.read_data(z80pio::B);
+            return this->board->pio.read_data(this, z80pio::B);
         case 0x03:
             return this->board->pio.read_control();
         default:

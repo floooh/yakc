@@ -8,10 +8,8 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::init(int id_, z80bus* bus_) {
-    YAKC_ASSERT(bus_);
+z80ctc::init(int id_) {
     this->id = id_;
-    this->bus = bus_;
     for (auto& chn : channels) {
         chn = channel_state();
     }
@@ -42,7 +40,7 @@ z80ctc::reset() {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::write(channel c, ubyte v) {
+z80ctc::write(z80bus* bus, channel c, ubyte v) {
     YAKC_ASSERT((c >= 0) && (c<num_channels));
 
     channel_state& chn = channels[c];
@@ -54,13 +52,17 @@ z80ctc::write(channel c, ubyte v) {
         if ((chn.mode & MODE) == MODE_TIMER) {
             chn.waiting_for_trigger = (chn.mode & TRIGGER) == TRIGGER_PULSE;
         }
-        this->bus->ctc_write(this->id, c);
+        if (bus) {
+            bus->ctc_write(this->id, c);
+        }
     }
     else if ((v & CONTROL) == CONTROL_WORD) {
         // a control word
         chn.mode = v;
         if (!(chn.mode & CONSTANT_FOLLOWS)) {
-            this->bus->ctc_write(this->id, c);
+            if (bus) {
+                bus->ctc_write(this->id, c);
+            }
         }
     }
     else {
@@ -99,14 +101,14 @@ z80ctc::down_counter_init(const channel_state& chn) const {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::update_timers(int ticks) {
+z80ctc::update_timers(z80bus* bus, int ticks) {
     for (int c = 0; c < num_channels; c++) {
         channel_state& chn = channels[c];
         if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
             if (((chn.mode & MODE) == MODE_TIMER) && !chn.waiting_for_trigger) {
                 chn.down_counter -= ticks;
                 while (chn.down_counter <= 0) {
-                    down_counter_callback(c);
+                    down_counter_callback(bus, c);
                     chn.down_counter += down_counter_init(chn);
                 }
             }
@@ -116,12 +118,12 @@ z80ctc::update_timers(int ticks) {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::update_counter(int chn_index) {
+z80ctc::update_counter(z80bus* bus, int chn_index) {
     channel_state& chn = this->channels[chn_index];
     if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
         if ((chn.mode & MODE) == MODE_COUNTER) {
             if (--chn.down_counter == 0) {
-                down_counter_callback(chn_index);
+                down_counter_callback(bus, chn_index);
                 chn.down_counter = down_counter_init(chn);
             }
         }
@@ -131,46 +133,21 @@ z80ctc::update_counter(int chn_index) {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::down_counter_callback(int chn_index) {
+z80ctc::down_counter_callback(z80bus* bus, int chn_index) {
     channel_state& chn = this->channels[chn_index];
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
-        chn.int_ctrl.request_interrupt(this->bus, chn.interrupt_vector);
+        chn.int_ctrl.request_interrupt(bus, chn.interrupt_vector);
     }
-    this->bus->ctc_zcto(this->id, chn_index);
+    if (bus) {
+        bus->ctc_zcto(this->id, chn_index);
+    }
 }
 
 //------------------------------------------------------------------------------
 void
-z80ctc::ctrg(channel c) {
-    this->update_counter(c);
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::ctrg0(void* userdata) {
-    z80ctc* self = (z80ctc*)userdata;
-    self->update_counter(CTC0);
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::ctrg1(void* userdata) {
-    z80ctc* self = (z80ctc*)userdata;
-    self->update_counter(CTC1);
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::ctrg2(void* userdata) {
-    z80ctc* self = (z80ctc*)userdata;
-    self->update_counter(CTC2);
-}
-
-//------------------------------------------------------------------------------
-void
-z80ctc::ctrg3(void* userdata) {
-    z80ctc* self = (z80ctc*)userdata;
-    self->update_counter(CTC3);
+z80ctc::ctrg(z80bus* bus, channel c) {
+    YAKC_ASSERT(bus);
+    this->update_counter(bus, c);
 }
 
 } // namespace YAKC

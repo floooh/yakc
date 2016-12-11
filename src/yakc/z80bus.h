@@ -29,6 +29,8 @@ public:
 
     /// request a CPU interrupt
     virtual void irq();
+    /// clock timer triggered
+    virtual void timer(int timer_id);
 };
 
 } // namespace YAKC

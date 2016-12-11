@@ -32,7 +32,9 @@ z80int::request_interrupt(z80bus* bus, ubyte data) {
 
     if (this->int_enabled) {
         this->int_enabled = false;
-        bus->irq();
+        if (bus) {
+            bus->irq();
+        }
         this->int_requested = true;
         this->int_request_data = data;
         if (this->downstream_device) {

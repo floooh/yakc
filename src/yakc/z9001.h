@@ -69,9 +69,8 @@ public:
     virtual ubyte pio_in(int pio_id, int port_id) override;
     /// request a CPU interrupt
     virtual void irq() override;
-
-    /// blink counter callback
-    static void blink_cb(void* userdata);
+    /// clock timer triggered
+    virtual void timer(int timer_id) override;
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);

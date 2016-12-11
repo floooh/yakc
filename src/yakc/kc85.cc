@@ -50,8 +50,8 @@ kc85::poweron(device m, os_rom os) {
     z80pio& pio = this->board->pio;
     z80ctc& ctc = this->board->ctc;
     cpu.mem.unmap_all();
-    pio.init(0, this);
-    ctc.init(0, this);
+    pio.init(0);
+    ctc.init(0);
     cpu.init(this);
     this->exp.init();
     this->video.init(m);
@@ -61,13 +61,10 @@ kc85::poweron(device m, os_rom os) {
     cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
     ctc.init_daisychain(&this->board->pio.int_ctrl);
 
-    // connect CTC2 trigger to a 50Hz vertical-blank-timer,
-    // this controls the foreground color blinking flag
-    this->board->clck.config_timer(0, 50, z80ctc::ctrg2, &this->board->ctc);
-
-    // connect a timer with the duration of one PAL line
-    // (~64ns) to the video scanline decoder callback
-    this->board->clck.config_timer(1, (uint32_t)(50.136*312), kc85_video::pal_line_cb, &this->video);
+    // a 50Hz timer which trigger every vertical blank
+    this->board->clck.config_timer(0, 50);
+    // a timer which triggers every PAL line for video memory decoding
+    this->board->clck.config_timer(1, (uint32_t)(50.136*312));
 
     // initial memory map
     this->board->cpu.out(0x88, 0x9f);
@@ -191,8 +188,8 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
             dbg.store_pc_history(cpu); // FIXME: only if debug window open?
             int cycles_step = cpu.step();
             cycles_step += cpu.handle_irq();
-            clk.update(cycles_step);
-            ctc.update_timers(cycles_step);
+            clk.update(this, cycles_step);
+            ctc.update_timers(this, cycles_step);
             this->audio.update_cycles(this->abs_cycle_count);
             this->abs_cycle_count += cycles_step;
         }
@@ -301,10 +298,10 @@ kc85::cpu_out(uword port, ubyte val) {
             }
             break;
         case 0x88:
-            this->board->pio.write_data(z80pio::A, val);
+            this->board->pio.write_data(this, z80pio::A, val);
             break;
         case 0x89:
-            this->board->pio.write_data(z80pio::B, val);
+            this->board->pio.write_data(this, z80pio::B, val);
             break;
         case 0x8A:
             this->board->pio.write_control(z80pio::A, val);
@@ -313,16 +310,16 @@ kc85::cpu_out(uword port, ubyte val) {
             this->board->pio.write_control(z80pio::B, val);
             break;
         case 0x8C:
-            this->board->ctc.write(z80ctc::CTC0, val);
+            this->board->ctc.write(this, z80ctc::CTC0, val);
             break;
         case 0x8D:
-            this->board->ctc.write(z80ctc::CTC1, val);
+            this->board->ctc.write(this, z80ctc::CTC1, val);
             break;
         case 0x8E:
-            this->board->ctc.write(z80ctc::CTC2, val);
+            this->board->ctc.write(this, z80ctc::CTC2, val);
             break;
         case 0x8F:
-            this->board->ctc.write(z80ctc::CTC3, val);
+            this->board->ctc.write(this, z80ctc::CTC3, val);
             break;
         default:
             break;
@@ -338,9 +335,9 @@ kc85::cpu_in(uword port) {
         case 0x80:
             return this->exp.module_type_in_slot(port>>8);
         case 0x88:
-            return this->board->pio.read_data(z80pio::A);
+            return this->board->pio.read_data(this, z80pio::A);
         case 0x89:
-            return this->board->pio.read_data(z80pio::B);
+            return this->board->pio.read_data(this, z80pio::B);
         case 0x8A:
         case 0x8B:
             return this->board->pio.read_control();
@@ -398,6 +395,23 @@ void
 kc85::irq() {
     // forward interrupt request to CPU
     this->board->cpu.irq();
+}
+
+//------------------------------------------------------------------------------
+void
+kc85::timer(int timer_id) {
+    switch (timer_id) {
+        case 0:
+            // timer 0 is a 50Hz vertical blank timer and controls the
+            // foreground color blinking
+            this->board->ctc.ctrg(this, z80ctc::CTC2);
+            break;
+        case 1:
+            // timer 1 triggers every PAL line (64ns) for the video scanline
+            // decoder callback
+            this->video.pal_line();
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -96,6 +96,8 @@ public:
     virtual void pio_out(int pio_id, int port_id, ubyte val) override;
     /// interrupt request callback
     virtual void irq() override;
+    /// clock timer-trigger callback
+    virtual void timer(int timer_id) override;
 
     /// update module/memory mapping
     void update_bank_switching();

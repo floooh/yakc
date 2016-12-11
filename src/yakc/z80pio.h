@@ -71,7 +71,7 @@ public:
     z80int int_ctrl;
 
     /// initialize the pio
-    void init(int id, z80bus* bus);
+    void init(int id);
     /// reset the pio
     void reset();
 
@@ -80,22 +80,21 @@ public:
     /// read control register (same result for both ports)
     ubyte read_control();
     /// write data register
-    void write_data(int port_id, ubyte data);
+    void write_data(z80bus* bus, int port_id, ubyte data);
     /// read data register
-    ubyte read_data(int port_id);
+    ubyte read_data(z80bus* bus, int port_id);
     /// strobe signal on PIO-A from peripheral
     void astb(bool active);
     /// strobe signal on PIO-B from peripheral
     void bstb(bool active);
     /// write data from peripheral into PIO
-    void write(int port_id, ubyte val);
+    void write(z80bus* bus, int port_id, ubyte val);
 
 private:
     /// set a port's ready line
-    void set_rdy(int port_id, bool active);
+    void set_rdy(z80bus* bus, int port_id, bool active);
 
     int id = 0;
-    z80bus* bus = nullptr;
 };
 
 } // namespace YAKC

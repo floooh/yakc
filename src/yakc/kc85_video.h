@@ -23,7 +23,7 @@ public:
     /// toggle blink flag, must be connected to CTC ZC/TO2 line
     void ctc_blink();
     /// PAL-line callback, scan-converts one video memory line
-    static void pal_line_cb(void* userdata);
+    void pal_line();
     /// update the KC85/4 IRM control byte (written to port 84)
     void kc85_4_irm_control(ubyte val);
 

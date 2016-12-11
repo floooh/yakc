@@ -59,9 +59,6 @@ public:
         CONTROL_VECTOR = 0,
     };
 
-    /// callback for ZC/TO0..3 lines
-    typedef void (*ctc_cb)(void* userdata);
-
     /// channel state
     struct channel_state {
         ubyte mode = RESET;             // current mode bits
@@ -73,29 +70,20 @@ public:
     } channels[num_channels];
 
     /// initialize the ctc
-    void init(int id, z80bus* bus);
+    void init(int id);
     /// initialize the downstream daisy chain
     void init_daisychain(z80int* downstream);
 
     /// reset the ctc
     void reset();
     /// update the CTC for a number of ticks, a tick is equal to a Z80 T-cycle
-    void update_timers(int ticks);
+    void update_timers(z80bus* bus, int ticks);
 
     /// trigger one of the CTC channel lines
-    void ctrg(channel c);
-
-    /// OBSOLETE: trigger line for CTC0
-    static void ctrg0(void* userdata);
-    /// OBSOLETE: trigger line for CTC1
-    static void ctrg1(void* userdata);
-    /// OBSOLETE: trigger line for CTC2
-    static void ctrg2(void* userdata);
-    /// OBSOLETE: trigger line for CTC3
-    static void ctrg3(void* userdata);
+    void ctrg(z80bus* bus, channel c);
 
     /// write value to channel
-    void write(channel c, ubyte v);
+    void write(z80bus* bus, channel c, ubyte v);
     /// read value from channel
     ubyte read(channel c);
 
@@ -103,12 +91,11 @@ private:
     /// get the counter/timer cycle count (prescaler * constant)
     int down_counter_init(const channel_state& chn) const;
     /// execute actions when down_counter reaches zero
-    void down_counter_callback(int chn_index);
+    void down_counter_callback(z80bus* bus, int chn_index);
     /// external trigger, called from trg0..trg3
-    void update_counter(int chn_index);
+    void update_counter(z80bus* bus, int chn_index);
 
     int id = 0;
-    z80bus* bus = nullptr;
 };
 
 } // namespace YAKC

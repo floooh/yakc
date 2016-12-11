@@ -8,10 +8,8 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-z80pio::init(int id_, z80bus* bus_) {
-    YAKC_ASSERT(bus_);
+z80pio::init(int id_) {
     this->id = id_;
-    this->bus = bus_;
     this->int_ctrl = z80int();
     for (int i = 0; i < num_ports; i++) {
         this->port[i] = port_t();
@@ -37,11 +35,13 @@ z80pio::reset() {
 
 //------------------------------------------------------------------------------
 void
-z80pio::set_rdy(int port_id, bool active) {
+z80pio::set_rdy(z80bus* bus, int port_id, bool active) {
     auto& p = this->port[port_id];
     if (p.rdy != active) {
         p.rdy = active;
-        this->bus->pio_rdy(this->id, port_id, active);
+        if (bus) {
+            bus->pio_rdy(this->id, port_id, active);
+        }
     }
 }
 
@@ -107,30 +107,36 @@ z80pio::read_control() {
 
 //------------------------------------------------------------------------------
 void
-z80pio::write_data(int port_id, ubyte data) {
+z80pio::write_data(z80bus* bus, int port_id, ubyte data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     auto& p = this->port[port_id];
     switch (p.mode) {
         case mode_output:
-            this->set_rdy(port_id, false);
+            this->set_rdy(bus, port_id, false);
             p.output = data;
-            this->bus->pio_out(this->id, port_id, data);
-            this->set_rdy(port_id, true);
+            if (bus) {
+                bus->pio_out(this->id, port_id, data);
+            }
+            this->set_rdy(bus, port_id, true);
             break;
         case mode_input:
             p.output = data;
             break;
         case mode_bidirectional:
-            this->set_rdy(port_id, false);
+            this->set_rdy(bus, port_id, false);
             p.output = data;
             if (!p.stb) {
-                this->bus->pio_out(this->id, port_id, data);
+                if (bus) {
+                    bus->pio_out(this->id, port_id, data);
+                }
             }
-            this->set_rdy(port_id, true);
+            this->set_rdy(bus, port_id, true);
             break;
         case mode_bitcontrol:
             p.output = data;
-            this->bus->pio_out(this->id, port_id, p.io_select | (p.output & ~p.io_select));
+            if (bus) {
+                bus->pio_out(this->id, port_id, p.io_select | (p.output & ~p.io_select));
+            }
             break;
         default:
             YAKC_ASSERT(false);
@@ -139,7 +145,7 @@ z80pio::write_data(int port_id, ubyte data) {
 
 //------------------------------------------------------------------------------
 ubyte
-z80pio::read_data(int port_id) {
+z80pio::read_data(z80bus* bus, int port_id) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     ubyte data = 0;
     auto& p = this->port[port_id];
@@ -149,19 +155,23 @@ z80pio::read_data(int port_id) {
             break;
         case mode_input:
             if (!p.stb) {
-                p.input = this->bus->pio_in(this->id, port_id);
+                if (bus) {
+                    p.input = bus->pio_in(this->id, port_id);
+                }
             }
             data = p.input;
-            this->set_rdy(port_id, false);
-            this->set_rdy(port_id, true);
+            this->set_rdy(bus, port_id, false);
+            this->set_rdy(bus, port_id, true);
             break;
         case mode_bidirectional:
             data = p.input;
-            this->set_rdy(port_id, false);
-            this->set_rdy(port_id, true);
+            this->set_rdy(bus, port_id, false);
+            this->set_rdy(bus, port_id, true);
             break;
         case mode_bitcontrol:
-            p.input = this->bus->pio_in(this->id, port_id);
+            if (bus) {
+                p.input = bus->pio_in(this->id, port_id);
+            }
             data = (p.input & p.io_select) | (p.output & ~p.io_select);
             break;
         default:
@@ -173,7 +183,7 @@ z80pio::read_data(int port_id) {
 
 //------------------------------------------------------------------------------
 void
-z80pio::write(int port_id, ubyte data) {
+z80pio::write(z80bus* bus, int port_id, ubyte data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     auto& p = this->port[port_id];
     if (mode_bitcontrol == p.mode) {
@@ -189,7 +199,7 @@ z80pio::write(int port_id, ubyte data) {
         else if ((ictrl == 0x40) && (val == 0)) match = true;
         else if ((ictrl == 0x60) && (val == mask)) match = true;
         if (!p.bctrl_match && match && (p.int_control & 0x80)) {
-            this->int_ctrl.request_interrupt(this->bus, p.int_vector);
+            this->int_ctrl.request_interrupt(bus, p.int_vector);
         }
         p.bctrl_match = match;
     }
