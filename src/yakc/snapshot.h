@@ -16,6 +16,13 @@ public:
         int magic;
         int version;
 
+        // general emulator state
+        struct emu_t {
+            uword model;
+            uword os;
+        } emu;
+        static_assert((sizeof(emu_t)&3)==0, "emu_t odd size!");
+
         // clock state
         struct clock_t {
             int base_freq_khz;
@@ -27,17 +34,45 @@ public:
         } clock;
         static_assert((sizeof(clock_t)&3)==0, "clock_t odd size!");
 
-        // central KC85 state
+        // KC85 system state
         struct kc_t {
+            ubyte on;
             ubyte model;
             ubyte caos;
             ubyte io84;
             ubyte io86;
             ubyte pio_a;
             ubyte pio_b;
-            ubyte pad[2];
+            uword cur_pal_line;
+            ubyte irm_control;
+            ubyte pio_blink_flag;
+            ubyte ctc_blink_flag;
+            int volume;
+            struct channel_t {
+                ubyte ctc_mode;
+                ubyte ctc_constant;
+            } chn[2];
+            struct slot_t {
+                ubyte slot_addr;        // 0x08 or 0x0C
+                ubyte module_type;      // kc85_exp::module_type
+                ubyte control_byte;
+                ubyte padding;
+            } slots[2];
         } kc;
         static_assert((sizeof(kc_t)&3)==0, "kc_t odd size!");
+
+        // Z1013 system state
+        struct z1013_t {
+            ubyte on;
+            ubyte model;
+            ubyte os;
+            ubyte kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
+            ubyte kbd_8x8_requested = false;         // bit 4 in PIO-B written
+            ubyte pad[3];
+            uint64_t next_kbd_column_bits = 0;
+            uint64_t kbd_column_bits = 0;
+        } z1013;
+        static_assert((sizeof(z1013_t)&3)==0, "z1013_t odd size!");
 
         // cpu state
         struct cpu_t {
@@ -85,37 +120,6 @@ public:
         pio_t pio1;
         pio_t pio2;
 
-        // video state
-        struct video_t {
-            uword cur_pal_line;
-            ubyte irm_control;
-            ubyte pio_blink_flag;
-            ubyte ctc_blink_flag;
-            ubyte padding[3];
-        } video;
-        static_assert((sizeof(video_t)&3)==0, "video_t odd size!");
-
-        // audio state
-        struct audio_t {
-            int volume;
-            struct channel_t {
-                ubyte ctc_mode;
-                ubyte ctc_constant;
-            } chn[2];
-        } audio;
-        static_assert((sizeof(audio_t)&3)==0, "audio_t odd size!");
-
-        // expansion module system
-        struct exp_t {
-            struct slot_t {
-                ubyte slot_addr;        // 0x08 or 0x0C
-                ubyte module_type;      // kc85_exp::module_type
-                ubyte control_byte;
-                ubyte padding;
-            } slots[2];
-        } exp;
-        static_assert((sizeof(exp_t)&3)==0, "exp_t odd size!");
-
         // system RAM banks
         ubyte ram[4][0x4000];
         // IRM RAM banks
@@ -135,14 +139,22 @@ public:
     /// test if state_t contains a valid snapshot
     static bool is_snapshot(const state_t& state);
 
+    /// write generic emu state
+    static void write_emu_state(const yakc& emu, state_t& state);
+    /// apply generic emu state
+    static void apply_emu_state(const state_t& state, yakc& emu);
     /// write the clock state
     static void write_clock_state(const yakc& emu, state_t& state);
     /// apply clock state
     static void apply_clock_state(const state_t& state, yakc& emu);
-    /// write the toplevel KC state
+    /// write the KC system state
     static void write_kc_state(const yakc& emu, state_t& state);
     /// apply toplevel KC state
     static void apply_kc_state(const state_t& state, yakc& emu);
+    /// write the Z1013 system state
+    static void write_z1013_state(const yakc& emy, state_t& state);
+    /// apply Z1013 system state
+    static void apply_z1013_state(const state_t& state, yakc& emu);
     /// write the cpu state
     static void write_cpu_state(const yakc& emu, state_t& state);
     /// apply cpu state
@@ -159,18 +171,6 @@ public:
     static void write_pio_state(const yakc& emu, state_t& state);
     /// apply pio state
     static void apply_pio_state(const state_t& state, yakc& emu);
-    /// write the video state
-    static void write_video_state(const yakc& emu, state_t& state);
-    /// apply video state
-    static void apply_video_state(const state_t& state, yakc& emu);
-    /// write the audio state
-    static void write_audio_state(const yakc& emu, state_t& state);
-    /// apply audio state
-    static void apply_audio_state(const state_t& state, yakc& emu);
-    /// write the expansion system state
-    static void write_exp_state(const yakc& emu, state_t& state);
-    /// apply expansion system state
-    static void apply_exp_state(const state_t& state, yakc& emu);
     /// write memory state
     static void write_memory_state(const yakc& emu, state_t& state);
     /// apply memory state

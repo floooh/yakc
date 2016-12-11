@@ -74,6 +74,8 @@ public:
     os_rom caos() const;
     /// get info about emulated system
     const char* system_info() const;
+    /// called after snapshot restore
+    void after_apply_snapshot();
 
     /// process one frame, up to absolute number of cycles
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);

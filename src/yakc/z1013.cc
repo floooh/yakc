@@ -13,36 +13,10 @@ z1013::init(breadboard* b) {
 
 //------------------------------------------------------------------------------
 void
-z1013::poweron(device m) {
-    YAKC_ASSERT(this->board);
-    YAKC_ASSERT(int(device::any_z1013) & int(m));
-    YAKC_ASSERT(!this->on);
-
+z1013::init_memory_mapping() {
     z80& cpu = this->board->cpu;
-    z80pio& pio = this->board->pio;
-
-    this->cur_model = m;
-    if (m == device::z1013_01) {
-        this->cur_os = os_rom::z1013_mon202;
-        this->init_keymap_8x4();
-    }
-    else {
-        this->cur_os = os_rom::z1013_mon_a2;
-        this->init_keymap_8x8();
-    }
-    this->on = true;
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
-    this->kbd_column_nr_requested = 0;
-    this->kbd_8x8_requested = false;
-    this->next_kbd_column_bits = 0;
-    this->kbd_column_bits = 0;
-
-    // map memory
-    clear(this->ram, sizeof(this->ram));
-    clear(this->irm, sizeof(this->irm));    
     cpu.mem.unmap_all();
-    if (m == device::z1013_64) {
+    if (device::z1013_64 == this->cur_model) {
         // 64 kByte RAM
         cpu.mem.map(1, 0x0000, 0x10000, this->ram, true);
     }
@@ -59,7 +33,59 @@ z1013::poweron(device m) {
     else {
         cpu.mem.map(0, 0xF000, sizeof(dump_z1013_mon_a2), dump_z1013_mon_a2, false);
     }
-    
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::init_keymaps() {
+    if (this->cur_model == device::z1013_01) {
+        this->init_keymap_8x4();
+    }
+    else {
+        this->init_keymap_8x8();
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::after_apply_snapshot() {
+    this->abs_cycle_count = 0;
+    this->overflow_cycles = 0;
+    this->init_keymaps();
+    this->init_memory_mapping();
+}
+
+//------------------------------------------------------------------------------
+void
+z1013::poweron(device m) {
+    YAKC_ASSERT(this->board);
+    YAKC_ASSERT(int(device::any_z1013) & int(m));
+    YAKC_ASSERT(!this->on);
+
+    z80& cpu = this->board->cpu;
+    z80pio& pio = this->board->pio;
+
+    this->cur_model = m;
+    if (m == device::z1013_01) {
+        this->cur_os = os_rom::z1013_mon202;
+    }
+    else {
+        this->cur_os = os_rom::z1013_mon_a2;
+    }
+    this->init_keymaps();
+    this->on = true;
+    this->abs_cycle_count = 0;
+    this->overflow_cycles = 0;
+    this->kbd_column_nr_requested = 0;
+    this->kbd_8x8_requested = false;
+    this->next_kbd_column_bits = 0;
+    this->kbd_column_bits = 0;
+
+    // map memory
+    clear(this->ram, sizeof(this->ram));
+    clear(this->irm, sizeof(this->irm));
+    this->init_memory_mapping();
+
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
     this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
 

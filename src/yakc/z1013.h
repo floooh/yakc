@@ -51,6 +51,10 @@ public:
 
     /// one-time setup
     void init(breadboard* board);
+    /// initialize memory mapping (called from poweron or snapshot restore)
+    void init_memory_mapping();
+    /// initialize keymap tables (called from poweron or snapshot restore)
+    void init_keymaps();
 
     /// power-on the device
     void poweron(device m);
@@ -62,6 +66,8 @@ public:
     device model() const;
     /// get info about emulated system
     const char* system_info() const;
+    /// called after snapshot restore
+    void after_apply_snapshot();
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);

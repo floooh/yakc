@@ -14,6 +14,15 @@ kc85::init(breadboard* b) {
 
 //------------------------------------------------------------------------------
 void
+kc85::after_apply_snapshot() {
+    this->abs_cycle_count = 0;
+    this->overflow_cycles = 0;
+    this->update_rom_pointers();
+    this->update_bank_switching();
+}
+
+//------------------------------------------------------------------------------
+void
 kc85::poweron(device m, os_rom os) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(device::any_kc85) & int(m));

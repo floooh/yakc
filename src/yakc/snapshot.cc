@@ -17,14 +17,13 @@ snapshot::take_snapshot(const yakc& emu, state_t& state) {
     memset(&state, 0, sizeof(state));
     state.magic = 'YAKC';
     state.version = 1;
+    write_emu_state(emu, state);
     write_clock_state(emu, state);
-    write_kc_state(emu, state);
     write_cpu_state(emu, state);
     write_ctc_state(emu, state);
     write_pio_state(emu, state);
-    write_video_state(emu, state);
-    write_audio_state(emu, state);
-    write_exp_state(emu, state);
+    write_kc_state(emu, state);
+    write_z1013_state(emu, state);
     write_memory_state(emu, state);
 }
 
@@ -32,15 +31,34 @@ snapshot::take_snapshot(const yakc& emu, state_t& state) {
 void
 snapshot::apply_snapshot(const state_t& state, yakc& emu) {
     YAKC_ASSERT(is_snapshot(state));
+    apply_emu_state(state, emu);
     apply_clock_state(state, emu);
-    apply_kc_state(state, emu);
     apply_cpu_state(state, emu);
     apply_ctc_state(state, emu);
     apply_pio_state(state, emu);
-    apply_video_state(state, emu);
-    apply_audio_state(state, emu);
-    apply_exp_state(state, emu);
+    apply_kc_state(state, emu);
+    apply_z1013_state(state, emu);
     apply_memory_state(state, emu);
+    if (emu.is_device(device::any_kc85)) {
+        emu.kc85.after_apply_snapshot();
+    }
+    else if (emu.is_device(device::any_z1013)) {
+        emu.z1013.after_apply_snapshot();
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+snapshot::write_emu_state(const yakc& emu, state_t& state) {
+    state.emu.model = (uword)emu.model;
+    state.emu.os = (uword)emu.os;
+}
+
+//------------------------------------------------------------------------------
+void
+snapshot::apply_emu_state(const state_t& state, yakc& emu) {
+    emu.model = (device) state.emu.model;
+    emu.os = (os_rom) state.emu.os;
 }
 
 //------------------------------------------------------------------------------
@@ -71,25 +89,85 @@ snapshot::apply_clock_state(const state_t& state, yakc& emu) {
 void
 snapshot::write_kc_state(const yakc& emu, state_t& state) {
     const kc85& kc = emu.kc85;
+    state.kc.on = kc.on;
     state.kc.model = (ubyte) kc.cur_model;
     state.kc.caos  = (ubyte) kc.cur_caos;
     state.kc.io84 = kc.io84;
     state.kc.io86 = kc.io86;
     state.kc.pio_a = kc.pio_a;
     state.kc.pio_b = kc.pio_b;
+    state.kc.cur_pal_line = kc.video.cur_pal_line;
+    state.kc.irm_control = kc.video.irm_control;
+    state.kc.pio_blink_flag = kc.video.pio_blink_flag;
+    state.kc.ctc_blink_flag = kc.video.ctc_blink_flag;
+    state.kc.volume = kc.audio.volume;
+    for (int c = 0; c < 2; c++) {
+        state.kc.chn[c].ctc_mode = kc.audio.channels[c].ctc_mode;
+        state.kc.chn[c].ctc_constant = kc.audio.channels[c].ctc_constant;
+    }
+    for (int s = 0; s < 2; s++) {
+        auto& dst = state.kc.slots[s];
+        const auto& src = kc.exp.slots[s];
+        dst.slot_addr = src.slot_addr;
+        dst.module_type = src.mod.type;
+        dst.control_byte = src.control_byte;
+    }
 }
 
 //------------------------------------------------------------------------------
 void
 snapshot::apply_kc_state(const state_t& state, yakc& emu) {
     kc85& kc = emu.kc85;
+    kc.on = state.kc.on;
     kc.cur_model = (device) state.kc.model;
     kc.cur_caos  = (os_rom) state.kc.caos;
     kc.io84      = state.kc.io84;
     kc.io86      = state.kc.io86;
     kc.pio_a     = state.kc.pio_a;
     kc.pio_b     = state.kc.pio_b;
-    kc.update_rom_pointers();
+    kc.video.model = (device) state.kc.model;
+    kc.video.cur_pal_line = state.kc.cur_pal_line;
+    kc.video.irm_control = state.kc.irm_control;
+    kc.video.pio_blink_flag = 0 != state.kc.pio_blink_flag;
+    kc.video.ctc_blink_flag = 0 != state.kc.ctc_blink_flag;
+    kc.audio.reset();
+    kc.audio.volume = state.kc.volume;
+    for (int c = 0; c < 2; c++) {
+        kc.audio.channels[c].ctc_mode = state.kc.chn[c].ctc_mode;
+        kc.audio.channels[c].ctc_constant = state.kc.chn[c].ctc_constant;
+    }
+    for (int s = 0; s < 2; s++) {
+        const auto& slot = state.kc.slots[s];
+        if (kc.exp.slot_occupied(slot.slot_addr)) {
+            kc.exp.remove_module(slot.slot_addr, kc.board->cpu.mem);
+        }
+        kc.exp.insert_module(slot.slot_addr, (kc85_exp::module_type)slot.module_type);
+        kc.exp.update_control_byte(slot.slot_addr, slot.control_byte);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+snapshot::write_z1013_state(const yakc& emu, state_t& state) {
+    state.z1013.on = emu.z1013.on;
+    state.z1013.model = (ubyte) emu.z1013.cur_model;
+    state.z1013.os  = (ubyte) emu.z1013.cur_os;
+    state.z1013.kbd_column_nr_requested = emu.z1013.kbd_column_nr_requested;
+    state.z1013.kbd_8x8_requested = emu.z1013.kbd_8x8_requested;
+    state.z1013.next_kbd_column_bits = emu.z1013.next_kbd_column_bits;
+    state.z1013.kbd_column_bits = emu.z1013.kbd_column_bits;
+}
+
+//------------------------------------------------------------------------------
+void
+snapshot::apply_z1013_state(const state_t& state, yakc& emu) {
+    emu.z1013.on = state.z1013.on;
+    emu.z1013.cur_model = (device) state.z1013.model;
+    emu.z1013.cur_os = (os_rom) state.z1013.os;
+    emu.z1013.kbd_column_nr_requested = state.z1013.kbd_column_nr_requested;
+    emu.z1013.kbd_8x8_requested = state.z1013.kbd_8x8_requested;
+    emu.z1013.next_kbd_column_bits = state.z1013.next_kbd_column_bits;
+    emu.z1013.kbd_column_bits = emu.z1013.kbd_column_bits;
 }
 
 //------------------------------------------------------------------------------
@@ -201,133 +279,87 @@ snapshot::apply_ctc_state(const state_t& state, yakc& emu) {
 //------------------------------------------------------------------------------
 void
 snapshot::write_pio_state(const yakc& emu, state_t& state) {
-    const z80pio& pio = emu.board.pio;
+    const z80pio& pio1 = emu.board.pio;
     for (int i = 0; i < 2; i++) {
-        state.pio1.port[i] = pio.port[i];
+        state.pio1.port[i] = pio1.port[i];
     }
-    write_intctrl_state(pio.int_ctrl, state.pio1.intctrl);
+    write_intctrl_state(pio1.int_ctrl, state.pio1.intctrl);
+    const z80pio& pio2 = emu.board.pio2;
+    for (int i = 0; i < 2; i++) {
+        state.pio2.port[i] = pio2.port[i];
+    }
+    write_intctrl_state(pio2.int_ctrl, state.pio2.intctrl);
 }
 
 //------------------------------------------------------------------------------
 void
 snapshot::apply_pio_state(const state_t& state, yakc& emu) {
-    z80pio& pio = emu.board.pio;
+    z80pio& pio1 = emu.board.pio;
     for (int i = 0; i < 2; i++) {
-        pio.port[i] = state.pio1.port[i];
+        pio1.port[i] = state.pio1.port[i];
     }
-    apply_intctrl_state(state.pio1.intctrl, pio.int_ctrl);
-}
-
-//------------------------------------------------------------------------------
-void
-snapshot::write_video_state(const yakc& emu, state_t& state) {
-    const kc85& kc = emu.kc85;
-    state.video.cur_pal_line = kc.video.cur_pal_line;
-    state.video.irm_control = kc.video.irm_control;
-    state.video.pio_blink_flag = kc.video.pio_blink_flag;
-    state.video.ctc_blink_flag = kc.video.ctc_blink_flag;
-}
-
-//------------------------------------------------------------------------------
-void
-snapshot::apply_video_state(const state_t& state, yakc& emu) {
-    kc85& kc = emu.kc85;
-    kc.video.model = (device) state.kc.model;
-    kc.video.cur_pal_line = state.video.cur_pal_line;
-    kc.video.irm_control = state.video.irm_control;
-    kc.video.pio_blink_flag = 0 != state.video.pio_blink_flag;
-    kc.video.ctc_blink_flag = 0 != state.video.ctc_blink_flag;
-}
-
-//------------------------------------------------------------------------------
-void
-snapshot::write_audio_state(const yakc& emu, state_t& state) {
-    const kc85& kc = emu.kc85;
-    state.audio.volume = kc.audio.volume;
-    for (int c = 0; c < 2; c++) {
-        state.audio.chn[c].ctc_mode = kc.audio.channels[c].ctc_mode;
-        state.audio.chn[c].ctc_constant = kc.audio.channels[c].ctc_constant;
+    apply_intctrl_state(state.pio1.intctrl, pio1.int_ctrl);
+    z80pio& pio2 = emu.board.pio2;
+    for (int i = 0; i < 2; i++) {
+        pio2.port[i] = state.pio2.port[i];
     }
-}
-
-//------------------------------------------------------------------------------
-void
-snapshot::apply_audio_state(const state_t& state, yakc& emu) {
-    kc85& kc = emu.kc85;
-    kc.audio.reset();
-    kc.audio.volume = state.audio.volume;
-    for (int c = 0; c < 2; c++) {
-        kc.audio.channels[c].ctc_mode = state.audio.chn[c].ctc_mode;
-        kc.audio.channels[c].ctc_constant = state.audio.chn[c].ctc_constant;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-snapshot::write_exp_state(const yakc& emu, state_t& state) {
-    const kc85& kc = emu.kc85;
-    for (int s = 0; s < 2; s++) {
-        auto& dst = state.exp.slots[s];
-        const auto& src = kc.exp.slots[s];
-        dst.slot_addr = src.slot_addr;
-        dst.module_type = src.mod.type;
-        dst.control_byte = src.control_byte;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-snapshot::apply_exp_state(const state_t& state, yakc& emu) {
-    kc85& kc = emu.kc85;
-    for (int s = 0; s < 2; s++) {
-        const auto& slot = state.exp.slots[s];
-        if (kc.exp.slot_occupied(slot.slot_addr)) {
-            kc.exp.remove_module(slot.slot_addr, kc.board->cpu.mem);
-        }
-        kc.exp.insert_module(slot.slot_addr, (kc85_exp::module_type)slot.module_type);
-        kc.exp.update_control_byte(slot.slot_addr, slot.control_byte);
-    }
+    apply_intctrl_state(state.pio2.intctrl, pio2.int_ctrl);
 }
 
 //------------------------------------------------------------------------------
 void
 snapshot::write_memory_state(const yakc& emu, state_t& state) {
-    const kc85& kc = emu.kc85;
-    static_assert(sizeof(kc.ram) == sizeof(state.ram), "general RAM size mismatch");
-    static_assert(sizeof(kc.video.irm) == sizeof(state.irm), "video RAM size mismatch");
+    if (emu.is_device(device::any_kc85)) {
+        const kc85& kc = emu.kc85;
+        static_assert(sizeof(kc.ram) == sizeof(state.ram), "KC RAM size mismatch");
+        static_assert(sizeof(kc.video.irm) == sizeof(state.irm), "KC video RAM size mismatch");
 
-    memcpy(state.ram, kc.ram, sizeof(kc.ram));
-    memcpy(state.irm, kc.video.irm, sizeof(kc.video.irm));
+        memcpy(state.ram, kc.ram, sizeof(kc.ram));
+        memcpy(state.irm, kc.video.irm, sizeof(kc.video.irm));
 
-    // copy content of RAM modules
-    const auto& slot08 = kc.exp.slot_by_addr(0x08);
-    if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
-        memcpy(state.ram8, slot08.mod.mem_ptr, slot08.mod.mem_size);
+        // copy content of RAM modules
+        const auto& slot08 = kc.exp.slot_by_addr(0x08);
+        if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
+            memcpy(state.ram8, slot08.mod.mem_ptr, slot08.mod.mem_size);
+        }
+        const auto& slot0C = kc.exp.slot_by_addr(0x0C);
+        if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
+            memcpy(state.ramC, slot0C.mod.mem_ptr, slot0C.mod.mem_size);
+        }
     }
-    const auto& slot0C = kc.exp.slot_by_addr(0x0C);
-    if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
-        memcpy(state.ramC, slot0C.mod.mem_ptr, slot0C.mod.mem_size);
+    else if (emu.is_device(device::any_z1013)) {
+        static_assert(sizeof(emu.z1013.ram) == sizeof(state.ram), "Z1013 RAM size mismatch");
+        static_assert(sizeof(emu.z1013.irm) < sizeof(state.irm[0]), "Z1013 IRM size too big");
+        memcpy(state.ram, emu.z1013.ram, sizeof(emu.z1013.ram));
+        memcpy(state.irm[0], emu.z1013.irm, sizeof(emu.z1013.irm));
     }
 }
 
 //------------------------------------------------------------------------------
 void
 snapshot::apply_memory_state(const state_t& state, yakc& emu) {
-    kc85& kc = emu.kc85;
-    static_assert(sizeof(kc.ram) == sizeof(state.ram), "general RAM size mismatch");
-    static_assert(sizeof(kc.video.irm) == sizeof(state.irm), "video RAM size mismatch");
+    if (emu.is_device(device::any_kc85)) {
+        kc85& kc = emu.kc85;
+        static_assert(sizeof(kc.ram) == sizeof(state.ram), "KC RAM size mismatch");
+        static_assert(sizeof(kc.video.irm) == sizeof(state.irm), "KC video RAM size mismatch");
 
-    memcpy(kc.ram, state.ram, sizeof(state.ram));
-    memcpy(kc.video.irm, state.irm, sizeof(state.irm));
-    const auto& slot08 = kc.exp.slot_by_addr(0x08);
-    if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
-        memcpy(slot08.mod.mem_ptr, state.ram8, slot08.mod.mem_size);
+        memcpy(kc.ram, state.ram, sizeof(state.ram));
+        memcpy(kc.video.irm, state.irm, sizeof(state.irm));
+        const auto& slot08 = kc.exp.slot_by_addr(0x08);
+        if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
+            memcpy(slot08.mod.mem_ptr, state.ram8, slot08.mod.mem_size);
+        }
+        const auto& slot0C = kc.exp.slot_by_addr(0x0C);
+        if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
+            memcpy(slot0C.mod.mem_ptr, state.ramC, slot0C.mod.mem_size);
+        }
     }
-    const auto& slot0C = kc.exp.slot_by_addr(0x0C);
-    if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
-        memcpy(slot0C.mod.mem_ptr, state.ramC, slot0C.mod.mem_size);
+    else if (emu.is_device(device::any_z1013)) {
+        static_assert(sizeof(emu.z1013.ram) == sizeof(state.ram), "Z1013 RAM size mismatch");
+        static_assert(sizeof(emu.z1013.irm) < sizeof(state.irm[0]), "Z1013 IRM size too big");
+        memcpy(emu.z1013.ram, state.ram, sizeof(emu.z1013.ram));
+        memcpy(emu.z1013.irm, state.irm[0], sizeof(emu.z1013.irm));
     }
-    kc.update_bank_switching();
 }
 
 } // namespace YAKC

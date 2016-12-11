@@ -352,7 +352,7 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Memory Editor")) {
                     this->OpenWindow(emu, MemoryWindow::Create());
                 }
-                if (emu.is_device(device::any_kc85)) {
+                if (emu.is_device(device::any_kc85) || emu.is_device(device::any_z1013)) {
                     if (ImGui::MenuItem("Scan for Commands...")) {
                         this->OpenWindow(emu, CommandWindow::Create());
                     }

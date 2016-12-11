@@ -15,7 +15,7 @@ TEST(z80pio_control) {
 
     z80bus bus;
     z80pio pio;
-    pio.init(0, &bus);
+    pio.init(0);
 
     for (int i = 0; i < z80pio::num_ports; i++) {
         CHECK(0 == pio.port[i].output);
@@ -140,7 +140,7 @@ TEST(z80pio_output_input) {
     // init port A to output mode and port B to input mode
     pioTestBus bus;
     z80pio pio;
-    pio.init(0, &bus);
+    pio.init(0);
 
     pio.write_control(z80pio::A, (0<<6)|0xF);
     CHECK(z80pio::mode_output == pio.port[z80pio::A].mode);
@@ -151,7 +151,7 @@ TEST(z80pio_output_input) {
 
     // write a data value to PIO-A, this should set the internal output register
     // and call the out callback
-    pio.write_data(z80pio::A, 0x54);
+    pio.write_data(&bus, z80pio::A, 0x54);
     CHECK(0x54 == pio.port[z80pio::A].output);
     CHECK(0 == pio.port[z80pio::A].input);
     CHECK(0x54 == bus.out_value_a);
@@ -160,7 +160,7 @@ TEST(z80pio_output_input) {
     // but simply return the value of the output register
     bus.out_value_a = 0;
     bus.in_value_a = 0x23;
-    ubyte read_val = pio.read_data(z80pio::A);
+    ubyte read_val = pio.read_data(&bus, z80pio::A);
     CHECK(0x54 == read_val);
     CHECK(0 == bus.out_value_a);
     CHECK(0x23 == bus.in_value_a);
@@ -171,7 +171,7 @@ TEST(z80pio_output_input) {
     // the input-callback to fetch a value
     bus.out_value_b = 0x11;
     bus.in_value_b = 0x45;
-    read_val = pio.read_data(z80pio::B);
+    read_val = pio.read_data(&bus, z80pio::B);
     CHECK(0x45 == read_val);
     CHECK(0x45 == pio.port[z80pio::B].input);
     CHECK(0 == pio.port[z80pio::B].output);
@@ -181,7 +181,7 @@ TEST(z80pio_output_input) {
     // (not the input register, but doesn't any callbacks to be called)
     bus.out_value_b = 0;
     bus.in_value_b = 0;
-    pio.write_data(z80pio::B, 0x78);
+    pio.write_data(&bus, z80pio::B, 0x78);
     CHECK(0 == bus.out_value_b);
     CHECK(0 == bus.in_value_b);
     CHECK(0x78 == pio.port[z80pio::B].output);
