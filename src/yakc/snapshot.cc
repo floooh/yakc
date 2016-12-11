@@ -24,6 +24,7 @@ snapshot::take_snapshot(const yakc& emu, state_t& state) {
     write_pio_state(emu, state);
     write_kc_state(emu, state);
     write_z1013_state(emu, state);
+    write_z9001_state(emu, state);
     write_memory_state(emu, state);
 }
 
@@ -38,12 +39,16 @@ snapshot::apply_snapshot(const state_t& state, yakc& emu) {
     apply_pio_state(state, emu);
     apply_kc_state(state, emu);
     apply_z1013_state(state, emu);
+    apply_z9001_state(state, emu);
     apply_memory_state(state, emu);
     if (emu.is_device(device::any_kc85)) {
         emu.kc85.after_apply_snapshot();
     }
     else if (emu.is_device(device::any_z1013)) {
         emu.z1013.after_apply_snapshot();
+    }
+    else if (emu.is_device(device::any_z9001)) {
+        emu.z9001.after_apply_snapshot();
     }
 }
 
@@ -90,7 +95,7 @@ void
 snapshot::write_kc_state(const yakc& emu, state_t& state) {
     const kc85& kc = emu.kc85;
     state.kc.on = kc.on;
-    state.kc.model = (ubyte) kc.cur_model;
+    state.kc.model = (uword) kc.cur_model;
     state.kc.caos  = (ubyte) kc.cur_caos;
     state.kc.io84 = kc.io84;
     state.kc.io86 = kc.io86;
@@ -150,8 +155,8 @@ snapshot::apply_kc_state(const state_t& state, yakc& emu) {
 void
 snapshot::write_z1013_state(const yakc& emu, state_t& state) {
     state.z1013.on = emu.z1013.on;
-    state.z1013.model = (ubyte) emu.z1013.cur_model;
-    state.z1013.os  = (ubyte) emu.z1013.cur_os;
+    state.z1013.model = (uword) emu.z1013.cur_model;
+    state.z1013.os = (ubyte) emu.z1013.cur_os;
     state.z1013.kbd_column_nr_requested = emu.z1013.kbd_column_nr_requested;
     state.z1013.kbd_8x8_requested = emu.z1013.kbd_8x8_requested;
     state.z1013.next_kbd_column_bits = emu.z1013.next_kbd_column_bits;
@@ -168,6 +173,38 @@ snapshot::apply_z1013_state(const state_t& state, yakc& emu) {
     emu.z1013.kbd_8x8_requested = state.z1013.kbd_8x8_requested;
     emu.z1013.next_kbd_column_bits = state.z1013.next_kbd_column_bits;
     emu.z1013.kbd_column_bits = emu.z1013.kbd_column_bits;
+}
+
+//------------------------------------------------------------------------------
+void
+snapshot::write_z9001_state(const yakc& emu, state_t& state) {
+    state.z9001.on = emu.z9001.on;
+    state.z9001.model = (uword) emu.z9001.cur_model;
+    state.z9001.os = (ubyte) emu.z9001.cur_os;
+    state.z9001.ctc0_mode = emu.z9001.ctc0_mode;
+    state.z9001.kbd_column_mask = emu.z9001.kbd_column_mask;
+    state.z9001.kbd_line_mask = emu.z9001.kbd_line_mask;
+    state.z9001.blink_flipflop = emu.z9001.blink_flipflop;
+    state.z9001.brd_color = emu.z9001.brd_color;
+    state.z9001.key_mask = emu.z9001.key_mask;
+    state.z9001.blink_counter = emu.z9001.blink_counter;
+    state.z9001.ctc0_constant = emu.z9001.ctc0_constant;
+}
+
+//------------------------------------------------------------------------------
+void
+snapshot::apply_z9001_state(const state_t& state, yakc& emu) {
+    emu.z9001.on = state.z9001.on;
+    emu.z9001.cur_model = (device) state.z9001.model;
+    emu.z9001.cur_os = (os_rom) state.z9001.os;
+    emu.z9001.ctc0_mode = state.z9001.ctc0_mode;
+    emu.z9001.kbd_column_mask = state.z9001.kbd_column_mask;
+    emu.z9001.kbd_line_mask = state.z9001.kbd_line_mask;
+    emu.z9001.blink_flipflop = state.z9001.blink_flipflop;
+    emu.z9001.brd_color = state.z9001.brd_color;
+    emu.z9001.key_mask = state.z9001.key_mask;
+    emu.z9001.blink_counter = state.z9001.blink_counter;
+    emu.z9001.ctc0_constant = state.z9001.ctc0_constant;
 }
 
 //------------------------------------------------------------------------------
@@ -333,6 +370,14 @@ snapshot::write_memory_state(const yakc& emu, state_t& state) {
         memcpy(state.ram, emu.z1013.ram, sizeof(emu.z1013.ram));
         memcpy(state.irm[0], emu.z1013.irm, sizeof(emu.z1013.irm));
     }
+    else if (emu.is_device(device::any_z9001)) {
+        static_assert(sizeof(emu.z9001.ram) == sizeof(state.ram), "Z9001 RAM size mismatch");
+        static_assert(sizeof(emu.z9001.color_ram) < sizeof(state.irm[0]), "Z9001 color RAM size too big");
+        static_assert(sizeof(emu.z9001.video_ram) < sizeof(state.irm[1]), "Z9001 video RAM size too big");
+        memcpy(state.ram, emu.z9001.ram, sizeof(emu.z9001.ram));
+        memcpy(state.irm[0], emu.z9001.color_ram, sizeof(emu.z9001.color_ram));
+        memcpy(state.irm[1], emu.z9001.video_ram, sizeof(emu.z9001.video_ram));
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -359,6 +404,14 @@ snapshot::apply_memory_state(const state_t& state, yakc& emu) {
         static_assert(sizeof(emu.z1013.irm) < sizeof(state.irm[0]), "Z1013 IRM size too big");
         memcpy(emu.z1013.ram, state.ram, sizeof(emu.z1013.ram));
         memcpy(emu.z1013.irm, state.irm[0], sizeof(emu.z1013.irm));
+    }
+    else if (emu.is_device(device::any_z9001)) {
+        static_assert(sizeof(emu.z9001.ram) == sizeof(state.ram), "Z9001 RAM size mismatch");
+        static_assert(sizeof(emu.z9001.color_ram) < sizeof(state.irm[0]), "Z9001 color RAM size too big");
+        static_assert(sizeof(emu.z9001.video_ram) < sizeof(state.irm[1]), "Z9001 video RAM size too big");
+        memcpy(emu.z9001.ram, state.ram, sizeof(emu.z9001.ram));
+        memcpy(emu.z9001.color_ram, state.irm[0], sizeof(emu.z9001.color_ram));
+        memcpy(emu.z9001.video_ram, state.irm[1], sizeof(emu.z9001.video_ram));
     }
 }
 

@@ -21,9 +21,7 @@ z80ctc::init_daisychain(z80int* downstream) {
     for (int i = 0; i < 3; i++) {
         this->channels[i].int_ctrl.connect_irq_device(&this->channels[i+1].int_ctrl);
     }
-    if (downstream) {
-        this->channels[3].int_ctrl.connect_irq_device(downstream);
-    }
+    this->channels[3].int_ctrl.connect_irq_device(downstream);
 }
 
 //------------------------------------------------------------------------------

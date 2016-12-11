@@ -352,31 +352,31 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Memory Editor")) {
                     this->OpenWindow(emu, MemoryWindow::Create());
                 }
-                if (emu.is_device(device::any_kc85) || emu.is_device(device::any_z1013)) {
+                if (emu.is_device(device::any_kc85)) {
                     if (ImGui::MenuItem("Scan for Commands...")) {
                         this->OpenWindow(emu, CommandWindow::Create());
                     }
-                    if (ImGui::BeginMenu("Take Snapshot")) {
+                }
+                if (ImGui::BeginMenu("Take Snapshot")) {
+                    for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
+                        strBuilder.Format(32, "Snapshot %d", i);
+                        if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                            this->snapshotStorage.TakeSnapshot(emu, i);
+                        }
+                    }
+                    ImGui::EndMenu();
+                }
+                if (this->snapshotStorage.HasSnapshots()) {
+                    if (ImGui::BeginMenu("Apply Snapshot")) {
                         for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                            strBuilder.Format(32, "Snapshot %d", i);
-                            if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                this->snapshotStorage.TakeSnapshot(emu, i);
+                            if (this->snapshotStorage.HasSnapshot(i)) {
+                                strBuilder.Format(32, "Snapshot %d", i);
+                                if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                                    this->snapshotStorage.ApplySnapshot(i, emu);
+                                }
                             }
                         }
                         ImGui::EndMenu();
-                    }
-                    if (this->snapshotStorage.HasSnapshots()) {
-                        if (ImGui::BeginMenu("Apply Snapshot")) {
-                            for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                                if (this->snapshotStorage.HasSnapshot(i)) {
-                                    strBuilder.Format(32, "Snapshot %d", i);
-                                    if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                        this->snapshotStorage.ApplySnapshot(i, emu);
-                                    }
-                                }
-                            }
-                            ImGui::EndMenu();
-                        }
                     }
                 }
                 ImGui::EndMenu();

@@ -81,8 +81,47 @@ z9001::init(breadboard* b) {
 
 //------------------------------------------------------------------------------
 void
+z9001::init_memory_mapping() {
+    z80& cpu = this->board->cpu;
+    cpu.mem.unmap_all();
+    if (device::z9001 == this->cur_model) {
+        // emulate a Z9001 with 16 KByte RAM module and BASIC module
+        cpu.mem.map(0, 0x0000, 0x8000, this->ram, true);
+        cpu.mem.map(1, 0xC000, 0x2800, dump_basic_507_511, false);
+        cpu.mem.map(1, 0xF000, 0x0800, dump_z9001_os12_1, false);
+        cpu.mem.map(1, 0xF800, 0x0800, dump_z9001_os12_2, false);
+    }
+    else if (device::kc87 == this->cur_model) {
+        // emulate a KC87 with 48 KByte RAM
+        cpu.mem.map(0, 0x0000, 0xC000, this->ram, true);
+        cpu.mem.map(1, 0xC000, 0x2000, dump_z9001_basic, false);
+        cpu.mem.map(1, 0xE000, 0x2000, dump_kc87_os_2, false);
+        cpu.mem.map(0, 0xE800, 0x0400, this->color_ram, true);
+    }
+    cpu.mem.map(0, 0xEC00, 0x0400, this->video_ram, true);
+}
+
+//------------------------------------------------------------------------------
+void
 z9001::setup_sound_funcs(const sound_funcs& funcs) {
     this->sound_cb = funcs;
+}
+
+//------------------------------------------------------------------------------
+void
+z9001::after_apply_snapshot() {
+    this->abs_cycle_count = 0;
+    this->overflow_cycles = 0;
+    this->init_memory_mapping();
+    z80& cpu = this->board->cpu;
+    z80pio& pio1 = this->board->pio;
+    z80pio& pio2 = this->board->pio2;
+    z80ctc& ctc = this->board->ctc;
+    cpu.bus = this;
+    cpu.connect_irq_device(&pio1.int_ctrl);
+    pio1.int_ctrl.connect_irq_device(&pio2.int_ctrl);
+    pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
+    ctc.init_daisychain(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -106,28 +145,13 @@ z9001::poweron(device m, os_rom os) {
     clear(this->ram, sizeof(this->ram));
     fill_random(this->color_ram, sizeof(this->color_ram));
     fill_random(this->video_ram, sizeof(this->video_ram));
-    z80& cpu = this->board->cpu;
-    cpu.mem.unmap_all();
-    if (device::z9001 == m) {
-        // emulate a Z9001 with 16 KByte RAM module and BASIC module
-        cpu.mem.map(0, 0x0000, 0x8000, this->ram, true);
-        cpu.mem.map(1, 0xC000, 0x2800, dump_basic_507_511, false);
-        cpu.mem.map(1, 0xF000, 0x0800, dump_z9001_os12_1, false);
-        cpu.mem.map(1, 0xF800, 0x0800, dump_z9001_os12_2, false);
-    }
-    else if (device::kc87 == m) {
-        // emulate a KC87 with 48 KByte RAM
-        cpu.mem.map(0, 0x0000, 0xC000, this->ram, true);
-        cpu.mem.map(1, 0xC000, 0x2000, dump_z9001_basic, false);
-        cpu.mem.map(1, 0xE000, 0x2000, dump_kc87_os_2, false);
-        cpu.mem.map(0, 0xE800, 0x0400, this->color_ram, true);
-    }
-    cpu.mem.map(0, 0xEC00, 0x0400, this->video_ram, true);
+    this->init_memory_mapping();
 
     // initialize the clock at 2.4576 MHz
     this->board->clck.init(2458);
 
     // initialize hardware components
+    z80& cpu = this->board->cpu;
     z80pio& pio1 = this->board->pio;
     z80pio& pio2 = this->board->pio2;
     z80ctc& ctc = this->board->ctc;

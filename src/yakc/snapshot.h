@@ -36,8 +36,8 @@ public:
 
         // KC85 system state
         struct kc_t {
+            uword model;
             ubyte on;
-            ubyte model;
             ubyte caos;
             ubyte io84;
             ubyte io86;
@@ -47,6 +47,7 @@ public:
             ubyte irm_control;
             ubyte pio_blink_flag;
             ubyte ctc_blink_flag;
+            ubyte pad[3];
             int volume;
             struct channel_t {
                 ubyte ctc_mode;
@@ -63,16 +64,34 @@ public:
 
         // Z1013 system state
         struct z1013_t {
+            uword model;
             ubyte on;
-            ubyte model;
             ubyte os;
             ubyte kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
             ubyte kbd_8x8_requested = false;         // bit 4 in PIO-B written
-            ubyte pad[3];
+            ubyte pad[2];
             uint64_t next_kbd_column_bits = 0;
             uint64_t kbd_column_bits = 0;
         } z1013;
         static_assert((sizeof(z1013_t)&3)==0, "z1013_t odd size!");
+
+        // Z9001 system state
+        struct z9001_t {
+            uword model;
+            ubyte on;
+            ubyte os;
+            ubyte ctc0_mode;
+            ubyte kbd_column_mask;
+            ubyte kbd_line_mask;
+            ubyte blink_flipflop;
+            ubyte brd_color;
+            ubyte pad[3];
+            uint32_t blink_counter;
+            ubyte ctc0_constant;
+            ubyte pad1[3];
+            uint64_t key_mask;
+        } z9001;
+        static_assert((sizeof(z9001_t)&3)==0, "z9001_t odd size!");
 
         // cpu state
         struct cpu_t {
@@ -152,9 +171,13 @@ public:
     /// apply toplevel KC state
     static void apply_kc_state(const state_t& state, yakc& emu);
     /// write the Z1013 system state
-    static void write_z1013_state(const yakc& emy, state_t& state);
+    static void write_z1013_state(const yakc& emu, state_t& state);
     /// apply Z1013 system state
     static void apply_z1013_state(const state_t& state, yakc& emu);
+    /// write the z9001 system state
+    static void write_z9001_state(const yakc& emu, state_t& state);
+    /// apply z9001 system state
+    static void apply_z9001_state(const state_t& state, yakc& emu);
     /// write the cpu state
     static void write_cpu_state(const yakc& emu, state_t& state);
     /// apply cpu state

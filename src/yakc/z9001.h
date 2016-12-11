@@ -38,6 +38,8 @@ public:
     void init(breadboard* board);
     /// setup audio callbacks
     void setup_sound_funcs(const sound_funcs& funcs);
+    /// init the memory map
+    void init_memory_mapping();
 
     /// power-on the device
     void poweron(device m, os_rom os);
@@ -49,6 +51,8 @@ public:
     device model() const;
     /// get info about emulated system
     const char* system_info() const;
+    /// called after snapshot restore
+    void after_apply_snapshot();    
     /// get current border color
     void border_color(float& out_red, float& out_green, float& out_blue);
 
