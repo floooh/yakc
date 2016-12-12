@@ -86,6 +86,8 @@ zx::poweron(device m) {
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
     this->board->clck.init((m == device::zxspectrum48k) ? 3500 : 3547);
+    // a 50Hz timer which trigger every vertical blank
+    this->board->clck.config_timer(0, 50);
 
     // initialize hardware components
     this->board->cpu.init();
@@ -136,7 +138,9 @@ void
 zx::cpu_out(uword port, ubyte val) {
     if ((port & 0xFF) == 0xFE) {
         this->brder_color = this->pal[val & 7] & 0xFFD7D7D7;
-        // FIXME: bit 3 activate MIC output, bit 4 activate EAR/speaker output
+        // FIXME:
+        //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
+        //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
         return;
     }
     if (device::zxspectrum128k == this->cur_model) {
@@ -187,6 +191,14 @@ zx::irq() {
 
 //------------------------------------------------------------------------------
 void
+zx::timer(int timer_id) {
+    if (0 == timer_id) {
+        this->blink_counter++;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
 zx::put_key(ubyte ascii) {
     if (ascii != this->key_code) {
         this->key_code = ascii;
@@ -224,6 +236,8 @@ void
 zx::decode_video() {
     uint32_t* dst = rgba8_buffer;
     uint8_t* vidmem_bank = this->ram[this->display_ram_bank];
+    bool blink = 0 != (this->blink_counter & 0x10);
+    uint32_t fg, bg;
     for (uint16_t y = 0; y < 192; y++) {
         uint16_t y_offset = ((y & 0xC0)<<5) | ((y & 0x07)<<8) | ((y & 0x38)<<2);
         for (uint16_t x = 0; x < 32; x++) {
@@ -239,8 +253,14 @@ zx::decode_video() {
             uint8_t clr = vidmem_bank[clr_offset];
 
             // foreground and background color
-            uint32_t fg = this->pal[clr & 7];
-            uint32_t bg = this->pal[(clr>>3) & 7];
+            if ((clr & (1<<7)) && blink) {
+                fg = this->pal[(clr>>3) & 7];
+                bg = this->pal[clr & 7];
+            }
+            else {
+                fg = this->pal[clr & 7];
+                bg = this->pal[(clr>>3) & 7];
+            }
             if (0 == (clr & (1<<6))) {
                 // standard brightness
                 fg &= 0xFFD7D7D7;

@@ -53,10 +53,13 @@ public:
     virtual ubyte cpu_in(uword port) override;
     /// interrupt request callback
     virtual void irq() override;
+    /// clock timer-trigger callback
+    virtual void timer(int timer_id) override;
 
     device cur_model = device::zxspectrum48k;
     os_rom cur_os = os_rom::amstrad_zx48k;
     bool on = false;
+    uint8_t blink_counter = 0;          // increased by one every vblank
     uint8_t key_code = 0;
     uint32_t display_ram_bank = 5;      // which RAM bank to use as display mem
     uint32_t brder_color = 0;
