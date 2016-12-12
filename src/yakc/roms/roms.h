@@ -16,4 +16,7 @@ extern unsigned char dump_z1013_font[2048];
 extern unsigned char dump_z9001_font[2048];
 extern unsigned char dump_kc87_font_2[2048];
 extern unsigned char dump_basic_507_511[10240];
+extern unsigned char dump_amstrad_zx48k[16384];
+extern unsigned char dump_amstrad_zx128k_0[16384];
+extern unsigned char dump_amstrad_zx128k_1[16384];
 } // namespace YAKC

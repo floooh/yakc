@@ -201,14 +201,16 @@ UI::OnFrame(yakc& emu) {
         if (ImGui::BeginMainMenuBar()) {
             const char* model;
             switch (emu.model) {
-                case device::kc85_2:    model = "KC85/2"; break;
-                case device::kc85_3:    model = "KC85/3"; break;
-                case device::kc85_4:    model = "KC85/4"; break;
-                case device::z1013_01:  model = "Z1013.01"; break;
-                case device::z1013_16:  model = "Z1013.16"; break;
-                case device::z1013_64:  model = "Z1013.64"; break;
-                case device::z9001:     model = "Z9001"; break;
-                case device::kc87:      model = "KC87"; break;
+                case device::kc85_2:            model = "KC85/2"; break;
+                case device::kc85_3:            model = "KC85/3"; break;
+                case device::kc85_4:            model = "KC85/4"; break;
+                case device::z1013_01:          model = "Z1013.01"; break;
+                case device::z1013_16:          model = "Z1013.16"; break;
+                case device::z1013_64:          model = "Z1013.64"; break;
+                case device::z9001:             model = "Z9001"; break;
+                case device::kc87:              model = "KC87"; break;
+                case device::zxspectrum48k:     model = "Spectrum48K"; break;
+                case device::zxspectrum128k:    model = "Spectrum128K"; break;
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
@@ -292,6 +294,17 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Boot to KC87  (48KB)")) {
                     emu.poweroff();
                     emu.poweron(device::kc87, os_rom::kc87_os_2);
+                }
+                if (ImGui::BeginMenu("Boot to ZX")) {
+                    if (ImGui::MenuItem("ZX Spectrum 48K")) {
+                        emu.poweroff();
+                        emu.poweron(device::zxspectrum48k, os_rom::none);
+                    }
+                    if (ImGui::MenuItem("ZX Spectrum 128K")) {
+                        emu.poweroff();
+                        emu.poweron(device::zxspectrum128k, os_rom::none);
+                    }
+                    ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
             }

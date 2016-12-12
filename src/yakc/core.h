@@ -63,10 +63,13 @@ enum class device {
     z1013_64 = (1<<6),
     z9001    = (1<<7),
     kc87     = (1<<8),
+    zxspectrum48k   = (1<<9),
+    zxspectrum128k  = (1<<10),
     none = 0,
     any_kc85 = (kc85_2|kc85_3|kc85_4),
     any_z1013 = (z1013_01|z1013_16|z1013_64),
-    any_z9001 = (z9001|kc87)
+    any_z9001 = (z9001|kc87),
+    any_zx = (zxspectrum48k|zxspectrum128k)
 };
 
 enum class os_rom {
@@ -80,6 +83,8 @@ enum class os_rom {
     z1013_mon_a2,
     z9001_os_1_2,
     kc87_os_2,
+    amstrad_zx48k,
+    amstrad_zx128k,
     none,
 };
 

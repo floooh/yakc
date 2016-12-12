@@ -170,6 +170,9 @@ YakcApp::OnRunning() {
     else if (this->emu.z1013.on) {
         this->draw.Render(this->emu.z1013.rgba8_buffer, 256, 256);
     }
+    else if (this->emu.zx.on) {
+        this->draw.Render(this->emu.zx.rgba8_buffer, 256, 192);
+    }
     #if YAKC_UI
     this->ui.OnFrame(this->emu);
     #endif

@@ -14,4 +14,7 @@ files:
     - 'z9001_font.bin'
     - 'kc87_font_2.bin'
     - 'basic_507_511.rom'
+    - 'amstrad_zx48k.bin'
+    - 'amstrad_zx128k_0.bin'
+    - 'amstrad_zx128k_1.bin'
 

@@ -16,6 +16,7 @@ yakc::init(const ext_funcs& sys_funcs, const sound_funcs& snd_funcs) {
     this->kc85.init(&this->board);
     this->z1013.init(&this->board);
     this->z9001.init(&this->board);
+    this->zx.init(&this->board);
     this->kc85.audio.setup_callbacks(snd_funcs);
     this->z9001.setup_sound_funcs(snd_funcs);
 }
@@ -38,6 +39,9 @@ yakc::poweron(device m, os_rom rom) {
     else if (this->is_device(device::any_z9001)) {
         this->z9001.poweron(m, rom);
     }
+    else if (this->is_device(device::any_zx)) {
+        this->zx.poweron(m);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -52,12 +56,15 @@ yakc::poweroff() {
     if (this->z9001.on) {
         this->z9001.poweroff();
     }
+    if (this->zx.on) {
+        this->zx.poweroff();
+    }
 }
 
 //------------------------------------------------------------------------------
 bool
 yakc::switchedon() const {
-    return this->kc85.on || this->z1013.on || this->z9001.on;
+    return this->kc85.on || this->z1013.on || this->z9001.on || this->zx.on;
 }
 
 //------------------------------------------------------------------------------
@@ -72,6 +79,9 @@ yakc::reset() {
     }
     if (this->z9001.on) {
         this->z9001.reset();
+    }
+    if (this->zx.on) {
+        this->zx.reset();
     }
 }
 
@@ -96,6 +106,9 @@ yakc::on_context_switched() {
     }
     else if (this->is_device(device::any_z9001)) {
         this->z9001.on_context_switched();
+    }
+    else if (this->is_device(device::any_zx)) {
+        this->zx.on_context_switched();
     }
 }
 
@@ -136,6 +149,9 @@ yakc::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
         else if (this->z9001.on) {
             this->abs_cycle_count = this->z9001.step(this->abs_cycle_count, abs_end_cycles);
         }
+        else if (this->zx.on) {
+            this->abs_cycle_count = this->zx.step(this->abs_cycle_count, abs_end_cycles);
+        }
         YAKC_ASSERT(this->abs_cycle_count >= abs_end_cycles);
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
     }
@@ -153,6 +169,9 @@ yakc::put_key(ubyte ascii) {
     if (this->z9001.on) {
         this->z9001.put_key(ascii);
     }
+    if (this->zx.on) {
+        this->zx.put_key(ascii);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -166,6 +185,9 @@ yakc::system_info() const {
     }
     else if (this->z9001.on) {
         return this->z9001.system_info();
+    }
+    else if (this->zx.on) {
+        return this->zx.system_info();
     }
     else {
         return "no info available";
@@ -183,6 +205,9 @@ yakc::get_bus() {
     }
     else if (this->is_device(device::any_z9001)) {
         return &this->z9001;
+    }
+    else if (this->is_device(device::any_zx)) {
+        return &this->zx;
     }
     else {
         return nullptr;
