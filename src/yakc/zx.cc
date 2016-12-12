@@ -56,12 +56,21 @@ zx::on_context_switched() {
 
 //------------------------------------------------------------------------------
 void
+zx::border_color(float& out_red, float& out_green, float& out_blue) {
+    out_red = this->border_red;
+    out_green = this->border_green;
+    out_blue = this->border_blue;
+}
+
+//------------------------------------------------------------------------------
+void
 zx::poweron(device m) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(device::any_zx) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
+    this->border_red = this->border_green = this->border_blue = 0.0f;
     if (m == device::zxspectrum48k) {
         this->cur_os = os_rom::amstrad_zx48k;
         this->display_ram_bank = 0;
@@ -125,6 +134,14 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
 //------------------------------------------------------------------------------
 void
 zx::cpu_out(uword port, ubyte val) {
+    if ((port & 0xFF) == 0xFE) {
+        // first 3 bits are border color
+        this->border_red   = (val & (1<<0)) ? (0xD7 / 255.0f) : 0;
+        this->border_blue  = (val & (1<<1)) ? (0xD7 / 255.0f) : 0;
+        this->border_green = (val & (1<<2)) ? (0xD7 / 255.0f) : 0;
+        // FIXME: bit 3 activate MIC output, bit 4 activate EAR/speaker output
+        return;
+    }
     if (device::zxspectrum128k == this->cur_model) {
         if (0x7FFD == port) {
             // store display RAM bank index
@@ -152,6 +169,7 @@ zx::cpu_out(uword port, ubyte val) {
                 // bit 4 clear: ROM0
                 mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_0, false);
             }
+            return;
         }
     }
 }

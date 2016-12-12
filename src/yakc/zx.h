@@ -34,6 +34,8 @@ public:
     const char* system_info() const;
     /// called after snapshot restore
     void on_context_switched();
+    /// get current border color
+    void border_color(float& out_red, float& out_green, float& out_blue);
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);
@@ -57,6 +59,9 @@ public:
     bool on = false;
     uint8_t key_code = 0;
     uint32_t display_ram_bank = 5;      // which RAM bank to use as display mem
+    float border_red = 0.0f;
+    float border_green = 0.0f;
+    float border_blue = 0.0f;
     uint32_t pal[8];
     uint32_t rgba8_buffer[256*192];
 };
