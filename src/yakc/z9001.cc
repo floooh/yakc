@@ -146,21 +146,17 @@ z9001::poweron(device m, os_rom os) {
     this->board->clck.init(2458);
 
     // initialize hardware components
-    z80& cpu = this->board->cpu;
-    z80pio& pio1 = this->board->pio;
-    z80pio& pio2 = this->board->pio2;
-    z80ctc& ctc = this->board->ctc;
-    cpu.init();
-    pio1.init(0);
-    pio2.init(1);
-    ctc.init(0);
+    this->board->cpu.init();
+    this->board->pio.init(0);
+    this->board->pio2.init(1);
+    this->board->ctc.init(0);
 
     // setup interrupt daisy chain, from highest to lowest priority:
     //  CPU -> PIO1 -> PIO2 -> CTC
-    cpu.connect_irq_device(&pio1.int_ctrl);
-    pio1.int_ctrl.connect_irq_device(&pio2.int_ctrl);
-    pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
-    ctc.init_daisychain(nullptr);
+    this->board->cpu.connect_irq_device(&this->board->pio.int_ctrl);
+    this->board->pio.int_ctrl.connect_irq_device(&this->board->pio2.int_ctrl);
+    this->board->pio2.int_ctrl.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
+    this->board->ctc.init_daisychain(nullptr);
 
     // configure a hardware counter to control the video blink attribute
     this->board->clck.config_timer(0, 100);

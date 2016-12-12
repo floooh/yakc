@@ -54,20 +54,17 @@ kc85::poweron(device m, os_rom os) {
     this->board->clck.init((m == device::kc85_4) ? 1770 : 1750);
 
     // initialize hardware components
-    z80& cpu = this->board->cpu;
-    z80pio& pio = this->board->pio;
-    z80ctc& ctc = this->board->ctc;
-    cpu.mem.unmap_all();
-    pio.init(0);
-    ctc.init(0);
-    cpu.init();
+    this->board->cpu.mem.unmap_all();
+    this->board->pio.init(0);
+    this->board->ctc.init(0);
+    this->board->cpu.init();
     this->exp.init();
     this->video.init(m);
     this->audio.init(&this->board->ctc);
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
-    cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
-    ctc.init_daisychain(&this->board->pio.int_ctrl);
+    this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
+    this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
 
     // a 50Hz timer which trigger every vertical blank
     this->board->clck.config_timer(0, 50);

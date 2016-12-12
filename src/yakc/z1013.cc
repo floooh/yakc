@@ -60,9 +60,6 @@ z1013::poweron(device m) {
     YAKC_ASSERT(int(device::any_z1013) & int(m));
     YAKC_ASSERT(!this->on);
 
-    z80& cpu = this->board->cpu;
-    z80pio& pio = this->board->pio;
-
     this->cur_model = m;
     if (m == device::z1013_01) {
         this->cur_os = os_rom::z1013_mon202;
@@ -86,8 +83,8 @@ z1013::poweron(device m) {
     this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
 
     // initialize hardware components
-    cpu.init();
-    pio.init(0);
+    this->board->cpu.init();
+    this->board->pio.init(0);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
