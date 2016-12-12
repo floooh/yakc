@@ -59,9 +59,7 @@ public:
     bool on = false;
     uint8_t key_code = 0;
     uint32_t display_ram_bank = 5;      // which RAM bank to use as display mem
-    float border_red = 0.0f;
-    float border_green = 0.0f;
-    float border_blue = 0.0f;
+    uint32_t brder_color = 0;
     uint32_t pal[8];
     uint32_t rgba8_buffer[256*192];
 };

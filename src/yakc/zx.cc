@@ -13,14 +13,14 @@ zx::init(breadboard* b) {
     this->board = b;
 
     // color palette
-    this->pal[0] = 0xFF000000;
-    this->pal[1] = 0xFFFF0000;
-    this->pal[2] = 0xFF0000FF;
-    this->pal[3] = 0xFFFF00FF;
-    this->pal[4] = 0xFF00FF00;
-    this->pal[5] = 0xFFFFFF00;
-    this->pal[6] = 0xFF00FFFF;
-    this->pal[7] = 0xFFFFFFFF;
+    this->pal[0] = 0xFF000000;      // black
+    this->pal[1] = 0xFFFF0000;      // blue
+    this->pal[2] = 0xFF0000FF;      // red
+    this->pal[3] = 0xFFFF00FF;      // magenta
+    this->pal[4] = 0xFF00FF00;      // green
+    this->pal[5] = 0xFFFFFF00;      // cyan
+    this->pal[6] = 0xFF00FFFF;      // yello
+    this->pal[7] = 0xFFFFFFFF;      // white
 }
 
 //------------------------------------------------------------------------------
@@ -57,9 +57,9 @@ zx::on_context_switched() {
 //------------------------------------------------------------------------------
 void
 zx::border_color(float& out_red, float& out_green, float& out_blue) {
-    out_red = this->border_red;
-    out_green = this->border_green;
-    out_blue = this->border_blue;
+    out_blue  = ((this->brder_color >> 16) & 0xFF) / 255.0f;
+    out_green = ((this->brder_color >> 8) & 0xFF) / 255.0f;
+    out_red  =  (this->brder_color & 0xFF) / 255.0f;
 }
 
 //------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ zx::poweron(device m) {
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
-    this->border_red = this->border_green = this->border_blue = 0.0f;
+    this->brder_color = 0;
     if (m == device::zxspectrum48k) {
         this->cur_os = os_rom::amstrad_zx48k;
         this->display_ram_bank = 0;
@@ -135,10 +135,7 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
 void
 zx::cpu_out(uword port, ubyte val) {
     if ((port & 0xFF) == 0xFE) {
-        // first 3 bits are border color
-        this->border_red   = (val & (1<<0)) ? (0xD7 / 255.0f) : 0;
-        this->border_blue  = (val & (1<<1)) ? (0xD7 / 255.0f) : 0;
-        this->border_green = (val & (1<<2)) ? (0xD7 / 255.0f) : 0;
+        this->brder_color = this->pal[val & 7] & 0xFFD7D7D7;
         // FIXME: bit 3 activate MIC output, bit 4 activate EAR/speaker output
         return;
     }
