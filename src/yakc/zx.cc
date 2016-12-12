@@ -82,6 +82,7 @@ zx::poweron(device m) {
     this->on = true;
 
     // map memory
+    clear(this->ram, sizeof(this->ram));
     this->init_memory_mapping();
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
