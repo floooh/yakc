@@ -31,6 +31,10 @@ public:
     bool switchedon() const;
     /// reset the emu
     void reset();
+    /// clear the current interrupt daisychain
+    void clear_daisychain();
+    /// do a partial init after applying a snapshot
+    void on_context_switched();
     /// check if currently emulated device matches
     bool is_device(device mask) const;
     /// process one frame, up to absolute number of cycles

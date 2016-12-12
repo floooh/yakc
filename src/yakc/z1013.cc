@@ -48,13 +48,9 @@ z1013::init_keymaps() {
 
 //------------------------------------------------------------------------------
 void
-z1013::after_apply_snapshot() {
+z1013::on_context_switched() {
     this->init_keymaps();
     this->init_memory_mapping();
-    this->board->cpu.connect_irq_device(nullptr);
-    this->board->ctc.init_daisychain(nullptr);
-    this->board->pio.int_ctrl.connect_irq_device(nullptr);
-    this->board->pio2.int_ctrl.connect_irq_device(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -92,10 +88,6 @@ z1013::poweron(device m) {
     // initialize hardware components
     cpu.init();
     pio.init(0);
-    this->board->cpu.connect_irq_device(nullptr);
-    this->board->ctc.init_daisychain(nullptr);
-    this->board->pio.int_ctrl.connect_irq_device(nullptr);
-    this->board->pio2.int_ctrl.connect_irq_device(nullptr);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;

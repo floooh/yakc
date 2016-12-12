@@ -52,7 +52,7 @@ public:
     /// get info about emulated system
     const char* system_info() const;
     /// called after snapshot restore
-    void after_apply_snapshot();    
+    void on_context_switched();
     /// get current border color
     void border_color(float& out_red, float& out_green, float& out_blue);
 

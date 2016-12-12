@@ -67,7 +67,7 @@ public:
     /// get info about emulated system
     const char* system_info() const;
     /// called after snapshot restore
-    void after_apply_snapshot();
+    void on_context_switched();
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);

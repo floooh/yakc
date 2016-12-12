@@ -41,15 +41,7 @@ snapshot::apply_snapshot(const state_t& state, yakc& emu) {
     apply_z1013_state(state, emu);
     apply_z9001_state(state, emu);
     apply_memory_state(state, emu);
-    if (emu.is_device(device::any_kc85)) {
-        emu.kc85.after_apply_snapshot();
-    }
-    else if (emu.is_device(device::any_z1013)) {
-        emu.z1013.after_apply_snapshot();
-    }
-    else if (emu.is_device(device::any_z9001)) {
-        emu.z9001.after_apply_snapshot();
-    }
+    emu.on_context_switched();
 }
 
 //------------------------------------------------------------------------------

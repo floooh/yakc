@@ -75,7 +75,7 @@ public:
     /// get info about emulated system
     const char* system_info() const;
     /// called after snapshot restore
-    void after_apply_snapshot();
+    void on_context_switched();
 
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);

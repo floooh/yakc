@@ -24,6 +24,7 @@ yakc::init(const ext_funcs& sys_funcs, const sound_funcs& snd_funcs) {
 void
 yakc::poweron(device m, os_rom rom) {
     YAKC_ASSERT(!this->kc85.on && !this->z1013.on);
+    this->clear_daisychain();
     this->model = m;
     this->os = rom;
     this->abs_cycle_count = 0;
@@ -71,6 +72,30 @@ yakc::reset() {
     }
     if (this->z9001.on) {
         this->z9001.reset();
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+yakc::clear_daisychain() {
+    this->board.cpu.connect_irq_device(nullptr);
+    this->board.ctc.init_daisychain(nullptr);
+    this->board.pio.int_ctrl.connect_irq_device(nullptr);
+    this->board.pio2.int_ctrl.connect_irq_device(nullptr);
+}
+
+//------------------------------------------------------------------------------
+void
+yakc::on_context_switched() {
+    this->clear_daisychain();
+    if (this->is_device(device::any_kc85)) {
+        this->kc85.on_context_switched();
+    }
+    else if (this->is_device(device::any_z1013)) {
+        this->z1013.on_context_switched();
+    }
+    else if (this->is_device(device::any_z9001)) {
+        this->z9001.on_context_switched();
     }
 }
 

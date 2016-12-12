@@ -14,14 +14,12 @@ kc85::init(breadboard* b) {
 
 //------------------------------------------------------------------------------
 void
-kc85::after_apply_snapshot() {
+kc85::on_context_switched() {
     YAKC_ASSERT(this->board);
     this->update_rom_pointers();
     this->update_bank_switching();
     this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
     this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
-    this->board->pio.int_ctrl.connect_irq_device(nullptr);
-    this->board->pio2.int_ctrl.connect_irq_device(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -70,7 +68,6 @@ kc85::poweron(device m, os_rom os) {
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
     cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
     ctc.init_daisychain(&this->board->pio.int_ctrl);
-    pio.int_ctrl.connect_irq_device(nullptr);
 
     // a 50Hz timer which trigger every vertical blank
     this->board->clck.config_timer(0, 50);

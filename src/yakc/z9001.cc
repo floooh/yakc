@@ -109,7 +109,7 @@ z9001::setup_sound_funcs(const sound_funcs& funcs) {
 
 //------------------------------------------------------------------------------
 void
-z9001::after_apply_snapshot() {
+z9001::on_context_switched() {
     this->init_memory_mapping();
     z80& cpu = this->board->cpu;
     z80pio& pio1 = this->board->pio;
