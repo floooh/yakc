@@ -93,12 +93,13 @@ z80dbg::breakpoint_addr(int index) const {
 
 //------------------------------------------------------------------------------
 void
-z80dbg::step_pc_modified(z80& cpu) {
+z80dbg::step_pc_modified(z80bus* bus, z80& cpu) {
+    YAKC_ASSERT(bus);
     uword pc;
     do {
         pc = cpu.PC;
         this->store_pc_history(cpu);
-        cpu.step();
+        cpu.step(bus);
     }
     while ((pc == cpu.PC) && !cpu.INV);
 }

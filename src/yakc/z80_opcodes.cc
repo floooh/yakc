@@ -2,7 +2,7 @@
 // machine generated, do not edit!
 #include "z80.h"
 namespace YAKC {
-uint32_t z80::do_op() {
+uint32_t z80::do_op(z80bus* bus) {
   switch (fetch_op()) {
     case 0x0: return 4; // NOP
     case 0x1: BC=mem.r16(PC); PC+=2; return 10; // LD BC,nn
@@ -475,7 +475,7 @@ uint32_t z80::do_op() {
     case 0xd0: if (!(F&CF)) { WZ=PC=mem.r16(SP); SP+=2; return 11; } else return 5; // RET NC
     case 0xd1: DE=mem.r16(SP); SP+=2; return 10; // POP DE
     case 0xd2: WZ=mem.r16(PC); if (!(F&CF)) { PC=WZ; } else { PC+=2; }; return 10; // JP NC,nn
-    case 0xd3: out((A<<8)|mem.r8(PC++),A); return 11; // OUT (n),A
+    case 0xd3: out(bus, (A<<8)|mem.r8(PC++),A); return 11; // OUT (n),A
     case 0xd4: WZ=mem.r16(PC); PC+=2; if (!(F&CF)) { SP-=2; mem.w16(SP,PC); PC=WZ; return 17; } else { return 10; } // CALL NC,nn
     case 0xd5: SP-=2; mem.w16(SP,DE); return 11; // PUSH DE
     case 0xd6: sub8(mem.r8(PC++)); return 7; // SUB n
@@ -483,7 +483,7 @@ uint32_t z80::do_op() {
     case 0xd8: if ((F&CF)) { WZ=PC=mem.r16(SP); SP+=2; return 11; } else return 5; // RET C
     case 0xd9: swap16(BC,BC_); swap16(DE,DE_); swap16(HL,HL_); swap16(WZ,WZ_); return 4; // EXX
     case 0xda: WZ=mem.r16(PC); if ((F&CF)) { PC=WZ; } else { PC+=2; }; return 10; // JP C,nn
-    case 0xdb: A=in((A<<8)|mem.r8(PC++)); return 11; // IN A,(n)
+    case 0xdb: A=in(bus, (A<<8)|mem.r8(PC++)); return 11; // IN A,(n)
     case 0xdc: WZ=mem.r16(PC); PC+=2; if ((F&CF)) { SP-=2; mem.w16(SP,PC); PC=WZ; return 17; } else { return 10; } // CALL C,nn
     case 0xdd:
       switch (fetch_op()) {
@@ -960,7 +960,7 @@ uint32_t z80::do_op() {
         case 0xd0: if (!(F&CF)) { WZ=PC=mem.r16(SP); SP+=2; return 15; } else return 9; // RET NC
         case 0xd1: DE=mem.r16(SP); SP+=2; return 14; // POP DE
         case 0xd2: WZ=mem.r16(PC); if (!(F&CF)) { PC=WZ; } else { PC+=2; }; return 14; // JP NC,nn
-        case 0xd3: out((A<<8)|mem.r8(PC++),A); return 15; // OUT (n),A
+        case 0xd3: out(bus, (A<<8)|mem.r8(PC++),A); return 15; // OUT (n),A
         case 0xd4: WZ=mem.r16(PC); PC+=2; if (!(F&CF)) { SP-=2; mem.w16(SP,PC); PC=WZ; return 21; } else { return 14; } // CALL NC,nn
         case 0xd5: SP-=2; mem.w16(SP,DE); return 15; // PUSH DE
         case 0xd6: sub8(mem.r8(PC++)); return 11; // SUB n
@@ -968,7 +968,7 @@ uint32_t z80::do_op() {
         case 0xd8: if ((F&CF)) { WZ=PC=mem.r16(SP); SP+=2; return 15; } else return 9; // RET C
         case 0xd9: swap16(BC,BC_); swap16(DE,DE_); swap16(HL,HL_); swap16(WZ,WZ_); return 8; // EXX
         case 0xda: WZ=mem.r16(PC); if ((F&CF)) { PC=WZ; } else { PC+=2; }; return 14; // JP C,nn
-        case 0xdb: A=in((A<<8)|mem.r8(PC++)); return 15; // IN A,(n)
+        case 0xdb: A=in(bus, (A<<8)|mem.r8(PC++)); return 15; // IN A,(n)
         case 0xdc: WZ=mem.r16(PC); PC+=2; if ((F&CF)) { SP-=2; mem.w16(SP,PC); PC=WZ; return 21; } else { return 14; } // CALL C,nn
         case 0xde: sbc8(mem.r8(PC++)); return 11; // SBC n
         case 0xdf: rst(0x18); return 15; // RST 0x18
@@ -1022,58 +1022,58 @@ uint32_t z80::do_op() {
     case 0xec: WZ=mem.r16(PC); PC+=2; if ((F&PF)) { SP-=2; mem.w16(SP,PC); PC=WZ; return 17; } else { return 10; } // CALL PE,nn
     case 0xed:
       switch (fetch_op()) {
-        case 0x40: B=in(BC); F=szp[B]|(F&CF); return 12; // IN B,(C)
-        case 0x41: out(BC,B); return 12; // OUT (C),B
+        case 0x40: B=in(bus, BC); F=szp[B]|(F&CF); return 12; // IN B,(C)
+        case 0x41: out(bus, BC,B); return 12; // OUT (C),B
         case 0x42: HL=sbc16(HL,BC); return 15; // SBC HL,BC
         case 0x43: WZ=mem.r16(PC); mem.w16(WZ++,BC); PC+=2; return 20; // LD (nn),BC
         case 0x44: neg8(); return 8; // NEG
         case 0x46: IM=0; return 8; // IM 0
         case 0x47: I=A; return 9; // LD I,A
-        case 0x48: C=in(BC); F=szp[C]|(F&CF); return 12; // IN C,(C)
-        case 0x49: out(BC,C); return 12; // OUT (C),C
+        case 0x48: C=in(bus, BC); F=szp[C]|(F&CF); return 12; // IN C,(C)
+        case 0x49: out(bus, BC,C); return 12; // OUT (C),C
         case 0x4a: HL=adc16(HL,BC); return 15; // ADC HL,BC
         case 0x4b: WZ=mem.r16(PC); BC=mem.r16(WZ++); PC+=2; return 20; // LD BC,(nn)
         case 0x4c: neg8(); return 8; // NEG
         case 0x4d: reti(); return 15; // RETI
         case 0x4e: IM=0; return 8; // IM 0
         case 0x4f: R=A; return 9; // LD R,A
-        case 0x50: D=in(BC); F=szp[D]|(F&CF); return 12; // IN D,(C)
-        case 0x51: out(BC,D); return 12; // OUT (C),D
+        case 0x50: D=in(bus, BC); F=szp[D]|(F&CF); return 12; // IN D,(C)
+        case 0x51: out(bus, BC,D); return 12; // OUT (C),D
         case 0x52: HL=sbc16(HL,DE); return 15; // SBC HL,DE
         case 0x53: WZ=mem.r16(PC); mem.w16(WZ++,DE); PC+=2; return 20; // LD (nn),DE
         case 0x54: neg8(); return 8; // NEG
         case 0x56: IM=1; return 8; // IM 1
         case 0x57: A=I; F=sziff2(I,IFF2)|(F&CF); return 9; // LD A,I
-        case 0x58: E=in(BC); F=szp[E]|(F&CF); return 12; // IN E,(C)
-        case 0x59: out(BC,E); return 12; // OUT (C),E
+        case 0x58: E=in(bus, BC); F=szp[E]|(F&CF); return 12; // IN E,(C)
+        case 0x59: out(bus, BC,E); return 12; // OUT (C),E
         case 0x5a: HL=adc16(HL,DE); return 15; // ADC HL,DE
         case 0x5b: WZ=mem.r16(PC); DE=mem.r16(WZ++); PC+=2; return 20; // LD DE,(nn)
         case 0x5c: neg8(); return 8; // NEG
         case 0x5e: IM=2; return 8; // IM 2
         case 0x5f: A=R; F=sziff2(R,IFF2)|(F&CF); return 9; // LD A,R
-        case 0x60: H=in(BC); F=szp[H]|(F&CF); return 12; // IN H,(C)
-        case 0x61: out(BC,H); return 12; // OUT (C),H
+        case 0x60: H=in(bus, BC); F=szp[H]|(F&CF); return 12; // IN H,(C)
+        case 0x61: out(bus, BC,H); return 12; // OUT (C),H
         case 0x62: HL=sbc16(HL,HL); return 15; // SBC HL,HL
         case 0x63: WZ=mem.r16(PC); mem.w16(WZ++,HL); PC+=2; return 20; // LD (nn),HL
         case 0x64: neg8(); return 8; // NEG
         case 0x66: IM=0; return 8; // IM 0
         case 0x67: rrd(); return 18; // RRD
-        case 0x68: L=in(BC); F=szp[L]|(F&CF); return 12; // IN L,(C)
-        case 0x69: out(BC,L); return 12; // OUT (C),L
+        case 0x68: L=in(bus, BC); F=szp[L]|(F&CF); return 12; // IN L,(C)
+        case 0x69: out(bus, BC,L); return 12; // OUT (C),L
         case 0x6a: HL=adc16(HL,HL); return 15; // ADC HL,HL
         case 0x6b: WZ=mem.r16(PC); HL=mem.r16(WZ++); PC+=2; return 20; // LD HL,(nn)
         case 0x6c: neg8(); return 8; // NEG
         case 0x6e: IM=0; return 8; // IM 0
         case 0x6f: rld(); return 18; // RLD
-        case 0x70: F=szp[in(BC)]|(F&CF); return 12; // IN (C)
-        case 0x71: out(BC,0); return 12; // None
+        case 0x70: F=szp[in(bus, BC)]|(F&CF); return 12; // IN (C)
+        case 0x71: out(bus, BC,0); return 12; // None
         case 0x72: HL=sbc16(HL,SP); return 15; // SBC HL,SP
         case 0x73: WZ=mem.r16(PC); mem.w16(WZ++,SP); PC+=2; return 20; // LD (nn),SP
         case 0x74: neg8(); return 8; // NEG
         case 0x76: IM=1; return 8; // IM 1
         case 0x77: return 9; // NOP (ED)
-        case 0x78: A=in(BC); F=szp[A]|(F&CF); return 12; // IN A,(C)
-        case 0x79: out(BC,A); return 12; // OUT (C),A
+        case 0x78: A=in(bus, BC); F=szp[A]|(F&CF); return 12; // IN A,(C)
+        case 0x79: out(bus, BC,A); return 12; // OUT (C),A
         case 0x7a: HL=adc16(HL,SP); return 15; // ADC HL,SP
         case 0x7b: WZ=mem.r16(PC); SP=mem.r16(WZ++); PC+=2; return 20; // LD SP,(nn)
         case 0x7c: neg8(); return 8; // NEG
@@ -1081,20 +1081,20 @@ uint32_t z80::do_op() {
         case 0x7f: return 9; // NOP (ED)
         case 0xa0: ldi(); return 16; // LDI
         case 0xa1: cpi(); return 16; // CPI
-        case 0xa2: ini(); return 16; // INI
-        case 0xa3: outi(); return 16; // OUTI
+        case 0xa2: ini(bus); return 16; // INI
+        case 0xa3: outi(bus); return 16; // OUTI
         case 0xa8: ldd(); return 16; // LDD
         case 0xa9: cpd(); return 16; // CPD
-        case 0xaa: ind(); return 16; // IND
-        case 0xab: outd(); return 16; // OUTD
+        case 0xaa: ind(bus); return 16; // IND
+        case 0xab: outd(bus); return 16; // OUTD
         case 0xb0: return ldir(); // LDIR
         case 0xb1: return cpir(); // CPIR
-        case 0xb2: return inir(); // INIR
-        case 0xb3: return otir(); // OTID
+        case 0xb2: return inir(bus); // INIR
+        case 0xb3: return otir(bus); // OTID
         case 0xb8: return lddr(); // LDDR
         case 0xb9: return cpdr(); // CPDR
-        case 0xba: return indr(); // INDR
-        case 0xbb: return otdr(); // OTDR
+        case 0xba: return indr(bus); // INDR
+        case 0xbb: return otdr(bus); // OTDR
         default: return invalid_opcode(2);
       }
       break;
@@ -1588,7 +1588,7 @@ uint32_t z80::do_op() {
         case 0xd0: if (!(F&CF)) { WZ=PC=mem.r16(SP); SP+=2; return 15; } else return 9; // RET NC
         case 0xd1: DE=mem.r16(SP); SP+=2; return 14; // POP DE
         case 0xd2: WZ=mem.r16(PC); if (!(F&CF)) { PC=WZ; } else { PC+=2; }; return 14; // JP NC,nn
-        case 0xd3: out((A<<8)|mem.r8(PC++),A); return 15; // OUT (n),A
+        case 0xd3: out(bus, (A<<8)|mem.r8(PC++),A); return 15; // OUT (n),A
         case 0xd4: WZ=mem.r16(PC); PC+=2; if (!(F&CF)) { SP-=2; mem.w16(SP,PC); PC=WZ; return 21; } else { return 14; } // CALL NC,nn
         case 0xd5: SP-=2; mem.w16(SP,DE); return 15; // PUSH DE
         case 0xd6: sub8(mem.r8(PC++)); return 11; // SUB n
@@ -1596,7 +1596,7 @@ uint32_t z80::do_op() {
         case 0xd8: if ((F&CF)) { WZ=PC=mem.r16(SP); SP+=2; return 15; } else return 9; // RET C
         case 0xd9: swap16(BC,BC_); swap16(DE,DE_); swap16(HL,HL_); swap16(WZ,WZ_); return 8; // EXX
         case 0xda: WZ=mem.r16(PC); if ((F&CF)) { PC=WZ; } else { PC+=2; }; return 14; // JP C,nn
-        case 0xdb: A=in((A<<8)|mem.r8(PC++)); return 15; // IN A,(n)
+        case 0xdb: A=in(bus, (A<<8)|mem.r8(PC++)); return 15; // IN A,(n)
         case 0xdc: WZ=mem.r16(PC); PC+=2; if ((F&CF)) { SP-=2; mem.w16(SP,PC); PC=WZ; return 21; } else { return 14; } // CALL C,nn
         case 0xde: sbc8(mem.r8(PC++)); return 11; // SBC n
         case 0xdf: rst(0x18); return 15; // RST 0x18

@@ -270,8 +270,8 @@ def enc_op(op, cyc, ext) :
             op_tbl = [
                 [ 'JP nn', 'WZ=PC=mem.r16(PC); return {};'.format(10+cyc) ],
                 [ None, None ], # CB prefix instructions
-                [ 'OUT (n),A', 'out((A<<8)|mem.r8(PC++),A); return {};'.format(11+cyc) ],
-                [ 'IN A,(n)', 'A=in((A<<8)|mem.r8(PC++)); return {};'.format(11+cyc) ],
+                [ 'OUT (n),A', 'out(bus, (A<<8)|mem.r8(PC++),A); return {};'.format(11+cyc) ],
+                [ 'IN A,(n)', 'A=in(bus, (A<<8)|mem.r8(PC++)); return {};'.format(11+cyc) ],
                 [ 
                     'EX (SP),{}'.format(rp[2]), 
                     '{{uword swp=mem.r16(SP); mem.w16(SP,{}); {}=WZ=swp;}} return {};'.format(rp[2], rp[2], 19+cyc)
@@ -340,16 +340,16 @@ def enc_ed_op(op) :
                     [ 'CPDR',   'return cpdr();' ]
                 ],
                 [
-                    [ 'INI',    'ini(); return 16;' ],
-                    [ 'IND',    'ind(); return 16;' ],
-                    [ 'INIR',   'return inir();' ],
-                    [ 'INDR',   'return indr();' ]
+                    [ 'INI',    'ini(bus); return 16;' ],
+                    [ 'IND',    'ind(bus); return 16;' ],
+                    [ 'INIR',   'return inir(bus);' ],
+                    [ 'INDR',   'return indr(bus);' ]
                 ],
                 [
-                    [ 'OUTI',   'outi(); return 16;' ],
-                    [ 'OUTD',   'outd(); return 16;' ],
-                    [ 'OTID',   'return otir();' ],
-                    [ 'OTDR',   'return otdr();' ]
+                    [ 'OUTI',   'outi(bus); return 16;' ],
+                    [ 'OUTD',   'outd(bus); return 16;' ],
+                    [ 'OTID',   'return otir(bus);' ],
+                    [ 'OTDR',   'return otdr(bus);' ]
                 ]
             ]
             o.cmt = op_tbl[z][y-4][0]
@@ -362,19 +362,19 @@ def enc_ed_op(op) :
             if y == 6:
                 # undocumented special case 'IN F,(C)', only alter flags, don't store result
                 o.cmt = 'IN (C)';
-                o.src = 'F=szp[in(BC)]|(F&CF); return 12;'
+                o.src = 'F=szp[in(bus, BC)]|(F&CF); return 12;'
             else:
                 o.cmt = 'IN {},(C)'.format(r[y])
-                o.src = '{}=in(BC); F=szp[{}]|(F&CF); return 12;'.format(r[y],r[y])
+                o.src = '{}=in(bus, BC); F=szp[{}]|(F&CF); return 12;'.format(r[y],r[y])
         elif z == 1:
             # OUT (C),r
             if y == 6:
                 # undocumented special case 'OUT (C),F', always output 0
                 o.cmd = 'OUT (C)';
-                o.src = 'out(BC,0); return 12;';
+                o.src = 'out(bus, BC,0); return 12;';
             else:
                 o.cmt = 'OUT (C),{}'.format(r[y])
-                o.src = 'out(BC,{}); return 12;'.format(r[y])
+                o.src = 'out(bus, BC,{}); return 12;'.format(r[y])
         elif z == 2:
             # SBC/ADC HL,rr
             cmt = 'SBC' if q == 0 else 'ADC'
@@ -530,7 +530,7 @@ def write_header(f) :
     l('// machine generated, do not edit!')
     l('#include "z80.h"')
     l('namespace YAKC {')
-    l('uint32_t z80::do_op() {')
+    l('uint32_t z80::do_op(z80bus* bus) {')
 
 #-------------------------------------------------------------------------------
 # begin a new instruction group (begins a switch statement)

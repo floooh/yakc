@@ -139,7 +139,7 @@ DebugWindow::drawControls(yakc& emu) {
     if (emu.board.dbg.paused) {
         ImGui::SameLine();
         if (ImGui::Button("step")) {
-            emu.board.dbg.step_pc_modified(emu.board.cpu);
+            emu.board.dbg.step_pc_modified(emu.get_bus(), emu.board.cpu);
         }
     }
     ImGui::Checkbox("break on invalid opcode", &emu.board.cpu.break_on_invalid_opcode);

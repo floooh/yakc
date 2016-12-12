@@ -117,7 +117,6 @@ z9001::after_apply_snapshot() {
     z80pio& pio1 = this->board->pio;
     z80pio& pio2 = this->board->pio2;
     z80ctc& ctc = this->board->ctc;
-    cpu.bus = this;
     cpu.connect_irq_device(&pio1.int_ctrl);
     pio1.int_ctrl.connect_irq_device(&pio2.int_ctrl);
     pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
@@ -155,7 +154,7 @@ z9001::poweron(device m, os_rom os) {
     z80pio& pio1 = this->board->pio;
     z80pio& pio2 = this->board->pio2;
     z80ctc& ctc = this->board->ctc;
-    cpu.init(this);
+    cpu.init();
     pio1.init(0);
     pio2.init(1);
     ctc.init(0);
@@ -230,7 +229,7 @@ z9001::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
                 break;
             }
             dbg.store_pc_history(cpu); // FIXME: only if debug window open?
-            int cycles_step = cpu.step();
+            int cycles_step = cpu.step(this);
             cycles_step += cpu.handle_irq();
             clk.update(this, cycles_step);
             ctc.update_timers(this, cycles_step);

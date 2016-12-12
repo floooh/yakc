@@ -58,13 +58,13 @@ static bool cpm_bdos(z80& cpu) {
 }
 
 // runs the cpu through a previously configured test (zexdoc or zexall)
-static void run_test(z80& cpu, const char* name) {
+static void run_test(z80& cpu, z80bus& bus, const char* name) {
     auto startTime = Clock::Now();
     bool running = true;
     std::uint64_t t = 0;
     std::uint64_t num = 0;
     while (running) {
-        t += cpu.step();
+        t += cpu.step(&bus);
         num++;
         // check for bdos call and trap
         if (cpu.INV) {
@@ -110,11 +110,11 @@ TEST(zexdoc) {
     z80 cpu;
     memset(ram, 0, sizeof(ram));
     cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
-    cpu.init(&bus);
+    cpu.init();
     cpu.SP = 0xF000;  // no idea where the stack is located in CP/M
     cpu.PC = 0x0100;  // execution starts at 0x0100
     cpu.mem.write(0x0100, dump_zexdoc, sizeof(dump_zexdoc));
-    run_test(cpu, "ZEXDOC");
+    run_test(cpu, bus, "ZEXDOC");
 }
 
 //------------------------------------------------------------------------------
@@ -125,9 +125,9 @@ TEST(zexall) {
     z80 cpu;
     memset(ram, 0, sizeof(ram));
     cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
-    cpu.init(&bus);
+    cpu.init();
     cpu.SP = 0xF000;  // no idea where the stack is located in CP/M
     cpu.PC = 0x0100;  // execution starts at 0x0100
     cpu.mem.write(0x0100, dump_zexall, sizeof(dump_zexall));
-    run_test(cpu, "ZEXALL");
+    run_test(cpu, bus, "ZEXALL");
 }

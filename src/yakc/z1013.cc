@@ -53,7 +53,6 @@ z1013::after_apply_snapshot() {
     this->overflow_cycles = 0;
     this->init_keymaps();
     this->init_memory_mapping();
-    this->board->cpu.bus = this;
     this->board->cpu.connect_irq_device(nullptr);
 }
 
@@ -92,7 +91,7 @@ z1013::poweron(device m) {
     this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
 
     // initialize hardware components
-    cpu.init(this);
+    cpu.init();
     pio.init(0);
     cpu.connect_irq_device(nullptr);
 
@@ -154,7 +153,7 @@ z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, u
                 break;
             }
             dbg.store_pc_history(cpu); // FIXME: only if debug window open?
-            int cycles_step = cpu.step();
+            int cycles_step = cpu.step(this);
             cycles_step += cpu.handle_irq();
             clk.update(this, cycles_step);
             this->abs_cycle_count += cycles_step;

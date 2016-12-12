@@ -54,7 +54,7 @@ public:
     uword breakpoint_addr(int index) const;
 
     /// step until PC changed (or an invalid opcode is hit)
-    void step_pc_modified(z80& cpu);
+    void step_pc_modified(z80bus* bus, z80& cpu);
 
     /// set an 8-bit register value by enum (slow)
     static void set8(z80& cpu, reg r, ubyte v);

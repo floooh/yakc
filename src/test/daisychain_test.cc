@@ -10,11 +10,6 @@ using namespace YAKC;
 
 static ubyte ram[0x4000];
 
-static void step(z80& cpu) {
-    cpu.step();
-    cpu.handle_irq();
-}
-
 class daisyChainTestBus : public z80bus {
 public:
     z80 cpu;
@@ -22,6 +17,11 @@ public:
         cpu.irq();
     }
 };
+
+static void step(daisyChainTestBus& bus) {
+    bus.cpu.step(&bus);
+    bus.cpu.handle_irq();
+}
 
 TEST(daisychain) {
 
@@ -56,13 +56,13 @@ TEST(daisychain) {
     // step the cpu a few times, and request an interrupt on the highest priority device
 
     // EI
-    step(bus.cpu);
+    step(bus);
     CHECK(bus.cpu.enable_interrupt);
     CHECK(!bus.cpu.IFF1);
     CHECK(!bus.cpu.IFF2);
 
     // LD SP,0x0100, and delayed interrupt-enable from EI
-    step(bus.cpu);
+    step(bus);
     CHECK(bus.cpu.SP == 0x0100);
     CHECK(!bus.cpu.enable_interrupt);
     CHECK(bus.cpu.IFF1);
@@ -76,7 +76,7 @@ TEST(daisychain) {
     CHECK(!dev1.int_enabled);
     CHECK(!dev2.int_enabled);
     CHECK(bus.cpu.irq_received);
-    step(bus.cpu);
+    step(bus);
     CHECK(!bus.cpu.irq_received);
     CHECK(!dev0.int_requested);
     CHECK(dev0.int_pending);
@@ -88,19 +88,19 @@ TEST(daisychain) {
     CHECK(!bus.cpu.IFF2);
 
     // interrupt handler, first execute an EI
-    bus.cpu.step();
+    bus.cpu.step(&bus);
     CHECK(bus.cpu.enable_interrupt);
     CHECK(!bus.cpu.IFF1);
     CHECK(!bus.cpu.IFF2);
 
     // a NOP following the EI, interrupts should be enabled again afterwards
-    bus.cpu.step();
+    bus.cpu.step(&bus);
     CHECK(!bus.cpu.enable_interrupt);
     CHECK(bus.cpu.IFF1);
     CHECK(bus.cpu.IFF2);
 
     // this is the RETI
-    bus.cpu.step();
+    bus.cpu.step(&bus);
     CHECK(!dev0.int_pending);
     CHECK(dev0.int_enabled);
     CHECK(dev1.int_enabled);

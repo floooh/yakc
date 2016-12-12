@@ -73,8 +73,6 @@ public:
 
     /// memory map
     memory mem;
-    /// bus callback object
-    z80bus* bus;
 
     /// highest priority interrupt controller in daisy chain
     z80int* irq_device;
@@ -89,7 +87,7 @@ public:
     z80();
 
     /// one-time init
-    void init(z80bus* bus);
+    void init();
     /// initialize the lookup tables
     void init_tables();
     /// connect the highest priority interrupt controller device
@@ -115,9 +113,9 @@ public:
     void di();
 
     /// call in-handler, return result
-    ubyte in(uword port);
+    ubyte in(z80bus* bus, uword port);
     /// call out-handler
-    void out(uword port, ubyte val);
+    void out(z80bus* bus, uword port, ubyte val);
 
     /// get flags for the LD A,I and LD A,R instructions
     static ubyte sziff2(ubyte val, bool iff2);
@@ -173,23 +171,23 @@ public:
     /// return flags for ini/ind instruction
     ubyte ini_ind_flags(ubyte io_val, int c_add);
     /// implement the INI instruction
-    void ini();
+    void ini(z80bus* bus);
     /// implement the INIR instruction, return number of T-states
-    int inir();
+    int inir(z80bus* bus);
     /// implement the IND instruction
-    void ind();
+    void ind(z80bus* bus);
     /// implement the INDR instruction, return number of T-states
-    int indr();
+    int indr(z80bus* bus);
     /// return flags for outi/outd instruction
     ubyte outi_outd_flags(ubyte io_val);
     /// implement the OUTI instruction
-    void outi();
+    void outi(z80bus* bus);
     /// implement the OTIR instructor, return number of T-states
-    int otir();
+    int otir(z80bus* bus);
     /// implment the OUTD instruction
-    void outd();
+    void outd(z80bus* bus);
     /// implement the OTDR instruction, return number of T-states
-    int otdr();
+    int otdr(z80bus* bus);
     /// implement the DAA instruction
     void daa();
     /// rotate left, copy sign bit into CF
@@ -228,9 +226,9 @@ public:
     /// fetch an opcode byte and increment R register
     ubyte fetch_op();
     /// execute a single instruction, return number of cycles
-    uint32_t step();
+    uint32_t step(z80bus* bus);
     /// top-level opcode decoder (generated)
-    uint32_t do_op();
+    uint32_t do_op(z80bus* bus);
 };
 
 #define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
@@ -503,13 +501,13 @@ z80::fetch_op() {
 
 //------------------------------------------------------------------------------
 inline uint32_t
-z80::step() {
+z80::step(z80bus* bus) {
     INV = false;
     if (enable_interrupt) {
         IFF1 = IFF2 = true;
         enable_interrupt = false;
     }
-    return do_op();
+    return do_op(bus);
 }
 
 } // namespace YAKC

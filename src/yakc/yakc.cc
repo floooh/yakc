@@ -119,6 +119,23 @@ yakc::system_info() const {
 }
 
 //------------------------------------------------------------------------------
+z80bus*
+yakc::get_bus() {
+    if (this->is_device(device::any_kc85)) {
+        return &this->kc85;
+    }
+    else if (this->is_device(device::any_z1013)) {
+        return &this->z1013;
+    }
+    else if (this->is_device(device::any_z9001)) {
+        return &this->z9001;
+    }
+    else {
+        return nullptr;
+    }
+}
+
+//------------------------------------------------------------------------------
 void
 yakc::border_color(float& out_red, float& out_green, float& out_blue) {
     if (this->z9001.on) {

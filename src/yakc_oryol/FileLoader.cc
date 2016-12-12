@@ -237,11 +237,11 @@ FileLoader::start(yakc* emu, const FileInfo& info) {
             }
             cpu.mem.w8(0xb7a0, 0);
             if (emu->model == device::kc85_3) {
-                cpu.out(0x89, 0x9f);
+                cpu.out(&emu->kc85, 0x89, 0x9f);
                 cpu.mem.w16(cpu.SP, 0xf15c);
             }
             else if (emu->model == device::kc85_4) {
-                cpu.out(0x89, 0xFF);
+                cpu.out(&emu->kc85, 0x89, 0xFF);
                 cpu.mem.w16(cpu.SP, 0xf17e);
             }
         }

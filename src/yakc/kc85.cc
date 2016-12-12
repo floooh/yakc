@@ -20,7 +20,6 @@ kc85::after_apply_snapshot() {
     this->overflow_cycles = 0;
     this->update_rom_pointers();
     this->update_bank_switching();
-    this->board->cpu.bus = this;
     this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
     this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
 }
@@ -65,7 +64,7 @@ kc85::poweron(device m, os_rom os) {
     cpu.mem.unmap_all();
     pio.init(0);
     ctc.init(0);
-    cpu.init(this);
+    cpu.init();
     this->exp.init();
     this->video.init(m);
     this->audio.init(&this->board->ctc);
@@ -80,7 +79,7 @@ kc85::poweron(device m, os_rom os) {
     this->board->clck.config_timer(1, (uint32_t)(50.136*312));
 
     // initial memory map
-    this->board->cpu.out(0x88, 0x9f);
+    this->board->cpu.out(this, 0x88, 0x9f);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -199,7 +198,7 @@ kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
                 break;
             }
             dbg.store_pc_history(cpu); // FIXME: only if debug window open?
-            int cycles_step = cpu.step();
+            int cycles_step = cpu.step(this);
             cycles_step += cpu.handle_irq();
             clk.update(this, cycles_step);
             ctc.update_timers(this, cycles_step);

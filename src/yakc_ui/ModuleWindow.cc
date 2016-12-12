@@ -40,7 +40,7 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
                         kc.exp.remove_module(slot_addr, kc.board->cpu.mem);
                     }
                     kc.exp.insert_module(slot_addr, type);
-                    kc.board->cpu.out(slot_addr<<8|0x80, 0x00);
+                    kc.board->cpu.out(&kc, slot_addr<<8|0x80, 0x00);
                 }
             }
         }
