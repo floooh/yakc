@@ -77,8 +77,8 @@ public:
     /// called after snapshot restore
     void after_apply_snapshot();
 
-    /// process one frame, up to absolute number of cycles
-    void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
+    /// process a number of cycles, return final processed tick
+    uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// put a key as ASCII code
     void put_key(ubyte ascii);
     /// handle keyboard input
@@ -109,10 +109,6 @@ public:
     device cur_model = device::kc85_3;
     os_rom cur_caos = os_rom::caos_3_1;
     bool on = false;
-    bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
-    bool cpu_behind = false;                // cpu would have been behind of min_cycle_count
-    uint64_t abs_cycle_count = 0;           // total CPU cycle count
-    uint32_t overflow_cycles = 0;           // cycles that have overflowed from last frame
     ubyte key_code = 0;
     const ubyte* caos_c_ptr = nullptr;
     int caos_c_size = 0;

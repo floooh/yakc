@@ -49,11 +49,12 @@ z1013::init_keymaps() {
 //------------------------------------------------------------------------------
 void
 z1013::after_apply_snapshot() {
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
     this->init_keymaps();
     this->init_memory_mapping();
     this->board->cpu.connect_irq_device(nullptr);
+    this->board->ctc.init_daisychain(nullptr);
+    this->board->pio.int_ctrl.connect_irq_device(nullptr);
+    this->board->pio2.int_ctrl.connect_irq_device(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -75,8 +76,6 @@ z1013::poweron(device m) {
     }
     this->init_keymaps();
     this->on = true;
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
     this->kbd_column_nr_requested = 0;
     this->kbd_8x8_requested = false;
     this->next_kbd_column_bits = 0;
@@ -93,7 +92,10 @@ z1013::poweron(device m) {
     // initialize hardware components
     cpu.init();
     pio.init(0);
-    cpu.connect_irq_device(nullptr);
+    this->board->cpu.connect_irq_device(nullptr);
+    this->board->ctc.init_daisychain(nullptr);
+    this->board->pio.int_ctrl.connect_irq_device(nullptr);
+    this->board->pio2.int_ctrl.connect_irq_device(nullptr);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -115,52 +117,31 @@ z1013::reset() {
     this->kbd_column_nr_requested = 0;
     this->next_kbd_column_bits = 0;
     this->kbd_column_bits = 0;
-    this->overflow_cycles = 0;
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
     this->board->cpu.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
-void
-z1013::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
-    // FIXME: the speed multiplier isn't currently working because of the min/max cycle count limiter!
-    YAKC_ASSERT(speed_multiplier > 0);
-    this->cpu_ahead = false;
-    this->cpu_behind = false;    
+uint64_t
+z1013::step(uint64_t start_tick, uint64_t end_tick) {
     z80& cpu = this->board->cpu;
     z80dbg& dbg = this->board->dbg;
     clock& clk = this->board->clck;
-
-    if (!dbg.paused) {
-        if (this->abs_cycle_count == 0) {
-            this->abs_cycle_count = min_cycle_count;
+    uint64_t cur_tick = start_tick;
+    while (cur_tick < end_tick) {
+        if (dbg.check_break(cpu)) {
+            dbg.paused = true;
+            return end_tick;
         }
-        const int64_t num_cycles = clk.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
-        uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
-        if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
-            abs_end_cycles = max_cycle_count;
-            this->cpu_ahead = true;
-        }
-        else if ((min_cycle_count != 0) && (abs_end_cycles < min_cycle_count)) {
-            abs_end_cycles = min_cycle_count;
-            this->cpu_behind = true;
-        }
-        while (this->abs_cycle_count < abs_end_cycles) {
-            if (dbg.check_break(cpu)) {
-                dbg.paused = true;
-                this->overflow_cycles = 0;
-                break;
-            }
-            dbg.store_pc_history(cpu); // FIXME: only if debug window open?
-            int cycles_step = cpu.step(this);
-            cycles_step += cpu.handle_irq();
-            clk.update(this, cycles_step);
-            this->abs_cycle_count += cycles_step;
-        }
-        this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
+        dbg.store_pc_history(cpu); // FIXME: only if debug window open?
+        int ticks_step = cpu.step(this);
+        ticks_step += cpu.handle_irq();
+        clk.update(this, ticks_step);
+        cur_tick += ticks_step;
     }
     this->decode_video();
+    return cur_tick;
 }
 
 //------------------------------------------------------------------------------

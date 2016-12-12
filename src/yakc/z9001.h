@@ -56,8 +56,8 @@ public:
     /// get current border color
     void border_color(float& out_red, float& out_green, float& out_blue);
 
-    /// process one frame, up to absolute number of cycles
-    void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
+    /// process a number of cycles, return final processed tick
+    uint64_t step(uint64_t start_tick, uint64_t end_tick);
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;
@@ -87,10 +87,7 @@ public:
     device cur_model = device::kc87;
     os_rom cur_os = os_rom::kc87_os_2;
     bool on = false;
-    bool cpu_ahead = false;
-    bool cpu_behind = false;
-    uint64_t abs_cycle_count = 0;
-    uint32_t overflow_cycles = 0;
+    uint64_t cur_tick = 0;
 
     keybuffer keybuf;
     uint64_t key_mask = 0;              // (column<<8)|line bits for currently pressed key

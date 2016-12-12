@@ -43,6 +43,11 @@ public:
     void border_color(float& out_red, float& out_green, float& out_blue);
     /// get the currently active z80bus
     z80bus* get_bus();
+
+    bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
+    bool cpu_behind = false;                // cpu would have been behind of min_cycle_count
+    uint64_t abs_cycle_count = 0;           // total CPU cycle count
+    uint32_t overflow_cycles = 0;           // cycles that have overflowed from last frame
 };
 
 } // namespace YAKC

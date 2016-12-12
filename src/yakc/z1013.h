@@ -71,8 +71,8 @@ public:
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);
-    /// process one frame, up to absolute number of cycles
-    void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
+    /// process a number of cycles, return final processed tick
+    uint64_t step(uint64_t start_tick, uint64_t end_tick);
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;
@@ -100,10 +100,6 @@ public:
     device cur_model = device::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;
     bool on = false;
-    bool cpu_ahead = false;
-    bool cpu_behind = false;
-    uint64_t abs_cycle_count = 0;
-    uint32_t overflow_cycles = 0;
     ubyte kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
     bool kbd_8x8_requested = false;         // bit 4 in PIO-B written
     uint64_t next_kbd_column_bits = 0;

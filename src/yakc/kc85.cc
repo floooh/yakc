@@ -16,12 +16,12 @@ kc85::init(breadboard* b) {
 void
 kc85::after_apply_snapshot() {
     YAKC_ASSERT(this->board);
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
     this->update_rom_pointers();
     this->update_bank_switching();
     this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
     this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
+    this->board->pio.int_ctrl.connect_irq_device(nullptr);
+    this->board->pio2.int_ctrl.connect_irq_device(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -34,8 +34,6 @@ kc85::poweron(device m, os_rom os) {
     this->cur_model = m;
     this->cur_caos = os;
     this->on = true;
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
     this->key_code = 0;
     this->io84 = 0;
     this->io86 = 0;
@@ -72,6 +70,7 @@ kc85::poweron(device m, os_rom os) {
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
     cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
     ctc.init_daisychain(&this->board->pio.int_ctrl);
+    pio.int_ctrl.connect_irq_device(nullptr);
 
     // a 50Hz timer which trigger every vertical blank
     this->board->clck.config_timer(0, 50);
@@ -105,7 +104,6 @@ kc85::reset() {
     this->board->cpu.reset();
     this->io84 = 0;
     this->io86 = 0;
-    this->overflow_cycles = 0;
     // execution after reset starts at 0xE000
     this->board->cpu.PC = 0xE000;
 }
@@ -163,50 +161,28 @@ kc85::update_rom_pointers() {
 }
 
 //------------------------------------------------------------------------------
-void
-kc85::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
-    // FIXME: the speed multiplier isn't currently working because of the min/max cycle count limiter!
-    YAKC_ASSERT(speed_multiplier > 0);
-    this->cpu_ahead = false;
-    this->cpu_behind = false;
-    this->handle_keyboard_input();
+uint64_t
+kc85::step(uint64_t start_tick, uint64_t end_tick) {
     z80& cpu = this->board->cpu;
-    z80dbg& dbg = this->board->dbg;
     z80ctc& ctc = this->board->ctc;
     clock& clk = this->board->clck;
-
-    if (!dbg.paused) {
-        // compute the end-cycle-count for the current frame
-        if (this->abs_cycle_count == 0) {
-            this->abs_cycle_count = min_cycle_count;
+    z80dbg& dbg = this->board->dbg;
+    this->handle_keyboard_input();
+    uint64_t cur_tick = start_tick;
+    while (cur_tick < end_tick) {
+        if (dbg.check_break(cpu)) {
+            dbg.paused = true;
+            return end_tick;
         }
-        const int64_t num_cycles = clk.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
-        uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
-        if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
-            abs_end_cycles = max_cycle_count;
-            this->cpu_ahead = true;
-        }
-        else if ((min_cycle_count != 0) && (abs_end_cycles < min_cycle_count)) {
-            abs_end_cycles = min_cycle_count;
-            this->cpu_behind = true;
-        }
-
-        while (this->abs_cycle_count < abs_end_cycles) {
-            if (dbg.check_break(cpu)) {
-                dbg.paused = true;
-                this->overflow_cycles = 0;
-                break;
-            }
-            dbg.store_pc_history(cpu); // FIXME: only if debug window open?
-            int cycles_step = cpu.step(this);
-            cycles_step += cpu.handle_irq();
-            clk.update(this, cycles_step);
-            ctc.update_timers(this, cycles_step);
-            this->audio.update_cycles(this->abs_cycle_count);
-            this->abs_cycle_count += cycles_step;
-        }
-        this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
+        dbg.store_pc_history(cpu); // FIXME: only if debug window open?
+        int ticks_step = cpu.step(this);
+        ticks_step += cpu.handle_irq();
+        clk.update(this, ticks_step);
+        ctc.update_timers(this, ticks_step);
+        this->audio.update_cycles(cur_tick);
+        cur_tick += ticks_step;
     }
+    return cur_tick;
 }
 
 //------------------------------------------------------------------------------

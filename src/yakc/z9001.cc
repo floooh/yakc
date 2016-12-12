@@ -110,8 +110,6 @@ z9001::setup_sound_funcs(const sound_funcs& funcs) {
 //------------------------------------------------------------------------------
 void
 z9001::after_apply_snapshot() {
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
     this->init_memory_mapping();
     z80& cpu = this->board->cpu;
     z80pio& pio1 = this->board->pio;
@@ -133,8 +131,6 @@ z9001::poweron(device m, os_rom os) {
     this->cur_model = m;
     this->cur_os = os;
     this->on = true;
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
     this->key_mask = 0;
     this->kbd_column_mask = 0;
     this->kbd_line_mask = 0;
@@ -188,7 +184,6 @@ z9001::reset() {
     this->board->pio.reset();
     this->board->pio2.reset();
     this->board->cpu.reset();
-    this->overflow_cycles = 0;
     this->keybuf.reset();
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
@@ -196,48 +191,28 @@ z9001::reset() {
 }
 
 //------------------------------------------------------------------------------
-void
-z9001::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
-    // FIXME: the speed multiplier isn't currently working because of the min/max cycle count limiter!
-    YAKC_ASSERT(speed_multiplier > 0);
-    this->cpu_ahead = false;
-    this->cpu_behind = false;    
+uint64_t
+z9001::step(uint64_t start_tick, uint64_t end_tick) {
     z80& cpu = this->board->cpu;
     z80dbg& dbg = this->board->dbg;
     z80ctc& ctc = this->board->ctc;
     clock& clk = this->board->clck;
-
     this->handle_key();
-    if (!dbg.paused) {
-        if (this->abs_cycle_count == 0) {
-            this->abs_cycle_count = min_cycle_count;
+    this->cur_tick = start_tick;
+    while (this->cur_tick < end_tick) {
+        if (dbg.check_break(cpu)) {
+            dbg.paused = true;
+            return end_tick;
         }
-        const int64_t num_cycles = clk.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
-        uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
-        if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
-            abs_end_cycles = max_cycle_count;
-            this->cpu_ahead = true;
-        }
-        else if ((min_cycle_count != 0) && (abs_end_cycles < min_cycle_count)) {
-            abs_end_cycles = min_cycle_count;
-            this->cpu_behind = true;
-        }
-        while (this->abs_cycle_count < abs_end_cycles) {
-            if (dbg.check_break(cpu)) {
-                dbg.paused = true;
-                this->overflow_cycles = 0;
-                break;
-            }
-            dbg.store_pc_history(cpu); // FIXME: only if debug window open?
-            int cycles_step = cpu.step(this);
-            cycles_step += cpu.handle_irq();
-            clk.update(this, cycles_step);
-            ctc.update_timers(this, cycles_step);
-            this->abs_cycle_count += cycles_step;
-        }
-        this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
+        dbg.store_pc_history(cpu); // FIXME: only if debug window open?
+        int ticks_step = cpu.step(this);
+        ticks_step += cpu.handle_irq();
+        clk.update(this, ticks_step);
+        ctc.update_timers(this, ticks_step);
+        this->cur_tick += ticks_step;
     }
     this->decode_video();
+    return this->cur_tick;
 }
 
 //------------------------------------------------------------------------------
@@ -419,7 +394,7 @@ z9001::ctc_write(int ctc_id, int chn_id) {
             if (!(this->ctc0_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
                 // CTC channel has become inactive, call the stop-callback
                 if (this->sound_cb.stop) {
-                    this->sound_cb.stop(this->sound_cb.userdata, this->abs_cycle_count, 0);
+                    this->sound_cb.stop(this->sound_cb.userdata, this->cur_tick, 0);
                 }
                 this->ctc0_mode = ctc_chn.mode;
             }
@@ -429,7 +404,7 @@ z9001::ctc_write(int ctc_id, int chn_id) {
                 if (div > 0) {
                     int hz = int((float(2457600) / float(div)) / 2.0f);
                     if (this->sound_cb.sound) {
-                        this->sound_cb.sound(this->sound_cb.userdata, this->abs_cycle_count, 0, hz);
+                        this->sound_cb.sound(this->sound_cb.userdata, this->cur_tick, 0, hz);
                     }
                 }
                 this->ctc0_constant = ctc_chn.constant;

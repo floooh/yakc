@@ -9,6 +9,10 @@ namespace YAKC {
 void
 yakc::init(const ext_funcs& sys_funcs, const sound_funcs& snd_funcs) {
     func = sys_funcs;
+    this->cpu_ahead = false;
+    this->cpu_behind = false;
+    this->abs_cycle_count = 0;
+    this->overflow_cycles = 0;
     this->kc85.init(&this->board);
     this->z1013.init(&this->board);
     this->z9001.init(&this->board);
@@ -22,6 +26,8 @@ yakc::poweron(device m, os_rom rom) {
     YAKC_ASSERT(!this->kc85.on && !this->z1013.on);
     this->model = m;
     this->os = rom;
+    this->abs_cycle_count = 0;
+    this->overflow_cycles = 0;
     if (this->is_device(device::any_kc85)) {
         this->kc85.poweron(m, rom);
     }
@@ -56,6 +62,7 @@ yakc::switchedon() const {
 //------------------------------------------------------------------------------
 void
 yakc::reset() {
+    this->overflow_cycles = 0;
     if (this->kc85.on) {
         this->kc85.reset();
     }
@@ -76,14 +83,36 @@ yakc::is_device(device mask) const {
 //------------------------------------------------------------------------------
 void
 yakc::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
-    if (this->kc85.on) {
-        this->kc85.onframe(speed_multiplier, micro_secs, min_cycle_count, max_cycle_count);
-    }
-    if (this->z1013.on) {
-        this->z1013.onframe(speed_multiplier, micro_secs, min_cycle_count, max_cycle_count);
-    }
-    if (this->z9001.on) {
-        this->z9001.onframe(speed_multiplier, micro_secs, min_cycle_count, max_cycle_count);
+    // FIXME: the speed multiplier isn't currently working because of the min/max cycle count limiter!
+    YAKC_ASSERT(speed_multiplier > 0);
+    this->cpu_ahead = false;
+    this->cpu_behind = false;
+    if (!this->board.dbg.paused) {
+        // compute the end-cycle-count for the current frame
+        if (this->abs_cycle_count == 0) {
+            this->abs_cycle_count = min_cycle_count;
+        }
+        const int64_t num_cycles = this->board.clck.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
+        uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
+        if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
+            abs_end_cycles = max_cycle_count;
+            this->cpu_ahead = true;
+        }
+        else if ((min_cycle_count != 0) && (abs_end_cycles < min_cycle_count)) {
+            abs_end_cycles = min_cycle_count;
+            this->cpu_behind = true;
+        }
+        if (this->kc85.on) {
+            this->abs_cycle_count = this->kc85.step(this->abs_cycle_count, abs_end_cycles);
+        }
+        else if (this->z1013.on) {
+            this->abs_cycle_count = this->z1013.step(this->abs_cycle_count, abs_end_cycles);
+        }
+        else if (this->z9001.on) {
+            this->abs_cycle_count = this->z9001.step(this->abs_cycle_count, abs_end_cycles);
+        }
+        YAKC_ASSERT(this->abs_cycle_count >= abs_end_cycles);
+        this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
     }
 }
 

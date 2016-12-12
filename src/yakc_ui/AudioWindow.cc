@@ -36,8 +36,8 @@ AudioWindow::Draw(yakc& emu) {
         ImGui::Checkbox("Pause", &this->paused);
         if (!this->paused) {
             Memory::Copy(Audio::soloud->getWave(), this->wavBuffer, 256*sizeof(float));
-            this->cpuAhead = emu.kc85.cpu_ahead;
-            this->cpuBehind = emu.kc85.cpu_behind;
+            this->cpuAhead = emu.cpu_ahead;
+            this->cpuBehind = emu.cpu_behind;
         }
         ImGui::Text("Backend: %s", Audio::soloud->getBackendString());
         ImGui::Text("Backend sample rate: source=%d, actual=%d\n",  this->audio->audioSource.sample_rate, 
