@@ -27,57 +27,43 @@ is_modifier(Key::Code key) {
 
 //------------------------------------------------------------------------------
 static uint8_t
-translate_special_key(Key::Code key, bool shift_pressed) {
-
-    uint8_t ascii = 0;
-
-    // check for special case (Enter, Esc, cursor keys, etc) and
-    // translate them to ascii
-    struct toAscii {
-        Key::Code key;
-        uint8_t ascii;
-    };
-    const static toAscii keyTable[] = {
-        // FIXME:
-        // HOME, PAGE UP/DOWN, START/END of line, INSERT,
-        // also, some of these (e.g. the function keys) are KC85/2 specific!
-        { Key::Left, 0x08 },
-        { Key::Right, 0x09 },
-        { Key::Down, 0x0A },
-        { Key::Up, 0x0B },
-        { Key::Enter, 0x0D },
-        { Key::BackSpace, 0x01 },
-        { Key::Escape, 0x03 },
-        { Key::F1, 0xF1 },
-        { Key::F2, 0xF2 },
-        { Key::F3, 0xF3 },
-        { Key::F4, 0xF4 },
-        { Key::F5, 0xF5 },
-        { Key::F6, 0xF6 },
-        { Key::F7, 0xF7 },
-        { Key::F8, 0xF8 },
-        { Key::F9, 0xF9 },
-        { Key::F10, 0xFA },
-        { Key::F11, 0xFB },
-        { Key::F12, 0xFC },
-    };
-    for (const auto& item : keyTable) {
-        if (item.key == key) {
-            if (shift_pressed && (key == Key::BackSpace)) {
-                // shift+bs: clear screen
-                ascii = 0x0C;
-            }
-            else if (shift_pressed && (key == Key::Escape)) {
-                // shift+esc: break
-                ascii = 0x13;
-            }
-            else {
-                ascii = item.ascii;
-            }
-            break;
+translate_special_key(const yakc* emu, Key::Code key, bool shift) {
+    if (emu->is_device(device::any_zx)) {
+        switch (key) {
+            case Key::Left:         return 0x08;
+            case Key::Right:        return 0x09;
+            case Key::Down:         return 0x0A;
+            case Key::Up:           return 0x0B;
+            case Key::Enter:        return 0x0D;
+            case Key::BackSpace:    return 0x0C;
+            case Key::Escape:       return 0x07;
+            default:                return 0;
         }
     }
-    return ascii;
+    else {
+        switch (key) {
+            case Key::Left:         return 0x08;
+            case Key::Right:        return 0x09;
+            case Key::Down:         return 0x0A;
+            case Key::Up:           return 0x0B;
+            case Key::Enter:        return 0x0D;
+            case Key::BackSpace:    return shift ? 0x0C : 0x01; // 0x0C: clear screen
+            case Key::Escape:       return shift ? 0x13 : 0x03; // 0x13: break
+            case Key::F1:           return 0xF1;
+            case Key::F2:           return 0xF2;
+            case Key::F3:           return 0xF3;
+            case Key::F4:           return 0xF4;
+            case Key::F5:           return 0xF5;
+            case Key::F6:           return 0xF6;
+            case Key::F7:           return 0xF7;
+            case Key::F8:           return 0xF8;
+            case Key::F9:           return 0xF9;
+            case Key::F10:          return 0xFA;
+            case Key::F11:          return 0xFB;
+            case Key::F12:          return 0xFC;
+            default:                return 0;
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -92,12 +78,14 @@ Keyboard::Setup(yakc& emu_) {
         if (e.Type == InputEvent::WChar) {
             if ((e.WCharCode >= 32) && (e.WCharCode < 127)) {
                 uint8_t ascii = (uint8_t) e.WCharCode;
-                // invert case (FIXME: this depends on the emulated system)
-                if (islower(ascii)) {
-                    ascii = toupper(ascii);
-                }
-                else if (isupper(ascii)) {
-                    ascii = tolower(ascii);
+                // invert case (not on ZX machines)
+                if (!this->emu->is_device(device::any_zx)) {
+                    if (islower(ascii)) {
+                        ascii = toupper(ascii);
+                    }
+                    else if (isupper(ascii)) {
+                        ascii = tolower(ascii);
+                    }
                 }
                 this->cur_char = ascii;
             }
@@ -108,7 +96,7 @@ Keyboard::Setup(yakc& emu_) {
                 this->pressedKeys.Add(e.KeyCode);
             }
             // translate any non-alphanumeric keys (Enter, Esc, cursor keys etc...)
-            uint8_t special_ascii = translate_special_key(e.KeyCode, Input::KeyPressed(Key::LeftShift));
+            uint8_t special_ascii = translate_special_key(this->emu, e.KeyCode, Input::KeyPressed(Key::LeftShift));
             if (0 != special_ascii) {
                 this->cur_char = special_ascii;
             }

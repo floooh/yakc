@@ -64,6 +64,7 @@ zx::poweron(device m) {
     this->cur_model = m;
     this->border_color = 0xFF000000;
     this->pal_line_counter = 0;
+    this->key_code = 0;
     if (device::zxspectrum48k == m) {
         this->cur_os = os_rom::amstrad_zx48k;
         this->display_ram_bank = 0;
@@ -263,7 +264,7 @@ zx::handle_keyboard_input() {
     // only write new keycode if previous one was handled
     ubyte flags = mem.r8(flags_addr);
     if (0 == (flags & (1<<5))) {
-        if (key_code != 0) {
+        if (this->key_code != 0) {
             mem.w8(lastk_addr, this->key_code);
             mem.w8(flags_addr, flags | (1<<5));
         }
