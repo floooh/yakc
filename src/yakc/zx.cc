@@ -65,6 +65,7 @@ zx::poweron(device m) {
     this->border_color = 0xFF000000;
     this->pal_line_counter = 0;
     this->key_code = 0;
+    this->memory_paging_disabled = false;
     if (device::zxspectrum48k == m) {
         this->cur_os = os_rom::amstrad_zx48k;
         this->display_ram_bank = 0;
@@ -109,8 +110,19 @@ zx::poweroff() {
 //------------------------------------------------------------------------------
 void
 zx::reset() {
+    this->memory_paging_disabled = false;
+    this->key_code = 0;
+    this->pal_line_counter = 0;
+    this->blink_counter = 0;
+    if (device::zxspectrum48k == this->cur_model) {
+        this->display_ram_bank = 0;
+    }
+    else {
+        this->display_ram_bank = 5;
+    }
     this->board->cpu.reset();
     this->board->cpu.PC = 0x0000;
+    this->init_memory_mapping();
 }
 
 //------------------------------------------------------------------------------
@@ -146,30 +158,36 @@ zx::cpu_out(uword port, ubyte val) {
     }
     if (device::zxspectrum128k == this->cur_model) {
         if (0x7FFD == port) {
-            // store display RAM bank index
-            this->display_ram_bank = (val & 0x8) ? 7 : 5;
+            if (!this->memory_paging_disabled) {
+                // store display RAM bank index
+                this->display_ram_bank = (val & (1<<3)) ? 7 : 5;
 
-            // FIXME: bit 5 locks future writing to 0x7FFD until reset
+                // control memory bank switching on 128K
+                // http://8bit.yarek.pl/computer/zx.128/
+                auto& mem = this->board->cpu.mem;
+                mem.unmap_layer(0);
 
-            // control memory bank switching on 128K
-            // http://8bit.yarek.pl/computer/zx.128/
-            auto& mem = this->board->cpu.mem;
-            mem.unmap_layer(0);
-
-            // section D (0xC000 .. 0xFFFF)
-            mem.map(0, 0xC000, 0x4000, this->ram[val & 0x7], true);
-            // section C, always mapped to RAM2 (0x8000 .. 0xBFFF)
-            mem.map(0, 0x8000, 0x4000, this->ram[2], true);
-            // section B, always mapped to RAM5 (0x4000 .. 0x7FFF)
-            mem.map(0, 0x4000, 0x4000, this->ram[5], true);
-            // ROM bank
-            if (val & 0x10) {
-                // bit 4 set: ROM1
-                mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_1, false);
+                // section D (0xC000 .. 0xFFFF)
+                mem.map(0, 0xC000, 0x4000, this->ram[val & 0x7], true);
+                // section C, always mapped to RAM2 (0x8000 .. 0xBFFF)
+                mem.map(0, 0x8000, 0x4000, this->ram[2], true);
+                // section B, always mapped to RAM5 (0x4000 .. 0x7FFF)
+                mem.map(0, 0x4000, 0x4000, this->ram[5], true);
+                // ROM bank
+                if (val & (1<<4)) {
+                    // bit 4 set: ROM1
+                    mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_1, false);
+                }
+                else {
+                    // bit 4 clear: ROM0
+                    mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_0, false);
+                }
             }
-            else {
-                // bit 4 clear: ROM0
-                mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_0, false);
+            if (val & (1<<5)) {
+                // bit 5 prevents further changes to memory pages
+                // until computer is reset, this is used when switching
+                // to the 48k ROM
+                this->memory_paging_disabled = true;
             }
             return;
         }

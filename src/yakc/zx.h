@@ -62,6 +62,7 @@ public:
     device cur_model = device::zxspectrum48k;
     os_rom cur_os = os_rom::amstrad_zx48k;
     bool on = false;
+    bool memory_paging_disabled = false;
     uint8_t blink_counter = 0;          // increased by one every vblank
     uint8_t key_code = 0;
     uint16_t pal_line_counter = 0;
