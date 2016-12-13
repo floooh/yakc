@@ -179,7 +179,7 @@ zx::cpu_out(uword port, ubyte val) {
 //------------------------------------------------------------------------------
 ubyte
 zx::cpu_in(uword port) {
-    printf("IN port: %04x\n", port);
+//    printf("IN port: %04x\n", port);
     return 0xFF;
 }
 
@@ -195,6 +195,7 @@ void
 zx::timer(int timer_id) {
     if (0 == timer_id) {
         this->blink_counter++;
+        this->irq();
     }
 }
 

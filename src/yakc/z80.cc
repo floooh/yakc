@@ -110,9 +110,9 @@ int
 z80::handle_irq() {
     int tstates = 0;
     if (this->irq_received) {
+        YAKC_ASSERT((this->IM >= 0) && (this->IM <= 2));
+
         tstates += 2;
-        // we don't implement MODE0 or MODE1 (yet?)
-        YAKC_ASSERT(2 == this->IM);
 
         // leave halt
         if (this->HALT) {
@@ -120,16 +120,33 @@ z80::handle_irq() {
             this->PC++;
         }
 
-        // NOTE: currently there's no timeout on an interrupt request if
-        // interrupts are disabled for too long, immediately cancelling
-        // the request doesn't work right (has problems with some KC
-        // games which have high-frequency interrupts for playing sound)
-        if (this->irq_device) {
-            if (this->IFF1) {
-                this->irq_received = false;
-                // handle interrupt
-                this->IFF1 = this->IFF2 = false;
-                ubyte vec = this->irq_device->interrupt_acknowledged();
+        if (this->IFF1) {
+            this->IFF1 = this->IFF2 = false;
+            this->irq_received = false;
+            if (0 == this->IM) {
+                // NOT IMPLEMENTED
+            }
+            else if (1 == this->IM) {
+                // this is an RST 38
+                SP -= 2;
+                mem.w16(SP, PC);
+                this->PC = 0x38;
+                tstates += 13;
+            }
+            else {
+                // NOTE: currently there's no timeout on an interrupt request if
+                // interrupts are disabled for too long, immediately cancelling
+                // the request doesn't work right (has problems with some KC
+                // games which have high-frequency interrupts for playing sound)
+                //
+                // NOTE for ZX Spectrum: the Speccy doesn't have a proper 'irq_device',
+                // and thus uses whatever is on the data bus when the interrupt
+                // happens, we simplify this here that the interrupt vector
+                // is always assumed to be 0
+                ubyte vec = 0x00;
+                if (this->irq_device) {
+                    vec = this->irq_device->interrupt_acknowledged();
+                }
                 uword addr = (this->I<<8)|(vec&0xFE);
                 this->SP -= 2;
                 this->mem.w16(this->SP, this->PC);
