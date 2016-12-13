@@ -67,9 +67,9 @@ kc85::poweron(device m, os_rom os) {
     this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
 
     // a 50Hz timer which trigger every vertical blank
-    this->board->clck.config_timer(0, 50);
+    this->board->clck.config_timer_hz(0, 50);
     // a timer which triggers every PAL line for video memory decoding
-    this->board->clck.config_timer(1, (uint32_t)(50.136*312));
+    this->board->clck.config_timer_hz(1, (uint32_t)(50.136*312));
 
     // initial memory map
     this->board->cpu.out(this, 0x88, 0x9f);

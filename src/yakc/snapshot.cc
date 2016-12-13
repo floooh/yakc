@@ -64,9 +64,9 @@ snapshot::write_clock_state(const yakc& emu, state_t& state) {
     const clock& clk = emu.board.clck;
     state.clock.base_freq_khz = clk.base_freq_khz;
     for (int i = 0; i < 4; i++) {
-        state.clock.timers[i].freq_hz = clk.timers[i].freq_hz;
-        state.clock.timers[i].count   = clk.timers[i].count;
-        state.clock.timers[i].value   = clk.timers[i].value;
+        state.clock.timers[i].interval = clk.timers[i].interval;
+        state.clock.timers[i].count    = clk.timers[i].count;
+        state.clock.timers[i].value    = clk.timers[i].value;
     }
 }
 
@@ -76,9 +76,9 @@ snapshot::apply_clock_state(const state_t& state, yakc& emu) {
     clock& clk = emu.board.clck;
     clk.base_freq_khz = state.clock.base_freq_khz;
     for (int i = 0; i < 4; i++) {
-        clk.timers[i].freq_hz = state.clock.timers[i].freq_hz;
-        clk.timers[i].count   = state.clock.timers[i].count;
-        clk.timers[i].value   = state.clock.timers[i].value;
+        clk.timers[i].interval = state.clock.timers[i].interval;
+        clk.timers[i].count    = state.clock.timers[i].count;
+        clk.timers[i].value    = state.clock.timers[i].value;
     }
 }
 

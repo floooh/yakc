@@ -22,8 +22,8 @@ public:
     /// return number of cycles for a given time-span in micro-seconds
     int64_t cycles(int micro_seconds) const;
 
-    /// configure a timer
-    void config_timer(int index, int hz);
+    /// configure a timer with a Hz frequency
+    void config_timer_hz(int index, int hz);
     /// advance the timers by a number of cycles
     void update(z80bus* bus, int num_cycles);
 
@@ -33,9 +33,9 @@ public:
     static const int num_timers = 4;
     /// timer state
     struct timer_state {
-        int freq_hz = 0;       // timer frequency in Hz
-        int count = 0;         // how often the counter went through 0
-        int value = 0;         // current counter value
+        int interval = 0;       // the timer interval in cycles
+        int count = 0;          // how often the counter went through 0
+        int value = 0;          // current counter value in cycles
     } timers[num_timers];
 };
 

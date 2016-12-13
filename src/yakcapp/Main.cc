@@ -63,7 +63,7 @@ YakcApp::OnInit() {
     const int frameSizeY = 16;
     const int width = 2*frameSizeX + 2*320;
     const int height = 2*frameSizeY + 2*256;
-    auto gfxSetup = GfxSetup::Window(width, height, "KC85");
+    auto gfxSetup = GfxSetup::Window(width, height, "YAKC Emulator");
     gfxSetup.SetPoolSize(GfxResourceType::Mesh, 8);
     gfxSetup.SetPoolSize(GfxResourceType::Texture, 8);
     gfxSetup.SetPoolSize(GfxResourceType::Pipeline, 8);
@@ -171,7 +171,9 @@ YakcApp::OnRunning() {
         this->draw.Render(this->emu.z1013.rgba8_buffer, 256, 256);
     }
     else if (this->emu.zx.on) {
-        this->draw.Render(this->emu.zx.rgba8_buffer, 256, 192);
+        // NOTE: ZX only has 256x192 framebuffer, but we put
+        // it into a 320x256 buffer and include the border color there
+        this->draw.Render(this->emu.zx.rgba8_buffer, 320, 256);
     }
     #if YAKC_UI
     this->ui.OnFrame(this->emu);

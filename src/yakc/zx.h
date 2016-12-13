@@ -34,8 +34,6 @@ public:
     const char* system_info() const;
     /// called after snapshot restore
     void on_context_switched();
-    /// get current border color
-    void border_color(float& out_red, float& out_green, float& out_blue);
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);
@@ -61,10 +59,10 @@ public:
     bool on = false;
     uint8_t blink_counter = 0;          // increased by one every vblank
     uint8_t key_code = 0;
-    uint32_t display_ram_bank = 5;      // which RAM bank to use as display mem
-    uint32_t brder_color = 0;
+    uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
+    uint32_t border_color = 0xFF000000;
     uint32_t pal[8];
-    uint32_t rgba8_buffer[256*192];
+    uint32_t rgba8_buffer[320*256];
 };
 
 } // namespace YAKC

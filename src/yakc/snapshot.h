@@ -27,7 +27,7 @@ public:
         struct clock_t {
             int base_freq_khz;
             struct timer_t {
-                int freq_hz;
+                int interval;
                 int count;
                 int value;
             } timers[4];

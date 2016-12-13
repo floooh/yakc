@@ -159,7 +159,7 @@ z9001::poweron(device m, os_rom os) {
     this->board->ctc.init_daisychain(nullptr);
 
     // configure a hardware counter to control the video blink attribute
-    this->board->clck.config_timer(0, 100);
+    this->board->clck.config_timer_hz(0, 100);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;

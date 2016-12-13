@@ -56,21 +56,13 @@ zx::on_context_switched() {
 
 //------------------------------------------------------------------------------
 void
-zx::border_color(float& out_red, float& out_green, float& out_blue) {
-    out_blue  = ((this->brder_color >> 16) & 0xFF) / 255.0f;
-    out_green = ((this->brder_color >> 8) & 0xFF) / 255.0f;
-    out_red  =  (this->brder_color & 0xFF) / 255.0f;
-}
-
-//------------------------------------------------------------------------------
-void
 zx::poweron(device m) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(device::any_zx) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
-    this->brder_color = 0;
+    this->border_color = 0xFF000000;
     if (m == device::zxspectrum48k) {
         this->cur_os = os_rom::amstrad_zx48k;
         this->display_ram_bank = 0;
@@ -85,10 +77,10 @@ zx::poweron(device m) {
     clear(this->ram, sizeof(this->ram));
     this->init_memory_mapping();
 
-    // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
+    // initialize the system clock
     this->board->clck.init((m == device::zxspectrum48k) ? 3500 : 3547);
     // a 50Hz timer which trigger every vertical blank
-    this->board->clck.config_timer(0, 50);
+    this->board->clck.config_timer_hz(0, 50);
 
     // initialize hardware components
     this->board->cpu.init();
@@ -137,8 +129,8 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
 //------------------------------------------------------------------------------
 void
 zx::cpu_out(uword port, ubyte val) {
-    if ((port & 0xFF) == 0xFE) {
-        this->brder_color = this->pal[val & 7] & 0xFFD7D7D7;
+    if ((port & 0xFF) == 0xFE) {        
+        this->border_color = this->pal[val & 7] & 0xFFD7D7D7;
         // FIXME:
         //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
         //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
@@ -240,36 +232,59 @@ zx::decode_video() {
     uint8_t* vidmem_bank = this->ram[this->display_ram_bank];
     bool blink = 0 != (this->blink_counter & 0x10);
     uint32_t fg, bg;
-    for (uint16_t y = 0; y < 192; y++) {
-        uint16_t y_offset = ((y & 0xC0)<<5) | ((y & 0x07)<<8) | ((y & 0x38)<<2);
-        for (uint16_t x = 0; x < 32; x++) {
-            // pixel offset:
-            // | 0| 1| 0|Y7|Y6|Y2|Y1|Y0|Y5|Y4|Y3|X4|X3|X2|X1|X0|
-            //
-            // color offset is linear
-            uint16_t pix_offset = y_offset | x;
-            uint16_t clr_offset = 0x1800 + (((y & ~0x7)<<2) | x);
 
-            // pixel mask and color attribute bytes
-            uint8_t pix = vidmem_bank[pix_offset];
-            uint8_t clr = vidmem_bank[clr_offset];
+    for (uint16_t y = 0; y < 256; y++) {
+        if ((y < 32) || (y >= 224)) {
+            // upper/lower border
+            for (int x = 0; x < 320; x++) {
+                *dst++ = this->border_color;
+            }
+        }
+        else {
+            // compute video memory Y offset (inside 256x192 area)
+            uint16_t yy = y-32;
+            uint16_t y_offset = ((yy & 0xC0)<<5) | ((yy & 0x07)<<8) | ((yy & 0x38)<<2);
 
-            // foreground and background color
-            if ((clr & (1<<7)) && blink) {
-                fg = this->pal[(clr>>3) & 7];
-                bg = this->pal[clr & 7];
+            // left border
+            for (int x = 0; x < (4*8); x++) {
+                *dst++ = this->border_color;
             }
-            else {
-                fg = this->pal[clr & 7];
-                bg = this->pal[(clr>>3) & 7];
+
+            // valid 256x192 vidmem area
+            for (uint16_t x = 0; x < 32; x++) {
+                // pixel offset:
+                // | 0| 1| 0|Y7|Y6|Y2|Y1|Y0|Y5|Y4|Y3|X4|X3|X2|X1|X0|
+                //
+                // color offset is linear
+                uint16_t pix_offset = y_offset | x;
+                uint16_t clr_offset = 0x1800 + (((yy & ~0x7)<<2) | x);
+
+                // pixel mask and color attribute bytes
+                uint8_t pix = vidmem_bank[pix_offset];
+                uint8_t clr = vidmem_bank[clr_offset];
+
+                // foreground and background color
+                if ((clr & (1<<7)) && blink) {
+                    fg = this->pal[(clr>>3) & 7];
+                    bg = this->pal[clr & 7];
+                }
+                else {
+                    fg = this->pal[clr & 7];
+                    bg = this->pal[(clr>>3) & 7];
+                }
+                if (0 == (clr & (1<<6))) {
+                    // standard brightness
+                    fg &= 0xFFD7D7D7;
+                    bg &= 0xFFD7D7D7;
+                }
+                for (int px = 7; px >=0; px--) {
+                    *dst++ = pix & (1<<px) ? fg : bg;
+                }
             }
-            if (0 == (clr & (1<<6))) {
-                // standard brightness
-                fg &= 0xFFD7D7D7;
-                bg &= 0xFFD7D7D7;
-            }
-            for (int px = 7; px >=0; px--) {
-                *dst++ = pix & (1<<px) ? fg : bg;
+
+            // right border
+            for (int x = 0; x < (4*8); x++) {
+                *dst++ = this->border_color;
             }
         }
     }
