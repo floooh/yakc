@@ -214,7 +214,78 @@ UI::OnFrame(yakc& emu) {
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
-                if (ImGui::MenuItem("System Info...")) {
+                if (ImGui::BeginMenu("System")) {
+                    if (ImGui::BeginMenu("VEB MPM")) {
+                        if (emu.kc85.roms.has(kc85_roms::hc900)) {
+                            if (ImGui::MenuItem("KC85/2 (HC900-CAOS)")) {
+                                emu.poweroff();
+                                emu.poweron(device::kc85_2, os_rom::caos_hc900);
+                            }
+                        }
+                        if (emu.kc85.roms.has(kc85_roms::caos22)) {
+                            if (ImGui::MenuItem("KC85/2 (HC-CAOS 2.2)")) {
+                                emu.poweroff();
+                                emu.poweron(device::kc85_2, os_rom::caos_2_2);
+                            }
+                        }
+                        if (ImGui::MenuItem("KC85/3 (HC-CAOS 3.1)")) {
+                            emu.poweroff();
+                            emu.poweron(device::kc85_3, os_rom::caos_3_1);
+                        }
+                        if (emu.kc85.roms.has(kc85_roms::caos34)) {
+                            if (ImGui::MenuItem("KC85/3 (HC-CAOS 3.4i)")) {
+                                emu.poweroff();
+                                emu.poweron(device::kc85_3, os_rom::caos_3_4);
+                            }
+                        }
+                        if (emu.kc85.roms.has(kc85_roms::caos42c) && emu.kc85.roms.has(kc85_roms::caos42e)) {
+                            if (ImGui::MenuItem("KC85/4 (KC-CAOS 4.2)")) {
+                                emu.poweroff();
+                                emu.poweron(device::kc85_4, os_rom::caos_4_2);
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if (ImGui::BeginMenu("Robotron Dresden")) {
+                        if (ImGui::MenuItem("Z9001 (32KB)")) {
+                            emu.poweroff();
+                            emu.poweron(device::z9001, os_rom::z9001_os_1_2);
+                        }
+                        if (ImGui::MenuItem("KC87  (48KB)")) {
+                            emu.poweroff();
+                            emu.poweron(device::kc87, os_rom::kc87_os_2);
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if (ImGui::BeginMenu("Robotron Riesa")) {
+                        if (ImGui::MenuItem("Z1013.01 (1MHz, 16KB)")) {
+                            emu.poweroff();
+                            emu.poweron(device::z1013_01, os_rom::none);
+                        }
+                        if (ImGui::MenuItem("Z1013.16 (2MHz, 16KB)")) {
+                            emu.poweroff();
+                            emu.poweron(device::z1013_16, os_rom::none);
+                        }
+                        if (ImGui::MenuItem("Z1013.64 (2MHz, 64KB)")) {
+                            emu.poweroff();
+                            emu.poweron(device::z1013_64, os_rom::none);
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if (ImGui::BeginMenu("Sinclair")) {
+                        if (ImGui::MenuItem("ZX Spectrum 48K")) {
+                            emu.poweroff();
+                            emu.poweron(device::zxspectrum48k, os_rom::none);
+                        }
+                        if (ImGui::MenuItem("ZX Spectrum 128K")) {
+                            emu.poweroff();
+                            emu.poweron(device::zxspectrum128k, os_rom::none);
+                        }
+                        ImGui::EndMenu();
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::MenuItem("Info...")) {
                     this->OpenWindow(emu, InfoWindow::Create());
                 }
                 if (ImGui::MenuItem("Load File...")) {
@@ -229,128 +300,55 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Reset")) {
                     emu.reset();
                 }
-                if (ImGui::BeginMenu("Boot to KC85/2")) {
-                    if (emu.kc85.roms.has(kc85_roms::hc900)) {
-                        if (ImGui::MenuItem("HC900-CAOS")) {
-                            emu.poweroff();
-                            emu.poweron(device::kc85_2, os_rom::caos_hc900);
-                        }
-                    }
-                    if (emu.kc85.roms.has(kc85_roms::caos22)) {
-                        if (ImGui::MenuItem("HC-CAOS 2.2")) {
-                            emu.poweroff();
-                            emu.poweron(device::kc85_2, os_rom::caos_2_2);
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Boot to KC85/3")) {
-                    if (ImGui::MenuItem("HC-CAOS 3.1")) {
-                        emu.poweroff();
-                        emu.poweron(device::kc85_3, os_rom::caos_3_1);
-                    }
-                    if (emu.kc85.roms.has(kc85_roms::caos34)) {
-                        if (ImGui::MenuItem("HC-CAOS 3.4i")) {
-                            emu.poweroff();
-                            emu.poweron(device::kc85_3, os_rom::caos_3_4);
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Boot to KC85/4")) {
-                    if (emu.kc85.roms.has(kc85_roms::caos41c) && emu.kc85.roms.has(kc85_roms::caos41e)) {
-                        if (ImGui::MenuItem("KC-CAOS 4.1")) {
-                            emu.poweroff();
-                            emu.poweron(device::kc85_4, os_rom::caos_4_1);
-                        }
-                    }
-                    if (emu.kc85.roms.has(kc85_roms::caos42c) && emu.kc85.roms.has(kc85_roms::caos42e)) {
-                        if (ImGui::MenuItem("KC-CAOS 4.2")) {
-                            emu.poweroff();
-                            emu.poweron(device::kc85_4, os_rom::caos_4_2);
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Boot to Z1013")) {
-                    if (ImGui::MenuItem("Z1013.01 (1 MHz, 16KB RAM)")) {
-                        emu.poweroff();
-                        emu.poweron(device::z1013_01, os_rom::none);
-                    }
-                    if (ImGui::MenuItem("Z1013.16 (2 MHz, 16KB RAM)")) {
-                        emu.poweroff();
-                        emu.poweron(device::z1013_16, os_rom::none);
-                    }
-                    if (ImGui::MenuItem("Z1013.64 (2 MHz, 64KB RAM)")) {
-                        emu.poweroff();
-                        emu.poweron(device::z1013_64, os_rom::none);
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::MenuItem("Boot to Z9001 (32KB)")) {
-                    emu.poweroff();
-                    emu.poweron(device::z9001, os_rom::z9001_os_1_2);
-                }
-                if (ImGui::MenuItem("Boot to KC87  (48KB)")) {
-                    emu.poweroff();
-                    emu.poweron(device::kc87, os_rom::kc87_os_2);
-                }
-                if (ImGui::BeginMenu("Boot to ZX")) {
-                    if (ImGui::MenuItem("ZX Spectrum 48K")) {
-                        emu.poweroff();
-                        emu.poweron(device::zxspectrum48k, os_rom::none);
-                    }
-                    if (ImGui::MenuItem("ZX Spectrum 128K")) {
-                        emu.poweroff();
-                        emu.poweron(device::zxspectrum128k, os_rom::none);
-                    }
-                    ImGui::EndMenu();
-                }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Software")) {
-                for (const auto& item : this->fileLoader.Items) {
-                    if (int(item.Compat) & int(emu.model)) {
-                        if (ImGui::MenuItem(item.Name.AsCStr())) {
-                            this->fileLoader.LoadAndStart(emu, item);
+            if (!emu.is_device(device::any_zx)) {
+                if (ImGui::BeginMenu("Software")) {
+                    for (const auto& item : this->fileLoader.Items) {
+                        if (int(item.Compat) & int(emu.model)) {
+                            if (ImGui::MenuItem(item.Name.AsCStr())) {
+                                this->fileLoader.LoadAndStart(emu, item);
+                            }
                         }
                     }
+                    ImGui::EndMenu();
                 }
-                ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Hardware")) {
-                if (emu.is_device(device::any_kc85)) {
-                    if (ImGui::MenuItem("Expansion Slots")) {
-                        this->OpenWindow(emu, ModuleWindow::Create());
+            if (!emu.is_device(device::any_zx)) {
+                if (ImGui::BeginMenu("Hardware")) {
+                    if (emu.is_device(device::any_kc85)) {
+                        if (ImGui::MenuItem("Expansion Slots")) {
+                            this->OpenWindow(emu, ModuleWindow::Create());
+                        }
+                        if (ImGui::MenuItem("Memory Map")) {
+                            this->OpenWindow(emu, MemoryMapWindow::Create());
+                        }
+                        if (ImGui::MenuItem("KC85 IO Ports")) {
+                            this->OpenWindow(emu, KC85IOWindow::Create());
+                        }
                     }
-                    if (ImGui::MenuItem("Memory Map")) {
-                        this->OpenWindow(emu, MemoryMapWindow::Create());
+                    if (emu.is_device(device::any_z9001)) {
+                        // the Z9001 has 2 PIOs
+                        if (ImGui::MenuItem("Z80 PIO 1")) {
+                            this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.pio));
+                        }
+                        if (ImGui::MenuItem("Z80 PIO 2")) {
+                            this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.pio2));
+                        }
                     }
-                    if (ImGui::MenuItem("KC85 IO Ports")) {
-                        this->OpenWindow(emu, KC85IOWindow::Create());
+                    else {
+                        // all others have 1 PIO
+                        if (ImGui::MenuItem("Z80 PIO")) {
+                            this->OpenWindow(emu, PIOWindow::Create("PIO", &emu.board.pio));
+                        }
                     }
+                    if (!emu.is_device(device::any_z1013)) {
+                        if (ImGui::MenuItem("Z80 CTC")) {
+                            this->OpenWindow(emu, CTCWindow::Create());
+                        }
+                    }
+                    ImGui::EndMenu();
                 }
-                if (emu.is_device(device::any_z9001)) {
-                    // the Z9001 has 2 PIOs
-                    if (ImGui::MenuItem("Z80 PIO 1")) {
-                        this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.pio));
-                    }
-                    if (ImGui::MenuItem("Z80 PIO 2")) {
-                        this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.pio2));
-                    }
-                }
-                else {
-                    // all others have 1 PIO
-                    if (ImGui::MenuItem("Z80 PIO")) {
-                        this->OpenWindow(emu, PIOWindow::Create("PIO", &emu.board.pio));
-                    }
-                }
-                if (!emu.is_device(device::any_z1013)) {
-                    if (ImGui::MenuItem("Z80 CTC")) {
-                        this->OpenWindow(emu, CTCWindow::Create());
-                    }
-                }
-                ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Debugging")) {
                 if (ImGui::MenuItem("CPU Debugger")) {
@@ -370,26 +368,28 @@ UI::OnFrame(yakc& emu) {
                         this->OpenWindow(emu, CommandWindow::Create());
                     }
                 }
-                if (ImGui::BeginMenu("Take Snapshot")) {
-                    for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                        strBuilder.Format(32, "Snapshot %d", i);
-                        if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                            this->snapshotStorage.TakeSnapshot(emu, i);
-                        }
-                    }
-                    ImGui::EndMenu();
-                }
-                if (this->snapshotStorage.HasSnapshots()) {
-                    if (ImGui::BeginMenu("Apply Snapshot")) {
+                if (!emu.is_device(device::any_zx)) {
+                    if (ImGui::BeginMenu("Take Snapshot")) {
                         for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                            if (this->snapshotStorage.HasSnapshot(i)) {
-                                strBuilder.Format(32, "Snapshot %d", i);
-                                if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                    this->snapshotStorage.ApplySnapshot(i, emu);
-                                }
+                            strBuilder.Format(32, "Snapshot %d", i);
+                            if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                                this->snapshotStorage.TakeSnapshot(emu, i);
                             }
                         }
                         ImGui::EndMenu();
+                    }
+                    if (this->snapshotStorage.HasSnapshots()) {
+                        if (ImGui::BeginMenu("Apply Snapshot")) {
+                            for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
+                                if (this->snapshotStorage.HasSnapshot(i)) {
+                                    strBuilder.Format(32, "Snapshot %d", i);
+                                    if (ImGui::MenuItem(strBuilder.AsCStr())) {
+                                        this->snapshotStorage.ApplySnapshot(i, emu);
+                                    }
+                                }
+                            }
+                            ImGui::EndMenu();
+                        }
                     }
                 }
                 ImGui::EndMenu();

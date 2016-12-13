@@ -139,7 +139,7 @@ zx::init_keymap() {
 //------------------------------------------------------------------------------
 void
 zx::on_context_switched() {
-    // FIXME
+    // FIXME!
 }
 
 //------------------------------------------------------------------------------
@@ -406,7 +406,11 @@ zx::pal_line() {
 //------------------------------------------------------------------------------
 const char*
 zx::system_info() const {
-    return "FIXME!";
+    return
+        "FIXME!\n\n"
+        "ZX ROM images acknowledgement:\n\n"
+        "Amstrad have kindly given their permission for the redistribution of their copyrighted material but retain that copyright.\n\n"
+        "See: http://www.worldofspectrum.org/permits/amstrad-roms.txt";
 }
 
 //------------------------------------------------------------------------------

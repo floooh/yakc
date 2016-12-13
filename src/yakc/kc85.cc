@@ -136,12 +136,6 @@ kc85::update_rom_pointers() {
             this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos34);
             this->caos_e_size = this->roms.size(kc85_roms::caos34);
             break;
-        case os_rom::caos_4_1:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos41e);
-            this->caos_e_size = this->roms.size(kc85_roms::caos41e);
-            this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos41c);
-            this->caos_c_size = this->roms.size(kc85_roms::caos41c);
-            break;
         case os_rom::caos_4_2:
             this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos42e);
             this->caos_e_size = this->roms.size(kc85_roms::caos42e);

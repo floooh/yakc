@@ -16,8 +16,6 @@ public:
         caos22,         // CAOS 2.2
         caos31,         // CAOS 3.1
         caos34,         // CAOS 3.4
-        caos41e,        // CAOS 4.1, 4 KByte chunk at E000
-        caos41c,        // CAOS 4.1, 8 KByte chunk at C000
         caos42e,        // CAOS 4.2, 4 KByte chunk at E000
         caos42c,        // CAOS 4.2, 8 KByte chunk at C000
         basic_rom,      // BASIC ROM, KC85/3 and KC85/4
