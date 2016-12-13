@@ -12,7 +12,7 @@ void
 zx::init(breadboard* b) {
     this->board = b;
 
-    // color palette
+    // setup color palette
     this->pal[0] = 0xFF000000;      // black
     this->pal[1] = 0xFFFF0000;      // blue
     this->pal[2] = 0xFF0000FF;      // red
@@ -39,13 +39,101 @@ zx::init_memory_mapping() {
         cpu.mem.map(0, 0x0000, 0x4000, dump_amstrad_zx48k, false);
     }
     else {
-        // Spectrum 128k
+        // Spectrum 128k initial memory mapping
         cpu.mem.map(0, 0x4000, 0x4000, this->ram[5], true);
         cpu.mem.map(0, 0x8000, 0x4000, this->ram[2], true);
         cpu.mem.map(0, 0xC000, 0x4000, this->ram[0], true);
         YAKC_ASSERT(sizeof(dump_amstrad_zx128k_0) == 0x4000);
         cpu.mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_0, false);
     }
+}
+
+//------------------------------------------------------------------------------
+static uint64_t
+key_bit(int column, int line) {
+    // returns keyboard matrix bit mask with single bit set at column and line
+    YAKC_ASSERT((column >= 0) && (column < 8));
+    YAKC_ASSERT((line >= 0) && (line < 5));
+    return (uint64_t(1)<<line)<<(column*5);
+}
+
+//------------------------------------------------------------------------------
+void
+zx::init_key_mask(ubyte ascii, int column, int line, int shift) {
+    // initialize an entry in the keyboard mapping table which
+    // maps ASCII codes to keyboard matrix bit mask
+    YAKC_ASSERT((column >= 0) && (column < 8));
+    YAKC_ASSERT((line >= 0) && (line < 5));
+    YAKC_ASSERT((shift >= 0) && (shift < 3));
+    uint64_t mask = key_bit(column, line);
+    if (1 == shift) {
+        // caps-shift
+        mask |= key_bit(0, 0);
+    }
+    if (2 == shift) {
+        // sym-shift
+        mask |= key_bit(7, 1);
+    }
+    this->key_map[ascii] = mask;
+}
+
+//------------------------------------------------------------------------------
+void
+zx::init_keymap() {
+    // initialize the keyboard matrix lookup table, maps
+    // ASCII codes to keyboard matrix state
+    clear(this->key_map, sizeof(this->key_map));
+    const char* kbd =
+        // no shift
+        " zxcv"         // A8       shift,z,x,c,v
+        "asdfg"         // A9       a,s,d,f,g
+        "qwert"         // A10      q,w,e,r,t
+        "12345"         // A11      1,2,3,4,5
+        "09876"         // A12      0,9,8,7,6
+        "poiuy"         // A13      p,o,i,u,y
+        " lkjh"         // A14      enter,l,k,j,h
+        "  mnb"         // A15      space,symshift,m,n,b
+
+        // shift
+        " ZXCV"         // A8
+        "ASDFG"         // A9
+        "QWERT"         // A10
+        "     "         // A11
+        "     "         // A12
+        "POIUY"         // A13
+        " LKJH"         // A14
+        "  MNB"         // A15
+
+        // symshift
+        " : ?/"         // A8
+        "     "         // A9
+        "   <>"         // A10
+        "!@#$%"         // A11
+        "_)('&"         // A12
+        "\";   "        // A13
+        " =+-^"         // A14
+        "  .,*";        // A15
+
+    for (int shift = 0; shift < 3; shift++) {
+        for (int column = 0; column < 8; column++) {
+            for (int line = 0; line < 5; line++) {
+                const ubyte c = kbd[shift*40 + column*5 + line];
+                if (c != 0x20) {
+                    this->init_key_mask(c, column, line, shift);
+                }
+            }
+        }
+    }
+
+    // special keys
+    this->init_key_mask(' ', 7, 0, 0);  // Space
+    this->init_key_mask(0x08, 3, 4, 1); // Cursor Left (Shift+5)
+    this->init_key_mask(0x0A, 4, 4, 1); // Cursor Down (Shift+6)
+    this->init_key_mask(0x0B, 4, 3, 1); // Cursor Up (Shift+7)
+    this->init_key_mask(0x09, 4, 2, 1); // Cursor Right (Shift+8)
+    this->init_key_mask(0x07, 3, 0, 1); // Edit (Shift+1)
+    this->init_key_mask(0x0C, 4, 0, 1); // Delete (Shift+0)
+    this->init_key_mask(0x0D, 6, 0, 0); // Enter
 }
 
 //------------------------------------------------------------------------------
@@ -64,8 +152,10 @@ zx::poweron(device m) {
     this->cur_model = m;
     this->border_color = 0xFF000000;
     this->pal_line_counter = 0;
-    this->key_code = 0;
     this->memory_paging_disabled = false;
+    this->init_keymap();
+    this->next_kbd_mask = 0;
+    this->cur_kbd_mask = 0;
     if (device::zxspectrum48k == m) {
         this->cur_os = os_rom::amstrad_zx48k;
         this->display_ram_bank = 0;
@@ -111,7 +201,8 @@ zx::poweroff() {
 void
 zx::reset() {
     this->memory_paging_disabled = false;
-    this->key_code = 0;
+    this->next_kbd_mask = 0;
+    this->cur_kbd_mask = 0;    
     this->pal_line_counter = 0;
     this->blink_counter = 0;
     if (device::zxspectrum48k == this->cur_model) {
@@ -149,7 +240,10 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
 //------------------------------------------------------------------------------
 void
 zx::cpu_out(uword port, ubyte val) {
-    if ((port & 0xFF) == 0xFE) {        
+    // handle Z80 OUT instruction
+    if ((port & 1) == 0) {
+        // "every even IO port addresses the ULA but to avoid
+        // problems with other I/O devices, only FE should be used"
         this->border_color = this->pal[val & 7] & 0xFFD7D7D7;
         // FIXME:
         //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
@@ -195,10 +289,62 @@ zx::cpu_out(uword port, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
+void
+zx::put_key(ubyte ascii) {
+    // register a new key press with the emulator
+    if (ascii) {
+        this->next_kbd_mask = this->key_map[ascii];
+    }
+    else {
+        this->next_kbd_mask = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+static ubyte
+extract_kbd_line_bits(uint64_t mask, int column) {
+    // extract keyboard matrix line bits by column
+    return (ubyte) ((mask>>(column*5)) & 0x1F);
+}
+
+//------------------------------------------------------------------------------
 ubyte
 zx::cpu_in(uword port) {
-//    printf("IN port: %04x\n", port);
-    return 0xFF;
+    // handle Z80 IN instruction
+    switch (port) {
+        case 0xFEFE:
+            // start of a new keyboard request cycle,
+            // fetch next key's keymask
+            this->cur_kbd_mask = this->next_kbd_mask;
+            // keyboard matrix column 0: shift, z, x, c, v
+            return ~extract_kbd_line_bits(this->cur_kbd_mask, 0);
+        case 0xFDFE:
+            // keyboard matrix column 1: a, s, d, f, g
+            return ~extract_kbd_line_bits(this->cur_kbd_mask, 1);
+        case 0xFBFE:
+            // keyboard matrix column 2: q, w, e, r, t
+            return ~extract_kbd_line_bits(this->cur_kbd_mask, 2);
+        case 0xF7FE:
+            // keyboard matrix column: 1, 2, 3, 4, 5
+            return ~extract_kbd_line_bits(this->cur_kbd_mask, 3);
+        case 0xEFFE:
+            // keyboard matrix column: 0, 9, 8, 7, 6
+            return ~extract_kbd_line_bits(this->cur_kbd_mask, 4);
+        case 0xDFFE:
+            // keyboard matrix column: p, o, i, u, y
+            return ~extract_kbd_line_bits(this->cur_kbd_mask, 5);
+        case 0xBFFE:
+            // keyboard matrix column: enter, l, k, j, h
+            return ~extract_kbd_line_bits(this->cur_kbd_mask, 6);
+        case 0x7FFE:
+            // keyboard matrix column: space, sym shift, m, n, b
+            return ~extract_kbd_line_bits(this->cur_kbd_mask, 7);
+        case 0xFFFD:
+            // FIXME: audio related
+            return 0xFF;
+        default:
+            return 0xFF;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -211,7 +357,9 @@ zx::irq() {
 //------------------------------------------------------------------------------
 void
 zx::timer(int timer_id) {
+    // clock timer callback
     if (0 == timer_id) {
+        // timer 0: new PAL line
         this->pal_line();
     }
 }
@@ -247,8 +395,8 @@ zx::pal_line() {
     }
 
     this->pal_line_counter++;
+    // start new frame, request vblank interrupt
     if (this->pal_line_counter > max_pal_lines) {
-        // start new frame, request vblank interrupt
         this->pal_line_counter = 0;
         this->blink_counter++;
         this->irq();
@@ -256,37 +404,9 @@ zx::pal_line() {
 }
 
 //------------------------------------------------------------------------------
-void
-zx::put_key(ubyte ascii) {
-    if (ascii != this->key_code) {
-        this->key_code = ascii;
-        this->handle_keyboard_input();
-    }
-}
-
-//------------------------------------------------------------------------------
 const char*
 zx::system_info() const {
     return "FIXME!";
-}
-
-//------------------------------------------------------------------------------
-void
-zx::handle_keyboard_input() {
-    // FIXME: this is a quick'n'dirty keyboard input which
-    // directly writes to system locations
-    uword lastk_addr = 0x5C08;
-    uword flags_addr = 0x5C3B;
-    auto& mem = this->board->cpu.mem;
-
-    // only write new keycode if previous one was handled
-    ubyte flags = mem.r8(flags_addr);
-    if (0 == (flags & (1<<5))) {
-        if (this->key_code != 0) {
-            mem.w8(lastk_addr, this->key_code);
-            mem.w8(flags_addr, flags | (1<<5));
-        }
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -300,7 +420,9 @@ zx::decode_video_line(uint16_t y) {
     // this is called from the pal_line() callback so that video decoding
     // is synchronized with the CPU and vblank interrupt,
     // y is ranging from 0 to 256 (32 pixels vertical border on each side)
-
+    //
+    // the blink flag flips every 16 frames
+    //
     uint32_t* dst = &(this->rgba8_buffer[y*320]);
     const uint8_t* vidmem_bank = this->ram[this->display_ram_bank];
     const bool blink = 0 != (this->blink_counter & 0x10);
