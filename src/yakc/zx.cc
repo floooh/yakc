@@ -63,7 +63,8 @@ zx::poweron(device m) {
 
     this->cur_model = m;
     this->border_color = 0xFF000000;
-    if (m == device::zxspectrum48k) {
+    this->pal_line_counter = 0;
+    if (device::zxspectrum48k == m) {
         this->cur_os = os_rom::amstrad_zx48k;
         this->display_ram_bank = 0;
     }
@@ -77,10 +78,17 @@ zx::poweron(device m) {
     clear(this->ram, sizeof(this->ram));
     this->init_memory_mapping();
 
-    // initialize the system clock
-    this->board->clck.init((m == device::zxspectrum48k) ? 3500 : 3547);
-    // a 50Hz timer which trigger every vertical blank
-    this->board->clck.config_timer_hz(0, 50);
+    // initialize the system clock and PAL-line timer
+    if (device::zxspectrum48k == m) {
+        // Spectrum48K is exactly 3.5 MHz
+        this->board->clck.init(3500);
+        this->board->clck.config_timer_cycles(0, 224);
+    }
+    else {
+        // 128K is slightly faster
+        this->board->clck.init(3547);
+        this->board->clck.config_timer_cycles(0, 228);
+    }
 
     // initialize hardware components
     this->board->cpu.init();
@@ -122,7 +130,6 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
         clk.update(this, ticks_step);
         cur_tick += ticks_step;
     }
-    this->decode_video();
     return cur_tick;
 }
 
@@ -186,6 +193,44 @@ zx::irq() {
 void
 zx::timer(int timer_id) {
     if (0 == timer_id) {
+        this->pal_line();
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+zx::pal_line() {
+    // this is called by the timer callback for every PAL line, controlling
+    // the vidmem decoding and vblank interrupt
+    //
+    // detailed information about frame timings is here:
+    //  for 48K:    http://rk.nvg.ntnu.no/sinclair/faq/tech_48.html#48K
+    //  for 128K:   http://rk.nvg.ntnu.no/sinclair/faq/tech_128.html
+    //
+    // one PAL line takes 224 T-states on 48K, and 228 T-states on 128K
+    // one PAL frame is 312 lines on 48K, and 311 lines on 128K
+    //
+    const uint32_t max_pal_lines = this->cur_model == device::zxspectrum128k ? 311 : 312;
+    const uint32_t top_border = this->cur_model == device::zxspectrum128k ? 63 : 64;
+
+    // decode the next videomem line into the emulator framebuffer,
+    // the border area of a real Spectrum is bigger than the emulator
+    // (the emu has 32 pixels border on each side, the hardware has:
+    //
+    //  63 or 64 lines top border
+    //  56 border lines bottom border
+    //  48 pixels on each side horizontal border
+    //
+    const uint32_t top_decode_line = top_border - 32;
+    const uint32_t btm_decode_line = top_border + 192 + 32;
+    if ((this->pal_line_counter >= top_decode_line) && (this->pal_line_counter < btm_decode_line)) {
+        this->decode_video_line(this->pal_line_counter - top_decode_line);
+    }
+
+    this->pal_line_counter++;
+    if (this->pal_line_counter > max_pal_lines) {
+        // start new frame, request vblank interrupt
+        this->pal_line_counter = 0;
         this->blink_counter++;
         this->irq();
     }
@@ -227,68 +272,73 @@ zx::handle_keyboard_input() {
 
 //------------------------------------------------------------------------------
 void
-zx::decode_video() {
-    uint32_t* dst = rgba8_buffer;
-    uint8_t* vidmem_bank = this->ram[this->display_ram_bank];
-    bool blink = 0 != (this->blink_counter & 0x10);
-    uint32_t fg, bg;
+zx::decode_video_line(uint16_t y) {
+    YAKC_ASSERT((y >= 0) && (y < 256));
 
-    for (uint16_t y = 0; y < 256; y++) {
-        if ((y < 32) || (y >= 224)) {
-            // upper/lower border
-            for (int x = 0; x < 320; x++) {
-                *dst++ = this->border_color;
+    // decode a single line from the ZX framebuffer into the
+    // emulator's framebuffer
+    //
+    // this is called from the pal_line() callback so that video decoding
+    // is synchronized with the CPU and vblank interrupt,
+    // y is ranging from 0 to 256 (32 pixels vertical border on each side)
+
+    uint32_t* dst = &(this->rgba8_buffer[y*320]);
+    const uint8_t* vidmem_bank = this->ram[this->display_ram_bank];
+    const bool blink = 0 != (this->blink_counter & 0x10);
+    uint32_t fg, bg;
+    if ((y < 32) || (y >= 224)) {
+        // upper/lower border
+        for (int x = 0; x < 320; x++) {
+            *dst++ = this->border_color;
+        }
+    }
+    else {
+        // compute video memory Y offset (inside 256x192 area)
+        uint16_t yy = y-32;
+        uint16_t y_offset = ((yy & 0xC0)<<5) | ((yy & 0x07)<<8) | ((yy & 0x38)<<2);
+
+        // left border
+        for (int x = 0; x < (4*8); x++) {
+            *dst++ = this->border_color;
+        }
+
+        // valid 256x192 vidmem area
+        for (uint16_t x = 0; x < 32; x++) {
+            // pixel offset:
+            // | 0| 1| 0|Y7|Y6|Y2|Y1|Y0|Y5|Y4|Y3|X4|X3|X2|X1|X0|
+            //
+            // color offset is linear
+            uint16_t pix_offset = y_offset | x;
+            uint16_t clr_offset = 0x1800 + (((yy & ~0x7)<<2) | x);
+
+            // pixel mask and color attribute bytes
+            uint8_t pix = vidmem_bank[pix_offset];
+            uint8_t clr = vidmem_bank[clr_offset];
+
+            // foreground and background color
+            if ((clr & (1<<7)) && blink) {
+                fg = this->pal[(clr>>3) & 7];
+                bg = this->pal[clr & 7];
+            }
+            else {
+                fg = this->pal[clr & 7];
+                bg = this->pal[(clr>>3) & 7];
+            }
+            if (0 == (clr & (1<<6))) {
+                // standard brightness
+                fg &= 0xFFD7D7D7;
+                bg &= 0xFFD7D7D7;
+            }
+            for (int px = 7; px >=0; px--) {
+                *dst++ = pix & (1<<px) ? fg : bg;
             }
         }
-        else {
-            // compute video memory Y offset (inside 256x192 area)
-            uint16_t yy = y-32;
-            uint16_t y_offset = ((yy & 0xC0)<<5) | ((yy & 0x07)<<8) | ((yy & 0x38)<<2);
 
-            // left border
-            for (int x = 0; x < (4*8); x++) {
-                *dst++ = this->border_color;
-            }
-
-            // valid 256x192 vidmem area
-            for (uint16_t x = 0; x < 32; x++) {
-                // pixel offset:
-                // | 0| 1| 0|Y7|Y6|Y2|Y1|Y0|Y5|Y4|Y3|X4|X3|X2|X1|X0|
-                //
-                // color offset is linear
-                uint16_t pix_offset = y_offset | x;
-                uint16_t clr_offset = 0x1800 + (((yy & ~0x7)<<2) | x);
-
-                // pixel mask and color attribute bytes
-                uint8_t pix = vidmem_bank[pix_offset];
-                uint8_t clr = vidmem_bank[clr_offset];
-
-                // foreground and background color
-                if ((clr & (1<<7)) && blink) {
-                    fg = this->pal[(clr>>3) & 7];
-                    bg = this->pal[clr & 7];
-                }
-                else {
-                    fg = this->pal[clr & 7];
-                    bg = this->pal[(clr>>3) & 7];
-                }
-                if (0 == (clr & (1<<6))) {
-                    // standard brightness
-                    fg &= 0xFFD7D7D7;
-                    bg &= 0xFFD7D7D7;
-                }
-                for (int px = 7; px >=0; px--) {
-                    *dst++ = pix & (1<<px) ? fg : bg;
-                }
-            }
-
-            // right border
-            for (int x = 0; x < (4*8); x++) {
-                *dst++ = this->border_color;
-            }
+        // right border
+        for (int x = 0; x < (4*8); x++) {
+            *dst++ = this->border_color;
         }
     }
 }
 
 } // namespace YAKC
-

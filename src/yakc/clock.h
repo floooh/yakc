@@ -24,6 +24,8 @@ public:
 
     /// configure a timer with a Hz frequency
     void config_timer_hz(int index, int hz);
+    /// configure a timer with a cycle count (Z80 T-states)
+    void config_timer_cycles(int index, int cycles);
     /// advance the timers by a number of cycles
     void update(z80bus* bus, int num_cycles);
 

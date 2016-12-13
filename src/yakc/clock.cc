@@ -35,6 +35,17 @@ clock::config_timer_hz(int index, int hz) {
 
 //------------------------------------------------------------------------------
 void
+clock::config_timer_cycles(int index, int cycles) {
+    YAKC_ASSERT((index >= 0) && (index < num_timers));
+    YAKC_ASSERT(cycles > 0);
+    auto& t = this->timers[index];
+    t.interval = cycles;
+    t.count = 0;
+    t.value = t.interval;
+}
+
+//------------------------------------------------------------------------------
+void
 clock::update(z80bus* bus, int num_cycles) {
     for (int i = 0; i < num_timers; i++) {
         auto& t = this->timers[i];
