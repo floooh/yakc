@@ -19,31 +19,9 @@ zx::init(breadboard* b) {
     this->pal[5] = 0xFFFFFF00;      // cyan
     this->pal[6] = 0xFF00FFFF;      // yello
     this->pal[7] = 0xFFFFFFFF;      // white
-}
 
-//------------------------------------------------------------------------------
-void
-zx::init_memory_mapping() {
-    z80& cpu = this->board->cpu;
-    cpu.mem.unmap_all();
-    if (device::zxspectrum48k == this->cur_model) {
-        // 48k RAM between 0x4000 and 0xFFFF
-        cpu.mem.map(0, 0x4000, 0x4000, this->ram[0], true);
-        cpu.mem.map(0, 0x8000, 0x4000, this->ram[1], true);
-        cpu.mem.map(0, 0xC000, 0x4000, this->ram[2], true);
-
-        // 16k ROM between 0x0000 and 0x3FFF
-        YAKC_ASSERT(sizeof(dump_amstrad_zx48k) == 0x4000);
-        cpu.mem.map(0, 0x0000, 0x4000, dump_amstrad_zx48k, false);
-    }
-    else {
-        // Spectrum 128k initial memory mapping
-        cpu.mem.map(0, 0x4000, 0x4000, this->ram[5], true);
-        cpu.mem.map(0, 0x8000, 0x4000, this->ram[2], true);
-        cpu.mem.map(0, 0xC000, 0x4000, this->ram[0], true);
-        YAKC_ASSERT(sizeof(dump_amstrad_zx128k_0) == 0x4000);
-        cpu.mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_0, false);
-    }
+    // setup key translation table
+    this->init_keymap();
 }
 
 //------------------------------------------------------------------------------
@@ -136,6 +114,31 @@ zx::init_keymap() {
 
 //------------------------------------------------------------------------------
 void
+zx::init_memory_mapping() {
+    z80& cpu = this->board->cpu;
+    cpu.mem.unmap_all();
+    if (device::zxspectrum48k == this->cur_model) {
+        // 48k RAM between 0x4000 and 0xFFFF
+        cpu.mem.map(0, 0x4000, 0x4000, this->ram[0], true);
+        cpu.mem.map(0, 0x8000, 0x4000, this->ram[1], true);
+        cpu.mem.map(0, 0xC000, 0x4000, this->ram[2], true);
+
+        // 16k ROM between 0x0000 and 0x3FFF
+        YAKC_ASSERT(sizeof(dump_amstrad_zx48k) == 0x4000);
+        cpu.mem.map(0, 0x0000, 0x4000, dump_amstrad_zx48k, false);
+    }
+    else {
+        // Spectrum 128k initial memory mapping
+        cpu.mem.map(0, 0x4000, 0x4000, this->ram[5], true);
+        cpu.mem.map(0, 0x8000, 0x4000, this->ram[2], true);
+        cpu.mem.map(0, 0xC000, 0x4000, this->ram[0], true);
+        YAKC_ASSERT(sizeof(dump_amstrad_zx128k_0) == 0x4000);
+        cpu.mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_0, false);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
 zx::on_context_switched() {
     // FIXME!
 }
@@ -151,7 +154,6 @@ zx::poweron(device m) {
     this->border_color = 0xFF000000;
     this->pal_line_counter = 0;
     this->memory_paging_disabled = false;
-    this->init_keymap();
     this->next_kbd_mask = 0;
     this->cur_kbd_mask = 0;
     if (device::zxspectrum48k == m) {
