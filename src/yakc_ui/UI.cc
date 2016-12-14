@@ -197,6 +197,16 @@ UI::OnFrame(yakc& emu) {
         ImGui::PopStyleColor();
     }
     ImGui::End();
+
+    // check if a file has been drag'n'dropped
+    if (this->fileLoader.ExtFileReady) {
+        this->fileLoader.ExtFileReady = false;
+        auto loadWindow = LoadWindow::Create();
+        loadWindow->SetFileLoader(&this->fileLoader);
+        this->OpenWindow(emu, loadWindow);
+        this->uiEnabled = true;
+    }
+
     if (this->uiEnabled) {
         if (ImGui::BeginMainMenuBar()) {
             const char* model;
@@ -431,6 +441,7 @@ UI::OnFrame(yakc& emu) {
     if (this->keyboardWindow) {
         this->keyboardWindow->Draw(emu);
     }
+
     ImGui::Render();
 
     // delete closed windows

@@ -8,9 +8,13 @@ using namespace Oryol;
 
 namespace YAKC {
 
+FileLoader* FileLoader::ptr = nullptr;
+
 //------------------------------------------------------------------------------
 void
 FileLoader::Setup(yakc& emu) {
+    o_assert(nullptr == ptr);
+    ptr = this;
     this->Items.Add("Pengo", "pengo.kcc", FileType::KCC, device::kc85_3);
     this->Items.Add("Pengo", "pengo4.kcc", FileType::KCC, device::kc85_4);
     this->Items.Add("Cave", "cave.kcc", FileType::KCC, device::kc85_3);
@@ -49,7 +53,8 @@ FileLoader::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 void
 FileLoader::Discard() {
-    // empty
+    o_assert(this == ptr);
+    ptr = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -250,6 +255,51 @@ FileLoader::start(yakc* emu, const FileInfo& info) {
         cpu.PC = info.ExecAddr;
     }
 }
+
+//------------------------------------------------------------------------------
+//  emscripten-specific file loader function (can be hooked up to
+//  a HTML drag'n'drop or file-dialog event handler
+//
+extern "C" {
+
+void emsc_pass_data(const char* name, const uint8_t* data, int size) {
+    Log::Info("External data received: %s, %p, %d\n", name, data, size);
+    if (FileLoader::ptr && data && (size > 0)) {
+        FileLoader::FileType type = FileLoader::FileType::UNKNOWN;
+        StringBuilder strb(name);
+        if (strb.Contains(".TAP") || strb.Contains(".tap")) {
+            type = FileLoader::FileType::TAP;
+            Log::Info("%s is a TAP file\n", name);
+        }
+        else if (strb.Contains(".KCC") || strb.Contains(".kcc")) {
+            type = FileLoader::FileType::KCC;
+            Log::Info("%s is a KCC file\n", name);
+        }
+        else if (strb.Contains(".Z80") || strb.Contains(".z80")) {
+            type = FileLoader::FileType::Z80;
+            Log::Info("%s is a Z80 file\n", name);
+        }
+        else if (strb.Contains(".BIN") || strb.Contains(".bin")) {
+            type = FileLoader::FileType::BIN;
+            Log::Info("%s is a BIN file\n", name);            
+        }
+
+        for (int i = 0; i < 128; i++) {
+            Log::Info("%02x ", data[i]);
+        }
+        Log::Info("\n");
+
+        FileLoader::Item item(name, name, type, device::none);
+        FileLoader* loader = FileLoader::ptr;
+        loader->FileData.Clear();
+        loader->FileData.Add(data, size);
+        loader->Info = FileLoader::parseHeader(loader->FileData, item);
+        loader->State = FileLoader::Ready;
+        loader->ExtFileReady = true;
+    }
+}
+
+} // extern "C"
 
 } // namespace YAKC
 

@@ -13,9 +13,12 @@ namespace YAKC {
 
 class FileLoader {
 public:
+    static FileLoader* ptr;
+
     /// file types
     enum class FileType {
         None,
+        UNKNOWN,
         KCC,
         TAP,
         Z80,
@@ -70,6 +73,8 @@ public:
     Oryol::URL Url;
     /// error code if loading has failed
     Oryol::IOStatus::Code FailedStatus = Oryol::IOStatus::OK;
+    /// flips to true if externally provided data available
+    bool ExtFileReady = false;
 
     /// setup the file loader object
     void Setup(yakc& emu);
@@ -84,7 +89,6 @@ public:
     /// copy to memory and start the previously loaded file
     bool Start(yakc& emu);
 
-private:
     /// internal load method
     void load(yakc* emu, const Item& item, bool autostart);
     /// get file info from loaded file data
