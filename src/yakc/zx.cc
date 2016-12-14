@@ -314,6 +314,8 @@ extract_kbd_line_bits(uint64_t mask, int column) {
 ubyte
 zx::cpu_in(uword port) {
     // handle Z80 IN instruction
+    //
+    // FIXME: reading from port xxFF should return 'current VRAM data'
     switch (port) {
         case 0xFEFE:
             // start of a new keyboard request cycle,
