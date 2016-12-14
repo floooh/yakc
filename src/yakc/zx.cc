@@ -17,7 +17,7 @@ zx::init(breadboard* b) {
     this->pal[3] = 0xFFFF00FF;      // magenta
     this->pal[4] = 0xFF00FF00;      // green
     this->pal[5] = 0xFFFFFF00;      // cyan
-    this->pal[6] = 0xFF00FFFF;      // yello
+    this->pal[6] = 0xFF00FFFF;      // yellow
     this->pal[7] = 0xFFFFFFFF;      // white
 
     // setup key translation table
@@ -42,11 +42,13 @@ zx::init_key_mask(ubyte ascii, int column, int line, int shift) {
     YAKC_ASSERT((line >= 0) && (line < 5));
     YAKC_ASSERT((shift >= 0) && (shift < 3));
     uint64_t mask = key_bit(column, line);
+
+    // FIXME: hmm, may need simultanous caps+sym shift later
     if (1 == shift) {
         // caps-shift
         mask |= key_bit(0, 0);
     }
-    if (2 == shift) {
+    else if (2 == shift) {
         // sym-shift
         mask |= key_bit(7, 1);
     }
@@ -182,10 +184,8 @@ zx::poweron(device m) {
         this->board->clck.config_timer_cycles(0, 228);
     }
 
-    // initialize hardware components
+    // cpu start state
     this->board->cpu.init();
-
-    // execution on power-on starts at 0x0000
     this->board->cpu.PC = 0x0000;
 }
 
@@ -219,9 +219,10 @@ zx::reset() {
 //------------------------------------------------------------------------------
 uint64_t
 zx::step(uint64_t start_tick, uint64_t end_tick) {
+    // step the system for given number of cycles, return actually
+    // executed number of cycles
     z80& cpu = this->board->cpu;
     z80dbg& dbg = this->board->dbg;
-    clock& clk = this->board->clck;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
         if (dbg.check_break(cpu)) {
@@ -231,7 +232,7 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
         dbg.store_pc_history(cpu); // FIXME: only if debug window open?
         int ticks_step = cpu.step(this);
         ticks_step += cpu.handle_irq();
-        clk.update(this, ticks_step);
+        this->board->clck.update(this, ticks_step);
         cur_tick += ticks_step;
     }
     return cur_tick;
@@ -250,14 +251,16 @@ zx::cpu_out(uword port, ubyte val) {
         //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
         return;
     }
+
+    // Spectrum128K specific out ports
     if (device::zxspectrum128k == this->cur_model) {
+        // control memory bank switching on 128K
+        // http://8bit.yarek.pl/computer/zx.128/
         if (0x7FFD == port) {
             if (!this->memory_paging_disabled) {
-                // store display RAM bank index
+                // bit 3 defines the video scanout memory bank (5 or 7)
                 this->display_ram_bank = (val & (1<<3)) ? 7 : 5;
 
-                // control memory bank switching on 128K
-                // http://8bit.yarek.pl/computer/zx.128/
                 auto& mem = this->board->cpu.mem;
                 mem.unmap_layer(0);
 
@@ -267,7 +270,7 @@ zx::cpu_out(uword port, ubyte val) {
                 mem.map(0, 0x8000, 0x4000, this->ram[2], true);
                 // section B, always mapped to RAM5 (0x4000 .. 0x7FFF)
                 mem.map(0, 0x4000, 0x4000, this->ram[5], true);
-                // ROM bank
+                // ROM0 or ROM1
                 if (val & (1<<4)) {
                     // bit 4 set: ROM1
                     mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_1, false);
@@ -314,7 +317,7 @@ zx::cpu_in(uword port) {
     switch (port) {
         case 0xFEFE:
             // start of a new keyboard request cycle,
-            // fetch next key's keymask
+            // fetch next key's keyboard matrix bitmask
             this->cur_kbd_mask = this->next_kbd_mask;
             // keyboard matrix column 0: shift, z, x, c, v
             return ~extract_kbd_line_bits(this->cur_kbd_mask, 0);
@@ -439,6 +442,10 @@ zx::decode_video_line(uint16_t y) {
     }
     else {
         // compute video memory Y offset (inside 256x192 area)
+        // this is how the 16-bit video memory address is computed
+        // from X and Y coordinates:
+        //
+        // | 0| 1| 0|Y7|Y6|Y2|Y1|Y0|Y5|Y4|Y3|X4|X3|X2|X1|X0|
         uint16_t yy = y-32;
         uint16_t y_offset = ((yy & 0xC0)<<5) | ((yy & 0x07)<<8) | ((yy & 0x38)<<2);
 
@@ -449,10 +456,6 @@ zx::decode_video_line(uint16_t y) {
 
         // valid 256x192 vidmem area
         for (uint16_t x = 0; x < 32; x++) {
-            // pixel offset:
-            // | 0| 1| 0|Y7|Y6|Y2|Y1|Y0|Y5|Y4|Y3|X4|X3|X2|X1|X0|
-            //
-            // color offset is linear
             uint16_t pix_offset = y_offset | x;
             uint16_t clr_offset = 0x1800 + (((yy & ~0x7)<<2) | x);
 
