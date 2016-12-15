@@ -11,10 +11,8 @@ using namespace Oryol;
 namespace YAKC {
 
 //------------------------------------------------------------------------------
-void
-LoadWindow::SetFileLoader(FileLoader* fileLoader) {
-    this->loader = fileLoader;
-}
+LoadWindow::LoadWindow(FileLoader* fileLoader):
+    loader(fileLoader) { }
 
 //------------------------------------------------------------------------------
 void
@@ -28,66 +26,69 @@ bool
 LoadWindow::Draw(yakc& emu) {
     YAKC_ASSERT(this->loader);
 
-    ImGui::SetNextWindowSize(ImVec2(512, 256), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(384, 192), ImGuiSetCond_Appearing);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
-
-        // item list
-        static int selected = 0;
-        int curr = 0;
-        ImGui::BeginChild("kcclist", ImVec2(250,0), true);
-        for (const auto& item : this->loader->Items) {
-            if (int(item.Compat) & int(emu.model)) {
-                if (ImGui::Selectable(item.Name.AsCStr(), selected == curr)) {
-                    selected = curr;
-                    this->loader->Load(emu, item);
-                }
-                curr++;
+        auto& ldr = *this->loader;
+        if (!ldr.ExtFileReady && ldr.State != FileLoader::Ready) {
+            #if ORYOL_EMSCRIPTEN
+            ImGui::Text("Drag and drop a file into the emulator!");
+            #else
+            static char urlBuf[256] = "";
+            ImGui::Text("http://localhost:8000/"); ImGui::SameLine();
+            if (ImGui::InputText("##url", urlBuf, sizeof(urlBuf), ImGuiInputTextFlags_EnterReturnsTrue)) {
+                FileLoader::Item item("", urlBuf, FileLoader::FileType::None, device::none);
+                ldr.Load(item);
             }
+            #endif
         }
-        ImGui::EndChild();
-        ImGui::SameLine();
-        ImGui::BeginGroup();
-        ImGui::BeginChild("status", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));    // leave room for 1 row below
-        if (FileLoader::Waiting == this->loader->State) {
-            ImGui::Text("Select a file to load...");
-        }
-        else if (FileLoader::Loading == this->loader->State) {
-            ImGui::Text("Loading:\n\n%s", this->loader->Url.AsCStr());
-        }
-        else if (FileLoader::Failed == this->loader->State) {
-            ImGui::Text("Failed to load:\n\n%s\n\nReason: %d (%s)",
-                this->loader->Url.AsCStr(),
-                this->loader->FailedStatus,
-                IOStatus::ToString(this->loader->FailedStatus));
-        }
-        else if (FileLoader::Ready == this->loader->State) {
-            ImGui::Text("Name: %s", this->loader->Info.Name.AsCStr());
-            ImGui::Text("Type: %s", this->loader->Info.TypeAsString());
-            ImGui::Text("Start Address: 0x%04X", this->loader->Info.StartAddr);
-            ImGui::Text("End Address:   0x%04X", this->loader->Info.EndAddr);
-            if (this->loader->Info.HasExecAddr) {
-                ImGui::Text("Exec Address:  0x%04X", this->loader->Info.ExecAddr);
+        else {
+            static const char* typeNames[] = {
+                "RAW",
+                "KCC",
+                "KC TAP",
+                "KC Z80",
+                "ZX TAP",
+                "ZX Z80"
+            };
+            int curFileType = (int) ldr.Info.Type;
+            if (ImGui::Combo("File Type", &curFileType, typeNames, int(FileLoader::FileType::Num))) {
+                // reparse loaded data
+                FileLoader::Item item("", ldr.Info.Filename.AsCStr(), (FileLoader::FileType)curFileType, device::none);
+                ldr.Info = ldr.parseHeader(ldr.FileData, item);
             }
-            else {
-                ImGui::Text("No executable address in file.");
+            ImGui::Text("Filename: %s", ldr.Info.Filename.AsCStr());
+            ImGui::Text("Name:     %s", ldr.Info.Name.AsCStr());
+            this->startAddr.Configure16("Start Address", ldr.Info.StartAddr);
+            if (this->startAddr.Draw()) {
+                ldr.Info.StartAddr = this->startAddr.Get16();
             }
-            if (this->loader->Info.FileSizeError) {
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "File Size Error!");
+            this->endAddr.Configure16("End Address", ldr.Info.EndAddr);
+            if (this->endAddr.Draw()) {
+                ldr.Info.EndAddr = this->endAddr.Get16();
+            }
+            this->execAddr.Configure16("Exec Address", ldr.Info.ExecAddr);
+            const bool execAddrInvalid = ((ldr.Info.ExecAddr < ldr.Info.StartAddr) || (ldr.Info.ExecAddr > ldr.Info.EndAddr));
+            if (execAddrInvalid) {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+            }
+            if (this->execAddr.Draw()) {
+                ldr.Info.ExecAddr = this->execAddr.Get16();
+            }
+            if (execAddrInvalid) {
+                ImGui::PopStyleColor();
             }
             if (ImGui::Button("Load")) {
-                this->loader->Copy(emu);
+                this->loader->Copy();
                 this->Visible = false;
             }
             ImGui::SameLine();
-            if (this->loader->Info.HasExecAddr) {
-                if (ImGui::Button("Load & Start")) {
-                    this->loader->Start(emu);
-                    this->Visible = false;
-                }
+            if (ImGui::Button("Load & Start")) {
+                this->loader->Start();
+                this->Visible = false;
             }
+
+
         }
-        ImGui::EndChild();
-        ImGui::EndGroup();
     }
     ImGui::End();
     return this->Visible;

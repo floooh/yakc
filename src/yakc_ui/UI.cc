@@ -201,9 +201,11 @@ UI::OnFrame(yakc& emu) {
     // check if a file has been drag'n'dropped
     if (this->fileLoader.ExtFileReady) {
         this->fileLoader.ExtFileReady = false;
-        auto loadWindow = LoadWindow::Create();
-        loadWindow->SetFileLoader(&this->fileLoader);
-        this->OpenWindow(emu, loadWindow);
+        if (this->loadWindow.isValid()) {
+            this->loadWindow->Visible = false;
+        }
+        this->loadWindow = LoadWindow::Create(&this->fileLoader);
+        this->OpenWindow(emu, this->loadWindow);
         this->uiEnabled = true;
     }
 
@@ -299,8 +301,10 @@ UI::OnFrame(yakc& emu) {
                     this->OpenWindow(emu, InfoWindow::Create());
                 }
                 if (ImGui::MenuItem("Load File...")) {
-                    auto loadWindow = LoadWindow::Create();
-                    loadWindow->SetFileLoader(&this->fileLoader);
+                    if (this->loadWindow.isValid()) {
+                        this->loadWindow->Visible = false;
+                    }
+                    this->loadWindow = LoadWindow::Create(&this->fileLoader);
                     this->OpenWindow(emu, loadWindow);
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
@@ -317,7 +321,7 @@ UI::OnFrame(yakc& emu) {
                     for (const auto& item : this->fileLoader.Items) {
                         if (int(item.Compat) & int(emu.model)) {
                             if (ImGui::MenuItem(item.Name.AsCStr())) {
-                                this->fileLoader.LoadAndStart(emu, item);
+                                this->fileLoader.LoadAndStart(item);
                             }
                         }
                     }
