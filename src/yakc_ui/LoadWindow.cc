@@ -86,8 +86,6 @@ LoadWindow::Draw(yakc& emu) {
                 this->loader->Start();
                 this->Visible = false;
             }
-
-
         }
     }
     ImGui::End();

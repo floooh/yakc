@@ -8,7 +8,7 @@ using namespace Oryol;
 
 namespace YAKC {
 
-/// KCC file format header block
+// KCC file format header block
 #pragma pack(push,1)
 struct kcc_header {
     ubyte name[10];
@@ -22,19 +22,15 @@ struct kcc_header {
     ubyte exec_addr_h;
     ubyte pad[128 - 23];  // pad to 128 bytes
 };
-#pragma pack(pop)
 
-/// TAP file format header block
-#pragma pack(push,1)
+// KC TAP file format header block
 struct tap_header {
     ubyte sig[16];              // "\xC3KC-TAPE by AF. ";
     ubyte type;                 // 00: KCTAP_Z9001, 01: KCTAP_KC85, else: KCTAB_SYS
     kcc_header kcc;             // from here on identical with KCC
 };
-#pragma pack(pop)
 
-/// Z80 file format header block
-#pragma pack(push,1)
+// KC Z80 file format header block
 struct z80_header {
     ubyte load_addr_l;
     ubyte load_addr_h;
@@ -47,16 +43,69 @@ struct z80_header {
     ubyte d3[3];        // d3 d3 d3
     ubyte name[16];
 };
+
+// ZX Z80 file format header (http://www.worldofspectrum.org/faq/reference/z80format.htm)
+struct zxz80_header {
+    ubyte A, F;
+    ubyte C, B;
+    ubyte L, H;
+    ubyte PC_l, PC_h;
+    ubyte SP_l, SP_h;
+    ubyte I, R;
+    ubyte flags0;
+    ubyte E, D;
+    ubyte C_, B_;
+    ubyte E_, D_;
+    ubyte L_, H_;
+    ubyte A_, F_;
+    ubyte IY_l, IY_h;
+    ubyte IX_l, IX_h;
+    ubyte EI;
+    ubyte IFF2;
+    ubyte flags1;
+};
+static_assert(sizeof(zxz80_header) == 30, "zxz80_header size mismatch");
+
+struct zxz80ext_header {
+    ubyte len_l;
+    ubyte len_h;
+    ubyte PC_l, PC_h;
+    ubyte hw_mode;
+    ubyte out_7ffd;
+    ubyte rom1;
+    ubyte flags;
+    ubyte out_fffd;
+    ubyte audio[16];
+    ubyte tlow_l;
+    ubyte tlow_h;
+    ubyte spectator_flags;
+    ubyte mgt_rom_paged;
+    ubyte multiface_rom_paged;
+    ubyte rom_0000_1fff;
+    ubyte rom_2000_3fff;
+    ubyte joy_mapping[10];
+    ubyte kbd_mapping[10];
+    ubyte mgt_type;
+    ubyte disciple_button_state;
+    ubyte disciple_flags;
+    ubyte out_1ffd;
+};
+
+struct zxz80page_header {
+    ubyte len_l;
+    ubyte len_h;
+    ubyte page_nr;
+};
 #pragma pack(pop)
 
-FileLoader* FileLoader::ptr = nullptr;
+FileLoader* FileLoader::pointer = nullptr;
 
 //------------------------------------------------------------------------------
 void
 FileLoader::Setup(yakc& emu_) {
-    o_assert(nullptr == ptr);
+    o_assert(nullptr == pointer);
     this->emu = &emu_;
-    ptr = this;
+    pointer = this;
     this->Items.Add("Pengo", "pengo.kcc", FileType::KCC, device::kc85_3);
     this->Items.Add("Pengo", "pengo4.kcc", FileType::KCC, device::kc85_4);
     this->Items.Add("Cave", "cave.kcc", FileType::KCC, device::kc85_3);
@@ -95,8 +144,8 @@ FileLoader::Setup(yakc& emu_) {
 //------------------------------------------------------------------------------
 void
 FileLoader::Discard() {
-    o_assert(this == ptr);
-    ptr = nullptr;
+    o_assert(this == pointer);
+    pointer = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -130,7 +179,7 @@ FileLoader::Start() {
     if (Ready == this->State) {
         copy(this->emu, this->Info, this->FileData);
         patch(this->emu, this->Info);
-        start(this->emu, this->Info);
+        start(this->emu, this->Info, this->FileData);
         return true;
     }
     else {
@@ -154,7 +203,7 @@ FileLoader::load(const Item& item, bool autostart) {
             if (autostart) {
                 copy(this->emu, this->Info, this->FileData);
                 patch(this->emu, this->Info);
-                start(this->emu, this->Info);
+                start(this->emu, this->Info, this->FileData);
             }
         },
         // load failed
@@ -207,23 +256,23 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         if (FileType::KC_TAP == info.Type) {
             ptr = (const ubyte*)&(((tap_header*)ptr)->kcc);
         }
-        const kcc_header* kcc_hdr = (const kcc_header*) ptr;
-        info.Name = String((const char*)kcc_hdr->name, 0, 16);
-        info.StartAddr = kcc_hdr->load_addr_h<<8 | kcc_hdr->load_addr_l;
-        info.EndAddr = kcc_hdr->end_addr_h<<8 | kcc_hdr->end_addr_l;
-        info.ExecAddr = kcc_hdr->exec_addr_h<<8 | kcc_hdr->exec_addr_l;
-        info.HasExecAddr = kcc_hdr->num_addr > 2;
+        const kcc_header* hdr = (const kcc_header*) ptr;
+        info.Name = String((const char*)hdr->name, 0, 16);
+        info.StartAddr = (hdr->load_addr_h<<8 | hdr->load_addr_l) & 0xFFFF;
+        info.EndAddr = (hdr->end_addr_h<<8 | hdr->end_addr_l) & 0xFFFF;
+        info.ExecAddr = (hdr->exec_addr_h<<8 | hdr->exec_addr_l) & 0xFFFF;
+        info.HasExecAddr = hdr->num_addr > 2;
         info.PayloadOffset = int((ptr + sizeof(kcc_header)) - start);
         if ((info.EndAddr-info.StartAddr) > data.Size()-128) {
             info.FileSizeError = true;
         }
     }
     else if (FileType::KC_Z80 == info.Type) {
-        const z80_header* z80_hdr = (const z80_header*) ptr;
-        info.Name = String((const char*)z80_hdr->name, 0, 16);
-        info.StartAddr = z80_hdr->load_addr_h<<8 | z80_hdr->load_addr_l;
-        info.EndAddr = z80_hdr->end_addr_h<<8 | z80_hdr->end_addr_l;
-        info.ExecAddr = z80_hdr->exec_addr_h<<8 | z80_hdr->exec_addr_l;
+        const z80_header* hdr = (const z80_header*) ptr;
+        info.Name = String((const char*)hdr->name, 0, 16);
+        info.StartAddr = (hdr->load_addr_h<<8 | hdr->load_addr_l) & 0xFFFF;
+        info.EndAddr = (hdr->end_addr_h<<8 | hdr->end_addr_l) & 0xFFFF;
+        info.ExecAddr = (hdr->exec_addr_h<<8 | hdr->exec_addr_l) & 0xFFFF;
         info.HasExecAddr = true;
         info.PayloadOffset = sizeof(z80_header);
         if ((info.EndAddr-info.StartAddr) > data.Size()-32) {
@@ -237,6 +286,24 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         info.ExecAddr = item.OptExecAddr;
         info.HasExecAddr = item.OptExecAddr != 0;
         info.PayloadOffset = 0;
+    }
+    else if (FileType::ZX_Z80 == info.Type) {
+        const zxz80_header* hdr = (const zxz80_header*) ptr;
+        const zxz80ext_header* ext_hdr = nullptr;
+        uword pc = (hdr->PC_h<<8 | hdr->PC_l) & 0xFFFF;
+        if (0 == pc) {
+            // Z80 version 2 or 3
+            ext_hdr = (const zxz80ext_header*) (ptr + sizeof(zxz80_header));
+            pc = (ext_hdr->PC_h<<8 | ext_hdr->PC_l) & 0xFFFF;
+        }
+        info.StartAddr = 0x4000;
+        info.EndAddr = 0x10000;
+        info.ExecAddr = pc;
+        info.HasExecAddr = true;
+        info.PayloadOffset = sizeof(zxz80_header);
+        if (ext_hdr) {
+            info.PayloadOffset += 2 + (ext_hdr->len_h<<8 | ext_hdr->len_l) & 0xFFFF;
+        }
     }
     return info;
 }
@@ -256,6 +323,71 @@ FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
                 // copy 128 bytes
                 for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
                     emu->board.cpu.mem.w8(addr++, *ptr++);
+                }
+            }
+        }
+        else if (FileType::ZX_Z80 == info.Type) {
+            if (emu->is_device(device::any_zx)) {
+                const zxz80_header* hdr = (const zxz80_header*) data.Data();
+                if ((hdr->PC_h == 0) && (hdr->PC_l == 0)) {
+                    const ubyte* ptr = payload;
+                    const ubyte* end_ptr = data.Data() + data.Size();
+                    while (ptr < end_ptr) {
+                        const zxz80page_header* phdr = (const zxz80page_header*) ptr;
+                        uint32_t len = (phdr->len_h<<8 | phdr->len_l) & 0xFFFF;
+                        int page_index = phdr->page_nr - 3;
+                        const ubyte* src_ptr = ptr + sizeof(zxz80page_header);
+                        ubyte* dst_ptr = emu->zx.ram[page_index];
+                        const ubyte* dst_end_ptr = dst_ptr + 0x4000;
+                        if ((page_index >= 0) && (page_index < 8)) {
+                            if (0xFFFF == len) {
+                                // uncompressed
+                                o_assert2(false, "FIXME: uncompressed!");
+                            }
+                            else {
+                                // compressed
+                                const ubyte* src_end_ptr = src_ptr + len;
+                                while (src_ptr < src_end_ptr) {
+                                    o_assert(dst_ptr < dst_end_ptr);
+                                    ubyte val = src_ptr[0];
+                                    if (0xED == val) {
+                                        if (0xED == src_ptr[1]) {
+                                            ubyte count = src_ptr[2];
+                                            o_assert2(0 != count, "48k end marker");
+                                            ubyte data = src_ptr[3];
+                                            src_ptr += 4;
+                                            for (int i = 0; i < count; i++) {
+                                                o_assert(dst_ptr < dst_end_ptr);
+                                                *dst_ptr++ = data;
+                                            }
+                                        }
+                                        else {
+                                            // single ED
+                                            *dst_ptr++ = val;
+                                            src_ptr++;
+                                        }
+                                    }
+                                    else {
+                                        // any value
+                                        *dst_ptr++ = val;
+                                        src_ptr++;
+                                    }
+                                }
+                                o_assert(dst_ptr == dst_end_ptr);
+                                o_assert(src_ptr == src_end_ptr);
+                            }
+                        }
+                        if (0xFFFF == len) {
+                            ptr += sizeof(zxz80page_header) + 0x10000;
+                        }
+                        else {
+                            ptr += sizeof(zxz80page_header) + len;
+                        }
+                    }
+                }
+                else {
+                    // FIXME: version 1
+                    o_assert2(false, "FIXME: Z80 version 1");
                 }
             }
         }
@@ -295,11 +427,38 @@ FileLoader::patch(yakc* emu, const FileInfo& info) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::start(yakc* emu, const FileInfo& info) {
+FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (info.HasExecAddr) {
-
         if (FileType::ZX_Z80 == info.Type) {
-            // FIXME
+            const zxz80_header* hdr = (const zxz80_header*) data.Data();
+            if ((hdr->PC_h == 0) && (hdr->PC_l == 0)) {
+                const zxz80ext_header* ext_hdr = (const zxz80ext_header*) (data.Data() + sizeof(zxz80_header));
+                z80& cpu = emu->board.cpu;
+                cpu.A = hdr->A; cpu.F = hdr->F;
+                cpu.B = hdr->B; cpu.C = hdr->C;
+                cpu.D = hdr->D; cpu.E = hdr->E;
+                cpu.H = hdr->H; cpu.L = hdr->L;
+                cpu.IXH = hdr->IX_h; cpu.IXL = hdr->IX_l;
+                cpu.IYH = hdr->IY_h; cpu.IYL = hdr->IY_l;
+                cpu.AF_ = (hdr->A_<<8 | hdr->F_) & 0xFFFF;
+                cpu.BC_ = (hdr->B_<<8 | hdr->C_) & 0xFFFF;
+                cpu.DE_ = (hdr->D_<<8 | hdr->E_) & 0xFFFF;
+                cpu.HL_ = (hdr->H_<<8 | hdr->L_) & 0xFFFF;
+                cpu.SP = (hdr->SP_h<<8 | hdr->SP_l) & 0xFFFF;
+                cpu.I = hdr->I;
+                cpu.R = (hdr->R & 0x7F) | ((hdr->flags0 & 1)<<7);
+                cpu.IFF2 = hdr->IFF2;
+                cpu.enable_interrupt = hdr->EI != 0;
+                cpu.IM = (hdr->flags1 & 3);
+                cpu.PC = (ext_hdr->PC_h<<8 | ext_hdr->PC_l) & 0xFFFF;
+                cpu.out(&emu->zx, 0xFFFD, ext_hdr->out_fffd);
+                cpu.out(&emu->zx, 0x7FFD, ext_hdr->out_7ffd);
+                emu->zx.border_color = emu->zx.pal[(hdr->flags0>>1) & 7] & 0xFFD7D7D7;
+            }
+            else {
+                // FIXME: version 1
+                o_assert2(false, "FIXME: Z80 version 1");
+            }
         }
         else {
             z80& cpu = emu->board.cpu;
@@ -343,9 +502,9 @@ extern "C" {
 
 void emsc_pass_data(const char* name, const uint8_t* data, int size) {
     Log::Info("External data received: %s, %p, %d\n", name, data, size);
-    if (FileLoader::ptr && data && (size > 0)) {
+    if (FileLoader::pointer && data && (size > 0)) {
         FileLoader::Item item(name, name, FileLoader::FileType::None, device::none);
-        FileLoader* loader = FileLoader::ptr;
+        FileLoader* loader = FileLoader::pointer;
         loader->FileData.Clear();
         loader->FileData.Add(data, size);
         loader->Info = loader->parseHeader(loader->FileData, item);

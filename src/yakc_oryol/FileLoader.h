@@ -13,7 +13,7 @@ namespace YAKC {
 
 class FileLoader {
 public:
-    static FileLoader* ptr;
+    static FileLoader* pointer;
 
     /// file types
     enum class FileType {
@@ -57,9 +57,9 @@ public:
         Oryol::String Filename;
         Oryol::String Name;
         FileType Type = FileType::None;
-        uword StartAddr = 0;
-        uword EndAddr = 0;
-        uword ExecAddr = 0;
+        int StartAddr = 0;
+        int EndAddr = 0;
+        int ExecAddr = 0;
         bool HasExecAddr = false;
         bool FileSizeError = false;
         int PayloadOffset = 0;
@@ -93,7 +93,7 @@ public:
     /// special-case patch loaded files
     static void patch(yakc* emu, const FileInfo& info);
     /// auto-start the loaded program
-    static void start(yakc* emu, const FileInfo& info);
+    static void start(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
 
     Oryol::Buffer FileData;
 private:
