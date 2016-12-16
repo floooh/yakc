@@ -125,21 +125,21 @@ yakc::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
     YAKC_ASSERT(speed_multiplier > 0);
     this->cpu_ahead = false;
     this->cpu_behind = false;
+    // compute the end-cycle-count for the current frame
+    if (this->abs_cycle_count == 0) {
+        this->abs_cycle_count = min_cycle_count;
+    }
+    const int64_t num_cycles = this->board.clck.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
+    uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
+    if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
+        abs_end_cycles = max_cycle_count;
+        this->cpu_ahead = true;
+    }
+    else if ((min_cycle_count != 0) && (abs_end_cycles < min_cycle_count)) {
+        abs_end_cycles = min_cycle_count;
+        this->cpu_behind = true;
+    }
     if (!this->board.dbg.paused) {
-        // compute the end-cycle-count for the current frame
-        if (this->abs_cycle_count == 0) {
-            this->abs_cycle_count = min_cycle_count;
-        }
-        const int64_t num_cycles = this->board.clck.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
-        uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
-        if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
-            abs_end_cycles = max_cycle_count;
-            this->cpu_ahead = true;
-        }
-        else if ((min_cycle_count != 0) && (abs_end_cycles < min_cycle_count)) {
-            abs_end_cycles = min_cycle_count;
-            this->cpu_behind = true;
-        }
         if (this->kc85.on) {
             this->abs_cycle_count = this->kc85.step(this->abs_cycle_count, abs_end_cycles);
         }
@@ -154,6 +154,10 @@ yakc::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
         }
         YAKC_ASSERT(this->abs_cycle_count >= abs_end_cycles);
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
+    }
+    else {
+        this->abs_cycle_count = abs_end_cycles;
+        this->overflow_cycles = 0;
     }
 }
 
