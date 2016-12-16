@@ -318,9 +318,6 @@ zx::cpu_in(uword port) {
     // FIXME: reading from port xxFF should return 'current VRAM data'
     switch (port) {
         case 0xFEFE:
-            // start of a new keyboard request cycle,
-            // fetch next key's keyboard matrix bitmask
-            this->cur_kbd_mask = this->next_kbd_mask;
             // keyboard matrix column 0: shift, z, x, c, v
             return ~extract_kbd_line_bits(this->cur_kbd_mask, 0);
         case 0xFDFE:
@@ -382,7 +379,7 @@ zx::pal_line() {
     // one PAL line takes 224 T-states on 48K, and 228 T-states on 128K
     // one PAL frame is 312 lines on 48K, and 311 lines on 128K
     //
-    const uint32_t max_pal_lines = this->cur_model == device::zxspectrum128k ? 311 : 312;
+    const uint32_t frame_pal_lines = this->cur_model == device::zxspectrum128k ? 311 : 312;
     const uint32_t top_border = this->cur_model == device::zxspectrum128k ? 63 : 64;
 
     // decode the next videomem line into the emulator framebuffer,
@@ -400,8 +397,9 @@ zx::pal_line() {
     }
 
     this->pal_line_counter++;
-    // start new frame, request vblank interrupt
-    if (this->pal_line_counter > max_pal_lines) {
+    if (this->pal_line_counter > frame_pal_lines) {
+        // start new frame, fetch next key, request vblank interrupt
+        this->cur_kbd_mask = this->next_kbd_mask;
         this->pal_line_counter = 0;
         this->blink_counter++;
         this->irq();
