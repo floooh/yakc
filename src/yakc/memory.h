@@ -47,8 +47,8 @@ public:
         static const int shift = 10;
         static const uword size = 1<<shift;
         static const uword mask = size - 1;
-        ubyte* ptr = nullptr;
-        bool writable = false;
+        ubyte* read_ptr = nullptr;
+        ubyte* write_ptr = nullptr;
     };
     /// number of pages
     static const int num_pages = addr_range / page::size;
@@ -65,8 +65,10 @@ public:
 
     /// constructor
     memory();
-    /// map a range of memory
-    void map(int layer, uword addr, unsigned int size, ubyte* ptr, bool writable);
+    /// map a range of memory with identical read/write pointer
+    void map(int layer, uword addr, unsigned int size, ubyte* read_ptr, bool writable);
+    /// map a range of memory with different read/write pointers
+    void map_rw(int layer, uword addr, unsigned int size, ubyte* read_ptr, ubyte* write_ptr);
     /// unmap a range of memory
     void unmap(int layer, uword addr, unsigned int size);
     /// unmap all memory pages in a mapping layer
@@ -75,10 +77,8 @@ public:
     void unmap_all();
     /// get the layer index a memory page is mapped to, -1 if unmapped
     int layer(uword addr) const;
-    /// map a Z80 address to host memory pointer (read/write)
-    ubyte* ptr(uword addr);
     /// map a Z80 address to host memory pointer (read-only)
-    const ubyte* ptr(uword addr) const;
+    const ubyte* read_ptr(uword addr) const;
 
     /// test if an address is writable
     bool is_writable(uword addr) const;
@@ -103,39 +103,33 @@ private:
 };
 
 //------------------------------------------------------------------------------
-inline ubyte*
-memory::ptr(uword addr) {
-    return this->pages[addr>>page::shift].ptr;
-}
-
-//------------------------------------------------------------------------------
 inline const ubyte*
-memory::ptr(uword addr) const {
-    return this->pages[addr>>page::shift].ptr;
+memory::read_ptr(uword addr) const {
+    return this->pages[addr>>page::shift].read_ptr;
 }
 
 //------------------------------------------------------------------------------
 inline bool
 memory::is_writable(uword addr) const {
-    return this->pages[addr>>page::shift].writable;
+    return nullptr != this->pages[addr>>page::shift].write_ptr;
 }
 
 //------------------------------------------------------------------------------
 inline ubyte
 memory::r8(uword addr) const {
-    return this->pages[addr>>page::shift].ptr[addr&page::mask];
+    return this->pages[addr>>page::shift].read_ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
 inline byte
 memory::rs8(uword addr) const {
-    return (byte) this->pages[addr>>page::shift].ptr[addr&page::mask];
+    return (byte) this->pages[addr>>page::shift].read_ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
 inline ubyte&
 memory::a8(uword addr) {
-    return this->pages[addr>>page::shift].ptr[addr&page::mask];
+    return this->pages[addr>>page::shift].write_ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
@@ -151,8 +145,8 @@ memory::r16(uword addr) const {
 inline void
 memory::w8(uword addr, ubyte b) const {
     const auto& page = this->pages[addr>>page::shift];
-    if (page.writable) {
-        page.ptr[addr & page::mask] = b;
+    if (page.write_ptr) {
+        page.write_ptr[addr & page::mask] = b;
     }
 }
 

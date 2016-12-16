@@ -202,7 +202,7 @@ MemoryMapWindow::Draw(yakc& emu) {
                 while (addr < end) {
                     type t = type::off;
                     if (slot.control_byte & 1) {
-                        t = emu.kc85.exp.module_in_slot_owns_pointer(slot_addr, mem.ptr(addr)) ? type::mapped : type::hidden;
+                        t = emu.kc85.exp.module_in_slot_owns_pointer(slot_addr, mem.read_ptr(addr)) ? type::mapped : type::hidden;
                     }
                     this->drawRect(draw_layer, addr, len >= 0x4000 ? 0x4000:(len&0x3FFF), slot.mod.name, t);
                     addr += 0x4000;
