@@ -84,8 +84,6 @@ public:
     /// copy to memory and start the previously loaded file
     bool Start();
 
-    /// internal load method
-    void load(const Item& item, bool autostart);
     /// get file info from loaded file data
     FileInfo parseHeader(const Oryol::Buffer& data, const Item& item);
     /// copy data from loaded stream object into KC memory
@@ -94,6 +92,13 @@ public:
     static void patch(yakc* emu, const FileInfo& info);
     /// auto-start the loaded program
     static void start(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
+
+    /// internal generic load method
+    void load(const Item& item, bool autostart);
+    /// load KC TAP file into memory
+    static void load_kctap(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
+    /// load ZX Z80 file into memory
+    static void load_zxz80(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
 
     Oryol::Buffer FileData;
 private:

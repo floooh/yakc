@@ -310,89 +310,105 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
-    if (!info.FileSizeError) {
-        const ubyte* payload = data.Data() + info.PayloadOffset;
-        if (FileType::KC_TAP == info.Type) {
-            // KC_TAP payload is 128 byte blocks, each with a single header byte
-            uword addr = info.StartAddr;
-            const ubyte* ptr = payload;
-            while (addr < info.EndAddr) {
-                // skip block lead byte
-                ptr++;
-                // copy 128 bytes
-                for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
-                    emu->board.cpu.mem.w8(addr++, *ptr++);
-                }
-            }
+FileLoader::load_kctap(yakc* emu, const FileInfo& info, const Buffer& data) {
+    o_assert_dbg(emu);
+    // KC_TAP payload is 128 byte blocks, each with a single header byte
+    const ubyte* payload = data.Data() + info.PayloadOffset;
+    uword addr = info.StartAddr;
+    const ubyte* ptr = payload;
+    while (addr < info.EndAddr) {
+        // skip block lead byte
+        ptr++;
+        // copy 128 bytes
+        for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
+            emu->board.cpu.mem.w8(addr++, *ptr++);
         }
-        else if (FileType::ZX_Z80 == info.Type) {
-            if (emu->is_device(device::any_zx)) {
-                const zxz80_header* hdr = (const zxz80_header*) data.Data();
-                if ((hdr->PC_h == 0) && (hdr->PC_l == 0)) {
-                    const ubyte* ptr = payload;
-                    const ubyte* end_ptr = data.Data() + data.Size();
-                    while (ptr < end_ptr) {
-                        const zxz80page_header* phdr = (const zxz80page_header*) ptr;
-                        uint32_t len = (phdr->len_h<<8 | phdr->len_l) & 0xFFFF;
-                        int page_index = phdr->page_nr - 3;
-                        const ubyte* src_ptr = ptr + sizeof(zxz80page_header);
-                        ubyte* dst_ptr = emu->zx.ram[page_index];
-                        const ubyte* dst_end_ptr = dst_ptr + 0x4000;
-                        if ((page_index >= 0) && (page_index < 8)) {
-                            if (0xFFFF == len) {
-                                // uncompressed
-                                o_assert2(false, "FIXME: uncompressed!");
-                            }
-                            else {
-                                // compressed
-                                const ubyte* src_end_ptr = src_ptr + len;
-                                while (src_ptr < src_end_ptr) {
-                                    o_assert(dst_ptr < dst_end_ptr);
-                                    ubyte val = src_ptr[0];
-                                    if (0xED == val) {
-                                        if (0xED == src_ptr[1]) {
-                                            ubyte count = src_ptr[2];
-                                            o_assert2(0 != count, "48k end marker");
-                                            ubyte data = src_ptr[3];
-                                            src_ptr += 4;
-                                            for (int i = 0; i < count; i++) {
-                                                o_assert(dst_ptr < dst_end_ptr);
-                                                *dst_ptr++ = data;
-                                            }
-                                        }
-                                        else {
-                                            // single ED
-                                            *dst_ptr++ = val;
-                                            src_ptr++;
-                                        }
-                                    }
-                                    else {
-                                        // any value
-                                        *dst_ptr++ = val;
-                                        src_ptr++;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+FileLoader::load_zxz80(yakc* emu, const FileInfo& info, const Buffer& data) {
+    o_assert_dbg(emu);
+    if (emu->is_device(device::any_zx)) {
+        const ubyte* payload = data.Data() + info.PayloadOffset;
+        const zxz80_header* hdr = (const zxz80_header*) data.Data();
+        if ((hdr->PC_h == 0) && (hdr->PC_l == 0)) {
+            const ubyte* ptr = payload;
+            const ubyte* end_ptr = data.Data() + data.Size();
+            while (ptr < end_ptr) {
+                const zxz80page_header* phdr = (const zxz80page_header*) ptr;
+                uint32_t len = (phdr->len_h<<8 | phdr->len_l) & 0xFFFF;
+                int page_index = phdr->page_nr - 3;
+                const ubyte* src_ptr = ptr + sizeof(zxz80page_header);
+                ubyte* dst_ptr = emu->zx.ram[page_index];
+                const ubyte* dst_end_ptr = dst_ptr + 0x4000;
+                if ((page_index >= 0) && (page_index < 8)) {
+                    if (0xFFFF == len) {
+                        // uncompressed
+                        o_assert2(false, "FIXME: uncompressed!");
+                    }
+                    else {
+                        // compressed
+                        const ubyte* src_end_ptr = src_ptr + len;
+                        while (src_ptr < src_end_ptr) {
+                            o_assert(dst_ptr < dst_end_ptr);
+                            ubyte val = src_ptr[0];
+                            if (0xED == val) {
+                                if (0xED == src_ptr[1]) {
+                                    ubyte count = src_ptr[2];
+                                    o_assert2(0 != count, "48k end marker");
+                                    ubyte data = src_ptr[3];
+                                    src_ptr += 4;
+                                    for (int i = 0; i < count; i++) {
+                                        o_assert(dst_ptr < dst_end_ptr);
+                                        *dst_ptr++ = data;
                                     }
                                 }
-                                o_assert(dst_ptr == dst_end_ptr);
-                                o_assert(src_ptr == src_end_ptr);
+                                else {
+                                    // single ED
+                                    *dst_ptr++ = val;
+                                    src_ptr++;
+                                }
+                            }
+                            else {
+                                // any value
+                                *dst_ptr++ = val;
+                                src_ptr++;
                             }
                         }
-                        if (0xFFFF == len) {
-                            ptr += sizeof(zxz80page_header) + 0x10000;
-                        }
-                        else {
-                            ptr += sizeof(zxz80page_header) + len;
-                        }
+                        o_assert(dst_ptr == dst_end_ptr);
+                        o_assert(src_ptr == src_end_ptr);
                     }
                 }
+                if (0xFFFF == len) {
+                    ptr += sizeof(zxz80page_header) + 0x10000;
+                }
                 else {
-                    // FIXME: version 1
-                    o_assert2(false, "FIXME: Z80 version 1");
+                    ptr += sizeof(zxz80page_header) + len;
                 }
             }
         }
         else {
+            // FIXME: version 1
+            o_assert2(false, "FIXME: Z80 version 1");
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
+    if (!info.FileSizeError) {
+        if (FileType::KC_TAP == info.Type) {
+            FileLoader::load_kctap(emu, info, data);
+        }
+        else if (FileType::ZX_Z80 == info.Type) {
+            FileLoader::load_zxz80(emu, info, data);
+        }
+        else {
             // KCC, Z80 and BIN file type payload is simply a continuous block of data
+            const ubyte* payload = data.Data() + info.PayloadOffset;            
             emu->board.cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
         }
     }
