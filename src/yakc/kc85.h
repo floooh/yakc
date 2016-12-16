@@ -68,10 +68,6 @@ public:
     void poweroff();
     /// reset the device
     void reset();
-    /// get the KC model
-    device model() const;
-    /// get the CAOS version
-    os_rom caos() const;
     /// get info about emulated system
     const char* system_info() const;
     /// called after snapshot restore

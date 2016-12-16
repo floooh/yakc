@@ -47,8 +47,6 @@ public:
     void poweroff();
     /// reset the device
     void reset();
-    /// get the Z1013 model
-    device model() const;
     /// get info about emulated system
     const char* system_info() const;
     /// called after snapshot restore

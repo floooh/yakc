@@ -170,6 +170,9 @@ YakcApp::OnRunning() {
     else if (this->emu.z1013.on) {
         this->draw.Render(this->emu.z1013.rgba8_buffer, 256, 256);
     }
+    else if (this->emu.cpc.on) {
+        this->draw.Render(this->emu.cpc.rgba8_buffer, 320, 200);
+    }
     else if (this->emu.zx.on) {
         // NOTE: ZX only has 256x192 framebuffer, but we put
         // it into a 320x256 buffer and include the border color there

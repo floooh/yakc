@@ -223,6 +223,9 @@ UI::OnFrame(yakc& emu) {
                 case device::kc87:              model = "KC87"; break;
                 case device::zxspectrum48k:     model = "Spectrum48K"; break;
                 case device::zxspectrum128k:    model = "Spectrum128K"; break;
+                case device::cpc464:            model = "CPC464"; break;
+                case device::cpc6128:           model = "CPC6128"; break;
+                case device::kccompact:         model = "KCCompact"; break;
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
@@ -292,6 +295,17 @@ UI::OnFrame(yakc& emu) {
                         if (ImGui::MenuItem("ZX Spectrum 128K")) {
                             emu.poweroff();
                             emu.poweron(device::zxspectrum128k, os_rom::none);
+                        }
+                        ImGui::EndMenu();
+                    }
+                    if (ImGui::BeginMenu("Amstrad")) {
+                        if (ImGui::MenuItem("CPC 464")) {
+                            emu.poweroff();
+                            emu.poweron(device::cpc464, os_rom::none);
+                        }
+                        if (ImGui::MenuItem("CPC 6128")) {
+                            emu.poweroff();
+                            emu.poweron(device::cpc6128, os_rom::none);
                         }
                         ImGui::EndMenu();
                     }

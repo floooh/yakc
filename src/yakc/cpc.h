@@ -1,8 +1,8 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class YAKC::zx
-    @brief Sinclair ZX Spectrum 48K/128K emulation
+    @class YAKC::cpc
+    @brief Amstrad CPC 464/6128 and KC Compact emulation
 */
 #include "yakc/breadboard.h"
 #include "roms/roms.h"
@@ -10,7 +10,7 @@
 
 namespace YAKC {
 
-class zx : public z80bus {
+class cpc : public z80bus {
 public:
     /// ram banks
     ubyte ram[8][0x4000];
@@ -22,10 +22,6 @@ public:
     void init(breadboard* board);
     /// initialize the memory map
     void init_memory_map();
-    /// initialize the keyboard matrix mapping table
-    void init_keymap();
-    /// initialize a single entry in the key-map table
-    void init_key_mask(ubyte ascii, int column, int line, int shift);
     /// power-on the device
     void poweron(device m);
     /// power-off the device
@@ -40,8 +36,8 @@ public:
     void put_key(ubyte ascii);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// decode the next line into RGBA8Buffer
-    void decode_video_line(uint16_t y);
+    /// FIXME: decode video memory
+    void decode_video_memory();
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;
@@ -52,24 +48,10 @@ public:
     /// clock timer-trigger callback
     virtual void timer(int timer_id) override;
 
-    /// called by timer for each PAL line (decodes 1 line of vidmem)
-    void pal_line();
-    /// called by PAL line for each vblank (generates interrupt)
-    void vblank();
-
-    device cur_model = device::zxspectrum48k;
+    device cur_model = device::cpc464;
     bool on = false;
-    bool memory_paging_disabled = false;
-    uint8_t last_fe_out = 0;            // last OUT value to xxFE port
-    uint8_t blink_counter = 0;          // increased by one every vblank
-    uint16_t pal_line_counter = 0;
-    uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
-    uint32_t border_color = 0xFF000000;
-    uint32_t pal[8];
-    uint32_t rgba8_buffer[320*256];
-    uint64_t next_kbd_mask = 0;
-    uint64_t cur_kbd_mask = 0;
-    uint64_t key_map[256];              // 8x5 keyboard matrix bits by key code
+    uint32_t pal[16];
+    uint32_t rgba8_buffer[320*200];
 };
 
 } // namespace YAKC

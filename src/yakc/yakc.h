@@ -10,6 +10,7 @@
 #include "yakc/z1013.h"
 #include "yakc/z9001.h"
 #include "yakc/zx.h"
+#include "yakc/cpc.h"
 
 namespace YAKC {
 
@@ -22,6 +23,7 @@ public:
     class z1013 z1013;
     class z9001 z9001;
     class zx zx;
+    class cpc cpc;
 
     /// one-time init
     void init(const ext_funcs& funcs, const sound_funcs& snd_funcs);

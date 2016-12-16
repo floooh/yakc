@@ -55,21 +55,25 @@ struct sound_funcs {
 #endif
 
 enum class device {
-    kc85_2   = (1<<0),
-    kc85_3   = (1<<1),
-    kc85_4   = (1<<2),
-    z1013_01 = (1<<3),
-    z1013_16 = (1<<5),
-    z1013_64 = (1<<6),
-    z9001    = (1<<7),
-    kc87     = (1<<8),
+    kc85_2          = (1<<0),
+    kc85_3          = (1<<1),
+    kc85_4          = (1<<2),
+    z1013_01        = (1<<3),
+    z1013_16        = (1<<5),
+    z1013_64        = (1<<6),
+    z9001           = (1<<7),
+    kc87            = (1<<8),
     zxspectrum48k   = (1<<9),
     zxspectrum128k  = (1<<10),
+    cpc464          = (1<<11),
+    cpc6128         = (1<<12),
+    kccompact       = (1<<13),
     none = 0,
-    any_kc85 = (kc85_2|kc85_3|kc85_4),
-    any_z1013 = (z1013_01|z1013_16|z1013_64),
-    any_z9001 = (z9001|kc87),
-    any_zx = (zxspectrum48k|zxspectrum128k),
+    any_kc85        = (kc85_2|kc85_3|kc85_4),
+    any_z1013       = (z1013_01|z1013_16|z1013_64),
+    any_z9001       = (z9001|kc87),
+    any_zx          = (zxspectrum48k|zxspectrum128k),
+    any_cpc         = (cpc464|cpc6128|kccompact),
     any = 0x00FFFFFF
 };
 
@@ -85,6 +89,10 @@ enum class os_rom {
     kc87_os_2,
     amstrad_zx48k,
     amstrad_zx128k,
+    cpc464_os,
+    cpc464_basic,
+    cpc6128,
+    cpc6128_basic,
     none,
 };
 
