@@ -63,6 +63,7 @@ public:
     os_rom cur_os = os_rom::amstrad_zx48k;
     bool on = false;
     bool memory_paging_disabled = false;
+    uint8_t last_fe_out = 0;            // last OUT value to xxFE port
     uint8_t blink_counter = 0;          // increased by one every vblank
     uint16_t pal_line_counter = 0;
     uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem

@@ -13,12 +13,6 @@ is_modifier(Key::Code key) {
     switch (key) {
         case Key::LeftShift:
         case Key::RightShift:
-        case Key::LeftControl:
-        case Key::RightControl:
-        case Key::LeftAlt:
-        case Key::RightAlt:
-        case Key::LeftSuper:
-        case Key::RightSuper:
             return true;
         default:
             return false;
@@ -37,6 +31,7 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift) {
             case Key::Enter:        return 0x0D;
             case Key::BackSpace:    return 0x0C;
             case Key::Escape:       return 0x07;
+            case Key::LeftControl:  return 0x0F;    // unused, for SymShift
             default:                return 0;
         }
     }

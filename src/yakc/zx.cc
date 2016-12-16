@@ -105,6 +105,7 @@ zx::init_keymap() {
 
     // special keys
     this->init_key_mask(' ', 7, 0, 0);  // Space
+    this->init_key_mask(0x0F, 7, 1, 0); // SymShift
     this->init_key_mask(0x08, 3, 4, 1); // Cursor Left (Shift+5)
     this->init_key_mask(0x0A, 4, 4, 1); // Cursor Down (Shift+6)
     this->init_key_mask(0x0B, 4, 3, 1); // Cursor Up (Shift+7)
@@ -154,7 +155,9 @@ zx::poweron(device m) {
 
     this->cur_model = m;
     this->border_color = 0xFF000000;
+    this->last_fe_out = 0;
     this->pal_line_counter = 0;
+    this->blink_counter = 0;
     this->memory_paging_disabled = false;
     this->next_kbd_mask = 0;
     this->cur_kbd_mask = 0;
@@ -202,7 +205,8 @@ void
 zx::reset() {
     this->memory_paging_disabled = false;
     this->next_kbd_mask = 0;
-    this->cur_kbd_mask = 0;    
+    this->cur_kbd_mask = 0;
+    this->last_fe_out = 0;
     this->pal_line_counter = 0;
     this->blink_counter = 0;
     if (device::zxspectrum48k == this->cur_model) {
@@ -249,6 +253,7 @@ zx::cpu_out(uword port, ubyte val) {
         // FIXME:
         //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
         //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
+        this->last_fe_out = val;
         return;
     }
 
@@ -288,7 +293,14 @@ zx::cpu_out(uword port, ubyte val) {
             }
             return;
         }
+        else if (0xFFFD == port) {
+            // FIXME: select audio register
+        }
+        else if (0xBFFD == port) {
+            // FIXME: write to selected audio register
+        }
     }
+
 }
 
 //------------------------------------------------------------------------------
@@ -316,37 +328,32 @@ zx::cpu_in(uword port) {
     // handle Z80 IN instruction
     //
     // FIXME: reading from port xxFF should return 'current VRAM data'
-    switch (port) {
-        case 0xFEFE:
-            // keyboard matrix column 0: shift, z, x, c, v
-            return ~extract_kbd_line_bits(this->cur_kbd_mask, 0);
-        case 0xFDFE:
-            // keyboard matrix column 1: a, s, d, f, g
-            return ~extract_kbd_line_bits(this->cur_kbd_mask, 1);
-        case 0xFBFE:
-            // keyboard matrix column 2: q, w, e, r, t
-            return ~extract_kbd_line_bits(this->cur_kbd_mask, 2);
-        case 0xF7FE:
-            // keyboard matrix column: 1, 2, 3, 4, 5
-            return ~extract_kbd_line_bits(this->cur_kbd_mask, 3);
-        case 0xEFFE:
-            // keyboard matrix column: 0, 9, 8, 7, 6
-            return ~extract_kbd_line_bits(this->cur_kbd_mask, 4);
-        case 0xDFFE:
-            // keyboard matrix column: p, o, i, u, y
-            return ~extract_kbd_line_bits(this->cur_kbd_mask, 5);
-        case 0xBFFE:
-            // keyboard matrix column: enter, l, k, j, h
-            return ~extract_kbd_line_bits(this->cur_kbd_mask, 6);
-        case 0x7FFE:
-            // keyboard matrix column: space, sym shift, m, n, b
-            return ~extract_kbd_line_bits(this->cur_kbd_mask, 7);
-        case 0xFFFD:
-            // FIXME: audio related
-            return 0xFF;
-        default:
-            return 0xFF;
+
+    // keyboard
+    if ((port & 0xFF) == 0xFE) {
+        ubyte val = 0;
+        // MIC/EAR flags -> bit 6
+        if (this->last_fe_out & (1<<3|1<<4)) {
+            val |= (1<<6);
+        }
+
+        // keyboard matrix bits
+        ubyte kbd_bits = 0;
+        for (int i = 0; i < 8; i++) {
+            if ((port & (0x0100 << i)) == 0) {
+                kbd_bits |= extract_kbd_line_bits(this->cur_kbd_mask, i);
+            }
+        }
+        val |= (~kbd_bits) & 0x1F;
+        return val;
     }
+    else if ((port & 0xFF) == 0x1F) {
+        // Kensington Joystick
+        // FIXME: for now just return all zeros, the bitmask
+        // would be: 000FUDLR
+        return 0x00;
+    }
+    return 0xFF;
 }
 
 //------------------------------------------------------------------------------
