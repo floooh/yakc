@@ -26,7 +26,7 @@ bool
 LoadWindow::Draw(yakc& emu) {
     YAKC_ASSERT(this->loader);
 
-    ImGui::SetNextWindowSize(ImVec2(384, 192), ImGuiSetCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(384, 200), ImGuiSetCond_Appearing);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         auto& ldr = *this->loader;
         if (!ldr.ExtFileReady && ldr.State != FileLoader::Ready) {
@@ -36,7 +36,7 @@ LoadWindow::Draw(yakc& emu) {
             static char urlBuf[256] = "";
             ImGui::Text("http://localhost:8000/"); ImGui::SameLine();
             if (ImGui::InputText("##url", urlBuf, sizeof(urlBuf), ImGuiInputTextFlags_EnterReturnsTrue)) {
-                FileLoader::Item item("", urlBuf, FileLoader::FileType::None, device::none);
+                FileLoader::Item item("", urlBuf, FileLoader::FileType::None, device::any);
                 ldr.Load(item);
             }
             #endif
@@ -53,7 +53,7 @@ LoadWindow::Draw(yakc& emu) {
             int curFileType = (int) ldr.Info.Type;
             if (ImGui::Combo("File Type", &curFileType, typeNames, int(FileLoader::FileType::Num))) {
                 // reparse loaded data
-                FileLoader::Item item("", ldr.Info.Filename.AsCStr(), (FileLoader::FileType)curFileType, device::none);
+                FileLoader::Item item("", ldr.Info.Filename.AsCStr(), (FileLoader::FileType)curFileType, device::any);
                 ldr.Info = ldr.parseHeader(ldr.FileData, item);
             }
             ImGui::Text("Filename: %s", ldr.Info.Filename.AsCStr());
@@ -77,6 +77,23 @@ LoadWindow::Draw(yakc& emu) {
             if (execAddrInvalid) {
                 ImGui::PopStyleColor();
             }
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+            const char* compatMsg = " ";
+            if (!emu.is_device(ldr.Info.RequiredSystem)) {
+                switch (ldr.Info.RequiredSystem) {
+                    case device::zxspectrum48k:
+                        compatMsg = "Please reboot to ZX Spectrum 48K";
+                        break;
+                    case device::zxspectrum128k:
+                        compatMsg = "Please reboot to ZX Spectrum 128K";
+                        break;
+                    default:
+                        compatMsg = "File will not work on this system";
+                        break;
+                }
+            }
+            ImGui::Text("%s", compatMsg);
+            ImGui::PopStyleColor();
             if (ImGui::Button("Load")) {
                 this->loader->Copy();
                 this->Visible = false;

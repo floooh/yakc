@@ -288,6 +288,7 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         info.PayloadOffset = 0;
     }
     else if (FileType::ZX_Z80 == info.Type) {
+        // http://www.worldofspectrum.org/faq/reference/z80format.htm
         const zxz80_header* hdr = (const zxz80_header*) ptr;
         const zxz80ext_header* ext_hdr = nullptr;
         uword pc = (hdr->PC_h<<8 | hdr->PC_l) & 0xFFFF;
@@ -295,6 +296,15 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
             // Z80 version 2 or 3
             ext_hdr = (const zxz80ext_header*) (ptr + sizeof(zxz80_header));
             pc = (ext_hdr->PC_h<<8 | ext_hdr->PC_l) & 0xFFFF;
+            if (ext_hdr->hw_mode < 3) {
+                info.RequiredSystem = device::zxspectrum48k;
+            }
+            else {
+                info.RequiredSystem = device::zxspectrum128k;
+            }
+        }
+        else {
+            info.RequiredSystem = device::zxspectrum48k;
         }
         info.StartAddr = 0x4000;
         info.EndAddr = 0x10000;
@@ -329,6 +339,7 @@ FileLoader::load_kctap(yakc* emu, const FileInfo& info, const Buffer& data) {
 //------------------------------------------------------------------------------
 void
 FileLoader::load_zxz80(yakc* emu, const FileInfo& info, const Buffer& data) {
+    // http://www.worldofspectrum.org/faq/reference/z80format.htm
     o_assert_dbg(emu);
     if (emu->is_device(device::any_zx)) {
         const ubyte* payload = data.Data() + info.PayloadOffset;
@@ -519,7 +530,7 @@ extern "C" {
 void emsc_pass_data(const char* name, const uint8_t* data, int size) {
     Log::Info("External data received: %s, %p, %d\n", name, data, size);
     if (FileLoader::pointer && data && (size > 0)) {
-        FileLoader::Item item(name, name, FileLoader::FileType::None, device::none);
+        FileLoader::Item item(name, name, FileLoader::FileType::None, device::any);
         FileLoader* loader = FileLoader::pointer;
         loader->FileData.Clear();
         loader->FileData.Add(data, size);

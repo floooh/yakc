@@ -63,6 +63,7 @@ public:
         bool HasExecAddr = false;
         bool FileSizeError = false;
         int PayloadOffset = 0;
+        device RequiredSystem = device::any;
     } Info;
     /// url of last loaded file
     Oryol::URL Url;
