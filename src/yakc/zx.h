@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 /**
     @class YAKC::zx
-    @brief wrapper class for Sinclair ZX emulation
+    @brief Sinclair ZX Spectrum 48K/128K emulation
 */
 #include "yakc/breadboard.h"
 #include "roms/roms.h"
@@ -21,7 +21,7 @@ public:
     /// one-time setup
     void init(breadboard* board);
     /// initialize the memory map
-    void init_memory_mapping();
+    void init_memory_map();
     /// initialize the keyboard matrix mapping table
     void init_keymap();
     /// initialize a single entry in the key-map table
@@ -32,7 +32,7 @@ public:
     void poweroff();
     /// reset the device
     void reset();
-    /// get the Z1013 model
+    /// get the ZX model
     device model() const;
     /// get info about emulated system
     const char* system_info() const;
@@ -60,7 +60,6 @@ public:
     void vblank();
 
     device cur_model = device::zxspectrum48k;
-    os_rom cur_os = os_rom::amstrad_zx48k;
     bool on = false;
     bool memory_paging_disabled = false;
     uint8_t last_fe_out = 0;            // last OUT value to xxFE port

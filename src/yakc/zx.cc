@@ -1,5 +1,17 @@
 //------------------------------------------------------------------------------
 //  zx.cc
+//
+//  TODO
+//  - wait states when CPU accesses 'contended memory' and IO ports
+//  - beeper and AY-3-8910 audio (needs rewrite of audio system)
+//  - joystick support for games: when enabled, mute cursor keys and
+//    space, and replace with Joystick+Fire
+//  - reads from port 0xFF must return 'current VRAM byte':
+//      - reset a T-state counter at start of each PAL-line
+//      - on CPU instruction, increment PAL-line T-state counter
+//      - use this counter to find the VRAM byte
+//  - add the system info text
+//
 //------------------------------------------------------------------------------
 #include "zx.h"
 
@@ -117,12 +129,12 @@ zx::init_keymap() {
 
 //------------------------------------------------------------------------------
 void
-zx::init_memory_mapping() {
+zx::init_memory_map() {
     z80& cpu = this->board->cpu;
     cpu.mem.unmap_all();
     if (device::zxspectrum48k == this->cur_model) {
         // 48k RAM between 0x4000 and 0xFFFF
-        cpu.mem.map(0, 0x4000, 0x4000, this->ram[0], true);
+        cpu.mem.map(0, 0x4000, 0x4000, this->ram[5], true);
         cpu.mem.map(0, 0x8000, 0x4000, this->ram[1], true);
         cpu.mem.map(0, 0xC000, 0x4000, this->ram[2], true);
 
@@ -161,19 +173,12 @@ zx::poweron(device m) {
     this->memory_paging_disabled = false;
     this->next_kbd_mask = 0;
     this->cur_kbd_mask = 0;
-    if (device::zxspectrum48k == m) {
-        this->cur_os = os_rom::amstrad_zx48k;
-        this->display_ram_bank = 0;
-    }
-    else {
-        this->cur_os = os_rom::amstrad_zx128k;
-        this->display_ram_bank = 5;
-    }
+    this->display_ram_bank = 5;
     this->on = true;
 
     // map memory
     clear(this->ram, sizeof(this->ram));
-    this->init_memory_mapping();
+    this->init_memory_map();
 
     // initialize the system clock and PAL-line timer
     if (device::zxspectrum48k == m) {
@@ -209,15 +214,10 @@ zx::reset() {
     this->last_fe_out = 0;
     this->pal_line_counter = 0;
     this->blink_counter = 0;
-    if (device::zxspectrum48k == this->cur_model) {
-        this->display_ram_bank = 0;
-    }
-    else {
-        this->display_ram_bank = 5;
-    }
+    this->display_ram_bank = 5;
     this->board->cpu.reset();
     this->board->cpu.PC = 0x0000;
-    this->init_memory_mapping();
+    this->init_memory_map();
 }
 
 //------------------------------------------------------------------------------
@@ -267,14 +267,10 @@ zx::cpu_out(uword port, ubyte val) {
                 this->display_ram_bank = (val & (1<<3)) ? 7 : 5;
 
                 auto& mem = this->board->cpu.mem;
-                mem.unmap_layer(0);
 
-                // section D (0xC000 .. 0xFFFF)
+                // only last memory bank is mappable
                 mem.map(0, 0xC000, 0x4000, this->ram[val & 0x7], true);
-                // section C, always mapped to RAM2 (0x8000 .. 0xBFFF)
-                mem.map(0, 0x8000, 0x4000, this->ram[2], true);
-                // section B, always mapped to RAM5 (0x4000 .. 0x7FFF)
-                mem.map(0, 0x4000, 0x4000, this->ram[5], true);
+
                 // ROM0 or ROM1
                 if (val & (1<<4)) {
                     // bit 4 set: ROM1
