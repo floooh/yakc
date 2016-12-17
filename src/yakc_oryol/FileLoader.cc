@@ -480,7 +480,7 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
                 cpu.PC = (ext_hdr->PC_h<<8 | ext_hdr->PC_l) & 0xFFFF;
                 cpu.out(&emu->zx, 0xFFFD, ext_hdr->out_fffd);
                 cpu.out(&emu->zx, 0x7FFD, ext_hdr->out_7ffd);
-                emu->zx.border_color = emu->zx.pal[(hdr->flags0>>1) & 7] & 0xFFD7D7D7;
+                emu->zx.border_color = zx::palette[(hdr->flags0>>1) & 7] & 0xFFD7D7D7;
             }
             else {
                 // FIXME: version 1

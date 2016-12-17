@@ -57,6 +57,8 @@ public:
     /// called by PAL line for each vblank (generates interrupt)
     void vblank();
 
+    static uint32_t palette[8];
+
     device cur_model = device::zxspectrum48k;
     bool on = false;
     bool memory_paging_disabled = false;
@@ -65,7 +67,6 @@ public:
     uint16_t pal_line_counter = 0;
     uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
     uint32_t border_color = 0xFF000000;
-    uint32_t pal[8];
     uint32_t rgba8_buffer[320*256];
     uint64_t next_kbd_mask = 0;
     uint64_t cur_kbd_mask = 0;

@@ -17,21 +17,21 @@
 
 namespace YAKC {
 
+uint32_t zx::palette[8] = {
+    0xFF000000,     // black
+    0xFFFF0000,     // blue
+    0xFF0000FF,     // red
+    0xFFFF00FF,     // magenta
+    0xFF00FF00,     // green
+    0xFFFFFF00,     // cyan
+    0xFF00FFFF,     // yellow
+    0xFFFFFFFF,     // white
+};
+
 //------------------------------------------------------------------------------
 void
 zx::init(breadboard* b) {
     this->board = b;
-
-    // setup color palette
-    this->pal[0] = 0xFF000000;      // black
-    this->pal[1] = 0xFFFF0000;      // blue
-    this->pal[2] = 0xFF0000FF;      // red
-    this->pal[3] = 0xFFFF00FF;      // magenta
-    this->pal[4] = 0xFF00FF00;      // green
-    this->pal[5] = 0xFFFFFF00;      // cyan
-    this->pal[6] = 0xFF00FFFF;      // yellow
-    this->pal[7] = 0xFFFFFFFF;      // white
-
     // setup key translation table
     this->init_keymap();
 }
@@ -249,7 +249,7 @@ zx::cpu_out(uword port, ubyte val) {
     if ((port & 1) == 0) {
         // "every even IO port addresses the ULA but to avoid
         // problems with other I/O devices, only FE should be used"
-        this->border_color = this->pal[val & 7] & 0xFFD7D7D7;
+        this->border_color = palette[val & 7] & 0xFFD7D7D7;
         // FIXME:
         //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
         //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
@@ -344,7 +344,7 @@ zx::cpu_in(uword port) {
         return val;
     }
     else if ((port & 0xFF) == 0x1F) {
-        // Kensington Joystick
+        // Kempston Joystick
         // FIXME: for now just return all zeros, the bitmask
         // would be: 000FUDLR
         return 0x00;
@@ -468,12 +468,12 @@ zx::decode_video_line(uint16_t y) {
 
             // foreground and background color
             if ((clr & (1<<7)) && blink) {
-                fg = this->pal[(clr>>3) & 7];
-                bg = this->pal[clr & 7];
+                fg = palette[(clr>>3) & 7];
+                bg = palette[clr & 7];
             }
             else {
-                fg = this->pal[clr & 7];
-                bg = this->pal[(clr>>3) & 7];
+                fg = palette[clr & 7];
+                bg = palette[(clr>>3) & 7];
             }
             if (0 == (clr & (1<<6))) {
                 // standard brightness

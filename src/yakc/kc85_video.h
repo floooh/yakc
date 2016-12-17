@@ -40,8 +40,6 @@ public:
     bool pio_blink_flag = true;
     bool ctc_blink_flag = true;
     uword cur_pal_line = 0;
-    unsigned int fg_pal[16];
-    unsigned int bg_pal[16];
 };
 
 } // namespace YAKC

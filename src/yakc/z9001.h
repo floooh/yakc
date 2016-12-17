@@ -97,7 +97,6 @@ public:
     bool blink_flipflop = false;
     uint8_t brd_color = 0;              // border color byte extracted from PIO1-A
     uint32_t blink_counter = 0;
-    uint32_t pal[8];
     uint32_t rgba8_buffer[320*192];     // decoded linear RGBA8 video buffer
 
     sound_funcs sound_cb;               // external sound callbacks

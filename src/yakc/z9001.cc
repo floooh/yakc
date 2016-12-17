@@ -5,6 +5,17 @@
 
 namespace YAKC {
 
+static uint32_t palette[8] = {
+    0xFF000000,     // black
+    0xFF0000FF,     // red
+    0xFF00FF00,     // green
+    0xFF00FFFF,     // yellow
+    0xFFFF0000,     // blue
+    0xFFFF00FF,     // purple
+    0xFFFFFF00,     // cyan
+    0xFFFFFFFF,     // white
+};
+
 //------------------------------------------------------------------------------
 static uint64_t kbd_bits(int col, int line) {
     return (uint64_t(1)<<line)<<(col*8);
@@ -14,16 +25,6 @@ static uint64_t kbd_bits(int col, int line) {
 void
 z9001::init(breadboard* b) {
     this->board = b;
-
-    // setup color palette (FIXME: fore- and background colors are identical?)
-    this->pal[0] = 0xFF000000;     // black
-    this->pal[1] = 0xFF0000FF;     // red
-    this->pal[2] = 0xFF00FF00;     // green
-    this->pal[3] = 0xFF00FFFF;     // yellow
-    this->pal[4] = 0xFFFF0000;     // blue
-    this->pal[5] = 0xFFFF00FF;     // purple
-    this->pal[6] = 0xFFFFFF00;     // cyan
-    this->pal[7] = 0xFFFFFFFF;     // white
 
     // setup the key map which translates ASCII to keyboard matrix bits
     const char* kbd_matrix =
@@ -471,7 +472,7 @@ z9001::handle_key() {
 void
 z9001::border_color(float& out_red, float& out_green, float& out_blue) {
     if (device::kc87 == this->cur_model) {
-        uint32_t bc = this->pal[this->brd_color & 7];
+        uint32_t bc = palette[this->brd_color & 7];
         out_red   = float(bc & 0xFF) / 255.0f;
         out_green = float((bc>>8)&0xFF) / 255.0f;
         out_blue  = float((bc>>16)&0xFF) / 255.0f;
@@ -505,12 +506,12 @@ z9001::decode_video() {
                     ubyte color = this->color_ram[off+x];
                     if ((color & 0x80) && this->blink_flipflop) {
                         // blinking: swap bg and fg
-                        fg = this->pal[color&7];
-                        bg = this->pal[(color>>4)&7];
+                        fg = palette[color&7];
+                        bg = palette[(color>>4)&7];
                     }
                     else {
-                        fg = this->pal[(color>>4)&7];
-                        bg = this->pal[color&7];
+                        fg = palette[(color>>4)&7];
+                        bg = palette[color&7];
                     }
                     for (int px = 7; px >=0; px--) {
                         *dst++ = pixels & (1<<px) ? fg:bg;

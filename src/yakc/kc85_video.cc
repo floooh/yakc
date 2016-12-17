@@ -5,46 +5,47 @@
 
 namespace YAKC {
 
+static uint32_t fg_palette[16] = {
+    0xFF000000,     // black
+    0xFFFF0000,     // blue
+    0xFF0000FF,     // red
+    0xFFFF00FF,     // magenta
+    0xFF00FF00,     // green
+    0xFFFFFF00,     // cyan
+    0xFF00FFFF,     // yellow
+    0xFFFFFFFF,     // white
+    0xFF000000,     // black #2
+    0xFFFF00A0,     // violet
+    0xFF00A0FF,     // orange
+    0xFFA000FF,     // purple
+    0xFFA0FF00,     // blueish green
+    0xFFFFA000,     // greenish blue
+    0xFF00FFA0,     // yellow-green
+    0xFFFFFFFF,     // white #2
+};
+
+static uint32_t bg_palette[8] = {
+    0xFF000000,      // black
+    0xFFA00000,      // dark-blue
+    0xFF0000A0,      // dark-red
+    0xFFA000A0,      // dark-magenta
+    0xFF00A000,      // dark-green
+    0xFFA0A000,      // dark-cyan
+    0xFF00A0A0,      // dark-yellow
+    0xFFA0A0A0,      // gray
+};
+
 //------------------------------------------------------------------------------
 void
 kc85_video::init(device m) {
     this->model = m;
     this->irm_control = 0;
-
     if (m == device::kc85_4) {
         clear(this->irm, sizeof(this->irm));
     }
     else {
         fill_random(this->irm, sizeof(this->irm));
     }
-
-    // setup foreground color palette
-    this->fg_pal[0] = 0xFF000000;     // black
-    this->fg_pal[1] = 0xFFFF0000;     // blue
-    this->fg_pal[2] = 0xFF0000FF;     // red
-    this->fg_pal[3] = 0xFFFF00FF;     // magenta
-    this->fg_pal[4] = 0xFF00FF00;     // green
-    this->fg_pal[5] = 0xFFFFFF00;     // cyan
-    this->fg_pal[6] = 0xFF00FFFF;     // yellow
-    this->fg_pal[7] = 0xFFFFFFFF;     // white
-    this->fg_pal[8] = 0xFF000000;     // black #2
-    this->fg_pal[9] = 0xFFFF00A0;     // violet
-    this->fg_pal[10] = 0xFF00A0FF;     // orange
-    this->fg_pal[11] = 0xFFA000FF;     // purple
-    this->fg_pal[12] = 0xFFA0FF00;     // blueish green
-    this->fg_pal[13] = 0xFFFFA000;     // greenish blue
-    this->fg_pal[14] = 0xFF00FFA0;     // yellow-green
-    this->fg_pal[15] = 0xFFFFFFFF;     // white #2
-
-    // setup background color palette
-    this->bg_pal[0] = 0xFF000000;      // black
-    this->bg_pal[1] = 0xFFA00000;      // dark-blue
-    this->bg_pal[2] = 0xFF0000A0;      // dark-red
-    this->bg_pal[3] = 0xFFA000A0;      // dark-magenta
-    this->bg_pal[4] = 0xFF00A000;      // dark-green
-    this->bg_pal[5] = 0xFFA0A000;      // dark-cyan
-    this->bg_pal[6] = 0xFF00A0A0;      // dark-yellow
-    this->bg_pal[7] = 0xFFA0A0A0;      // gray
 }
 
 //------------------------------------------------------------------------------
@@ -99,8 +100,8 @@ kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_bg
     // index 0 is background color, index 1 is foreground color
     const ubyte bg_index = colors & 0x7;
     const ubyte fg_index = (colors>>3)&0xF;
-    const unsigned int bg = this->bg_pal[bg_index];
-    const unsigned int fg = (blink_bg && (colors & 0x80)) ? bg : this->fg_pal[fg_index];
+    const unsigned int bg = bg_palette[bg_index];
+    const unsigned int fg = (blink_bg && (colors & 0x80)) ? bg : fg_palette[fg_index];
     ptr[0] = pixels & 0x80 ? fg : bg;
     ptr[1] = pixels & 0x40 ? fg : bg;
     ptr[2] = pixels & 0x20 ? fg : bg;
@@ -152,7 +153,6 @@ kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
             ubyte src_colors = color_data[color_offset];
             this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
         }
-
     }
 }
 
