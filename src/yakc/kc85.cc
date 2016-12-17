@@ -7,9 +7,39 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-kc85::init(breadboard* b) {
+kc85::init(breadboard* b, rom_images* r) {
     this->board = b;
+    this->roms = r;
     this->exp.init();
+}
+
+//------------------------------------------------------------------------------
+bool
+kc85::check_roms(const rom_images& roms, device model, os_rom os) {
+    if (device::kc85_2 == model) {
+        if (os_rom::caos_hc900 == os) {
+            return roms.has(rom_images::hc900);
+        }
+        else if (os_rom::caos_2_2 == os) {
+            return roms.has(rom_images::caos22);
+        }
+    }
+    else if (device::kc85_3 == model) {
+        if (os_rom::caos_3_1 == os) {
+            return roms.has(rom_images::caos31) && roms.has(rom_images::kc85_basic_rom);
+        }
+        else if (os_rom::caos_3_4 == os) {
+            return roms.has(rom_images::caos34) && roms.has(rom_images::kc85_basic_rom);
+        }
+    }
+    else if (device::kc85_4 == model) {
+        if (os_rom::caos_4_2 == os) {
+            return roms.has(rom_images::caos42c) &&
+                   roms.has(rom_images::caos42e) &&
+                   roms.has(rom_images::kc85_basic_rom);
+        }
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -107,28 +137,36 @@ void
 kc85::update_rom_pointers() {
     this->caos_c_ptr = nullptr;
     this->caos_c_size = 0;
+    this->basic_ptr = nullptr;
+    this->basic_size = 0;
     switch (this->cur_caos) {
         case os_rom::caos_hc900:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::hc900);
-            this->caos_e_size = this->roms.size(kc85_roms::hc900);
+            this->caos_e_ptr  = this->roms->ptr(rom_images::hc900);
+            this->caos_e_size = this->roms->size(rom_images::hc900);
             break;
         case os_rom::caos_2_2:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos22);
-            this->caos_e_size = this->roms.size(kc85_roms::caos22);
+            this->caos_e_ptr  = this->roms->ptr(rom_images::caos22);
+            this->caos_e_size = this->roms->size(rom_images::caos22);
             break;
         case os_rom::caos_3_1:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos31);
-            this->caos_e_size = this->roms.size(kc85_roms::caos31);
+            this->caos_e_ptr  = this->roms->ptr(rom_images::caos31);
+            this->caos_e_size = this->roms->size(rom_images::caos31);
+            this->basic_ptr   = this->roms->ptr(rom_images::kc85_basic_rom);
+            this->basic_size  = this->roms->size(rom_images::kc85_basic_rom);
             break;
         case os_rom::caos_3_4:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos34);
-            this->caos_e_size = this->roms.size(kc85_roms::caos34);
+            this->caos_e_ptr  = this->roms->ptr(rom_images::caos34);
+            this->caos_e_size = this->roms->size(rom_images::caos34);
+            this->basic_ptr   = this->roms->ptr(rom_images::kc85_basic_rom);
+            this->basic_size  = this->roms->size(rom_images::kc85_basic_rom);
             break;
         case os_rom::caos_4_2:
-            this->caos_e_ptr  = this->roms.ptr(kc85_roms::caos42e);
-            this->caos_e_size = this->roms.size(kc85_roms::caos42e);
-            this->caos_c_ptr  = this->roms.ptr(kc85_roms::caos42c);
-            this->caos_c_size = this->roms.size(kc85_roms::caos42c);
+            this->caos_e_ptr  = this->roms->ptr(rom_images::caos42e);
+            this->caos_e_size = this->roms->size(rom_images::caos42e);
+            this->caos_c_ptr  = this->roms->ptr(rom_images::caos42c);
+            this->caos_c_size = this->roms->size(rom_images::caos42c);
+            this->basic_ptr   = this->roms->ptr(rom_images::kc85_basic_rom);
+            this->basic_size  = this->roms->size(rom_images::kc85_basic_rom);
             break;
         default:
             YAKC_ASSERT(false);
@@ -398,12 +436,12 @@ kc85::update_bank_switching() {
         // 8 KByte BASIC ROM at 0xC000 (only KC85/3)
         if (device::kc85_3 == this->cur_model) {
             if (pio_a & PIO_A_BASIC_ROM) {
-                cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
+                cpu.mem.map(0, 0xC000, this->basic_size, this->basic_ptr, false);
             }
         }
         // 8 KByte CAOS ROM at 0xF000
         if (pio_a & PIO_A_CAOS_ROM) {
-            cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
+            cpu.mem.map(0, 0xE000, this->caos_e_size, this->caos_e_ptr, false);
         }
     }
     else if (device::kc85_4 == this->cur_model) {
@@ -439,15 +477,15 @@ kc85::update_bank_switching() {
         }
         // 8 KByte BASIC ROM at 0xC000
         if (pio_a & PIO_A_BASIC_ROM) {
-            cpu.mem.map(0, 0xC000, 0x2000, dump_basic_c0, false);
+            cpu.mem.map(0, 0xC000, this->basic_size, this->basic_ptr, false);
         }
         // 4 KByte CAOS ROM-C at 0xC000
         if (this->io86 & IO86_CAOS_ROM_C) {
-            cpu.mem.map(0, 0xC000, this->caos_c_size, (ubyte*)this->caos_c_ptr, false);
+            cpu.mem.map(0, 0xC000, this->caos_c_size, this->caos_c_ptr, false);
         }
         // 8 KByte CAOS ROM-E at 0xE000
         if (pio_a & PIO_A_CAOS_ROM) {
-            cpu.mem.map(0, 0xE000, this->caos_e_size, (ubyte*)this->caos_e_ptr, false);
+            cpu.mem.map(0, 0xE000, this->caos_e_size, this->caos_e_ptr, false);
         }
     }
 

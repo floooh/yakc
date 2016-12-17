@@ -13,13 +13,36 @@ yakc::init(const ext_funcs& sys_funcs, const sound_funcs& snd_funcs) {
     this->cpu_behind = false;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
-    this->kc85.init(&this->board);
+    this->kc85.init(&this->board, &this->roms);
     this->z1013.init(&this->board);
     this->z9001.init(&this->board);
-    this->zx.init(&this->board);
-    this->cpc.init(&this->board);
+    this->zx.init(&this->board, &this->roms);
+    this->cpc.init(&this->board, &this->roms);
     this->kc85.audio.setup_callbacks(snd_funcs);
     this->z9001.setup_sound_funcs(snd_funcs);
+}
+
+//------------------------------------------------------------------------------
+bool
+yakc::check_roms(device m, os_rom os) {
+    if (is_device(m, device::any_kc85)) {
+        return kc85::check_roms(this->roms, m, os);
+    }
+    else if (is_device(m, device::any_z1013)) {
+        return z1013::check_roms(this->roms, m, os);
+    }
+    else if (is_device(m, device::any_z9001)) {
+        return z9001::check_roms(this->roms, m, os);
+    }
+    else if (is_device(m, device::any_zx)) {
+        return zx::check_roms(this->roms, m, os);
+    }
+    else if (is_device(m, device::any_cpc)) {
+        return cpc::check_roms(this->roms, m, os);
+    }
+    else {
+        return false;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -129,6 +152,12 @@ yakc::on_context_switched() {
 bool
 yakc::is_device(device mask) const {
     return 0 != (int(this->model) & int(mask));
+}
+
+//------------------------------------------------------------------------------
+bool
+yakc::is_device(device model, device mask) {
+    return 0 != (int(model) & int(mask));
 }
 
 //------------------------------------------------------------------------------

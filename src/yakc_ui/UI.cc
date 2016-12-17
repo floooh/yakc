@@ -19,7 +19,6 @@
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
-#include "yakc/roms/roms.h"
 
 using namespace Oryol;
 
@@ -231,29 +230,31 @@ UI::OnFrame(yakc& emu) {
             if (ImGui::BeginMenu(model)) {
                 if (ImGui::BeginMenu("System")) {
                     if (ImGui::BeginMenu("VEB MPM")) {
-                        if (emu.kc85.roms.has(kc85_roms::hc900)) {
+                        if (emu.check_roms(device::kc85_2, os_rom::caos_hc900)) {
                             if (ImGui::MenuItem("KC85/2 (HC900-CAOS)")) {
                                 emu.poweroff();
                                 emu.poweron(device::kc85_2, os_rom::caos_hc900);
                             }
                         }
-                        if (emu.kc85.roms.has(kc85_roms::caos22)) {
+                        if (emu.check_roms(device::kc85_2, os_rom::caos_2_2)) {
                             if (ImGui::MenuItem("KC85/2 (HC-CAOS 2.2)")) {
                                 emu.poweroff();
                                 emu.poweron(device::kc85_2, os_rom::caos_2_2);
                             }
                         }
-                        if (ImGui::MenuItem("KC85/3 (HC-CAOS 3.1)")) {
-                            emu.poweroff();
-                            emu.poweron(device::kc85_3, os_rom::caos_3_1);
+                        if (emu.check_roms(device::kc85_3, os_rom::caos_3_1)) {
+                            if (ImGui::MenuItem("KC85/3 (HC-CAOS 3.1)")) {
+                                emu.poweroff();
+                                emu.poweron(device::kc85_3, os_rom::caos_3_1);
+                            }
                         }
-                        if (emu.kc85.roms.has(kc85_roms::caos34)) {
+                        if (emu.check_roms(device::kc85_3, os_rom::caos_3_4)) {
                             if (ImGui::MenuItem("KC85/3 (HC-CAOS 3.4i)")) {
                                 emu.poweroff();
                                 emu.poweron(device::kc85_3, os_rom::caos_3_4);
                             }
                         }
-                        if (emu.kc85.roms.has(kc85_roms::caos42c) && emu.kc85.roms.has(kc85_roms::caos42e)) {
+                        if (emu.check_roms(device::kc85_4, os_rom::caos_4_2)) {
                             if (ImGui::MenuItem("KC85/4 (KC-CAOS 4.2)")) {
                                 emu.poweroff();
                                 emu.poweron(device::kc85_4, os_rom::caos_4_2);
@@ -262,50 +263,68 @@ UI::OnFrame(yakc& emu) {
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Robotron Dresden")) {
-                        if (ImGui::MenuItem("Z9001 (32KB)")) {
-                            emu.poweroff();
-                            emu.poweron(device::z9001, os_rom::z9001_os_1_2);
+                        if (emu.check_roms(device::z9001, os_rom::z9001_os_1_2)) {
+                            if (ImGui::MenuItem("Z9001 (32KB)")) {
+                                emu.poweroff();
+                                emu.poweron(device::z9001, os_rom::z9001_os_1_2);
+                            }
                         }
-                        if (ImGui::MenuItem("KC87  (48KB)")) {
-                            emu.poweroff();
-                            emu.poweron(device::kc87, os_rom::kc87_os_2);
+                        if (emu.check_roms(device::kc87, os_rom::kc87_os_2)) {
+                            if (ImGui::MenuItem("KC87  (48KB)")) {
+                                emu.poweroff();
+                                emu.poweron(device::kc87, os_rom::kc87_os_2);
+                            }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Robotron Riesa")) {
-                        if (ImGui::MenuItem("Z1013.01 (1MHz, 16KB)")) {
-                            emu.poweroff();
-                            emu.poweron(device::z1013_01, os_rom::none);
+                        if (emu.check_roms(device::z1013_01, os_rom::none)) {
+                            if (ImGui::MenuItem("Z1013.01 (1MHz, 16KB)")) {
+                                emu.poweroff();
+                                emu.poweron(device::z1013_01, os_rom::none);
+                            }
                         }
-                        if (ImGui::MenuItem("Z1013.16 (2MHz, 16KB)")) {
-                            emu.poweroff();
-                            emu.poweron(device::z1013_16, os_rom::none);
+                        if (emu.check_roms(device::z1013_16, os_rom::none)) {
+                            if (ImGui::MenuItem("Z1013.16 (2MHz, 16KB)")) {
+                                emu.poweroff();
+                                emu.poweron(device::z1013_16, os_rom::none);
+                            }
                         }
-                        if (ImGui::MenuItem("Z1013.64 (2MHz, 64KB)")) {
-                            emu.poweroff();
-                            emu.poweron(device::z1013_64, os_rom::none);
+                        if (emu.check_roms(device::z1013_64, os_rom::none)) {
+                            if (ImGui::MenuItem("Z1013.64 (2MHz, 64KB)")) {
+                                emu.poweroff();
+                                emu.poweron(device::z1013_64, os_rom::none);
+                            }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Sinclair")) {
-                        if (ImGui::MenuItem("ZX Spectrum 48K")) {
-                            emu.poweroff();
-                            emu.poweron(device::zxspectrum48k, os_rom::none);
+                        if (emu.check_roms(device::zxspectrum48k, os_rom::none)) {
+                            if (ImGui::MenuItem("ZX Spectrum 48K")) {
+                                emu.poweroff();
+                                emu.poweron(device::zxspectrum48k, os_rom::none);
+                            }
                         }
-                        if (ImGui::MenuItem("ZX Spectrum 128K")) {
-                            emu.poweroff();
-                            emu.poweron(device::zxspectrum128k, os_rom::none);
+                        if (emu.check_roms(device::zxspectrum128k, os_rom::none)) {
+                            if (ImGui::MenuItem("ZX Spectrum 128K")) {
+                                emu.poweroff();
+                                emu.poweron(device::zxspectrum128k, os_rom::none);
+                            }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Amstrad")) {
-                        if (ImGui::MenuItem("CPC 464")) {
-                            emu.poweroff();
-                            emu.poweron(device::cpc464, os_rom::none);
+                        if (emu.check_roms(device::cpc464, os_rom::none)) {
+                            if (ImGui::MenuItem("CPC 464")) {
+                                emu.poweroff();
+                                emu.poweron(device::cpc464, os_rom::none);
+                            }
                         }
-                        if (ImGui::MenuItem("CPC 6128")) {
-                            emu.poweroff();
-                            emu.poweron(device::cpc6128, os_rom::none);
+                        if (emu.check_roms(device::cpc6128, os_rom::none)) {
+                            if (ImGui::MenuItem("CPC 6128")) {
+                                emu.poweroff();
+                                emu.poweron(device::cpc6128, os_rom::none);
+                            }
                         }
                         ImGui::EndMenu();
                     }

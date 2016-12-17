@@ -1,13 +1,13 @@
 //------------------------------------------------------------------------------
-//  kc85_roms.cc
+//  rom_images.cc
 //------------------------------------------------------------------------------
-#include "kc85_roms.h"
+#include "rom_images.h"
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-kc85_roms::add(rom type, const ubyte* ptr, int size) {
+rom_images::add(rom type, const ubyte* ptr, int size) {
     YAKC_ASSERT((type >= 0) && (type < num_roms));
     YAKC_ASSERT(!this->has(type));
     YAKC_ASSERT((cur_pos + size) <= buf_size);
@@ -20,21 +20,21 @@ kc85_roms::add(rom type, const ubyte* ptr, int size) {
 
 //------------------------------------------------------------------------------
 bool
-kc85_roms::has(rom type) const {
+rom_images::has(rom type) const {
     YAKC_ASSERT((type >= 0) && (type < num_roms));
     return -1 != this->roms[type].pos;
 }
 
 //------------------------------------------------------------------------------
-const ubyte*
-kc85_roms::ptr(rom type) const {
+ubyte*
+rom_images::ptr(rom type) {
     YAKC_ASSERT(this->has(type));
     return &this->buffer[this->roms[type].pos];
 }
 
 //------------------------------------------------------------------------------
 int
-kc85_roms::size(rom type) const {
+rom_images::size(rom type) const {
     YAKC_ASSERT(this->has(type));
     return this->roms[type].size;
 }

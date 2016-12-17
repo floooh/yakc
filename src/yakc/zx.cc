@@ -30,10 +30,24 @@ uint32_t zx::palette[8] = {
 
 //------------------------------------------------------------------------------
 void
-zx::init(breadboard* b) {
+zx::init(breadboard* b, rom_images* r) {
+    YAKC_ASSERT(b && r);
     this->board = b;
+    this->roms = r;
     // setup key translation table
     this->init_keymap();
+}
+
+//------------------------------------------------------------------------------
+bool
+zx::check_roms(const rom_images& roms, device model, os_rom os) {
+    if (device::zxspectrum48k == model) {
+        return roms.has(rom_images::zx48k);
+    }
+    else if (device::zxspectrum128k == model) {
+        return roms.has(rom_images::zx128k_0) && roms.has(rom_images::zx128k_1);
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -139,16 +153,17 @@ zx::init_memory_map() {
         cpu.mem.map(0, 0xC000, 0x4000, this->ram[2], true);
 
         // 16k ROM between 0x0000 and 0x3FFF
-        YAKC_ASSERT(sizeof(dump_amstrad_zx48k) == 0x4000);
-        cpu.mem.map(0, 0x0000, 0x4000, dump_amstrad_zx48k, false);
+        YAKC_ASSERT(this->roms->has(rom_images::zx48k) && (this->roms->size(rom_images::zx48k) == 0x4000));
+        cpu.mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx48k), false);
     }
     else {
         // Spectrum 128k initial memory mapping
         cpu.mem.map(0, 0x4000, 0x4000, this->ram[5], true);
         cpu.mem.map(0, 0x8000, 0x4000, this->ram[2], true);
         cpu.mem.map(0, 0xC000, 0x4000, this->ram[0], true);
-        YAKC_ASSERT(sizeof(dump_amstrad_zx128k_0) == 0x4000);
-        cpu.mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_0, false);
+        YAKC_ASSERT(this->roms->has(rom_images::zx128k_0) && (this->roms->size(rom_images::zx128k_0) == 0x4000));
+        YAKC_ASSERT(this->roms->has(rom_images::zx128k_1) && (this->roms->size(rom_images::zx128k_1) == 0x4000));
+        cpu.mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx128k_0), false);
     }
 }
 
@@ -274,11 +289,11 @@ zx::cpu_out(uword port, ubyte val) {
                 // ROM0 or ROM1
                 if (val & (1<<4)) {
                     // bit 4 set: ROM1
-                    mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_1, false);
+                    mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx128k_1), false);
                 }
                 else {
                     // bit 4 clear: ROM0
-                    mem.map(0, 0x0000, 0x4000, dump_amstrad_zx128k_0, false);
+                    mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx128k_0), false);
                 }
             }
             if (val & (1<<5)) {

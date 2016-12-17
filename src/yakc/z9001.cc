@@ -2,6 +2,7 @@
 //  z9001.cc
 //------------------------------------------------------------------------------
 #include "z9001.h"
+#include "roms/rom_dumps.h"
 
 namespace YAKC {
 
@@ -78,6 +79,13 @@ z9001::init(breadboard* b) {
     this->key_map[0x1C] = kbd_bits(4, 7);       // list
     this->key_map[0x1D] = kbd_bits(5, 7);       // run
     this->key_map[0x20] = kbd_bits(7, 6);       // space
+}
+
+//------------------------------------------------------------------------------
+bool
+z9001::check_roms(const rom_images& roms, device model, os_rom os) {
+    // FIXME
+    return true;
 }
 
 //------------------------------------------------------------------------------

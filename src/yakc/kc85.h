@@ -5,12 +5,11 @@
     @brief wrapper class for the KC85/2, /3, /4
 */
 #include "yakc/breadboard.h"
+#include "yakc/rom_images.h"
 #include "yakc/z80bus.h"
-#include "yakc/roms/roms.h"
 #include "yakc/kc85_video.h"
 #include "yakc/kc85_audio.h"
 #include "yakc/kc85_exp.h"
-#include "yakc/kc85_roms.h"
 
 namespace YAKC {
 
@@ -50,17 +49,19 @@ public:
 
     /// hardware components
     breadboard* board = nullptr;
+    rom_images* roms = nullptr;
     kc85_video video;
     kc85_audio audio;
     kc85_exp exp;
-    kc85_roms roms;
     ubyte pio_a = 0;        // backing for PIO-A data
     ubyte pio_b = 0;        // backing for PIO-B data
     ubyte io84 = 0;         // special KC85/4 io register
     ubyte io86 = 0;         // special KC85/4 io register
 
     /// one-time init
-    void init(breadboard* board);
+    void init(breadboard* board, rom_images* roms);
+    /// check if required roms are loaded
+    static bool check_roms(const rom_images& roms, device model, os_rom os);
 
     /// power-on the device
     void poweron(device m, os_rom os);
@@ -106,10 +107,12 @@ public:
     os_rom cur_caos = os_rom::caos_3_1;
     bool on = false;
     ubyte key_code = 0;
-    const ubyte* caos_c_ptr = nullptr;
+    ubyte* caos_c_ptr = nullptr;
     int caos_c_size = 0;
-    const ubyte* caos_e_ptr = nullptr;
+    ubyte* caos_e_ptr = nullptr;
     int caos_e_size = 0;
+    ubyte* basic_ptr = nullptr;
+    int basic_size = 0;
 };
 
 } // namespace YAKC

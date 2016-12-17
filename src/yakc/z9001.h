@@ -17,8 +17,8 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/keybuffer.h"
-#include "yakc/roms/roms.h"
 #include "yakc/z80bus.h"
+#include "yakc/rom_images.h"
 
 namespace YAKC {
 
@@ -36,6 +36,8 @@ public:
 
     /// one-time setup
     void init(breadboard* board);
+    /// check if required roms are loaded
+    static bool check_roms(const rom_images& roms, device model, os_rom os);
     /// setup audio callbacks
     void setup_sound_funcs(const sound_funcs& funcs);
     /// init the memory map

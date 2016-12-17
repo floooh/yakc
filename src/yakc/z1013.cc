@@ -2,6 +2,7 @@
 //  z1013.cc
 //------------------------------------------------------------------------------
 #include "z1013.h"
+#include "roms/rom_dumps.h"
 
 namespace YAKC {
 
@@ -9,6 +10,13 @@ namespace YAKC {
 void
 z1013::init(breadboard* b) {
     this->board = b;
+}
+
+//------------------------------------------------------------------------------
+bool
+z1013::check_roms(const rom_images& roms, device model, os_rom os) {
+    // FIXME
+    return true;
 }
 
 //------------------------------------------------------------------------------

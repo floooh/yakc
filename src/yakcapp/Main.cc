@@ -16,6 +16,7 @@
 #if YAKC_UI
 #include "yakc_ui/UI.h"
 #endif
+#include "yakc/roms/rom_dumps.h"
 
 using namespace Oryol;
 using namespace YAKC;
@@ -204,21 +205,46 @@ YakcApp::OnCleanup() {
 void
 YakcApp::initRoms() {
 
-    // standard roms required for initial booting are built-in
-    this->emu.kc85.roms.add(kc85_roms::caos31, dump_caos31, sizeof(dump_caos31));
-    this->emu.kc85.roms.add(kc85_roms::basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
-    this->emu.kc85.roms.add(kc85_roms::caos42c, dump_caos42c, sizeof(dump_caos42c));
-    this->emu.kc85.roms.add(kc85_roms::caos42e, dump_caos42e, sizeof(dump_caos42e));
+    // only KC85/3 roms are 'built-in' to reeduce executable size
+    this->emu.roms.add(rom_images::caos31, dump_caos31, sizeof(dump_caos31));
+    this->emu.roms.add(rom_images::kc85_basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
 
     // async-load optional ROMs
     IO::Load("rom:hc900.852", [this](IO::LoadResult ioRes) {
-        this->emu.kc85.roms.add(kc85_roms::hc900, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.roms.add(rom_images::hc900, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos22.852", [this](IO::LoadResult ioRes) {
-        this->emu.kc85.roms.add(kc85_roms::caos22, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.roms.add(rom_images::caos22, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos34.853", [this](IO::LoadResult ioRes) {
-        this->emu.kc85.roms.add(kc85_roms::caos34, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.roms.add(rom_images::caos34, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:caos42c.854", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::caos42c, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:caos42e.854", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:amstrad_zx48k.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::zx48k, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:amstrad_zx128k_0.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::zx128k_0, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:amstrad_zx128k_1.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::zx128k_1, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:cpc464_os.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::cpc464_os, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:cpc464_basic.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::cpc464_basic, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:cpc6128_os.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::cpc6128_os, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:cpc6128_basic.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::cpc6128_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }
 
@@ -253,10 +279,11 @@ YakcApp::initModules() {
 
     // M026 FORTH
     IO::Load("rom:forth.853", [this](IO::LoadResult ioRes) {
-        kc85& kc = this->emu.kc85;
-        kc.roms.add(kc85_roms::forth, ioRes.Data.Data(), ioRes.Data.Size());
+        auto& kc = this->emu.kc85;
+        auto& roms = this->emu.roms;
+        roms.add(rom_images::forth, ioRes.Data.Data(), ioRes.Data.Size());
         kc.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
-            kc.roms.ptr(kc85_roms::forth), kc.roms.size(kc85_roms::forth),
+            roms.ptr(rom_images::forth), roms.size(rom_images::forth),
             "FORTH language expansion module.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"
@@ -267,10 +294,11 @@ YakcApp::initModules() {
 
     // M027 DEVELOPMENT
     IO::Load("rom:develop.853", [this](IO::LoadResult ioRes) {
-        kc85& kc = this->emu.kc85;
-        kc.roms.add(kc85_roms::develop, ioRes.Data.Data(), ioRes.Data.Size());
+        auto& kc = this->emu.kc85;
+        auto& roms = this->emu.roms;
+        roms.add(rom_images::develop, ioRes.Data.Data(), ioRes.Data.Size());
         kc.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
-            kc.roms.ptr(kc85_roms::develop), kc.roms.size(kc85_roms::develop),
+            roms.ptr(rom_images::develop), roms.size(rom_images::develop),
             "Assembler/disassembler expansion module.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"
@@ -281,10 +309,11 @@ YakcApp::initModules() {
 
     // M006 BASIC (+ HC-CAOS 901)
     IO::Load("rom:m006.rom", [this](IO::LoadResult ioRes) {
-        kc85& kc = this->emu.kc85;
-        kc.roms.add(kc85_roms::basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
+        auto& kc = this->emu.kc85;
+        auto& roms = this->emu.roms;
+        roms.add(rom_images::kc85_basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
         kc.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
-            kc.roms.ptr(kc85_roms::basic_mod), kc.roms.size(kc85_roms::basic_mod),
+            roms.ptr(rom_images::kc85_basic_mod), roms.size(rom_images::kc85_basic_mod),
             "BASIC + HC-901 CAOS for KC85/2.\n\n"
             "Activate with:\n"
             "JUMP [SLOT]\n\n"
@@ -293,10 +322,11 @@ YakcApp::initModules() {
 
     // M012 TEXOR
     IO::Load("rom:texor.rom", [this](IO::LoadResult ioRes) {
-        kc85& kc = this->emu.kc85;
-        kc.roms.add(kc85_roms::texor, ioRes.Data.Data(), ioRes.Data.Size());
+        auto& kc = this->emu.kc85;
+        auto& roms = this->emu.roms;
+        roms.add(rom_images::texor, ioRes.Data.Data(), ioRes.Data.Size());
         kc.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
-            kc.roms.ptr(kc85_roms::texor), kc.roms.size(kc85_roms::texor),
+            roms.ptr(rom_images::texor), roms.size(rom_images::texor),
             "TEXOR text processing software.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"

@@ -5,7 +5,7 @@
     @brief Amstrad CPC 464/6128 and KC Compact emulation
 */
 #include "yakc/breadboard.h"
-#include "roms/roms.h"
+#include "yakc/rom_images.h"
 #include "yakc/z80bus.h"
 
 namespace YAKC {
@@ -17,9 +17,13 @@ public:
 
     /// the main board
     breadboard* board = nullptr;
+    /// rom image storage
+    rom_images* roms = nullptr;
 
     /// one-time setup
-    void init(breadboard* board);
+    void init(breadboard* board, rom_images* roms);
+    /// check if required roms are loaded
+    static bool check_roms(const rom_images& roms, device model, os_rom os);        
     /// initialize the memory map
     void init_memory_map();
     /// power-on the device

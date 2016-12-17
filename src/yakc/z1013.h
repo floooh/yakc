@@ -34,8 +34,8 @@
     can require more than one key to be set (e.g. shift keys).
 */
 #include "yakc/breadboard.h"
-#include "yakc/roms/roms.h"
 #include "yakc/z80bus.h"
+#include "yakc/rom_images.h"
 
 namespace YAKC {
 
@@ -51,6 +51,8 @@ public:
 
     /// one-time setup
     void init(breadboard* board);
+    /// check if required roms are loaded
+    static bool check_roms(const rom_images& roms, device model, os_rom os);    
     /// initialize memory mapping (called from poweron or snapshot restore)
     void init_memory_mapping();
     /// initialize keymap tables (called from poweron or snapshot restore)

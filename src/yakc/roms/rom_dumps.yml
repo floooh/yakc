@@ -2,8 +2,6 @@
 files:
     - 'basic_c0.853'
     - 'caos31.853'
-    - 'caos42c.854'
-    - 'caos42e.854'
     - 'z1013_mon202.bin'
     - 'z1013_mon_a2.bin'
     - 'z9001_basic.bin'
@@ -14,12 +12,5 @@ files:
     - 'z9001_font.bin'
     - 'kc87_font_2.bin'
     - 'basic_507_511.rom'
-    - 'amstrad_zx48k.bin'
-    - 'amstrad_zx128k_0.bin'
-    - 'amstrad_zx128k_1.bin'
-    - 'cpc464_os.bin'
-    - 'cpc464_basic.bin'
-    - 'cpc6128_os.bin'
-    - 'cpc6128_basic.bin'
     
 

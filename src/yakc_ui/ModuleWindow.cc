@@ -3,7 +3,6 @@
 //------------------------------------------------------------------------------
 #include "ModuleWindow.h"
 #include "IMUI/IMUI.h"
-#include "yakc/roms/roms.h"
 
 using namespace Oryol;
 

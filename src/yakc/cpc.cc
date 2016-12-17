@@ -2,7 +2,6 @@
 //  cpc.cc
 //------------------------------------------------------------------------------
 #include "cpc.h"
-#include "roms/roms.h"
 
 namespace YAKC {
 
@@ -50,9 +49,23 @@ uint32_t hw_palette[32] = {
 
 //------------------------------------------------------------------------------
 void
-cpc::init(breadboard* b) {
+cpc::init(breadboard* b, rom_images* r) {
+    YAKC_ASSERT(b && r);
     this->board = b;
+    this->roms = r;
     clear(this->pens, sizeof(this->pens));
+}
+
+//------------------------------------------------------------------------------
+bool
+cpc::check_roms(const rom_images& roms, device model, os_rom os) {
+    if (device::cpc464 == model) {
+        return roms.has(rom_images::cpc464_os) && roms.has(rom_images::cpc464_basic);
+    }
+    else if (device::cpc6128 == model) {
+        return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------
@@ -60,6 +73,7 @@ void
 cpc::init_memory_map() {
     z80& cpu = this->board->cpu;
     cpu.mem.unmap_all();
+    YAKC_ASSERT(check_roms(*this->roms, this->cur_model, os_rom::none));
 
     if (device::cpc464 == this->cur_model) {
         // map 32 KByte RAM from 4000 to BFFF
@@ -67,12 +81,10 @@ cpc::init_memory_map() {
         cpu.mem.map(0, 0x8000, 0x4000, this->ram[2], true);
 
         // lower ROM (OS), writes always go to RAM bank 0
-        YAKC_ASSERT(sizeof(dump_cpc464_os) == 0x4000);
-        cpu.mem.map_rw(0, 0x0000, 0x4000, dump_cpc464_os, this->ram[0]);
+        cpu.mem.map_rw(0, 0x0000, 0x4000, this->roms->ptr(rom_images::cpc464_os), this->ram[0]);
 
         // upper ROM (BASIC), writes always go to RAM bank 3
-        YAKC_ASSERT(sizeof(dump_cpc464_basic) == 0x4000);
-        cpu.mem.map_rw(0, 0xC000, 0x4000, dump_cpc464_basic, this->ram[3]);
+        cpu.mem.map_rw(0, 0xC000, 0x4000, this->roms->ptr(rom_images::cpc464_basic), this->ram[3]);
     }
     else if (device::cpc6128 == this->cur_model) {
         // FIXME
@@ -206,7 +218,7 @@ cpc::cpu_out(uword port, ubyte val) {
                 mem.map_rw(0, 0x0000, 0x4000, this->ram[0], this->ram[0]);
             }
             else {
-                mem.map_rw(0, 0x0000, 0x4000, dump_cpc464_os, this->ram[0]);
+                mem.map_rw(0, 0x0000, 0x4000, this->roms->ptr(rom_images::cpc464_os), this->ram[0]);
             }
 
             // enable/disable upper ROM
@@ -214,7 +226,7 @@ cpc::cpu_out(uword port, ubyte val) {
                 mem.map_rw(0, 0xC000, 0x4000, this->ram[3], this->ram[3]);
             }
             else {
-                mem.map_rw(0, 0xC000, 0x4000, dump_cpc464_basic, this->ram[3]);
+                mem.map_rw(0, 0xC000, 0x4000, this->roms->ptr(rom_images::cpc464_basic), this->ram[3]);
             }
         }
     }

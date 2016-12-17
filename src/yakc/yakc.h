@@ -6,6 +6,7 @@
 */
 #include "yakc/core.h"
 #include "yakc/breadboard.h"
+#include "yakc/rom_images.h"
 #include "yakc/kc85.h"
 #include "yakc/z1013.h"
 #include "yakc/z9001.h"
@@ -24,9 +25,12 @@ public:
     class z9001 z9001;
     class zx zx;
     class cpc cpc;
+    class rom_images roms;
 
     /// one-time init
     void init(const ext_funcs& funcs, const sound_funcs& snd_funcs);
+    /// check if the required ROM images for a model/os combination are loaded
+    bool check_roms(device model, os_rom os);
     /// poweron one of the emus
     void poweron(device m, os_rom os);
     /// poweroff the emu
@@ -41,6 +45,8 @@ public:
     void on_context_switched();
     /// check if currently emulated device matches
     bool is_device(device mask) const;
+    /// check any model against device mask
+    static bool is_device(device model, device mask);
     /// process one frame, up to absolute number of cycles
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
     /// put a key as ASCII code
