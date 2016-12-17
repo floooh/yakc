@@ -3,6 +3,8 @@
 //------------------------------------------------------------------------------
 #include "cpc.h"
 
+#include <stdio.h>
+
 namespace YAKC {
 
 //
@@ -106,6 +108,8 @@ cpc::poweron(device m) {
 
     this->cur_model = m;
     this->on = true;
+    this->hsync_counter = 0;
+    this->scanline_counter = 0;
     this->select_pen = 0;
     this->border_color = 0;
     clear(this->pens, sizeof(this->pens));
@@ -116,6 +120,7 @@ cpc::poweron(device m) {
 
     // initialize clock and timers
     this->board->clck.init(4000);
+    this->board->clck.config_timer_cycles(0, 64 * 4);
 
     // CPU start state
     this->board->cpu.init();
@@ -128,14 +133,16 @@ cpc::poweroff() {
     YAKC_ASSERT(this->on);
     this->board->cpu.mem.unmap_all();
     this->on = false;
-    this->select_pen = 0;
-    this->border_color = 0;
-    clear(this->pens, sizeof(this->pens));
 }
 
 //------------------------------------------------------------------------------
 void
 cpc::reset() {
+    clear(this->pens, sizeof(this->pens));
+    this->hsync_counter = 0;
+    this->scanline_counter = 0;
+    this->select_pen = 0;
+    this->border_color = 0;
     this->board->cpu.reset();
     this->board->cpu.PC = 0x0000;
     this->init_memory_map();
@@ -162,11 +169,6 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         this->board->clck.update(this, ticks_step);
         cur_tick += ticks_step;
     }
-
-    // FIXME
-    for (uint16_t y = 0; y < 200; y++) {
-        this->decode_video_line(y);
-    }
     return cur_tick;
 }
 
@@ -185,8 +187,9 @@ cpc::cpu_out(uword port, ubyte val) {
         if (reg == 0x00) {
             // if bit 4 is set, this means that the border color should be set
             this->select_pen = val & 0x1F;
+            return;
         }
-        else if (reg == 0x40) {
+        if (reg == 0x40) {
             if (this->select_pen & 0x10) {
                 // set border color
                 this->border_color = hw_palette[val & 0x1F];
@@ -195,8 +198,9 @@ cpc::cpu_out(uword port, ubyte val) {
                 // set pen
                 this->pens[this->select_pen & 0x0F] = hw_palette[val & 0x1F];
             }
+            return;
         }
-        else if (reg == 0x80) {
+        if (reg == 0x80) {
             //
             //  select screen mode, rom config and int ctrl
             //
@@ -228,8 +232,10 @@ cpc::cpu_out(uword port, ubyte val) {
             else {
                 mem.map_rw(0, 0xC000, 0x4000, this->roms->ptr(rom_images::cpc464_basic), this->ram[3]);
             }
+            return;
         }
     }
+    printf("OUT %04x %02x\n", port, val);
 }
 
 //------------------------------------------------------------------------------
@@ -242,6 +248,7 @@ cpc::put_key(ubyte ascii) {
 ubyte
 cpc::cpu_in(uword port) {
     // FIXME
+    printf("IN %04x\n", port);
     return 0xFF;
 }
 
@@ -255,7 +262,35 @@ cpc::irq() {
 //------------------------------------------------------------------------------
 void
 cpc::timer(int timer_id) {
-    // FIXME
+    if (0 == timer_id) {
+        this->scanline();
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc::scanline() {
+    // http://cpctech.cpc-live.com/docs/ints.html
+
+    // FIXME! take border into account
+    if (this->scanline_counter < 200) {
+        this->decode_video_line(this->scanline_counter);
+    }
+
+    // issue an interrupt request every 52 scan lines
+    if (this->hsync_counter == 52) {
+        this->hsync_counter = 0;
+        this->irq();
+    }
+
+    // start new frame?
+    if (this->scanline_counter == 312) {
+        // start new frame
+        this->scanline_counter = 0;
+    }
+
+    this->hsync_counter++;
+    this->scanline_counter++;
 }
 
 //------------------------------------------------------------------------------

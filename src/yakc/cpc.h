@@ -40,6 +40,9 @@ public:
     void put_key(ubyte ascii);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
+
+    /// video scanline callback
+    void scanline();
     /// decode a video-memory line
     void decode_video_line(uint16_t y);
 
@@ -54,6 +57,8 @@ public:
 
     device cur_model = device::cpc464;
     bool on = false;
+    uint16_t hsync_counter = 0;
+    uint16_t scanline_counter = 0;
     uint32_t select_pen = 0;
     uint32_t border_color = 0;
     uint32_t pens[16];
