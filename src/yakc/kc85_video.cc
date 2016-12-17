@@ -74,18 +74,18 @@ kc85_video::kc85_4_irm_control(ubyte val) {
 
 //------------------------------------------------------------------------------
 void
-kc85_video::pal_line() {
+kc85_video::scanline() {
     // this needs to be called for each PAL line (one PAL line: 64 microseconds)
-    if (this->cur_pal_line < 256) {
+    if (this->cur_scanline < 256) {
         const bool blink_bg = this->ctc_blink_flag && this->pio_blink_flag;
-        this->decode_one_line(this->rgba8_buffer, this->cur_pal_line, blink_bg);
+        this->decode_one_line(this->rgba8_buffer, this->cur_scanline, blink_bg);
     }
-    this->cur_pal_line++;
+    this->cur_scanline++;
     // wraparound pal line counter at 312 lines (see KC85/3 service manual),
     // plus there are very slight timing differences between a 85/3 and 85/4
     const int wrap_around = device::kc85_3 == this->model ? 312 : 310;
-    if (this->cur_pal_line > wrap_around) {
-        this->cur_pal_line = 0;
+    if (this->cur_scanline > wrap_around) {
+        this->cur_scanline = 0;
     }
 }
 

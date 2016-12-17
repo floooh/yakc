@@ -22,8 +22,8 @@ public:
     void pio_blink_enable(bool b);
     /// toggle blink flag, must be connected to CTC ZC/TO2 line
     void ctc_blink();
-    /// PAL-line callback, scan-converts one video memory line
-    void pal_line();
+    /// PAL-scanline callback, scan-converts one video memory line
+    void scanline();
     /// update the KC85/4 IRM control byte (written to port 84)
     void kc85_4_irm_control(ubyte val);
 
@@ -39,7 +39,7 @@ public:
     ubyte irm_control = 0;
     bool pio_blink_flag = true;
     bool ctc_blink_flag = true;
-    uword cur_pal_line = 0;
+    uword cur_scanline = 0;
 };
 
 } // namespace YAKC

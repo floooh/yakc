@@ -43,7 +43,7 @@ public:
             ubyte io86;
             ubyte pio_a;
             ubyte pio_b;
-            uword cur_pal_line;
+            uword cur_scanline;
             ubyte irm_control;
             ubyte pio_blink_flag;
             ubyte ctc_blink_flag;

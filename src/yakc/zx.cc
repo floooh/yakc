@@ -183,7 +183,7 @@ zx::poweron(device m) {
     this->cur_model = m;
     this->border_color = 0xFF000000;
     this->last_fe_out = 0;
-    this->pal_line_counter = 0;
+    this->scanline_counter = 0;
     this->blink_counter = 0;
     this->memory_paging_disabled = false;
     this->next_kbd_mask = 0;
@@ -227,7 +227,7 @@ zx::reset() {
     this->next_kbd_mask = 0;
     this->cur_kbd_mask = 0;
     this->last_fe_out = 0;
-    this->pal_line_counter = 0;
+    this->scanline_counter = 0;
     this->blink_counter = 0;
     this->display_ram_bank = 5;
     this->board->cpu.reset();
@@ -380,13 +380,13 @@ zx::timer(int timer_id) {
     // clock timer callback
     if (0 == timer_id) {
         // timer 0: new PAL line
-        this->pal_line();
+        this->scanline();
     }
 }
 
 //------------------------------------------------------------------------------
 void
-zx::pal_line() {
+zx::scanline() {
     // this is called by the timer callback for every PAL line, controlling
     // the vidmem decoding and vblank interrupt
     //
@@ -397,7 +397,7 @@ zx::pal_line() {
     // one PAL line takes 224 T-states on 48K, and 228 T-states on 128K
     // one PAL frame is 312 lines on 48K, and 311 lines on 128K
     //
-    const uint32_t frame_pal_lines = this->cur_model == device::zxspectrum128k ? 311 : 312;
+    const uint32_t frame_scanlines = this->cur_model == device::zxspectrum128k ? 311 : 312;
     const uint32_t top_border = this->cur_model == device::zxspectrum128k ? 63 : 64;
 
     // decode the next videomem line into the emulator framebuffer,
@@ -410,15 +410,14 @@ zx::pal_line() {
     //
     const uint32_t top_decode_line = top_border - 32;
     const uint32_t btm_decode_line = top_border + 192 + 32;
-    if ((this->pal_line_counter >= top_decode_line) && (this->pal_line_counter < btm_decode_line)) {
-        this->decode_video_line(this->pal_line_counter - top_decode_line);
+    if ((this->scanline_counter >= top_decode_line) && (this->scanline_counter < btm_decode_line)) {
+        this->decode_video_line(this->scanline_counter - top_decode_line);
     }
 
-    this->pal_line_counter++;
-    if (this->pal_line_counter > frame_pal_lines) {
+    if (this->scanline_counter++ >= frame_scanlines) {
         // start new frame, fetch next key, request vblank interrupt
         this->cur_kbd_mask = this->next_kbd_mask;
-        this->pal_line_counter = 0;
+        this->scanline_counter = 0;
         this->blink_counter++;
         this->irq();
     }
@@ -442,7 +441,7 @@ zx::decode_video_line(uint16_t y) {
     // decode a single line from the ZX framebuffer into the
     // emulator's framebuffer
     //
-    // this is called from the pal_line() callback so that video decoding
+    // this is called from the scanline() callback so that video decoding
     // is synchronized with the CPU and vblank interrupt,
     // y is ranging from 0 to 256 (32 pixels vertical border on each side)
     //

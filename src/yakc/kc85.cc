@@ -411,7 +411,7 @@ kc85::timer(int timer_id) {
         case 1:
             // timer 1 triggers every PAL line (64ns) for the video scanline
             // decoder callback
-            this->video.pal_line();
+            this->video.scanline();
             break;
     }
 }

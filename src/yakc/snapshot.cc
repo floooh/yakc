@@ -93,7 +93,7 @@ snapshot::write_kc_state(const yakc& emu, state_t& state) {
     state.kc.io86 = kc.io86;
     state.kc.pio_a = kc.pio_a;
     state.kc.pio_b = kc.pio_b;
-    state.kc.cur_pal_line = kc.video.cur_pal_line;
+    state.kc.cur_scanline = kc.video.cur_scanline;
     state.kc.irm_control = kc.video.irm_control;
     state.kc.pio_blink_flag = kc.video.pio_blink_flag;
     state.kc.ctc_blink_flag = kc.video.ctc_blink_flag;
@@ -123,7 +123,7 @@ snapshot::apply_kc_state(const state_t& state, yakc& emu) {
     kc.pio_a     = state.kc.pio_a;
     kc.pio_b     = state.kc.pio_b;
     kc.video.model = (device) state.kc.model;
-    kc.video.cur_pal_line = state.kc.cur_pal_line;
+    kc.video.cur_scanline = state.kc.cur_scanline;
     kc.video.irm_control = state.kc.irm_control;
     kc.video.pio_blink_flag = 0 != state.kc.pio_blink_flag;
     kc.video.ctc_blink_flag = 0 != state.kc.ctc_blink_flag;
