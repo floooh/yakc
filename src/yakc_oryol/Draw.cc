@@ -28,11 +28,12 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame_x, int frame_y) {
     this->irmTexture320x256 = Gfx::CreateResource(irmSetup);
     irmSetup.Height = 192;
     this->irmTexture320x192 = Gfx::CreateResource(irmSetup);
-    irmSetup.Height = 200;
-    this->irmTexture320x200 = Gfx::CreateResource(irmSetup);
     irmSetup.Width = 256;
     irmSetup.Height = 256;
     this->irmTexture256x256 = Gfx::CreateResource(irmSetup);
+    irmSetup.Width = 640;
+    irmSetup.Height = 200;
+    this->irmTexture640x200 = Gfx::CreateResource(irmSetup);
 
     auto fsqSetup = MeshSetup::FullScreenQuad(true);
     Id fsq = Gfx::CreateResource(fsqSetup);
@@ -79,11 +80,11 @@ Draw::Render(const void* pixels, int width, int height) {
     else if ((320 == width) && (192 == height)) {
         tex = this->irmTexture320x192;
     }
-    else if ((320 == width) && (200 == height)) {
-        tex = this->irmTexture320x200;
-    }
     else if ((256 == width) && (256 == height)) {
         tex = this->irmTexture256x256;
+    }
+    else if ((640 == width) && (200 == height)) {
+        tex = this->irmTexture640x200;
     }
     else {
         o_error("Draw::Render(): invalid display size!\n");

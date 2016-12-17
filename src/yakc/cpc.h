@@ -36,8 +36,8 @@ public:
     void put_key(ubyte ascii);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// FIXME: decode video memory
-    void decode_video_memory();
+    /// decode a video-memory line
+    void decode_video_line(uint16_t y);
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;
@@ -50,8 +50,10 @@ public:
 
     device cur_model = device::cpc464;
     bool on = false;
-    uint32_t pal[16];
-    uint32_t rgba8_buffer[320*200];
+    uint32_t select_pen = 0;
+    uint32_t border_color = 0;
+    uint32_t pens[16];
+    uint32_t rgba8_buffer[640*200];
 };
 
 } // namespace YAKC
