@@ -73,8 +73,8 @@ Keyboard::Setup(yakc& emu_) {
         if (e.Type == InputEvent::WChar) {
             if ((e.WCharCode >= 32) && (e.WCharCode < 127)) {
                 uint8_t ascii = (uint8_t) e.WCharCode;
-                // invert case (not on ZX machines)
-                if (!this->emu->is_device(device::any_zx)) {
+                // invert case (not on ZX or CPC machines)
+                if (!(this->emu->is_device(device::any_zx)||this->emu->is_device(device::any_cpc))) {
                     if (islower(ascii)) {
                         ascii = toupper(ascii);
                     }

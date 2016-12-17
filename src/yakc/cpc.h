@@ -26,6 +26,10 @@ public:
     static bool check_roms(const rom_images& roms, device model, os_rom os);        
     /// initialize the memory map
     void init_memory_map();
+    /// initialize the keycode translation map
+    void init_keymap();
+    /// initialize a single entry in the key-map table
+    void init_key_mask(ubyte ascii, int column, int line, int shift);    
     /// power-on the device
     void poweron(device m);
     /// power-off the device
@@ -57,12 +61,20 @@ public:
 
     device cur_model = device::cpc464;
     bool on = false;
+
     uint16_t hsync_counter = 0;
     uint16_t scanline_counter = 0;
     uint32_t select_pen = 0;
     uint32_t border_color = 0;
     uint32_t pens[16];
     uint32_t rgba8_buffer[640*200];
+
+    struct key_mask {
+        ubyte col[10] = { };
+    };
+    key_mask next_key_mask;
+    key_mask cur_key_mask;
+    key_mask key_map[256];
 };
 
 } // namespace YAKC

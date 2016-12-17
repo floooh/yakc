@@ -51,11 +51,73 @@ uint32_t hw_palette[32] = {
 
 //------------------------------------------------------------------------------
 void
+cpc::init_key_mask(ubyte ascii, int col, int bit, int shift) {
+    YAKC_ASSERT((col >= 0) && (col < 10));
+    YAKC_ASSERT((bit >= 0) && (bit < 8));
+    YAKC_ASSERT((shift >= 0) && (shift < 2));
+    this->key_map[ascii] = key_mask();
+    this->key_map[ascii].col[col] = (1<<bit);
+    if (shift != 0) {
+        this->key_map[ascii].col[2] = (1<<5);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc::init_keymap() {
+    // http://cpctech.cpc-live.com/docs/keyboard.html
+    clear(this->key_map, sizeof(this->key_map));
+    const char* kbd =
+        // no shift
+        "   ^08641 "
+        "  [-97532 "
+        "   @oure  "
+        "  ]piytwq "
+        "   ;lhgs  "
+        "   :kjfda "
+        "  \\/mnbc  "
+        "   ., vxz "
+
+        // shift
+        "    _(&$! "
+        "  {=)'%#\" "
+        "   |OURE  "
+        "  }PIYTWQ "
+        "   +LHGS  "
+        "   *KJFDA "
+        "  `?MNBC  "
+        "   >< VXZ ";
+    int l = strlen(kbd);
+    YAKC_ASSERT(l == 160);
+    for (int shift = 0; shift < 2; shift++) {
+        for (int col = 0; col < 10; col++) {
+            for (int bit = 0; bit < 8; bit++) {
+                ubyte ascii = kbd[shift*80 + bit*10 + col];
+                this->init_key_mask(ascii, col, bit, shift);
+            }
+        }
+    }
+
+    // special keys
+    this->init_key_mask(' ',  5, 7, 0);     // Space
+    this->init_key_mask(0x08, 1, 0, 0);     // Cursor Left
+    this->init_key_mask(0x09, 0, 1, 0);     // Cursor Right
+    this->init_key_mask(0x0A, 0, 2, 0);     // Cursor Down
+    this->init_key_mask(0x0B, 0, 0, 0);     // Cursor Up
+    this->init_key_mask(0x01, 9, 7, 0);     // Delete
+    this->init_key_mask(0x0C, 2, 0, 0);     // Clr
+    this->init_key_mask(0x0D, 2, 2, 0);     // Return
+    this->init_key_mask(0x03, 8, 2, 0);     // Escape
+}
+
+//------------------------------------------------------------------------------
+void
 cpc::init(breadboard* b, rom_images* r) {
     YAKC_ASSERT(b && r);
     this->board = b;
     this->roms = r;
     clear(this->pens, sizeof(this->pens));
+    this->init_keymap();
 }
 
 //------------------------------------------------------------------------------
@@ -112,6 +174,8 @@ cpc::poweron(device m) {
     this->scanline_counter = 0;
     this->select_pen = 0;
     this->border_color = 0;
+    this->next_key_mask = key_mask();
+    this->cur_key_mask = key_mask();
     clear(this->pens, sizeof(this->pens));
 
     // map memory
@@ -143,6 +207,8 @@ cpc::reset() {
     this->scanline_counter = 0;
     this->select_pen = 0;
     this->border_color = 0;
+    this->next_key_mask = key_mask();
+    this->cur_key_mask = key_mask();
     this->board->cpu.reset();
     this->board->cpu.PC = 0x0000;
     this->init_memory_map();
@@ -235,20 +301,50 @@ cpc::cpu_out(uword port, ubyte val) {
             return;
         }
     }
-    printf("OUT %04x %02x\n", port, val);
+//    printf("OUT %04x %02x\n", port, val);
 }
 
 //------------------------------------------------------------------------------
 void
 cpc::put_key(ubyte ascii) {
-    // FIXME
+    if (ascii) {
+        this->next_key_mask = this->key_map[ascii];
+    }
+    else {
+        this->next_key_mask = key_mask();
+    }
 }
 
 //------------------------------------------------------------------------------
 ubyte
 cpc::cpu_in(uword port) {
+
+    // NOTE: this is a quick-n-dirty hack to get keyboard input working!
+    switch (port) {
+        case 0xF470:
+            return ~(this->cur_key_mask.col[0]);
+        case 0xF471:
+            return ~(this->cur_key_mask.col[1]);
+        case 0xF472:
+            return ~(this->cur_key_mask.col[2]);
+        case 0xF473:
+            return ~(this->cur_key_mask.col[3]);
+        case 0xF474:
+            return ~(this->cur_key_mask.col[4]);
+        case 0xF475:
+            return ~(this->cur_key_mask.col[5]);
+        case 0xF476:
+            return ~(this->cur_key_mask.col[6]);
+        case 0xF477:
+            return ~(this->cur_key_mask.col[7]);
+        case 0xF478:
+            return ~(this->cur_key_mask.col[8]);
+        case 0xF479:
+            return ~(this->cur_key_mask.col[9]);
+    }
+
     // FIXME
-    printf("IN %04x\n", port);
+//    printf("IN %04x\n", port);
     return 0xFF;
 }
 
@@ -278,19 +374,17 @@ cpc::scanline() {
     }
 
     // issue an interrupt request every 52 scan lines
-    if (this->hsync_counter == 52) {
+    if (++this->hsync_counter == 52) {
         this->hsync_counter = 0;
         this->irq();
     }
 
     // start new frame?
-    if (this->scanline_counter == 312) {
-        // start new frame
+    if (++this->scanline_counter == 312) {
+        // start new frame, fetch next key mask
+        this->cur_key_mask = this->next_key_mask;
         this->scanline_counter = 0;
     }
-
-    this->hsync_counter++;
-    this->scanline_counter++;
 }
 
 //------------------------------------------------------------------------------
