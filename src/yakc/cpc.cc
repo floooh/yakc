@@ -3,8 +3,6 @@
 //------------------------------------------------------------------------------
 #include "cpc.h"
 
-#include <stdio.h>
-
 namespace YAKC {
 
 //------------------------------------------------------------------------------
@@ -84,7 +82,9 @@ cpc::check_roms(const rom_images& roms, device model, os_rom os) {
         return roms.has(rom_images::cpc464_os) && roms.has(rom_images::cpc464_basic);
     }
     else if (device::cpc6128 == model) {
-        return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
+// FIXME
+//        return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
+return false;
     }
     return false;
 }
