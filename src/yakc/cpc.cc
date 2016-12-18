@@ -135,7 +135,7 @@ cpc::poweron(device m) {
     clear(this->board->ram, sizeof(this->board->ram));
     this->init_memory_map();
 
-    // initialize clock and timers
+    // initialize clock to 4 MHz
     this->board->clck.init(4000);
 
     // CPU start state
@@ -191,7 +191,19 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
 void
 cpc::cpu_out(uword port, ubyte val) {
     YAKC_ASSERT(device::cpc464 == this->cur_model);
-    if ((port & 0xFF00) == 0x7F00) {
+    if (0 == (port & (1<<14))) {
+        // CRTC function
+        const uword crtc_func = port & 0x0300;
+        if (crtc_func == 0x0000) {
+            // 0xBCxx: select CRTC register
+            this->video.select_crtc(val);
+        }
+        else if (crtc_func == 0x0100) {
+            // 0xBDxx: write CRTC register
+            this->video.write_crtc(val);
+        }
+    }
+    else if ((port & 0xFF00) == 0x7F00) {
         //
         // http://www.grimware.org/doku.php/documentations/devices/gatearray
         // http://www.cpcwiki.eu/index.php/Gate_Array
@@ -223,6 +235,8 @@ cpc::cpu_out(uword port, ubyte val) {
             //
             //  - bit 4: interrupt generation control
             //
+            this->video.set_mode(val & 3);
+
             auto& mem = this->board->cpu.mem;
 
             // enable/disable lower ROM
