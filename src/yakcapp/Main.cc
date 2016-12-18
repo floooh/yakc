@@ -172,7 +172,7 @@ YakcApp::OnRunning() {
         this->draw.Render(this->emu.z1013.rgba8_buffer, 256, 256);
     }
     else if (this->emu.cpc.on) {
-        this->draw.Render(this->emu.cpc.rgba8_buffer, 640, 200);
+        this->draw.Render(this->emu.cpc.video.rgba8_buffer, 640, 200);
     }
     else if (this->emu.zx.on) {
         // NOTE: ZX only has 256x192 framebuffer, but we put

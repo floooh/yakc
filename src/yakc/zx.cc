@@ -148,9 +148,9 @@ zx::init_memory_map() {
     cpu.mem.unmap_all();
     if (device::zxspectrum48k == this->cur_model) {
         // 48k RAM between 0x4000 and 0xFFFF
-        cpu.mem.map(0, 0x4000, 0x4000, this->ram[5], true);
-        cpu.mem.map(0, 0x8000, 0x4000, this->ram[1], true);
-        cpu.mem.map(0, 0xC000, 0x4000, this->ram[2], true);
+        cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[5], true);
+        cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[1], true);
+        cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[2], true);
 
         // 16k ROM between 0x0000 and 0x3FFF
         YAKC_ASSERT(this->roms->has(rom_images::zx48k) && (this->roms->size(rom_images::zx48k) == 0x4000));
@@ -158,9 +158,9 @@ zx::init_memory_map() {
     }
     else {
         // Spectrum 128k initial memory mapping
-        cpu.mem.map(0, 0x4000, 0x4000, this->ram[5], true);
-        cpu.mem.map(0, 0x8000, 0x4000, this->ram[2], true);
-        cpu.mem.map(0, 0xC000, 0x4000, this->ram[0], true);
+        cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[5], true);
+        cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[2], true);
+        cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[0], true);
         YAKC_ASSERT(this->roms->has(rom_images::zx128k_0) && (this->roms->size(rom_images::zx128k_0) == 0x4000));
         YAKC_ASSERT(this->roms->has(rom_images::zx128k_1) && (this->roms->size(rom_images::zx128k_1) == 0x4000));
         cpu.mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx128k_0), false);
@@ -192,7 +192,7 @@ zx::poweron(device m) {
     this->on = true;
 
     // map memory
-    clear(this->ram, sizeof(this->ram));
+    clear(this->board->ram, sizeof(this->board->ram));
     this->init_memory_map();
 
     // initialize the system clock and PAL-line timer
@@ -284,7 +284,7 @@ zx::cpu_out(uword port, ubyte val) {
                 auto& mem = this->board->cpu.mem;
 
                 // only last memory bank is mappable
-                mem.map(0, 0xC000, 0x4000, this->ram[val & 0x7], true);
+                mem.map(0, 0xC000, 0x4000, this->board->ram[val & 0x7], true);
 
                 // ROM0 or ROM1
                 if (val & (1<<4)) {
@@ -448,7 +448,7 @@ zx::decode_video_line(uint16_t y) {
     // the blink flag flips every 16 frames
     //
     uint32_t* dst = &(this->rgba8_buffer[y*320]);
-    const uint8_t* vidmem_bank = this->ram[this->display_ram_bank];
+    const uint8_t* vidmem_bank = this->board->ram[this->display_ram_bank];
     const bool blink = 0 != (this->blink_counter & 0x10);
     uint32_t fg, bg;
     if ((y < 32) || (y >= 224)) {

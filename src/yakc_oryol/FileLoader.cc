@@ -352,7 +352,7 @@ FileLoader::load_zxz80(yakc* emu, const FileInfo& info, const Buffer& data) {
                 uint32_t len = (phdr->len_h<<8 | phdr->len_l) & 0xFFFF;
                 int page_index = phdr->page_nr - 3;
                 const ubyte* src_ptr = ptr + sizeof(zxz80page_header);
-                ubyte* dst_ptr = emu->zx.ram[page_index];
+                ubyte* dst_ptr = emu->zx.board->ram[page_index];
                 const ubyte* dst_end_ptr = dst_ptr + 0x4000;
                 if ((page_index >= 0) && (page_index < 8)) {
                     if (0xFFFF == len) {

@@ -31,6 +31,9 @@ public:
     virtual void irq();
     /// clock timer triggered
     virtual void timer(int timer_id);
+
+    /// optional, called when vblank happens
+    virtual void vblank();
 };
 
 } // namespace YAKC

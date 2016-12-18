@@ -21,6 +21,7 @@ public:
     z80pio pio2;        // Z9001 has 2 PIOs
     z80ctc ctc;
     z80dbg dbg;
+    ubyte ram[8][0x4000];
 };
 
 } // namespace YAKC

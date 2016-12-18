@@ -59,4 +59,10 @@ z80bus::timer(int timer_id) {
     // empty
 }
 
+//------------------------------------------------------------------------------
+void
+z80bus::vblank() {
+    // empty
+}
+
 } // namespace YAKC

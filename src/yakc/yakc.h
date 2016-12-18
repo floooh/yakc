@@ -19,12 +19,12 @@ class yakc {
 public:
     device model = device::none;
     os_rom os = os_rom::none;
-    breadboard board;
     class kc85 kc85;
     class z1013 z1013;
     class z9001 z9001;
     class zx zx;
     class cpc cpc;
+    breadboard board;
     class rom_images roms;
 
     /// one-time init

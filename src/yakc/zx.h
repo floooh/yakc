@@ -12,9 +12,6 @@ namespace YAKC {
 
 class zx : public z80bus {
 public:
-    /// ram banks
-    ubyte ram[8][0x4000];
-
     /// the main board
     breadboard* board = nullptr;
     /// rom image storage
@@ -58,8 +55,6 @@ public:
 
     /// called by timer for each PAL scanline (decodes 1 line of vidmem)
     void scanline();
-    /// called by PAL line for each vblank (generates interrupt)
-    void vblank();
 
     static uint32_t palette[8];
 
