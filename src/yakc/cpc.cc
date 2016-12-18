@@ -130,6 +130,7 @@ cpc::poweron(device m) {
     this->cur_model = m;
     this->on = true;
     this->video.init(this->board);
+    this->pio_c = 0;
     this->next_key_mask = key_mask();
     this->cur_key_mask = key_mask();
 
@@ -157,6 +158,7 @@ cpc::poweroff() {
 void
 cpc::reset() {
     this->video.reset();
+    this->pio_c = 0;
     this->next_key_mask = key_mask();
     this->cur_key_mask = key_mask();
     this->board->cpu.reset();
@@ -274,6 +276,7 @@ cpc::cpu_out(uword port, ubyte val) {
     else if ((port & 0xFF00) == 0xF600) {
         // FIXME: 8255 PIO Port C (KeybRow, Tape, PSG Control)
         //printf("OUT PIO Port C: %02x\n", val);
+        this->pio_c = val;
     }
     else if ((port & 0xFF00) == 0xF700) {
         // FIXME: 8255 PIO Control Register
@@ -348,8 +351,12 @@ cpc::cpu_in(uword port) {
         }
         return val;
     }
+    else if ((port & 0xFF00) == 0xF600) {
+        // PIO-C, FIXME: why is this read back?
+        return this->pio_c;
+    }
     else {
-//        printf("IN %04x\n", port);
+        printf("IN %04x\n", port);
         return 0x00;
     }
 }

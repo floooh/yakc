@@ -55,6 +55,7 @@ public:
     device cur_model = device::cpc464;
     bool on = false;
     cpc_video video;
+    ubyte pio_c;
     struct key_mask {
         ubyte col[10] = { };
     };
