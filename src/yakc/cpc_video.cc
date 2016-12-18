@@ -65,12 +65,24 @@ cpc_video::reset() {
     this->hsync_count = 0;
     this->selected_pen = 0;
     this->border_color = 0;
+    this->vsync_flag = false;
     clear(this->pens, sizeof(this->pens));
 
     // reset CRTC registers
     // http://www.cpcwiki.eu/index.php/CRTC
-    clear(this->crtc.regs, sizeof(this->crtc.regs));
     this->crtc.selected = 0;
+
+    clear(this->crtc.regs, sizeof(this->crtc.regs));
+    this->crtc.regs[crtc_t::HORI_TOTAL] = 63;
+    this->crtc.regs[crtc_t::HORI_DISPLAYED] = 40;
+    this->crtc.regs[crtc_t::HORI_SYNC_POS] = 46;
+    this->crtc.regs[crtc_t::SYNC_WIDTHS] = 128 + 14;
+    this->crtc.regs[crtc_t::VERT_TOTAL] = 38;
+    this->crtc.regs[crtc_t::VERT_DISPLAYED] = 25;
+    this->crtc.regs[crtc_t::VERT_SYNC_POS] = 30;
+    this->crtc.regs[crtc_t::MAX_RASTER_ADDR] = 7;
+    this->crtc.regs[crtc_t::DISPLAY_START_ADDR_HI] = 32;
+
     this->crtc.mask[crtc_t::HORI_TOTAL] = 0xFF;
     this->crtc.mask[crtc_t::HORI_DISPLAYED] = 0xFF;
     this->crtc.mask[crtc_t::HORI_SYNC_POS] = 0xFF;
@@ -120,11 +132,34 @@ cpc_video::scanline(z80bus* bus) {
     // issue an interrupt request every 52 scan lines
     // FIXME: when the CPU acknowledges the interrupt, bit 5 of the
     // hsync_counter must be cleared
-    // FIXME #2: gate array interrupt control flag
+    // FIXME #2: gate array interrupt control flagcalc
+    //
     // see: http://www.retroisle.com/amstrad/cpc/Technical/hardware_Interrupts.php
+    //      http://cpctech.cpc-live.com/docs/ints.html
+    //
+    // NOTE: for color flashing to work, an interrupt must happen while
+    // the interrupt is processed by the CPU, with standard CRTC register
+    // values, this would happen at scanline 260 (the 5th HSYNC of the frame)
     if (++this->hsync_count == 52) {
         this->hsync_count = 0;
         bus->irq();
+    }
+
+    // set the vsync bit
+    // http://www.cpcwiki.eu/index.php/CRTC
+    const uint32_t char_height = this->crtc.regs[crtc_t::MAX_RASTER_ADDR] + 1;
+    const int min_vsync_line = this->crtc.regs[crtc_t::VERT_SYNC_POS] * char_height;
+
+    // NOTE: the vsync 'duration' is fixed on 'old' CPCs, the docs say 16 lines, but
+    // with this it will not be active during when a HSYNC interrupt is triggered
+    // (on scanline 260), thus we double the number of lines, so that the
+    // 5th IRQ on the frame sees an active vsync_flag
+    const int max_vsync_line = min_vsync_line + 32;
+    if ((this->scanline_count >= min_vsync_line) && (this->scanline_count < max_vsync_line)) {
+        this->vsync_flag = true;
+    }
+    else {
+        this->vsync_flag = false;
     }
 
     // start new frame?
@@ -281,13 +316,18 @@ cpc_video::write_crtc(ubyte val) {
 ubyte
 cpc_video::read_crtc() const {
     if ((this->crtc.selected >= 12) && (this->crtc.selected < 18)) {
-        // FIXME
-        return 0;
+        return this->crtc.regs[this->crtc.selected];
     }
     else {
         // write only register, or outside register range
         return 0;
     }
+}
+
+//------------------------------------------------------------------------------
+bool
+cpc_video::vsync_bit() const {
+    return this->vsync_flag;
 }
 
 } // namespace YAKC

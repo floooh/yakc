@@ -3,6 +3,8 @@
 //------------------------------------------------------------------------------
 #include "cpc.h"
 
+#include <stdio.h>
+
 namespace YAKC {
 
 //------------------------------------------------------------------------------
@@ -190,6 +192,7 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
 //------------------------------------------------------------------------------
 void
 cpc::cpu_out(uword port, ubyte val) {
+    // http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
     YAKC_ASSERT(device::cpc464 == this->cur_model);
     if (0 == (port & (1<<14))) {
         // CRTC function
@@ -202,8 +205,14 @@ cpc::cpu_out(uword port, ubyte val) {
             // 0xBDxx: write CRTC register
             this->video.write_crtc(val);
         }
+        else {
+            printf("OUT: unknown CRTC function!\n");
+        }
+        return;
     }
-    else if ((port & 0xFF00) == 0x7F00) {
+    else if (0x4000 == (port & 0xC000)) {
+        //
+        // Gate Array function
         //
         // http://www.grimware.org/doku.php/documentations/devices/gatearray
         // http://www.cpcwiki.eu/index.php/Gate_Array
@@ -214,13 +223,11 @@ cpc::cpu_out(uword port, ubyte val) {
         if (reg == 0x00) {
             // if bit 4 is set, this means that the border color should be set
             this->video.select_pen(val);
-            return;
         }
-        if (reg == 0x40) {
+        else if (reg == 0x40) {
             this->video.assign_color(val);
-            return;
         }
-        if (reg == 0x80) {
+        else if (reg == 0x80) {
             //
             //  select screen mode, rom config and int ctrl
             //
@@ -254,10 +261,27 @@ cpc::cpu_out(uword port, ubyte val) {
             else {
                 mem.map_rw(0, 0xC000, 0x4000, this->roms->ptr(rom_images::cpc464_basic), this->board->ram[3]);
             }
-            return;
+        }
+        else {
+            // FIXME: unknown Gate Array function
+            printf("OUT Unknown Gate Array func: %02x", val);
         }
     }
-//    printf("OUT %04x %02x\n", port, val);
+    else if ((port & 0xFF00) == 0xF400) {
+        // FIXME: 8255 PIO Port A (PSG Data)
+        // printf("OUT PIO Port A: %02x\n", val);
+    }
+    else if ((port & 0xFF00) == 0xF600) {
+        // FIXME: 8255 PIO Port C (KeybRow, Tape, PSG Control)
+        //printf("OUT PIO Port C: %02x\n", val);
+    }
+    else if ((port & 0xFF00) == 0xF700) {
+        // FIXME: 8255 PIO Control Register
+        // printf("OUT PIO Control: %02x\n", val);
+    }
+    else {
+        printf("OUT %04x %02x\n", port, val);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -275,33 +299,59 @@ cpc::put_key(ubyte ascii) {
 ubyte
 cpc::cpu_in(uword port) {
 
-    // NOTE: this is a quick-n-dirty hack to get keyboard input working!
-    switch (port) {
-        case 0xF470:
-            return ~(this->cur_key_mask.col[0]);
-        case 0xF471:
-            return ~(this->cur_key_mask.col[1]);
-        case 0xF472:
-            return ~(this->cur_key_mask.col[2]);
-        case 0xF473:
-            return ~(this->cur_key_mask.col[3]);
-        case 0xF474:
-            return ~(this->cur_key_mask.col[4]);
-        case 0xF475:
-            return ~(this->cur_key_mask.col[5]);
-        case 0xF476:
-            return ~(this->cur_key_mask.col[6]);
-        case 0xF477:
-            return ~(this->cur_key_mask.col[7]);
-        case 0xF478:
-            return ~(this->cur_key_mask.col[8]);
-        case 0xF479:
-            return ~(this->cur_key_mask.col[9]);
+    if (0 == (port & (1<<14))) {
+        // CRTC function
+        // FIXME: this doesn't seem to be called from the BASIC prompt
+        const uword crtc_func = port & 0x0300;
+        if (crtc_func == 0x0300) {
+            // 0xBFxx: read from selected CRTC register
+            return this->video.read_crtc();
+        }
+        else {
+            printf("IN: CRTC unknown function!\n");
+            return 0xFF;
+        }
     }
-
-    // FIXME
-//    printf("IN %04x\n", port);
-    return 0xFF;
+    else if ((port & 0xFF00) == 0xF400) {
+        // 8255 PIO Port A (PSG Data)
+        if ((port & 0x000F) < 10) {
+            // NOTE: this is a quick-n-dirty hack to get keyboard input working!
+            return ~(this->cur_key_mask.col[port & 0x000F]);
+        }
+        else {
+            printf("IN: PIO Port A unknown function!\n");
+            return 0xFF;
+        }
+    }
+    else if ((port & 0xFF00) == 0xF500) {
+        // http://cpcwiki.eu/index.php/8255
+        //
+        // PIO Port B:
+        //  Bit 7: cassette data input
+        //  Bit 6: printer port ready (1=not ready, 0=ready)
+        //  Bit 5: expansion port /EXP pin
+        //  Bit 4: screen refresh rate (1=50Hz, 0=60Hz)
+        //  Bit 3..1: distributor id (shown in start screen)
+        //      0: Isp
+        //      1: Triumph
+        //      2: Saisho
+        //      3: Solavox
+        //      4: Awa
+        //      5: Schneider
+        //      6: Orion
+        //      7: Amstrad
+        //  Bit 0: vsync
+        //
+        ubyte val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
+        if (this->video.vsync_bit()) {
+            val |= (1<<0);
+        }
+        return val;
+    }
+    else {
+//        printf("IN %04x\n", port);
+        return 0x00;
+    }
 }
 
 //------------------------------------------------------------------------------

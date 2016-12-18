@@ -31,6 +31,8 @@ public:
     void write_crtc(ubyte val);
     /// read crtc register
     ubyte read_crtc() const;
+    /// get current state of the vsync bit
+    bool vsync_bit() const;
 
     /// called by update at start of a scanline
     void scanline(z80bus* bus);
@@ -76,7 +78,8 @@ public:
         ubyte mask[NUM_REGS];       // used to mask reg value to valid range
     };
     crtc_t crtc;
-
+    
+    bool vsync_flag = false;
     uint32_t mode = 1;
     uint32_t selected_pen = 0;
     uint32_t border_color = 0;
