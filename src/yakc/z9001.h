@@ -26,9 +26,11 @@ class z9001 : public z80bus {
 public:
     /// the main board
     breadboard* board = nullptr;
+    /// rom image store
+    rom_images* roms = nullptr;
 
     /// one-time setup
-    void init(breadboard* board);
+    void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
     static bool check_roms(const rom_images& roms, device model, os_rom os);
     /// setup audio callbacks

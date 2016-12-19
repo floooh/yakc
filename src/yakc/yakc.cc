@@ -14,8 +14,8 @@ yakc::init(const ext_funcs& sys_funcs, const sound_funcs& snd_funcs) {
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
     this->kc85.init(&this->board, &this->roms);
-    this->z1013.init(&this->board);
-    this->z9001.init(&this->board);
+    this->z1013.init(&this->board, &this->roms);
+    this->z9001.init(&this->board, &this->roms);
     this->zx.init(&this->board, &this->roms);
     this->cpc.init(&this->board, &this->roms);
     this->kc85.audio.setup_callbacks(snd_funcs);

@@ -12,24 +12,34 @@ class rom_images {
 public:
     /// existing ROM blobs
     enum rom {
-        hc900 = 0,          // HC-900 CAOS (KC85/2)
-        caos22,             // CAOS 2.2
-        caos31,             // CAOS 3.1
-        caos34,             // CAOS 3.4
-        caos42e,            // CAOS 4.2, 4 KByte chunk at E000
-        caos42c,            // CAOS 4.2, 8 KByte chunk at C000
-        kc85_basic_rom,     // BASIC ROM, KC85/3 and KC85/4
-        kc85_basic_mod,     // BASIC+HC-901 CAOS ROM MODULE, KC85/2
-        forth,              // KC85 FORTH module
-        develop,            // KC85 DEVELOP module
-        texor,              // KC85 TEXOR module
-        zx48k,              // ZX Spectrum 48K ROM
-        zx128k_0,           // ZX Spectrum 128K ROM0
-        zx128k_1,           // ZX Spectrum 128K ROM1
-        cpc464_os,          // CPC 464 OS ROM
-        cpc464_basic,       // CPC 464 BASIC ROM
-        cpc6128_os,         // CPC 6128 OS ROM
-        cpc6128_basic,      // CPC 6128 BASIC ROM
+        hc900 = 0,              // HC-900 CAOS (KC85/2)
+        caos22,                 // CAOS 2.2
+        caos31,                 // CAOS 3.1
+        caos34,                 // CAOS 3.4
+        caos42e,                // CAOS 4.2, 4 KByte chunk at E000
+        caos42c,                // CAOS 4.2, 8 KByte chunk at C000
+        kc85_basic_rom,         // BASIC ROM, KC85/3 and KC85/4
+        kc85_basic_mod,         // BASIC+HC-901 CAOS ROM MODULE, KC85/2
+        forth,                  // KC85 FORTH module
+        develop,                // KC85 DEVELOP module
+        texor,                  // KC85 TEXOR module
+        zx48k,                  // ZX Spectrum 48K ROM
+        zx128k_0,               // ZX Spectrum 128K ROM0
+        zx128k_1,               // ZX Spectrum 128K ROM1
+        cpc464_os,              // CPC 464 OS ROM
+        cpc464_basic,           // CPC 464 BASIC ROM
+        cpc6128_os,             // CPC 6128 OS ROM
+        cpc6128_basic,          // CPC 6128 BASIC ROM
+        z9001_basic_507_511,    // Z9001 original BASIC ROM
+        z9001_os12_1,           // Z9001 OS 1.2 ROM 1
+        z9001_os12_2,           // Z9001 OS 1.2 ROM 2
+        z9001_basic,            // Z9001 BASIC ROM (used in KC87)
+        kc87_os_2,              // Z9001 OS 2.0 (used in KC87)
+        z9001_font,             // Z9001 original font ROM
+        kc87_font_2,            // Z9001 new font ROM (used in KC87)
+        z1013_mon202,           // Z1013 Monitor 2.02 ROM
+        z1013_mon_a2,           // Z1013 Monitor A.2 ROM
+        z1013_font,             // Z1013 font ROM
 
         num_roms
     };

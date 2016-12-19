@@ -8,15 +8,20 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-z1013::init(breadboard* b) {
+z1013::init(breadboard* b, rom_images* r) {
     this->board = b;
+    this->roms = r;
 }
 
 //------------------------------------------------------------------------------
 bool
 z1013::check_roms(const rom_images& roms, device model, os_rom os) {
-    // FIXME
-    return true;
+    if (device::z1013_01 == model) {
+        return roms.has(rom_images::z1013_mon202) && roms.has(rom_images::z1013_font);
+    }
+    else {
+        return roms.has(rom_images::z1013_mon_a2) && roms.has(rom_images::z1013_font);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -36,10 +41,10 @@ z1013::init_memory_mapping() {
     cpu.mem.map(0, 0xEC00, 0x0400, this->board->ram[vidmem_page], true);
     // 2 kByte system rom
     if (os_rom::z1013_mon202 == this->cur_os) {
-        cpu.mem.map(0, 0xF000, sizeof(dump_z1013_mon202), dump_z1013_mon202, false);
+        cpu.mem.map(0, 0xF000, this->roms->size(rom_images::z1013_mon202), this->roms->ptr(rom_images::z1013_mon202), false);
     }
     else {
-        cpu.mem.map(0, 0xF000, sizeof(dump_z1013_mon_a2), dump_z1013_mon_a2, false);
+        cpu.mem.map(0, 0xF000, this->roms->size(rom_images::z1013_mon_a2), this->roms->ptr(rom_images::z1013_mon_a2), false);
     }
 }
 
@@ -371,11 +376,12 @@ void
 z1013::decode_video() {
     uint32_t* dst = rgba8_buffer;
     const ubyte* src = this->board->ram[vidmem_page];
+    const ubyte* font = this->roms->ptr(rom_images::z1013_font);
     for (int y = 0; y < 32; y++) {
         for (int py = 0; py < 8; py++) {
             for (int x = 0; x < 32; x++) {
                 ubyte chr = src[(y<<5) + x];
-                ubyte bits = dump_z1013_font[(chr<<3)|py];
+                ubyte bits = font[(chr<<3)|py];
                 for (int px = 7; px >=0; px--) {
                     *dst++ = bits & (1<<px) ? 0xFFFFFFFF : 0xFF000000;
                 }

@@ -225,6 +225,36 @@ YakcApp::initRoms() {
     IO::Load("rom:caos42e.854", [this](IO::LoadResult ioRes) {
         this->emu.roms.add(rom_images::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
     });
+    IO::Load("rom:z1013_mon202.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::z1013_mon202, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:z1013_mon_a2.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::z1013_mon_a2, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:z1013_font.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::z1013_font, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:z9001_os12_1.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::z9001_os12_1, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:z9001_os12_2.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::z9001_os12_2, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:z9001_font.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::z9001_font, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:z9001_basic.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::z9001_basic, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:kc87_os_2.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::kc87_os_2, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:z9001_basic_507_511.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::z9001_basic_507_511, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:kc87_font_2.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::kc87_font_2, ioRes.Data.Data(), ioRes.Data.Size());
+    });
     IO::Load("rom:amstrad_zx48k.bin", [this](IO::LoadResult ioRes) {
         this->emu.roms.add(rom_images::zx48k, ioRes.Data.Data(), ioRes.Data.Size());
     });
