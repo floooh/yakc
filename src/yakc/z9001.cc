@@ -95,19 +95,19 @@ z9001::init_memory_mapping() {
     cpu.mem.unmap_all();
     if (device::z9001 == this->cur_model) {
         // emulate a Z9001 with 16 KByte RAM module and BASIC module
-        cpu.mem.map(0, 0x0000, 0x8000, this->ram, true);
+        cpu.mem.map(0, 0x0000, 0x8000, this->board->ram[0], true);
         cpu.mem.map(1, 0xC000, 0x2800, dump_basic_507_511, false);
         cpu.mem.map(1, 0xF000, 0x0800, dump_z9001_os12_1, false);
         cpu.mem.map(1, 0xF800, 0x0800, dump_z9001_os12_2, false);
     }
     else if (device::kc87 == this->cur_model) {
         // emulate a KC87 with 48 KByte RAM
-        cpu.mem.map(0, 0x0000, 0xC000, this->ram, true);
+        cpu.mem.map(0, 0x0000, 0xC000, this->board->ram[0], true);
         cpu.mem.map(1, 0xC000, 0x2000, dump_z9001_basic, false);
         cpu.mem.map(1, 0xE000, 0x2000, dump_kc87_os_2, false);
-        cpu.mem.map(0, 0xE800, 0x0400, this->color_ram, true);
+        cpu.mem.map(0, 0xE800, 0x0400, this->board->ram[color_ram_page], true);
     }
-    cpu.mem.map(0, 0xEC00, 0x0400, this->video_ram, true);
+    cpu.mem.map(0, 0xEC00, 0x0400, this->board->ram[video_ram_page], true);
 }
 
 //------------------------------------------------------------------------------
@@ -146,9 +146,9 @@ z9001::poweron(device m, os_rom os) {
     this->keybuf.init(4);
 
     // map memory
-    clear(this->ram, sizeof(this->ram));
-    fill_random(this->color_ram, sizeof(this->color_ram));
-    fill_random(this->video_ram, sizeof(this->video_ram));
+    clear(this->board->ram, sizeof(this->board->ram));
+    fill_random(this->board->ram[color_ram_page], sizeof(this->board->ram[color_ram_page]));
+    fill_random(this->board->ram[video_ram_page], sizeof(this->board->ram[video_ram_page]));
     this->init_memory_mapping();
 
     // initialize the clock at 2.4576 MHz
@@ -496,6 +496,8 @@ z9001::decode_video() {
 
     // FIXME: there's also a 40x20 display mode
     uint32_t* dst = this->rgba8_buffer;
+    const ubyte* vidmem = this->board->ram[video_ram_page];
+    const ubyte* colmem = this->board->ram[color_ram_page];
     ubyte* font;
     if (device::kc87 == this->cur_model) {
         font = dump_kc87_font_2;
@@ -509,9 +511,9 @@ z9001::decode_video() {
         for (int y = 0; y < 24; y++) {
             for (int py = 0; py < 8; py++) {
                 for (int x = 0; x < 40; x++) {
-                    ubyte chr = this->video_ram[off+x];
+                    ubyte chr = vidmem[off+x];
                     ubyte pixels = font[(chr<<3)|py];
-                    ubyte color = this->color_ram[off+x];
+                    ubyte color = colmem[off+x];
                     if ((color & 0x80) && this->blink_flipflop) {
                         // blinking: swap bg and fg
                         fg = palette[color&7];
@@ -533,7 +535,7 @@ z9001::decode_video() {
         for (int y = 0; y < 24; y++) {
             for (int py = 0; py < 8; py++) {
                 for (int x = 0; x < 40; x++) {
-                    ubyte chr = this->video_ram[off+x];
+                    ubyte chr = vidmem[off+x];
                     ubyte pixels = font[(chr<<3)|py];
                     for (int px = 7; px >=0; px--) {
                         *dst++ = pixels & (1<<px) ? 0xFFFFFFFF : 0xFF000000;

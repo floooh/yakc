@@ -290,12 +290,8 @@ cpc::cpu_out(uword port, ubyte val) {
 //------------------------------------------------------------------------------
 void
 cpc::put_key(ubyte ascii) {
-    if (ascii) {
-        this->next_key_mask = this->key_map[ascii];
-    }
-    else {
-        this->next_key_mask = key_mask();
-    }
+    // ascii=0 means no key pressed
+    this->next_key_mask = this->key_map[ascii];
 }
 
 //------------------------------------------------------------------------------

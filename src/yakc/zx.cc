@@ -317,13 +317,9 @@ zx::cpu_out(uword port, ubyte val) {
 //------------------------------------------------------------------------------
 void
 zx::put_key(ubyte ascii) {
-    // register a new key press with the emulator
-    if (ascii) {
-        this->next_kbd_mask = this->key_map[ascii];
-    }
-    else {
-        this->next_kbd_mask = 0;
-    }
+    // register a new key press with the emulator,
+    // ascii=0 means no key pressed
+    this->next_kbd_mask = this->key_map[ascii];
 }
 
 //------------------------------------------------------------------------------

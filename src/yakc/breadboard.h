@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 /**
     @class YAKC::breadboard
-    @brief houses all the chips required by emulated systems
+    @brief houses all the common chips required by emulated systems
 */
 #include "yakc/core.h"
 #include "yakc/clock.h"
@@ -18,7 +18,7 @@ public:
     clock clck;
     z80 cpu;
     z80pio pio;
-    z80pio pio2;        // Z9001 has 2 PIOs
+    z80pio pio2;
     z80ctc ctc;
     z80dbg dbg;
     ubyte ram[8][0x4000];

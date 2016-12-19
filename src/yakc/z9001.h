@@ -24,13 +24,6 @@ namespace YAKC {
 
 class z9001 : public z80bus {
 public:
-    /// system RAM
-    ubyte ram[4*0x4000];
-    /// color RAM (40x24 color attributes)
-    ubyte color_ram[0x400];
-    /// video RAM (40x24 characters)
-    ubyte video_ram[0x400];
-
     /// the main board
     breadboard* board = nullptr;
 
@@ -83,6 +76,9 @@ public:
 
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
+
+    static const int video_ram_page = 4;
+    static const int color_ram_page = 5;
 
     device cur_model = device::kc87;
     os_rom cur_os = os_rom::kc87_os_2;

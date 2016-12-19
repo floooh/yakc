@@ -4,17 +4,14 @@
     @class kc85_video
     @brief wraps the KC85 video RAM (IRM) and video decoding hardware
 */
-#include "yakc/core.h"
+#include "yakc/breadboard.h"
 
 namespace YAKC {
 
 class kc85_video {
 public:
-    /// video memory banks
-    ubyte irm[4][0x4000];
-
     /// initialize the video hardware
-    void init(device m);
+    void init(device m, breadboard* b);
     /// reset the video hardware
     void reset();
 
@@ -35,6 +32,8 @@ public:
     /// decoded linear RGBA8 video buffer
     unsigned int rgba8_buffer[320*256];
 
+    static const int irm0_page = 4;
+    breadboard* board = nullptr;
     device model = device::kc85_3;
     ubyte irm_control = 0;
     bool pio_blink_flag = true;

@@ -26,14 +26,14 @@ z1013::init_memory_mapping() {
     cpu.mem.unmap_all();
     if (device::z1013_64 == this->cur_model) {
         // 64 kByte RAM
-        cpu.mem.map(1, 0x0000, 0x10000, this->ram, true);
+        cpu.mem.map(1, 0x0000, 0x10000, this->board->ram[0], true);
     }
     else {
         // 16 kByte RAM
-        cpu.mem.map(1, 0x0000, 0x4000, this->ram, true);
+        cpu.mem.map(1, 0x0000, 0x4000, this->board->ram[0], true);
     }
     // 1 kByte video memory
-    cpu.mem.map(0, 0xEC00, 0x0400, this->irm, true);
+    cpu.mem.map(0, 0xEC00, 0x0400, this->board->ram[vidmem_page], true);
     // 2 kByte system rom
     if (os_rom::z1013_mon202 == this->cur_os) {
         cpu.mem.map(0, 0xF000, sizeof(dump_z1013_mon202), dump_z1013_mon202, false);
@@ -83,8 +83,7 @@ z1013::poweron(device m) {
     this->kbd_column_bits = 0;
 
     // map memory
-    clear(this->ram, sizeof(this->ram));
-    clear(this->irm, sizeof(this->irm));
+    clear(this->board->ram, sizeof(this->board->ram));
     this->init_memory_mapping();
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
@@ -371,10 +370,11 @@ z1013::init_keymap_8x8() {
 void
 z1013::decode_video() {
     uint32_t* dst = rgba8_buffer;
+    const ubyte* src = this->board->ram[vidmem_page];
     for (int y = 0; y < 32; y++) {
         for (int py = 0; py < 8; py++) {
             for (int x = 0; x < 32; x++) {
-                ubyte chr = this->irm[(y<<5) + x];
+                ubyte chr = src[(y<<5) + x];
                 ubyte bits = dump_z1013_font[(chr<<3)|py];
                 for (int px = 7; px >=0; px--) {
                     *dst++ = bits & (1<<px) ? 0xFFFFFFFF : 0xFF000000;

@@ -71,10 +71,10 @@ kc85::poweron(device m, os_rom os) {
     // fill RAM banks with noise (but not on KC85/4? at least the 4
     // doesn't have the random-color-pattern when switching it on)
     if (device::kc85_4 == m) {
-        clear(this->ram, sizeof(this->ram));
+        clear(this->board->ram, sizeof(this->board->ram));
     }
     else {
-        fill_random(this->ram, sizeof(this->ram));
+        fill_random(this->board->ram, sizeof(this->board->ram));
     }
 
     // set operating system pointers
@@ -89,7 +89,7 @@ kc85::poweron(device m, os_rom os) {
     this->board->ctc.init(0);
     this->board->cpu.init();
     this->exp.init();
-    this->video.init(m);
+    this->video.init(m, this->board);
     this->audio.init(&this->board->ctc);
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
@@ -427,11 +427,11 @@ kc85::update_bank_switching() {
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
         if (pio_a & PIO_A_RAM) {
-            cpu.mem.map(0, 0x0000, 0x4000, ram[0], true);
+            cpu.mem.map(0, 0x0000, 0x4000, this->board->ram[0], true);
         }
         // 16 KByte video memory at 0x8000
         if (pio_a & PIO_A_IRM) {
-            cpu.mem.map(0, 0x8000, 0x4000, this->video.irm[0], true);
+            cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[kc85_video::irm0_page], true);
         }
         // 8 KByte BASIC ROM at 0xC000 (only KC85/3)
         if (device::kc85_3 == this->cur_model) {
@@ -449,22 +449,22 @@ kc85::update_bank_switching() {
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
         if (pio_a & PIO_A_RAM) {
-            cpu.mem.map(0, 0x0000, 0x4000, ram[0], true);
+            cpu.mem.map(0, 0x0000, 0x4000, this->board->ram[0], true);
         }
         // 16 KByte RAM at 0x4000
         if (this->io86 & IO86_RAM4) {
-            cpu.mem.map(0, 0x4000, 0x4000, ram[1], true); // this->io86 & IO86_RAM4_RO);
+            cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[1], true); // this->io86 & IO86_RAM4_RO);
         }
         // 16 KByte RAM at 0x8000 (2 banks)
         if (pio_b & PIO_B_RAM8) {
-            ubyte* ram8_ptr = (this->io84 & IO84_SEL_RAM8) ? ram[3] : ram[2];
+            ubyte* ram8_ptr = (this->io84 & IO84_SEL_RAM8) ? this->board->ram[3] : this->board->ram[2];
             cpu.mem.map(0, 0x8000, 0x4000, ram8_ptr, true); // pio_b & PIO_B_RAM8_RO);
         }
         // IRM is 4 banks, 2 for pixels, 2 for color,
         // the area A800 to BFFF is always mapped to IRM0!
         if (pio_a & PIO_A_IRM) {
             int irm_index = (this->io84 & 6)>>1;
-            ubyte* irm_ptr = this->video.irm[irm_index];
+            ubyte* irm_ptr = this->board->ram[kc85_video::irm0_page + irm_index];
             // on the KC85, an access to IRM banks other than the
             // first is only possible for the first 10 KByte until
             // A800, memory access to the remaining 6 KBytes
@@ -473,7 +473,7 @@ kc85::update_bank_switching() {
             cpu.mem.map(0, 0x8000, 0x2800, irm_ptr, true);
 
             // always force access to A800 and above to the first IRM bank
-            cpu.mem.map(0, 0xA800, 0x1800, this->video.irm[0]+0x2800, true);
+            cpu.mem.map(0, 0xA800, 0x1800, this->board->ram[kc85_video::irm0_page]+0x2800, true);
         }
         // 8 KByte BASIC ROM at 0xC000
         if (pio_a & PIO_A_BASIC_ROM) {

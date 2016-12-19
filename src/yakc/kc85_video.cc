@@ -37,15 +37,10 @@ static uint32_t bg_palette[8] = {
 
 //------------------------------------------------------------------------------
 void
-kc85_video::init(device m) {
+kc85_video::init(device m, breadboard* b) {
     this->model = m;
+    this->board = b;
     this->irm_control = 0;
-    if (m == device::kc85_4) {
-        clear(this->irm, sizeof(this->irm));
-    }
-    else {
-        fill_random(this->irm, sizeof(this->irm));
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -120,8 +115,8 @@ kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
     if (device::kc85_4 == this->model) {
         // KC85/4
         int irm_index = (this->irm_control & 1) * 2;
-        const ubyte* pixel_data = this->irm[irm_index];
-        const ubyte* color_data = this->irm[irm_index+1];
+        const ubyte* pixel_data = this->board->ram[irm0_page + irm_index];
+        const ubyte* color_data = this->board->ram[irm0_page + irm_index + 1];
         for (int x = 0; x < width; x++) {
             int offset = y | (x<<8);
             ubyte src_pixels = pixel_data[offset];
@@ -131,8 +126,8 @@ kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
     }
     else {
         // KC85/3
-        const ubyte* pixel_data = this->irm[0];
-        const ubyte* color_data = this->irm[0] + 0x2800;
+        const ubyte* pixel_data = this->board->ram[irm0_page];
+        const ubyte* color_data = this->board->ram[irm0_page] + 0x2800;
         const int left_pixel_offset  = (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>4)&0xF)<<9);
         const int left_color_offset  = (((y>>2)&0x3f)<<5);
         const int right_pixel_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>6)&0x3)<<9);

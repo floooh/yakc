@@ -338,15 +338,11 @@ snapshot::apply_pio_state(const state_t& state, yakc& emu) {
 //------------------------------------------------------------------------------
 void
 snapshot::write_memory_state(const yakc& emu, state_t& state) {
+    static_assert(sizeof(emu.board.ram) == sizeof(state.ram), "Breadboard RAM size mismatch");
+    memcpy(state.ram, emu.board.ram, sizeof(emu.board.ram));
     if (emu.is_device(device::any_kc85)) {
+        // copy content of KC85 RAM modules
         const kc85& kc = emu.kc85;
-        static_assert(sizeof(kc.ram) == sizeof(state.ram), "KC RAM size mismatch");
-        static_assert(sizeof(kc.video.irm) == sizeof(state.irm), "KC video RAM size mismatch");
-
-        memcpy(state.ram, kc.ram, sizeof(kc.ram));
-        memcpy(state.irm, kc.video.irm, sizeof(kc.video.irm));
-
-        // copy content of RAM modules
         const auto& slot08 = kc.exp.slot_by_addr(0x08);
         if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
             memcpy(state.ram8, slot08.mod.mem_ptr, slot08.mod.mem_size);
@@ -356,32 +352,16 @@ snapshot::write_memory_state(const yakc& emu, state_t& state) {
             memcpy(state.ramC, slot0C.mod.mem_ptr, slot0C.mod.mem_size);
         }
     }
-    else if (emu.is_device(device::any_z1013)) {
-        static_assert(sizeof(emu.z1013.ram) == sizeof(state.ram), "Z1013 RAM size mismatch");
-        static_assert(sizeof(emu.z1013.irm) < sizeof(state.irm[0]), "Z1013 IRM size too big");
-        memcpy(state.ram, emu.z1013.ram, sizeof(emu.z1013.ram));
-        memcpy(state.irm[0], emu.z1013.irm, sizeof(emu.z1013.irm));
-    }
-    else if (emu.is_device(device::any_z9001)) {
-        static_assert(sizeof(emu.z9001.ram) == sizeof(state.ram), "Z9001 RAM size mismatch");
-        static_assert(sizeof(emu.z9001.color_ram) < sizeof(state.irm[0]), "Z9001 color RAM size too big");
-        static_assert(sizeof(emu.z9001.video_ram) < sizeof(state.irm[1]), "Z9001 video RAM size too big");
-        memcpy(state.ram, emu.z9001.ram, sizeof(emu.z9001.ram));
-        memcpy(state.irm[0], emu.z9001.color_ram, sizeof(emu.z9001.color_ram));
-        memcpy(state.irm[1], emu.z9001.video_ram, sizeof(emu.z9001.video_ram));
-    }
 }
 
 //------------------------------------------------------------------------------
 void
 snapshot::apply_memory_state(const state_t& state, yakc& emu) {
+    static_assert(sizeof(emu.board.ram) == sizeof(state.ram), "Breadboard RAM size mismatch");
+    memcpy(emu.board.ram, state.ram, sizeof(emu.board.ram));
     if (emu.is_device(device::any_kc85)) {
+        // copy content of KC85 RAM modules
         kc85& kc = emu.kc85;
-        static_assert(sizeof(kc.ram) == sizeof(state.ram), "KC RAM size mismatch");
-        static_assert(sizeof(kc.video.irm) == sizeof(state.irm), "KC video RAM size mismatch");
-
-        memcpy(kc.ram, state.ram, sizeof(state.ram));
-        memcpy(kc.video.irm, state.irm, sizeof(state.irm));
         const auto& slot08 = kc.exp.slot_by_addr(0x08);
         if (slot08.mod.mem_ptr && slot08.mod.mem_owned) {
             memcpy(slot08.mod.mem_ptr, state.ram8, slot08.mod.mem_size);
@@ -390,20 +370,6 @@ snapshot::apply_memory_state(const state_t& state, yakc& emu) {
         if (slot0C.mod.mem_ptr && slot0C.mod.mem_owned) {
             memcpy(slot0C.mod.mem_ptr, state.ramC, slot0C.mod.mem_size);
         }
-    }
-    else if (emu.is_device(device::any_z1013)) {
-        static_assert(sizeof(emu.z1013.ram) == sizeof(state.ram), "Z1013 RAM size mismatch");
-        static_assert(sizeof(emu.z1013.irm) < sizeof(state.irm[0]), "Z1013 IRM size too big");
-        memcpy(emu.z1013.ram, state.ram, sizeof(emu.z1013.ram));
-        memcpy(emu.z1013.irm, state.irm[0], sizeof(emu.z1013.irm));
-    }
-    else if (emu.is_device(device::any_z9001)) {
-        static_assert(sizeof(emu.z9001.ram) == sizeof(state.ram), "Z9001 RAM size mismatch");
-        static_assert(sizeof(emu.z9001.color_ram) < sizeof(state.irm[0]), "Z9001 color RAM size too big");
-        static_assert(sizeof(emu.z9001.video_ram) < sizeof(state.irm[1]), "Z9001 video RAM size too big");
-        memcpy(emu.z9001.ram, state.ram, sizeof(emu.z9001.ram));
-        memcpy(emu.z9001.color_ram, state.irm[0], sizeof(emu.z9001.color_ram));
-        memcpy(emu.z9001.video_ram, state.irm[1], sizeof(emu.z9001.video_ram));
     }
 }
 

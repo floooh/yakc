@@ -41,11 +41,6 @@ namespace YAKC {
 
 class z1013 : public z80bus {
 public:
-    /// ram banks
-    ubyte ram[4*0x4000];
-    /// 1 Kbyte separate video memory
-    ubyte irm[0x400];
-
     /// the main board
     breadboard* board = nullptr;
 
@@ -97,6 +92,7 @@ public:
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
 
+    static const int vidmem_page = 4;
     device cur_model = device::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;
     bool on = false;

@@ -140,9 +140,7 @@ public:
         pio_t pio2;
 
         // system RAM banks
-        ubyte ram[4][0x4000];
-        // IRM RAM banks
-        ubyte irm[4][0x4000];
+        ubyte ram[8][0x4000];
         // optional slot 0x08 RAM banks
         ubyte ram8[4][0x4000];
         // optional slot 0x0C RAM banks

@@ -15,9 +15,6 @@ namespace YAKC {
 
 class kc85 : public z80bus {
 public:
-    /// ram banks
-    ubyte ram[4][0x4000];
-
     /// IO bits
     enum {
         PIO_A_CAOS_ROM    = (1<<0),
