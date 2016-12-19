@@ -23,7 +23,7 @@ public:
     /// called from CPU OUT handler to assign color to selected pen
     void assign_color(ubyte val);
     /// set display mode (0..2)
-    void set_mode(ubyte val);
+    void set_video_mode(ubyte val);
 
     /// select crtc register
     void select_crtc(ubyte val);
@@ -78,13 +78,21 @@ public:
         ubyte mask[NUM_REGS];       // used to mask reg value to valid range
     };
     crtc_t crtc;
-    
+
+    static const int max_display_width = 768;
+    static const int max_display_height = 272;
+
+    int top_border_start    = (max_display_height - 200) / 2;
+    int bottom_border_start = ((max_display_height - 200) / 2) + 200;
+    int left_border_width   = (max_display_width - 640) / 2;
+    int right_border_width  = (max_display_width - 640) / 2;
+
     bool vsync_flag = false;
     uint32_t mode = 1;
     uint32_t selected_pen = 0;
     uint32_t border_color = 0;
     uint32_t pens[16];
-    uint32_t rgba8_buffer[640*200];
+    uint32_t rgba8_buffer[max_display_width * max_display_height]; // enough pixels for overscan mode
 };
 
 } // namespace YAKC

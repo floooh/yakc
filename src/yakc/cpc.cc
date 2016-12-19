@@ -244,7 +244,7 @@ cpc::cpu_out(uword port, ubyte val) {
             //
             //  - bit 4: interrupt generation control
             //
-            this->video.set_mode(val & 3);
+            this->video.set_video_mode(val & 3);
 
             auto& mem = this->board->cpu.mem;
 

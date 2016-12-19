@@ -73,15 +73,15 @@ cpc_video::reset() {
     this->crtc.selected = 0;
 
     clear(this->crtc.regs, sizeof(this->crtc.regs));
-    this->crtc.regs[crtc_t::HORI_TOTAL] = 63;
-    this->crtc.regs[crtc_t::HORI_DISPLAYED] = 40;
-    this->crtc.regs[crtc_t::HORI_SYNC_POS] = 46;
-    this->crtc.regs[crtc_t::SYNC_WIDTHS] = 128 + 14;
-    this->crtc.regs[crtc_t::VERT_TOTAL] = 38;
-    this->crtc.regs[crtc_t::VERT_DISPLAYED] = 25;
-    this->crtc.regs[crtc_t::VERT_SYNC_POS] = 30;
-    this->crtc.regs[crtc_t::MAX_RASTER_ADDR] = 7;
-    this->crtc.regs[crtc_t::DISPLAY_START_ADDR_HI] = 32;
+    this->crtc.regs[crtc_t::HORI_TOTAL] = 0x3F;
+    this->crtc.regs[crtc_t::HORI_DISPLAYED] = 0x28;
+    this->crtc.regs[crtc_t::HORI_SYNC_POS] = 0x2E;
+    this->crtc.regs[crtc_t::SYNC_WIDTHS] = 0x8E;
+    this->crtc.regs[crtc_t::VERT_TOTAL] = 0x26;
+    this->crtc.regs[crtc_t::VERT_DISPLAYED] = 0x19;
+    this->crtc.regs[crtc_t::VERT_SYNC_POS] = 0x1E;
+    this->crtc.regs[crtc_t::MAX_RASTER_ADDR] = 0x07;
+    this->crtc.regs[crtc_t::DISPLAY_START_ADDR_HI] = 0x30;
 
     this->crtc.mask[crtc_t::HORI_TOTAL] = 0xFF;
     this->crtc.mask[crtc_t::HORI_DISPLAYED] = 0xFF;
@@ -125,7 +125,7 @@ cpc_video::scanline(z80bus* bus) {
 
     // FIXME! take border into account
     const int visible_scan_lines = (this->crtc.regs[crtc_t::MAX_RASTER_ADDR]+1) * this->crtc.regs[crtc_t::VERT_DISPLAYED];
-    if (this->scanline_count < visible_scan_lines) {
+    if (this->scanline_count < max_display_height) {
         this->decode_scanline(this->scanline_count);
     }
 
@@ -185,10 +185,20 @@ cpc_video::decode_scanline(uint16_t y) {
     //
     // 32 KByte overscan buffers
     //
+    uint32_t* dst = &(this->rgba8_buffer[y * max_display_width]);
+
+    // vertical border area?
+    if ((y < this->top_border_start) || (y >= this->bottom_border_start)) {
+        for (int i = 0; i < max_display_width; i++) {
+            *dst++ = this->border_color;
+        }
+        return;
+    }
+    uint16_t yy = y - this->top_border_start;
 
     // compute the current CRTC RA register
     const uint32_t char_height = this->crtc.regs[crtc_t::MAX_RASTER_ADDR] + 1;
-    const uint32_t ra = y % char_height;
+    const uint32_t ra = yy % char_height;
     const uint32_t ra_offset = ((ra & 7)<<11); // memory address offset contributed by RA
 
     // compute the current CRTC MA register, and multiply by 2 (because
@@ -196,11 +206,15 @@ cpc_video::decode_scanline(uint16_t y) {
     // the current video memory address
     uint32_t ma2 = this->crtc.regs[crtc_t::DISPLAY_START_ADDR_HI]<<8;
     ma2 += this->crtc.regs[crtc_t::DISPLAY_START_ADDR_LO];
-    ma2 += (y / char_height) * this->crtc.regs[crtc_t::HORI_DISPLAYED];
+    ma2 += (yy / char_height) * this->crtc.regs[crtc_t::HORI_DISPLAYED];
     ma2 *= 2;
     const uint32_t line_num_bytes = this->crtc.regs[crtc_t::HORI_DISPLAYED] * 2;
     uint32_t p;
-    uint32_t* dst = &(this->rgba8_buffer[y * 640]);
+
+    // left border
+    for (int i = 0; i < this->left_border_width; i++) {
+        *dst++ = this->border_color;
+    }
 
     // http://cpctech.cpc-live.com/docs/graphics.html
     if (0 == mode) {
@@ -271,6 +285,13 @@ cpc_video::decode_scanline(uint16_t y) {
     else if (3 == mode) {
         // FIXME: undocumented 160x200 @ 4 colors (not on KC compact)
     }
+
+    // right border
+    for (int i = 0; i < this->right_border_width; i++) {
+        *dst++ = this->border_color;
+    }
+    YAKC_ASSERT(dst == &(this->rgba8_buffer[y * max_display_width]) + max_display_width);
+    YAKC_ASSERT(dst <= &this->rgba8_buffer[max_display_width * max_display_height]);
 }
 
 //------------------------------------------------------------------------------
@@ -294,7 +315,7 @@ cpc_video::assign_color(ubyte val) {
 
 //------------------------------------------------------------------------------
 void
-cpc_video::set_mode(ubyte val) {
+cpc_video::set_video_mode(ubyte val) {
     this->mode = val & 3;
 }
 
