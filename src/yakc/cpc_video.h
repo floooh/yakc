@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 /**
     @class YAKC::cpc_video
-    @brief CPC PAL and CTRC emulation
+    @brief CPC video decoder (CRTC, color palette, video mode)
 */
 #include "yakc/z80bus.h"
 #include "yakc/breadboard.h"
@@ -34,19 +34,14 @@ public:
     /// get current state of the vsync bit
     bool vsync_bit() const;
 
+    /// update derived CRTC values
+    void update_crtc_values();
     /// called by update at start of a scanline
     void scanline(z80bus* bus);
     /// decode a scanline into rgba8_buffer
     void decode_scanline(uint16_t y);
 
-    static const int scanline_cycles = 256;     // 64ns * 4 cycles per ns
-    static const int irq_scanlines = 52;        // interrupt request every 52 scanlines
-
     breadboard* board = nullptr;
-
-    int cycle_count = 0;        // scanline cycle counter
-    int scanline_count = 0;     // current scanline
-    int hsync_count = 0;        // count scanline until
 
     // CRTC registers
     // http://www.cpcwiki.eu/index.php/CRTC
@@ -74,8 +69,28 @@ public:
             NUM_REGS,
         };
         ubyte selected = 0;         // currently selected register for write/read
-        ubyte regs[NUM_REGS];
-        ubyte mask[NUM_REGS];       // used to mask reg value to valid range
+        ubyte regs[NUM_REGS] = { };
+        ubyte mask[NUM_REGS] = { };       // used to mask reg value to valid range
+
+        // current state
+        int scanline_count = 0;         // current scanline counter
+        int scanline_cycle_count = 0;   // position in scanline in CPU cycles
+        bool hsync = false;             // inside hsync_start/hsync_end
+        bool vsync = false;             // inside vsync_start/vsync_end
+        bool hsync_triggered = false;   // hsync processing already triggered this scanline
+        bool vsync_triggered = false;   // vsync already triggered this frame
+        int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
+
+        // derived state (must be computed after registers change)
+        bool dirty = false;         // CRTC registers had been updated
+        int scanline_end = 0;       // end of scanline, in CPU cycles
+        int hsync_start = 0;        // start of HSYNC in scanline, in CPU cycles
+        int hsync_end = 0;          // end of HSYNC in scanline, in CPU cycles
+        int row_height = 0;         // height of a character row in scanlines
+        int vsync_start = 0;        // start of VSYNC, in number of scanlines
+        int vsync_end = 0;          // end of VSYNC in number of scanlines
+        int frame_end = 312;        // last scanline in frame
+        int visible_scanlines = 0;  // number of visible scanlines (inside vertical border)
     };
     crtc_t crtc;
 
@@ -87,7 +102,6 @@ public:
     int left_border_width   = (max_display_width - 640) / 2;
     int right_border_width  = (max_display_width - 640) / 2;
 
-    bool vsync_flag = false;
     uint32_t mode = 1;
     uint32_t selected_pen = 0;
     uint32_t border_color = 0;
