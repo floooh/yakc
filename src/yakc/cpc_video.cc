@@ -115,9 +115,14 @@ cpc_video::update_crtc_values() {
     // start of VSYNC signal in scanlines
     crtc.vsync_start = crtc.regs[crtc_t::VERT_SYNC_POS] * crtc.row_height;
     // end of VSYNC signal in scanlines
-    crtc.vsync_end = crtc.vsync_start + (((crtc.regs[crtc_t::SYNC_WIDTHS]&0xF0)>>4)*crtc.row_height);
+    // FIXME: this is hardwired to 16, but this does not seem to be enough
+    // for the HSYNC interrupt to detect the VSYNC bit, so extend the length
+    // for the VSYNC flag...
+    const int vblank_lines = 16;
+    crtc.vsync_end = crtc.vsync_start + vblank_lines;
+    crtc.vsync_irq_end = crtc.vsync_end + 16;
     // end of PAL frame
-    crtc.frame_end = 312;
+    crtc.frame_end = crtc.regs[crtc_t::VERT_TOTAL]*crtc.row_height + crtc.regs[crtc_t::VERT_TOTAL_ADJUST];
     // number of visible scanlines
     crtc.visible_scanlines = crtc.regs[crtc_t::VERT_DISPLAYED] * crtc.row_height;
 }
@@ -162,21 +167,36 @@ cpc_video::update(z80bus* bus, int cycles) {
         crtc.hsync_triggered = false;
         crtc.scanline_cycle_count %= crtc.scanline_end;
 
-        if (crtc.scanline_count < max_display_height) {
-            this->decode_scanline(crtc.scanline_count);
+        if (crtc.palline_count < max_display_height) {
+            if (crtc.scanline_count < crtc.visible_scanlines) {
+                // decode visible scanline
+                this->decode_visible_scanline(crtc.scanline_count, crtc.palline_count);
+            }
+            else {
+                // render border
+                this->decode_border_scanline(crtc.palline_count);
+            }
         }
 
-        // scanline inside VSYNC area?
+        // bump (src-)scanline and (dst-)pal-line
         crtc.scanline_count++;
+        crtc.palline_count++;
+
+        // scanline inside VSYNC area?
         crtc.vsync = (crtc.scanline_count >= crtc.vsync_start) &&
-                     (crtc.scanline_count < crtc.vsync_end);
+                     (crtc.scanline_count < crtc.vsync_irq_end);
         if (crtc.vsync && !crtc.vsync_triggered) {
             crtc.vsync_triggered = true;
             bus->vblank();
         }
 
-        // start new frame?
-        if (crtc.scanline_count >= crtc.frame_end) {
+        // wraparound scan-line and PAL-line
+        const int skip_vert = (crtc.frame_end - max_display_height) / 2;
+        if (crtc.scanline_count == (crtc.vsync_end + skip_vert)) {
+            // rewind PAL line counter to top of screen
+            crtc.palline_count = 0;
+        }
+        if (crtc.scanline_count == crtc.frame_end) {
             crtc.scanline_count = 0;
             crtc.vsync_triggered = false;
         }
@@ -190,7 +210,20 @@ cpc_video::update(z80bus* bus, int cycles) {
 
 //------------------------------------------------------------------------------
 void
-cpc_video::decode_scanline(uint16_t y) {
+cpc_video::decode_border_scanline(int dst_y) {
+    YAKC_ASSERT((dst_y >= 0) && (dst_y < max_display_height));
+    uint32_t* dst = &(this->rgba8_buffer[dst_y * max_display_width]);
+    for (int i = 0; i < max_display_width; i++) {
+        *dst++ = this->border_color;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_video::decode_visible_scanline(int src_y, int dst_y) {
+    YAKC_ASSERT(dst_y < max_display_height);
+    //
+    // NOTE:
     //
     // mode 0: 160x200      2 pixels per byte
     // mode 1: 320x200      4 pixels per byte
@@ -200,112 +233,105 @@ cpc_video::decode_scanline(uint16_t y) {
     //  http://cpctech.cpc-live.com/docs/screen.html
     //  http://www.grimware.org/doku.php/documentations/devices/crtc
     //
-    // 32 KByte overscan buffers
+    // FIXME: 32 KByte overscan buffers
     //
-    uint32_t* dst = &(this->rgba8_buffer[y * max_display_width]);
+    uint32_t* dst = &(this->rgba8_buffer[dst_y * max_display_width]);
 
-    // vertical border area?
-    if (y >= crtc.visible_scanlines) {
-        for (int i = 0; i < max_display_width; i++) {
-            *dst++ = this->border_color;
+    // compute the current CRTC RA register
+    // (contributes bits 11,12,13 of the video memory address)
+    const uint32_t ra = src_y % crtc.row_height;
+    const uint32_t ra_offset = ((ra & 7)<<11); // memory address offset contributed by RA
+
+    // compute the current CRTC MA register, and multiply by 2 (because
+    // 2 bytes per CRTC cycle are read), MA and RA are used to compute
+    // the current video memory address
+    uint32_t ma2 = this->crtc.regs[crtc_t::DISPLAY_START_ADDR_HI]<<8;
+    ma2 += this->crtc.regs[crtc_t::DISPLAY_START_ADDR_LO];
+    ma2 += (src_y / crtc.row_height) * crtc.regs[crtc_t::HORI_DISPLAYED];
+    ma2 *= 2;
+    const uint32_t line_num_bytes = crtc.regs[crtc_t::HORI_DISPLAYED] * 2;
+    uint32_t p;
+
+    // FIXME: left border
+    for (int i = 0; i < this->left_border_width; i++) {
+        *dst++ = this->border_color;
+    }
+
+    // http://cpctech.cpc-live.com/docs/graphics.html
+    if (0 == mode) {
+        // 160x200 @ 16 colors
+        //
+        // pixel    bit mask
+        // 0:       |3|7|
+        // 1:       |2|6|
+        // 2:       |1|5|
+        // 3:       |0|4|
+        //
+        // FIXME: dst could overflow here!!!
+        for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
+            const uint32_t page_index = (ma2>>13) & 3;
+            const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
+
+            const uint8_t val = this->board->ram[page_index][page_offset];
+            p = this->pens[((val>>7)&0x1)|((val>>2)&0x2)|((val>>3)&0x4)|((val<<2)&0x8)];
+            *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
+            p = this->pens[((val>>6)&0x1)|((val>>1)&0x2)|((val>>2)&0x4)|((val<<3)&0x8)];
+            *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
         }
     }
-    else {
-        // compute the current CRTC RA register
-        const uint32_t ra = y % crtc.row_height;
-        const uint32_t ra_offset = ((ra & 7)<<11); // memory address offset contributed by RA
+    else if (1 == mode) {
+        // 320x200 @ 4 colors
+        //
+        // pixel    bit mask
+        // 0:       |3|7|
+        // 1:       |2|6|
+        // 2:       |1|5|
+        // 3:       |0|4|
+        //
+        // FIXME: dst could overflow here!!!
+        for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
+            const uint32_t page_index = (ma2>>13) & 3;
+            const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
 
-        // compute the current CRTC MA register, and multiply by 2 (because
-        // 2 bytes per CRTC cycle are read), MA and RA are used to compute
-        // the current video memory address
-        uint32_t ma2 = this->crtc.regs[crtc_t::DISPLAY_START_ADDR_HI]<<8;
-        ma2 += this->crtc.regs[crtc_t::DISPLAY_START_ADDR_LO];
-        ma2 += (y / crtc.row_height) * crtc.regs[crtc_t::HORI_DISPLAYED];
-        ma2 *= 2;
-        const uint32_t line_num_bytes = crtc.regs[crtc_t::HORI_DISPLAYED] * 2;
-        uint32_t p;
-
-        // left border
-        for (int i = 0; i < this->left_border_width; i++) {
-            *dst++ = this->border_color;
-        }
-
-        // http://cpctech.cpc-live.com/docs/graphics.html
-        if (0 == mode) {
-            // 160x200 @ 16 colors
-            //
-            // pixel    bit mask
-            // 0:       |3|7|
-            // 1:       |2|6|
-            // 2:       |1|5|
-            // 3:       |0|4|
-            //
-            // FIXME: dst could overflow here!!!
-            for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
-                const uint32_t page_index = (ma2>>13) & 3;
-                const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-
-                const uint8_t val = this->board->ram[page_index][page_offset];
-                p = this->pens[((val>>7)&0x1)|((val>>2)&0x2)|((val>>3)&0x4)|((val<<2)&0x8)];
-                *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
-                p = this->pens[((val>>6)&0x1)|((val>>1)&0x2)|((val>>2)&0x4)|((val<<3)&0x8)];
-                *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
-            }
-        }
-        else if (1 == mode) {
-            // 320x200 @ 4 colors
-            //
-            // pixel    bit mask
-            // 0:       |3|7|
-            // 1:       |2|6|
-            // 2:       |1|5|
-            // 3:       |0|4|
-            //
-            // FIXME: dst could overflow here!!!
-            for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
-                const uint32_t page_index = (ma2>>13) & 3;
-                const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-
-                const uint8_t val = this->board->ram[page_index][page_offset];
-                p = this->pens[((val>>2)&2)|((val>>7)&1)];
-                *dst++ = p; *dst++ = p;
-                p = this->pens[((val>>1)&2)|((val>>6)&1)];
-                *dst++ = p; *dst++ = p;
-                p = this->pens[((val>>0)&2)|((val>>5)&1)];
-                *dst++ = p; *dst++ = p;
-                p = this->pens[((val<<1)&2)|((val>>4)&1)];
-                *dst++ = p; *dst++ = p;
-            }
-        }
-        else if (2 == mode) {
-            // 640x200 @ 2 colors
-            //
-            // FIXME: dst could overflow here!!!
-            for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
-                const uint32_t page_index = (ma2>>13) & 3;
-                const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-
-                const uint8_t val = this->board->ram[page_index][page_offset];
-                *dst++ = this->pens[(val>>7)&1];
-                *dst++ = this->pens[(val>>6)&1];
-                *dst++ = this->pens[(val>>5)&1];
-                *dst++ = this->pens[(val>>4)&1];
-                *dst++ = this->pens[(val>>3)&1];
-                *dst++ = this->pens[(val>>2)&1];
-                *dst++ = this->pens[(val>>1)&1];
-                *dst++ = this->pens[(val>>0)&1];
-            }
-        }
-        else if (3 == mode) {
-            // FIXME: undocumented 160x200 @ 4 colors (not on KC compact)
-        }
-
-        // right border
-        for (int i = 0; i < this->right_border_width; i++) {
-            *dst++ = this->border_color;
+            const uint8_t val = this->board->ram[page_index][page_offset];
+            p = this->pens[((val>>2)&2)|((val>>7)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->pens[((val>>1)&2)|((val>>6)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->pens[((val>>0)&2)|((val>>5)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->pens[((val<<1)&2)|((val>>4)&1)];
+            *dst++ = p; *dst++ = p;
         }
     }
-    YAKC_ASSERT(dst == &(this->rgba8_buffer[y * max_display_width]) + max_display_width);
+    else if (2 == mode) {
+        // 640x200 @ 2 colors
+        //
+        // FIXME: dst could overflow here!!!
+        for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
+            const uint32_t page_index = (ma2>>13) & 3;
+            const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
+
+            const uint8_t val = this->board->ram[page_index][page_offset];
+            *dst++ = this->pens[(val>>7)&1];
+            *dst++ = this->pens[(val>>6)&1];
+            *dst++ = this->pens[(val>>5)&1];
+            *dst++ = this->pens[(val>>4)&1];
+            *dst++ = this->pens[(val>>3)&1];
+            *dst++ = this->pens[(val>>2)&1];
+            *dst++ = this->pens[(val>>1)&1];
+            *dst++ = this->pens[(val>>0)&1];
+        }
+    }
+    else if (3 == mode) {
+        // FIXME: undocumented 160x200 @ 4 colors (not on KC compact)
+    }
+
+    // FIXME: right border
+    for (int i = 0; i < this->right_border_width; i++) {
+        *dst++ = this->border_color;
+    }
+    YAKC_ASSERT(dst == &(this->rgba8_buffer[dst_y * max_display_width]) + max_display_width);
     YAKC_ASSERT(dst <= &this->rgba8_buffer[max_display_width * max_display_height]);
 }
 

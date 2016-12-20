@@ -38,8 +38,10 @@ public:
     void update_crtc_values();
     /// called by update at start of a scanline
     void scanline(z80bus* bus);
+    /// decode border scanline at framebuffer coordinate y
+    void decode_border_scanline(int dst_y);
     /// decode a scanline into rgba8_buffer
-    void decode_scanline(uint16_t y);
+    void decode_visible_scanline(int src_y, int dst_y);
 
     breadboard* board = nullptr;
 
@@ -73,7 +75,8 @@ public:
         ubyte mask[NUM_REGS] = { };       // used to mask reg value to valid range
 
         // current state
-        int scanline_count = 0;         // current scanline counter
+        int scanline_count = 0;         // current scanline counter (src y)
+        int palline_count = 0;          // current position on screen (dst y)
         int scanline_cycle_count = 0;   // position in scanline in CPU cycles
         bool hsync = false;             // inside hsync_start/hsync_end
         bool vsync = false;             // inside vsync_start/vsync_end
@@ -82,23 +85,22 @@ public:
         int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
 
         // derived state (must be computed after registers change)
-        bool dirty = false;         // CRTC registers had been updated
-        int scanline_end = 0;       // end of scanline, in CPU cycles
-        int hsync_start = 0;        // start of HSYNC in scanline, in CPU cycles
-        int hsync_end = 0;          // end of HSYNC in scanline, in CPU cycles
-        int row_height = 0;         // height of a character row in scanlines
-        int vsync_start = 0;        // start of VSYNC, in number of scanlines
-        int vsync_end = 0;          // end of VSYNC in number of scanlines
-        int frame_end = 312;        // last scanline in frame
-        int visible_scanlines = 0;  // number of visible scanlines (inside vertical border)
+        bool dirty = false;             // CRTC registers had been updated
+        int scanline_end = 0;           // end of scanline, in CPU cycles
+        int visible_scanlines = 0;      // number of visible scanlines (inside vertical border)
+        int frame_end = 0;              // last scanline in frame
+        int hsync_start = 0;            // start of HSYNC in scanline, in CPU cycles
+        int hsync_end = 0;              // end of HSYNC in scanline, in CPU cycles
+        int row_height = 0;             // height of a character row in scanlines
+        int vsync_start = 0;            // start of VSYNC, in number of scanlines
+        int vsync_end = 0;              // end of VSYNC in number of scanlines (official)
+        int vsync_irq_end = 0;          // extended end of VSYNC for VSYNC bit (hack for firmware to pick up this bit)
     };
     crtc_t crtc;
 
     static const int max_display_width = 768;
     static const int max_display_height = 272;
 
-    int top_border_start    = (max_display_height - 200) / 2;
-    int bottom_border_start = ((max_display_height - 200) / 2) + 200;
     int left_border_width   = (max_display_width - 640) / 2;
     int right_border_width  = (max_display_width - 640) / 2;
 
