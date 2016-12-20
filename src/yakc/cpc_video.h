@@ -84,7 +84,7 @@ public:
         bool vsync_triggered = false;   // vsync already triggered this frame
         int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
 
-        // derived state (must be computed after registers change)
+        // computed values
         bool dirty = false;             // CRTC registers had been updated
         int scanline_end = 0;           // end of scanline, in CPU cycles
         int visible_scanlines = 0;      // number of visible scanlines (inside vertical border)
@@ -95,14 +95,13 @@ public:
         int vsync_start = 0;            // start of VSYNC, in number of scanlines
         int vsync_end = 0;              // end of VSYNC in number of scanlines (official)
         int vsync_irq_end = 0;          // extended end of VSYNC for VSYNC bit (hack for firmware to pick up this bit)
+        int left_border_width = 0;      // width of left border in emulator framebuffer pixels
+        int visible_width = 0;          // width of visible area in emulator framebuffer pixels
     };
     crtc_t crtc;
 
     static const int max_display_width = 768;
     static const int max_display_height = 272;
-
-    int left_border_width   = (max_display_width - 640) / 2;
-    int right_border_width  = (max_display_width - 640) / 2;
 
     uint32_t mode = 1;
     uint32_t selected_pen = 0;
