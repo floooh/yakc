@@ -51,6 +51,12 @@ public:
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
     /// put a key as ASCII code
     void put_key(ubyte ascii);
+    /// enable/disable joystick
+    void enable_joystick(bool b);
+    /// return true if joystick is enabled
+    bool is_joystick_enabled() const;
+    /// put joystick input
+    void put_joystick(int index, ubyte mask);
     /// get human-readable info about current system
     const char* system_info() const;
     /// get current border color
@@ -62,6 +68,9 @@ public:
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count
     uint64_t abs_cycle_count = 0;           // total CPU cycle count
     uint32_t overflow_cycles = 0;           // cycles that have overflowed from last frame
+
+private:
+    bool joystick_enabled = false;
 };
 
 } // namespace YAKC

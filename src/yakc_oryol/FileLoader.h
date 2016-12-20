@@ -23,6 +23,7 @@ public:
         KC_Z80,
         ZX_TAP,
         ZX_Z80,
+        CPC_SNA,
 
         Num,
         None,
@@ -100,6 +101,8 @@ public:
     static void load_kctap(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
     /// load ZX Z80 file into memory
     static void load_zxz80(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
+    /// load CPC SNA file into memory
+    static void load_sna(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
 
     Oryol::Buffer FileData;
 private:

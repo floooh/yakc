@@ -192,8 +192,17 @@ UI::OnFrame(yakc& emu) {
             }
         }
         #endif
+        if (emu.is_joystick_enabled()) {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.5f, 0.0f, 1.0f));
+        }
+        else {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.0f, 0.0f, 1.0f));
+        }
+        if (ImGui::Button("JOY")) {
+            emu.enable_joystick(!emu.is_joystick_enabled());
+        }
         ImGui::PopStyleVar();
-        ImGui::PopStyleColor();
+        ImGui::PopStyleColor(2);
     }
     ImGui::End();
 

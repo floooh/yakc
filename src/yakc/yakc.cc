@@ -227,6 +227,28 @@ yakc::put_key(ubyte ascii) {
 }
 
 //------------------------------------------------------------------------------
+void
+yakc::enable_joystick(bool b) {
+    this->joystick_enabled = b;
+}
+
+//------------------------------------------------------------------------------
+bool
+yakc::is_joystick_enabled() const {
+    return this->joystick_enabled;
+}
+
+//------------------------------------------------------------------------------
+void
+yakc::put_joystick(int index, ubyte mask) {
+    if (this->joystick_enabled) {
+        if (this->cpc.on) {
+            this->cpc.put_joystick(index, mask);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 const char*
 yakc::system_info() const {
     if (this->kc85.on) {

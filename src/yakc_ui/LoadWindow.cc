@@ -48,7 +48,8 @@ LoadWindow::Draw(yakc& emu) {
                 "KC TAP",
                 "KC Z80",
                 "ZX TAP",
-                "ZX Z80"
+                "ZX Z80",
+                "CPC SNA"
             };
             int curFileType = (int) ldr.Info.Type;
             if (ImGui::Combo("File Type", &curFileType, typeNames, int(FileLoader::FileType::Num))) {
@@ -86,6 +87,12 @@ LoadWindow::Draw(yakc& emu) {
                         break;
                     case device::zxspectrum128k:
                         compatMsg = "Please reboot to ZX Spectrum 128K";
+                        break;
+                    case device::cpc464:
+                        compatMsg = "Please reboot to Amstrad CPC464";
+                        break;
+                    case device::cpc6128:
+                        compatMsg = "Please reboot to Amstrad CPC6128";
                         break;
                     default:
                         compatMsg = "File will not work on this system";

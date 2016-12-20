@@ -96,6 +96,38 @@ struct zxz80page_header {
     ubyte len_h;
     ubyte page_nr;
 };
+
+// CPC SNA file format header
+// http://cpctech.cpc-live.com/docs/snapshot.html
+struct sna_header {
+    ubyte magic[8];     // must be "MV - SNA"
+    ubyte pad0[8];
+    ubyte version;
+    ubyte F, A, C, B, E, D, L, H, R, I;
+    ubyte IFF1, IFF2;
+    ubyte IX_l, IX_h;
+    ubyte IY_l, IY_h;
+    ubyte SP_l, SP_h;
+    ubyte PC_l, PC_h;
+    ubyte IM;
+    ubyte F_, A_, C_, B_, E_, D_, L_, H_;
+    ubyte selected_pen;
+    ubyte pens[17];             // palette + border colors
+    ubyte gate_array_config;
+    ubyte ram_config;
+    ubyte crtc_selected;
+    ubyte crtc_regs[18];
+    ubyte rom_config;
+    ubyte ppi_a;
+    ubyte ppi_b;
+    ubyte ppi_c;
+    ubyte ppi_control;
+    ubyte psg_selected;
+    ubyte psg_regs[16];
+    uword dump_size;
+    ubyte pad1[0x93];
+};
+static_assert(sizeof(sna_header) == 256, "SNA header size");
 #pragma pack(pop)
 
 FileLoader* FileLoader::pointer = nullptr;
@@ -240,6 +272,9 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
                 info.Type = FileLoader::FileType::KC_Z80;
             }
         }
+        else if (strb.Contains(".SNA") || strb.Contains(".sna")) {
+            info.Type = FileLoader::FileType::CPC_SNA;
+        }
         else if (strb.Contains(".BIN") || strb.Contains(".bin")) {
             info.Type = FileLoader::FileType::RAW;
         }
@@ -314,6 +349,16 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         if (ext_hdr) {
             info.PayloadOffset += 2 + (ext_hdr->len_h<<8 | ext_hdr->len_l) & 0xFFFF;
         }
+    }
+    else if (FileType::CPC_SNA == info.Type) {
+        // http://cpctech.cpc-live.com/docs/snapshot.html
+        const sna_header* hdr = (const sna_header*) ptr;
+        info.StartAddr = 0x0000;
+        info.EndAddr = 0x10000;
+        info.ExecAddr = (hdr->PC_h<<8)|hdr->PC_l;
+        info.HasExecAddr = true;
+        info.PayloadOffset = 0x100;
+        info.RequiredSystem = device::cpc464;
     }
     return info;
 }
@@ -409,6 +454,20 @@ FileLoader::load_zxz80(yakc* emu, const FileInfo& info, const Buffer& data) {
 
 //------------------------------------------------------------------------------
 void
+FileLoader::load_sna(yakc* emu, const FileInfo& info, const Buffer& data) {
+    // http://cpctech.cpc-live.com/docs/snapshot.html
+    o_assert_dbg(emu);
+    if (emu->is_device(device::any_cpc)) {
+        const sna_header* hdr = (const sna_header*) data.Data();
+        const ubyte* payload = data.Data() + info.PayloadOffset;
+        // FIXME: 128K support
+        o_assert(hdr->dump_size == 64);
+        memcpy(emu->board.ram[0], payload, 0x10000);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
 FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (!info.FileSizeError) {
         if (FileType::KC_TAP == info.Type) {
@@ -416,6 +475,9 @@ FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
         }
         else if (FileType::ZX_Z80 == info.Type) {
             FileLoader::load_zxz80(emu, info, data);
+        }
+        else if (FileType::CPC_SNA == info.Type) {
+            FileLoader::load_sna(emu, info, data);
         }
         else {
             // KCC, Z80 and BIN file type payload is simply a continuous block of data
@@ -486,6 +548,47 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
                 // FIXME: version 1
                 o_assert2(false, "FIXME: Z80 version 1");
             }
+        }
+        else if (FileType::CPC_SNA == info.Type) {
+            const sna_header* hdr = (const sna_header*) data.Data();
+            // CPU state
+            auto& cpu = emu->board.cpu;
+            cpu.F = hdr->F; cpu.A = hdr->A;
+            cpu.C = hdr->C; cpu.B = hdr->B;
+            cpu.E = hdr->E; cpu.D = hdr->D;
+            cpu.L = hdr->L; cpu.H = hdr->H;
+            cpu.R = hdr->R; cpu.I = hdr->I;
+            cpu.IFF1 = hdr->IFF1 != 0;
+            cpu.IFF2 = hdr->IFF2 != 0;
+            cpu.IX = (hdr->IX_h<<8 | hdr->IX_l) & 0xFFFF;
+            cpu.IY = (hdr->IY_h<<8 | hdr->IY_l) & 0xFFFF;
+            cpu.SP = (hdr->SP_h<<8 | hdr->SP_l) & 0xFFFF;
+            cpu.PC = (hdr->PC_h<<8 | hdr->PC_l) & 0xFFFF;
+            cpu.IM = hdr->IM;
+            cpu.AF_ = (hdr->A_<<8 | hdr->F_) & 0xFFFF;
+            cpu.BC_ = (hdr->B_<<8 | hdr->C_) & 0xFFFF;
+            cpu.DE_ = (hdr->D_<<8 | hdr->E_) & 0xFFFF;
+            cpu.HL_ = (hdr->H_<<8 | hdr->L_) & 0xFFFF;
+            // gate array state
+            auto& cpc = emu->cpc;
+            for (int i = 0; i < 17; i++) {
+                cpc.video.select_pen(i);
+                cpc.video.assign_color(hdr->pens[i]);
+            }
+            cpc.video.select_pen(hdr->selected_pen);
+            cpc.cpu_out(0x7FFF, hdr->gate_array_config);
+            // FIXME: ram_config
+            for (int i = 0; i < 18; i++) {
+                cpc.video.select_crtc(i);
+                cpc.video.write_crtc(hdr->crtc_regs[i]);
+            }
+            cpc.video.update_crtc_values();
+            cpc.video.crtc.selected = hdr->crtc_selected;
+            // FIXME: rom_config
+            // FIXME: ppi_a
+            // FIXME: ppi_b
+            cpc.pio_c = hdr->ppi_c;
+            // FIXME: psg_select and psg_regs
         }
         else {
             z80& cpu = emu->board.cpu;

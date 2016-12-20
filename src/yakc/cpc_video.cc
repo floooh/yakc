@@ -129,10 +129,14 @@ cpc_video::update_crtc_values() {
     // compute left border width (in emulator pixels)
     const int total_scanline_pixels = crtc.scanline_end * 4;
     const int hsync_end_pixels = crtc.hsync_end * 4;
+/*
+    FIXME
     crtc.left_border_width = (total_scanline_pixels - hsync_end_pixels);
     if (crtc.left_border_width < 0) {
         crtc.left_border_width = 0;
     }
+*/
+crtc.left_border_width = 64;
     // width of visible area in emulator framebuffer pixels
     crtc.visible_width = crtc.regs[crtc_t::HORI_DISPLAYED] * 8 * 2;
     if ((crtc.left_border_width + crtc.visible_width) >= max_display_width) {

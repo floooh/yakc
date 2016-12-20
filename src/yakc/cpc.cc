@@ -66,6 +66,14 @@ cpc::init_keymap() {
     this->init_key_mask(0x0C, 2, 0, 0);     // Clr
     this->init_key_mask(0x0D, 2, 2, 0);     // Return
     this->init_key_mask(0x03, 8, 2, 0);     // Escape
+
+    // joystick (just use some unused upper ascii codes)
+    this->init_key_mask(0xF0, 9, 2, 0);     // joystick left
+    this->init_key_mask(0xF1, 9, 3, 0);     // joystick right
+    this->init_key_mask(0xF2, 9, 0, 0);     // joystick down
+    this->init_key_mask(0xF3, 9, 1, 0);     // joystick up
+    this->init_key_mask(0xF4, 9, 5, 0);     // joystick fire0
+    this->init_key_mask(0xF5, 9, 4, 0);     // joystick fire1
 }
 
 //------------------------------------------------------------------------------
@@ -292,6 +300,29 @@ void
 cpc::put_key(ubyte ascii) {
     // ascii=0 means no key pressed
     this->next_key_mask = this->key_map[ascii];
+}
+
+//------------------------------------------------------------------------------
+void
+cpc::put_joystick(int index, ubyte mask) {
+    if (mask & joystick::left) {
+        this->next_key_mask.or_mask(this->key_map[0xF0]);
+    }
+    if (mask & joystick::right) {
+        this->next_key_mask.or_mask(this->key_map[0xF1]);
+    }
+    if (mask & joystick::up) {
+        this->next_key_mask.or_mask(this->key_map[0xF2]);
+    }
+    if (mask & joystick::down) {
+        this->next_key_mask.or_mask(this->key_map[0xF3]);
+    }
+    if (mask & joystick::btn0) {
+        this->next_key_mask.or_mask(this->key_map[0xF4]);
+    }
+    if (mask & joystick::btn1) {
+        this->next_key_mask.or_mask(this->key_map[0xF5]);
+    }
 }
 
 //------------------------------------------------------------------------------

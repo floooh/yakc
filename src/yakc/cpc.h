@@ -40,6 +40,8 @@ public:
     void on_context_switched();
     /// put a key as ASCII code
     void put_key(ubyte ascii);
+    /// put joystick bitmask
+    void put_joystick(int index, ubyte mask);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
 
@@ -57,7 +59,13 @@ public:
     cpc_video video;
     ubyte pio_c;
     struct key_mask {
-        ubyte col[10] = { };
+        static const int num_lines = 10;
+        ubyte col[num_lines] = { };
+        void or_mask(const key_mask& m) {
+            for (int i = 0; i < num_lines; i++) {
+                this->col[i] |= m.col[i];
+            }
+        };
     };
     key_mask next_key_mask;
     key_mask cur_key_mask;

@@ -95,6 +95,25 @@ Keyboard::Setup(yakc& emu_) {
             if (0 != special_ascii) {
                 this->cur_char = special_ascii;
             }
+            // joystick
+            if (e.KeyCode == Key::Left) {
+                this->cur_joystick |= joystick::left;
+            }
+            else if (e.KeyCode == Key::Right) {
+                this->cur_joystick |= joystick::right;
+            }
+            else if (e.KeyCode == Key::Up) {
+                this->cur_joystick |= joystick::up;
+            }
+            else if (e.KeyCode == Key::Down) {
+                this->cur_joystick |= joystick::down;
+            }
+            else if (e.KeyCode == Key::Space) {
+                this->cur_joystick |= joystick::btn0;
+            }
+            else if (e.KeyCode == Key::LeftControl) {
+                this->cur_joystick |= joystick::btn1;
+            }
         }
         else if (e.Type == InputEvent::KeyUp) {
             // keep track of pressed keys
@@ -103,6 +122,25 @@ Keyboard::Setup(yakc& emu_) {
                 if (this->pressedKeys.Empty()) {
                     this->cur_char = 0;
                 }
+            }
+            // joystick
+            if (e.KeyCode == Key::Left) {
+                this->cur_joystick &= ~joystick::left;
+            }
+            else if (e.KeyCode == Key::Right) {
+                this->cur_joystick &= ~joystick::right;
+            }
+            else if (e.KeyCode == Key::Up) {
+                this->cur_joystick &= ~joystick::up;
+            }
+            else if (e.KeyCode == Key::Down) {
+                this->cur_joystick &= ~joystick::down;
+            }
+            else if (e.KeyCode == Key::Space) {
+                this->cur_joystick &= ~joystick::btn0;
+            }
+            else if (e.KeyCode == Key::LeftControl) {
+                this->cur_joystick &= ~joystick::btn1;
             }
         }
     });
@@ -121,9 +159,11 @@ Keyboard::HandleInput() {
     o_assert_dbg(this->emu);
     if (this->hasInputFocus) {
         this->emu->put_key(this->cur_char);
+        this->emu->put_joystick(0, this->cur_joystick);
     }
     else {
         this->emu->put_key(0);
+        this->emu->put_joystick(0, 0);
     }
 }
 

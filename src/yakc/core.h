@@ -96,4 +96,16 @@ enum class os_rom {
     none,
 };
 
+class joystick {
+public:
+    enum {
+        left = (1<<0),
+        right = (1<<1),
+        up = (1<<2),
+        down = (1<<3),
+        btn0 = (1<<4),
+        btn1 = (1<<5)
+    };
+};
+
 } // namespace YAKC
