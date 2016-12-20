@@ -424,7 +424,7 @@ UI::OnFrame(yakc& emu) {
                         this->OpenWindow(emu, CommandWindow::Create());
                     }
                 }
-                if (!emu.is_device(device::any_zx)) {
+                if (!(emu.is_device(device::any_zx) || emu.is_device(device::any_cpc))) {
                     if (ImGui::BeginMenu("Take Snapshot")) {
                         for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
                             strBuilder.Format(32, "Snapshot %d", i);
