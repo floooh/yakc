@@ -140,7 +140,8 @@ cpc::poweron(device m) {
     this->video.init(this->board);
     this->pio_c = 0;
     this->next_key_mask = key_mask();
-    this->cur_key_mask = key_mask();
+    this->next_joy_mask = key_mask();
+    this->cur_keyboard_mask = key_mask();
 
     // map memory
     clear(this->board->ram, sizeof(this->board->ram));
@@ -168,7 +169,8 @@ cpc::reset() {
     this->video.reset();
     this->pio_c = 0;
     this->next_key_mask = key_mask();
-    this->cur_key_mask = key_mask();
+    this->next_joy_mask = key_mask();
+    this->cur_keyboard_mask = key_mask();
     this->board->cpu.reset();
     this->board->cpu.PC = 0x0000;
     this->init_memory_map();
@@ -297,31 +299,32 @@ cpc::cpu_out(uword port, ubyte val) {
 
 //------------------------------------------------------------------------------
 void
-cpc::put_key(ubyte ascii) {
-    // ascii=0 means no key pressed
-    this->next_key_mask = this->key_map[ascii];
-}
-
-//------------------------------------------------------------------------------
-void
-cpc::put_joystick(int index, ubyte mask) {
-    if (mask & joystick::left) {
-        this->next_key_mask.or_mask(this->key_map[0xF0]);
+cpc::put_input(ubyte ascii, ubyte joy0_mask) {
+    // ascii=0 means no key pressed, joystick input mutes keyboard input
+    this->next_joy_mask = key_mask();
+    if (0 == joy0_mask) {
+        this->next_key_mask = this->key_map[ascii];
     }
-    if (mask & joystick::right) {
-        this->next_key_mask.or_mask(this->key_map[0xF1]);
-    }
-    if (mask & joystick::up) {
-        this->next_key_mask.or_mask(this->key_map[0xF2]);
-    }
-    if (mask & joystick::down) {
-        this->next_key_mask.or_mask(this->key_map[0xF3]);
-    }
-    if (mask & joystick::btn0) {
-        this->next_key_mask.or_mask(this->key_map[0xF4]);
-    }
-    if (mask & joystick::btn1) {
-        this->next_key_mask.or_mask(this->key_map[0xF5]);
+    else {
+        this->next_key_mask = key_mask();
+        if (joy0_mask & joystick::left) {
+            this->next_joy_mask.combine(this->key_map[0xF0]);
+        }
+        if (joy0_mask & joystick::right) {
+            this->next_joy_mask.combine(this->key_map[0xF1]);
+        }
+        if (joy0_mask & joystick::up) {
+            this->next_joy_mask.combine(this->key_map[0xF2]);
+        }
+        if (joy0_mask & joystick::down) {
+            this->next_joy_mask.combine(this->key_map[0xF3]);
+        }
+        if (joy0_mask & joystick::btn0) {
+            this->next_joy_mask.combine(this->key_map[0xF5]);
+        }
+        if (joy0_mask & joystick::btn1) {
+            this->next_joy_mask.combine(this->key_map[0xF4]);
+        }
     }
 }
 
@@ -346,7 +349,7 @@ cpc::cpu_in(uword port) {
         // 8255 PIO Port A (PSG Data)
         if ((port & 0x000F) < 10) {
             // NOTE: this is a quick-n-dirty hack to get keyboard input working!
-            return ~(this->cur_key_mask.col[port & 0x000F]);
+            return ~(this->cur_keyboard_mask.col[port & 0x000F]);
         }
         else {
             printf("IN: PIO Port A unknown function!\n");
@@ -399,7 +402,8 @@ cpc::irq() {
 void
 cpc::vblank() {
     // fetch next key mask
-    this->cur_key_mask = this->next_key_mask;
+    this->cur_keyboard_mask = this->next_key_mask;
+    this->cur_keyboard_mask.combine(this->next_joy_mask);
 }
 
 //------------------------------------------------------------------------------

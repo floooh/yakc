@@ -38,10 +38,8 @@ public:
     const char* system_info() const;
     /// called after snapshot restore
     void on_context_switched();
-    /// put a key as ASCII code
-    void put_key(ubyte ascii);
-    /// put joystick bitmask
-    void put_joystick(int index, ubyte mask);
+    /// put a key and joystick input
+    void put_input(ubyte ascii, ubyte joy0_mask);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
 
@@ -61,14 +59,20 @@ public:
     struct key_mask {
         static const int num_lines = 10;
         ubyte col[num_lines] = { };
-        void or_mask(const key_mask& m) {
+        void combine(const key_mask& m) {
             for (int i = 0; i < num_lines; i++) {
                 this->col[i] |= m.col[i];
             }
         };
+        void clear(const key_mask& m) {
+            for (int i = 0; i < num_lines; i++) {
+                this->col[i] &= ~m.col[i];
+            }
+        }
     };
     key_mask next_key_mask;
-    key_mask cur_key_mask;
+    key_mask next_joy_mask;
+    key_mask cur_keyboard_mask;
     key_mask key_map[256];
 };
 

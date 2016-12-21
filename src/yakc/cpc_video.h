@@ -72,7 +72,6 @@ public:
         };
         ubyte selected = 0;         // currently selected register for write/read
         ubyte regs[NUM_REGS] = { };
-        ubyte mask[NUM_REGS] = { };       // used to mask reg value to valid range
 
         // current state
         int scanline_count = 0;         // current scanline counter (src y)

@@ -49,14 +49,12 @@ public:
     static bool is_device(device model, device mask);
     /// process one frame, up to absolute number of cycles
     void onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count);
-    /// put a key as ASCII code
-    void put_key(ubyte ascii);
+    /// put key and joystick input
+    void put_input(ubyte ascii, ubyte joy0_mask);
     /// enable/disable joystick
     void enable_joystick(bool b);
     /// return true if joystick is enabled
     bool is_joystick_enabled() const;
-    /// put joystick input
-    void put_joystick(int index, ubyte mask);
     /// get human-readable info about current system
     const char* system_info() const;
     /// get current border color

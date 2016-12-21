@@ -50,6 +50,48 @@ uint32_t hw_palette[32] = {
     0xffF67B6E,         // #5F pastel blue
 };
 
+ubyte crtc_defaults[cpc_video::crtc_t::NUM_REGS] = {
+    0x3F,       // HORI_TOTAL
+    0x28,       // HORI_DISPLAYED
+    0x2E,       // HORI_SYNC_POS
+    0x8E,       // SYNC_WIDTHS
+    0x26,       // VERT_TOTAL
+    0x00,       // VERT_TOTAL_ADJUST
+    0x19,       // VERT_DISPLAYED
+    0x1E,       // VERT_SYNC_POS
+    0x00,       // INTERLACE_AND_SKEW
+    0x07,       // MAX_RASTER_ADDR
+    0x00,       // CURSOR_START_RASTER
+    0x00,       // CURSOR_END_RASTER
+    0x30,       // DISPLAY_START_ADDR_HI
+    0x00,       // DISPLAY_START_ADDR_LO
+    0x00,       // CURSOR_ADDR_HI
+    0x00,       // CURSOR_ADDR_LO
+    0x00,       // LIGHTPEN_ADDR_HI
+    0x00,       // LIGHTPEN_ADDR_LO
+};
+
+ubyte crtc_masks[cpc_video::crtc_t::NUM_REGS] = {
+    0xFF,       // HORI_TOTAL
+    0xFF,       // HORI_DISPLAYED
+    0xFF,       // HORI_SYNC_POS
+    0xFF,       // SYNC_WIDTHS
+    0x7F,       // VERT_TOTAL
+    0x1F,       // VERT_TOTAL_ADJUST
+    0x7F,       // VERT_DISPLAYED
+    0x7F,       // VERT_SYNC_POS
+    0x03,       // INTERLACE_AND_SKEW
+    0x1F,       // MAX_RASTER_ADDR
+    0x7F,       // CURSOR_START_RASTER
+    0x1F,       // CURSOR_END_RASTER
+    0x3F,       // DISPLAY_START_ADDR_HI
+    0xFF,       // DISPLAY_START_ADDR_LO
+    0x3F,       // CURSOR_ADDR_HI
+    0xFF,       // CURSOR_ADDR_LO
+    0x3F,       // LIGHTPEN_ADDR_HI
+    0xFF,       // LIGHTPEN_ADDR_LO
+};
+
 //------------------------------------------------------------------------------
 void
 cpc_video::init(breadboard* board_) {
@@ -67,35 +109,9 @@ cpc_video::reset() {
     // reset CRTC registers
     // http://www.cpcwiki.eu/index.php/CRTC
     this->crtc = crtc_t();
-    this->crtc.regs[crtc_t::HORI_TOTAL] = 0x3F;
-    this->crtc.regs[crtc_t::HORI_DISPLAYED] = 0x28;
-    this->crtc.regs[crtc_t::HORI_SYNC_POS] = 0x2E;
-    this->crtc.regs[crtc_t::SYNC_WIDTHS] = 0x8E;
-    this->crtc.regs[crtc_t::VERT_TOTAL] = 0x26;
-    this->crtc.regs[crtc_t::VERT_DISPLAYED] = 0x19;
-    this->crtc.regs[crtc_t::VERT_SYNC_POS] = 0x1E;
-    this->crtc.regs[crtc_t::MAX_RASTER_ADDR] = 0x07;
-    this->crtc.regs[crtc_t::DISPLAY_START_ADDR_HI] = 0x30;
-
-    this->crtc.mask[crtc_t::HORI_TOTAL] = 0xFF;
-    this->crtc.mask[crtc_t::HORI_DISPLAYED] = 0xFF;
-    this->crtc.mask[crtc_t::HORI_SYNC_POS] = 0xFF;
-    this->crtc.mask[crtc_t::SYNC_WIDTHS] = 0xFF;
-    this->crtc.mask[crtc_t::VERT_TOTAL] = 0x7F;
-    this->crtc.mask[crtc_t::VERT_TOTAL_ADJUST] = 0x1F;
-    this->crtc.mask[crtc_t::VERT_DISPLAYED] = 0x7F;
-    this->crtc.mask[crtc_t::VERT_SYNC_POS] = 0x7F;
-    this->crtc.mask[crtc_t::INTERLACE_AND_SKEW] = 0x03;
-    this->crtc.mask[crtc_t::MAX_RASTER_ADDR] = 0x1F;
-    this->crtc.mask[crtc_t::CURSOR_START_RASTER] = 0x7F;
-    this->crtc.mask[crtc_t::CURSOR_END_RASTER] = 0x1F;
-    this->crtc.mask[crtc_t::DISPLAY_START_ADDR_HI] = 0x3F;
-    this->crtc.mask[crtc_t::DISPLAY_START_ADDR_LO] = 0xFF;
-    this->crtc.mask[crtc_t::CURSOR_ADDR_HI] = 0x3F;
-    this->crtc.mask[crtc_t::CURSOR_ADDR_LO] = 0xFF;
-    this->crtc.mask[crtc_t::LIGHTPEN_ADDR_HI] = 0x3F;
-    this->crtc.mask[crtc_t::LIGHTPEN_ADDR_LO] = 0xFF;
-
+    for (int i = 0; i < crtc_t::NUM_REGS; i++) {
+        this->crtc.regs[i] = crtc_defaults[i];
+    }
     this->update_crtc_values();
 }
 
@@ -128,15 +144,19 @@ cpc_video::update_crtc_values() {
 
     // compute left border width (in emulator pixels)
     const int total_scanline_pixels = crtc.scanline_end * 4;
-    const int hsync_end_pixels = crtc.hsync_end * 4;
-/*
-    FIXME
-    crtc.left_border_width = (total_scanline_pixels - hsync_end_pixels);
+
+    // ok, this is tricky, and only as far as I understood it:
+    //  - the CRT beam retrace is triggered by an oscillator in the monitor,
+    //    so the retrace happens completely independent from the CRTC settings
+    //  - but: the beam will stop at the beginning of a line until HSYNC_START
+    //  - around 13.5ns are 'lost' per scanline for HSYNC+'black porch'+delays
+    // this 13.5ns*4 is where the '54' constant is coming from (13.5ns in CPU cycles)
+    const int line_start_cycles = crtc.hsync_start + 54;
+    const int line_start_pixels = line_start_cycles * 4;
+    crtc.left_border_width = (total_scanline_pixels - line_start_pixels);
     if (crtc.left_border_width < 0) {
         crtc.left_border_width = 0;
     }
-*/
-crtc.left_border_width = 64;
     // width of visible area in emulator framebuffer pixels
     crtc.visible_width = crtc.regs[crtc_t::HORI_DISPLAYED] * 8 * 2;
     if ((crtc.left_border_width + crtc.visible_width) >= max_display_width) {
@@ -383,7 +403,7 @@ cpc_video::select_crtc(ubyte val) {
 void
 cpc_video::write_crtc(ubyte val) {
     if (this->crtc.selected < crtc_t::NUM_REGS) {
-        this->crtc.regs[this->crtc.selected] = val & this->crtc.mask[this->crtc.selected];
+        this->crtc.regs[this->crtc.selected] = val & crtc_masks[this->crtc.selected];
         this->crtc.dirty = true;
     }
 }

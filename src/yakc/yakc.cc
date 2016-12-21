@@ -208,7 +208,10 @@ yakc::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, ui
 
 //------------------------------------------------------------------------------
 void
-yakc::put_key(ubyte ascii) {
+yakc::put_input(ubyte ascii, ubyte joy0_mask) {
+    if (!this->joystick_enabled) {
+        joy0_mask = 0;
+    }
     if (this->kc85.on) {
         this->kc85.put_key(ascii);
     }
@@ -222,7 +225,7 @@ yakc::put_key(ubyte ascii) {
         this->zx.put_key(ascii);
     }
     if (this->cpc.on) {
-        this->cpc.put_key(ascii);
+        this->cpc.put_input(ascii, joy0_mask);
     }
 }
 
@@ -236,16 +239,6 @@ yakc::enable_joystick(bool b) {
 bool
 yakc::is_joystick_enabled() const {
     return this->joystick_enabled;
-}
-
-//------------------------------------------------------------------------------
-void
-yakc::put_joystick(int index, ubyte mask) {
-    if (this->joystick_enabled) {
-        if (this->cpc.on) {
-            this->cpc.put_joystick(index, mask);
-        }
-    }
 }
 
 //------------------------------------------------------------------------------

@@ -158,12 +158,10 @@ void
 Keyboard::HandleInput() {
     o_assert_dbg(this->emu);
     if (this->hasInputFocus) {
-        this->emu->put_key(this->cur_char);
-        this->emu->put_joystick(0, this->cur_joystick);
+        this->emu->put_input(this->cur_char, this->cur_joystick);
     }
     else {
-        this->emu->put_key(0);
-        this->emu->put_joystick(0, 0);
+        this->emu->put_input(0, 0);
     }
 }
 

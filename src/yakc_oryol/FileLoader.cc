@@ -460,9 +460,14 @@ FileLoader::load_sna(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (emu->is_device(device::any_cpc)) {
         const sna_header* hdr = (const sna_header*) data.Data();
         const ubyte* payload = data.Data() + info.PayloadOffset;
-        // FIXME: 128K support
-        o_assert(hdr->dump_size == 64);
-        memcpy(emu->board.ram[0], payload, 0x10000);
+        if (hdr->dump_size == 64) {
+            o_assert(sizeof(emu->board.ram) >= 0x10000);
+            memcpy(emu->board.ram[0], payload, 0x10000);
+        }
+        else {
+            o_assert(sizeof(emu->board.ram) >= 0x20000);
+            memcpy(emu->board.ram[0], payload, 0x20000);
+        }
     }
 }
 
