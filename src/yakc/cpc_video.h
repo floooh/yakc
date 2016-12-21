@@ -82,6 +82,7 @@ public:
         bool hsync_triggered = false;   // hsync processing already triggered this scanline
         bool vsync_triggered = false;   // vsync already triggered this frame
         int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
+        int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
 
         // computed values
         bool dirty = false;             // CRTC registers had been updated
@@ -93,7 +94,6 @@ public:
         int row_height = 0;             // height of a character row in scanlines
         int vsync_start = 0;            // start of VSYNC, in number of scanlines
         int vsync_end = 0;              // end of VSYNC in number of scanlines (official)
-        int vsync_irq_end = 0;          // extended end of VSYNC for VSYNC bit (hack for firmware to pick up this bit)
         int left_border_width = 0;      // width of left border in emulator framebuffer pixels
         int visible_width = 0;          // width of visible area in emulator framebuffer pixels
     };

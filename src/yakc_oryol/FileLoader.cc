@@ -563,8 +563,8 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             cpu.E = hdr->E; cpu.D = hdr->D;
             cpu.L = hdr->L; cpu.H = hdr->H;
             cpu.R = hdr->R; cpu.I = hdr->I;
-            cpu.IFF1 = hdr->IFF1 != 0;
-            cpu.IFF2 = hdr->IFF2 != 0;
+            cpu.IFF1 = (hdr->IFF1 & 1) != 0;
+            cpu.IFF2 = (hdr->IFF2 & 1) != 0;
             cpu.IX = (hdr->IX_h<<8 | hdr->IX_l) & 0xFFFF;
             cpu.IY = (hdr->IY_h<<8 | hdr->IY_l) & 0xFFFF;
             cpu.SP = (hdr->SP_h<<8 | hdr->SP_l) & 0xFFFF;
@@ -577,24 +577,19 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             // gate array state
             auto& cpc = emu->cpc;
             for (int i = 0; i < 17; i++) {
-                cpc.video.select_pen(i);
-                cpc.video.assign_color(hdr->pens[i]);
+                cpc.cpu_out(0x7FFF, i);
+                cpc.cpu_out(0x7FFF, (hdr->pens[i] & 0x1F) | 0x40);
             }
-            cpc.video.select_pen(hdr->selected_pen);
-            cpc.cpu_out(0x7FFF, hdr->gate_array_config);
-            // FIXME: ram_config
+            cpc.cpu_out(0x7FFF, hdr->selected_pen & 0x1F);
+            cpc.cpu_out(0x7FFF, (hdr->gate_array_config & 0x3F) | 0x80);
+            cpc.cpu_out(0x7FFF, (hdr->ram_config & 0x3F) | 0xC0);
             for (int i = 0; i < 18; i++) {
                 cpc.video.select_crtc(i);
                 cpc.video.write_crtc(hdr->crtc_regs[i]);
             }
             cpc.video.update_crtc_values();
             cpc.video.crtc.selected = hdr->crtc_selected;
-            if (hdr->rom_config != 0xFF) {
-                cpc.cpu_out(0x7FFF, 0xC0 | hdr->rom_config);
-            }
-            else {
-                cpc.cpu_out(0x7FFF, 0xC0);
-            }
+            // FIXME: rom_config
             // FIXME: ppi_a
             // FIXME: ppi_b
             cpc.pio_c = hdr->ppi_c;

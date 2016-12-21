@@ -136,7 +136,6 @@ cpc_video::update_crtc_values() {
     // for the VSYNC flag...
     const int vblank_lines = 16;
     crtc.vsync_end = crtc.vsync_start + vblank_lines;
-    crtc.vsync_irq_end = crtc.vsync_end + 16;
     // end of PAL frame
     crtc.frame_end = crtc.regs[crtc_t::VERT_TOTAL]*crtc.row_height + crtc.regs[crtc_t::VERT_TOTAL_ADJUST];
     // number of visible scanlines
@@ -193,6 +192,19 @@ cpc_video::update(z80bus* bus, int cycles) {
         // NOTE: for color flashing to work, an interrupt must happen while
         // the interrupt is processed by the CPU, with standard CRTC register
         // values, this would happen at scanline 260 (the 5th HSYNC of the frame)
+
+        // special case interrupt request after vsync already after 32 lines
+        if (crtc.hsync_after_vsync_counter != 0) {
+            crtc.hsync_after_vsync_counter--;
+            if (crtc.hsync_after_vsync_counter == 0) {
+                if (crtc.hsync_irq_count >= 32) {
+                    crtc.hsync_irq_count = 0;
+                    bus->irq();
+                }
+            }
+        }
+
+        // interrupt request every 52 lines
         if (crtc.hsync_irq_count == 52) {
             crtc.hsync_irq_count = 0;
             bus->irq();
@@ -220,8 +232,9 @@ cpc_video::update(z80bus* bus, int cycles) {
 
         // scanline inside VSYNC area?
         crtc.vsync = (crtc.scanline_count >= crtc.vsync_start) &&
-                     (crtc.scanline_count < crtc.vsync_irq_end);
+                     (crtc.scanline_count < crtc.vsync_end);
         if (crtc.vsync && !crtc.vsync_triggered) {
+            crtc.hsync_after_vsync_counter = 3;
             crtc.vsync_triggered = true;
             bus->vblank();
         }

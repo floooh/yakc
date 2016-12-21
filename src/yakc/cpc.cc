@@ -245,6 +245,9 @@ cpc::cpu_out(uword port, ubyte val) {
             //
             this->ga_config = val;
             this->video.set_video_mode(val & 3);
+            if (val & (1<<4)) {
+                this->video.crtc.hsync_irq_count = 0;
+            }
             this->update_memory_mapping();
         }
         else if (reg == 0xC0) {
@@ -306,27 +309,31 @@ cpc::update_memory_mapping() {
         rom1_ptr = this->roms->ptr(rom_images::cpc464_basic);
     }
     auto& cpu = this->board->cpu;
+    const int i0 = ram_table[ram_table_index][0];
+    const int i1 = ram_table[ram_table_index][1];
+    const int i2 = ram_table[ram_table_index][2];
+    const int i3 = ram_table[ram_table_index][3];
     // 0x0000..0x3FFF
     if (this->ga_config & (1<<2)) {
         // read/write from and to RAM bank
-        cpu.mem.map(0, 0x0000, 0x4000, this->board->ram[ram_table[ram_table_index][0]], true);
+        cpu.mem.map(0, 0x0000, 0x4000, this->board->ram[i0], true);
     }
     else {
         // read from ROM, write to RAM
-        cpu.mem.map_rw(0, 0x0000, 0x4000, rom0_ptr, this->board->ram[ram_table[ram_table_index][0]]);
+        cpu.mem.map_rw(0, 0x0000, 0x4000, rom0_ptr, this->board->ram[i0]);
     }
     // 0x4000..0x7FFF
-    cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[ram_table[ram_table_index][1]], true);
+    cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[i1], true);
     // 0x8000..0xBFFF
-    cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[ram_table[ram_table_index][2]], true);
+    cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[i2], true);
     // 0xC000..0xFFFF
     if (this->ga_config & (1<<3)) {
         // read/write from and to RAM bank
-        cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[ram_table[ram_table_index][3]], true);
+        cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[i3], true);
     }
     else {
         // read from ROM, write to RAM
-        cpu.mem.map_rw(0, 0xC000, 0x4000, rom1_ptr, this->board->ram[ram_table[ram_table_index][3]]);
+        cpu.mem.map_rw(0, 0xC000, 0x4000, rom1_ptr, this->board->ram[i3]);
     }
 }
 
