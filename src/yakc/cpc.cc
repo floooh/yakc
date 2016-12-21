@@ -92,9 +92,7 @@ cpc::check_roms(const rom_images& roms, device model, os_rom os) {
         return roms.has(rom_images::cpc464_os) && roms.has(rom_images::cpc464_basic);
     }
     else if (device::cpc6128 == model) {
-// FIXME
-//        return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
-return false;
+        return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
     }
     return false;
 }
@@ -105,21 +103,9 @@ cpc::init_memory_map() {
     z80& cpu = this->board->cpu;
     cpu.mem.unmap_all();
     YAKC_ASSERT(check_roms(*this->roms, this->cur_model, os_rom::none));
-
-    if (device::cpc464 == this->cur_model) {
-        // map 32 KByte RAM from 4000 to BFFF
-        cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[1], true);
-        cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[2], true);
-
-        // lower ROM (OS), writes always go to RAM bank 0
-        cpu.mem.map_rw(0, 0x0000, 0x4000, this->roms->ptr(rom_images::cpc464_os), this->board->ram[0]);
-
-        // upper ROM (BASIC), writes always go to RAM bank 3
-        cpu.mem.map_rw(0, 0xC000, 0x4000, this->roms->ptr(rom_images::cpc464_basic), this->board->ram[3]);
-    }
-    else if (device::cpc6128 == this->cur_model) {
-        // FIXME
-    }
+    this->ga_config = 0x00;     // enable both ROMs
+    this->ram_config = 0x00;    // standard RAM bank config (0,1,2,3)
+    this->update_memory_mapping();
 }
 
 //------------------------------------------------------------------------------
@@ -138,6 +124,8 @@ cpc::poweron(device m) {
     this->cur_model = m;
     this->on = true;
     this->video.init(this->board);
+    this->ga_config = 0;
+    this->ram_config = 0;
     this->pio_c = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
@@ -167,6 +155,8 @@ cpc::poweroff() {
 void
 cpc::reset() {
     this->video.reset();
+    this->ga_config = 0;
+    this->ram_config = 0;
     this->pio_c = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
@@ -205,7 +195,6 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
 void
 cpc::cpu_out(uword port, ubyte val) {
     // http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
-    YAKC_ASSERT(device::cpc464 == this->cur_model);
     if (0 == (port & (1<<14))) {
         // CRTC function
         const uword crtc_func = port & 0x0300;
@@ -254,24 +243,15 @@ cpc::cpu_out(uword port, ubyte val) {
             //
             //  - bit 4: interrupt generation control
             //
+            this->ga_config = val;
             this->video.set_video_mode(val & 3);
-
-            auto& mem = this->board->cpu.mem;
-
-            // enable/disable lower ROM
-            if (val & (1<<2)) {
-                mem.map_rw(0, 0x0000, 0x4000, this->board->ram[0], this->board->ram[0]);
-            }
-            else {
-                mem.map_rw(0, 0x0000, 0x4000, this->roms->ptr(rom_images::cpc464_os), this->board->ram[0]);
-            }
-
-            // enable/disable upper ROM
-            if (val & (1<<3)) {
-                mem.map_rw(0, 0xC000, 0x4000, this->board->ram[3], this->board->ram[3]);
-            }
-            else {
-                mem.map_rw(0, 0xC000, 0x4000, this->roms->ptr(rom_images::cpc464_basic), this->board->ram[3]);
+            this->update_memory_mapping();
+        }
+        else if (reg == 0xC0) {
+            // CPC6128 RAM banking
+            if (device::cpc6128 == this->cur_model) {
+                this->ram_config = val;
+                this->update_memory_mapping();
             }
         }
         else {
@@ -294,6 +274,59 @@ cpc::cpu_out(uword port, ubyte val) {
     }
     else {
         printf("OUT %04x %02x\n", port, val);
+    }
+}
+
+//------------------------------------------------------------------------------
+// CPC6128 RAM block indices (see cpu_out())
+int ram_table[8][4] = {
+    { 0, 1, 2, 3 },
+    { 0, 1, 2, 7 },
+    { 4, 5, 6, 7 },
+    { 0, 3, 2, 7 },
+    { 0, 4, 2, 3 },
+    { 0, 5, 2, 3 },
+    { 0, 6, 2, 3 },
+    { 0, 7, 2, 3 },
+};
+
+void
+cpc::update_memory_mapping() {
+    // index into RAM config array
+    int ram_table_index;
+    ubyte* rom0_ptr,*rom1_ptr;
+    if (device::cpc6128 == this->cur_model) {
+        ram_table_index = this->ram_config & 0x07;
+        rom0_ptr = this->roms->ptr(rom_images::cpc6128_os);
+        rom1_ptr = this->roms->ptr(rom_images::cpc6128_basic);
+    }
+    else {
+        ram_table_index = 0;
+        rom0_ptr = this->roms->ptr(rom_images::cpc464_os);
+        rom1_ptr = this->roms->ptr(rom_images::cpc464_basic);
+    }
+    auto& cpu = this->board->cpu;
+    // 0x0000..0x3FFF
+    if (this->ga_config & (1<<2)) {
+        // read/write from and to RAM bank
+        cpu.mem.map(0, 0x0000, 0x4000, this->board->ram[ram_table[ram_table_index][0]], true);
+    }
+    else {
+        // read from ROM, write to RAM
+        cpu.mem.map_rw(0, 0x0000, 0x4000, rom0_ptr, this->board->ram[ram_table[ram_table_index][0]]);
+    }
+    // 0x4000..0x7FFF
+    cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[ram_table[ram_table_index][1]], true);
+    // 0x8000..0xBFFF
+    cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[ram_table[ram_table_index][2]], true);
+    // 0xC000..0xFFFF
+    if (this->ga_config & (1<<3)) {
+        // read/write from and to RAM bank
+        cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[ram_table[ram_table_index][3]], true);
+    }
+    else {
+        // read from ROM, write to RAM
+        cpu.mem.map_rw(0, 0xC000, 0x4000, rom1_ptr, this->board->ram[ram_table[ram_table_index][3]]);
     }
 }
 

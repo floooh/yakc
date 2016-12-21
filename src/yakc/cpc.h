@@ -42,6 +42,8 @@ public:
     void put_input(ubyte ascii, ubyte joy0_mask);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
+    /// update bank switching
+    void update_memory_mapping();
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;
@@ -56,6 +58,8 @@ public:
     bool on = false;
     cpc_video video;
     ubyte pio_c;
+    ubyte ga_config = 0x00;     // out to port 0x7Fxx func 0x80
+    ubyte ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
     struct key_mask {
         static const int num_lines = 10;
         ubyte col[num_lines] = { };

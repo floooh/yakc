@@ -358,7 +358,7 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         info.ExecAddr = (hdr->PC_h<<8)|hdr->PC_l;
         info.HasExecAddr = true;
         info.PayloadOffset = 0x100;
-        info.RequiredSystem = device::cpc464;
+        info.RequiredSystem = device::any_cpc;  // FIXME
     }
     return info;
 }
@@ -589,7 +589,12 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             }
             cpc.video.update_crtc_values();
             cpc.video.crtc.selected = hdr->crtc_selected;
-            // FIXME: rom_config
+            if (hdr->rom_config != 0xFF) {
+                cpc.cpu_out(0x7FFF, 0xC0 | hdr->rom_config);
+            }
+            else {
+                cpc.cpu_out(0x7FFF, 0xC0);
+            }
             // FIXME: ppi_a
             // FIXME: ppi_b
             cpc.pio_c = hdr->ppi_c;
