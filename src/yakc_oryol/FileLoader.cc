@@ -184,6 +184,8 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Ikari Warriors", "ikari_warriors.sna", FileType::CPC_SNA, device::any_cpc, true);
     this->Items.Add("Exolon", "exolon.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
     this->Items.Add("Cyclone", "cyclone.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
+    this->Items.Add("Boulderdash", "boulderdash_zx.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
+    this->Items.Add("Bomb Jack", "bombjack_zx.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
 }
 
 //------------------------------------------------------------------------------
@@ -403,65 +405,81 @@ FileLoader::load_zxz80(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (emu->is_device(device::any_zx)) {
         const ubyte* payload = data.Data() + info.PayloadOffset;
         const zxz80_header* hdr = (const zxz80_header*) data.Data();
-        if ((hdr->PC_h == 0) && (hdr->PC_l == 0)) {
-            const ubyte* ptr = payload;
-            const ubyte* end_ptr = data.Data() + data.Size();
-            while (ptr < end_ptr) {
+        bool is_version1 = ((hdr->PC_h != 0) || (hdr->PC_l != 0));
+        bool v1_compr = 0 != (hdr->flags0 & (1<<5));
+        const ubyte* ptr = payload;
+        const ubyte* end_ptr = data.Data() + data.Size();
+        while (ptr < end_ptr) {
+            const ubyte* src_ptr = ptr;
+            int page_index = 0;
+            uint32_t src_len, dst_len;
+            if (is_version1) {
+                src_len = data.Size() - sizeof(zxz80_header);
+                dst_len = 48 * 1024;
+            }
+            else {
+                src_ptr += sizeof(zxz80page_header);
                 const zxz80page_header* phdr = (const zxz80page_header*) ptr;
-                uint32_t len = (phdr->len_h<<8 | phdr->len_l) & 0xFFFF;
-                int page_index = phdr->page_nr - 3;
-                const ubyte* src_ptr = ptr + sizeof(zxz80page_header);
-                ubyte* dst_ptr = emu->zx.board->ram[page_index];
-                const ubyte* dst_end_ptr = dst_ptr + 0x4000;
-                if ((page_index >= 0) && (page_index < 8)) {
-                    if (0xFFFF == len) {
-                        // uncompressed
-                        o_assert2(false, "FIXME: uncompressed!");
-                    }
-                    else {
-                        // compressed
-                        const ubyte* src_end_ptr = src_ptr + len;
-                        while (src_ptr < src_end_ptr) {
-                            o_assert(dst_ptr < dst_end_ptr);
-                            ubyte val = src_ptr[0];
-                            if (0xED == val) {
-                                if (0xED == src_ptr[1]) {
-                                    ubyte count = src_ptr[2];
-                                    o_assert2(0 != count, "48k end marker");
-                                    ubyte data = src_ptr[3];
-                                    src_ptr += 4;
-                                    for (int i = 0; i < count; i++) {
-                                        o_assert(dst_ptr < dst_end_ptr);
-                                        *dst_ptr++ = data;
-                                    }
-                                }
-                                else {
-                                    // single ED
-                                    *dst_ptr++ = val;
-                                    src_ptr++;
+                src_len = (phdr->len_h<<8 | phdr->len_l) & 0xFFFF;
+                dst_len = 0x4000;
+                page_index = phdr->page_nr - 3;
+                if (emu->is_device(device::zxspectrum48k) && (page_index == 5)) {
+                    page_index = 0;
+                }
+            }
+            ubyte* dst_ptr = emu->zx.board->ram[page_index];
+            const ubyte* dst_end_ptr = dst_ptr + dst_len;
+            if ((page_index >= 0) && (page_index < 8)) {
+                if (0xFFFF == src_len) {
+                    // uncompressed
+                    o_assert2(false, "FIXME: uncompressed!");
+                }
+                else {
+                    // compressed
+                    const ubyte* src_end_ptr = src_ptr + src_len;
+                    bool v1_done = false;
+                    while ((src_ptr < src_end_ptr) && !v1_done) {
+                        ubyte val = src_ptr[0];
+                        // check for version 1 end marker
+                        if (v1_compr && (0==val) && (0xED==src_ptr[1]) && (0xED==src_ptr[2]) && (0==src_ptr[3])) {
+                            v1_done = true;
+                            src_ptr += 4;
+                        }
+                        else if (0xED == val) {
+                            if (0xED == src_ptr[1]) {
+                                ubyte count = src_ptr[2];
+                                o_assert(0 != count);
+                                ubyte data = src_ptr[3];
+                                src_ptr += 4;
+                                for (int i = 0; i < count; i++) {
+                                    o_assert(dst_ptr < dst_end_ptr);
+                                    *dst_ptr++ = data;
                                 }
                             }
                             else {
-                                // any value
+                                // single ED
+                                o_assert(dst_ptr < dst_end_ptr);
                                 *dst_ptr++ = val;
                                 src_ptr++;
                             }
                         }
-                        o_assert(dst_ptr == dst_end_ptr);
-                        o_assert(src_ptr == src_end_ptr);
+                        else {
+                            // any value
+                            o_assert(dst_ptr < dst_end_ptr);
+                            *dst_ptr++ = val;
+                            src_ptr++;
+                        }
                     }
-                }
-                if (0xFFFF == len) {
-                    ptr += sizeof(zxz80page_header) + 0x10000;
-                }
-                else {
-                    ptr += sizeof(zxz80page_header) + len;
+                    o_assert(dst_ptr == dst_end_ptr);
+                    o_assert(src_ptr == src_end_ptr);
                 }
             }
-        }
-        else {
-            // FIXME: version 1
-            o_assert2(false, "FIXME: Z80 version 1");
+            if (0xFFFF == src_len) {
+                ptr += sizeof(zxz80page_header) + 0x4000;
+            }
+            else {
+                ptr += sizeof(zxz80page_header) + src_len;
+            }
         }
     }
 }
@@ -540,34 +558,41 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (info.HasExecAddr) {
         if (FileType::ZX_Z80 == info.Type) {
             const zxz80_header* hdr = (const zxz80_header*) data.Data();
+            const zxz80ext_header* ext_hdr = nullptr;
             if ((hdr->PC_h == 0) && (hdr->PC_l == 0)) {
-                const zxz80ext_header* ext_hdr = (const zxz80ext_header*) (data.Data() + sizeof(zxz80_header));
-                z80& cpu = emu->board.cpu;
-                cpu.A = hdr->A; cpu.F = hdr->F;
-                cpu.B = hdr->B; cpu.C = hdr->C;
-                cpu.D = hdr->D; cpu.E = hdr->E;
-                cpu.H = hdr->H; cpu.L = hdr->L;
-                cpu.IXH = hdr->IX_h; cpu.IXL = hdr->IX_l;
-                cpu.IYH = hdr->IY_h; cpu.IYL = hdr->IY_l;
-                cpu.AF_ = (hdr->A_<<8 | hdr->F_) & 0xFFFF;
-                cpu.BC_ = (hdr->B_<<8 | hdr->C_) & 0xFFFF;
-                cpu.DE_ = (hdr->D_<<8 | hdr->E_) & 0xFFFF;
-                cpu.HL_ = (hdr->H_<<8 | hdr->L_) & 0xFFFF;
-                cpu.SP = (hdr->SP_h<<8 | hdr->SP_l) & 0xFFFF;
-                cpu.I = hdr->I;
-                cpu.R = (hdr->R & 0x7F) | ((hdr->flags0 & 1)<<7);
-                cpu.IFF2 = hdr->IFF2;
-                cpu.enable_interrupt = hdr->EI != 0;
+                ext_hdr = (const zxz80ext_header*) (data.Data() + sizeof(zxz80_header));
+            }
+            z80& cpu = emu->board.cpu;
+            cpu.A = hdr->A; cpu.F = hdr->F;
+            cpu.B = hdr->B; cpu.C = hdr->C;
+            cpu.D = hdr->D; cpu.E = hdr->E;
+            cpu.H = hdr->H; cpu.L = hdr->L;
+            cpu.IXH = hdr->IX_h; cpu.IXL = hdr->IX_l;
+            cpu.IYH = hdr->IY_h; cpu.IYL = hdr->IY_l;
+            cpu.AF_ = (hdr->A_<<8 | hdr->F_) & 0xFFFF;
+            cpu.BC_ = (hdr->B_<<8 | hdr->C_) & 0xFFFF;
+            cpu.DE_ = (hdr->D_<<8 | hdr->E_) & 0xFFFF;
+            cpu.HL_ = (hdr->H_<<8 | hdr->L_) & 0xFFFF;
+            cpu.SP = (hdr->SP_h<<8 | hdr->SP_l) & 0xFFFF;
+            cpu.I = hdr->I;
+            cpu.R = (hdr->R & 0x7F) | ((hdr->flags0 & 1)<<7);
+            cpu.IFF2 = hdr->IFF2;
+            cpu.enable_interrupt = hdr->EI != 0;
+            if (hdr->flags1 != 0xFF) {
                 cpu.IM = (hdr->flags1 & 3);
+            }
+            else {
+                cpu.IM = 1;
+            }
+            if (ext_hdr) {
                 cpu.PC = (ext_hdr->PC_h<<8 | ext_hdr->PC_l) & 0xFFFF;
                 cpu.out(&emu->zx, 0xFFFD, ext_hdr->out_fffd);
                 cpu.out(&emu->zx, 0x7FFD, ext_hdr->out_7ffd);
-                emu->zx.border_color = zx::palette[(hdr->flags0>>1) & 7] & 0xFFD7D7D7;
             }
             else {
-                // FIXME: version 1
-                o_assert2(false, "FIXME: Z80 version 1");
+                cpu.PC = (hdr->PC_h<<8 | hdr->PC_l) & 0xFFFF;
             }
+            emu->zx.border_color = zx::palette[(hdr->flags0>>1) & 7] & 0xFFD7D7D7;
         }
         else if (FileType::CPC_SNA == info.Type) {
             const sna_header* hdr = (const sna_header*) data.Data();

@@ -148,7 +148,7 @@ zx::init_memory_map() {
     cpu.mem.unmap_all();
     if (device::zxspectrum48k == this->cur_model) {
         // 48k RAM between 0x4000 and 0xFFFF
-        cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[5], true);
+        cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[0], true);
         cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[1], true);
         cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[2], true);
 
@@ -189,7 +189,12 @@ zx::poweron(device m) {
     this->joy_mask = 0;
     this->next_kbd_mask = 0;
     this->cur_kbd_mask = 0;
-    this->display_ram_bank = 5;
+    if (device::zxspectrum48k == this->cur_model) {
+        this->display_ram_bank = 0;
+    }
+    else {
+        this->display_ram_bank = 5;
+    }
     this->on = true;
 
     // map memory
