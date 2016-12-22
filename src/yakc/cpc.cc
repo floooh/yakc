@@ -69,6 +69,7 @@ cpc::init_keymap() {
 
     // special keys
     this->init_key_mask(' ',  5, 7, 0);     // Space
+    this->init_key_mask(0x02, 2, 5, 0);     // Shift
     this->init_key_mask(0x08, 1, 0, 0);     // Cursor Left
     this->init_key_mask(0x09, 0, 1, 0);     // Cursor Right
     this->init_key_mask(0x0A, 0, 2, 0);     // Cursor Down

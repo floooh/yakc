@@ -35,6 +35,31 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift) {
             default:                return 0;
         }
     }
+    else if (emu->is_device(device::any_cpc)) {
+        switch (key) {
+            case Key::Left:         return 0x08;
+            case Key::Right:        return 0x09;
+            case Key::Down:         return 0x0A;
+            case Key::Up:           return 0x0B;
+            case Key::Enter:        return 0x0D;
+            case Key::LeftShift:    return 0x02;
+            case Key::BackSpace:    return shift ? 0x0C : 0x01; // 0x0C: clear screen
+            case Key::Escape:       return shift ? 0x13 : 0x03; // 0x13: break
+            case Key::F1:           return 0xF1;
+            case Key::F2:           return 0xF2;
+            case Key::F3:           return 0xF3;
+            case Key::F4:           return 0xF4;
+            case Key::F5:           return 0xF5;
+            case Key::F6:           return 0xF6;
+            case Key::F7:           return 0xF7;
+            case Key::F8:           return 0xF8;
+            case Key::F9:           return 0xF9;
+            case Key::F10:          return 0xFA;
+            case Key::F11:          return 0xFB;
+            case Key::F12:          return 0xFC;
+            default:                return 0;
+        }
+    }
     else {
         switch (key) {
             case Key::Left:         return 0x08;
