@@ -171,6 +171,11 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Mazogs", "mazog_deutsch.z80", FileType::KC_Z80, device::any_z1013);
     this->Items.Add("Monitor ZM30 (start with 'ZM')", "zm30.kcc", FileType::KCC, device::any_z9001);
     this->Items.Add("Forth 83 (start with 'F83')", "F83_COM.TAP", FileType::KC_TAP, device::any_z9001);
+    this->Items.Add("Arkanoid", "arkanoid.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Ghosts'n'Goblins", "ghosts_n_goblins.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Gryzor", "gryzor.sna", FileType::CPC_SNA, device::cpc6128, true);
+    this->Items.Add("Dragon Ninja", "dragon_ninja.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Head over Heels", "head_over_heels.sna", FileType::CPC_SNA, device::any_cpc, true);
 }
 
 //------------------------------------------------------------------------------
@@ -250,6 +255,7 @@ FileLoader::FileInfo
 FileLoader::parseHeader(const Buffer& data, const Item& item) {
     FileInfo info;
     info.Filename = item.Filename;
+    info.EnableJoystick = item.EnableJoystick;
     if (FileType::None == item.Type) {
         // guess the file type
         StringBuilder strb(item.Filename);
@@ -522,6 +528,7 @@ FileLoader::patch(yakc* emu, const FileInfo& info) {
 //------------------------------------------------------------------------------
 void
 FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
+    emu->enable_joystick(info.EnableJoystick);
     if (info.HasExecAddr) {
         if (FileType::ZX_Z80 == info.Type) {
             const zxz80_header* hdr = (const zxz80_header*) data.Data();

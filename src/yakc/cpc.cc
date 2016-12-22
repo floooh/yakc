@@ -1,5 +1,16 @@
 //------------------------------------------------------------------------------
 //  cpc.cc
+//
+//  TODO:
+//  - audio!
+//  - improve CRTC emulation so that demos work (implement CRTC closer
+//    to the real thing, a cascade of counters, and decode video memory
+//    per CRTC cycle, not per line)
+//  - subtle differences between different CRTC types
+//  - ROM module switching
+//  - KC Compact differences (color ROM, CIO instead of gate array, ...)
+//  - support more emulator file formats
+//
 //------------------------------------------------------------------------------
 #include "cpc.h"
 
@@ -94,7 +105,12 @@ cpc::check_roms(const rom_images& roms, device model, os_rom os) {
     else if (device::cpc6128 == model) {
         return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
     }
-    return false;
+    else if (device::kccompact == model) {
+        return roms.has(rom_images::kcc_os) && roms.has(rom_images::kcc_basic);
+    }
+    else {
+        return false;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -298,7 +314,12 @@ cpc::update_memory_mapping() {
     // index into RAM config array
     int ram_table_index;
     ubyte* rom0_ptr,*rom1_ptr;
-    if (device::cpc6128 == this->cur_model) {
+    if (device::kccompact == this->cur_model) {
+        ram_table_index = 0;
+        rom0_ptr = this->roms->ptr(rom_images::kcc_os);
+        rom1_ptr = this->roms->ptr(rom_images::kcc_basic);
+    }
+    else if (device::cpc6128 == this->cur_model) {
         ram_table_index = this->ram_config & 0x07;
         rom0_ptr = this->roms->ptr(rom_images::cpc6128_os);
         rom1_ptr = this->roms->ptr(rom_images::cpc6128_basic);

@@ -26,7 +26,7 @@ bool
 LoadWindow::Draw(yakc& emu) {
     YAKC_ASSERT(this->loader);
 
-    ImGui::SetNextWindowSize(ImVec2(384, 200), ImGuiSetCond_Appearing);
+    ImGui::SetNextWindowSize(ImVec2(384, 220), ImGuiSetCond_Appearing);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         auto& ldr = *this->loader;
         if (!ldr.ExtFileReady && ldr.State != FileLoader::Ready) {
@@ -78,6 +78,7 @@ LoadWindow::Draw(yakc& emu) {
             if (execAddrInvalid) {
                 ImGui::PopStyleColor();
             }
+            ImGui::Checkbox("Enable Joystick", &ldr.Info.EnableJoystick);
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
             const char* compatMsg = " ";
             if (!emu.is_device(ldr.Info.RequiredSystem)) {

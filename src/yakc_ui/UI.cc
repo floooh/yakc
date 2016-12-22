@@ -269,6 +269,12 @@ UI::OnFrame(yakc& emu) {
                                 emu.poweron(device::kc85_4, os_rom::caos_4_2);
                             }
                         }
+                        if (emu.check_roms(device::kccompact, os_rom::none)) {
+                            if (ImGui::MenuItem("KC Compact (CPC clone)")) {
+                                emu.poweroff();
+                                emu.poweron(device::kccompact, os_rom::none);
+                            }
+                        }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Robotron Dresden")) {

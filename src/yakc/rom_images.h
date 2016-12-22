@@ -40,6 +40,8 @@ public:
         z1013_mon202,           // Z1013 Monitor 2.02 ROM
         z1013_mon_a2,           // Z1013 Monitor A.2 ROM
         z1013_font,             // Z1013 font ROM
+        kcc_os,                 // KC Compact OS ROM
+        kcc_basic,              // KC Compact OS Basic
 
         num_roms
     };

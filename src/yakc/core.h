@@ -93,6 +93,8 @@ enum class os_rom {
     cpc464_basic,
     cpc6128,
     cpc6128_basic,
+    kcc_os,
+    kcc_basic,
     none,
 };
 

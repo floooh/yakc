@@ -60,8 +60,8 @@ YakcApp::OnInit() {
     IO::Setup(ioSetup);
 
     // we only need few resources, so don't waste memory
-    const int frameSizeX = 32;
-    const int frameSizeY = 16;
+    const int frameSizeX = 24;
+    const int frameSizeY = 8;
     const int width = 2*frameSizeX + 2*320;
     const int height = 2*frameSizeY + 2*256;
     auto gfxSetup = GfxSetup::Window(width, height, "YAKC Emulator");
@@ -275,6 +275,12 @@ YakcApp::initRoms() {
     });
     IO::Load("rom:cpc6128_basic.bin", [this](IO::LoadResult ioRes) {
         this->emu.roms.add(rom_images::cpc6128_basic, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:kcc_os.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::kcc_os, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:kcc_bas.bin", [this](IO::LoadResult ioRes) {
+        this->emu.roms.add(rom_images::kcc_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }
 
