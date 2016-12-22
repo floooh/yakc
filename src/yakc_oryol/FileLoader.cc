@@ -182,6 +182,8 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Cybernoid", "cybernoid.sna", FileType::CPC_SNA, device::any_cpc, true);
     this->Items.Add("Fruity Frank", "fruity_frank.sna", FileType::CPC_SNA, device(int(device::kccompact)|int(device::cpc6128)), true);
     this->Items.Add("Ikari Warriors", "ikari_warriors.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Exolon", "exolon.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
+    this->Items.Add("Cyclone", "cyclone.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
 }
 
 //------------------------------------------------------------------------------

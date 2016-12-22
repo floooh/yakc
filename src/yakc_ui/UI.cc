@@ -364,17 +364,15 @@ UI::OnFrame(yakc& emu) {
                 }
                 ImGui::EndMenu();
             }
-            if (!emu.is_device(device::any_zx)) {
-                if (ImGui::BeginMenu("Software")) {
-                    for (const auto& item : this->fileLoader.Items) {
-                        if (int(item.Compat) & int(emu.model)) {
-                            if (ImGui::MenuItem(item.Name.AsCStr())) {
-                                this->fileLoader.LoadAndStart(item);
-                            }
+            if (ImGui::BeginMenu("Software")) {
+                for (const auto& item : this->fileLoader.Items) {
+                    if (int(item.Compat) & int(emu.model)) {
+                        if (ImGui::MenuItem(item.Name.AsCStr())) {
+                            this->fileLoader.LoadAndStart(item);
                         }
                     }
-                    ImGui::EndMenu();
                 }
+                ImGui::EndMenu();
             }
             if (!(emu.is_device(device::any_zx) || emu.is_device(device::any_cpc))) {
                 if (ImGui::BeginMenu("Hardware")) {
