@@ -69,8 +69,6 @@ public:
     void map(int layer, uword addr, unsigned int size, ubyte* read_ptr, bool writable);
     /// map a range of memory with different read/write pointers
     void map_rw(int layer, uword addr, unsigned int size, ubyte* read_ptr, ubyte* write_ptr);
-    /// unmap a range of memory
-    void unmap(int layer, uword addr, unsigned int size);
     /// unmap all memory pages in a mapping layer
     void unmap_layer(int layer);
     /// unmap all memory pages
@@ -99,7 +97,7 @@ public:
 
 private:
     /// update the CPU-visible mapping
-    void update_mapping();
+    void update_mapping(int page_index);
 };
 
 //------------------------------------------------------------------------------
