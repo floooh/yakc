@@ -14,7 +14,7 @@
 //------------------------------------------------------------------------------
 #include "cpc.h"
 
-#include <stdio.h>
+//#include <stdio.h>
 
 namespace YAKC {
 
@@ -144,6 +144,7 @@ cpc::poweron(device m) {
     this->ga_config = 0;
     this->ram_config = 0;
     this->pio_c = 0;
+    this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
     this->cur_keyboard_mask = key_mask();
@@ -175,6 +176,7 @@ cpc::reset() {
     this->ga_config = 0;
     this->ram_config = 0;
     this->pio_c = 0;
+    this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
     this->cur_keyboard_mask = key_mask();
@@ -224,7 +226,7 @@ cpc::cpu_out(uword port, ubyte val) {
             this->video.write_crtc(val);
         }
         else {
-            printf("OUT: unknown CRTC function!\n");
+            //printf("OUT: unknown CRTC function!\n");
         }
         return;
     }
@@ -276,24 +278,41 @@ cpc::cpu_out(uword port, ubyte val) {
         }
         else {
             // FIXME: unknown Gate Array function
-            printf("OUT Unknown Gate Array func: %02x", val);
+            //printf("OUT Unknown Gate Array func: %02x", val);
         }
+    }
+    else if ((port & 0xFF00) == 0xDF00) {
+        // FIXME: ROM select
+        //printf("OUT ROM Select: %02x\n", val);
+    }
+    else if ((port & 0xFF00) == 0xEF00) {
+        // FIXME: printer port
+        //printf("OUT Printer Port: %02x\n", val);
     }
     else if ((port & 0xFF00) == 0xF400) {
         // FIXME: 8255 PIO Port A (PSG Data)
-        // printf("OUT PIO Port A: %02x\n", val);
+        //printf("OUT PIO Port A: %02x\n", val);
     }
     else if ((port & 0xFF00) == 0xF600) {
         // FIXME: 8255 PIO Port C (KeybRow, Tape, PSG Control)
+        this->scan_kbd_line = val & 0x1F;
         //printf("OUT PIO Port C: %02x\n", val);
         this->pio_c = val;
     }
     else if ((port & 0xFF00) == 0xF700) {
         // FIXME: 8255 PIO Control Register
-        // printf("OUT PIO Control: %02x\n", val);
+        //printf("OUT PIO Control: %02x\n", val);
+    }
+    else if ((port & 0xFF00) == 0xF800) {
+        // FIXME: peripheral soft reset
+        //printf("OUT Peripheral Soft Reset: %02x\n", val);
+    }
+    else if ((port & 0xFF00) == 0xFA00) {
+        // FIXME: Floppy Motor Control (0xFA7E), and Amstrad Serial Interface
+        //printf("OUT Floppy Motor / Serial: %02x\n", val);
     }
     else {
-        printf("OUT %04x %02x\n", port, val);
+        //printf("OUT UNKNOWN: %04x %02x\n", port, val);
     }
 }
 
@@ -403,18 +422,16 @@ cpc::cpu_in(uword port) {
             return this->video.read_crtc();
         }
         else {
-            printf("IN: CRTC unknown function!\n");
+            //printf("IN: CRTC unknown function!\n");
             return 0xFF;
         }
     }
     else if ((port & 0xFF00) == 0xF400) {
         // 8255 PIO Port A (PSG Data)
-        if ((port & 0x000F) < 10) {
-            // NOTE: this is a quick-n-dirty hack to get keyboard input working!
-            return ~(this->cur_keyboard_mask.col[port & 0x000F]);
+        if (this->scan_kbd_line < 10) {
+            return ~(this->cur_keyboard_mask.col[this->scan_kbd_line]);
         }
         else {
-            printf("IN: PIO Port A unknown function!\n");
             return 0xFF;
         }
     }
@@ -448,7 +465,7 @@ cpc::cpu_in(uword port) {
         return this->pio_c;
     }
     else {
-        printf("IN %04x\n", port);
+        //printf("IN %04x\n", port);
         return 0x00;
     }
 }

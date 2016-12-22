@@ -176,6 +176,12 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Gryzor", "gryzor.sna", FileType::CPC_SNA, device::cpc6128, true);
     this->Items.Add("Dragon Ninja", "dragon_ninja.sna", FileType::CPC_SNA, device::any_cpc, true);
     this->Items.Add("Head over Heels", "head_over_heels.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Boulderdash", "boulder_dash.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Bomb Jack", "bomb_jack.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Chase HQ", "chase_hq.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Cybernoid", "cybernoid.sna", FileType::CPC_SNA, device::any_cpc, true);
+    this->Items.Add("Fruity Frank", "fruity_frank.sna", FileType::CPC_SNA, device(int(device::kccompact)|int(device::cpc6128)), true);
+    this->Items.Add("Ikari Warriors", "ikari_warriors.sna", FileType::CPC_SNA, device::any_cpc, true);
 }
 
 //------------------------------------------------------------------------------

@@ -76,6 +76,7 @@ public:
             }
         }
     };
+    ubyte scan_kbd_line;    // next keyboard line to be scanned
     key_mask next_key_mask;
     key_mask next_joy_mask;
     key_mask cur_keyboard_mask;
