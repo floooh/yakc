@@ -20,7 +20,7 @@ public:
 
 static void step(daisyChainTestBus& bus) {
     bus.cpu.step(&bus);
-    bus.cpu.handle_irq();
+    bus.cpu.handle_irq(&bus);
 }
 
 TEST(daisychain) {

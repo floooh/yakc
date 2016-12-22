@@ -224,7 +224,7 @@ z9001::step(uint64_t start_tick, uint64_t end_tick) {
         }
         dbg.store_pc_history(cpu); // FIXME: only if debug window open?
         int ticks_step = cpu.step(this);
-        ticks_step += cpu.handle_irq();
+        ticks_step += cpu.handle_irq(this);
         clk.update(this, ticks_step);
         ctc.update_timers(this, ticks_step);
         this->cur_tick += ticks_step;

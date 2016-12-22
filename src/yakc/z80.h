@@ -104,7 +104,7 @@ public:
     /// receive an interrupt request
     void irq();
     /// handle an interrupt request, must be called after step(), return num tstates taken
-    int handle_irq();
+    int handle_irq(z80bus* bus);
     /// implement the RETI instruction
     void reti();
     /// implement the EI instruction

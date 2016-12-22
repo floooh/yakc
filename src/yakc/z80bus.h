@@ -29,6 +29,8 @@ public:
 
     /// request a CPU interrupt
     virtual void irq();
+    /// interrupt acknowled CPU
+    virtual void iack();
     /// clock timer triggered
     virtual void timer(int timer_id);
 

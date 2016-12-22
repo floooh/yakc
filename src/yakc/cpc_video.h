@@ -24,6 +24,10 @@ public:
     void assign_color(ubyte val);
     /// set display mode (0..2)
     void set_video_mode(ubyte val);
+    /// called when bit 4 in CPU OUT 0x7Fxx is set (resets HSYNC counter)
+    void interrupt_control();
+    /// called when CPU acknowledges interrupt, clears bit 5 of HSYNC counter
+    void interrupt_acknowledge();
 
     /// select crtc register
     void select_crtc(ubyte val);
@@ -85,7 +89,6 @@ public:
         int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
 
         // computed values
-        bool dirty = false;             // CRTC registers had been updated
         int scanline_end = 0;           // end of scanline, in CPU cycles
         int visible_scanlines = 0;      // number of visible scanlines (inside vertical border)
         int frame_end = 0;              // last scanline in frame

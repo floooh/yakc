@@ -182,7 +182,7 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         dbg.store_pc_history(cpu); // FIXME: only if debug window open?
         int ticks_step = cpu.step(this);
         // need to round up ticks to 4, this is a CPC specialty
-        ticks_step += cpu.handle_irq();
+        ticks_step += cpu.handle_irq(this);
         ticks_step = (ticks_step + 3) & ~3;
         this->board->clck.update(this, ticks_step);
         this->video.update(this, ticks_step);
@@ -246,7 +246,7 @@ cpc::cpu_out(uword port, ubyte val) {
             this->ga_config = val;
             this->video.set_video_mode(val & 3);
             if (val & (1<<4)) {
-                this->video.crtc.hsync_irq_count = 0;
+                this->video.interrupt_control();
             }
             this->update_memory_mapping();
         }
@@ -436,6 +436,12 @@ void
 cpc::irq() {
     // forward interrupt request to CPU
     this->board->cpu.irq();
+}
+
+//------------------------------------------------------------------------------
+void
+cpc::iack() {
+    this->video.interrupt_acknowledge();
 }
 
 //------------------------------------------------------------------------------

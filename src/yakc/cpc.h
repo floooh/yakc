@@ -51,6 +51,8 @@ public:
     virtual ubyte cpu_in(uword port) override;
     /// interrupt request callback
     virtual void irq() override;
+    /// interrupt acknowledge callback
+    virtual void iack() override;
     /// vblank callback
     virtual void vblank() override;
 

@@ -118,8 +118,6 @@ cpc_video::reset() {
 //------------------------------------------------------------------------------
 void
 cpc_video::update_crtc_values() {
-    crtc.dirty = false;
-    
     // length of a scanline in CPU cycles
     crtc.scanline_end = (crtc.regs[crtc_t::HORI_TOTAL]+1) * 4;
     // start of HSYNC signal inside scanline in CPU cycles
@@ -176,7 +174,7 @@ cpc_video::update(z80bus* bus, int cycles) {
     // update HSYNC flag, and check if interrupt must be requested
     crtc.hsync = (crtc.scanline_cycle_count >= crtc.hsync_start) &&
                  (crtc.scanline_cycle_count < crtc.hsync_end);
-    if (crtc.hsync && !crtc.hsync_triggered) {
+    if ((crtc.scanline_cycle_count >= crtc.hsync_start) && !crtc.hsync_triggered) {
         crtc.hsync_triggered = true;
         crtc.hsync_irq_count++;
 
@@ -209,13 +207,8 @@ cpc_video::update(z80bus* bus, int cycles) {
             crtc.hsync_irq_count = 0;
             bus->irq();
         }
-    }
 
-    // end of scanline reached? then wraparound and start new scanline
-    if (crtc.scanline_cycle_count >= crtc.scanline_end) {
-        crtc.hsync_triggered = false;
-        crtc.scanline_cycle_count %= crtc.scanline_end;
-
+        // decode the current(!) scanline
         if (crtc.palline_count < max_display_height) {
             if (crtc.scanline_count < crtc.visible_scanlines) {
                 // decode visible scanline
@@ -238,6 +231,12 @@ cpc_video::update(z80bus* bus, int cycles) {
             crtc.vsync_triggered = true;
             bus->vblank();
         }
+    }
+
+    // end of scanline reached? then wraparound and start new scanline
+    if (crtc.scanline_cycle_count >= crtc.scanline_end) {
+        crtc.hsync_triggered = false;
+        crtc.scanline_cycle_count = 0;
 
         // wrap around pal-line
         crtc.palline_count++;
@@ -248,14 +247,9 @@ cpc_video::update(z80bus* bus, int cycles) {
         }
 
         // wrap around scanline
-        if (crtc.scanline_count == crtc.frame_end) {
+        if (crtc.scanline_count >= crtc.frame_end) {
             crtc.scanline_count = 0;
             crtc.vsync_triggered = false;
-        }
-
-        // update CRTC values?
-        if (crtc.dirty) {
-            this->update_crtc_values();
         }
     }
 }
@@ -417,7 +411,7 @@ void
 cpc_video::write_crtc(ubyte val) {
     if (this->crtc.selected < crtc_t::NUM_REGS) {
         this->crtc.regs[this->crtc.selected] = val & crtc_masks[this->crtc.selected];
-        this->crtc.dirty = true;
+        this->update_crtc_values();
     }
 }
 
@@ -437,6 +431,20 @@ cpc_video::read_crtc() const {
 bool
 cpc_video::vsync_bit() const {
     return this->crtc.vsync;
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_video::interrupt_control() {
+    this->crtc.hsync_irq_count = 0;
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_video::interrupt_acknowledge() {
+    // clear top bit of hsync counter, makes sure the next hsync irq
+    // won't happen until at least 32 lines later
+    this->crtc.hsync_irq_count &= 0x1F;
 }
 
 } // namespace YAKC

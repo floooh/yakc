@@ -107,7 +107,7 @@ z80::irq() {
 
 //------------------------------------------------------------------------------
 int
-z80::handle_irq() {
+z80::handle_irq(z80bus* bus) {
     int tstates = 0;
     if (this->irq_received) {
         YAKC_ASSERT((this->IM >= 0) && (this->IM <= 2));
@@ -132,6 +132,9 @@ z80::handle_irq() {
                 mem.w16(SP, PC);
                 this->PC = 0x38;
                 tstates += 13;
+                if (bus) {
+                    bus->iack();
+                }
             }
             else {
                 // NOTE: currently there's no timeout on an interrupt request if
@@ -146,6 +149,9 @@ z80::handle_irq() {
                 ubyte vec = 0x00;
                 if (this->irq_device) {
                     vec = this->irq_device->interrupt_acknowledged();
+                }
+                if (bus) {
+                    bus->iack();
                 }
                 uword addr = (this->I<<8)|(vec&0xFE);
                 this->SP -= 2;
