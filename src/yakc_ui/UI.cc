@@ -376,7 +376,7 @@ UI::OnFrame(yakc& emu) {
                     ImGui::EndMenu();
                 }
             }
-            if (!emu.is_device(device::any_zx)) {
+            if (!(emu.is_device(device::any_zx) || emu.is_device(device::any_cpc))) {
                 if (ImGui::BeginMenu("Hardware")) {
                     if (emu.is_device(device::any_kc85)) {
                         if (ImGui::MenuItem("Expansion Slots")) {
