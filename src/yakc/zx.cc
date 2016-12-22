@@ -186,6 +186,7 @@ zx::poweron(device m) {
     this->scanline_counter = 0;
     this->blink_counter = 0;
     this->memory_paging_disabled = false;
+    this->joy_mask = 0;
     this->next_kbd_mask = 0;
     this->cur_kbd_mask = 0;
     this->display_ram_bank = 5;
@@ -224,6 +225,7 @@ zx::poweroff() {
 void
 zx::reset() {
     this->memory_paging_disabled = false;
+    this->joy_mask = 0;
     this->next_kbd_mask = 0;
     this->cur_kbd_mask = 0;
     this->last_fe_out = 0;
@@ -316,10 +318,11 @@ zx::cpu_out(uword port, ubyte val) {
 
 //------------------------------------------------------------------------------
 void
-zx::put_key(ubyte ascii) {
+zx::put_input(ubyte ascii, ubyte joy_mask) {
     // register a new key press with the emulator,
     // ascii=0 means no key pressed
     this->next_kbd_mask = this->key_map[ascii];
+    this->joy_mask = joy_mask;
 }
 
 //------------------------------------------------------------------------------
@@ -356,9 +359,23 @@ zx::cpu_in(uword port) {
     }
     else if ((port & 0xFF) == 0x1F) {
         // Kempston Joystick
-        // FIXME: for now just return all zeros, the bitmask
-        // would be: 000FUDLR
-        return 0x00;
+        ubyte val = 0;
+        if (this->joy_mask & joystick::left) {
+            val |= 1<<1;
+        }
+        if (this->joy_mask & joystick::right) {
+            val |= 1<<0;
+        }
+        if (this->joy_mask & joystick::up) {
+            val |= 1<<3;
+        }
+        if (this->joy_mask & joystick::down) {
+            val |= 1<<2;
+        }
+        if (this->joy_mask & joystick::btn0) {
+            val |= 1<<4;
+        }
+        return val;
     }
     return 0xFF;
 }

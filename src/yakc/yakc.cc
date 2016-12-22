@@ -222,7 +222,7 @@ yakc::put_input(ubyte ascii, ubyte joy0_mask) {
         this->z9001.put_key(ascii);
     }
     if (this->zx.on) {
-        this->zx.put_key(ascii);
+        this->zx.put_input(ascii, joy0_mask);
     }
     if (this->cpc.on) {
         this->cpc.put_input(ascii, joy0_mask);

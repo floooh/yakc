@@ -37,8 +37,8 @@ public:
     const char* system_info() const;
     /// called after snapshot restore
     void on_context_switched();
-    /// put a key as ASCII code
-    void put_key(ubyte ascii);
+    /// put a key and joystick input (Kempston)
+    void put_input(ubyte ascii, ubyte joy0_mask);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// decode the next line into RGBA8Buffer
@@ -67,6 +67,7 @@ public:
     uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
     uint32_t border_color = 0xFF000000;
     uint32_t rgba8_buffer[320*256];
+    ubyte joy_mask = 0;                 // joystick mask
     uint64_t next_kbd_mask = 0;
     uint64_t cur_kbd_mask = 0;
     uint64_t key_map[256];              // 8x5 keyboard matrix bits by key code
