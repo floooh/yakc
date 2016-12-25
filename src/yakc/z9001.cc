@@ -563,6 +563,12 @@ z9001::decode_video() {
 }
 
 //------------------------------------------------------------------------------
+void
+z9001::decode_audio(float* buffer, int num_samples) {
+    this->speaker.fill_samples(buffer, num_samples);
+}
+
+//------------------------------------------------------------------------------
 const char*
 z9001::system_info() const {
     if (device::z9001 == this->cur_model) {

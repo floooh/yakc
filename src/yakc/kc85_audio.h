@@ -31,6 +31,9 @@ public:
     void step(int cpu_cycles);
     /// must be called from z80bus::ctc_write() for CTC channel 0 or 1
     void ctc_write(int ctc_channel);
+    /// decode audio data
+    void decode_audio(float* buffer, int num_samples);
+
 
     z80ctc* ctc = nullptr;
     uint64_t cycle_count = 0;       // current absolute CPU cycle count

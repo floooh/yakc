@@ -50,7 +50,7 @@ sound_speaker::stop_all() {
 //------------------------------------------------------------------------------
 void
 sound_speaker::step(int cpu_cycles) {
-    this->sample_counter -= (cpu_cycles<<3);
+    this->sample_counter -= cpu_cycles * precision;
     while (this->sample_counter < 0) {
         // generate new sample
         this->sample_counter += this->sample_cycles;

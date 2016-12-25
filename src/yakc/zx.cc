@@ -213,6 +213,9 @@ zx::poweron(device m) {
         this->board->clck.config_timer_cycles(0, 228);
     }
 
+    // initialize sound generator
+    this->beeper.init(this->board->clck.base_freq_khz, SOUND_SAMPLE_RATE);
+
     // cpu start state
     this->board->cpu.init();
     this->board->cpu.PC = 0x0000;
@@ -229,6 +232,7 @@ zx::poweroff() {
 //------------------------------------------------------------------------------
 void
 zx::reset() {
+    this->beeper.reset();
     this->memory_paging_disabled = false;
     this->joy_mask = 0;
     this->next_kbd_mask = 0;
@@ -259,6 +263,7 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
         int ticks_step = cpu.step(this);
         ticks_step += cpu.handle_irq(this);
         this->board->clck.update(this, ticks_step);
+        this->beeper.step(ticks_step);
         cur_tick += ticks_step;
     }
     return cur_tick;
@@ -276,6 +281,7 @@ zx::cpu_out(uword port, ubyte val) {
         //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
         //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
         this->last_fe_out = val;
+        this->beeper.write(0 != (val & (1<<4)));
         return;
     }
 
@@ -522,6 +528,12 @@ zx::decode_video_line(uint16_t y) {
             *dst++ = this->border_color;
         }
     }
+}
+
+//------------------------------------------------------------------------------
+void
+zx::decode_audio(float* buffer, int num_samples) {
+    this->beeper.fill_samples(buffer, num_samples);
 }
 
 } // namespace YAKC

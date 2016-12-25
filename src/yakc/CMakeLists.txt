@@ -7,6 +7,7 @@ fips_begin_module(yakc)
         z80pio.cc z80pio.h z80ctc.cc z80ctc.h z80dbg.cc z80dbg.h
         sound.h sound.cc
         sound_speaker.h sound_speaker.cc
+        sound_beeper.h sound_beeper.cc
         kc85.h kc85.cc kc85_video.h kc85_video.cc kc85_audio.h kc85_audio.cc kc85_exp.h kc85_exp.cc
         z1013.h z1013.cc
         z9001.h z9001.cc

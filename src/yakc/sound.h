@@ -24,6 +24,7 @@ public:
     int sample_cycles;          // length of one audio sample in CPU cycles
     int sample_counter;         // need to generate new sample if counter goes below zero
 
+    static const int precision = 8;
     static const int num_buffers = 32;
     static const int buf_size = 128;
     std::atomic<int> read_buffer = { 0 };

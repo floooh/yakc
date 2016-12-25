@@ -7,6 +7,7 @@
 #include "yakc/breadboard.h"
 #include "yakc/rom_images.h"
 #include "yakc/z80bus.h"
+#include "yakc/sound_beeper.h"
 
 namespace YAKC {
 
@@ -43,6 +44,8 @@ public:
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// decode the next line into RGBA8Buffer
     void decode_video_line(uint16_t y);
+    /// decode audio data
+    void decode_audio(float* buffer, int num_samples);
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;
@@ -71,6 +74,7 @@ public:
     uint64_t next_kbd_mask = 0;
     uint64_t cur_kbd_mask = 0;
     uint64_t key_map[256];              // 8x5 keyboard matrix bits by key code
+    sound_beeper beeper;
 };
 
 } // namespace YAKC
