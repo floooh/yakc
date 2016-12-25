@@ -97,7 +97,6 @@ snapshot::write_kc_state(const yakc& emu, state_t& state) {
     state.kc.irm_control = kc.video.irm_control;
     state.kc.pio_blink_flag = kc.video.pio_blink_flag;
     state.kc.ctc_blink_flag = kc.video.ctc_blink_flag;
-    state.kc.volume = kc.audio.volume;
     for (int c = 0; c < 2; c++) {
         state.kc.chn[c].ctc_mode = kc.audio.channels[c].ctc_mode;
         state.kc.chn[c].ctc_constant = kc.audio.channels[c].ctc_constant;
@@ -128,7 +127,6 @@ snapshot::apply_kc_state(const state_t& state, yakc& emu) {
     kc.video.pio_blink_flag = 0 != state.kc.pio_blink_flag;
     kc.video.ctc_blink_flag = 0 != state.kc.ctc_blink_flag;
     kc.audio.reset();
-    kc.audio.volume = state.kc.volume;
     for (int c = 0; c < 2; c++) {
         kc.audio.channels[c].ctc_mode = state.kc.chn[c].ctc_mode;
         kc.audio.channels[c].ctc_constant = state.kc.chn[c].ctc_constant;

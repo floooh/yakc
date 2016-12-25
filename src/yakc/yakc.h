@@ -28,7 +28,7 @@ public:
     class rom_images roms;
 
     /// one-time init
-    void init(const ext_funcs& funcs, const sound_funcs& snd_funcs);
+    void init(const ext_funcs& funcs);
     /// check if the required ROM images for a model/os combination are loaded
     bool check_roms(device model, os_rom os);
     /// poweron one of the emus
@@ -61,6 +61,8 @@ public:
     void border_color(float& out_red, float& out_green, float& out_blue);
     /// get the currently active z80bus
     z80bus* get_bus();
+    /// fill sample buffer for external audio system (may be called from a thread!)
+    void fill_sound_samples(float* buffer, int num_samples);
 
     bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count

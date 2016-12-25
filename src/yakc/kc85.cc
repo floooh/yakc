@@ -90,7 +90,7 @@ kc85::poweron(device m, os_rom os) {
     this->board->cpu.init();
     this->exp.init();
     this->video.init(m, this->board);
-    this->audio.init(&this->board->ctc);
+    this->audio.init(this->board);
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
     this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
@@ -193,7 +193,7 @@ kc85::step(uint64_t start_tick, uint64_t end_tick) {
         ticks_step += cpu.handle_irq(this);
         clk.update(this, ticks_step);
         ctc.update_timers(this, ticks_step);
-        this->audio.update_cycles(cur_tick);
+        this->audio.step(ticks_step);
         cur_tick += ticks_step;
     }
     return cur_tick;
@@ -388,7 +388,8 @@ kc85::pio_out(int pio_id, int port_id, ubyte val) {
     else {
         this->pio_b = val;
         this->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
-        this->audio.update_volume(val & PIO_B_VOLUME_MASK);
+        // FIXME: audio volume
+        //this->audio.update_volume(val & PIO_B_VOLUME_MASK);
     }
 }
 

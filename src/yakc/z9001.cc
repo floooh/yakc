@@ -125,12 +125,6 @@ z9001::init_memory_mapping() {
 
 //------------------------------------------------------------------------------
 void
-z9001::setup_sound_funcs(const sound_funcs& funcs) {
-    this->sound_cb = funcs;
-}
-
-//------------------------------------------------------------------------------
-void
 z9001::on_context_switched() {
     this->init_memory_mapping();
     z80& cpu = this->board->cpu;
@@ -157,6 +151,8 @@ z9001::poweron(device m, os_rom os) {
     this->kbd_column_mask = 0;
     this->kbd_line_mask = 0;
     this->keybuf.init(4);
+    this->ctc0_mode = z80ctc::RESET;
+    this->ctc0_constant = 0;
 
     // map memory
     clear(this->board->ram, sizeof(this->board->ram));
@@ -172,6 +168,7 @@ z9001::poweron(device m, os_rom os) {
     this->board->pio.init(0);
     this->board->pio2.init(1);
     this->board->ctc.init(0);
+    this->speaker.init(this->board->clck.base_freq_khz, SOUND_SAMPLE_RATE);
 
     // setup interrupt daisy chain, from highest to lowest priority:
     //  CPU -> PIO1 -> PIO2 -> CTC
@@ -191,13 +188,21 @@ z9001::poweron(device m, os_rom os) {
 void
 z9001::poweroff() {
     YAKC_ASSERT(this->on);
+    this->speaker.stop_all();
     this->board->cpu.mem.unmap_all();
-    this->on = false;    
+    this->on = false;
 }
 
 //------------------------------------------------------------------------------
 void
 z9001::reset() {
+    this->key_mask = 0;
+    this->kbd_column_mask = 0;
+    this->kbd_line_mask = 0;
+    this->keybuf.reset();
+    this->ctc0_mode = z80ctc::RESET;
+    this->ctc0_constant = 0;
+    this->speaker.stop_all();    
     this->board->ctc.reset();
     this->board->pio.reset();
     this->board->pio2.reset();
@@ -227,6 +232,7 @@ z9001::step(uint64_t start_tick, uint64_t end_tick) {
         ticks_step += cpu.handle_irq(this);
         clk.update(this, ticks_step);
         ctc.update_timers(this, ticks_step);
+        this->speaker.step(ticks_step);
         this->cur_tick += ticks_step;
     }
     this->decode_video();
@@ -411,9 +417,7 @@ z9001::ctc_write(int ctc_id, int chn_id) {
 
             if (!(this->ctc0_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
                 // CTC channel has become inactive, call the stop-callback
-                if (this->sound_cb.stop) {
-                    this->sound_cb.stop(this->sound_cb.userdata, this->cur_tick, 0);
-                }
+                this->speaker.stop(0);
                 this->ctc0_mode = ctc_chn.mode;
             }
             else if (!(ctc_chn.mode & z80ctc::RESET)) {
@@ -421,9 +425,7 @@ z9001::ctc_write(int ctc_id, int chn_id) {
                 int div = ctc_chn.constant * ((ctc_chn.mode & z80ctc::PRESCALER_256) ? 256 : 16);
                 if (div > 0) {
                     int hz = int((float(2457600) / float(div)) / 2.0f);
-                    if (this->sound_cb.sound) {
-                        this->sound_cb.sound(this->sound_cb.userdata, this->cur_tick, 0, hz);
-                    }
+                    this->speaker.start(0, hz);
                 }
                 this->ctc0_constant = ctc_chn.constant;
                 this->ctc0_mode = ctc_chn.mode;

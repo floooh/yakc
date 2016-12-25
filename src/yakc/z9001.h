@@ -19,6 +19,7 @@
 #include "yakc/keybuffer.h"
 #include "yakc/z80bus.h"
 #include "yakc/rom_images.h"
+#include "yakc/sound_speaker.h"
 
 namespace YAKC {
 
@@ -33,8 +34,6 @@ public:
     void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
     static bool check_roms(const rom_images& roms, device model, os_rom os);
-    /// setup audio callbacks
-    void setup_sound_funcs(const sound_funcs& funcs);
     /// init the memory map
     void init_memory_mapping();
 
@@ -99,9 +98,9 @@ public:
     uint32_t blink_counter = 0;
     uint32_t rgba8_buffer[320*192];     // decoded linear RGBA8 video buffer
 
-    sound_funcs sound_cb;               // external sound callbacks
     ubyte ctc0_mode = z80ctc::RESET;    // CTC0 state for audio output
     ubyte ctc0_constant = 0;
+    sound_speaker speaker;              // audio speaker emulation
 };
 
 } // namespace YAKC

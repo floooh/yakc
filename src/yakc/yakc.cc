@@ -7,7 +7,7 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-yakc::init(const ext_funcs& sys_funcs, const sound_funcs& snd_funcs) {
+yakc::init(const ext_funcs& sys_funcs) {
     func = sys_funcs;
     this->cpu_ahead = false;
     this->cpu_behind = false;
@@ -18,8 +18,6 @@ yakc::init(const ext_funcs& sys_funcs, const sound_funcs& snd_funcs) {
     this->z9001.init(&this->board, &this->roms);
     this->zx.init(&this->board, &this->roms);
     this->cpc.init(&this->board, &this->roms);
-    this->kc85.audio.setup_callbacks(snd_funcs);
-    this->z9001.setup_sound_funcs(snd_funcs);
 }
 
 //------------------------------------------------------------------------------
@@ -295,6 +293,20 @@ yakc::border_color(float& out_red, float& out_green, float& out_blue) {
     }
     else {
         out_red = out_green = out_blue = 0.0f;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+yakc::fill_sound_samples(float* buffer, int num_samples) {
+    if (this->kc85.on) {
+        return this->kc85.audio.speaker.fill_samples(buffer, num_samples);
+    }
+    else if (this->z9001.on) {
+        return this->z9001.speaker.fill_samples(buffer, num_samples);
+    }
+    else {
+        clear(buffer, num_samples * sizeof(float));
     }
 }
 

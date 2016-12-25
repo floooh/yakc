@@ -4,7 +4,7 @@
     @class YAKC::Audio
     @brief implement audio playback callback
 */
-#include "yakc/clock.h"
+#include "yakc/yakc.h"
 #include "Core/Containers/Queue.h"
 #include "AudioSource.h"
 #include "soloud_biquadresonantfilter.h"
@@ -14,23 +14,17 @@ namespace YAKC {
 class Audio {
 public:
     /// setup audio playback
-    void Setup(const clock& clk);
+    void Setup(yakc* emu);
     /// shutdown audio playback
     void Discard();
     /// per-frame update
-    void Update(const clock& clk);
+    void Update();
     /// get the current max processed audio sample count in number of CPU cycles
     uint64_t GetProcessedCycles() const;
 
-    /// callback to start sound or change frequency
-    static void cb_sound(void* userdata, uint64_t cycle_count, int channel, int hz);
-    /// callback to stop sound
-    static void cb_stop(void* userdata, uint64_t cycle_count, int channel);
-    /// callback to change volume
-    static void cb_volume(void* userdata, uint64_t cycle_count, int vol);
-
     static SoLoud::Soloud* soloud;
     static int soloud_open_count;
+    yakc* emu = nullptr;
     SoLoud::BiquadResonantFilter filter;
     AudioSource audioSource;
     int audioHandle = 0;

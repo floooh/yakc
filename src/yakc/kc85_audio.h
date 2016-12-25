@@ -16,34 +16,25 @@
     - stop_cb: stop a sound with delay in sample ticks
 */
 #include "yakc/core.h"
-#include "yakc/z80ctc.h"
+#include "yakc/breadboard.h"
+#include "yakc/sound_speaker.h"
 
 namespace YAKC {
 
 class kc85_audio {
 public:
-    /// setup callbacks (call before anything else)
-    void setup_callbacks(const sound_funcs& funcs);
-    /// initialize the audio hardware (we need access to the ctc
-    void init(z80ctc* ctc);
+    /// initialize the audio hardware
+    void init(breadboard* board);
     /// reset the audio hardware
     void reset();
-    /// called from instruction execution loop to get correct T cycle in 60Hzframe
-    void update_cycles(uint64_t cycle_count);
-    /// update volume (0..1F, called from kc85 PIO-B handler)
-    void update_volume(int vol);
-
-    /// update a sound channel when ctc state has changed
-    void update_channel(int channel);
+    /// called after executing CPU instruction
+    void step(int cpu_cycles);
     /// must be called from z80bus::ctc_write() for CTC channel 0 or 1
     void ctc_write(int ctc_channel);
 
     z80ctc* ctc = nullptr;
     uint64_t cycle_count = 0;       // current absolute CPU cycle count
-
-    int volume = 0;
-    sound_funcs funcs;
-
+    sound_speaker speaker;
     static const int num_channels = 2;
     struct channel_state {
         ubyte ctc_mode = z80ctc::RESET;

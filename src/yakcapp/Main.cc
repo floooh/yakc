@@ -72,17 +72,17 @@ YakcApp::OnInit() {
     Gfx::Setup(gfxSetup);
     Input::Setup();
 
+    // initialize Oryol platform wrappers
+    this->draw.Setup(gfxSetup, frameSizeX, frameSizeY);
+    this->audio.Setup(&this->emu);
+    this->keyboard.Setup(this->emu);
+
     // initialize the emulator
     ext_funcs sys_funcs;
     sys_funcs.assertmsg_func = Log::AssertMsg;
     sys_funcs.malloc_func = [] (size_t s) -> void* { return Oryol::Memory::Alloc((int)s); };
     sys_funcs.free_func = [] (void* p) { Oryol::Memory::Free(p); };
-    sound_funcs snd_funcs;
-    snd_funcs.userdata = &this->audio;
-    snd_funcs.sound = Audio::cb_sound;
-    snd_funcs.volume = Audio::cb_volume;
-    snd_funcs.stop = Audio::cb_stop;
-    this->emu.init(sys_funcs, snd_funcs);
+    this->emu.init(sys_funcs);
 
     // initialize the ROM dumps and modules
     this->initRoms();
@@ -90,9 +90,6 @@ YakcApp::OnInit() {
     // switch the emulator on
     this->emu.poweron(device::kc85_3, os_rom::caos_3_1);
 
-    this->draw.Setup(gfxSetup, frameSizeX, frameSizeY);
-    this->audio.Setup(this->emu.board.clck);
-    this->keyboard.Setup(this->emu);
     #if YAKC_UI
     this->ui.Setup(this->emu, &this->audio);
     #endif
@@ -161,7 +158,7 @@ YakcApp::OnRunning() {
         o_trace_end();
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
-    this->audio.Update(this->emu.board.clck);
+    this->audio.Update();
     if (this->emu.kc85.on) {
         this->draw.Render(this->emu.kc85.video.rgba8_buffer, 320, 256);
     }

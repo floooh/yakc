@@ -48,7 +48,6 @@ public:
             ubyte pio_blink_flag;
             ubyte ctc_blink_flag;
             ubyte pad[3];
-            int volume;
             struct channel_t {
                 ubyte ctc_mode;
                 ubyte ctc_constant;

@@ -40,8 +40,7 @@ AudioWindow::Draw(yakc& emu) {
             this->cpuBehind = emu.cpu_behind;
         }
         ImGui::Text("Backend: %s", Audio::soloud->getBackendString());
-        ImGui::Text("Backend sample rate: source=%d, actual=%d\n",  this->audio->audioSource.sample_rate, 
-            Audio::soloud->getBackendSamplerate());
+        ImGui::Text("Backend Samplerate: %d", Audio::soloud->getBackendSamplerate());
         ImGui::Text("Backend sample buffer size: %d\n", Audio::soloud->getBackendBufferSize());
         if (this->cpuAhead) {
             ImGui::TextColored(UI::WarnColor, "*** CPU AHEAD ***");
@@ -51,14 +50,6 @@ AudioWindow::Draw(yakc& emu) {
         }
         else {
             ImGui::TextColored(UI::OkColor, "CPU SYNCED");
-        }
-        for (int chn=0; chn<2; chn++) {
-            if (this->audio->audioSource.channels[chn].overflow) {
-                ImGui::TextColored(UI::WarnColor, "*** CHANNEL %d: RINGBUFFER OVERFLOW***", chn);
-            }
-            else {
-                ImGui::TextColored(UI::OkColor, "Channel %d: ok", chn);
-            }
         }
         ImGui::PlotLines("Wave", this->wavBuffer, 256, 0, nullptr, -1, 1, ImVec2(512, 60));
     }
