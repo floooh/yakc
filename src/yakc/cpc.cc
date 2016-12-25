@@ -161,7 +161,7 @@ cpc::poweron(device m) {
     this->board->clck.init(4000);
 
     // initialize audio chip
-    this->audio.init(this->board->clck.base_freq_khz, SOUND_SAMPLE_RATE);
+    this->audio.init(this->board->clck.base_freq_khz, 1000, SOUND_SAMPLE_RATE);
 
     // CPU start state
     this->board->cpu.init();
