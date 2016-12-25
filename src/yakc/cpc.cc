@@ -143,7 +143,11 @@ cpc::poweron(device m) {
     this->video.init(this->board);
     this->ga_config = 0;
     this->ram_config = 0;
+    this->psg_selected = 0;
+    this->pio_a = 0;
+    this->pio_b = 0;
     this->pio_c = 0;
+    this->pio_control = 0;
     this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
@@ -155,6 +159,9 @@ cpc::poweron(device m) {
 
     // initialize clock to 4 MHz
     this->board->clck.init(4000);
+
+    // initialize audio chip
+    this->audio.init(this->board->clck.base_freq_khz, SOUND_SAMPLE_RATE);
 
     // CPU start state
     this->board->cpu.init();
@@ -173,9 +180,14 @@ cpc::poweroff() {
 void
 cpc::reset() {
     this->video.reset();
+    this->audio.reset();
     this->ga_config = 0;
     this->ram_config = 0;
+    this->psg_selected = 0;
+    this->pio_a = 0;
+    this->pio_b = 0;
     this->pio_c = 0;
+    this->pio_control = 0;
     this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
@@ -205,6 +217,7 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         ticks_step = (ticks_step + 3) & ~3;
         this->board->clck.update(this, ticks_step);
         this->video.update(this, ticks_step);
+        this->audio.step(ticks_step);
         cur_tick += ticks_step;
     }
     return cur_tick;
@@ -290,18 +303,39 @@ cpc::cpu_out(uword port, ubyte val) {
         //printf("OUT Printer Port: %02x\n", val);
     }
     else if ((port & 0xFF00) == 0xF400) {
-        // FIXME: 8255 PIO Port A (PSG Data)
-        //printf("OUT PIO Port A: %02x\n", val);
+        // 8255 PIO Port A (PSG Data)
+        // port A must be set to output
+        if (0 == (this->pio_control & (1<<4))) {
+            this->pio_a = val;
+        }
     }
     else if ((port & 0xFF00) == 0xF600) {
-        // FIXME: 8255 PIO Port C (KeybRow, Tape, PSG Control)
+        // 8255 PIO Port C (KeybRow, Tape, PSG Control)
+        if ((val & 0xC0) == 0xC0) {
+            // select PSG register from content of PIO-A
+            this->psg_selected = this->pio_a;
+        }
+        else if ((val & 0xC0) == 0x80) {
+            // write to selected PSG register
+            this->audio.write(this->psg_selected, this->pio_a);
+        }
+        // FIXME: bit 5,4: cassette write and motor control
         this->scan_kbd_line = val & 0x1F;
-        //printf("OUT PIO Port C: %02x\n", val);
         this->pio_c = val;
     }
     else if ((port & 0xFF00) == 0xF700) {
-        // FIXME: 8255 PIO Control Register
-        //printf("OUT PIO Control: %02x\n", val);
+        // 8255 PIO control register (write only)
+        // http://www.cpcwiki.eu/index.php/8255
+        if (val & (1<<7)) {
+            this->pio_control = val;
+            this->pio_a = 0;
+            this->pio_b = 0;
+            this->pio_c = 0;
+        }
+        else {
+            // set single bit in PIO-C
+            this->pio_c |= ((val&1) << ((val>>1)&0x7));
+        }
     }
     else if ((port & 0xFF00) == 0xF800) {
         // FIXME: peripheral soft reset
@@ -428,12 +462,20 @@ cpc::cpu_in(uword port) {
     }
     else if ((port & 0xFF00) == 0xF400) {
         // 8255 PIO Port A (PSG Data)
-        if (this->scan_kbd_line < 10) {
-            return ~(this->cur_keyboard_mask.col[this->scan_kbd_line]);
+        // keyboard data is in PSG IO Port A
+        // PIO-A must be in input mode
+        if ((0 != (this->pio_control & (1<<4))) && ((this->pio_c & 0xC0) == 0x40)) {
+            if (this->psg_selected == sound_ay8910::IO_PORT_A) {
+                if (this->scan_kbd_line < 10) {
+                    return ~(this->cur_keyboard_mask.col[this->scan_kbd_line]);
+                }
+            }
+            else {
+                return this->audio.read(this->psg_selected);
+            }
         }
-        else {
-            return 0xFF;
-        }
+        // fallthrough
+        return 0x00;
     }
     else if ((port & 0xFF00) == 0xF500) {
         // http://cpcwiki.eu/index.php/8255
@@ -489,6 +531,12 @@ cpc::vblank() {
     // fetch next key mask
     this->cur_keyboard_mask = this->next_key_mask;
     this->cur_keyboard_mask.combine(this->next_joy_mask);
+}
+
+//------------------------------------------------------------------------------
+void
+cpc::decode_audio(float* buffer, int num_samples) {
+    this->audio.fill_samples(buffer, num_samples);
 }
 
 //------------------------------------------------------------------------------

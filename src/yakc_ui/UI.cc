@@ -16,6 +16,7 @@
 #include "AudioWindow.h"
 #include "KC85IOWindow.h"
 #include "InfoWindow.h"
+#include "AY8910Window.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -374,41 +375,36 @@ UI::OnFrame(yakc& emu) {
                 }
                 ImGui::EndMenu();
             }
-            if (!(emu.is_device(device::any_zx) || emu.is_device(device::any_cpc))) {
-                if (ImGui::BeginMenu("Hardware")) {
-                    if (emu.is_device(device::any_kc85)) {
-                        if (ImGui::MenuItem("Expansion Slots")) {
-                            this->OpenWindow(emu, ModuleWindow::Create());
-                        }
-                        if (ImGui::MenuItem("Memory Map")) {
-                            this->OpenWindow(emu, MemoryMapWindow::Create());
-                        }
-                        if (ImGui::MenuItem("KC85 IO Ports")) {
-                            this->OpenWindow(emu, KC85IOWindow::Create());
-                        }
+            if (ImGui::BeginMenu("Hardware")) {
+                if (emu.is_device(device::any_kc85)) {
+                    if (ImGui::MenuItem("Expansion Slots")) {
+                        this->OpenWindow(emu, ModuleWindow::Create());
                     }
-                    if (emu.is_device(device::any_z9001)) {
-                        // the Z9001 has 2 PIOs
-                        if (ImGui::MenuItem("Z80 PIO 1")) {
-                            this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.pio));
-                        }
-                        if (ImGui::MenuItem("Z80 PIO 2")) {
-                            this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.pio2));
-                        }
+                    if (ImGui::MenuItem("Memory Map")) {
+                        this->OpenWindow(emu, MemoryMapWindow::Create());
                     }
-                    else {
-                        // all others have 1 PIO
-                        if (ImGui::MenuItem("Z80 PIO")) {
-                            this->OpenWindow(emu, PIOWindow::Create("PIO", &emu.board.pio));
-                        }
+                    if (ImGui::MenuItem("KC85 IO Ports")) {
+                        this->OpenWindow(emu, KC85IOWindow::Create());
                     }
-                    if (!emu.is_device(device::any_z1013)) {
-                        if (ImGui::MenuItem("Z80 CTC")) {
-                            this->OpenWindow(emu, CTCWindow::Create());
-                        }
-                    }
-                    ImGui::EndMenu();
                 }
+                // the Z9001 has 2 PIOs
+                if (ImGui::MenuItem("Z80 PIO 1")) {
+                    this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.pio));
+                }
+                if (ImGui::MenuItem("Z80 PIO 2")) {
+                    this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.pio2));
+                }
+                // all others have 1 PIO
+                if (ImGui::MenuItem("Z80 PIO")) {
+                    this->OpenWindow(emu, PIOWindow::Create("PIO", &emu.board.pio));
+                }
+                if (ImGui::MenuItem("Z80 CTC")) {
+                    this->OpenWindow(emu, CTCWindow::Create());
+                }
+                if (ImGui::MenuItem("AY-3-8910")) {
+                    this->OpenWindow(emu, AY8910Window::Create());
+                }
+                ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Debugging")) {
                 if (ImGui::MenuItem("CPU Debugger")) {

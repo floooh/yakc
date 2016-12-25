@@ -307,7 +307,10 @@ yakc::fill_sound_samples(float* buffer, int num_samples) {
     }
     else if (this->zx.on) {
         return this->zx.decode_audio(buffer, num_samples);
-    }   
+    }
+    else if (this->cpc.on) {
+        return this->cpc.decode_audio(buffer, num_samples);
+    }
     else {
         clear(buffer, num_samples * sizeof(float));
     }

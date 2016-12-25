@@ -8,6 +8,7 @@
 #include "yakc/rom_images.h"
 #include "yakc/z80bus.h"
 #include "yakc/cpc_video.h"
+#include "yakc/sound_ay8910.h"
 
 namespace YAKC {
 
@@ -44,6 +45,8 @@ public:
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// update bank switching
     void update_memory_mapping();
+    /// decode next audio buffer
+    void decode_audio(float* buffer, int num_samples);
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;
@@ -59,7 +62,12 @@ public:
     device cur_model = device::cpc464;
     bool on = false;
     cpc_video video;
+    sound_ay8910 audio;
+    ubyte psg_selected;         // selected AY8910 selected
+    ubyte pio_a;
+    ubyte pio_b;
     ubyte pio_c;
+    ubyte pio_control;
     ubyte ga_config = 0x00;     // out to port 0x7Fxx func 0x80
     ubyte ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
     struct key_mask {
