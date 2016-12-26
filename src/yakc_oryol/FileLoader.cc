@@ -630,10 +630,13 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             cpc.video.update_crtc_values();
             cpc.video.crtc.selected = hdr->crtc_selected;
             // FIXME: rom_config
-            // FIXME: ppi_a
-            // FIXME: ppi_b
+            cpc.pio_a = hdr->ppi_a;
+            cpc.pio_b = hdr->ppi_b;
             cpc.pio_c = hdr->ppi_c;
-            // FIXME: psg_select and psg_regs
+            cpc.psg_selected = hdr->psg_selected;
+            for (int i = 0; i < 16; i++) {
+                cpc.audio.regs[i] = hdr->psg_regs[i];
+            }
         }
         else {
             z80& cpu = emu->board.cpu;
