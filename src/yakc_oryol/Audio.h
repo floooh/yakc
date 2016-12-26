@@ -21,6 +21,13 @@ public:
     void Update();
     /// get the current max processed audio sample count in number of CPU cycles
     uint64_t GetProcessedCycles() const;
+    /// update filter settings
+    void UpdateFilterSettings();
+    /// reset filter settings to default
+    void ResetFilterSettings();
+
+    float LowPassFreq = 4000.0f;
+    float LowPassResonance = 2.0f;
 
     static SoLoud::Soloud* soloud;
     static int soloud_open_count;

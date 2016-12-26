@@ -55,7 +55,8 @@ sound_speaker::step(int cpu_cycles) {
         // generate new sample
         this->sample_counter += this->sample_cycles;
         float s = 0.0f;
-        for (auto& chn : this->channels) {
+        for (int i = 0; i < 2; i++) {
+            auto& chn = this->channels[i];
             if (chn.phase_add > 0) {
                 chn.phase_counter += chn.phase_add;
                 s += (chn.phase_counter < 0x8000) ? 0.5f : -0.5f;

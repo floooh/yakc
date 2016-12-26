@@ -20,7 +20,7 @@ Audio::Setup(yakc* emu_) {
         soloud->init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 1024, 1);
     }
     soloud_open_count++;
-    this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, 3000.0f, 2.0f);
+    this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, this->LowPassFreq, this->LowPassResonance);
     this->audioSource.emu = emu_;
     this->audioSource.setSingleInstance(true);
     this->audioSource.setFilter(0, &this->filter);
@@ -49,6 +49,21 @@ Audio::Update() {
 uint64_t
 Audio::GetProcessedCycles() const {
     return this->audioSource.sample_cycle_count;
+}
+
+//------------------------------------------------------------------------------
+void
+Audio::UpdateFilterSettings() {
+    soloud->fadeFilterParameter(this->audioHandle, 0, SoLoud::BiquadResonantFilter::FREQUENCY, this->LowPassFreq, 0.1f);
+    soloud->fadeFilterParameter(this->audioHandle, 0, SoLoud::BiquadResonantFilter::RESONANCE, this->LowPassResonance, 0.1f);
+}
+
+//------------------------------------------------------------------------------
+void
+Audio::ResetFilterSettings() {
+    this->LowPassFreq = 4000.0f;
+    this->LowPassResonance = 2.0f;
+    this->UpdateFilterSettings();
 }
 
 } // namespace YAKC
