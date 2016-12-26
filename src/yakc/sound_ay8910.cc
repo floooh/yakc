@@ -47,9 +47,9 @@ float ay8910_volumes[16] = {
 //------------------------------------------------------------------------------
 void
 sound_ay8910::init(int cpu_khz, int ay_khz, int sound_hz) {
-    // NOTE: cpu_khz must be a multiple of ay_khz
+    // NOTE: cpu_khz should be a multiple of ay_khz
     sound::init(cpu_khz, sound_hz);
-    this->freq_length = (cpu_khz / ay_khz) * 8;
+    this->freq_length = (cpu_khz * 8) / ay_khz;
     this->freq_count = this->freq_length;
     this->reset();
 }
