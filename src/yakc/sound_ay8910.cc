@@ -108,7 +108,7 @@ sound_ay8910::step(int cpu_cycles) {
 
     // generate new sample?
     this->sample_counter -= cpu_cycles * precision;
-    while (this->sample_counter < 0) {
+    while (this->sample_counter <= 0) {
         this->sample_counter += this->sample_cycles;
         float vol = 0.0f;
         float s = 0.0f;

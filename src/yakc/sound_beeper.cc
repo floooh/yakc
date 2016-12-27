@@ -34,7 +34,7 @@ void
 sound_beeper::step(int cpu_cycles) {
     // super-sample 4x
     this->sample_counter -= cpu_cycles * precision * super_sample;
-    while (this->sample_counter < 0) {
+    while (this->sample_counter <= 0) {
         // generate new super-sampled sample
         this->sample_counter += this->sample_cycles;
         if (this->state) {

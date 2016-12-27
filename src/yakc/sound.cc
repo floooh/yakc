@@ -36,7 +36,7 @@ sound::reset() {
 void
 sound::step(int cpu_cycles) {
     this->sample_counter -= cpu_cycles * precision;
-    while (this->sample_counter < 0) {
+    while (this->sample_counter <= 0) {
         this->sample_counter += this->sample_cycles;
         float* dst = &(this->buf[this->write_buffer][0]);
         dst[this->write_pos] = 0.0f;
