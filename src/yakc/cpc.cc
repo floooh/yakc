@@ -7,7 +7,7 @@
 //    per CRTC cycle, not per line)
 //  - subtle differences between different CRTC types
 //  - ROM module switching
-//  - KC Compact differences (color ROM, CIO instead of gate array, ...)
+//  - KC Compact differences (colors are different!)
 //  - support more emulator file formats
 //  - move PIO 8255 emulation into its own class
 //

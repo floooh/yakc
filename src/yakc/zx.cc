@@ -3,9 +3,7 @@
 //
 //  TODO
 //  - wait states when CPU accesses 'contended memory' and IO ports
-//  - beeper and AY-3-8910 audio (needs rewrite of audio system)
-//  - joystick support for games: when enabled, mute cursor keys and
-//    space, and replace with Joystick+Fire
+//  - AY-3-8910 audio
 //  - reads from port 0xFF must return 'current VRAM byte':
 //      - reset a T-state counter at start of each PAL-line
 //      - on CPU instruction, increment PAL-line T-state counter
