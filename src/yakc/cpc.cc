@@ -2,7 +2,6 @@
 //  cpc.cc
 //
 //  TODO:
-//  - audio!
 //  - improve CRTC emulation so that demos work (implement CRTC closer
 //    to the real thing, a cascade of counters, and decode video memory
 //    per CRTC cycle, not per line)
@@ -212,8 +211,8 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         }
         dbg.store_pc_history(cpu); // FIXME: only if debug window open?
         int ticks_step = cpu.step(this);
-        // need to round up ticks to 4, this is a CPC specialty
         ticks_step += cpu.handle_irq(this);
+        // need to round up ticks to 4, this is a CPC specialty
         ticks_step = (ticks_step + 3) & ~3;
         this->board->clck.update(this, ticks_step);
         this->video.update(this, ticks_step);
@@ -227,6 +226,47 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
 void
 cpc::cpu_out(uword port, ubyte val) {
     // http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
+    if (0 == (port & (1<<15))) {
+        // Gate Array or RAM configuration
+        if (0 != (port & (1<<14))) {
+            // Gate Array
+            switch (val & 0xC0) {
+                // select pen
+                case 0x00:
+                    this->video.select_pen(val);
+                    break;
+                // assign color to selected pen
+                case 0x40:
+                    this->video.assign_color(val);
+                    break;
+                // select screen mode, rom config, interrupt ctrl
+                case 0x80:
+                    //  - bits 0 and 1 select the screen mode
+                    //      00: Mode 0 (160x200 @ 16 colors)
+                    //      01: Mode 1 (320x200 @ 4 colors)
+                    //      02: Mode 2 (640x200 @ 2 colors)
+                    //      11: Mode 3 (160x200 @ 2 colors, undocumented)
+                    //
+                    //  - bit 2: disable/enable lower ROM
+                    //  - bit 3: disable/enable upper ROM
+                    //
+                    //  - bit 4: interrupt generation control
+                    //
+                    this->ga_config = val;
+                    this->video.set_video_mode(val & 3);
+                    if (val & (1<<4)) {
+                        this->video.interrupt_control();
+                    }
+                    this->update_memory_mapping();
+                    break;
+            }
+        }
+        // CPC6128 RAM configuration
+        if (((val & 0xC0) == 0xC0) && (device::cpc6128 == this->cur_model)) {
+            this->ram_config = val;
+            this->update_memory_mapping();
+        }
+    }
     if (0 == (port & (1<<14))) {
         // CRTC function
         const uword crtc_func = port & 0x0300;
@@ -243,110 +283,66 @@ cpc::cpu_out(uword port, ubyte val) {
         }
         return;
     }
-    else if (0x4000 == (port & 0xC000)) {
-        //
-        // Gate Array function
-        //
-        // http://www.grimware.org/doku.php/documentations/devices/gatearray
-        // http://www.cpcwiki.eu/index.php/Gate_Array
-        //
-        //  bits 7 and 6 (on CPC plus also 5) define the command
-        //
-        const ubyte reg = val & 0xC0;
-        if (reg == 0x00) {
-            // if bit 4 is set, this means that the border color should be set
-            this->video.select_pen(val);
-        }
-        else if (reg == 0x40) {
-            this->video.assign_color(val);
-        }
-        else if (reg == 0x80) {
-            //
-            //  select screen mode, rom config and int ctrl
-            //
-            //  - bits 0 and 1 select the screen mode
-            //      00: Mode 0 (160x200 @ 16 colors)
-            //      01: Mode 1 (320x200 @ 4 colors)
-            //      02: Mode 2 (640x200 @ 2 colors)
-            //      11: Mode 3 (160x200 @ 2 colors, undocumented)
-            //
-            //  - bit 2: disable/enable lower ROM
-            //  - bit 3: disable/enable upper ROM
-            //
-            //  - bit 4: interrupt generation control
-            //
-            this->ga_config = val;
-            this->video.set_video_mode(val & 3);
-            if (val & (1<<4)) {
-                this->video.interrupt_control();
-            }
-            this->update_memory_mapping();
-        }
-        else if (reg == 0xC0) {
-            // CPC6128 RAM banking
-            if (device::cpc6128 == this->cur_model) {
-                this->ram_config = val;
-                this->update_memory_mapping();
-            }
-        }
-        else {
-            // FIXME: unknown Gate Array function
-            //printf("OUT Unknown Gate Array func: %02x", val);
-        }
-    }
-    else if ((port & 0xFF00) == 0xDF00) {
+    if (0 == (port & (1<<13))) {
         // FIXME: ROM select
         //printf("OUT ROM Select: %02x\n", val);
     }
-    else if ((port & 0xFF00) == 0xEF00) {
+    if (0 == (port & (1<<12))) {
         // FIXME: printer port
         //printf("OUT Printer Port: %02x\n", val);
     }
-    else if ((port & 0xFF00) == 0xF400) {
-        // 8255 PIO Port A (PSG Data)
-        // port A must be set to output
-        if (0 == (this->pio_control & (1<<4))) {
-            this->pio_a = val;
+    if (0 == (port & (1<<11))) {
+        // 8255 PPI, select IO port
+        switch ((port & 0x0300)>>8) {
+            // PIO Port A
+            case 0:
+                // port A (should always be set to output on CPC)
+                if (0 == (this->pio_control & (1<<4))) {
+                    this->pio_a = val;
+                }
+                break;
+            // PIO Port B (should always be set to input on CPC)
+            case 1:
+                if (0 == (this->pio_control & (1<<0))) {
+                    // shouldn't happen on CPC
+                    this->pio_b = val;
+                }
+                break;
+            // PIO Port C (should always be set to output on CPC)
+            case 2:
+                // FIXME: check upper/lower IO bits
+                if ((val & 0xC0) == 0xC0) {
+                    // select PSG register from content of PIO-A
+                    this->psg_selected = this->pio_a;
+                }
+                else if ((val & 0xC0) == 0x80) {
+                    // write to selected PSG register
+                    this->audio.write(this->psg_selected, this->pio_a);
+                }
+                // FIXME: bit 5,4: cassette write and motor control
+                this->scan_kbd_line = val & 0x1F;
+                this->pio_c = val;
+                break;
+            // PIO Control
+            case 3:
+                // 8255 PIO control register (write only)
+                // http://www.cpcwiki.eu/index.php/8255
+                if (val & (1<<7)) {
+                    this->pio_control = val;
+                    this->pio_a = 0;
+                    this->pio_b = 0;
+                    this->pio_c = 0;
+                }
+                else {
+                    // set single bit in PIO-C
+                    this->pio_c |= ((val&1) << ((val>>1)&0x7));
+                }
+                break;
         }
     }
-    else if ((port & 0xFF00) == 0xF600) {
-        // 8255 PIO Port C (KeybRow, Tape, PSG Control)
-        if ((val & 0xC0) == 0xC0) {
-            // select PSG register from content of PIO-A
-            this->psg_selected = this->pio_a;
-        }
-        else if ((val & 0xC0) == 0x80) {
-            // write to selected PSG register
-            this->audio.write(this->psg_selected, this->pio_a);
-        }
-        // FIXME: bit 5,4: cassette write and motor control
-        this->scan_kbd_line = val & 0x1F;
-        this->pio_c = val;
-    }
-    else if ((port & 0xFF00) == 0xF700) {
-        // 8255 PIO control register (write only)
-        // http://www.cpcwiki.eu/index.php/8255
-        if (val & (1<<7)) {
-            this->pio_control = val;
-            this->pio_a = 0;
-            this->pio_b = 0;
-            this->pio_c = 0;
-        }
-        else {
-            // set single bit in PIO-C
-            this->pio_c |= ((val&1) << ((val>>1)&0x7));
-        }
-    }
-    else if ((port & 0xFF00) == 0xF800) {
+    if (0 == (port & (1<<10))) {
         // FIXME: peripheral soft reset
         //printf("OUT Peripheral Soft Reset: %02x\n", val);
-    }
-    else if ((port & 0xFF00) == 0xFA00) {
-        // FIXME: Floppy Motor Control (0xFA7E), and Amstrad Serial Interface
-        //printf("OUT Floppy Motor / Serial: %02x\n", val);
-    }
-    else {
-        //printf("OUT UNKNOWN: %04x %02x\n", port, val);
     }
 }
 
