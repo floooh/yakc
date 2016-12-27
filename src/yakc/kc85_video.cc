@@ -77,9 +77,7 @@ kc85_video::scanline() {
     }
     this->cur_scanline++;
     // wraparound pal line counter at 312 lines (see KC85/3 service manual),
-    // plus there are very slight timing differences between a 85/3 and 85/4
-    const int wrap_around = device::kc85_3 == this->model ? 312 : 310;
-    if (this->cur_scanline > wrap_around) {
+    if (this->cur_scanline >= 312) {
         this->cur_scanline = 0;
     }
 }
