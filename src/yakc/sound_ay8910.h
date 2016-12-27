@@ -45,8 +45,8 @@ public:
     static_assert(NUM_REGS == 16, "AY8910 num regs!");
 
     ubyte regs[NUM_REGS] = { };
-    int freq_length = 0;
-    int freq_count = 0;
+    int tone_update_period = 0;
+    int tone_update_count = 0;
 
     static const int num_channels = 3;
     struct channel_t {
@@ -60,6 +60,11 @@ public:
     int noise_period = 0;
     int noise_bit = 0;
     int noise_rng = 1;
+    int env_count = 0;
+    int env_period = 0;
+    int env_cycle_count = 0;
+    uint32_t env_volume = 0;
+    int env_volume_add = 0;
 };
 
 } // namespace YAKC
