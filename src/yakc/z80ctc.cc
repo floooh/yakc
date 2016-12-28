@@ -99,7 +99,7 @@ z80ctc::down_counter_init(const channel_state& chn) const {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::update_timers(system_bus* bus, int ticks) {
+z80ctc::step(system_bus* bus, int ticks) {
     for (int c = 0; c < num_channels; c++) {
         channel_state& chn = channels[c];
         if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {

@@ -207,8 +207,8 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         ticks_step += cpu.handle_irq(this);
         // need to round up ticks to 4, this is a CPC specialty
         ticks_step = (ticks_step + 3) & ~3;
-        this->board->clck.update(this, ticks_step);
-        this->video.update(this, ticks_step);
+        this->board->clck.step(this, ticks_step);
+        this->video.step(this, ticks_step);
         this->audio.step(ticks_step);
         cur_tick += ticks_step;
     }

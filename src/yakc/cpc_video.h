@@ -16,7 +16,7 @@ public:
     /// perform a reset
     void reset();
     /// call after each CPU instruction, calls the scanline() method
-    void update(system_bus* bus, int cycles);
+    void step(system_bus* bus, int cycles);
 
     /// called from CPU OUT handler to select pen for modification
     void select_pen(ubyte val);

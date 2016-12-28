@@ -77,7 +77,7 @@ public:
     /// reset the ctc
     void reset();
     /// update the CTC for a number of ticks, a tick is equal to a Z80 T-cycle
-    void update_timers(system_bus* bus, int ticks);
+    void step(system_bus* bus, int ticks);
 
     /// trigger one of the CTC channel lines
     void ctrg(system_bus* bus, channel c);

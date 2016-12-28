@@ -200,7 +200,7 @@ cpc_video::update_crtc_values() {
 
 //------------------------------------------------------------------------------
 void
-cpc_video::update(system_bus* bus, int cycles) {
+cpc_video::step(system_bus* bus, int cycles) {
 
     // http://cpctech.cpc-live.com/docs/ints.html
     // http://www.cpcwiki.eu/forum/programming/frame-flyback-and-interrupts/msg25106/#msg25106

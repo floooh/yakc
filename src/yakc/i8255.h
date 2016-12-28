@@ -61,13 +61,21 @@ private:
     /// change the control bits
     void set_mode(system_bus* bus, ubyte val);
     /// return input or output mode for port A
-    int port_a_mode() const;
+    int port_a_mode() const {
+        return this->control & (1<<4) ? MODE_INPUT : MODE_OUTPUT;
+    }
     /// return input or output mode for port B
-    int port_b_mode() const;
+    int port_b_mode() const {
+        return this->control & (1<<1) ? MODE_INPUT : MODE_OUTPUT;
+    }
     /// return input or output mode for lower 4 bits of port C
-    int port_c_lower_mode() const;
+    int port_c_lower_mode() const {
+        return this->control & (1<<0) ? MODE_INPUT : MODE_OUTPUT;
+    }
     /// return input or output mode for upper 4 bits of port C
-    int port_c_upper_mode() const;
+    int port_c_upper_mode() const {
+        return this->control & (1<<3) ? MODE_INPUT : MODE_OUTPUT;
+    }
     /// output value on port C to data bus
     void output_port_c(system_bus* bus) const;
     /// input value on port C
@@ -75,6 +83,7 @@ private:
 
     int id = 0;
 };
+
 
 } // namespace YAKC
 

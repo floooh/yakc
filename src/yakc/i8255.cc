@@ -23,30 +23,6 @@ i8255::reset() {
 }
 
 //------------------------------------------------------------------------------
-int
-i8255::port_a_mode() const {
-    return this->control & (1<<4) ? MODE_INPUT : MODE_OUTPUT;
-}
-
-//------------------------------------------------------------------------------
-int
-i8255::port_b_mode() const {
-    return this->control & (1<<1) ? MODE_INPUT : MODE_OUTPUT;
-}
-
-//------------------------------------------------------------------------------
-int
-i8255::port_c_lower_mode() const {
-    return this->control & (1<<0) ? MODE_INPUT : MODE_OUTPUT;
-}
-
-//------------------------------------------------------------------------------
-int
-i8255::port_c_upper_mode() const {
-    return this->control & (1<<3) ? MODE_INPUT : MODE_OUTPUT;
-}
-
-//------------------------------------------------------------------------------
 void
 i8255::output_port_c(system_bus* bus) const {
     if (bus) {
@@ -114,12 +90,10 @@ i8255::write(system_bus* bus, int addr, ubyte val) {
                 }
             }
             break;
-
         case PORT_C:
             this->output[PORT_C] = val;
             this->output_port_c(bus);
             break;
-
         case CONTROL:
             if (val & (1<<7)) {
                 this->set_mode(bus, val);

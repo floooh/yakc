@@ -27,7 +27,7 @@ public:
     /// configure a timer with a cycle count (Z80 T-states)
     void config_timer_cycles(int index, int cycles);
     /// advance the timers by a number of cycles
-    void update(system_bus* bus, int num_cycles);
+    void step(system_bus* bus, int num_cycles);
 
     /// the clock main frequency in KHz
     int base_freq_khz = 0;
