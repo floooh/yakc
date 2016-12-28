@@ -9,7 +9,6 @@
 //  - ROM module switching
 //  - KC Compact: doesn't have custom gate array
 //  - support more emulator file formats
-//  - move PIO 8255 emulation into its own class
 //
 //------------------------------------------------------------------------------
 #include "cpc.h"
@@ -138,7 +137,6 @@ cpc::poweron(device m) {
 
     this->cur_model = m;
     this->on = true;
-    this->video.init(m, this->board);
     this->ga_config = 0;
     this->ram_config = 0;
     this->psg_selected = 0;
@@ -156,6 +154,7 @@ cpc::poweron(device m) {
 
     // initialize support chips
     this->pio.init(0);
+    this->video.init(m, this->board);
     this->audio.init(this->board->clck.base_freq_khz, 1000, SOUND_SAMPLE_RATE);
 
     // CPU start state

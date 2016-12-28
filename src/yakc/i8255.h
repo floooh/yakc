@@ -4,16 +4,14 @@
     @class i8255
     @brief emulation of the Intel 8255 PIO 
     
-    NOTE: in the beginning this only contains functionality needed for
-    Amstrad CPC emulation (e.g. no interrupt logic implemented)
+    NOTE: currently this only contains functionality needed for
+    Amstrad CPC emulation (only MODE_0 is implemented)
     
     Data sheet: 
         Intel: http://www.csee.umbc.edu/~cpatel2/links/310/data_sheets/8255.pdf
         Mitsubishi: http://www.cpcwiki.eu/imgs/d/df/PPI_M5L8255AP-5.pdf
     MAME impl:
         https://github.com/mamedev/mame/blob/master/src/devices/machine/i8255.cpp
-    
-
 */
 #include "yakc/core.h"
 
@@ -31,12 +29,6 @@ public:
         CONTROL = 3,
     };
 
-    /// control groups
-    enum {
-        GROUP_A = 0,
-        GROUP_B,
-    };
-
     /// input/output modes
     enum {
         MODE_OUTPUT = 0,
@@ -45,7 +37,6 @@ public:
 
     static const int num_ports = 3;
     ubyte output[num_ports] = { };      // output latch
-//    ubyte input[num_ports] = { };       // input latch (only used in MODE_1 and MODE_2)
     ubyte control = 0;                  // control word
 
     /// initialize a i8255 instance
