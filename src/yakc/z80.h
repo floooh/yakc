@@ -10,7 +10,7 @@
 
 namespace YAKC {
 
-class z80bus;
+class system_bus;
 class z80 {
 public:
     enum {
@@ -104,7 +104,7 @@ public:
     /// receive an interrupt request
     void irq();
     /// handle an interrupt request, must be called after step(), return num tstates taken
-    int handle_irq(z80bus* bus);
+    int handle_irq(system_bus* bus);
     /// implement the RETI instruction
     void reti();
     /// implement the EI instruction
@@ -113,9 +113,9 @@ public:
     void di();
 
     /// call in-handler, return result
-    ubyte in(z80bus* bus, uword port);
+    ubyte in(system_bus* bus, uword port);
     /// call out-handler
-    void out(z80bus* bus, uword port, ubyte val);
+    void out(system_bus* bus, uword port, ubyte val);
 
     /// get flags for the LD A,I and LD A,R instructions
     static ubyte sziff2(ubyte val, bool iff2);
@@ -171,23 +171,23 @@ public:
     /// return flags for ini/ind instruction
     ubyte ini_ind_flags(ubyte io_val, int c_add);
     /// implement the INI instruction
-    void ini(z80bus* bus);
+    void ini(system_bus* bus);
     /// implement the INIR instruction, return number of T-states
-    int inir(z80bus* bus);
+    int inir(system_bus* bus);
     /// implement the IND instruction
-    void ind(z80bus* bus);
+    void ind(system_bus* bus);
     /// implement the INDR instruction, return number of T-states
-    int indr(z80bus* bus);
+    int indr(system_bus* bus);
     /// return flags for outi/outd instruction
     ubyte outi_outd_flags(ubyte io_val);
     /// implement the OUTI instruction
-    void outi(z80bus* bus);
+    void outi(system_bus* bus);
     /// implement the OTIR instructor, return number of T-states
-    int otir(z80bus* bus);
+    int otir(system_bus* bus);
     /// implment the OUTD instruction
-    void outd(z80bus* bus);
+    void outd(system_bus* bus);
     /// implement the OTDR instruction, return number of T-states
-    int otdr(z80bus* bus);
+    int otdr(system_bus* bus);
     /// implement the DAA instruction
     void daa();
     /// rotate left, copy sign bit into CF
@@ -226,9 +226,9 @@ public:
     /// fetch an opcode byte and increment R register
     ubyte fetch_op();
     /// execute a single instruction, return number of cycles
-    uint32_t step(z80bus* bus);
+    uint32_t step(system_bus* bus);
     /// top-level opcode decoder (generated)
-    uint32_t do_op(z80bus* bus);
+    uint32_t do_op(system_bus* bus);
 };
 
 #define YAKC_SZ(val) ((val&0xFF)?(val&SF):ZF)
@@ -501,7 +501,7 @@ z80::fetch_op() {
 
 //------------------------------------------------------------------------------
 inline uint32_t
-z80::step(z80bus* bus) {
+z80::step(system_bus* bus) {
     INV = false;
     if (enable_interrupt) {
         IFF1 = IFF2 = true;

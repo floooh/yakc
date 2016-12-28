@@ -2,7 +2,7 @@
 // machine generated, do not edit!
 #include "z80.h"
 namespace YAKC {
-uint32_t z80::do_op(z80bus* bus) {
+uint32_t z80::do_op(system_bus* bus) {
   switch (fetch_op()) {
     case 0x0: return 4; // NOP
     case 0x1: BC=mem.r16(PC); PC+=2; return 10; // LD BC,nn

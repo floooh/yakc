@@ -17,7 +17,7 @@
 
 namespace YAKC {
 
-class z80bus;
+class system_bus;
 class z80int {
 public:
     /// connect to downstream (lower-pri) device in daisy chain
@@ -27,7 +27,7 @@ public:
     void reset();
 
     /// called by device to request an interrupt
-    bool request_interrupt(z80bus* bus, ubyte data);
+    bool request_interrupt(system_bus* bus, ubyte data);
     /// called by CPU to acknowldge interrupt request, return data byte (usually interrupt vector)
     ubyte interrupt_acknowledged();
     /// NOTE: interrupt_cancelled is currently not called by CPU, this

@@ -1,10 +1,9 @@
 fips_begin_module(yakc)
     fips_vs_warning_level(3)
     fips_files(
-        core.h core.cc memory.cc memory.h clock.h clock.cc 
+        core.h core.cc memory.cc memory.h clock.h clock.cc system_bus.h system_bus.cc
         rom_images.h rom_images.cc
-        z80bus.cc z80bus.h z80.cc z80.h z80int.cc z80int.h
-        z80pio.cc z80pio.h z80ctc.cc z80ctc.h z80dbg.cc z80dbg.h
+        z80.cc z80.h z80int.cc z80int.h z80pio.cc z80pio.h z80ctc.cc z80ctc.h z80dbg.cc z80dbg.h
         sound.h sound.cc
         sound_speaker.h sound_speaker.cc
         sound_beeper.h sound_beeper.cc

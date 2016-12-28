@@ -17,13 +17,13 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/keybuffer.h"
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 #include "yakc/rom_images.h"
 #include "yakc/sound_speaker.h"
 
 namespace YAKC {
 
-class z9001 : public z80bus {
+class z9001 : public system_bus {
 public:
     /// the main board
     breadboard* board = nullptr;

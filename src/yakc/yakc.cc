@@ -263,7 +263,7 @@ yakc::system_info() const {
 }
 
 //------------------------------------------------------------------------------
-z80bus*
+system_bus*
 yakc::get_bus() {
     if (this->is_device(device::any_kc85)) {
         return &this->kc85;

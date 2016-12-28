@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/z80pio.h"
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 
 using namespace YAKC;
 
@@ -13,7 +13,7 @@ TEST(z80pio_control) {
     // this roughly follows the Z80 PIO user's manual
     // (http://www.z80.info/zip/z80piomn.pdf )
 
-    z80bus bus;
+    system_bus bus;
     z80pio pio;
     pio.init(0);
 
@@ -110,7 +110,7 @@ TEST(z80pio_control) {
 }
 
 //------------------------------------------------------------------------------
-class pioTestBus : public z80bus {
+class pioTestBus : public system_bus {
 public:
     ubyte out_value_a = 0;
     ubyte in_value_a = 0;

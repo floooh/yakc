@@ -29,7 +29,7 @@ public:
     void reset();
     /// called after executing CPU instruction
     void step(int cpu_cycles);
-    /// must be called from z80bus::ctc_write() for CTC channel 0 or 1
+    /// must be called from system_bus::ctc_write() for CTC channel 0 or 1
     void ctc_write(int ctc_channel);
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);

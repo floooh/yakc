@@ -93,7 +93,7 @@ z80dbg::breakpoint_addr(int index) const {
 
 //------------------------------------------------------------------------------
 void
-z80dbg::step_pc_modified(z80bus* bus, z80& cpu) {
+z80dbg::step_pc_modified(system_bus* bus, z80& cpu) {
     YAKC_ASSERT(bus);
     uword pc;
     do {

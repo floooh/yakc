@@ -2,7 +2,7 @@
 //  z80.cc
 //------------------------------------------------------------------------------
 #include "z80.h"
-#include "z80bus.h"
+#include "system_bus.h"
 
 namespace YAKC {
 
@@ -107,7 +107,7 @@ z80::irq() {
 
 //------------------------------------------------------------------------------
 int
-z80::handle_irq(z80bus* bus) {
+z80::handle_irq(system_bus* bus) {
     int tstates = 0;
     if (this->irq_received) {
         YAKC_ASSERT((this->IM >= 0) && (this->IM <= 2));
@@ -195,7 +195,7 @@ z80::di() {
 
 //------------------------------------------------------------------------------
 ubyte
-z80::in(z80bus* bus, uword port) {
+z80::in(system_bus* bus, uword port) {
     if (bus) {
         return bus->cpu_in(port);
     }
@@ -206,7 +206,7 @@ z80::in(z80bus* bus, uword port) {
 
 //------------------------------------------------------------------------------
 void
-z80::out(z80bus* bus, uword port, ubyte val) {
+z80::out(system_bus* bus, uword port, ubyte val) {
     if (bus) {
         bus->cpu_out(port, val);
     }
@@ -369,7 +369,7 @@ z80::ini_ind_flags(ubyte io_val, int c_add) {
 
 //------------------------------------------------------------------------------
 void
-z80::ini(z80bus* bus) {
+z80::ini(system_bus* bus) {
     ubyte io_val = in(bus, BC);
     WZ = BC + 1;
     B--;
@@ -379,7 +379,7 @@ z80::ini(z80bus* bus) {
 
 //------------------------------------------------------------------------------
 int
-z80::inir(z80bus* bus) {
+z80::inir(system_bus* bus) {
     ini(bus);
     if (B != 0) {
         PC -= 2;
@@ -392,7 +392,7 @@ z80::inir(z80bus* bus) {
 
 //------------------------------------------------------------------------------
 void
-z80::ind(z80bus* bus) {
+z80::ind(system_bus* bus) {
     ubyte io_val = in(bus, BC);
     WZ = BC - 1;
     B--;
@@ -402,7 +402,7 @@ z80::ind(z80bus* bus) {
 
 //------------------------------------------------------------------------------
 int
-z80::indr(z80bus* bus) {
+z80::indr(system_bus* bus) {
     ind(bus);
     if (B != 0) {
         PC -= 2;
@@ -429,7 +429,7 @@ z80::outi_outd_flags(ubyte io_val) {
 
 //------------------------------------------------------------------------------
 void
-z80::outi(z80bus* bus) {
+z80::outi(system_bus* bus) {
     ubyte io_val = mem.r8(HL++);
     B--;
     WZ = BC + 1;
@@ -439,7 +439,7 @@ z80::outi(z80bus* bus) {
 
 //------------------------------------------------------------------------------
 int
-z80::otir(z80bus* bus) {
+z80::otir(system_bus* bus) {
     outi(bus);
     if (B != 0) {
         PC -= 2;
@@ -452,7 +452,7 @@ z80::otir(z80bus* bus) {
 
 //------------------------------------------------------------------------------
 void
-z80::outd(z80bus* bus) {
+z80::outd(system_bus* bus) {
     ubyte io_val = mem.r8(HL--);
     B--;
     WZ = BC - 1;
@@ -462,7 +462,7 @@ z80::outd(z80bus* bus) {
 
 //------------------------------------------------------------------------------
 int
-z80::otdr(z80bus* bus) {
+z80::otdr(system_bus* bus) {
     outd(bus);
     if (B != 0) {
         PC -= 2;

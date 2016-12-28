@@ -14,7 +14,7 @@
 
 namespace YAKC {
 
-class z80bus;
+class system_bus;
 
 class z80ctc {
 public:
@@ -77,13 +77,13 @@ public:
     /// reset the ctc
     void reset();
     /// update the CTC for a number of ticks, a tick is equal to a Z80 T-cycle
-    void update_timers(z80bus* bus, int ticks);
+    void update_timers(system_bus* bus, int ticks);
 
     /// trigger one of the CTC channel lines
-    void ctrg(z80bus* bus, channel c);
+    void ctrg(system_bus* bus, channel c);
 
     /// write value to channel
-    void write(z80bus* bus, channel c, ubyte v);
+    void write(system_bus* bus, channel c, ubyte v);
     /// read value from channel
     ubyte read(channel c);
 
@@ -91,9 +91,9 @@ private:
     /// get the counter/timer cycle count (prescaler * constant)
     int down_counter_init(const channel_state& chn) const;
     /// execute actions when down_counter reaches zero
-    void down_counter_callback(z80bus* bus, int chn_index);
+    void down_counter_callback(system_bus* bus, int chn_index);
     /// external trigger, called from trg0..trg3
-    void update_counter(z80bus* bus, int chn_index);
+    void update_counter(system_bus* bus, int chn_index);
 
     int id = 0;
 };

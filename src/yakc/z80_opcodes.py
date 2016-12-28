@@ -530,7 +530,7 @@ def write_header(f) :
     l('// machine generated, do not edit!')
     l('#include "z80.h"')
     l('namespace YAKC {')
-    l('uint32_t z80::do_op(z80bus* bus) {')
+    l('uint32_t z80::do_op(system_bus* bus) {')
 
 #-------------------------------------------------------------------------------
 # begin a new instruction group (begins a switch statement)

@@ -4,13 +4,13 @@
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/z80.h"
 #include "yakc/z80int.h"
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 
 using namespace YAKC;
 
 static ubyte ram[0x4000];
 
-class daisyChainTestBus : public z80bus {
+class daisyChainTestBus : public system_bus {
 public:
     z80 cpu;
     virtual void irq() {

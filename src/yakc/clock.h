@@ -13,7 +13,7 @@
 
 namespace YAKC {
 
-class z80bus;
+class system_bus;
 
 class clock {
 public:
@@ -27,7 +27,7 @@ public:
     /// configure a timer with a cycle count (Z80 T-states)
     void config_timer_cycles(int index, int cycles);
     /// advance the timers by a number of cycles
-    void update(z80bus* bus, int num_cycles);
+    void update(system_bus* bus, int num_cycles);
 
     /// the clock main frequency in KHz
     int base_freq_khz = 0;

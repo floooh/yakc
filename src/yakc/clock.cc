@@ -2,7 +2,7 @@
 //  clock.cc
 //------------------------------------------------------------------------------
 #include "clock.h"
-#include "z80bus.h"
+#include "system_bus.h"
 
 namespace YAKC {
 
@@ -46,7 +46,7 @@ clock::config_timer_cycles(int index, int cycles) {
 
 //------------------------------------------------------------------------------
 void
-clock::update(z80bus* bus, int num_cycles) {
+clock::update(system_bus* bus, int num_cycles) {
     for (int i = 0; i < num_timers; i++) {
         auto& t = this->timers[i];
         if (t.interval > 0) {

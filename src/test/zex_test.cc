@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/z80.h"
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 #include "test/zex.h"
 #include "Core/Time/Clock.h"
 #include <string.h>
@@ -58,7 +58,7 @@ static bool cpm_bdos(z80& cpu) {
 }
 
 // runs the cpu through a previously configured test (zexdoc or zexall)
-static void run_test(z80& cpu, z80bus& bus, const char* name) {
+static void run_test(z80& cpu, system_bus& bus, const char* name) {
     auto startTime = Clock::Now();
     bool running = true;
     std::uint64_t t = 0;
@@ -106,7 +106,7 @@ static void run_test(z80& cpu, z80bus& bus, const char* name) {
 TEST(zexdoc) {
 
     memset(output, 0, sizeof(output));
-    z80bus bus;
+    system_bus bus;
     z80 cpu;
     memset(ram, 0, sizeof(ram));
     cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);
@@ -121,7 +121,7 @@ TEST(zexdoc) {
 TEST(zexall) {
 
     memset(output, 0, sizeof(output));
-    z80bus bus;
+    system_bus bus;
     z80 cpu;
     memset(ram, 0, sizeof(ram));
     cpu.mem.map(0, 0x0000, sizeof(ram), ram, true);

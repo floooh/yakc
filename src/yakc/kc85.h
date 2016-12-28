@@ -6,14 +6,14 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/rom_images.h"
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 #include "yakc/kc85_video.h"
 #include "yakc/kc85_audio.h"
 #include "yakc/kc85_exp.h"
 
 namespace YAKC {
 
-class kc85 : public z80bus {
+class kc85 : public system_bus {
 public:
     /// IO bits
     enum {

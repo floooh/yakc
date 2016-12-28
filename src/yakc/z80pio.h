@@ -17,7 +17,7 @@
 
 namespace YAKC {
 
-class z80bus;
+class system_bus;
 
 class z80pio {
 public:
@@ -80,19 +80,19 @@ public:
     /// read control register (same result for both ports)
     ubyte read_control();
     /// write data register
-    void write_data(z80bus* bus, int port_id, ubyte data);
+    void write_data(system_bus* bus, int port_id, ubyte data);
     /// read data register
-    ubyte read_data(z80bus* bus, int port_id);
+    ubyte read_data(system_bus* bus, int port_id);
     /// strobe signal on PIO-A from peripheral
     void astb(bool active);
     /// strobe signal on PIO-B from peripheral
     void bstb(bool active);
     /// write data from peripheral into PIO
-    void write(z80bus* bus, int port_id, ubyte val);
+    void write(system_bus* bus, int port_id, ubyte val);
 
 private:
     /// set a port's ready line
-    void set_rdy(z80bus* bus, int port_id, bool active);
+    void set_rdy(system_bus* bus, int port_id, bool active);
 
     int id = 0;
 };

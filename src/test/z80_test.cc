@@ -3,13 +3,13 @@
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/z80.h"
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 
 using namespace YAKC;
 
 static ubyte ram0[0x4000];
 
-class cpuTestBus : public z80bus {
+class cpuTestBus : public system_bus {
 public:
     uword out_port = 0;
     ubyte out_byte = 0xFF;

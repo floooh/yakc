@@ -4,7 +4,7 @@
     @class YAKC::cpc_video
     @brief CPC video decoder (CRTC, color palette, video mode)
 */
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 #include "yakc/breadboard.h"
 
 namespace YAKC {
@@ -16,7 +16,7 @@ public:
     /// perform a reset
     void reset();
     /// call after each CPU instruction, calls the scanline() method
-    void update(z80bus* bus, int cycles);
+    void update(system_bus* bus, int cycles);
 
     /// called from CPU OUT handler to select pen for modification
     void select_pen(ubyte val);
@@ -41,7 +41,7 @@ public:
     /// update derived CRTC values
     void update_crtc_values();
     /// called by update at start of a scanline
-    void scanline(z80bus* bus);
+    void scanline(system_bus* bus);
     /// decode border scanline at framebuffer coordinate y
     void decode_border_scanline(int dst_y);
     /// decode a scanline into rgba8_buffer

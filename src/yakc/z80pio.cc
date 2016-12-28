@@ -2,7 +2,7 @@
 //  z80pio.cc
 //------------------------------------------------------------------------------
 #include "z80pio.h"
-#include "z80bus.h"
+#include "system_bus.h"
 
 namespace YAKC {
 
@@ -35,7 +35,7 @@ z80pio::reset() {
 
 //------------------------------------------------------------------------------
 void
-z80pio::set_rdy(z80bus* bus, int port_id, bool active) {
+z80pio::set_rdy(system_bus* bus, int port_id, bool active) {
     auto& p = this->port[port_id];
     if (p.rdy != active) {
         p.rdy = active;
@@ -107,7 +107,7 @@ z80pio::read_control() {
 
 //------------------------------------------------------------------------------
 void
-z80pio::write_data(z80bus* bus, int port_id, ubyte data) {
+z80pio::write_data(system_bus* bus, int port_id, ubyte data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     auto& p = this->port[port_id];
     switch (p.mode) {
@@ -145,7 +145,7 @@ z80pio::write_data(z80bus* bus, int port_id, ubyte data) {
 
 //------------------------------------------------------------------------------
 ubyte
-z80pio::read_data(z80bus* bus, int port_id) {
+z80pio::read_data(system_bus* bus, int port_id) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     ubyte data = 0;
     auto& p = this->port[port_id];
@@ -183,7 +183,7 @@ z80pio::read_data(z80bus* bus, int port_id) {
 
 //------------------------------------------------------------------------------
 void
-z80pio::write(z80bus* bus, int port_id, ubyte data) {
+z80pio::write(system_bus* bus, int port_id, ubyte data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     auto& p = this->port[port_id];
     if (mode_bitcontrol == p.mode) {

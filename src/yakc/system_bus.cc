@@ -1,73 +1,73 @@
 //------------------------------------------------------------------------------
-//  z80bus.cc
+//  system_bus.cc
 //------------------------------------------------------------------------------
-#include "z80bus.h"
+#include "system_bus.h"
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
 ubyte
-z80bus::cpu_in(uword port) {
+system_bus::cpu_in(uword port) {
     return 0;
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::cpu_out(uword port, ubyte val) {
+system_bus::cpu_out(uword port, ubyte val) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 ubyte
-z80bus::pio_in(int pio_id, int port_id) {
+system_bus::pio_in(int pio_id, int port_id) {
     return 0;
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::pio_out(int pio_id, int port_id, ubyte val) {
+system_bus::pio_out(int pio_id, int port_id, ubyte val) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::pio_rdy(int pio_id, int port_id, bool active) {
+system_bus::pio_rdy(int pio_id, int port_id, bool active) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::ctc_write(int ctc_id, int chn_id) {
+system_bus::ctc_write(int ctc_id, int chn_id) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::ctc_zcto(int ctc_id, int chn_id) {
+system_bus::ctc_zcto(int ctc_id, int chn_id) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::irq() {
+system_bus::irq() {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::iack() {
+system_bus::iack() {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::timer(int timer_id) {
+system_bus::timer(int timer_id) {
     // empty
 }
 
 //------------------------------------------------------------------------------
 void
-z80bus::vblank() {
+system_bus::vblank() {
     // empty
 }
 

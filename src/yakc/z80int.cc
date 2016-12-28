@@ -2,7 +2,7 @@
 //  z80int.cc
 //------------------------------------------------------------------------------
 #include "z80int.h"
-#include "z80bus.h"
+#include "system_bus.h"
 
 namespace YAKC {
 
@@ -23,7 +23,7 @@ z80int::reset() {
 
 //------------------------------------------------------------------------------
 bool
-z80int::request_interrupt(z80bus* bus, ubyte data) {
+z80int::request_interrupt(system_bus* bus, ubyte data) {
 
     // FIXME: hmm can we interrupt ourselves? what happens if our device
     // requests an interrupt, but we're currently also being serviced

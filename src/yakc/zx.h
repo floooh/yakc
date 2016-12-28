@@ -6,12 +6,12 @@
 */
 #include "yakc/breadboard.h"
 #include "yakc/rom_images.h"
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 #include "yakc/sound_beeper.h"
 
 namespace YAKC {
 
-class zx : public z80bus {
+class zx : public system_bus {
 public:
     /// the main board
     breadboard* board = nullptr;

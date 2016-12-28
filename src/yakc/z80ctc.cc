@@ -2,7 +2,7 @@
 //  z80ctc.cc
 //------------------------------------------------------------------------------
 #include "z80ctc.h"
-#include "z80bus.h"
+#include "system_bus.h"
 
 namespace YAKC {
 
@@ -38,7 +38,7 @@ z80ctc::reset() {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::write(z80bus* bus, channel c, ubyte v) {
+z80ctc::write(system_bus* bus, channel c, ubyte v) {
     YAKC_ASSERT((c >= 0) && (c<num_channels));
 
     channel_state& chn = channels[c];
@@ -99,7 +99,7 @@ z80ctc::down_counter_init(const channel_state& chn) const {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::update_timers(z80bus* bus, int ticks) {
+z80ctc::update_timers(system_bus* bus, int ticks) {
     for (int c = 0; c < num_channels; c++) {
         channel_state& chn = channels[c];
         if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
@@ -116,7 +116,7 @@ z80ctc::update_timers(z80bus* bus, int ticks) {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::update_counter(z80bus* bus, int chn_index) {
+z80ctc::update_counter(system_bus* bus, int chn_index) {
     channel_state& chn = this->channels[chn_index];
     if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
         if ((chn.mode & MODE) == MODE_COUNTER) {
@@ -131,7 +131,7 @@ z80ctc::update_counter(z80bus* bus, int chn_index) {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::down_counter_callback(z80bus* bus, int chn_index) {
+z80ctc::down_counter_callback(system_bus* bus, int chn_index) {
     channel_state& chn = this->channels[chn_index];
     if ((chn.mode & INTERRUPT) == INTERRUPT_ENABLED) {
         chn.int_ctrl.request_interrupt(bus, chn.interrupt_vector);
@@ -143,7 +143,7 @@ z80ctc::down_counter_callback(z80bus* bus, int chn_index) {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::ctrg(z80bus* bus, channel c) {
+z80ctc::ctrg(system_bus* bus, channel c) {
     YAKC_ASSERT(bus);
     this->update_counter(bus, c);
 }

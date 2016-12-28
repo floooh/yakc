@@ -34,12 +34,12 @@
     can require more than one key to be set (e.g. shift keys).
 */
 #include "yakc/breadboard.h"
-#include "yakc/z80bus.h"
+#include "yakc/system_bus.h"
 #include "yakc/rom_images.h"
 
 namespace YAKC {
 
-class z1013 : public z80bus {
+class z1013 : public system_bus {
 public:
     /// the main board
     breadboard* board = nullptr;
