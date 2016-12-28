@@ -630,9 +630,9 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             cpc.video.update_crtc_values();
             cpc.video.crtc.selected = hdr->crtc_selected;
             // FIXME: rom_config
-            cpc.pio_a = hdr->ppi_a;
-            cpc.pio_b = hdr->ppi_b;
-            cpc.pio_c = hdr->ppi_c;
+            cpc.pio.output[i8255::PORT_A] = hdr->ppi_a;
+            cpc.pio.output[i8255::PORT_B] = hdr->ppi_b;
+            cpc.pio.output[i8255::PORT_C] = hdr->ppi_c;
             cpc.psg_selected = hdr->psg_selected;
             for (int i = 0; i < 16; i++) {
                 cpc.audio.regs[i] = hdr->psg_regs[i];

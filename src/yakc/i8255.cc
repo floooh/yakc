@@ -75,7 +75,7 @@ i8255::set_mode(system_bus* bus, ubyte val) {
     this->control = val;
     for (int i = 0; i < num_ports; i++) {
         this->output[i] = 0;
-        this->input[i] = 0;
+        //this->input[i] = 0;
     }
     if (bus) {
         if (this->port_a_mode() == MODE_OUTPUT) {
@@ -97,7 +97,7 @@ i8255::set_mode(system_bus* bus, ubyte val) {
 //------------------------------------------------------------------------------
 void
 i8255::write(system_bus* bus, int addr, ubyte val) {
-    switch (addr & 0x03) {
+    switch (addr & 3) {
         case PORT_A:
             if (this->port_a_mode() == MODE_OUTPUT) {
                 this->output[PORT_A] = val;
@@ -171,7 +171,7 @@ i8255::input_port_c(system_bus* bus) {
 //------------------------------------------------------------------------------
 ubyte
 i8255::read(system_bus* bus, int addr) {
-    switch (addr & 0x03) {
+    switch (addr & 3) {
         case PORT_A:
             if (this->port_a_mode() == MODE_OUTPUT) {
                 return this->output[PORT_A];    // read data from output latch

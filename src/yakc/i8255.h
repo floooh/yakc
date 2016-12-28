@@ -45,14 +45,13 @@ public:
 
     static const int num_ports = 3;
     ubyte output[num_ports] = { };      // output latch
-    ubyte input[num_ports] = { };       // input latch
+//    ubyte input[num_ports] = { };       // input latch (only used in MODE_1 and MODE_2)
     ubyte control = 0;                  // control word
 
     /// initialize a i8255 instance
     void init(int id);
     /// reset the i8255
     void reset();
-
     /// write to the PIO, addr is A,B,C,CTRL (0..3)
     void write(system_bus* bus, int addr, ubyte val);
     /// read from the PIO, addr is A,B,C (CTRL can't be read)

@@ -9,6 +9,7 @@
 #include "yakc/system_bus.h"
 #include "yakc/cpc_video.h"
 #include "yakc/sound_ay8910.h"
+#include "yakc/i8255.h"
 
 namespace YAKC {
 
@@ -52,6 +53,10 @@ public:
     virtual void cpu_out(uword port, ubyte val) override;
     /// the z80 in callback
     virtual ubyte cpu_in(uword port) override;
+    /// PIO output callback
+    virtual void pio_out(int pio_id, int port_id, ubyte val) override;
+    /// PIO input callback
+    virtual ubyte pio_in(int pio_id, int port_id) override;
     /// interrupt request callback
     virtual void irq() override;
     /// interrupt acknowledge callback
@@ -61,13 +66,12 @@ public:
 
     device cur_model = device::cpc464;
     bool on = false;
+
     cpc_video video;
     sound_ay8910 audio;
-    ubyte psg_selected;         // selected AY8910 selected
-    ubyte pio_a;
-    ubyte pio_b;
-    ubyte pio_c;
-    ubyte pio_control;
+    i8255 pio;
+
+    ubyte psg_selected;         // selected AY8910 register
     ubyte ga_config = 0x00;     // out to port 0x7Fxx func 0x80
     ubyte ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
     struct key_mask {

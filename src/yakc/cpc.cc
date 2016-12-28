@@ -14,8 +14,6 @@
 //------------------------------------------------------------------------------
 #include "cpc.h"
 
-//#include <stdio.h>
-
 namespace YAKC {
 
 //------------------------------------------------------------------------------
@@ -144,10 +142,6 @@ cpc::poweron(device m) {
     this->ga_config = 0;
     this->ram_config = 0;
     this->psg_selected = 0;
-    this->pio_a = 0;
-    this->pio_b = 0;
-    this->pio_c = 0;
-    this->pio_control = 0;
     this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
@@ -160,7 +154,8 @@ cpc::poweron(device m) {
     // initialize clock to 4 MHz
     this->board->clck.init(4000);
 
-    // initialize audio chip
+    // initialize support chips
+    this->pio.init(0);
     this->audio.init(this->board->clck.base_freq_khz, 1000, SOUND_SAMPLE_RATE);
 
     // CPU start state
@@ -181,13 +176,10 @@ void
 cpc::reset() {
     this->video.reset();
     this->audio.reset();
+    this->pio.reset();
     this->ga_config = 0;
     this->ram_config = 0;
     this->psg_selected = 0;
-    this->pio_a = 0;
-    this->pio_b = 0;
-    this->pio_c = 0;
-    this->pio_control = 0;
     this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
@@ -293,53 +285,8 @@ cpc::cpu_out(uword port, ubyte val) {
         //printf("OUT Printer Port: %02x\n", val);
     }
     if (0 == (port & (1<<11))) {
-        // 8255 PPI, select IO port
-        switch ((port & 0x0300)>>8) {
-            // PIO Port A
-            case 0:
-                // port A (should always be set to output on CPC)
-                if (0 == (this->pio_control & (1<<4))) {
-                    this->pio_a = val;
-                }
-                break;
-            // PIO Port B (should always be set to input on CPC)
-            case 1:
-                if (0 == (this->pio_control & (1<<0))) {
-                    // shouldn't happen on CPC
-                    this->pio_b = val;
-                }
-                break;
-            // PIO Port C (should always be set to output on CPC)
-            case 2:
-                // FIXME: check upper/lower IO bits
-                if ((val & 0xC0) == 0xC0) {
-                    // select PSG register from content of PIO-A
-                    this->psg_selected = this->pio_a;
-                }
-                else if ((val & 0xC0) == 0x80) {
-                    // write to selected PSG register
-                    this->audio.write(this->psg_selected, this->pio_a);
-                }
-                // FIXME: bit 5,4: cassette write and motor control
-                this->scan_kbd_line = val & 0x1F;
-                this->pio_c = val;
-                break;
-            // PIO Control
-            case 3:
-                // 8255 PIO control register (write only)
-                // http://www.cpcwiki.eu/index.php/8255
-                if (val & (1<<7)) {
-                    this->pio_control = val;
-                    this->pio_a = 0;
-                    this->pio_b = 0;
-                    this->pio_c = 0;
-                }
-                else {
-                    // set single bit in PIO-C
-                    this->pio_c |= ((val&1) << ((val>>1)&0x7));
-                }
-                break;
-        }
+        // 8255 PPI
+        this->pio.write(this, ((port & 0x0300)>>8) & 0x03, val);
     }
     if (0 == (port & (1<<10))) {
         // FIXME: peripheral soft reset
@@ -348,8 +295,102 @@ cpc::cpu_out(uword port, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
+ubyte
+cpc::cpu_in(uword port) {
+    if (0 == (port & (1<<14))) {
+        // CRTC function
+        // FIXME: untested
+        const uword crtc_func = port & 0x0300;
+        if (crtc_func == 0x0300) {
+            // 0xBFxx: read from selected CRTC register
+            return this->video.read_crtc();
+        }
+        else {
+            //printf("IN: CRTC unknown function!\n");
+            return 0xFF;
+        }
+    }
+    if (0 == (port & (1<<11))) {
+        return this->pio.read(this, ((port & 0x0300)>>8) & 0x03);
+    }
+    if (0 == (port & (1<<10))) {
+        // FIXME: Expansion Peripherals
+    }
+    // fallthrough
+    return 0x00;
+}
+
+//------------------------------------------------------------------------------
+void
+cpc::pio_out(int /*pio_id*/, int port_id, ubyte val) {
+    if (i8255::PORT_C == port_id) {
+        // PSG function
+        const ubyte func = val & 0xC0;
+        switch (func) {
+            case 0xC0:
+                // select PSG register from PIO Port A
+                this->psg_selected = this->pio.output[i8255::PORT_A];
+                break;
+            case 0x80:
+                // write to selected PSG register
+                this->audio.write(this->psg_selected, this->pio.output[i8255::PORT_A]);
+                break;
+        }
+        // FIXME: cassette write data, cassette motor control
+        // bits 0..5: select keyboard matrix line
+        this->scan_kbd_line = val & 0x1F;
+    }
+}
+
+//------------------------------------------------------------------------------
+ubyte
+cpc::pio_in(int /*pio_id*/, int port_id) {
+    if (i8255::PORT_A == port_id) {
+        // catch keyboard data which is normally in PSG PORT A
+        if (this->psg_selected == sound_ay8910::IO_PORT_A) {
+            if (this->scan_kbd_line < 10) {
+                return ~(this->cur_keyboard_mask.col[this->scan_kbd_line]);
+            }
+            else {
+                return 0xFF;
+            }
+        }
+        else {
+            // read PSG register
+            return this->audio.read(this->psg_selected);
+        }
+    }
+    else if (i8255::PORT_B == port_id) {
+        //  Bit 7: cassette data input
+        //  Bit 6: printer port ready (1=not ready, 0=ready)
+        //  Bit 5: expansion port /EXP pin
+        //  Bit 4: screen refresh rate (1=50Hz, 0=60Hz)
+        //  Bit 3..1: distributor id (shown in start screen)
+        //      0: Isp
+        //      1: Triumph
+        //      2: Saisho
+        //      3: Solavox
+        //      4: Awa
+        //      5: Schneider
+        //      6: Orion
+        //      7: Amstrad
+        //  Bit 0: vsync
+        //
+        ubyte val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
+        if (this->video.vsync_bit()) {
+            val |= (1<<0);
+        }
+        return val;
+    }
+    else {
+        // shouldn't happen
+        return 0xFF;
+    }
+}
+
+//------------------------------------------------------------------------------
 // CPC6128 RAM block indices (see cpu_out())
-int ram_table[8][4] = {
+static int ram_config_table[8][4] = {
     { 0, 1, 2, 3 },
     { 0, 1, 2, 7 },
     { 4, 5, 6, 7 },
@@ -381,10 +422,10 @@ cpc::update_memory_mapping() {
         rom1_ptr = this->roms->ptr(rom_images::cpc464_basic);
     }
     auto& cpu = this->board->cpu;
-    const int i0 = ram_table[ram_table_index][0];
-    const int i1 = ram_table[ram_table_index][1];
-    const int i2 = ram_table[ram_table_index][2];
-    const int i3 = ram_table[ram_table_index][3];
+    const int i0 = ram_config_table[ram_table_index][0];
+    const int i1 = ram_config_table[ram_table_index][1];
+    const int i2 = ram_config_table[ram_table_index][2];
+    const int i3 = ram_config_table[ram_table_index][3];
     // 0x0000..0x3FFF
     if (this->ga_config & (1<<2)) {
         // read/write from and to RAM bank
@@ -438,82 +479,6 @@ cpc::put_input(ubyte ascii, ubyte joy0_mask) {
             this->next_joy_mask.combine(this->key_map[0xF4]);
         }
     }
-}
-
-//------------------------------------------------------------------------------
-ubyte
-cpc::cpu_in(uword port) {
-    if (0 == (port & (1<<14))) {
-        // CRTC function
-        // FIXME: untested
-        const uword crtc_func = port & 0x0300;
-        if (crtc_func == 0x0300) {
-            // 0xBFxx: read from selected CRTC register
-            return this->video.read_crtc();
-        }
-        else {
-            //printf("IN: CRTC unknown function!\n");
-            return 0xFF;
-        }
-    }
-    if (0 == (port & (1<<11))) {
-        // 8255 PIO function
-        switch ((port & 0x0300)>>8) {
-            // PIO Port A (PSG data)
-            case 0:
-                // keyboard data is in PSG IO Port A
-                // PIO-A must be in input mode
-                if ((0 != (this->pio_control & (1<<4))) && ((this->pio_c & 0xC0) == 0x40)) {
-                    if (this->psg_selected == sound_ay8910::IO_PORT_A) {
-                        if (this->scan_kbd_line < 10) {
-                            return ~(this->cur_keyboard_mask.col[this->scan_kbd_line]);
-                        }
-                    }
-                    else {
-                        return this->audio.read(this->psg_selected);
-                    }
-                }
-                // fallthrough
-                return 0x00;
-
-            // PIO Port B
-            case 1:
-                // http://cpcwiki.eu/index.php/8255
-                //
-                //  Bit 7: cassette data input
-                //  Bit 6: printer port ready (1=not ready, 0=ready)
-                //  Bit 5: expansion port /EXP pin
-                //  Bit 4: screen refresh rate (1=50Hz, 0=60Hz)
-                //  Bit 3..1: distributor id (shown in start screen)
-                //      0: Isp
-                //      1: Triumph
-                //      2: Saisho
-                //      3: Solavox
-                //      4: Awa
-                //      5: Schneider
-                //      6: Orion
-                //      7: Amstrad
-                //  Bit 0: vsync
-                //
-                {
-                    ubyte val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
-                    if (this->video.vsync_bit()) {
-                        val |= (1<<0);
-                    }
-                    return val;
-                }
-
-            // PIO Port C
-            case 2:
-                // PIO-C, FIXME: why is this read back?
-                return this->pio_c;
-        }
-    }
-    if (0 == (port & (1<<10))) {
-        // FIXME: Expansion Peripherals
-    }
-    // fallthrough
-    return 0x00;
 }
 
 //------------------------------------------------------------------------------
