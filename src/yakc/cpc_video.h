@@ -12,7 +12,7 @@ namespace YAKC {
 class cpc_video {
 public:
     /// initialize the object
-    void init(breadboard* board);
+    void init(device model, breadboard* board);
     /// perform a reset
     void reset();
     /// call after each CPU instruction, calls the scanline() method
@@ -48,6 +48,7 @@ public:
     void decode_visible_scanline(int src_y, int dst_y);
 
     breadboard* board = nullptr;
+    device model = device::none;
 
     // CRTC registers
     // http://www.cpcwiki.eu/index.php/CRTC
@@ -108,6 +109,7 @@ public:
     uint32_t mode = 1;
     uint32_t selected_pen = 0;
     uint32_t border_color = 0;
+    uint32_t palette[32];
     uint32_t pens[16];
     uint32_t rgba8_buffer[max_display_width * max_display_height]; // enough pixels for overscan mode
 };

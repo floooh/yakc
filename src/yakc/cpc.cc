@@ -7,7 +7,7 @@
 //    per CRTC cycle, not per line)
 //  - subtle differences between different CRTC types
 //  - ROM module switching
-//  - KC Compact differences (colors are different!)
+//  - KC Compact: doesn't have custom gate array
 //  - support more emulator file formats
 //  - move PIO 8255 emulation into its own class
 //
@@ -140,7 +140,7 @@ cpc::poweron(device m) {
 
     this->cur_model = m;
     this->on = true;
-    this->video.init(this->board);
+    this->video.init(m, this->board);
     this->ga_config = 0;
     this->ram_config = 0;
     this->psg_selected = 0;

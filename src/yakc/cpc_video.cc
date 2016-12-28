@@ -15,7 +15,7 @@ namespace YAKC {
 //  index into this palette is the 'hardware color number' & 0x1F
 //  order is ABGR
 //
-uint32_t hw_palette[32] = {
+static uint32_t cpc_palette[32] = {
     0xff6B7D6E,         // #40 white
     0xff6D7D6E,         // #41 white
     0xff6BF300,         // #42 sea grean
@@ -50,7 +50,15 @@ uint32_t hw_palette[32] = {
     0xffF67B6E,         // #5F pastel blue
 };
 
-ubyte crtc_defaults[cpc_video::crtc_t::NUM_REGS] = {
+// first 32 bytes of the KC Compact color ROM
+static uint32_t kcc_color_rom[32] = {
+    0x15, 0x15, 0x31, 0x3d, 0x01, 0x0d, 0x11, 0x1d,
+    0x0d, 0x3d, 0x3c, 0x3f, 0x0c, 0x0f, 0x1c, 0x1f,
+    0x01, 0x31, 0x30, 0x33, 0x00, 0x03, 0x10, 0x13,
+    0x05, 0x35, 0x34, 0x37, 0x04, 0x07, 0x14, 0x17
+};
+
+static ubyte crtc_defaults[cpc_video::crtc_t::NUM_REGS] = {
     0x3F,       // HORI_TOTAL
     0x28,       // HORI_DISPLAYED
     0x2E,       // HORI_SYNC_POS
@@ -71,7 +79,7 @@ ubyte crtc_defaults[cpc_video::crtc_t::NUM_REGS] = {
     0x00,       // LIGHTPEN_ADDR_LO
 };
 
-ubyte crtc_masks[cpc_video::crtc_t::NUM_REGS] = {
+static ubyte crtc_masks[cpc_video::crtc_t::NUM_REGS] = {
     0xFF,       // HORI_TOTAL
     0xFF,       // HORI_DISPLAYED
     0xFF,       // HORI_SYNC_POS
@@ -94,8 +102,37 @@ ubyte crtc_masks[cpc_video::crtc_t::NUM_REGS] = {
 
 //------------------------------------------------------------------------------
 void
-cpc_video::init(breadboard* board_) {
+cpc_video::init(device model_, breadboard* board_) {
+    this->model = model_;
     this->board = board_;
+
+    // initialize the color palette (CPC and KC Compact have slightly different colors)
+    if (device::kccompact != this->model) {
+        // CPC models
+        for (int i = 0; i < 32; i++) {
+            this->palette[i] = cpc_palette[i];
+        }
+    }
+    else {
+        // KC Compact
+        for (int i = 0; i < 32; i++) {
+            uint32_t rgba8 = 0xFF000000;
+            const ubyte val = kcc_color_rom[i];
+            // color bits:
+            //  xx|gg|rr|bb
+            //
+            const ubyte b = val & 0x03;
+            const ubyte r = (val>>2) & 0x03;
+            const ubyte g = (val>>4) & 0x03;
+            if (b == 0x03)      rgba8 |= 0x00FF0000;    // full blue
+            else if (b != 0)    rgba8 |= 0x007F0000;    // half blue
+            if (g == 0x03)      rgba8 |= 0x0000FF00;    // full green
+            else if (g != 0)    rgba8 |= 0x00007F00;    // half green
+            if (r == 0x03)      rgba8 |= 0x000000FF;    // full red
+            else if (r != 0)    rgba8 |= 0x0000007F;    // half red
+            this->palette[i] = rgba8;
+        }
+    }
     this->reset();
 }
 
@@ -386,11 +423,11 @@ void
 cpc_video::assign_color(ubyte val) {
     if (this->selected_pen & 0x10) {
         // set border color
-        this->border_color = hw_palette[val & 0x1F];
+        this->border_color = this->palette[val & 0x1F];
     }
     else {
         // set pen
-        this->pens[this->selected_pen & 0x0F] = hw_palette[val & 0x1F];
+        this->pens[this->selected_pen & 0x0F] = this->palette[val & 0x1F];
     }
 }
 
