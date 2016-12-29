@@ -97,8 +97,9 @@ public:
     int vsync_count = 0;
     /// scanline counter
     int scanline_count = 0;
+    /// vtotal_adjust additional scanline counter
+    int adjust_scanline_count = 0;
 
-private:
     /// step the horizontal counter
     void step_h_count();
     /// step the scanline counter
@@ -112,7 +113,8 @@ private:
 
     int type = int(type::MC6845);
     int reg_sel = 0;                // currently selected register
-    ubyte prev_bits = 0;
+    ubyte set_bits = 0;
+    ubyte cleared_bits = 0;
     ubyte bits = 0;
     uword ma_row_start = 0;         // memory address at row start
 };
@@ -126,24 +128,28 @@ mc6845::test(ubyte mask) const {
 //------------------------------------------------------------------------------
 inline bool
 mc6845::on(ubyte mask) const {
-    return 0 != ((this->bits & (this->bits ^ this->prev_bits)) & mask);
+    return 0 != (this->set_bits & mask);
+//    return 0 != ((this->bits & (this->bits ^ this->prev_bits)) & mask);
 }
 
 //------------------------------------------------------------------------------
 inline bool
 mc6845::off(ubyte mask) const {
-    return 0 != ((~this->bits & (this->bits ^ this->prev_bits)) & mask);
+    return 0 != (this->cleared_bits & mask);
+//    return 0 != ((~this->bits & (this->bits ^ this->prev_bits)) & mask);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mc6845::set(ubyte mask) {
+    this->set_bits |= ~this->bits & mask;
     this->bits |= mask;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mc6845::clear(ubyte mask) {
+    this->cleared_bits |= this->bits & mask;
     this->bits &= ~mask;
 }
 

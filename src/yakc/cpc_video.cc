@@ -58,53 +58,12 @@ static uint32_t kcc_color_rom[32] = {
     0x05, 0x35, 0x34, 0x37, 0x04, 0x07, 0x14, 0x17
 };
 
-static ubyte crtc_defaults[cpc_video::crtc_t::NUM_REGS] = {
-    0x3F,       // HORI_TOTAL
-    0x28,       // HORI_DISPLAYED
-    0x2E,       // HORI_SYNC_POS
-    0x8E,       // SYNC_WIDTHS
-    0x26,       // VERT_TOTAL
-    0x00,       // VERT_TOTAL_ADJUST
-    0x19,       // VERT_DISPLAYED
-    0x1E,       // VERT_SYNC_POS
-    0x00,       // INTERLACE_AND_SKEW
-    0x07,       // MAX_RASTER_ADDR
-    0x00,       // CURSOR_START_RASTER
-    0x00,       // CURSOR_END_RASTER
-    0x30,       // DISPLAY_START_ADDR_HI
-    0x00,       // DISPLAY_START_ADDR_LO
-    0x00,       // CURSOR_ADDR_HI
-    0x00,       // CURSOR_ADDR_LO
-    0x00,       // LIGHTPEN_ADDR_HI
-    0x00,       // LIGHTPEN_ADDR_LO
-};
-
-static ubyte crtc_masks[cpc_video::crtc_t::NUM_REGS] = {
-    0xFF,       // HORI_TOTAL
-    0xFF,       // HORI_DISPLAYED
-    0xFF,       // HORI_SYNC_POS
-    0xFF,       // SYNC_WIDTHS
-    0x7F,       // VERT_TOTAL
-    0x1F,       // VERT_TOTAL_ADJUST
-    0x7F,       // VERT_DISPLAYED
-    0x7F,       // VERT_SYNC_POS
-    0x03,       // INTERLACE_AND_SKEW
-    0x1F,       // MAX_RASTER_ADDR
-    0x7F,       // CURSOR_START_RASTER
-    0x1F,       // CURSOR_END_RASTER
-    0x3F,       // DISPLAY_START_ADDR_HI
-    0xFF,       // DISPLAY_START_ADDR_LO
-    0x3F,       // CURSOR_ADDR_HI
-    0xFF,       // CURSOR_ADDR_LO
-    0x3F,       // LIGHTPEN_ADDR_HI
-    0xFF,       // LIGHTPEN_ADDR_LO
-};
-
 //------------------------------------------------------------------------------
 void
 cpc_video::init(device model_, breadboard* board_) {
     this->model = model_;
     this->board = board_;
+    this->crtc.init(mc6845::type::MC6845);
 
     // initialize the color palette (CPC and KC Compact have slightly different colors)
     if (device::kccompact != this->model) {
@@ -142,60 +101,7 @@ cpc_video::reset() {
     this->selected_pen = 0;
     this->border_color = 0;
     clear(this->pens, sizeof(this->pens));
-
-    // reset CRTC registers
-    // http://www.cpcwiki.eu/index.php/CRTC
-    this->crtc = crtc_t();
-    for (int i = 0; i < crtc_t::NUM_REGS; i++) {
-        this->crtc.regs[i] = crtc_defaults[i];
-    }
-    this->update_crtc_values();
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::update_crtc_values() {
-    // length of a scanline in CPU cycles
-    crtc.scanline_end = (crtc.regs[crtc_t::HORI_TOTAL]+1) * 4;
-    // start of HSYNC signal inside scanline in CPU cycles
-    crtc.hsync_start = crtc.regs[crtc_t::HORI_SYNC_POS] * 4;
-    // end of HSYNC signal inside scanline in CPU cycles
-    crtc.hsync_end = crtc.hsync_start + ((crtc.regs[crtc_t::SYNC_WIDTHS]&0xF) * 4);
-    // height of a character row in scanlines
-    crtc.row_height = crtc.regs[crtc_t::MAX_RASTER_ADDR] + 1;
-    // start of VSYNC signal in scanlines
-    crtc.vsync_start = crtc.regs[crtc_t::VERT_SYNC_POS] * crtc.row_height;
-    // end of VSYNC signal in scanlines
-    // FIXME: this is hardwired to 16, but this does not seem to be enough
-    // for the HSYNC interrupt to detect the VSYNC bit, so extend the length
-    // for the VSYNC flag...
-    const int vblank_lines = 16;
-    crtc.vsync_end = crtc.vsync_start + vblank_lines;
-    // end of PAL frame
-    crtc.frame_end = crtc.regs[crtc_t::VERT_TOTAL]*crtc.row_height + crtc.regs[crtc_t::VERT_TOTAL_ADJUST];
-    // number of visible scanlines
-    crtc.visible_scanlines = crtc.regs[crtc_t::VERT_DISPLAYED] * crtc.row_height;
-
-    // compute left border width (in emulator pixels)
-    const int total_scanline_pixels = crtc.scanline_end * 4;
-
-    // ok, this is tricky, and only as far as I understood it:
-    //  - the CRT beam retrace is triggered by an oscillator in the monitor,
-    //    so the retrace happens completely independent from the CRTC settings
-    //  - but: the beam will stop at the beginning of a line until HSYNC_START
-    //  - around 13.5ns are 'lost' per scanline for HSYNC+'black porch'+delays
-    // this 13.5ns*4 is where the '54' constant is coming from (13.5ns in CPU cycles)
-    const int line_start_cycles = crtc.hsync_start + 54;
-    const int line_start_pixels = line_start_cycles * 4;
-    crtc.left_border_width = (total_scanline_pixels - line_start_pixels);
-    if (crtc.left_border_width < 0) {
-        crtc.left_border_width = 0;
-    }
-    // width of visible area in emulator framebuffer pixels
-    crtc.visible_width = crtc.regs[crtc_t::HORI_DISPLAYED] * 8 * 2;
-    if ((crtc.left_border_width + crtc.visible_width) >= max_display_width) {
-        crtc.visible_width = max_display_width - crtc.left_border_width;
-    }
+    this->crtc.reset();
 }
 
 //------------------------------------------------------------------------------
@@ -204,284 +110,132 @@ cpc_video::step(system_bus* bus, int cycles) {
 
     // http://cpctech.cpc-live.com/docs/ints.html
     // http://www.cpcwiki.eu/forum/programming/frame-flyback-and-interrupts/msg25106/#msg25106
+    // http://www.grimware.org/doku.php/documentations/devices/gatearray#interrupt.generator
 
-    // update the scanline-cycle-counter
-    crtc.scanline_cycle_count += cycles;
+    this->crtc_cycle_count -= cycles;
+    while (this->crtc_cycle_count <= 0) {
+        this->crtc_cycle_count += 4;
+        this->crtc.step();
 
-    // update HSYNC flag, and check if interrupt must be requested
-    crtc.hsync = (crtc.scanline_cycle_count >= crtc.hsync_start) &&
-                 (crtc.scanline_cycle_count < crtc.hsync_end);
-    if ((crtc.scanline_cycle_count >= crtc.hsync_start) && !crtc.hsync_triggered) {
-        crtc.hsync_triggered = true;
-        crtc.hsync_irq_count++;
+        // interrupt is generated at HSYNC's falling edge
+        if (this->crtc.off(mc6845::HSYNC)) {
+            this->hsync_irq_count = (this->hsync_irq_count + 1) & 0x3F;
 
-        // request interrupt every 52 scanlines
-        //
-        // FIXME: when the CPU acknowledges the interrupt, bit 5 of the
-        // hsync_counter must be cleared
-        // FIXME #2: gate array interrupt control flagcalc
-        //
-        // see: http://www.retroisle.com/amstrad/cpc/Technical/hardware_Interrupts.php
-        //      http://cpctech.cpc-live.com/docs/ints.html
-        //
-        // NOTE: for color flashing to work, an interrupt must happen while
-        // the interrupt is processed by the CPU, with standard CRTC register
-        // values, this would happen at scanline 260 (the 5th HSYNC of the frame)
+            // special handling 2 HSYNCs after VSYNC
+            if (this->hsync_after_vsync_counter != 0) {
+                this->hsync_after_vsync_counter--;
+                if (this->hsync_after_vsync_counter == 0) {
+                    if (this->hsync_irq_count & (1<<5)) {
+                        // ...if counter is >=32 (bit5=1), no interrupt request is issued,
+                        // and the counter is reset to 0
+                        this->hsync_irq_count = 0;
+                    }
+                    else {
+                        // ...if counter is <32 (bit5=0), generate an interrupt request,
+                        // and the counter is reset to 0
+                        bus->irq();
+                        this->hsync_irq_count = 0;
+                    }
+                }
+            }
+            if (this->hsync_irq_count == 52) {
+                this->hsync_irq_count = 0;
+                bus->irq();
+            }
+        }
 
-        // special case interrupt request after vsync already after 32 lines
-        if (crtc.hsync_after_vsync_counter != 0) {
-            crtc.hsync_after_vsync_counter--;
-            if (crtc.hsync_after_vsync_counter == 0) {
-                if (crtc.hsync_irq_count >= 32) {
-                    crtc.hsync_irq_count = 0;
-                    bus->irq();
+        if (this->crtc.on(mc6845::VSYNC)) {
+            this->hsync_after_vsync_counter = 3;
+            bus->vblank();
+        }
+
+        if (this->crtc.on(mc6845::DISPEN_H)) {
+            this->dst_x = 0;
+            this->dst_y++;
+        }
+        if (this->crtc.on(mc6845::DISPEN_V)) {
+            this->dst_y = 0;
+        }
+        if ((this->dst_x < max_display_width) && (this->dst_y < max_display_height)) {
+            // decode the next 2 pixels
+            uint32_t* dst = &(this->rgba8_buffer[this->dst_x + this->dst_y * max_display_width]);
+            this->dst_x += 16;
+
+            uint32_t ma2 = this->crtc.ma * 2;
+            const uint32_t ra = this->crtc.ra;
+            const uint32_t ra_offset = ((ra & 7)<<11); // memory address offset contributed by RA
+            uint32_t p;
+
+            if (!this->crtc.test(mc6845::DISPEN)) {
+                p = 0xFF2F2F2F;
+                if (this->crtc.test(mc6845::HSYNC)) {
+                    p |= 0xFF00007F;
+                }
+                if (this->crtc.test(mc6845::VSYNC)) {
+                    p |= 0xFF007F00;
+                }
+                for (int i = 0; i < 16; i++) {
+                    *dst++ = p;
+                }
+            }
+            else {
+                if (0 == this->mode) {
+                    // 160x200 @ 16 colors
+                    // pixel    bit mask
+                    // 0:       |3|7|
+                    // 1:       |2|6|
+                    // 2:       |1|5|
+                    // 3:       |0|4|
+                    for (int i = 0; i < 2; i++, ma2++) {
+                        const uint32_t page_index = (ma2>>13) & 3;
+                        const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
+                        const uint8_t val = this->board->ram[page_index][page_offset];
+                        p = this->pens[((val>>7)&0x1)|((val>>2)&0x2)|((val>>3)&0x4)|((val<<2)&0x8)];
+                        *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
+                        p = this->pens[((val>>6)&0x1)|((val>>1)&0x2)|((val>>2)&0x4)|((val<<3)&0x8)];
+                        *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
+                    }
+                }
+                else if (1 == this->mode) {
+                    // 320x200 @ 4 colors
+                    // pixel    bit mask
+                    // 0:       |3|7|
+                    // 1:       |2|6|
+                    // 2:       |1|5|
+                    // 3:       |0|4|
+                    for (int i = 0; i < 2; i++, ma2++) {
+                        const uint32_t page_index = (ma2>>13) & 3;
+                        const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
+                        const uint8_t val = this->board->ram[page_index][page_offset];
+                        p = this->pens[((val>>2)&2)|((val>>7)&1)];
+                        *dst++ = p; *dst++ = p;
+                        p = this->pens[((val>>1)&2)|((val>>6)&1)];
+                        *dst++ = p; *dst++ = p;
+                        p = this->pens[((val>>0)&2)|((val>>5)&1)];
+                        *dst++ = p; *dst++ = p;
+                        p = this->pens[((val<<1)&2)|((val>>4)&1)];
+                        *dst++ = p; *dst++ = p;
+                    }
+                }
+                else if (2 == this->mode) {
+                    // 640x200 @ 2 colors
+                    for (int i = 0; i < 2; i++, ma2++) {
+                        const uint32_t page_index = (ma2>>13) & 3;
+                        const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
+                        const uint8_t val = this->board->ram[page_index][page_offset];
+                        *dst++ = this->pens[(val>>7)&1];
+                        *dst++ = this->pens[(val>>6)&1];
+                        *dst++ = this->pens[(val>>5)&1];
+                        *dst++ = this->pens[(val>>4)&1];
+                        *dst++ = this->pens[(val>>3)&1];
+                        *dst++ = this->pens[(val>>2)&1];
+                        *dst++ = this->pens[(val>>1)&1];
+                        *dst++ = this->pens[(val>>0)&1];
+                    }
                 }
             }
         }
-
-        // interrupt request every 52 lines
-        if (crtc.hsync_irq_count == 52) {
-            crtc.hsync_irq_count = 0;
-            bus->irq();
-        }
-
-        // decode the current(!) scanline
-        if (crtc.palline_count < max_display_height) {
-            if (crtc.scanline_count < crtc.visible_scanlines) {
-                // decode visible scanline
-                this->decode_visible_scanline(crtc.scanline_count, crtc.palline_count);
-            }
-            else {
-                // render border
-                this->decode_border_scanline(crtc.palline_count);
-            }
-        }
-
-        // bump (src-)scanline and (dst-)pal-line
-        crtc.scanline_count++;
-
-        // scanline inside VSYNC area?
-        crtc.vsync = (crtc.scanline_count >= crtc.vsync_start) &&
-                     (crtc.scanline_count < crtc.vsync_end);
-        if (crtc.vsync && !crtc.vsync_triggered) {
-            crtc.hsync_after_vsync_counter = 3;
-            crtc.vsync_triggered = true;
-            bus->vblank();
-        }
     }
-
-    // end of scanline reached? then wraparound and start new scanline
-    if (crtc.scanline_cycle_count >= crtc.scanline_end) {
-        crtc.hsync_triggered = false;
-        crtc.scanline_cycle_count = 0;
-
-        // wrap around pal-line
-        crtc.palline_count++;
-        const int skip_vert = (crtc.frame_end - max_display_height) / 2;
-        if (crtc.scanline_count == (crtc.vsync_end + skip_vert)) {
-            // rewind PAL line counter to top of screen
-            crtc.palline_count = 0;
-        }
-
-        // wrap around scanline
-        if (crtc.scanline_count >= crtc.frame_end) {
-            crtc.scanline_count = 0;
-            crtc.vsync_triggered = false;
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::decode_border_scanline(int dst_y) {
-    YAKC_ASSERT((dst_y >= 0) && (dst_y < max_display_height));
-    uint32_t* dst = &(this->rgba8_buffer[dst_y * max_display_width]);
-    for (int i = 0; i < max_display_width; i++) {
-        *dst++ = this->border_color;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::decode_visible_scanline(int src_y, int dst_y) {
-    YAKC_ASSERT(dst_y < max_display_height);
-    //
-    // NOTE:
-    //
-    // mode 0: 160x200      2 pixels per byte
-    // mode 1: 320x200      4 pixels per byte
-    // mode 2: 640x200      8 pixels per byte
-    //
-    //  http://www.cpcwiki.eu/index.php/CRTC
-    //  http://cpctech.cpc-live.com/docs/screen.html
-    //  http://www.grimware.org/doku.php/documentations/devices/crtc
-    //
-    // FIXME: 32 KByte overscan buffers
-    //
-    uint32_t* dst = &(this->rgba8_buffer[dst_y * max_display_width]);
-
-    // compute the current CRTC RA register
-    // (contributes bits 11,12,13 of the video memory address)
-    const uint32_t ra = src_y % crtc.row_height;
-    const uint32_t ra_offset = ((ra & 7)<<11); // memory address offset contributed by RA
-
-    // compute the current CRTC MA register, and multiply by 2 (because
-    // 2 bytes per CRTC cycle are read), MA and RA are used to compute
-    // the current video memory address
-    uint32_t ma2 = crtc.regs[crtc_t::DISPLAY_START_ADDR_HI]<<8;
-    ma2 += crtc.regs[crtc_t::DISPLAY_START_ADDR_LO];
-    ma2 += (src_y / crtc.row_height) * crtc.regs[crtc_t::HORI_DISPLAYED];
-    ma2 *= 2;
-
-    // fill left border
-    for (int i = 0; i < crtc.left_border_width; i++) {
-        *dst++ = this->border_color;
-    }
-
-    // http://cpctech.cpc-live.com/docs/graphics.html
-    uint32_t p;
-    const uint32_t line_num_bytes = crtc.visible_width / 8;
-    if (0 == mode) {
-        // 160x200 @ 16 colors
-        //
-        // pixel    bit mask
-        // 0:       |3|7|
-        // 1:       |2|6|
-        // 2:       |1|5|
-        // 3:       |0|4|
-        for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
-            const uint32_t page_index = (ma2>>13) & 3;
-            const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-
-            const uint8_t val = this->board->ram[page_index][page_offset];
-            p = this->pens[((val>>7)&0x1)|((val>>2)&0x2)|((val>>3)&0x4)|((val<<2)&0x8)];
-            *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
-            p = this->pens[((val>>6)&0x1)|((val>>1)&0x2)|((val>>2)&0x4)|((val<<3)&0x8)];
-            *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
-        }
-    }
-    else if (1 == mode) {
-        // 320x200 @ 4 colors
-        //
-        // pixel    bit mask
-        // 0:       |3|7|
-        // 1:       |2|6|
-        // 2:       |1|5|
-        // 3:       |0|4|
-        for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
-            const uint32_t page_index = (ma2>>13) & 3;
-            const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-
-            const uint8_t val = this->board->ram[page_index][page_offset];
-            p = this->pens[((val>>2)&2)|((val>>7)&1)];
-            *dst++ = p; *dst++ = p;
-            p = this->pens[((val>>1)&2)|((val>>6)&1)];
-            *dst++ = p; *dst++ = p;
-            p = this->pens[((val>>0)&2)|((val>>5)&1)];
-            *dst++ = p; *dst++ = p;
-            p = this->pens[((val<<1)&2)|((val>>4)&1)];
-            *dst++ = p; *dst++ = p;
-        }
-    }
-    else if (2 == mode) {
-        // 640x200 @ 2 colors
-        for (uint32_t x = 0; x < line_num_bytes; x++, ma2++) {
-            const uint32_t page_index = (ma2>>13) & 3;
-            const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-
-            const uint8_t val = this->board->ram[page_index][page_offset];
-            *dst++ = this->pens[(val>>7)&1];
-            *dst++ = this->pens[(val>>6)&1];
-            *dst++ = this->pens[(val>>5)&1];
-            *dst++ = this->pens[(val>>4)&1];
-            *dst++ = this->pens[(val>>3)&1];
-            *dst++ = this->pens[(val>>2)&1];
-            *dst++ = this->pens[(val>>1)&1];
-            *dst++ = this->pens[(val>>0)&1];
-        }
-    }
-    else if (3 == mode) {
-        // FIXME: undocumented 160x200 @ 4 colors (not on KC compact)
-    }
-
-    // fill right border
-    for (int i = (crtc.left_border_width + crtc.visible_width); i < max_display_width; i++) {
-        *dst++ = this->border_color;
-    }
-    YAKC_ASSERT(dst == &(this->rgba8_buffer[dst_y * max_display_width]) + max_display_width);
-    YAKC_ASSERT(dst <= &this->rgba8_buffer[max_display_width * max_display_height]);
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::select_pen(ubyte val) {
-    this->selected_pen = val & 0x1F;
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::assign_color(ubyte val) {
-    if (this->selected_pen & 0x10) {
-        // set border color
-        this->border_color = this->palette[val & 0x1F];
-    }
-    else {
-        // set pen
-        this->pens[this->selected_pen & 0x0F] = this->palette[val & 0x1F];
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::set_video_mode(ubyte val) {
-    this->mode = val & 3;
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::select_crtc(ubyte val) {
-    this->crtc.selected = val;
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::write_crtc(ubyte val) {
-    if (this->crtc.selected < crtc_t::NUM_REGS) {
-        this->crtc.regs[this->crtc.selected] = val & crtc_masks[this->crtc.selected];
-        this->update_crtc_values();
-    }
-}
-
-//------------------------------------------------------------------------------
-ubyte
-cpc_video::read_crtc() const {
-    if ((this->crtc.selected >= 12) && (this->crtc.selected < 18)) {
-        return this->crtc.regs[this->crtc.selected];
-    }
-    else {
-        // write only register, or outside register range
-        return 0;
-    }
-}
-
-//------------------------------------------------------------------------------
-bool
-cpc_video::vsync_bit() const {
-    return this->crtc.vsync;
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::interrupt_control() {
-    this->crtc.hsync_irq_count = 0;
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_video::interrupt_acknowledge() {
-    // clear top bit of hsync counter, makes sure the next hsync irq
-    // won't happen until at least 32 lines later
-    this->crtc.hsync_irq_count &= 0x1F;
 }
 
 } // namespace YAKC
