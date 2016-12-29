@@ -5,6 +5,7 @@ fips_begin_module(yakc)
         rom_images.h rom_images.cc
         z80.cc z80.h z80int.cc z80int.h z80pio.cc z80pio.h z80ctc.cc z80ctc.h z80dbg.cc z80dbg.h
         i8255.h i8255.cc
+        mc6845.h mc6845.cc
         sound.h sound.cc
         sound_speaker.h sound_speaker.cc
         sound_beeper.h sound_beeper.cc
