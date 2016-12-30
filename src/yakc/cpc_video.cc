@@ -99,11 +99,16 @@ cpc_video::init(device model_, breadboard* board_) {
 //------------------------------------------------------------------------------
 void
 cpc_video::reset() {
-    this->selected_pen = 0;
-    this->border_color = 0;
     clear(this->pens, sizeof(this->pens));
     this->crtc.reset();
+    this->crtc_cycle_count = 0;
+    this->hsync_irq_count = 0;
+    this->hsync_after_vsync_counter = 0;
+    this->hsync_delay_count = 0;
     this->request_interrupt = false;
+    this->mode = 1;
+    this->selected_pen = 0;
+    this->border_color = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -224,11 +229,19 @@ cpc_video::step(system_bus* bus, int cycles) {
         this->handle_crtc_sync(bus);
 
         // feed state of hsync and vsync signals into CRT, and step the CRT
+        // NOTE: HSYNC from the CRTC is delayed by 2us and will last for
+        // at most 4us unless CRTC HSYNC is triggered off earlier
         if (this->crtc.on(mc6845::HSYNC)) {
-            this->crt.trigger_hsync();
+            this->hsync_delay_count = 2;
         }
         if (this->crtc.on(mc6845::VSYNC)) {
             this->crt.trigger_vsync();
+        }
+        if (hsync_delay_count > 0) {
+            this->hsync_delay_count--;
+            if (this->hsync_delay_count == 0) {
+                this->crt.trigger_hsync();
+            }
         }
         this->crt.step();
 
@@ -241,6 +254,12 @@ cpc_video::step(system_bus* bus, int cycles) {
                 if (this->crtc.test(mc6845::DISPEN)) {
                     // decode visible pixels
                     this->decode_pixels(dst);
+                }
+                else if (this->crtc.test(mc6845::HSYNC|mc6845::VSYNC)) {
+                    // blacker than black
+                    for (int i = 0; i < 16; i++) {
+                        dst[i] = 0xFF000000;
+                    }
                 }
                 else {
                     // border color

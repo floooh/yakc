@@ -54,8 +54,7 @@ public:
     int crtc_cycle_count = 0;
     int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
     int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
-    int left_border_width = 0;      // width of left border in emulator framebuffer pixels
-    int visible_width = 0;          // width of visible area in emulator framebuffer pixels
+    int hsync_delay_count = 0;
     bool request_interrupt = false;
 
     static const int max_display_width = 768;
