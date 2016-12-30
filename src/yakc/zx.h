@@ -46,6 +46,8 @@ public:
     void decode_video_line(uint16_t y);
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
+    /// get framebuffer, width and height
+    const void* framebuffer(int& out_width, int& out_height);
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;

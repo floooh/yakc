@@ -70,6 +70,10 @@ public:
     const char* system_info() const;
     /// called after snapshot restore
     void on_context_switched();
+    /// decode audio data
+    void decode_audio(float* buffer, int num_samples);
+    /// get pointer to framebuffer, width and height
+    const void* framebuffer(int& out_width, int& out_height);
 
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);

@@ -79,6 +79,8 @@ public:
     void decode_video();
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
+    /// get framebuffer, width and height
+    const void* framebuffer(int& out_width, int& out_height);
 
     static const int video_ram_page = 4;
     static const int color_ram_page = 5;

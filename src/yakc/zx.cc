@@ -534,4 +534,12 @@ zx::decode_audio(float* buffer, int num_samples) {
     this->beeper.fill_samples(buffer, num_samples);
 }
 
+//------------------------------------------------------------------------------
+const void*
+zx::framebuffer(int& out_width, int& out_height) {
+    out_width = 320;
+    out_height = 256;
+    return this->rgba8_buffer;
+}
+
 } // namespace YAKC

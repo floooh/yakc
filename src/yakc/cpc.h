@@ -48,6 +48,8 @@ public:
     void update_memory_mapping();
     /// decode next audio buffer
     void decode_audio(float* buffer, int num_samples);
+    /// get pointer to framebuffer, width and height
+    const void* framebuffer(int& out_width, int& out_height);
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;

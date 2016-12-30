@@ -63,6 +63,8 @@ public:
     system_bus* get_bus();
     /// fill sample buffer for external audio system (may be called from a thread!)
     void fill_sound_samples(float* buffer, int num_samples);
+    /// get pointer to emulator framebuffer, its width, and height
+    const void* framebuffer(int& out_width, int& out_height);
 
     bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count

@@ -569,6 +569,14 @@ z9001::decode_audio(float* buffer, int num_samples) {
 }
 
 //------------------------------------------------------------------------------
+const void*
+z9001::framebuffer(int& out_width, int& out_height) {
+    out_width = 320;
+    out_height = 192;
+    return this->rgba8_buffer;
+}
+
+//------------------------------------------------------------------------------
 const char*
 z9001::system_info() const {
     if (device::z9001 == this->cur_model) {

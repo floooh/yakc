@@ -65,6 +65,8 @@ public:
     const char* system_info() const;
     /// called after snapshot restore
     void on_context_switched();
+    /// get framebuffer, width and height
+    const void* framebuffer(int& out_width, int& out_height);
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);

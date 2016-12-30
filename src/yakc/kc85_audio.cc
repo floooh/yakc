@@ -53,10 +53,4 @@ kc85_audio::ctc_write(int chn) {
     }
 }
 
-//------------------------------------------------------------------------------
-void
-kc85_audio::decode_audio(float* buffer, int num_samples) {
-    this->speaker.fill_samples(buffer, num_samples);
-}
-
 } // namespace YAKC

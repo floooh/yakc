@@ -38,13 +38,18 @@ public:
     ubyte read_crtc() const;
     /// get current state of the vsync bit
     bool vsync_bit() const;
+    /// gate array hsync/vsync stuff (irq and vblank)  
+    void handle_crtc_sync(system_bus* bus);
+    /// decode the next 16 pixels into the emulator framebuffer
+    void decode_pixels(uint32_t* dst);
 
     breadboard* board = nullptr;
     device model = device::none;
+    bool debug_video = true;
 
     mc6845 crtc;
-    int dst_x = 0;
-    int dst_y = 0;
+    uint32_t dst_x = 0;
+    uint32_t dst_y = 0;
 
     int crtc_cycle_count = 0;
     int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
@@ -56,12 +61,16 @@ public:
     static const int max_display_width = 768;
     static const int max_display_height = 272;
 
+    static const int dbg_max_display_width  = 1024;     // 64*16
+    static const int dbg_max_display_height = 320;      // 312 + some room
+
     uint32_t mode = 1;
     uint32_t selected_pen = 0;
     uint32_t border_color = 0;
     uint32_t palette[32];
     uint32_t pens[16];
     uint32_t rgba8_buffer[max_display_width * max_display_height]; // enough pixels for overscan mode
+    uint32_t dbg_rgba8_buffer[dbg_max_display_width * dbg_max_display_height];
 };
 
 //------------------------------------------------------------------------------

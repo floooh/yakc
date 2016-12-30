@@ -159,22 +159,11 @@ YakcApp::OnRunning() {
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
     this->audio.Update();
-    if (this->emu.kc85.on) {
-        this->draw.Render(this->emu.kc85.video.rgba8_buffer, 320, 256);
-    }
-    else if (this->emu.z9001.on) {
-        this->draw.Render(this->emu.z9001.rgba8_buffer, 320, 192);
-    }
-    else if (this->emu.z1013.on) {
-        this->draw.Render(this->emu.z1013.rgba8_buffer, 256, 256);
-    }
-    else if (this->emu.cpc.on) {
-        this->draw.Render(this->emu.cpc.video.rgba8_buffer, cpc_video::max_display_width, cpc_video::max_display_height);
-    }
-    else if (this->emu.zx.on) {
-        // NOTE: ZX only has 256x192 framebuffer, but we put
-        // it into a 320x256 buffer and include the border color there
-        this->draw.Render(this->emu.zx.rgba8_buffer, 320, 256);
+    int width = 0;
+    int height = 0;
+    const void* fb = this->emu.framebuffer(width, height);
+    if (fb) {
+        this->draw.Render(fb, width, height);
     }
     #if YAKC_UI
     this->ui.OnFrame(this->emu);

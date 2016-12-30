@@ -300,7 +300,7 @@ yakc::border_color(float& out_red, float& out_green, float& out_blue) {
 void
 yakc::fill_sound_samples(float* buffer, int num_samples) {
     if (this->kc85.on) {
-        return this->kc85.audio.decode_audio(buffer, num_samples);
+        return this->kc85.decode_audio(buffer, num_samples);
     }
     else if (this->z9001.on) {
         return this->z9001.decode_audio(buffer, num_samples);
@@ -313,6 +313,31 @@ yakc::fill_sound_samples(float* buffer, int num_samples) {
     }
     else {
         clear(buffer, num_samples * sizeof(float));
+    }
+}
+
+//------------------------------------------------------------------------------
+const void*
+yakc::framebuffer(int& out_width, int& out_height) {
+    if (this->kc85.on) {
+        return this->kc85.framebuffer(out_width, out_height);
+    }
+    else if (this->z9001.on) {
+        return this->z9001.framebuffer(out_width, out_height);
+    }
+    else if (this->z1013.on) {
+        return this->z1013.framebuffer(out_width, out_height);
+    }
+    else if (this->zx.on) {
+        return this->zx.framebuffer(out_width, out_height);
+    }
+    else if (this->cpc.on) {
+        return this->cpc.framebuffer(out_width, out_height);
+    }
+    else {
+        out_width = 0;
+        out_height = 0;
+        return nullptr;
     }
 }
 

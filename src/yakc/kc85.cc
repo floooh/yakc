@@ -54,6 +54,20 @@ kc85::on_context_switched() {
 
 //------------------------------------------------------------------------------
 void
+kc85::decode_audio(float* buffer, int num_samples) {
+    this->audio.speaker.fill_samples(buffer, num_samples);
+}
+
+//------------------------------------------------------------------------------
+const void*
+kc85::framebuffer(int& out_width, int& out_height) {
+    out_width = 320;
+    out_height = 256;
+    return this->video.rgba8_buffer;
+}
+
+//------------------------------------------------------------------------------
+void
 kc85::poweron(device m, os_rom os) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(device::any_kc85) & int(m));

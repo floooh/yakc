@@ -507,6 +507,21 @@ cpc::decode_audio(float* buffer, int num_samples) {
 }
 
 //------------------------------------------------------------------------------
+const void*
+cpc::framebuffer(int& out_width, int& out_height) {
+    if (this->video.debug_video) {
+        out_width = cpc_video::dbg_max_display_width;
+        out_height = cpc_video::dbg_max_display_height;
+        return this->video.dbg_rgba8_buffer;
+    }
+    else {
+        out_width = cpc_video::max_display_width;
+        out_height = cpc_video::max_display_height;
+        return this->video.rgba8_buffer;
+    }
+}
+
+//------------------------------------------------------------------------------
 const char*
 cpc::system_info() const {
     return "FIXME!";

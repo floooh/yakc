@@ -391,6 +391,14 @@ z1013::decode_video() {
 }
 
 //------------------------------------------------------------------------------
+const void*
+z1013::framebuffer(int& out_width, int& out_height) {
+    out_width = 256;
+    out_height = 256;
+    return this->rgba8_buffer;
+}
+
+//------------------------------------------------------------------------------
 const char*
 z1013::system_info() const {
     if (this->cur_model == device::z1013_01) {

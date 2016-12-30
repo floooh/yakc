@@ -107,6 +107,108 @@ cpc_video::reset() {
 
 //------------------------------------------------------------------------------
 void
+cpc_video::handle_crtc_sync(system_bus* bus) {
+    // checks the HSYNC and VSYN CRTC flags and issues CPU interrupt
+    // request and system_bus vblank callback if needed
+    //
+    // if an interrupt was requested the request_interrupt member will
+    // be true after the method returns (used for debug visualizations)
+
+    // interrupt is generated at HSYNC's falling edge
+    if (this->crtc.off(mc6845::HSYNC)) {
+        this->request_interrupt = false;
+        this->hsync_irq_count = (this->hsync_irq_count + 1) & 0x3F;
+
+        // special case handling to sync interrupt requests
+        // with the VSYNC (2 HSYNCs after VSYNC)
+        if (this->hsync_after_vsync_counter != 0) {
+            this->hsync_after_vsync_counter--;
+            if (this->hsync_after_vsync_counter == 0) {
+                if (this->hsync_irq_count >= 32) {
+                    this->request_interrupt = true;
+                }
+                this->hsync_irq_count = 0;
+            }
+        }
+        if (this->hsync_irq_count == 52) {
+            this->hsync_irq_count = 0;
+            this->request_interrupt = true;
+        }
+        if (this->request_interrupt) {
+            bus->irq();
+        }
+    }
+
+    if (this->crtc.on(mc6845::VSYNC)) {
+        this->hsync_after_vsync_counter = 3;
+        bus->vblank();
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_video::decode_pixels(uint32_t* dst) {
+
+    // compute the source address from current CRTC ma (memory address)
+    // and ra (raster address) like this:
+    //
+    // |ma12|ma11|ra2|ra1|ra0|ma9|ma8|...|ma2|ma1|ma0|0|
+    //
+    // Bits ma12 and m11 point to the 16 KByte page, and all
+    // other bits are the index into that page.
+    //
+    const uint32_t page_index  = (this->crtc.ma>>12) & 3;
+    const uint32_t page_offset = ((this->crtc.ma & 0x03FF)<<1) | ((this->crtc.ra & 7)<<11);
+    const ubyte* src = &(this->board->ram[page_index][page_offset]);
+    uint8_t c;
+    uint32_t p;
+    if (0 == this->mode) {
+        // 160x200 @ 16 colors
+        // pixel    bit mask
+        // 0:       |3|7|
+        // 1:       |2|6|
+        // 2:       |1|5|
+        // 3:       |0|4|
+        for (int i = 0; i < 2; i++) {
+            c = *src++;
+            p = this->pens[((c>>7)&0x1)|((c>>2)&0x2)|((c>>3)&0x4)|((c<<2)&0x8)];
+            *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
+            p = this->pens[((c>>6)&0x1)|((c>>1)&0x2)|((c>>2)&0x4)|((c<<3)&0x8)];
+            *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
+        }
+    }
+    else if (1 == this->mode) {
+        // 320x200 @ 4 colors
+        // pixel    bit mask
+        // 0:       |3|7|
+        // 1:       |2|6|
+        // 2:       |1|5|
+        // 3:       |0|4|
+        for (int i = 0; i < 2; i++) {
+            c = *src++;
+            p = this->pens[((c>>2)&2)|((c>>7)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->pens[((c>>1)&2)|((c>>6)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->pens[((c>>0)&2)|((c>>5)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->pens[((c<<1)&2)|((c>>4)&1)];
+            *dst++ = p; *dst++ = p;
+        }
+    }
+    else if (2 == this->mode) {
+        // 640x200 @ 2 colors
+        for (int i = 0; i < 2; i++) {
+            c = *src++;
+            for (int j = 7; j >= 0; j--) {
+                *dst++ = this->pens[(c>>j)&1];
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void
 cpc_video::step(system_bus* bus, int cycles) {
 
     // http://cpctech.cpc-live.com/docs/ints.html
@@ -117,130 +219,44 @@ cpc_video::step(system_bus* bus, int cycles) {
     while (this->crtc_cycle_count <= 0) {
         this->crtc_cycle_count += 4;
         this->crtc.step();
+        this->handle_crtc_sync(bus);
 
-        // interrupt is generated at HSYNC's falling edge
-        if (this->crtc.off(mc6845::HSYNC)) {
-            this->request_interrupt = false;
-            this->hsync_irq_count = (this->hsync_irq_count + 1) & 0x3F;
-
-            // special handling 2 HSYNCs after VSYNC
-            if (this->hsync_after_vsync_counter != 0) {
-                this->hsync_after_vsync_counter--;
-                if (this->hsync_after_vsync_counter == 0) {
-                    if (this->hsync_irq_count >= 32) {
-                        this->request_interrupt = true;
-                    }
-                    this->hsync_irq_count = 0;
-                }
+        if (this->debug_video) {
+            if (0 == this->crtc.h_count) {
+                this->dst_x = 0;
+                this->dst_y++;
             }
-            if (this->hsync_irq_count == 52) {
-                this->hsync_irq_count = 0;
-                this->request_interrupt = true;
+            if ((0 == this->crtc.row_count) && (0 == this->crtc.scanline_count)) {
+                this->dst_y = 0;
             }
-            if (this->request_interrupt) {
-                bus->irq();
-            }
-        }
-
-        if (this->crtc.on(mc6845::VSYNC)) {
-            this->hsync_after_vsync_counter = 3;
-            bus->vblank();
-        }
-
-        if (0 == this->crtc.h_count) {
-            this->dst_x = 0;
-            this->dst_y++;
-        }
-        if ((0 == this->crtc.row_count) && (0 == this->crtc.scanline_count)) {
-            this->dst_y = 0;
-        }
-        if ((this->dst_x < max_display_width) && (this->dst_y < max_display_height)) {
-            // decode the next 2 pixels
-            uint32_t* dst = &(this->rgba8_buffer[this->dst_x + this->dst_y * max_display_width]);
-            this->dst_x += 16;
-
-            uint32_t ma2 = this->crtc.ma * 2;
-            const uint32_t ra = this->crtc.ra;
-            const uint32_t ra_offset = ((ra & 7)<<11); // memory address offset contributed by RA
-            uint32_t p;
-
-            if (!this->crtc.test(mc6845::DISPEN)) {
-                p = 0xFF2F2F2F;
-                if (this->crtc.test(mc6845::HSYNC)) {
-                    p |= 0xFF00007F;
-                }
-                if (this->crtc.test(mc6845::VSYNC)) {
-                    p |= 0xFF007F00;
-                }
-                if (this->request_interrupt) {
-                    p |= 0xFFFFFFFF;
-                }
-                if (0 == this->crtc.scanline_count) {
-                    p = 0xFF000000;
-                }
-                for (int i = 0; i < 16; i++) {
-                    if (i == 0) {
-                        *dst++ = 0xFF000000;
+            if ((this->dst_x < (dbg_max_display_width-16)) && (this->dst_y < dbg_max_display_height)) {
+                uint32_t* dst = &(this->dbg_rgba8_buffer[this->dst_x + this->dst_y * dbg_max_display_width]);
+                this->dst_x += 16;
+                if (!this->crtc.test(mc6845::DISPEN)) {
+                    uint32_t p = 0xFF2F2F2F;
+                    if (this->crtc.test(mc6845::HSYNC)) {
+                        p |= 0xFF00007F;
                     }
-                    else {
-                        *dst++ = p;
+                    if (this->crtc.test(mc6845::VSYNC)) {
+                        p |= 0xFF007F00;
+                    }
+                    if (this->request_interrupt) {
+                        p |= 0xFFFFFFFF;
+                    }
+                    if (0 == this->crtc.scanline_count) {
+                        p = 0xFF000000;
+                    }
+                    for (int i = 0; i < 16; i++) {
+                        if (i == 0) {
+                            *dst++ = 0xFF000000;
+                        }
+                        else {
+                            *dst++ = p;
+                        }
                     }
                 }
-            }
-            else {
-                if (0 == this->mode) {
-                    // 160x200 @ 16 colors
-                    // pixel    bit mask
-                    // 0:       |3|7|
-                    // 1:       |2|6|
-                    // 2:       |1|5|
-                    // 3:       |0|4|
-                    for (int i = 0; i < 2; i++, ma2++) {
-                        const uint32_t page_index = (ma2>>13) & 3;
-                        const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-                        const uint8_t val = this->board->ram[page_index][page_offset];
-                        p = this->pens[((val>>7)&0x1)|((val>>2)&0x2)|((val>>3)&0x4)|((val<<2)&0x8)];
-                        *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
-                        p = this->pens[((val>>6)&0x1)|((val>>1)&0x2)|((val>>2)&0x4)|((val<<3)&0x8)];
-                        *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
-                    }
-                }
-                else if (1 == this->mode) {
-                    // 320x200 @ 4 colors
-                    // pixel    bit mask
-                    // 0:       |3|7|
-                    // 1:       |2|6|
-                    // 2:       |1|5|
-                    // 3:       |0|4|
-                    for (int i = 0; i < 2; i++, ma2++) {
-                        const uint32_t page_index = (ma2>>13) & 3;
-                        const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-                        const uint8_t val = this->board->ram[page_index][page_offset];
-                        p = this->pens[((val>>2)&2)|((val>>7)&1)];
-                        *dst++ = p; *dst++ = p;
-                        p = this->pens[((val>>1)&2)|((val>>6)&1)];
-                        *dst++ = p; *dst++ = p;
-                        p = this->pens[((val>>0)&2)|((val>>5)&1)];
-                        *dst++ = p; *dst++ = p;
-                        p = this->pens[((val<<1)&2)|((val>>4)&1)];
-                        *dst++ = p; *dst++ = p;
-                    }
-                }
-                else if (2 == this->mode) {
-                    // 640x200 @ 2 colors
-                    for (int i = 0; i < 2; i++, ma2++) {
-                        const uint32_t page_index = (ma2>>13) & 3;
-                        const uint32_t page_offset = ra_offset | (ma2 & 0x7FF);
-                        const uint8_t val = this->board->ram[page_index][page_offset];
-                        *dst++ = this->pens[(val>>7)&1];
-                        *dst++ = this->pens[(val>>6)&1];
-                        *dst++ = this->pens[(val>>5)&1];
-                        *dst++ = this->pens[(val>>4)&1];
-                        *dst++ = this->pens[(val>>3)&1];
-                        *dst++ = this->pens[(val>>2)&1];
-                        *dst++ = this->pens[(val>>1)&1];
-                        *dst++ = this->pens[(val>>0)&1];
-                    }
+                else {
+                    this->decode_pixels(dst);
                 }
             }
         }
