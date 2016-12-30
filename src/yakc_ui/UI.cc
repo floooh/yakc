@@ -428,6 +428,11 @@ UI::OnFrame(yakc& emu) {
                         this->OpenWindow(emu, CommandWindow::Create());
                     }
                 }
+                if (emu.is_device(device::any_cpc)) {
+                    if (ImGui::MenuItem("CPC CRTC Visualization", nullptr, emu.cpc.video.debug_video)) {
+                        emu.cpc.video.debug_video = !emu.cpc.video.debug_video;
+                    }
+                }
                 if (!(emu.is_device(device::any_zx) || emu.is_device(device::any_cpc))) {
                     if (ImGui::BeginMenu("Take Snapshot")) {
                         for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {

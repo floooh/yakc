@@ -64,6 +64,7 @@ cpc_video::init(device model_, breadboard* board_) {
     this->model = model_;
     this->board = board_;
     this->crtc.init(mc6845::type::MC6845);
+    this->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
 
     // initialize the color palette (CPC and KC Compact have slightly different colors)
     if (device::kccompact != this->model) {
@@ -218,40 +219,70 @@ cpc_video::step(system_bus* bus, int cycles) {
     this->crtc_cycle_count -= cycles;
     while (this->crtc_cycle_count <= 0) {
         this->crtc_cycle_count += 4;
+
         this->crtc.step();
         this->handle_crtc_sync(bus);
 
-        if (this->debug_video) {
-            if (0 == this->crtc.h_count) {
-                this->dst_x = 0;
-                this->dst_y++;
+        // feed state of hsync and vsync signals into CRT, and step the CRT
+        if (this->crtc.on(mc6845::HSYNC)) {
+            this->crt.trigger_hsync();
+        }
+        if (this->crtc.on(mc6845::VSYNC)) {
+            this->crt.trigger_vsync();
+        }
+        this->crt.step();
+
+        if (!this->debug_video) {
+            if (this->crt.visible) {
+                int dst_x = this->crt.x * 16;
+                int dst_y = this->crt.y;
+                YAKC_ASSERT((dst_x <= (max_display_width-16)) && (dst_y < max_display_height));
+                uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * max_display_width]);
+                if (this->crtc.test(mc6845::DISPEN)) {
+                    // decode visible pixels
+                    this->decode_pixels(dst);
+                }
+                else {
+                    // border color
+                    for (int i = 0; i < 16; i++) {
+                        dst[i] = this->border_color;
+                    }
+                }
             }
-            if ((0 == this->crtc.row_count) && (0 == this->crtc.scanline_count)) {
-                this->dst_y = 0;
-            }
-            if ((this->dst_x < (dbg_max_display_width-16)) && (this->dst_y < dbg_max_display_height)) {
-                uint32_t* dst = &(this->dbg_rgba8_buffer[this->dst_x + this->dst_y * dbg_max_display_width]);
-                this->dst_x += 16;
+        }
+        else {
+            // debug mode
+            int dst_x = this->crt.h_pos * 16;
+            int dst_y = this->crt.v_pos;
+            if ((dst_x < (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
+                uint32_t* dst = &(this->dbg_rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
                 if (!this->crtc.test(mc6845::DISPEN)) {
-                    uint32_t p = 0xFF2F2F2F;
+                    ubyte r = 0x3F;
+                    ubyte g = 0x3F;
+                    ubyte b = 0x3F;
                     if (this->crtc.test(mc6845::HSYNC)) {
-                        p |= 0xFF00007F;
+                        r = 0x7F;
                     }
                     if (this->crtc.test(mc6845::VSYNC)) {
-                        p |= 0xFF007F00;
+                        g = 0x7F;
                     }
                     if (this->request_interrupt) {
-                        p |= 0xFFFFFFFF;
+                        r = g = b = 0xFF;
                     }
-                    if (0 == this->crtc.scanline_count) {
-                        p = 0xFF000000;
+                    else if (0 == this->crtc.scanline_count) {
+                        r = g = b = 0x00;
+                    }
+                    if (this->crt.h_black || this->crt.v_black) {
+                        r >>= 1;
+                        g >>= 1;
+                        b >>= 1;
                     }
                     for (int i = 0; i < 16; i++) {
                         if (i == 0) {
                             *dst++ = 0xFF000000;
                         }
                         else {
-                            *dst++ = p;
+                            *dst++ = 0xFF<<24 | b<<16 | g<<8 | r;
                         }
                     }
                 }

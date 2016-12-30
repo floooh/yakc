@@ -7,6 +7,7 @@
 #include "yakc/system_bus.h"
 #include "yakc/breadboard.h"
 #include "yakc/mc6845.h"
+#include "yakc/crt.h"
 
 namespace YAKC {
 
@@ -45,11 +46,10 @@ public:
 
     breadboard* board = nullptr;
     device model = device::none;
-    bool debug_video = true;
+    bool debug_video = false;
 
-    mc6845 crtc;
-    uint32_t dst_x = 0;
-    uint32_t dst_y = 0;
+    class crt crt;          // provides destination coordinates (TV)
+    mc6845 crtc;            // provides source coordinates (video controller)
 
     int crtc_cycle_count = 0;
     int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
@@ -62,7 +62,7 @@ public:
     static const int max_display_height = 272;
 
     static const int dbg_max_display_width  = 1024;     // 64*16
-    static const int dbg_max_display_height = 320;      // 312 + some room
+    static const int dbg_max_display_height = 312;
 
     uint32_t mode = 1;
     uint32_t selected_pen = 0;
