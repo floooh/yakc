@@ -22,7 +22,7 @@ AY8910Window::Draw(yakc& emu) {
     if (emu.cpc.on) {
         snd = &emu.cpc.audio;
     }
-    ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(200, 240), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         if (snd) {
             ImGui::Text("Period A:     0x%04X", (snd->regs[sound_ay8910::TONE_PERIOD_A_COARSE]<<8)|snd->regs[sound_ay8910::TONE_PERIOD_A_FINE]);
@@ -37,6 +37,9 @@ AY8910Window::Draw(yakc& emu) {
             ImGui::Text("Env Cycle:    0x%02X", snd->regs[sound_ay8910::ENV_SHAPE_CYCLE]);
             ImGui::Text("IO Port A:    0x%02X", snd->regs[sound_ay8910::IO_PORT_A]);
             ImGui::Text("IO Port B:    0x%02X", snd->regs[sound_ay8910::IO_PORT_B]);
+        }
+        else {
+            ImGui::Text("not active");
         }
     }
     ImGui::End();
