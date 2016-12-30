@@ -88,24 +88,18 @@ public:
     bool off(ubyte mask) const;
 
     /// horizontal counter
-    int h_count = 0;
+    int h_count;
     /// hsync counter
-    int hsync_count = 0;
+    int hsync_count;
     /// character row counter
-    int row_count = 0;
+    int row_count;
     /// vsync counter
-    int vsync_count = 0;
+    int vsync_count;
     /// scanline counter
-    int scanline_count = 0;
+    int scanline_count;
     /// vtotal_adjust additional scanline counter
-    int adjust_scanline_count = 0;
+    int adjust_scanline_count;
 
-    /// step the horizontal counter
-    void step_h_count();
-    /// step the scanline counter
-    void step_scanline_count();
-    /// step the row counter
-    void step_row_count();
     /// set a status bit
     void set(ubyte mask);
     /// clear a status bit
@@ -113,8 +107,7 @@ public:
 
     int type = int(type::MC6845);
     int reg_sel = 0;                // currently selected register
-    ubyte set_bits = 0;
-    ubyte cleared_bits = 0;
+    ubyte prev_bits = 0;
     ubyte bits = 0;
     uword ma_row_start = 0;         // memory address at row start
 };
@@ -128,28 +121,24 @@ mc6845::test(ubyte mask) const {
 //------------------------------------------------------------------------------
 inline bool
 mc6845::on(ubyte mask) const {
-    return 0 != (this->set_bits & mask);
-//    return 0 != ((this->bits & (this->bits ^ this->prev_bits)) & mask);
+    return 0 != ((this->bits & (this->bits ^ this->prev_bits)) & mask);
 }
 
 //------------------------------------------------------------------------------
 inline bool
 mc6845::off(ubyte mask) const {
-    return 0 != (this->cleared_bits & mask);
-//    return 0 != ((~this->bits & (this->bits ^ this->prev_bits)) & mask);
+    return 0 != ((~this->bits & (this->bits ^ this->prev_bits)) & mask);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mc6845::set(ubyte mask) {
-    this->set_bits |= ~this->bits & mask;
     this->bits |= mask;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mc6845::clear(ubyte mask) {
-    this->cleared_bits |= this->bits & mask;
     this->bits &= ~mask;
 }
 

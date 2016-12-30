@@ -51,6 +51,7 @@ public:
     int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
     int left_border_width = 0;      // width of left border in emulator framebuffer pixels
     int visible_width = 0;          // width of visible area in emulator framebuffer pixels
+    bool request_interrupt = false;
 
     static const int max_display_width = 768;
     static const int max_display_height = 272;

@@ -102,6 +102,7 @@ cpc_video::reset() {
     this->border_color = 0;
     clear(this->pens, sizeof(this->pens));
     this->crtc.reset();
+    this->request_interrupt = false;
 }
 
 //------------------------------------------------------------------------------
@@ -119,27 +120,24 @@ cpc_video::step(system_bus* bus, int cycles) {
 
         // interrupt is generated at HSYNC's falling edge
         if (this->crtc.off(mc6845::HSYNC)) {
+            this->request_interrupt = false;
             this->hsync_irq_count = (this->hsync_irq_count + 1) & 0x3F;
 
             // special handling 2 HSYNCs after VSYNC
             if (this->hsync_after_vsync_counter != 0) {
                 this->hsync_after_vsync_counter--;
                 if (this->hsync_after_vsync_counter == 0) {
-                    if (this->hsync_irq_count & (1<<5)) {
-                        // ...if counter is >=32 (bit5=1), no interrupt request is issued,
-                        // and the counter is reset to 0
-                        this->hsync_irq_count = 0;
+                    if (this->hsync_irq_count >= 32) {
+                        this->request_interrupt = true;
                     }
-                    else {
-                        // ...if counter is <32 (bit5=0), generate an interrupt request,
-                        // and the counter is reset to 0
-                        bus->irq();
-                        this->hsync_irq_count = 0;
-                    }
+                    this->hsync_irq_count = 0;
                 }
             }
             if (this->hsync_irq_count == 52) {
                 this->hsync_irq_count = 0;
+                this->request_interrupt = true;
+            }
+            if (this->request_interrupt) {
                 bus->irq();
             }
         }
@@ -149,11 +147,11 @@ cpc_video::step(system_bus* bus, int cycles) {
             bus->vblank();
         }
 
-        if (this->crtc.on(mc6845::DISPEN_H)) {
+        if (0 == this->crtc.h_count) {
             this->dst_x = 0;
             this->dst_y++;
         }
-        if (this->crtc.on(mc6845::DISPEN_V)) {
+        if ((0 == this->crtc.row_count) && (0 == this->crtc.scanline_count)) {
             this->dst_y = 0;
         }
         if ((this->dst_x < max_display_width) && (this->dst_y < max_display_height)) {
@@ -174,8 +172,19 @@ cpc_video::step(system_bus* bus, int cycles) {
                 if (this->crtc.test(mc6845::VSYNC)) {
                     p |= 0xFF007F00;
                 }
+                if (this->request_interrupt) {
+                    p |= 0xFFFFFFFF;
+                }
+                if (0 == this->crtc.scanline_count) {
+                    p = 0xFF000000;
+                }
                 for (int i = 0; i < 16; i++) {
-                    *dst++ = p;
+                    if (i == 0) {
+                        *dst++ = 0xFF000000;
+                    }
+                    else {
+                        *dst++ = p;
+                    }
                 }
             }
             else {

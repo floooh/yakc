@@ -49,8 +49,7 @@ void
 mc6845::reset() {
     // NOTE: control registers are not cleared on reset 
     this->bits = 0;
-    this->set_bits = 0;
-    this->cleared_bits = 0;
+    this->prev_bits = 0;
     this->ma = 0;
     this->ra = 0;
     this->h_count = 0;
@@ -100,9 +99,76 @@ mc6845::read() const {
 //------------------------------------------------------------------------------
 void
 mc6845::step() {
-    this->set_bits = 0;
-    this->cleared_bits = 0;
-    this->step_h_count();
+    this->prev_bits = this->bits;
+
+    // pre-update checks
+    if (this->row_count == this->regs[V_SYNC_POS]) {
+        this->set(VSYNC);
+    }
+
+    // update counters
+    this->h_count = (this->h_count + 1) & 0xFF;
+    this->ma = (this->ma + 1) & 0x3FFF;
+    if (this->test(HSYNC)) {
+        this->hsync_count++;
+    }
+    if (this->h_count >= (1 + this->regs[H_TOTAL])) {
+        // new scanline
+        this->h_count = 0;
+        if (this->test(VSYNC)) {
+            this->vsync_count++;
+        }
+        this->scanline_count++;
+        if (this->scanline_count >= (1 + this->regs[MAX_SCANLINE_ADDR])) {
+            // new character row
+            this->scanline_count = 0;
+            this->row_count = (this->row_count + 1) & 0xFF;
+            this->ma_row_start += this->regs[H_DISPLAYED];
+        }
+        if (this->row_count >= (1 + this->regs[V_TOTAL])) {
+            if (this->adjust_scanline_count >= this->regs[V_TOTAL_ADJUST]) {
+                // new frame
+                this->row_count = 0;
+                this->scanline_count = 0;
+                this->adjust_scanline_count = 0;
+                this->ma_row_start = (this->regs[START_ADDR_HI]<<8) | this->regs[START_ADDR_LO];
+            }
+            else {
+                this->adjust_scanline_count++;
+            }
+        }
+        this->ma = this->ma_row_start;
+        this->ra = this->scanline_count;
+    }
+
+    // horizontal status bits
+    if (this->h_count == this->regs[H_SYNC_POS]) {
+        this->set(HSYNC);
+        this->hsync_count = 0;
+    }    
+    if (this->h_count == 0) {
+        this->clear(HSYNC);
+        this->set(DISPEN_H);
+    }
+    if (this->h_count == this->regs[H_DISPLAYED]) {
+        this->clear(DISPEN_H);
+    }
+    if (this->hsync_count == this->regs[H_SYNC_WIDTH]) {
+        this->clear(HSYNC);
+        this->hsync_count = 0;
+    }
+
+    // vertical status bits
+    if (this->row_count == 0) {
+        this->set(DISPEN_V);
+    }
+    if (this->row_count == this->regs[V_DISPLAYED]) {
+        this->clear(DISPEN_V);
+    }
+    if (this->vsync_count == 16) {
+        this->clear(VSYNC);
+        this->vsync_count = 0;
+    }
 
     // set DISPEN status
     if ((this->bits & (DISPEN_V|DISPEN_H)) == (DISPEN_V|DISPEN_H)) {
@@ -110,85 +176,6 @@ mc6845::step() {
     }
     else {
         this->clear(DISPEN);
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mc6845::step_h_count() {
-    if (this->test(HSYNC)) {
-        this->hsync_count = (this->hsync_count + 1) & 0x0F;
-        if ((this->hsync_count == 0) || (this->hsync_count == this->regs[H_SYNC_WIDTH])) {
-            this->clear(HSYNC);
-        }
-    }
-    this->h_count = (this->h_count + 1) & 0xFF;
-    this->ma = (this->ma + 1) & 0x3FFF;
-    if (this->h_count == this->regs[H_DISPLAYED]) {
-        this->clear(DISPEN_H);
-    }
-    if (this->h_count == this->regs[H_SYNC_POS]) {
-        this->set(HSYNC);
-        this->hsync_count = 0;
-    }
-    if (this->h_count == (1 + this->regs[H_TOTAL])) {
-        this->h_count = 0;
-        this->clear(HSYNC|DISPEN|DISPEN_H);
-        this->set(DISPEN_H);
-        this->step_scanline_count();
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mc6845::step_scanline_count() {
-    this->scanline_count = (this->scanline_count + 1) & 0x0F;
-
-    // VSYNC length is counted in raster lines
-    if (this->test(VSYNC)) {
-        this->vsync_count = (this->vsync_count + 1) & 0x0F;
-        if (this->vsync_count == 0) {
-            this->clear(VSYNC);
-        }
-    }
-
-    // end of frame?
-    if (this->row_count == (1+this->regs[V_TOTAL])) {
-        if (this->adjust_scanline_count == this->regs[V_TOTAL_ADJUST]) {
-            this->row_count = 0;
-            this->scanline_count = 0;
-            this->adjust_scanline_count = 0;
-            this->ma_row_start = (this->regs[START_ADDR_HI]<<8) | this->regs[START_ADDR_LO];
-            this->clear(DISPEN|DISPEN_V|VSYNC);
-            this->set(DISPEN_V);
-        }
-        else {
-            // count additional vertical adjust scanlines
-            this->adjust_scanline_count++;
-        }
-    }
-    if (this->scanline_count == (1 + this->regs[MAX_SCANLINE_ADDR])) {
-        this->scanline_count = 0;
-        this->step_row_count();
-    }
-
-    // update row-address register
-    this->ma = this->ma_row_start;
-    this->ra = this->scanline_count;
-}
-
-//------------------------------------------------------------------------------
-void
-mc6845::step_row_count() {
-    this->row_count = (this->row_count + 1) & 0x7F;
-    this->ma_row_start += this->regs[H_DISPLAYED];
-    if (this->row_count == this->regs[V_DISPLAYED]) {
-        this->clear(DISPEN_V);
-    }
-    // FIXME: this doesn't trigger if V_SYNC_POS is 0!!!
-    if (this->row_count == this->regs[V_SYNC_POS]) {
-        this->set(VSYNC);
-        this->vsync_count = 0;
     }
 }
 
