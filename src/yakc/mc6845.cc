@@ -1,5 +1,10 @@
 //------------------------------------------------------------------------------
 //  mc6845.cc
+//
+//  FIXME: decouple counter-increments and -wraparound by only setting
+//  an 'action-flag', and realize the action in the next step, should
+//  fix the 'chicken egg' problem.
+//
 //------------------------------------------------------------------------------
 #include "mc6845.h"
 
@@ -58,6 +63,7 @@ mc6845::reset() {
     this->vsync_count = 0;
     this->scanline_count = 0;
     this->adjust_scanline_count = 0;
+    this->reg_sel = 0;
     this->set(DISPEN_H|DISPEN_V);
 }
 
@@ -97,6 +103,25 @@ mc6845::read() const {
 }
 
 //------------------------------------------------------------------------------
+ubyte
+mc6845::read_status() const {
+    if (1 == this->type) {
+        // bit 6: /LPEN (not implemented)
+        // bit 5: currently in vertical blanking
+        if (this->test(DISPEN_V)) {
+            return 0x00;
+        }
+        else {
+            // currently in vblank
+            return (1<<5);
+        }
+    }
+    else {
+        return 0;
+    }
+}
+
+//------------------------------------------------------------------------------
 void
 mc6845::step() {
     this->prev_bits = this->bits;
@@ -108,24 +133,29 @@ mc6845::step() {
 
     // update counters
     this->h_count = (this->h_count + 1) & 0xFF;
-    this->ma = (this->ma + 1) & 0x3FFF;
+    if (this->test(DISPEN)) {
+        this->ma = (this->ma + 1) & 0x3FFF;
+    }
     if (this->test(HSYNC)) {
         this->hsync_count++;
     }
-    if (this->h_count >= (1 + this->regs[H_TOTAL])) {
+    if (this->h_count == (1 + this->regs[H_TOTAL])) {
         // new scanline
         this->h_count = 0;
         if (this->test(VSYNC)) {
             this->vsync_count++;
         }
-        this->scanline_count++;
-        if (this->scanline_count >= (1 + this->regs[MAX_SCANLINE_ADDR])) {
+        if ((1 == this->type) && (0 == this->row_count)) {
+            this->ma_row_start = (this->regs[START_ADDR_HI]<<8) | this->regs[START_ADDR_LO];
+        }
+        this->scanline_count = (this->scanline_count + 1) & 0x1F;
+        if (this->scanline_count == (1 + this->regs[MAX_SCANLINE_ADDR])) {
             // new character row
             this->scanline_count = 0;
-            this->row_count = (this->row_count + 1) & 0xFF;
-            this->ma_row_start += this->regs[H_DISPLAYED];
+            this->row_count = (this->row_count + 1) & 0x7F;
+            this->ma_row_start = this->ma;
         }
-        if (this->row_count >= (1 + this->regs[V_TOTAL])) {
+        if (this->row_count == (1 + this->regs[V_TOTAL])) {
             if (this->adjust_scanline_count >= this->regs[V_TOTAL_ADJUST]) {
                 // new frame
                 this->row_count = 0;

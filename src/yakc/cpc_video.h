@@ -31,12 +31,6 @@ public:
     /// called when CPU acknowledges interrupt, clears bit 5 of HSYNC counter
     void interrupt_acknowledge();
 
-    /// select crtc register
-    void select_crtc(ubyte val);
-    /// write crtc register
-    void write_crtc(ubyte val);
-    /// read crtc register
-    ubyte read_crtc() const;
     /// get current state of the vsync bit
     bool vsync_bit() const;
     /// gate array hsync/vsync stuff (irq and vblank)  
@@ -54,7 +48,8 @@ public:
     int crtc_cycle_count = 0;
     int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
     int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
-    int hsync_delay_count = 0;
+    int hsync_start_count = 0;
+    int hsync_end_count = 0;
     bool request_interrupt = false;
 
     static const int max_display_width = 768;
@@ -63,7 +58,8 @@ public:
     static const int dbg_max_display_width  = 1024;     // 64*16
     static const int dbg_max_display_height = 312;
 
-    uint32_t mode = 1;
+    uint32_t next_video_mode = 1;
+    uint32_t video_mode = 1;
     uint32_t selected_pen = 0;
     uint32_t border_color = 0;
     uint32_t palette[32];
@@ -94,25 +90,8 @@ cpc_video::assign_color(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 cpc_video::set_video_mode(ubyte val) {
-    this->mode = val & 3;
-}
-
-//------------------------------------------------------------------------------
-inline void
-cpc_video::select_crtc(ubyte val) {
-    this->crtc.select(val);
-}
-
-//------------------------------------------------------------------------------
-inline void
-cpc_video::write_crtc(ubyte val) {
-    this->crtc.write(val);
-}
-
-//------------------------------------------------------------------------------
-inline ubyte
-cpc_video::read_crtc() const {
-    return this->crtc.read();
+    // video mode is realized at the end of HSYNC
+    this->next_video_mode = val & 3;
 }
 
 //------------------------------------------------------------------------------

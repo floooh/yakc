@@ -264,11 +264,11 @@ cpc::cpu_out(uword port, ubyte val) {
         const uword crtc_func = port & 0x0300;
         if (crtc_func == 0x0000) {
             // 0xBCxx: select CRTC register
-            this->video.select_crtc(val);
+            this->video.crtc.select(val);
         }
         else if (crtc_func == 0x0100) {
             // 0xBDxx: write CRTC register
-            this->video.write_crtc(val);
+            this->video.crtc.write(val);
         }
         else {
             //printf("OUT: unknown CRTC function!\n");
@@ -300,9 +300,13 @@ cpc::cpu_in(uword port) {
         // CRTC function
         // FIXME: untested
         const uword crtc_func = port & 0x0300;
-        if (crtc_func == 0x0300) {
+        if (crtc_func == 0x0200) {
+            // 0xBExx: read status register on type 1 CRTC
+            return this->video.crtc.read_status();
+        }
+        else if (crtc_func == 0x0300) {
             // 0xBFxx: read from selected CRTC register
-            return this->video.read_crtc();
+            return this->video.crtc.read();
         }
         else {
             //printf("IN: CRTC unknown function!\n");

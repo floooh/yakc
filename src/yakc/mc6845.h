@@ -36,6 +36,8 @@ public:
     void write(ubyte val);
     /// read selected register
     ubyte read() const;
+    /// read special type 1 (UM6845R) status register
+    ubyte read_status() const;
 
     /// status bits
     enum {

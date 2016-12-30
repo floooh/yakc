@@ -63,7 +63,7 @@ void
 cpc_video::init(device model_, breadboard* board_) {
     this->model = model_;
     this->board = board_;
-    this->crtc.init(mc6845::type::MC6845);
+    this->crtc.init(mc6845::type::UM6845R);
     this->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
 
     // initialize the color palette (CPC and KC Compact have slightly different colors)
@@ -104,9 +104,11 @@ cpc_video::reset() {
     this->crtc_cycle_count = 0;
     this->hsync_irq_count = 0;
     this->hsync_after_vsync_counter = 0;
-    this->hsync_delay_count = 0;
+    this->hsync_start_count = 0;
+    this->hsync_end_count = 0;
     this->request_interrupt = false;
-    this->mode = 1;
+    this->next_video_mode = 1;
+    this->video_mode = 1;
     this->selected_pen = 0;
     this->border_color = 0;
 }
@@ -120,34 +122,59 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
     // if an interrupt was requested the request_interrupt member will
     // be true after the method returns (used for debug visualizations)
 
-    // interrupt is generated at HSYNC's falling edge
-    if (this->crtc.off(mc6845::HSYNC)) {
-        this->request_interrupt = false;
-        this->hsync_irq_count = (this->hsync_irq_count + 1) & 0x3F;
-
-        // special case handling to sync interrupt requests
-        // with the VSYNC (2 HSYNCs after VSYNC)
-        if (this->hsync_after_vsync_counter != 0) {
-            this->hsync_after_vsync_counter--;
-            if (this->hsync_after_vsync_counter == 0) {
-                if (this->hsync_irq_count >= 32) {
-                    this->request_interrupt = true;
-                }
-                this->hsync_irq_count = 0;
-            }
-        }
-        if (this->hsync_irq_count == 52) {
-            this->hsync_irq_count = 0;
-            this->request_interrupt = true;
-        }
-        if (this->request_interrupt) {
-            bus->irq();
-        }
+    // feed state of hsync and vsync signals into CRT, and step the CRT
+    // NOTE: HSYNC from the CRTC is delayed by 2us and will last for
+    // at most 4us unless CRTC HSYNC is triggered off earlier
+    if (this->crtc.on(mc6845::HSYNC)) {
+        this->hsync_start_count = 2;
+        this->hsync_end_count = 6;
     }
-
     if (this->crtc.on(mc6845::VSYNC)) {
+        this->crt.trigger_vsync();
         this->hsync_after_vsync_counter = 3;
         bus->vblank();
+    }
+    if (hsync_start_count > 0) {
+        this->hsync_start_count--;
+        if (this->hsync_start_count == 0) {
+            this->crt.trigger_hsync();
+        }
+    }
+    if (this->crtc.off(mc6845::HSYNC)) {
+        // check if CRTC hsync needs to end early
+        if (this->hsync_end_count > 1) {
+            this->hsync_end_count = 1;
+        }
+    }
+    if (this->hsync_end_count > 0) {
+        this->hsync_end_count--;
+        if (0 == this->hsync_end_count) {
+            // fetch next video mode
+            this->video_mode = this->next_video_mode;
+
+            this->request_interrupt = false;
+            this->hsync_irq_count = (this->hsync_irq_count + 1) & 0x3F;
+
+            // special case handling to sync interrupt requests
+            // with the VSYNC (2 HSYNCs after VSYNC)
+            // http://cpctech.cpc-live.com/docs/gaint.html
+            if (this->hsync_after_vsync_counter != 0) {
+                this->hsync_after_vsync_counter--;
+                if (this->hsync_after_vsync_counter == 0) {
+                    if (this->hsync_irq_count >= 32) {
+                        this->request_interrupt = true;
+                    }
+                    this->hsync_irq_count = 0;
+                }
+            }
+            if (this->hsync_irq_count == 52) {
+                this->hsync_irq_count = 0;
+                this->request_interrupt = true;
+            }
+            if (this->request_interrupt) {
+                bus->irq();
+            }
+        }
     }
 }
 
@@ -168,7 +195,7 @@ cpc_video::decode_pixels(uint32_t* dst) {
     const ubyte* src = &(this->board->ram[page_index][page_offset]);
     uint8_t c;
     uint32_t p;
-    if (0 == this->mode) {
+    if (0 == this->video_mode) {
         // 160x200 @ 16 colors
         // pixel    bit mask
         // 0:       |3|7|
@@ -183,7 +210,7 @@ cpc_video::decode_pixels(uint32_t* dst) {
             *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
         }
     }
-    else if (1 == this->mode) {
+    else if (1 == this->video_mode) {
         // 320x200 @ 4 colors
         // pixel    bit mask
         // 0:       |3|7|
@@ -202,7 +229,7 @@ cpc_video::decode_pixels(uint32_t* dst) {
             *dst++ = p; *dst++ = p;
         }
     }
-    else if (2 == this->mode) {
+    else if (2 == this->video_mode) {
         // 640x200 @ 2 colors
         for (int i = 0; i < 2; i++) {
             c = *src++;
@@ -227,22 +254,6 @@ cpc_video::step(system_bus* bus, int cycles) {
 
         this->crtc.step();
         this->handle_crtc_sync(bus);
-
-        // feed state of hsync and vsync signals into CRT, and step the CRT
-        // NOTE: HSYNC from the CRTC is delayed by 2us and will last for
-        // at most 4us unless CRTC HSYNC is triggered off earlier
-        if (this->crtc.on(mc6845::HSYNC)) {
-            this->hsync_delay_count = 2;
-        }
-        if (this->crtc.on(mc6845::VSYNC)) {
-            this->crt.trigger_vsync();
-        }
-        if (hsync_delay_count > 0) {
-            this->hsync_delay_count--;
-            if (this->hsync_delay_count == 0) {
-                this->crt.trigger_hsync();
-            }
-        }
         this->crt.step();
 
         if (!this->debug_video) {
