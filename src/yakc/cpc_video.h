@@ -6,8 +6,6 @@
 */
 #include "yakc/system_bus.h"
 #include "yakc/breadboard.h"
-#include "yakc/mc6845.h"
-#include "yakc/crt.h"
 
 namespace YAKC {
 
@@ -41,9 +39,6 @@ public:
     breadboard* board = nullptr;
     device model = device::none;
     bool debug_video = false;
-
-    class crt crt;          // provides destination coordinates (TV)
-    mc6845 crtc;            // provides source coordinates (video controller)
 
     int crtc_cycle_count = 0;
     int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
@@ -97,7 +92,7 @@ cpc_video::set_video_mode(ubyte val) {
 //------------------------------------------------------------------------------
 inline bool
 cpc_video::vsync_bit() const {
-    return this->crtc.test(mc6845::VSYNC);
+    return this->board->mc6845.test(mc6845::VSYNC);
 }
 
 //------------------------------------------------------------------------------

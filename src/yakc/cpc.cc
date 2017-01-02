@@ -153,9 +153,9 @@ cpc::poweron(device m) {
     this->board->clck.init(4000);
 
     // initialize support chips
-    this->pio.init(0);
+    this->board->i8255.init(0);
     this->video.init(m, this->board);
-    this->audio.init(this->board->clck.base_freq_khz, 1000, SOUND_SAMPLE_RATE);
+    this->board->ay8910.init(this->board->clck.base_freq_khz, 1000, SOUND_SAMPLE_RATE);
 
     // CPU start state
     this->board->cpu.init();
@@ -174,8 +174,8 @@ cpc::poweroff() {
 void
 cpc::reset() {
     this->video.reset();
-    this->audio.reset();
-    this->pio.reset();
+    this->board->ay8910.reset();
+    this->board->i8255.reset();
     this->ga_config = 0;
     this->ram_config = 0;
     this->psg_selected = 0;
@@ -208,7 +208,7 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         ticks_step = (ticks_step + 3) & ~3;
         this->board->clck.step(this, ticks_step);
         this->video.step(this, ticks_step);
-        this->audio.step(ticks_step);
+        this->board->ay8910.step(ticks_step);
         cur_tick += ticks_step;
     }
     return cur_tick;
@@ -264,11 +264,11 @@ cpc::cpu_out(uword port, ubyte val) {
         const uword crtc_func = port & 0x0300;
         if (crtc_func == 0x0000) {
             // 0xBCxx: select CRTC register
-            this->video.crtc.select(val);
+            this->board->mc6845.select(val);
         }
         else if (crtc_func == 0x0100) {
             // 0xBDxx: write CRTC register
-            this->video.crtc.write(val);
+            this->board->mc6845.write(val);
         }
         else {
             //printf("OUT: unknown CRTC function!\n");
@@ -285,7 +285,7 @@ cpc::cpu_out(uword port, ubyte val) {
     }
     if (0 == (port & (1<<11))) {
         // 8255 PPI
-        this->pio.write(this, ((port & 0x0300)>>8) & 0x03, val);
+        this->board->i8255.write(this, ((port & 0x0300)>>8) & 0x03, val);
     }
     if (0 == (port & (1<<10))) {
         // FIXME: peripheral soft reset
@@ -302,11 +302,11 @@ cpc::cpu_in(uword port) {
         const uword crtc_func = port & 0x0300;
         if (crtc_func == 0x0200) {
             // 0xBExx: read status register on type 1 CRTC
-            return this->video.crtc.read_status();
+            return this->board->mc6845.read_status();
         }
         else if (crtc_func == 0x0300) {
             // 0xBFxx: read from selected CRTC register
-            return this->video.crtc.read();
+            return this->board->mc6845.read();
         }
         else {
             //printf("IN: CRTC unknown function!\n");
@@ -314,7 +314,7 @@ cpc::cpu_in(uword port) {
         }
     }
     if (0 == (port & (1<<11))) {
-        return this->pio.read(this, ((port & 0x0300)>>8) & 0x03);
+        return this->board->i8255.read(this, ((port & 0x0300)>>8) & 0x03);
     }
     if (0 == (port & (1<<10))) {
         // FIXME: Expansion Peripherals
@@ -332,11 +332,11 @@ cpc::pio_out(int /*pio_id*/, int port_id, ubyte val) {
         switch (func) {
             case 0xC0:
                 // select PSG register from PIO Port A
-                this->psg_selected = this->pio.output[i8255::PORT_A];
+                this->psg_selected = this->board->i8255.output[i8255::PORT_A];
                 break;
             case 0x80:
                 // write to selected PSG register
-                this->audio.write(this->psg_selected, this->pio.output[i8255::PORT_A]);
+                this->board->ay8910.write(this->psg_selected, this->board->i8255.output[i8255::PORT_A]);
                 break;
         }
         // FIXME: cassette write data, cassette motor control
@@ -360,7 +360,7 @@ cpc::pio_in(int /*pio_id*/, int port_id) {
         }
         else {
             // read PSG register
-            return this->audio.read(this->psg_selected);
+            return this->board->ay8910.read(this->psg_selected);
         }
     }
     else if (i8255::PORT_B == port_id) {
@@ -507,7 +507,7 @@ cpc::vblank() {
 //------------------------------------------------------------------------------
 void
 cpc::decode_audio(float* buffer, int num_samples) {
-    this->audio.fill_samples(buffer, num_samples);
+    this->board->ay8910.fill_samples(buffer, num_samples);
 }
 
 //------------------------------------------------------------------------------

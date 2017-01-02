@@ -19,7 +19,6 @@
 #include "yakc/keybuffer.h"
 #include "yakc/system_bus.h"
 #include "yakc/rom_images.h"
-#include "yakc/sound_speaker.h"
 
 namespace YAKC {
 
@@ -104,7 +103,6 @@ public:
 
     ubyte ctc0_mode = z80ctc::RESET;    // CTC0 state for audio output
     ubyte ctc0_constant = 0;
-    sound_speaker speaker;              // audio speaker emulation
 };
 
 } // namespace YAKC

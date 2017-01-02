@@ -625,17 +625,17 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             cpc.cpu_out(0x7FFF, (hdr->gate_array_config & 0x3F) | 0x80);
             cpc.cpu_out(0x7FFF, (hdr->ram_config & 0x3F) | 0xC0);
             for (int i = 0; i < 18; i++) {
-                cpc.video.crtc.select(i);
-                cpc.video.crtc.write(hdr->crtc_regs[i]);
+                emu->board.mc6845.select(i);
+                emu->board.mc6845.write(hdr->crtc_regs[i]);
             }
-            cpc.video.crtc.select(hdr->crtc_selected);
+            emu->board.mc6845.select(hdr->crtc_selected);
             // FIXME: rom_config
-            cpc.pio.output[i8255::PORT_A] = hdr->ppi_a;
-            cpc.pio.output[i8255::PORT_B] = hdr->ppi_b;
-            cpc.pio.output[i8255::PORT_C] = hdr->ppi_c;
+            emu->board.i8255.output[i8255::PORT_A] = hdr->ppi_a;
+            emu->board.i8255.output[i8255::PORT_B] = hdr->ppi_b;
+            emu->board.i8255.output[i8255::PORT_C] = hdr->ppi_c;
             cpc.psg_selected = hdr->psg_selected;
             for (int i = 0; i < 16; i++) {
-                cpc.audio.regs[i] = hdr->psg_regs[i];
+                emu->board.ay8910.regs[i] = hdr->psg_regs[i];
             }
         }
         else {

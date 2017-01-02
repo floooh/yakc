@@ -278,7 +278,7 @@ void
 snapshot::write_ctc_state(const yakc& emu, state_t& state) {
     for (int c = 0; c < 4; c++) {
         auto& dst = state.ctc.chn[c];
-        const auto& src = emu.board.ctc.channels[c];
+        const auto& src = emu.board.z80ctc.channels[c];
         dst.down_counter = src.down_counter;
         dst.mode = src.mode;
         dst.constant = src.constant;
@@ -292,7 +292,7 @@ snapshot::write_ctc_state(const yakc& emu, state_t& state) {
 void
 snapshot::apply_ctc_state(const state_t& state, yakc& emu) {
     for (int c = 0; c < 4; c++) {
-        auto& dst = emu.board.ctc.channels[c];
+        auto& dst = emu.board.z80ctc.channels[c];
         const auto& src = state.ctc.chn[c];
         dst.down_counter = src.down_counter;
         dst.mode = src.mode;
@@ -306,12 +306,12 @@ snapshot::apply_ctc_state(const state_t& state, yakc& emu) {
 //------------------------------------------------------------------------------
 void
 snapshot::write_pio_state(const yakc& emu, state_t& state) {
-    const z80pio& pio1 = emu.board.pio;
+    const z80pio& pio1 = emu.board.z80pio;
     for (int i = 0; i < 2; i++) {
         state.pio1.port[i] = pio1.port[i];
     }
     write_intctrl_state(pio1.int_ctrl, state.pio1.intctrl);
-    const z80pio& pio2 = emu.board.pio2;
+    const z80pio& pio2 = emu.board.z80pio2;
     for (int i = 0; i < 2; i++) {
         state.pio2.port[i] = pio2.port[i];
     }
@@ -321,12 +321,12 @@ snapshot::write_pio_state(const yakc& emu, state_t& state) {
 //------------------------------------------------------------------------------
 void
 snapshot::apply_pio_state(const state_t& state, yakc& emu) {
-    z80pio& pio1 = emu.board.pio;
+    z80pio& pio1 = emu.board.z80pio;
     for (int i = 0; i < 2; i++) {
         pio1.port[i] = state.pio1.port[i];
     }
     apply_intctrl_state(state.pio1.intctrl, pio1.int_ctrl);
-    z80pio& pio2 = emu.board.pio2;
+    z80pio& pio2 = emu.board.z80pio2;
     for (int i = 0; i < 2; i++) {
         pio2.port[i] = state.pio2.port[i];
     }

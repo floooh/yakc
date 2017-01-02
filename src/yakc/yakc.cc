@@ -120,9 +120,9 @@ yakc::reset() {
 void
 yakc::clear_daisychain() {
     this->board.cpu.connect_irq_device(nullptr);
-    this->board.ctc.init_daisychain(nullptr);
-    this->board.pio.int_ctrl.connect_irq_device(nullptr);
-    this->board.pio2.int_ctrl.connect_irq_device(nullptr);
+    this->board.z80ctc.init_daisychain(nullptr);
+    this->board.z80pio.int_ctrl.connect_irq_device(nullptr);
+    this->board.z80pio2.int_ctrl.connect_irq_device(nullptr);
 }
 
 //------------------------------------------------------------------------------

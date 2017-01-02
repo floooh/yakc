@@ -8,8 +8,6 @@
 #include "yakc/rom_images.h"
 #include "yakc/system_bus.h"
 #include "yakc/cpc_video.h"
-#include "yakc/sound_ay8910.h"
-#include "yakc/i8255.h"
 
 namespace YAKC {
 
@@ -70,8 +68,6 @@ public:
     bool on = false;
 
     cpc_video video;
-    sound_ay8910 audio;
-    i8255 pio;
 
     ubyte psg_selected;         // selected AY8910 register
     ubyte ga_config = 0x00;     // out to port 0x7Fxx func 0x80

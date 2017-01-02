@@ -48,14 +48,14 @@ kc85::on_context_switched() {
     YAKC_ASSERT(this->board);
     this->update_rom_pointers();
     this->update_bank_switching();
-    this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
-    this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
+    this->board->cpu.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
+    this->board->z80ctc.init_daisychain(&this->board->z80pio.int_ctrl);
 }
 
 //------------------------------------------------------------------------------
 void
 kc85::decode_audio(float* buffer, int num_samples) {
-    this->audio.speaker.fill_samples(buffer, num_samples);
+    this->board->speaker.fill_samples(buffer, num_samples);
 }
 
 //------------------------------------------------------------------------------
@@ -99,16 +99,16 @@ kc85::poweron(device m, os_rom os) {
 
     // initialize hardware components
     this->board->cpu.mem.unmap_all();
-    this->board->pio.init(0);
-    this->board->ctc.init(0);
+    this->board->z80pio.init(0);
+    this->board->z80ctc.init(0);
     this->board->cpu.init();
     this->exp.init();
     this->video.init(m, this->board);
     this->audio.init(this->board);
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
-    this->board->cpu.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
-    this->board->ctc.init_daisychain(&this->board->pio.int_ctrl);
+    this->board->cpu.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
+    this->board->z80ctc.init_daisychain(&this->board->z80pio.int_ctrl);
 
     // a 50Hz timer which trigger every vertical blank
     this->board->clck.config_timer_hz(0, 50);
@@ -137,8 +137,8 @@ kc85::reset() {
     this->exp.reset();
     this->video.reset();
     this->audio.reset();
-    this->board->ctc.reset();
-    this->board->pio.reset();
+    this->board->z80ctc.reset();
+    this->board->z80pio.reset();
     this->board->cpu.reset();
     this->io84 = 0;
     this->io86 = 0;
@@ -192,7 +192,7 @@ kc85::update_rom_pointers() {
 uint64_t
 kc85::step(uint64_t start_tick, uint64_t end_tick) {
     z80& cpu = this->board->cpu;
-    z80ctc& ctc = this->board->ctc;
+    z80ctc& ctc = this->board->z80ctc;
     clock& clk = this->board->clck;
     z80dbg& dbg = this->board->dbg;
     this->handle_keyboard_input();
@@ -314,28 +314,28 @@ kc85::cpu_out(uword port, ubyte val) {
             }
             break;
         case 0x88:
-            this->board->pio.write_data(this, z80pio::A, val);
+            this->board->z80pio.write_data(this, z80pio::A, val);
             break;
         case 0x89:
-            this->board->pio.write_data(this, z80pio::B, val);
+            this->board->z80pio.write_data(this, z80pio::B, val);
             break;
         case 0x8A:
-            this->board->pio.write_control(z80pio::A, val);
+            this->board->z80pio.write_control(z80pio::A, val);
             break;
         case 0x8B:
-            this->board->pio.write_control(z80pio::B, val);
+            this->board->z80pio.write_control(z80pio::B, val);
             break;
         case 0x8C:
-            this->board->ctc.write(this, z80ctc::CTC0, val);
+            this->board->z80ctc.write(this, z80ctc::CTC0, val);
             break;
         case 0x8D:
-            this->board->ctc.write(this, z80ctc::CTC1, val);
+            this->board->z80ctc.write(this, z80ctc::CTC1, val);
             break;
         case 0x8E:
-            this->board->ctc.write(this, z80ctc::CTC2, val);
+            this->board->z80ctc.write(this, z80ctc::CTC2, val);
             break;
         case 0x8F:
-            this->board->ctc.write(this, z80ctc::CTC3, val);
+            this->board->z80ctc.write(this, z80ctc::CTC3, val);
             break;
         default:
             break;
@@ -351,20 +351,20 @@ kc85::cpu_in(uword port) {
         case 0x80:
             return this->exp.module_type_in_slot(port>>8);
         case 0x88:
-            return this->board->pio.read_data(this, z80pio::A);
+            return this->board->z80pio.read_data(this, z80pio::A);
         case 0x89:
-            return this->board->pio.read_data(this, z80pio::B);
+            return this->board->z80pio.read_data(this, z80pio::B);
         case 0x8A:
         case 0x8B:
-            return this->board->pio.read_control();
+            return this->board->z80pio.read_control();
         case 0x8C:
-            return this->board->ctc.read(z80ctc::CTC0);
+            return this->board->z80ctc.read(z80ctc::CTC0);
         case 0x8D:
-            return this->board->ctc.read(z80ctc::CTC1);
+            return this->board->z80ctc.read(z80ctc::CTC1);
         case 0x8E:
-            return this->board->ctc.read(z80ctc::CTC2);
+            return this->board->z80ctc.read(z80ctc::CTC2);
         case 0x8F:
-            return this->board->ctc.read(z80ctc::CTC3);
+            return this->board->z80ctc.read(z80ctc::CTC3);
         default:
             return 0xFF;
     }
@@ -421,7 +421,7 @@ kc85::timer(int timer_id) {
         case 0:
             // timer 0 is a 50Hz vertical blank timer and controls the
             // foreground color blinking
-            this->board->ctc.ctrg(this, z80ctc::CTC2);
+            this->board->z80ctc.ctrg(this, z80ctc::CTC2);
             break;
         case 1:
             // timer 1 triggers every PAL line (64ns) for the video scanline

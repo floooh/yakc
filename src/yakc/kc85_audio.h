@@ -17,7 +17,6 @@
 */
 #include "yakc/core.h"
 #include "yakc/breadboard.h"
-#include "yakc/sound_speaker.h"
 
 namespace YAKC {
 
@@ -32,9 +31,8 @@ public:
     /// must be called from system_bus::ctc_write() for CTC channel 0 or 1
     void ctc_write(int ctc_channel);
 
-    z80ctc* ctc = nullptr;
+    breadboard* board = nullptr;
     uint64_t cycle_count = 0;       // current absolute CPU cycle count
-    sound_speaker speaker;
     static const int num_channels = 2;
     struct channel_state {
         ubyte ctc_mode = z80ctc::RESET;

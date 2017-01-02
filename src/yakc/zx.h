@@ -7,7 +7,6 @@
 #include "yakc/breadboard.h"
 #include "yakc/rom_images.h"
 #include "yakc/system_bus.h"
-#include "yakc/sound_beeper.h"
 
 namespace YAKC {
 
@@ -76,7 +75,6 @@ public:
     uint64_t next_kbd_mask = 0;
     uint64_t cur_kbd_mask = 0;
     uint64_t key_map[256];              // 8x5 keyboard matrix bits by key code
-    sound_beeper beeper;
 };
 
 } // namespace YAKC

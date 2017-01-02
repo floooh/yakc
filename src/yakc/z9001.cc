@@ -128,9 +128,9 @@ void
 z9001::on_context_switched() {
     this->init_memory_mapping();
     z80& cpu = this->board->cpu;
-    z80pio& pio1 = this->board->pio;
-    z80pio& pio2 = this->board->pio2;
-    z80ctc& ctc = this->board->ctc;
+    z80pio& pio1 = this->board->z80pio;
+    z80pio& pio2 = this->board->z80pio2;
+    z80ctc& ctc = this->board->z80ctc;
     cpu.connect_irq_device(&pio1.int_ctrl);
     pio1.int_ctrl.connect_irq_device(&pio2.int_ctrl);
     pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
@@ -165,17 +165,17 @@ z9001::poweron(device m, os_rom os) {
 
     // initialize hardware components
     this->board->cpu.init();
-    this->board->pio.init(0);
-    this->board->pio2.init(1);
-    this->board->ctc.init(0);
-    this->speaker.init(this->board->clck.base_freq_khz, SOUND_SAMPLE_RATE);
+    this->board->z80pio.init(0);
+    this->board->z80pio2.init(1);
+    this->board->z80ctc.init(0);
+    this->board->speaker.init(this->board->clck.base_freq_khz, SOUND_SAMPLE_RATE);
 
     // setup interrupt daisy chain, from highest to lowest priority:
     //  CPU -> PIO1 -> PIO2 -> CTC
-    this->board->cpu.connect_irq_device(&this->board->pio.int_ctrl);
-    this->board->pio.int_ctrl.connect_irq_device(&this->board->pio2.int_ctrl);
-    this->board->pio2.int_ctrl.connect_irq_device(&this->board->ctc.channels[0].int_ctrl);
-    this->board->ctc.init_daisychain(nullptr);
+    this->board->cpu.connect_irq_device(&this->board->z80pio.int_ctrl);
+    this->board->z80pio.int_ctrl.connect_irq_device(&this->board->z80pio2.int_ctrl);
+    this->board->z80pio2.int_ctrl.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
+    this->board->z80ctc.init_daisychain(nullptr);
 
     // configure a hardware counter to control the video blink attribute
     this->board->clck.config_timer_hz(0, 100);
@@ -188,7 +188,7 @@ z9001::poweron(device m, os_rom os) {
 void
 z9001::poweroff() {
     YAKC_ASSERT(this->on);
-    this->speaker.stop_all();
+    this->board->speaker.stop_all();
     this->board->cpu.mem.unmap_all();
     this->on = false;
 }
@@ -202,10 +202,10 @@ z9001::reset() {
     this->keybuf.reset();
     this->ctc0_mode = z80ctc::RESET;
     this->ctc0_constant = 0;
-    this->speaker.stop_all();    
-    this->board->ctc.reset();
-    this->board->pio.reset();
-    this->board->pio2.reset();
+    this->board->speaker.stop_all();
+    this->board->z80ctc.reset();
+    this->board->z80pio.reset();
+    this->board->z80pio2.reset();
     this->board->cpu.reset();
     this->keybuf.reset();
 
@@ -218,8 +218,6 @@ uint64_t
 z9001::step(uint64_t start_tick, uint64_t end_tick) {
     z80& cpu = this->board->cpu;
     z80dbg& dbg = this->board->dbg;
-    z80ctc& ctc = this->board->ctc;
-    clock& clk = this->board->clck;
     this->handle_key();
     this->cur_tick = start_tick;
     while (this->cur_tick < end_tick) {
@@ -230,9 +228,9 @@ z9001::step(uint64_t start_tick, uint64_t end_tick) {
         dbg.store_pc_history(cpu); // FIXME: only if debug window open?
         int ticks = cpu.step(this);
         ticks += cpu.handle_irq(this);
-        clk.step(this, ticks);
-        ctc.step(this, ticks);
-        this->speaker.step(ticks);
+        this->board->clck.step(this, ticks);
+        this->board->z80ctc.step(this, ticks);
+        this->board->speaker.step(ticks);
         this->cur_tick += ticks;
     }
     this->decode_video();
@@ -243,9 +241,9 @@ z9001::step(uint64_t start_tick, uint64_t end_tick) {
 void
 z9001::cpu_out(uword port, ubyte val) {
     // NOTE: there are 2 port numbers each for all CTC and PIO ports!
-    z80pio& pio1 = this->board->pio;
-    z80pio& pio2 = this->board->pio2;
-    z80ctc& ctc = this->board->ctc;
+    z80pio& pio1 = this->board->z80pio;
+    z80pio& pio2 = this->board->z80pio2;
+    z80ctc& ctc = this->board->z80ctc;
     switch (port & 0xFF) {
         case 0x80:
         case 0x84:
@@ -303,9 +301,9 @@ z9001::cpu_out(uword port, ubyte val) {
 //------------------------------------------------------------------------------
 ubyte
 z9001::cpu_in(uword port) {
-    z80pio& pio1 = this->board->pio;
-    z80pio& pio2 = this->board->pio2;
-    z80ctc& ctc = this->board->ctc;
+    z80pio& pio1 = this->board->z80pio;
+    z80pio& pio2 = this->board->z80pio2;
+    z80ctc& ctc = this->board->z80ctc;
     switch (port & 0xFF) {
         case 0x80:
         case 0x84:
@@ -408,7 +406,7 @@ z9001::pio_in(int pio_id, int port_id) {
 void
 z9001::ctc_write(int ctc_id, int chn_id) {
     // this is the same as in the KC85/3 emu
-    z80ctc& ctc = this->board->ctc;
+    z80ctc& ctc = this->board->z80ctc;
     if (0 == chn_id) {
         // has the CTC channel state changed since last time?
         const auto& ctc_chn = ctc.channels[0];
@@ -417,7 +415,7 @@ z9001::ctc_write(int ctc_id, int chn_id) {
 
             if (!(this->ctc0_mode & z80ctc::RESET) && (ctc_chn.mode & z80ctc::RESET)) {
                 // CTC channel has become inactive, call the stop-callback
-                this->speaker.stop(0);
+                this->board->speaker.stop(0);
                 this->ctc0_mode = ctc_chn.mode;
             }
             else if (!(ctc_chn.mode & z80ctc::RESET)) {
@@ -425,7 +423,7 @@ z9001::ctc_write(int ctc_id, int chn_id) {
                 int div = ctc_chn.constant * ((ctc_chn.mode & z80ctc::PRESCALER_256) ? 256 : 16);
                 if (div > 0) {
                     int hz = int((float(2457600) / float(div)) / 2.0f);
-                    this->speaker.start(0, hz);
+                    this->board->speaker.start(0, hz);
                 }
                 this->ctc0_constant = ctc_chn.constant;
                 this->ctc0_mode = ctc_chn.mode;
@@ -440,7 +438,7 @@ z9001::ctc_zcto(int ctc_id, int chn_id) {
     // CTC2 is configured as timer and triggers CTC3, which is configured
     // as counter, CTC3 triggers an interrupt which drives the system clock
     if (2 == chn_id) {
-        this->board->ctc.ctrg(this, z80ctc::CTC3);
+        this->board->z80ctc.ctrg(this, z80ctc::CTC3);
     }
 }
 
@@ -487,7 +485,7 @@ z9001::handle_key() {
                 line_bits |= (this->key_mask>>(col*8)) & 0xFF;
             }
         }
-        this->board->pio2.write(this, z80pio::B, ~line_bits);
+        this->board->z80pio2.write(this, z80pio::B, ~line_bits);
     }
 }
 
@@ -565,7 +563,7 @@ z9001::decode_video() {
 //------------------------------------------------------------------------------
 void
 z9001::decode_audio(float* buffer, int num_samples) {
-    this->speaker.fill_samples(buffer, num_samples);
+    this->board->speaker.fill_samples(buffer, num_samples);
 }
 
 //------------------------------------------------------------------------------

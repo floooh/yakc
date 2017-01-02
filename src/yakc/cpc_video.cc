@@ -63,8 +63,8 @@ void
 cpc_video::init(device model_, breadboard* board_) {
     this->model = model_;
     this->board = board_;
-    this->crtc.init(mc6845::type::UM6845R);
-    this->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
+    this->board->mc6845.init(mc6845::type::UM6845R);
+    this->board->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
 
     // initialize the color palette (CPC and KC Compact have slightly different colors)
     if (device::kccompact != this->model) {
@@ -100,7 +100,7 @@ cpc_video::init(device model_, breadboard* board_) {
 void
 cpc_video::reset() {
     clear(this->pens, sizeof(this->pens));
-    this->crtc.reset();
+    this->board->mc6845.reset();
     this->crtc_cycle_count = 0;
     this->hsync_irq_count = 0;
     this->hsync_after_vsync_counter = 0;
@@ -125,22 +125,24 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
     // feed state of hsync and vsync signals into CRT, and step the CRT
     // NOTE: HSYNC from the CRTC is delayed by 2us and will last for
     // at most 4us unless CRTC HSYNC is triggered off earlier
-    if (this->crtc.on(mc6845::HSYNC)) {
+    auto& crtc = this->board->mc6845;
+    auto& crt = this->board->crt;
+    if (crtc.on(mc6845::HSYNC)) {
         this->hsync_start_count = 2;
         this->hsync_end_count = 6;
     }
-    if (this->crtc.on(mc6845::VSYNC)) {
-        this->crt.trigger_vsync();
+    if (crtc.on(mc6845::VSYNC)) {
+        crt.trigger_vsync();
         this->hsync_after_vsync_counter = 3;
         bus->vblank();
     }
     if (hsync_start_count > 0) {
         this->hsync_start_count--;
         if (this->hsync_start_count == 0) {
-            this->crt.trigger_hsync();
+            crt.trigger_hsync();
         }
     }
-    if (this->crtc.off(mc6845::HSYNC)) {
+    if (crtc.off(mc6845::HSYNC)) {
         // check if CRTC hsync needs to end early
         if (this->hsync_end_count > 1) {
             this->hsync_end_count = 1;
@@ -190,8 +192,9 @@ cpc_video::decode_pixels(uint32_t* dst) {
     // Bits ma12 and m11 point to the 16 KByte page, and all
     // other bits are the index into that page.
     //
-    const uint32_t page_index  = (this->crtc.ma>>12) & 3;
-    const uint32_t page_offset = ((this->crtc.ma & 0x03FF)<<1) | ((this->crtc.ra & 7)<<11);
+    auto& crtc = this->board->mc6845;
+    const uint32_t page_index  = (crtc.ma>>12) & 3;
+    const uint32_t page_offset = ((crtc.ma & 0x03FF)<<1) | ((crtc.ra & 7)<<11);
     const ubyte* src = &(this->board->ram[page_index][page_offset]);
     uint8_t c;
     uint32_t p;
@@ -247,26 +250,27 @@ cpc_video::step(system_bus* bus, int cycles) {
     // http://cpctech.cpc-live.com/docs/ints.html
     // http://www.cpcwiki.eu/forum/programming/frame-flyback-and-interrupts/msg25106/#msg25106
     // http://www.grimware.org/doku.php/documentations/devices/gatearray#interrupt.generator
-
+    auto& crtc = this->board->mc6845;
+    auto& crt = this->board->crt;
     this->crtc_cycle_count -= cycles;
     while (this->crtc_cycle_count <= 0) {
         this->crtc_cycle_count += 4;
 
-        this->crtc.step();
+        crtc.step();
         this->handle_crtc_sync(bus);
-        this->crt.step();
+        crt.step();
 
         if (!this->debug_video) {
-            if (this->crt.visible) {
-                int dst_x = this->crt.x * 16;
-                int dst_y = this->crt.y;
+            if (crt.visible) {
+                int dst_x = crt.x * 16;
+                int dst_y = crt.y;
                 YAKC_ASSERT((dst_x <= (max_display_width-16)) && (dst_y < max_display_height));
                 uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * max_display_width]);
-                if (this->crtc.test(mc6845::DISPEN)) {
+                if (crtc.test(mc6845::DISPEN)) {
                     // decode visible pixels
                     this->decode_pixels(dst);
                 }
-                else if (this->crtc.test(mc6845::HSYNC|mc6845::VSYNC)) {
+                else if (crtc.test(mc6845::HSYNC|mc6845::VSYNC)) {
                     // blacker than black
                     for (int i = 0; i < 16; i++) {
                         dst[i] = 0xFF000000;
@@ -282,27 +286,27 @@ cpc_video::step(system_bus* bus, int cycles) {
         }
         else {
             // debug mode
-            int dst_x = this->crt.h_pos * 16;
-            int dst_y = this->crt.v_pos;
+            int dst_x = crt.h_pos * 16;
+            int dst_y = crt.v_pos;
             if ((dst_x < (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
                 uint32_t* dst = &(this->dbg_rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
-                if (!this->crtc.test(mc6845::DISPEN)) {
+                if (!crtc.test(mc6845::DISPEN)) {
                     ubyte r = 0x3F;
                     ubyte g = 0x3F;
                     ubyte b = 0x3F;
-                    if (this->crtc.test(mc6845::HSYNC)) {
+                    if (crtc.test(mc6845::HSYNC)) {
                         r = 0x7F;
                     }
-                    if (this->crtc.test(mc6845::VSYNC)) {
+                    if (crtc.test(mc6845::VSYNC)) {
                         g = 0x7F;
                     }
                     if (this->request_interrupt) {
                         r = g = b = 0xFF;
                     }
-                    else if (0 == this->crtc.scanline_count) {
+                    else if (0 == crtc.scanline_count) {
                         r = g = b = 0x00;
                     }
-                    if (this->crt.h_black || this->crt.v_black) {
+                    if (crt.h_black || crt.v_black) {
                         r >>= 1;
                         g >>= 1;
                         b >>= 1;

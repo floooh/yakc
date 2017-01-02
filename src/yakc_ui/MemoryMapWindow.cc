@@ -108,8 +108,8 @@ MemoryMapWindow::Draw(yakc& emu) {
 
         // FIXME: need to handle KC85 PIO port backing
         // as 'peripheral device' with callbacks!
-        const ubyte pio_a = emu.board.pio.read_data(nullptr, z80pio::A);
-        const ubyte pio_b = emu.board.pio.read_data(nullptr, z80pio::B);
+        const ubyte pio_a = emu.board.z80pio.read_data(nullptr, z80pio::A);
+        const ubyte pio_b = emu.board.z80pio.read_data(nullptr, z80pio::B);
 
         // built-in memory at 0x0000
         this->drawRect(0, 0x0000, 0x4000, "RAM 0", (pio_a & kc85::PIO_A_RAM) ? type::mapped : type::off) ;

@@ -390,14 +390,14 @@ UI::OnFrame(yakc& emu) {
                 }
                 // the Z9001 has 2 PIOs
                 if (ImGui::MenuItem("Z80 PIO 1")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.pio));
+                    this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.z80pio));
                 }
                 if (ImGui::MenuItem("Z80 PIO 2")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.pio2));
+                    this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.z80pio2));
                 }
                 // all others have 1 PIO
                 if (ImGui::MenuItem("Z80 PIO")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO", &emu.board.pio));
+                    this->OpenWindow(emu, PIOWindow::Create("PIO", &emu.board.z80pio));
                 }
                 if (ImGui::MenuItem("Z80 CTC")) {
                     this->OpenWindow(emu, CTCWindow::Create());

@@ -96,7 +96,7 @@ z1013::poweron(device m) {
 
     // initialize hardware components
     this->board->cpu.init();
-    this->board->pio.init(0);
+    this->board->z80pio.init(0);
 
     // execution on power-on starts at 0xF000
     this->board->cpu.PC = 0xF000;
@@ -113,7 +113,7 @@ z1013::poweroff() {
 //------------------------------------------------------------------------------
 void
 z1013::reset() {
-    this->board->pio.reset();
+    this->board->z80pio.reset();
     this->board->cpu.reset();
     this->kbd_column_nr_requested = 0;
     this->next_kbd_column_bits = 0;
@@ -151,19 +151,19 @@ z1013::cpu_out(uword port, ubyte val) {
     switch (port & 0xFF) {
         case 0x00:
             // PIO A, data
-            this->board->pio.write_data(this, z80pio::A, val);
+            this->board->z80pio.write_data(this, z80pio::A, val);
             break;
         case 0x01:
             // PIO A, control
-            this->board->pio.write_control(z80pio::A, val);
+            this->board->z80pio.write_control(z80pio::A, val);
             break;
         case 0x02:
             // PIO B, data
-            this->board->pio.write_data(this, z80pio::B, val);
+            this->board->z80pio.write_data(this, z80pio::B, val);
             break;
         case 0x03:
             // PIO B, control
-            this->board->pio.write_control(z80pio::B, val);
+            this->board->z80pio.write_control(z80pio::B, val);
             break;
         case 0x08:
             // keyboard column
@@ -182,13 +182,13 @@ ubyte
 z1013::cpu_in(uword port) {
     switch (port & 0xFF) {
         case 0x00:
-            return this->board->pio.read_data(this, z80pio::A);
+            return this->board->z80pio.read_data(this, z80pio::A);
         case 0x01:
-            return this->board->pio.read_control();
+            return this->board->z80pio.read_control();
         case 0x02:
-            return this->board->pio.read_data(this, z80pio::B);
+            return this->board->z80pio.read_data(this, z80pio::B);
         case 0x03:
-            return this->board->pio.read_control();
+            return this->board->z80pio.read_control();
         default:
             return 0xFF;
     }
