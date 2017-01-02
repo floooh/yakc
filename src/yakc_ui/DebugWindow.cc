@@ -4,7 +4,7 @@
 #include "DebugWindow.h"
 #include "IMUI/IMUI.h"
 #include "yakc_ui/UI.h"
-#include "yakc_oryol/Disasm.h"
+#include "Disasm.h"
 
 using namespace Oryol;
 

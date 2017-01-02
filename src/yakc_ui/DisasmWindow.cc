@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "DisasmWindow.h"
 #include "IMUI/IMUI.h"
-#include "yakc_oryol/Disasm.h"
+#include "Disasm.h"
 
 using namespace Oryol;
 
