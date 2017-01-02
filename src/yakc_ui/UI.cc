@@ -271,10 +271,10 @@ UI::OnFrame(yakc& emu) {
                                 emu.poweron(device::kc85_4, os_rom::caos_4_2);
                             }
                         }
-                        if (emu.check_roms(device::kccompact, os_rom::none)) {
+                        if (emu.check_roms(device::kccompact)) {
                             if (ImGui::MenuItem("KC Compact (CPC clone)")) {
                                 emu.poweroff();
-                                emu.poweron(device::kccompact, os_rom::none);
+                                emu.poweron(device::kccompact);
                             }
                         }
                         ImGui::EndMenu();
@@ -295,52 +295,52 @@ UI::OnFrame(yakc& emu) {
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Robotron Riesa")) {
-                        if (emu.check_roms(device::z1013_01, os_rom::none)) {
+                        if (emu.check_roms(device::z1013_01)) {
                             if (ImGui::MenuItem("Z1013.01 (1MHz, 16KB)")) {
                                 emu.poweroff();
-                                emu.poweron(device::z1013_01, os_rom::none);
+                                emu.poweron(device::z1013_01);
                             }
                         }
-                        if (emu.check_roms(device::z1013_16, os_rom::none)) {
+                        if (emu.check_roms(device::z1013_16)) {
                             if (ImGui::MenuItem("Z1013.16 (2MHz, 16KB)")) {
                                 emu.poweroff();
-                                emu.poweron(device::z1013_16, os_rom::none);
+                                emu.poweron(device::z1013_16);
                             }
                         }
-                        if (emu.check_roms(device::z1013_64, os_rom::none)) {
+                        if (emu.check_roms(device::z1013_64)) {
                             if (ImGui::MenuItem("Z1013.64 (2MHz, 64KB)")) {
                                 emu.poweroff();
-                                emu.poweron(device::z1013_64, os_rom::none);
+                                emu.poweron(device::z1013_64);
                             }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Sinclair")) {
-                        if (emu.check_roms(device::zxspectrum48k, os_rom::none)) {
+                        if (emu.check_roms(device::zxspectrum48k)) {
                             if (ImGui::MenuItem("ZX Spectrum 48K")) {
                                 emu.poweroff();
-                                emu.poweron(device::zxspectrum48k, os_rom::none);
+                                emu.poweron(device::zxspectrum48k);
                             }
                         }
-                        if (emu.check_roms(device::zxspectrum128k, os_rom::none)) {
+                        if (emu.check_roms(device::zxspectrum128k)) {
                             if (ImGui::MenuItem("ZX Spectrum 128K")) {
                                 emu.poweroff();
-                                emu.poweron(device::zxspectrum128k, os_rom::none);
+                                emu.poweron(device::zxspectrum128k);
                             }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Amstrad")) {
-                        if (emu.check_roms(device::cpc464, os_rom::none)) {
+                        if (emu.check_roms(device::cpc464)) {
                             if (ImGui::MenuItem("CPC 464")) {
                                 emu.poweroff();
-                                emu.poweron(device::cpc464, os_rom::none);
+                                emu.poweron(device::cpc464);
                             }
                         }
-                        if (emu.check_roms(device::cpc6128, os_rom::none)) {
+                        if (emu.check_roms(device::cpc6128)) {
                             if (ImGui::MenuItem("CPC 6128")) {
                                 emu.poweroff();
-                                emu.poweron(device::cpc6128, os_rom::none);
+                                emu.poweron(device::cpc6128);
                             }
                         }
                         ImGui::EndMenu();

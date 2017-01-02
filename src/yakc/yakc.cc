@@ -21,6 +21,12 @@ yakc::init(const ext_funcs& sys_funcs) {
 }
 
 //------------------------------------------------------------------------------
+void
+yakc::add_rom(rom_images::rom type, const ubyte* ptr, int size) {
+    this->roms.add(type, ptr, size);
+}
+
+//------------------------------------------------------------------------------
 bool
 yakc::check_roms(device m, os_rom os) {
     if (is_device(m, device::any_kc85)) {
@@ -160,16 +166,22 @@ yakc::is_device(device model, device mask) {
 
 //------------------------------------------------------------------------------
 void
-yakc::onframe(int speed_multiplier, int micro_secs, uint64_t min_cycle_count, uint64_t max_cycle_count) {
-    // FIXME: the speed multiplier isn't currently working because of the min/max cycle count limiter!
-    YAKC_ASSERT(speed_multiplier > 0);
+yakc::step(int micro_secs, uint64_t audio_cycle_count) {
+    uint64_t min_cycle_count = 0;
+    uint64_t max_cycle_count = 0;
+    if (audio_cycle_count > 0) {
+        const uint64_t cpu_min_ahead_cycles = (this->board.clck.base_freq_khz*1000)/100;
+        const uint64_t cpu_max_ahead_cycles = (this->board.clck.base_freq_khz*1000)/25;
+        min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
+        max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
+    }
     this->cpu_ahead = false;
     this->cpu_behind = false;
     // compute the end-cycle-count for the current frame
     if (this->abs_cycle_count == 0) {
         this->abs_cycle_count = min_cycle_count;
     }
-    const int64_t num_cycles = this->board.clck.cycles(micro_secs*speed_multiplier) - this->overflow_cycles;
+    const int64_t num_cycles = this->board.clck.cycles(micro_secs) - this->overflow_cycles;
     uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
     if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
         abs_end_cycles = max_cycle_count;

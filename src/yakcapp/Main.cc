@@ -79,7 +79,7 @@ YakcApp::OnInit() {
 
     // initialize the emulator
     ext_funcs sys_funcs;
-    sys_funcs.assertmsg_func = Log::AssertMsg;
+    sys_funcs.assertmsg_func = Oryol::Log::AssertMsg;
     sys_funcs.malloc_func = [] (size_t s) -> void* { return Oryol::Memory::Alloc((int)s); };
     sys_funcs.free_func = [] (void* p) { Oryol::Memory::Free(p); };
     this->emu.init(sys_funcs);
@@ -133,20 +133,11 @@ YakcApp::OnRunning() {
     clear.w = 1.0f;
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(clear));
     int micro_secs = (int) frameTime.AsMicroSeconds();
-    uint64_t min_cycle_count = 0;
-    uint64_t max_cycle_count = 0;
-    const uint64_t audio_cycle_count = this->audio.GetProcessedCycles();
-    if (audio_cycle_count > 0) {
-        const uint64_t cpu_min_ahead_cycles = (this->emu.board.clck.base_freq_khz*1000)/100;
-        const uint64_t cpu_max_ahead_cycles = (this->emu.board.clck.base_freq_khz*1000)/25;
-        min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
-        max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
-    }
-
+    uint64_t processed_audio_cycles = this->audio.GetProcessedCycles();
     #if YAKC_UI
         o_trace_begin(yakc_kc);
         // keep CPU synchronized to a small time window ahead of audio playback
-        this->emu.onframe(this->ui.Settings.cpuSpeed, micro_secs, min_cycle_count, max_cycle_count);
+        this->emu.step(micro_secs, processed_audio_cycles);
         o_trace_end();
         this->draw.UpdateParams(
             this->ui.Settings.crtEffect,
@@ -154,7 +145,7 @@ YakcApp::OnRunning() {
             glm::vec2(this->ui.Settings.crtWarp));
     #else
         o_trace_begin(yakc_kc);
-        this->emu.onframe(2, micro_secs, min_cycle_count, max_cycle_count);
+        this->emu.onframe(micro_secs, processed_audio_cycles);
         o_trace_end();
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
@@ -192,81 +183,81 @@ void
 YakcApp::initRoms() {
 
     // only KC85/3 roms are 'built-in' to reeduce executable size
-    this->emu.roms.add(rom_images::caos31, dump_caos31, sizeof(dump_caos31));
-    this->emu.roms.add(rom_images::kc85_basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
+    this->emu.add_rom(rom_images::caos31, dump_caos31, sizeof(dump_caos31));
+    this->emu.add_rom(rom_images::kc85_basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
 
     // async-load optional ROMs
     IO::Load("rom:hc900.852", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::hc900, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::hc900, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos22.852", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::caos22, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::caos22, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos34.853", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::caos34, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::caos34, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos42c.854", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::caos42c, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::caos42c, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:caos42e.854", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:z1013_mon202.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::z1013_mon202, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::z1013_mon202, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:z1013_mon_a2.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::z1013_mon_a2, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::z1013_mon_a2, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:z1013_font.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::z1013_font, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::z1013_font, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:z9001_os12_1.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::z9001_os12_1, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::z9001_os12_1, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:z9001_os12_2.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::z9001_os12_2, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::z9001_os12_2, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:z9001_font.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::z9001_font, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::z9001_font, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:z9001_basic.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::z9001_basic, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::z9001_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:kc87_os_2.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::kc87_os_2, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::kc87_os_2, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:z9001_basic_507_511.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::z9001_basic_507_511, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::z9001_basic_507_511, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:kc87_font_2.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::kc87_font_2, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::kc87_font_2, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:amstrad_zx48k.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::zx48k, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::zx48k, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:amstrad_zx128k_0.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::zx128k_0, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::zx128k_0, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:amstrad_zx128k_1.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::zx128k_1, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::zx128k_1, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:cpc464_os.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::cpc464_os, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::cpc464_os, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:cpc464_basic.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::cpc464_basic, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::cpc464_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:cpc6128_os.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::cpc6128_os, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::cpc6128_os, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:cpc6128_basic.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::cpc6128_basic, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::cpc6128_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:kcc_os.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::kcc_os, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::kcc_os, ioRes.Data.Data(), ioRes.Data.Size());
     });
     IO::Load("rom:kcc_bas.bin", [this](IO::LoadResult ioRes) {
-        this->emu.roms.add(rom_images::kcc_basic, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.add_rom(rom_images::kcc_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }
 
@@ -301,11 +292,9 @@ YakcApp::initModules() {
 
     // M026 FORTH
     IO::Load("rom:forth.853", [this](IO::LoadResult ioRes) {
-        auto& kc = this->emu.kc85;
-        auto& roms = this->emu.roms;
-        roms.add(rom_images::forth, ioRes.Data.Data(), ioRes.Data.Size());
-        kc.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
-            roms.ptr(rom_images::forth), roms.size(rom_images::forth),
+        this->emu.add_rom(rom_images::forth, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.kc85.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
+            this->emu.roms.ptr(rom_images::forth), this->emu.roms.size(rom_images::forth),
             "FORTH language expansion module.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"
@@ -316,11 +305,9 @@ YakcApp::initModules() {
 
     // M027 DEVELOPMENT
     IO::Load("rom:develop.853", [this](IO::LoadResult ioRes) {
-        auto& kc = this->emu.kc85;
-        auto& roms = this->emu.roms;
-        roms.add(rom_images::develop, ioRes.Data.Data(), ioRes.Data.Size());
-        kc.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
-            roms.ptr(rom_images::develop), roms.size(rom_images::develop),
+        this->emu.add_rom(rom_images::develop, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.kc85.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
+            this->emu.roms.ptr(rom_images::develop), this->emu.roms.size(rom_images::develop),
             "Assembler/disassembler expansion module.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"
@@ -331,11 +318,9 @@ YakcApp::initModules() {
 
     // M006 BASIC (+ HC-CAOS 901)
     IO::Load("rom:m006.rom", [this](IO::LoadResult ioRes) {
-        auto& kc = this->emu.kc85;
-        auto& roms = this->emu.roms;
-        roms.add(rom_images::kc85_basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
-        kc.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
-            roms.ptr(rom_images::kc85_basic_mod), roms.size(rom_images::kc85_basic_mod),
+        this->emu.add_rom(rom_images::kc85_basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.kc85.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
+            this->emu.roms.ptr(rom_images::kc85_basic_mod), this->emu.roms.size(rom_images::kc85_basic_mod),
             "BASIC + HC-901 CAOS for KC85/2.\n\n"
             "Activate with:\n"
             "JUMP [SLOT]\n\n"
@@ -344,11 +329,9 @@ YakcApp::initModules() {
 
     // M012 TEXOR
     IO::Load("rom:texor.rom", [this](IO::LoadResult ioRes) {
-        auto& kc = this->emu.kc85;
-        auto& roms = this->emu.roms;
-        roms.add(rom_images::texor, ioRes.Data.Data(), ioRes.Data.Size());
-        kc.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
-            roms.ptr(rom_images::texor), roms.size(rom_images::texor),
+        this->emu.add_rom(rom_images::texor, ioRes.Data.Data(), ioRes.Data.Size());
+        this->emu.kc85.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
+            this->emu.roms.ptr(rom_images::texor), this->emu.roms.size(rom_images::texor),
             "TEXOR text processing software.\n\n"
             "First deactivate the BASIC ROM with:\n"
             "SWITCH 02 00\n\n"
