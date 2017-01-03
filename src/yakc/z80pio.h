@@ -29,7 +29,7 @@ public:
     };
 
     /// port modes
-    enum : ubyte {
+    enum : uint8_t {
         mode_output = 0,
         mode_input,
         mode_bidirectional,
@@ -37,7 +37,7 @@ public:
     };
 
     /// interrupt control bits
-    enum : ubyte {
+    enum : uint8_t {
         intctrl_enable_int   = (1<<7),
         intctrl_and_or       = (1<<6),
         intctrl_high_low     = (1<<5),
@@ -45,7 +45,7 @@ public:
     };
 
     /// port expect mode (what is the next control word)
-    enum : ubyte {
+    enum : uint8_t {
         expect_any = 0,
         expect_io_select = 1,
         expect_int_mask = 2,
@@ -53,14 +53,14 @@ public:
 
     /// port state
     struct port_t {
-        ubyte output = 0;       // output register
-        ubyte input = 0;        // input register
-        ubyte io_select = 0;    // i/o select bits (for bit-control mode)
-        ubyte mode = 0;         // 0=output, 1=input, 2=bidirection, 3=bit-control
-        ubyte int_mask = 0xFF;
-        ubyte int_vector = 0;
-        ubyte int_control = 0;
-        ubyte expect = 0;           // next expected control byte
+        uint8_t output = 0;       // output register
+        uint8_t input = 0;        // input register
+        uint8_t io_select = 0;    // i/o select bits (for bit-control mode)
+        uint8_t mode = 0;         // 0=output, 1=input, 2=bidirection, 3=bit-control
+        uint8_t int_mask = 0xFF;
+        uint8_t int_vector = 0;
+        uint8_t int_control = 0;
+        uint8_t expect = 0;           // next expected control byte
         bool rdy = false;           // ready line active
         bool stb = false;           // strobe line active
         bool bctrl_match = false;   // bitcontrol logic equation result
@@ -76,19 +76,19 @@ public:
     void reset();
 
     /// write control register
-    void write_control(int port_id, ubyte val);
+    void write_control(int port_id, uint8_t val);
     /// read control register (same result for both ports)
-    ubyte read_control();
+    uint8_t read_control();
     /// write data register
-    void write_data(system_bus* bus, int port_id, ubyte data);
+    void write_data(system_bus* bus, int port_id, uint8_t data);
     /// read data register
-    ubyte read_data(system_bus* bus, int port_id);
+    uint8_t read_data(system_bus* bus, int port_id);
     /// strobe signal on PIO-A from peripheral
     void astb(bool active);
     /// strobe signal on PIO-B from peripheral
     void bstb(bool active);
     /// write data from peripheral into PIO
-    void write(system_bus* bus, int port_id, ubyte val);
+    void write(system_bus* bus, int port_id, uint8_t val);
 
 private:
     /// set a port's ready line

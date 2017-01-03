@@ -47,7 +47,7 @@ z80pio::set_rdy(system_bus* bus, int port_id, bool active) {
 
 //------------------------------------------------------------------------------
 void
-z80pio::write_control(int port_id, ubyte val) {
+z80pio::write_control(int port_id, uint8_t val) {
     YAKC_ASSERT((port_id>=0)&&(port_id<num_ports));
 
     auto& p = this->port[port_id];
@@ -66,7 +66,7 @@ z80pio::write_control(int port_id, ubyte val) {
         }
         else if ((val & 0xF) == 0xF) {
             // set mode, NOTE: bidirectional on port B is not allowed
-            const ubyte m = val>>6;
+            const uint8_t m = val>>6;
             if ((port_id == B) && (m == mode_bidirectional)) {
                 YAKC_ASSERT(false);
             }
@@ -97,7 +97,7 @@ z80pio::write_control(int port_id, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 z80pio::read_control() {
     // I haven't found any information what is really returned when
     // reading the control port so I'm going with MAME, which returns
@@ -107,7 +107,7 @@ z80pio::read_control() {
 
 //------------------------------------------------------------------------------
 void
-z80pio::write_data(system_bus* bus, int port_id, ubyte data) {
+z80pio::write_data(system_bus* bus, int port_id, uint8_t data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     auto& p = this->port[port_id];
     switch (p.mode) {
@@ -144,10 +144,10 @@ z80pio::write_data(system_bus* bus, int port_id, ubyte data) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 z80pio::read_data(system_bus* bus, int port_id) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
-    ubyte data = 0;
+    uint8_t data = 0;
     auto& p = this->port[port_id];
     switch (p.mode) {
         case mode_output:
@@ -183,17 +183,17 @@ z80pio::read_data(system_bus* bus, int port_id) {
 
 //------------------------------------------------------------------------------
 void
-z80pio::write(system_bus* bus, int port_id, ubyte data) {
+z80pio::write(system_bus* bus, int port_id, uint8_t data) {
     YAKC_ASSERT((port_id >= 0) && (port_id < num_ports));
     auto& p = this->port[port_id];
     if (mode_bitcontrol == p.mode) {
         p.input = data;
-        ubyte val = (p.input & p.io_select) | (p.output & ~p.io_select);
-        ubyte mask = ~p.int_mask;
+        uint8_t val = (p.input & p.io_select) | (p.output & ~p.io_select);
+        uint8_t mask = ~p.int_mask;
         bool match = false;
         val &= mask;
 
-        const ubyte ictrl = p.int_control & 0x60;
+        const uint8_t ictrl = p.int_control & 0x60;
         if ((ictrl == 0) && (val != mask)) match = true;
         else if ((ictrl == 0x20) && (val != 0)) match = true;
         else if ((ictrl == 0x40) && (val == 0)) match = true;

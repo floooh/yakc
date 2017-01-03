@@ -33,11 +33,11 @@ public:
     /// select a register (0..17) for reading/writing
     void select(int r);
     /// write selected register
-    void write(ubyte val);
+    void write(uint8_t val);
     /// read selected register
-    ubyte read() const;
+    uint8_t read() const;
     /// read special type 1 (UM6845R) status register
-    ubyte read_status() const;
+    uint8_t read_status() const;
 
     /// status bits
     enum {
@@ -76,18 +76,18 @@ public:
     };
     static_assert(NUM_REGS == 18, "mc6845 num registers");
     /// the register file
-    ubyte regs[NUM_REGS] = { };
+    uint8_t regs[NUM_REGS] = { };
 
     /// current memory address (14 bits)
-    uword ma = 0;
+    uint16_t ma = 0;
     /// current row address (5 bits)
-    uword ra = 0;
+    uint16_t ra = 0;
     /// test if any status bit is set
-    bool test(ubyte mask) const;
+    bool test(uint8_t mask) const;
     /// check if any status bits have changed state to 'on' this step
-    bool on(ubyte mask) const;
+    bool on(uint8_t mask) const;
     /// check if any status bits have changed state to 'off' this step
-    bool off(ubyte mask) const;
+    bool off(uint8_t mask) const;
 
     /// horizontal counter
     int h_count;
@@ -103,44 +103,44 @@ public:
     int adjust_scanline_count;
 
     /// set a status bit
-    void set(ubyte mask);
+    void set(uint8_t mask);
     /// clear a status bit
-    void clear(ubyte mask);
+    void clear(uint8_t mask);
 
     int type = int(type::MC6845);
     int reg_sel = 0;                // currently selected register
-    ubyte prev_bits = 0;
-    ubyte bits = 0;
-    uword ma_row_start = 0;         // memory address at row start
+    uint8_t prev_bits = 0;
+    uint8_t bits = 0;
+    uint16_t ma_row_start = 0;      // memory address at row start
 };
 
 //------------------------------------------------------------------------------
 inline bool
-mc6845::test(ubyte mask) const {
+mc6845::test(uint8_t mask) const {
     return 0 != (this->bits & mask);
 }
 
 //------------------------------------------------------------------------------
 inline bool
-mc6845::on(ubyte mask) const {
+mc6845::on(uint8_t mask) const {
     return 0 != ((this->bits & (this->bits ^ this->prev_bits)) & mask);
 }
 
 //------------------------------------------------------------------------------
 inline bool
-mc6845::off(ubyte mask) const {
+mc6845::off(uint8_t mask) const {
     return 0 != ((~this->bits & (this->bits ^ this->prev_bits)) & mask);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mc6845::set(ubyte mask) {
+mc6845::set(uint8_t mask) {
     this->bits |= mask;
 }
 
 //------------------------------------------------------------------------------
 inline void
-mc6845::clear(ubyte mask) {
+mc6845::clear(uint8_t mask) {
     this->bits &= ~mask;
 }
 

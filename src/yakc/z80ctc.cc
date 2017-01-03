@@ -38,7 +38,7 @@ z80ctc::reset() {
 
 //------------------------------------------------------------------------------
 void
-z80ctc::write(system_bus* bus, channel c, ubyte v) {
+z80ctc::write(system_bus* bus, channel c, uint8_t v) {
     YAKC_ASSERT((c >= 0) && (c<num_channels));
 
     channel_state& chn = channels[c];
@@ -76,7 +76,7 @@ z80ctc::write(system_bus* bus, channel c, ubyte v) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 z80ctc::read(channel c) {
     YAKC_ASSERT((c >= 0) && (c<num_channels));
     const channel_state& chn = channels[c];
@@ -84,7 +84,7 @@ z80ctc::read(channel c) {
     if ((chn.mode & MODE) == MODE_TIMER) {
         val /= ((chn.mode & PRESCALER) == PRESCALER_256) ? 256 : 16;
     }
-    return (ubyte) val;
+    return (uint8_t) val;
 }
 
 //------------------------------------------------------------------------------

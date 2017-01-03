@@ -20,7 +20,7 @@ public:
     /// one-time init
     void init(const ext_funcs& funcs);
     /// add a ROM image
-    void add_rom(rom_images::rom type, const ubyte* ptr, int size);
+    void add_rom(rom_images::rom type, const uint8_t* ptr, int size);
     /// check if the required ROM images for a model/os combination are loaded
     bool check_roms(device model, os_rom os=os_rom::none);
     /// poweron one of the emus
@@ -33,7 +33,7 @@ public:
     void step(int micro_secs, uint64_t audio_cycle_count);
 
     /// put key and joystick input
-    void put_input(ubyte ascii, ubyte joy0_mask);
+    void put_input(uint8_t ascii, uint8_t joy0_mask);
     /// enable/disable joystick
     void enable_joystick(bool b);
     /// return true if joystick is enabled

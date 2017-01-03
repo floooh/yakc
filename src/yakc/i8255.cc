@@ -26,8 +26,8 @@ i8255::reset() {
 void
 i8255::output_port_c(system_bus* bus) const {
     if (bus) {
-        ubyte mask = 0;
-        ubyte val = 0;
+        uint8_t mask = 0;
+        uint8_t val = 0;
         if (this->port_c_upper_mode() == MODE_OUTPUT) {
             mask |= 0xF0;
         }
@@ -47,7 +47,7 @@ i8255::output_port_c(system_bus* bus) const {
 
 //------------------------------------------------------------------------------
 void
-i8255::set_mode(system_bus* bus, ubyte val) {
+i8255::set_mode(system_bus* bus, uint8_t val) {
     this->control = val;
     for (int i = 0; i < num_ports; i++) {
         this->output[i] = 0;
@@ -72,7 +72,7 @@ i8255::set_mode(system_bus* bus, ubyte val) {
 
 //------------------------------------------------------------------------------
 void
-i8255::write(system_bus* bus, int addr, ubyte val) {
+i8255::write(system_bus* bus, int addr, uint8_t val) {
     switch (addr & 3) {
         case PORT_A:
             if (this->port_a_mode() == MODE_OUTPUT) {
@@ -100,7 +100,7 @@ i8255::write(system_bus* bus, int addr, ubyte val) {
             }
             else {
                 // set/clear single bit in port C
-                const ubyte mask = 1<<((val>>1)&7);
+                const uint8_t mask = 1<<((val>>1)&7);
                 if (val & (1<<0)) {
                     this->output[PORT_C] |= mask;
                 }
@@ -115,10 +115,10 @@ i8255::write(system_bus* bus, int addr, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 i8255::input_port_c(system_bus* bus) {
-    ubyte mask = 0;
-    ubyte val = 0;
+    uint8_t mask = 0;
+    uint8_t val = 0;
     if (this->port_c_upper_mode() == MODE_OUTPUT) {
         val |= this->output[PORT_C] & 0xF0;     // read data from output latch
     }
@@ -143,7 +143,7 @@ i8255::input_port_c(system_bus* bus) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 i8255::read(system_bus* bus, int addr) {
     switch (addr & 3) {
         case PORT_A:

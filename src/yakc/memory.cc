@@ -13,7 +13,7 @@ memory::memory() {
 
 //------------------------------------------------------------------------------
 void
-memory::map_rw(int layer, uword addr, unsigned int size, ubyte* read_ptr, ubyte* write_ptr) {
+memory::map_rw(int layer, uint16_t addr, unsigned int size, uint8_t* read_ptr, uint8_t* write_ptr) {
     YAKC_ASSERT((layer >= 0) && (layer < num_layers));
     YAKC_ASSERT((addr & page::mask) == 0);
     YAKC_ASSERT((size & page::mask) == 0);
@@ -22,8 +22,8 @@ memory::map_rw(int layer, uword addr, unsigned int size, ubyte* read_ptr, ubyte*
     const int num = size>>page::shift;
     YAKC_ASSERT(num <= num_pages);
     for (int i = 0; i < num; i++) {
-        const uword offset = i * page::size;
-        const uword page_index = ((addr+offset)&addr_mask) >> page::shift;    // page index will wrap around
+        const uint16_t offset = i * page::size;
+        const uint16_t page_index = ((addr+offset)&addr_mask) >> page::shift;    // page index will wrap around
         YAKC_ASSERT(page_index < num_pages);
         this->layers[layer][page_index].read_ptr = read_ptr + offset;
         if (nullptr != write_ptr) {
@@ -38,7 +38,7 @@ memory::map_rw(int layer, uword addr, unsigned int size, ubyte* read_ptr, ubyte*
 
 //------------------------------------------------------------------------------
 void
-memory::map(int layer, uword addr, unsigned int size, ubyte* ptr, bool writable) {
+memory::map(int layer, uint16_t addr, unsigned int size, uint8_t* ptr, bool writable) {
     if (writable) {
         this->map_rw(layer, addr, size, ptr, ptr);
     }
@@ -95,7 +95,7 @@ memory::update_mapping(int page_index) {
 
 //------------------------------------------------------------------------------
 int
-memory::layer(uword addr) const {
+memory::layer(uint16_t addr) const {
     const int page_index = addr>>page::shift;
     for (int layer_index = 0; layer_index < num_layers; layer_index++) {
         if (this->pages[page_index].read_ptr == this->layers[layer_index][page_index].read_ptr) {

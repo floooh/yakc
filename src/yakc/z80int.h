@@ -27,9 +27,9 @@ public:
     void reset();
 
     /// called by device to request an interrupt
-    bool request_interrupt(system_bus* bus, ubyte data);
+    bool request_interrupt(system_bus* bus, uint8_t data);
     /// called by CPU to acknowldge interrupt request, return data byte (usually interrupt vector)
-    ubyte interrupt_acknowledged();
+    uint8_t interrupt_acknowledged();
     /// NOTE: interrupt_cancelled is currently not called by CPU, this
     /// caused problems with some games which had very high frequency interrupts,
     /// called by CPU after request_interrupt to notify devices that it cannot serve the request
@@ -46,7 +46,7 @@ public:
     /// an interrupt is currently being requested
     bool int_requested = false;
     /// the data byte for the requested interrupt
-    ubyte int_request_data = 0;
+    uint8_t int_request_data = 0;
     /// the interrupt has been acknowledged and is currently processed by CPU until RETI is received
     bool int_pending = false;
 

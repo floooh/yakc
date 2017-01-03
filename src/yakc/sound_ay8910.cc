@@ -8,7 +8,7 @@
 
 namespace YAKC {
 
-ubyte ay8910_masks[sound_ay8910::NUM_REGS] = {
+uint8_t ay8910_masks[sound_ay8910::NUM_REGS] = {
     0xFF,       // TONE_PERIOD_A_FINE
     0x0F,       // TONE_PERIOD_A_COARSE
     0xFF,       // TONE_PERIOD_B_FINE
@@ -122,7 +122,7 @@ sound_ay8910::step(int cpu_cycles) {
                 this->env_cycle_count++;
                 if (this->env_cycle_count == 16) {
                     this->env_cycle_count = 0;
-                    const ubyte env_ctrl = this->regs[ENV_SHAPE_CYCLE];
+                    const uint8_t env_ctrl = this->regs[ENV_SHAPE_CYCLE];
 
                     // HOLD
                     if (env_ctrl & (1<<0)) {
@@ -182,7 +182,7 @@ sound_ay8910::step(int cpu_cycles) {
 
 //------------------------------------------------------------------------------
 void
-sound_ay8910::write(ubyte reg, ubyte val) {
+sound_ay8910::write(uint8_t reg, uint8_t val) {
     if (reg < NUM_REGS) {
         this->regs[reg] = val & ay8910_masks[reg];
 
@@ -208,8 +208,8 @@ sound_ay8910::write(ubyte reg, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-sound_ay8910::read(ubyte reg) const {
+uint8_t
+sound_ay8910::read(uint8_t reg) const {
     if (reg < NUM_REGS) {
         return this->regs[reg];
     }

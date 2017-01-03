@@ -23,7 +23,7 @@ z80int::reset() {
 
 //------------------------------------------------------------------------------
 bool
-z80int::request_interrupt(system_bus* bus, ubyte data) {
+z80int::request_interrupt(system_bus* bus, uint8_t data) {
 
     // FIXME: hmm can we interrupt ourselves? what happens if our device
     // requests an interrupt, but we're currently also being serviced
@@ -48,7 +48,7 @@ z80int::request_interrupt(system_bus* bus, ubyte data) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 z80int::interrupt_acknowledged() {
     if (this->int_requested) {
         // it's our turn, return the interrupt-request data byte,

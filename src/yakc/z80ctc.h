@@ -61,11 +61,11 @@ public:
 
     /// channel state
     struct channel_state {
-        ubyte mode = RESET;             // current mode bits
-        ubyte constant = 0;             // the time constant
+        uint8_t mode = RESET;             // current mode bits
+        uint8_t constant = 0;             // the time constant
         int down_counter = 0;           // current down-counter value
         bool waiting_for_trigger = false;
-        ubyte interrupt_vector = 0;
+        uint8_t interrupt_vector = 0;
         z80int int_ctrl;
     } channels[num_channels];
 
@@ -83,9 +83,9 @@ public:
     void ctrg(system_bus* bus, channel c);
 
     /// write value to channel
-    void write(system_bus* bus, channel c, ubyte v);
+    void write(system_bus* bus, channel c, uint8_t v);
     /// read value from channel
-    ubyte read(channel c);
+    uint8_t read(channel c);
 
 private:
     /// get the counter/timer cycle count (prescaler * constant)

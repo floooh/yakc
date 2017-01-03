@@ -18,9 +18,9 @@ public:
     void step(int cpu_cycles);
 
     /// write to selected register
-    void write(ubyte reg, ubyte val);
+    void write(uint8_t reg, uint8_t val);
     /// read from selected register
-    ubyte read(ubyte reg) const;
+    uint8_t read(uint8_t reg) const;
 
     enum reg {
         TONE_PERIOD_A_FINE = 0,
@@ -44,7 +44,7 @@ public:
     };
     static_assert(NUM_REGS == 16, "AY8910 num regs!");
 
-    ubyte regs[NUM_REGS] = { };
+    uint8_t regs[NUM_REGS] = { };
     int tone_update_period = 0;
     int tone_update_count = 0;
 

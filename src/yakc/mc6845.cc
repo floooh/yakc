@@ -10,7 +10,7 @@
 
 namespace YAKC {
 
-static ubyte reg_bits[mc6845::NUM_REGS] = {
+static uint8_t reg_bits[mc6845::NUM_REGS] = {
     0xFF,   // H_TOTAL
     0xFF,   // H_DISPLAYED
     0xFF,   // H_SYNC_POS
@@ -32,7 +32,7 @@ static ubyte reg_bits[mc6845::NUM_REGS] = {
 };
 
 // 1: writable, 2: readable, 3: read/write
-static ubyte reg_access[int(mc6845::type::NUM)][mc6845::NUM_REGS] = {
+static uint8_t reg_access[int(mc6845::type::NUM)][mc6845::NUM_REGS] = {
     { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 2, 2 },
     { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 2 },
     { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 2 }
@@ -75,7 +75,7 @@ mc6845::select(int r) {
 
 //------------------------------------------------------------------------------
 void
-mc6845::write(ubyte val) {
+mc6845::write(uint8_t val) {
     if (this->reg_sel < NUM_REGS) {
         // writable register?
         if (reg_access[this->type][this->reg_sel] & 1) {
@@ -85,7 +85,7 @@ mc6845::write(ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 mc6845::read() const {
     if (this->reg_sel < NUM_REGS) {
         // readable register?
@@ -103,7 +103,7 @@ mc6845::read() const {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 mc6845::read_status() const {
     if (1 == this->type) {
         // bit 6: /LPEN (not implemented)

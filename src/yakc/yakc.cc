@@ -22,7 +22,7 @@ yakc::init(const ext_funcs& sys_funcs) {
 
 //------------------------------------------------------------------------------
 void
-yakc::add_rom(rom_images::rom type, const ubyte* ptr, int size) {
+yakc::add_rom(rom_images::rom type, const uint8_t* ptr, int size) {
     this->roms.add(type, ptr, size);
 }
 
@@ -218,7 +218,7 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
 
 //------------------------------------------------------------------------------
 void
-yakc::put_input(ubyte ascii, ubyte joy0_mask) {
+yakc::put_input(uint8_t ascii, uint8_t joy0_mask) {
     if (!this->joystick_enabled) {
         joy0_mask = 0;
     }

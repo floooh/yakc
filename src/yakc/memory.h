@@ -45,10 +45,10 @@ public:
     /// a memory page mapping description
     struct page {
         static const int shift = 10;
-        static const uword size = 1<<shift;
-        static const uword mask = size - 1;
-        ubyte* read_ptr = nullptr;
-        ubyte* write_ptr = nullptr;
+        static const uint16_t size = 1<<shift;
+        static const uint16_t mask = size - 1;
+        uint8_t* read_ptr = nullptr;
+        uint8_t* write_ptr = nullptr;
     };
     /// number of pages
     static const int num_pages = addr_range / page::size;
@@ -66,34 +66,34 @@ public:
     /// constructor
     memory();
     /// map a range of memory with identical read/write pointer
-    void map(int layer, uword addr, unsigned int size, ubyte* read_ptr, bool writable);
+    void map(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, bool writable);
     /// map a range of memory with different read/write pointers
-    void map_rw(int layer, uword addr, unsigned int size, ubyte* read_ptr, ubyte* write_ptr);
+    void map_rw(int layer, uword addr, uint32_t size, uint8_t* read_ptr, uint8_t* write_ptr);
     /// unmap all memory pages in a mapping layer
     void unmap_layer(int layer);
     /// unmap all memory pages
     void unmap_all();
     /// get the layer index a memory page is mapped to, -1 if unmapped
-    int layer(uword addr) const;
+    int layer(uint16_t addr) const;
     /// map a Z80 address to host memory pointer (read-only)
-    const ubyte* read_ptr(uword addr) const;
+    const uint8_t* read_ptr(uint16_t addr) const;
 
     /// test if an address is writable
-    bool is_writable(uword addr) const;
+    bool is_writable(uint16_t addr) const;
     /// read a byte at cpu address
-    ubyte r8(uword addr) const;
+    uint8_t r8(uint16_t addr) const;
     /// read a signed byte at cpu address
-    byte rs8(uword addr) const;
+    int8_t rs8(uint16_t addr) const;
     /// write a byte to cpu address
-    void w8(uword addr, ubyte b) const;
+    void w8(uint16_t addr, uint8_t b) const;
     /// read/write access to byte
-    ubyte& a8(uword addr);
+    uint8_t& a8(uint16_t addr);
     /// read a word at cpu address
-    uword r16(uword addr) const;
+    uint16_t r16(uint16_t addr) const;
     /// write a word to cpu address
-    void w16(uword addr, uword w) const;
+    void w16(uint16_t addr, uint16_t w) const;
     /// write a byte range
-    void write(uword addr, const ubyte* src, int num) const;
+    void write(uint16_t addr, const uint8_t* src, int num) const;
 
 private:
     /// update the CPU-visible mapping
@@ -101,47 +101,47 @@ private:
 };
 
 //------------------------------------------------------------------------------
-inline const ubyte*
-memory::read_ptr(uword addr) const {
+inline const uint8_t*
+memory::read_ptr(uint16_t addr) const {
     return this->pages[addr>>page::shift].read_ptr;
 }
 
 //------------------------------------------------------------------------------
 inline bool
-memory::is_writable(uword addr) const {
+memory::is_writable(uint16_t addr) const {
     return nullptr != this->pages[addr>>page::shift].write_ptr;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-memory::r8(uword addr) const {
+inline uint8_t
+memory::r8(uint16_t addr) const {
     return this->pages[addr>>page::shift].read_ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
-inline byte
+inline int8_t
 memory::rs8(uword addr) const {
-    return (byte) this->pages[addr>>page::shift].read_ptr[addr&page::mask];
+    return (int8_t) this->pages[addr>>page::shift].read_ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
-inline ubyte&
-memory::a8(uword addr) {
+inline uint8_t&
+memory::a8(uint16_t addr) {
     return this->pages[addr>>page::shift].write_ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------
-inline uword
-memory::r16(uword addr) const {
-    ubyte l = this->r8(addr);
-    ubyte h = this->r8(addr+1);
-    uword w = h << 8 | l;
+inline uint16_t
+memory::r16(uint16_t addr) const {
+    uint8_t l = this->r8(addr);
+    uint8_t h = this->r8(addr+1);
+    uint16_t w = h << 8 | l;
     return w;
 }
 
 //------------------------------------------------------------------------------
 inline void
-memory::w8(uword addr, ubyte b) const {
+memory::w8(uint16_t addr, uint8_t b) const {
     const auto& page = this->pages[addr>>page::shift];
     if (page.write_ptr) {
         page.write_ptr[addr & page::mask] = b;
@@ -150,14 +150,14 @@ memory::w8(uword addr, ubyte b) const {
 
 //------------------------------------------------------------------------------
 inline void
-memory::w16(uword addr, uword w) const {
+memory::w16(uint16_t addr, uint16_t w) const {
     this->w8(addr, w & 0xFF);
     this->w8(addr + 1, (w>>8));
 }
 
 //------------------------------------------------------------------------------
 inline void
-memory::write(uword addr, const ubyte* src, int num) const {
+memory::write(uint16_t addr, const uint8_t* src, int num) const {
     for (int i = 0; i < num; i++) {
         this->w8(addr++, src[i]);
     }

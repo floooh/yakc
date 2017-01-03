@@ -36,21 +36,21 @@ public:
     };
 
     static const int num_ports = 3;
-    ubyte output[num_ports] = { };      // output latch
-    ubyte control = 0;                  // control word
+    uint8_t output[num_ports] = { };      // output latch
+    uint8_t control = 0;                  // control word
 
     /// initialize a i8255 instance
     void init(int id);
     /// reset the i8255
     void reset();
     /// write to the PIO, addr is A,B,C,CTRL (0..3)
-    void write(system_bus* bus, int addr, ubyte val);
+    void write(system_bus* bus, int addr, uint8_t val);
     /// read from the PIO, addr is A,B,C (CTRL can't be read)
-    ubyte read(system_bus* bus, int addr);
+    uint8_t read(system_bus* bus, int addr);
 
 private:
     /// change the control bits
-    void set_mode(system_bus* bus, ubyte val);
+    void set_mode(system_bus* bus, uint8_t val);
     /// return input or output mode for port A
     int port_a_mode() const {
         return this->control & (1<<4) ? MODE_INPUT : MODE_OUTPUT;
@@ -70,11 +70,10 @@ private:
     /// output value on port C to data bus
     void output_port_c(system_bus* bus) const;
     /// input value on port C
-    ubyte input_port_c(system_bus* bus);
+    uint8_t input_port_c(system_bus* bus);
 
     int id = 0;
 };
-
 
 } // namespace YAKC
 
