@@ -86,8 +86,6 @@ public:
     int8_t rs8(uint16_t addr) const;
     /// write a byte to cpu address
     void w8(uint16_t addr, uint8_t b) const;
-    /// read/write access to byte
-    uint8_t& a8(uint16_t addr);
     /// read a word at cpu address
     uint16_t r16(uint16_t addr) const;
     /// write a word to cpu address
@@ -122,12 +120,6 @@ memory::r8(uint16_t addr) const {
 inline int8_t
 memory::rs8(uword addr) const {
     return (int8_t) this->pages[addr>>page::shift].read_ptr[addr&page::mask];
-}
-
-//------------------------------------------------------------------------------
-inline uint8_t&
-memory::a8(uint16_t addr) {
-    return this->pages[addr>>page::shift].write_ptr[addr&page::mask];
 }
 
 //------------------------------------------------------------------------------

@@ -247,24 +247,24 @@ kc85::handle_keyboard_input() {
     const uword ix = this->board->cpu.IX;
     if (0 == this->key_code) {
         // if keycode is 0, this basically means the CTC3 timeout was hit
-        mem.a8(ix+0x8) |= timeout;      // set the CTC3 timeout bit
-        mem.w8(ix+0xD, 0);              // clear current keycode
+        mem.w8(ix+0x8, mem.r8(ix+0x8)|timeout); // set the CTC3 timeout bit
+        mem.w8(ix+0xD, 0);                      // clear current keycode
     }
     else {
         // a valid keycode has been received, clear the timeout bit
-        mem.a8(ix+0x8) &= ~timeout;
+        mem.w8(ix+0x8, mem.r8(ix+0x8)&~timeout);
 
         // check for key-repeat
         if (this->key_code != mem.r8(ix+0xD)) {
             // no key-repeat
-            mem.w8(ix+0xD, this->key_code);     // write new keycode
-            mem.a8(ix+0x8) &= ~repeat;          // clear the first-key-repeat bit
-            mem.a8(ix+0x8) |= keyready;         // set the key-ready bit
-            mem.w8(ix+0xA, 0);                  // clear the key-repeat counter
+            mem.w8(ix+0xD, this->key_code);             // write new keycode
+            mem.w8(ix+0x8, mem.r8(ix+0x8)&~repeat);     // clear the first-key-repeat bit
+            mem.w8(ix+0x8, mem.r8(ix+0x8)|keyready);    // set the key-ready bit
+            mem.w8(ix+0xA, 0);                          // clear the key-repeat counter
         }
         else {
             // handle key-repeat
-            mem.a8(ix+0xA)++;                   // increment repeat-pause-counter
+            mem.w8(ix+0xA, mem.r8(ix+0xA)+1);   // increment repeat-pause-counter
             if (mem.r8(ix+0x8) & repeat) {
                 // this is a followup, short key-repeat
                 if (mem.r8(ix+0xA) < short_repeat_count) {
@@ -280,11 +280,11 @@ kc85::handle_keyboard_input() {
                 }
                 else {
                     // first key-repeat pause over, set first-key-repeat flag
-                    mem.a8(ix+0x8) |= repeat;
+                    mem.w8(ix+0x8, mem.r8(ix+0x8)|repeat);
                 }
             }
             // key-repeat triggered, just set the key-ready flag and reset repeat-count
-            mem.a8(ix+0x8) |= keyready;
+            mem.w8(ix+0x8, mem.r8(ix+0x8)|keyready);
             mem.w8(ix+0xA, 0);
         }
     }
