@@ -13,7 +13,7 @@ memory::memory() {
 
 //------------------------------------------------------------------------------
 void
-memory::map_rw(int layer, uint16_t addr, unsigned int size, uint8_t* read_ptr, uint8_t* write_ptr) {
+memory::map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8_t* write_ptr) {
     YAKC_ASSERT((layer >= 0) && (layer < num_layers));
     YAKC_ASSERT((addr & page::mask) == 0);
     YAKC_ASSERT((size & page::mask) == 0);
@@ -38,7 +38,7 @@ memory::map_rw(int layer, uint16_t addr, unsigned int size, uint8_t* read_ptr, u
 
 //------------------------------------------------------------------------------
 void
-memory::map(int layer, uint16_t addr, unsigned int size, uint8_t* ptr, bool writable) {
+memory::map(int layer, uint16_t addr, uint32_t size, uint8_t* ptr, bool writable) {
     if (writable) {
         this->map_rw(layer, addr, size, ptr, ptr);
     }
@@ -84,12 +84,12 @@ memory::update_mapping(int page_index) {
     // set the CPU-visible mapping
     if (layer_index != num_layers) {
         // a valid mapping exists for this page
-        this->pages[page_index] = this->layers[layer_index][page_index];
+        this->page_table[page_index] = this->layers[layer_index][page_index];
     }
     else {
         // no mapping exists, set to the special 'unmapped page'
-        this->pages[page_index].read_ptr = this->unmapped_page;
-        this->pages[page_index].write_ptr = nullptr;
+        this->page_table[page_index].read_ptr = this->unmapped_page;
+        this->page_table[page_index].write_ptr = nullptr;
     }
 }
 
@@ -98,7 +98,7 @@ int
 memory::layer(uint16_t addr) const {
     const int page_index = addr>>page::shift;
     for (int layer_index = 0; layer_index < num_layers; layer_index++) {
-        if (this->pages[page_index].read_ptr == this->layers[layer_index][page_index].read_ptr) {
+        if (this->page_table[page_index].read_ptr == this->layers[layer_index][page_index].read_ptr) {
             return layer_index;
         }
     }
