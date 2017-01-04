@@ -24,13 +24,18 @@ memory::map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8
     for (int i = 0; i < num; i++) {
         const uint16_t offset = i * page::size;
         const uint16_t page_index = ((addr+offset)&addr_mask) >> page::shift;    // page index will wrap around
+
+        // the pointers are 'pre-offsetted' by the upper 6 bits of the 16-bit
+        // page-start address, this saves us a masking operation later when
+        // when accessing the page
+        const int pre_offset = page_index * page::size;
         YAKC_ASSERT(page_index < num_pages);
-        this->layers[layer][page_index].read_ptr = read_ptr + offset;
+        this->layers[layer][page_index].read_ptr = (read_ptr - pre_offset) + offset;
         if (nullptr != write_ptr) {
-            this->layers[layer][page_index].write_ptr = write_ptr + offset;
+            this->layers[layer][page_index].write_ptr = (write_ptr - pre_offset) + offset;
         }
         else {
-            this->layers[layer][page_index].write_ptr = this->junk_page;
+            this->layers[layer][page_index].write_ptr = this->junk_page - pre_offset;
         }
         this->update_mapping(page_index);
     }
@@ -88,21 +93,10 @@ memory::update_mapping(int page_index) {
     }
     else {
         // no mapping exists, set to the special 'unmapped page'
-        this->page_table[page_index].read_ptr = this->unmapped_page;
-        this->page_table[page_index].write_ptr = this->junk_page;
+        const int pre_offset = page_index * page::size;
+        this->page_table[page_index].read_ptr = this->unmapped_page - pre_offset;
+        this->page_table[page_index].write_ptr = this->junk_page - pre_offset;
     }
-}
-
-//------------------------------------------------------------------------------
-int
-memory::layer(uint16_t addr) const {
-    const int page_index = addr>>page::shift;
-    for (int layer_index = 0; layer_index < num_layers; layer_index++) {
-        if (this->page_table[page_index].read_ptr == this->layers[layer_index][page_index].read_ptr) {
-            return layer_index;
-        }
-    }
-    return -1;
 }
 
 } // namespace YAKC

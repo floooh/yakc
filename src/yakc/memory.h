@@ -75,13 +75,9 @@ public:
     void unmap_layer(int layer);
     /// unmap all memory pages
     void unmap_all();
-    /// get the layer index a memory page is mapped to, -1 if unmapped
-    int layer(uint16_t addr) const;
     /// map a Z80 address to host memory pointer (read-only)
     const uint8_t* read_ptr(uint16_t addr) const;
 
-    /// test if an address is writable
-    bool is_writable(uint16_t addr) const;
     /// read a byte at cpu address
     uint8_t r8(uint16_t addr) const;
     /// read a signed byte at cpu address
@@ -107,27 +103,21 @@ memory::read_ptr(uint16_t addr) const {
 }
 
 //------------------------------------------------------------------------------
-inline bool
-memory::is_writable(uint16_t addr) const {
-    return this->junk_page != this->page_table[addr>>page::shift].write_ptr;
-}
-
-//------------------------------------------------------------------------------
 inline void
 memory::w8(uint16_t addr, uint8_t b) const {
-    this->page_table[addr>>page::shift].write_ptr[addr&page::mask] = b;
+    this->page_table[addr>>page::shift].write_ptr[addr] = b;
 }
 
 //------------------------------------------------------------------------------
 inline uint8_t
 memory::r8(uint16_t addr) const {
-    return this->page_table[addr>>page::shift].read_ptr[addr&page::mask];
+    return this->page_table[addr>>page::shift].read_ptr[addr];
 }
 
 //------------------------------------------------------------------------------
 inline int8_t
 memory::rs8(uint16_t addr) const {
-    return (int8_t) this->page_table[addr>>page::shift].read_ptr[addr&page::mask];
+    return (int8_t) this->page_table[addr>>page::shift].read_ptr[addr];
 }
 
 //------------------------------------------------------------------------------
