@@ -62,6 +62,8 @@ public:
     page page_table[num_pages];
     /// a dummy page for currently unmapped memory
     uint8_t unmapped_page[page::size];
+    /// another write-only 'junk' page for writes to ROM areas
+    uint8_t junk_page[page::size];
 
     /// constructor
     memory();
@@ -107,7 +109,13 @@ memory::read_ptr(uint16_t addr) const {
 //------------------------------------------------------------------------------
 inline bool
 memory::is_writable(uint16_t addr) const {
-    return nullptr != this->page_table[addr>>page::shift].write_ptr;
+    return this->junk_page != this->page_table[addr>>page::shift].write_ptr;
+}
+
+//------------------------------------------------------------------------------
+inline void
+memory::w8(uint16_t addr, uint8_t b) const {
+    this->page_table[addr>>page::shift].write_ptr[addr&page::mask] = b;
 }
 
 //------------------------------------------------------------------------------
@@ -123,28 +131,19 @@ memory::rs8(uint16_t addr) const {
 }
 
 //------------------------------------------------------------------------------
+inline void
+memory::w16(uint16_t addr, uint16_t w) const {
+    this->w8(addr, w & 0xFF);
+    this->w8(addr + 1, (w>>8));
+}
+
+//------------------------------------------------------------------------------
 inline uint16_t
 memory::r16(uint16_t addr) const {
     uint8_t l = this->r8(addr);
     uint8_t h = this->r8(addr+1);
     uint16_t w = h << 8 | l;
     return w;
-}
-
-//------------------------------------------------------------------------------
-inline void
-memory::w8(uint16_t addr, uint8_t b) const {
-    const auto& page = this->page_table[addr>>page::shift];
-    if (page.write_ptr) {
-        page.write_ptr[addr & page::mask] = b;
-    }
-}
-
-//------------------------------------------------------------------------------
-inline void
-memory::w16(uint16_t addr, uint16_t w) const {
-    this->w8(addr, w & 0xFF);
-    this->w8(addr + 1, (w>>8));
 }
 
 //------------------------------------------------------------------------------

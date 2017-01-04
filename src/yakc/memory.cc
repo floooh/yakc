@@ -30,7 +30,7 @@ memory::map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8
             this->layers[layer][page_index].write_ptr = write_ptr + offset;
         }
         else {
-            this->layers[layer][page_index].write_ptr = nullptr;
+            this->layers[layer][page_index].write_ptr = this->junk_page;
         }
         this->update_mapping(page_index);
     }
@@ -89,7 +89,7 @@ memory::update_mapping(int page_index) {
     else {
         // no mapping exists, set to the special 'unmapped page'
         this->page_table[page_index].read_ptr = this->unmapped_page;
-        this->page_table[page_index].write_ptr = nullptr;
+        this->page_table[page_index].write_ptr = this->junk_page;
     }
 }
 
