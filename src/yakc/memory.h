@@ -99,7 +99,8 @@ private:
 //------------------------------------------------------------------------------
 inline const uint8_t*
 memory::read_ptr(uint16_t addr) const {
-    return this->page_table[addr>>page::shift].read_ptr;
+    const int page_index = addr>>page::shift;
+    return this->page_table[page_index].read_ptr + page_index*page::size;
 }
 
 //------------------------------------------------------------------------------
