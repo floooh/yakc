@@ -40,7 +40,7 @@ static uint8_t reg_access[int(mc6845::type::NUM)][mc6845::NUM_REGS] = {
 
 //------------------------------------------------------------------------------
 void
-mc6845::init(enum type t) {
+mc6845::init(enum class type t) {
     YAKC_ASSERT(t < type::NUM);
     this->type = int(t);
     this->reset();

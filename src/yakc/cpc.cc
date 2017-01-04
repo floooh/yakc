@@ -53,8 +53,7 @@ cpc::init_keymap() {
         "   *KJFDA "
         "  `?MNBC  "
         "   >< VXZ ";
-    int l = strlen(kbd);
-    YAKC_ASSERT(l == 160);
+    YAKC_ASSERT(strlen(kbd) == 160);
     for (int shift = 0; shift < 2; shift++) {
         for (int col = 0; col < 10; col++) {
             for (int bit = 0; bit < 8; bit++) {
