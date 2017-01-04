@@ -458,7 +458,7 @@ zx::system_info() const {
 //------------------------------------------------------------------------------
 void
 zx::decode_video_line(uint16_t y) {
-    YAKC_ASSERT((y >= 0) && (y < 256));
+    YAKC_ASSERT(y < 256);
 
     // decode a single line from the ZX framebuffer into the
     // emulator's framebuffer

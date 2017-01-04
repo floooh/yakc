@@ -32,7 +32,7 @@ static uint8_t reg_bits[mc6845::NUM_REGS] = {
 };
 
 // 1: writable, 2: readable, 3: read/write
-static uint8_t reg_access[int(mc6845::type::NUM)][mc6845::NUM_REGS] = {
+static uint8_t reg_access[mc6845::NUM_TYPES][mc6845::NUM_REGS] = {
     { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 2, 2 },
     { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 2 },
     { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 2 }
@@ -40,8 +40,8 @@ static uint8_t reg_access[int(mc6845::type::NUM)][mc6845::NUM_REGS] = {
 
 //------------------------------------------------------------------------------
 void
-mc6845::init(enum class type t) {
-    YAKC_ASSERT(t < type::NUM);
+mc6845::init(enum type t) {
+    YAKC_ASSERT(t < NUM_TYPES);
     this->type = int(t);
     this->reset();
     for (int i = 0; i < NUM_REGS; i++) {

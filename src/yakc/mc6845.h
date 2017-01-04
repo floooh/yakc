@@ -16,12 +16,12 @@ namespace YAKC {
 class mc6845 {
 public:
     /// subtypes with slightly different behaviour
-    enum class type {
-        UM6845 = 0, // CPC 'type 0'
-        UM6845R,    // CPC 'type 1'
-        MC6845,     // CPC 'type 2'
+    enum type {
+        TYPE_UM6845 = 0, // CPC 'type 0'
+        TYPE_UM6845R,    // CPC 'type 1'
+        TYPE_MC6845,     // CPC 'type 2'
 
-        NUM,
+        NUM_TYPES,
     };
 
     /// initialize the MC6845 instance
@@ -107,7 +107,7 @@ public:
     /// clear a status bit
     void clear(uint8_t mask);
 
-    int type = int(type::MC6845);
+    int type = 0;
     int reg_sel = 0;                // currently selected register
     uint8_t prev_bits = 0;
     uint8_t bits = 0;

@@ -110,7 +110,7 @@ int
 z80::handle_irq(system_bus* bus) {
     int tstates = 0;
     if (this->irq_received) {
-        YAKC_ASSERT((this->IM >= 0) && (this->IM <= 2));
+        YAKC_ASSERT(this->IM <= 2);
 
         tstates += 2;
 

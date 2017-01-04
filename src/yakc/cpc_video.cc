@@ -63,7 +63,7 @@ void
 cpc_video::init(device model_, breadboard* board_) {
     this->model = model_;
     this->board = board_;
-    this->board->mc6845.init(mc6845::type::UM6845R);
+    this->board->mc6845.init(mc6845::TYPE_UM6845R);
     this->board->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
 
     // initialize the color palette (CPC and KC Compact have slightly different colors)

@@ -364,7 +364,7 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         info.HasExecAddr = true;
         info.PayloadOffset = sizeof(zxz80_header);
         if (ext_hdr) {
-            info.PayloadOffset += 2 + (ext_hdr->len_h<<8 | ext_hdr->len_l) & 0xFFFF;
+            info.PayloadOffset += 2 + ((ext_hdr->len_h<<8 | ext_hdr->len_l) & 0xFFFF);
         }
     }
     else if (FileType::CPC_SNA == info.Type) {
