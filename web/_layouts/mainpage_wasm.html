@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  {% include head.html %}
+  <body>
+    {% include main-header-wasm.html %}
+    {% include main-nav-bar.html %}
+
+    <div class="game-border">
+    <canvas class="game" id="canvas" hidden oncontextmenu="event.preventDefault()" width="640" height="512"></canvas>
+    </div>
+
+    <script type="text/javascript" src="emsc.js"></script>
+    <script>
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'yakcapp.wasm.txt', true)
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function() {
+          Module.wasmBinary = xhr.response;
+          var script = document.createElement('script');
+          script.src = "yakcapp.wasm.js";
+          document.body.appendChild(script);
+        };
+        xhr.send(null);
+    </script>
+
+  </body>
+</html>
+

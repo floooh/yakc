@@ -15,19 +15,19 @@ from mod import log, util, project, emscripten, android, nacl
 def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     """builds the final webpage under under fips-deploy/oryol-webpage"""
     ws_dir = util.get_workspace_dir(fips_dir)
-    deploy_dir = '{}/fips-deploy/yakc/yakc-emsc-make-release/'.format(ws_dir)
+    asmjs_dir = '{}/fips-deploy/yakc/yakc-emsc-make-release/'.format(ws_dir)
+    wasm_dir  = '{}/fips-deploy/yakc/yakc-wasm-make-release/'.format(ws_dir)
 
     # webpage files
     copy_tree(proj_dir+'/web/_site', webpage_dir)
 
     # copy the application files
-    for name in ['yakcapp.js'] :
-        log.info('> copy file: {}'.format(name))
-        shutil.copy(deploy_dir + name, webpage_dir + '/' + name)
+    shutil.copy(asmjs_dir + 'yakcapp.js', webpage_dir + '/yakcapp.js')
+    shutil.copy(wasm_dir  + 'yakcapp.js', webpage_dir + '/yakcapp.wasm.js')
+    shutil.copy(wasm_dir  + 'yakcapp.wasm', webpage_dir + '/yakcapp.wasm.txt')
 
-    # copy kcc and tap files
+    # copy game/rom image files
     for fname in glob.glob(proj_dir + '/files/*') :
-        log.info('> copy file: {}'.format(fname))
         shutil.copy(fname, webpage_dir + '/' + os.path.basename(fname))
 
     # if the virtualkc directory exists, copy everything there
@@ -47,10 +47,12 @@ def build_deploy_webpage(fips_dir, proj_dir) :
         shutil.rmtree(webpage_dir)
     os.makedirs(webpage_dir)
 
-    # compile emscripten, pnacl and android samples
+    # compile
     if emscripten.check_exists(fips_dir) :
         project.gen(fips_dir, proj_dir, 'yakc-emsc-make-release')
         project.build(fips_dir, proj_dir, 'yakc-emsc-make-release')
+        project.gen(fips_dir, proj_dir, 'yakc-wasm-make-release')
+        project.build(fips_dir, proj_dir, 'yakc-wasm-make-release')
    
     # build the webpage via jekyll
     subprocess.call('jekyll build', cwd=proj_dir+'/web', shell=True)
