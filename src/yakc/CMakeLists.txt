@@ -4,7 +4,8 @@ fips_begin_module(yakc)
     fips_dir(core)
     fips_files(
         core.h core.cc 
-        memory.h memory.cc 
+        memory.h memory.cc
+        counter.h
         clock.h clock.cc
         system_bus.h system_bus.cc
     )

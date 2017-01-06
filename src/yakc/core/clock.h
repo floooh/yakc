@@ -9,7 +9,7 @@
     used to generate the CPU clock at 1.75MHz(KC85/3) or 1.77MHz (KC85/4),
     the vertical blank and video scan line timings.
 */
-#include "yakc/core/core.h"
+#include "yakc/core/counter.h"
 
 namespace YAKC {
 
@@ -29,16 +29,9 @@ public:
     /// advance the timers by a number of cycles
     void step(system_bus* bus, int num_cycles);
 
-    /// the clock main frequency in KHz
     int base_freq_khz = 0;
-    /// max number of timers
     static const int num_timers = 4;
-    /// timer state
-    struct timer_state {
-        int period = 0;         // the timer period in cycles
-        int count = 0;          // how often the counter went through 0
-        int value = 0;          // current counter value in cycles
-    } timers[num_timers];
+    counter timers[num_timers];
 };
 
 } // namespace YAKC

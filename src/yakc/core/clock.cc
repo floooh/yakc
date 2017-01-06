@@ -12,7 +12,7 @@ clock::init(int khz) {
     YAKC_ASSERT(khz > 0);
     this->base_freq_khz = khz;
     for (auto& t : this->timers) {
-        t = timer_state();
+        t = counter();
     }
 }
 
@@ -27,10 +27,7 @@ void
 clock::config_timer_hz(int index, int hz) {
     YAKC_ASSERT((index >= 0) && (index < num_timers));
     YAKC_ASSERT(hz > 0);
-    auto& t = this->timers[index];
-    t.period = (this->base_freq_khz*1000)/hz;
-    t.count = 0;
-    t.value = 0;
+    this->timers[index].init((this->base_freq_khz*1000)/hz);
 }
 
 //------------------------------------------------------------------------------
@@ -38,10 +35,7 @@ void
 clock::config_timer_cycles(int index, int cycles) {
     YAKC_ASSERT((index >= 0) && (index < num_timers));
     YAKC_ASSERT(cycles > 0);
-    auto& t = this->timers[index];
-    t.period = cycles;
-    t.count = 0;
-    t.value = 0;
+    this->timers[index].init(cycles);
 }
 
 //------------------------------------------------------------------------------
@@ -50,10 +44,8 @@ clock::step(system_bus* bus, int num_cycles) {
     for (int i = 0; i < num_timers; i++) {
         auto& t = this->timers[i];
         if (t.period > 0) {
-            t.value -= num_cycles;
-            while (t.value < 0) {
-                t.count++;
-                t.value += t.period;
+            t.update(num_cycles);
+            while (t.step()) {
                 if (bus) {
                     bus->timer(i);
                 }

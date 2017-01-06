@@ -65,7 +65,6 @@ snapshot::write_clock_state(const yakc& emu, state_t& state) {
     state.clock.base_freq_khz = clk.base_freq_khz;
     for (int i = 0; i < 4; i++) {
         state.clock.timers[i].period = clk.timers[i].period;
-        state.clock.timers[i].count  = clk.timers[i].count;
         state.clock.timers[i].value  = clk.timers[i].value;
     }
 }
@@ -77,7 +76,6 @@ snapshot::apply_clock_state(const state_t& state, yakc& emu) {
     clk.base_freq_khz = state.clock.base_freq_khz;
     for (int i = 0; i < 4; i++) {
         clk.timers[i].period = state.clock.timers[i].period;
-        clk.timers[i].count  = state.clock.timers[i].count;
         clk.timers[i].value  = state.clock.timers[i].value;
     }
 }
