@@ -63,6 +63,7 @@ void
 cpc_video::init(device model_, breadboard* board_) {
     this->model = model_;
     this->board = board_;
+    this->cycle_counter.init(4);    // step every 4 CPU cycles
     this->board->mc6845.init(mc6845::TYPE_UM6845R);
     this->board->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
 
@@ -84,12 +85,12 @@ cpc_video::init(device model_, breadboard* board_) {
             const ubyte b = val & 0x03;
             const ubyte r = (val>>2) & 0x03;
             const ubyte g = (val>>4) & 0x03;
-            if (b == 0x03)      rgba8 |= 0x00FF0000;    // full blue
-            else if (b != 0)    rgba8 |= 0x007F0000;    // half blue
-            if (g == 0x03)      rgba8 |= 0x0000FF00;    // full green
-            else if (g != 0)    rgba8 |= 0x00007F00;    // half green
-            if (r == 0x03)      rgba8 |= 0x000000FF;    // full red
-            else if (r != 0)    rgba8 |= 0x0000007F;    // half red
+            if (b == 0x03)     rgba8 |= 0x00FF0000;    // full blue
+            else if (b != 0)   rgba8 |= 0x007F0000;    // half blue
+            if (g == 0x03)     rgba8 |= 0x0000FF00;    // full green
+            else if (g != 0)   rgba8 |= 0x00007F00;    // half green
+            if (r == 0x03)     rgba8 |= 0x000000FF;    // full red
+            else if (r != 0)   rgba8 |= 0x0000007F;    // half red
             this->palette[i] = rgba8;
         }
     }
@@ -101,7 +102,7 @@ void
 cpc_video::reset() {
     clear(this->pens, sizeof(this->pens));
     this->board->mc6845.reset();
-    this->crtc_cycle_count = 0;
+    this->cycle_counter.reset();
     this->hsync_irq_count = 0;
     this->hsync_after_vsync_counter = 0;
     this->hsync_start_count = 0;
@@ -252,10 +253,8 @@ cpc_video::step(system_bus* bus, int cycles) {
     // http://www.grimware.org/doku.php/documentations/devices/gatearray#interrupt.generator
     auto& crtc = this->board->mc6845;
     auto& crt = this->board->crt;
-    this->crtc_cycle_count -= cycles;
-    while (this->crtc_cycle_count <= 0) {
-        this->crtc_cycle_count += 4;
-
+    this->cycle_counter.update(cycles);
+    while (this->cycle_counter.step()) {
         crtc.step();
         this->handle_crtc_sync(bus);
         crt.step();

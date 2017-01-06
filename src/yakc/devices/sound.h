@@ -5,6 +5,7 @@
     @brief sound generator for simple beeper sound
 */
 #include "yakc/core/core.h"
+#include "yakc/core/counter.h"
 #include <atomic>
 
 namespace YAKC {
@@ -21,8 +22,7 @@ public:
     void fill_samples(float* buffer, int num_samples);
 
     int sound_hz;               // playback frequency
-    int sample_cycles;          // length of one audio sample in CPU cycles
-    int sample_counter;         // need to generate new sample if counter goes below zero
+    counter sample_counter;     // triggers when new sample needs to be generated
 
     static const int precision = 8;
     static const int num_buffers = 32;

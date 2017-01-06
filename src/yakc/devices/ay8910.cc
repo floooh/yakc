@@ -52,8 +52,7 @@ void
 ay8910::init(int cpu_khz, int ay_khz, int sound_hz) {
     // NOTE: cpu_khz should be a multiple of ay_khz
     sound::init(cpu_khz, sound_hz);
-    this->tone_update_period = (cpu_khz * 8) / ay_khz;
-    this->tone_update_count = 0;
+    this->tone_update.init((cpu_khz * 8) / ay_khz);
     this->reset();
 }
 
@@ -82,9 +81,8 @@ void
 ay8910::step(int cpu_cycles) {
 
     // update counters
-    this->tone_update_count -= cpu_cycles;
-    while (this->tone_update_count <= 0) {
-        this->tone_update_count += this->tone_update_period;
+    this->tone_update.update(cpu_cycles);
+    while (this->tone_update.step()) {
         for (int i = 0; i < num_channels; i++) {
             auto& chn = this->channels[i];
             chn.count++;
@@ -120,7 +118,7 @@ ay8910::step(int cpu_cycles) {
             // http://dev-docs.atariforge.org/files/GI_AY-3-8910_Feb-1979.pdf
             if (0 != this->env_volume_add) {
                 this->env_cycle_count++;
-                if (this->env_cycle_count == 16) {
+                if (this->env_cycle_count >= 16) {
                     this->env_cycle_count = 0;
                     const uint8_t env_ctrl = this->regs[ENV_SHAPE_CYCLE];
 
@@ -153,9 +151,8 @@ ay8910::step(int cpu_cycles) {
     }
 
     // generate new sample?
-    this->sample_counter -= cpu_cycles * precision;
-    while (this->sample_counter <= 0) {
-        this->sample_counter += this->sample_cycles;
+    this->sample_counter.update(cpu_cycles * precision);
+    while (this->sample_counter.step()) {
         float vol = 0.0f;
         float s = 0.0f;
         for (int i = 0; i < num_channels; i++) {

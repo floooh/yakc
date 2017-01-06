@@ -50,10 +50,9 @@ speaker::stop_all() {
 //------------------------------------------------------------------------------
 void
 speaker::step(int cpu_cycles) {
-    this->sample_counter -= cpu_cycles * precision;
-    while (this->sample_counter <= 0) {
+    this->sample_counter.update(cpu_cycles * precision);
+    while (this->sample_counter.step()) {
         // generate new sample
-        this->sample_counter += this->sample_cycles;
         float s = 0.0f;
         for (int i = 0; i < 2; i++) {
             auto& chn = this->channels[i];

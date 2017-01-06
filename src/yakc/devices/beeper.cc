@@ -31,10 +31,9 @@ beeper::write(bool b) {
 void
 beeper::step(int cpu_cycles) {
     // super-sample 4x
-    this->sample_counter -= cpu_cycles * precision * super_sample;
-    while (this->sample_counter <= 0) {
+    this->sample_counter.update(cpu_cycles * precision * super_sample);
+    while (this->sample_counter.step()) {
         // generate new super-sampled sample
-        this->sample_counter += this->sample_cycles;
         if (this->state) {
             this->value += 0.5f;
         }

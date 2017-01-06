@@ -45,8 +45,7 @@ public:
     static_assert(NUM_REGS == 16, "AY8910 num regs!");
 
     uint8_t regs[NUM_REGS] = { };
-    int tone_update_period = 0;
-    int tone_update_count = 0;
+    counter tone_update;
 
     static const int num_channels = 3;
     struct channel_t {

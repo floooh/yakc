@@ -40,7 +40,7 @@ public:
     device model = device::none;
     bool debug_video = false;
 
-    int crtc_cycle_count = 0;
+    counter cycle_counter;
     int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
     int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
     int hsync_start_count = 0;

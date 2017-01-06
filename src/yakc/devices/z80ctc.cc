@@ -105,7 +105,7 @@ z80ctc::step(system_bus* bus, int ticks) {
         if (0 == (chn.mode & (RESET|CONSTANT_FOLLOWS))) {
             if (((chn.mode & MODE) == MODE_TIMER) && !chn.waiting_for_trigger) {
                 chn.down_counter -= ticks;
-                while (chn.down_counter <= 0) {
+                while (chn.down_counter < 0) {
                     down_counter_callback(bus, c);
                     chn.down_counter += down_counter_init(chn);
                 }

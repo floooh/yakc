@@ -16,16 +16,15 @@ sound::init(int cpu_khz_, int sound_hz_) {
     this->write_buffer = 0;
     this->write_pos = 0;
     // improve sample_cycle counter precision 8x
-    this->sample_cycles = (cpu_khz_ * 1000 * precision) / sound_hz_;
-    YAKC_ASSERT(this->sample_cycles > 0);
-    this->sample_counter = this->sample_cycles;
+    this->sample_counter.init((cpu_khz_ * 1000 * precision) / sound_hz_);
+    YAKC_ASSERT(this->sample_counter.period > 0);
     clear(this->buf, sizeof(this->buf));
 }
 
 //------------------------------------------------------------------------------
 void
 sound::reset() {
-    this->sample_counter = this->sample_cycles;
+    this->sample_counter.reset();
     this->read_buffer = 0;
     this->write_buffer = 0;
     this->write_pos = 0;
@@ -35,9 +34,8 @@ sound::reset() {
 //------------------------------------------------------------------------------
 void
 sound::step(int cpu_cycles) {
-    this->sample_counter -= cpu_cycles * precision;
-    while (this->sample_counter <= 0) {
-        this->sample_counter += this->sample_cycles;
+    this->sample_counter.update(cpu_cycles * precision);
+    while(sample_counter.step()) {
         float* dst = &(this->buf[this->write_buffer][0]);
         dst[this->write_pos] = 0.0f;
         this->write_pos = (this->write_pos + 1) & (buf_size-1);
