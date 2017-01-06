@@ -202,12 +202,17 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         }
         dbg.store_pc_history(cpu); // FIXME: only if debug window open?
         int ticks_step = cpu.step(this);
-        ticks_step += cpu.handle_irq(this);
         // need to round up ticks to 4, this is a CPC specialty
         ticks_step = (ticks_step + 3) & ~3;
         this->board->clck.step(this, ticks_step);
         this->video.step(this, ticks_step);
         this->board->ay8910.step(ticks_step);
+
+        // hmm: handling the IRQ after the chips fixes some subtle
+        // scrolling problem in Boulderdash (no flickering in
+        // the hiscore line when scrolling down) BUT WHY?
+        ticks_step += cpu.handle_irq(this);
+        ticks_step = (ticks_step + 3) & ~3;
         cur_tick += ticks_step;
     }
     return cur_tick;
