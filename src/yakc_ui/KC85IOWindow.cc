@@ -4,7 +4,7 @@
 #include "KC85IOWindow.h"
 #include "IMUI/IMUI.h"
 #include "yakc_ui/UI.h"
-#include "yakc/kc85.h"
+#include "yakc/systems/kc85.h"
 
 using namespace Oryol;
 

@@ -5,7 +5,7 @@
     @brief simple class to store machine state snapshots
 */
 #include "yakc/yakc.h"
-#include "yakc/snapshot.h"
+#include "yakc/systems/snapshot.h"
 
 namespace YAKC {
 

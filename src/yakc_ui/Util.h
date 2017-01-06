@@ -4,7 +4,7 @@
     @class Util
     @brief emulator app utility functions
 */
-#include "yakc/core.h"
+#include "yakc/core/core.h"
 #include "Core/Assertion.h"
 #include <stdio.h>
 

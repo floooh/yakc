@@ -2,9 +2,9 @@
 //  daisychain_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "yakc/z80.h"
-#include "yakc/z80int.h"
-#include "yakc/system_bus.h"
+#include "yakc/devices/z80.h"
+#include "yakc/devices/z80int.h"
+#include "yakc/core/system_bus.h"
 
 using namespace YAKC;
 

@@ -2,7 +2,7 @@
 //  mem_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "yakc/memory.h"
+#include "yakc/core/memory.h"
 #include <string.h>
 
 using namespace YAKC;

@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "MC6845Window.h"
 #include "IMUI/IMUI.h"
-#include "yakc/mc6845.h"
+#include "yakc/devices/mc6845.h"
 
 using namespace Oryol;
 

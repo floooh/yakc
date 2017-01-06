@@ -4,14 +4,14 @@
     @class YAKC::yakc
     @brief main emulator class
 */
-#include "yakc/core.h"
-#include "yakc/breadboard.h"
-#include "yakc/rom_images.h"
-#include "yakc/kc85.h"
-#include "yakc/z1013.h"
-#include "yakc/z9001.h"
-#include "yakc/zx.h"
-#include "yakc/cpc.h"
+#include "yakc/core/core.h"
+#include "yakc/systems/breadboard.h"
+#include "yakc/systems/rom_images.h"
+#include "yakc/systems/kc85.h"
+#include "yakc/systems/z1013.h"
+#include "yakc/systems/z9001.h"
+#include "yakc/systems/zx.h"
+#include "yakc/systems/cpc.h"
 
 namespace YAKC {
 
