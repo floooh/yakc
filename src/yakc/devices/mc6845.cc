@@ -133,9 +133,7 @@ mc6845::step() {
 
     // update counters
     this->h_count = (this->h_count + 1) & 0xFF;
-    if (this->test(DISPEN)) {
-        this->ma = (this->ma + 1) & 0x3FFF;
-    }
+    this->ma = (this->ma + 1) & 0x3FFF;
     if (this->test(HSYNC)) {
         this->hsync_count++;
     }
@@ -153,7 +151,7 @@ mc6845::step() {
             // new character row
             this->scanline_count = 0;
             this->row_count = (this->row_count + 1) & 0x7F;
-            this->ma_row_start = this->ma;
+            this->ma_row_start += this->regs[H_DISPLAYED];
         }
         if (this->row_count == (1 + this->regs[V_TOTAL])) {
             if (this->adjust_scanline_count >= this->regs[V_TOTAL_ADJUST]) {
