@@ -35,7 +35,7 @@ public:
     static const int num_timers = 4;
     /// timer state
     struct timer_state {
-        int interval = 0;       // the timer interval in cycles
+        int period = 0;         // the timer period in cycles
         int count = 0;          // how often the counter went through 0
         int value = 0;          // current counter value in cycles
     } timers[num_timers];
