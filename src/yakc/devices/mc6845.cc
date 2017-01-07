@@ -14,7 +14,7 @@ static uint8_t reg_bits[mc6845::NUM_REGS] = {
     0xFF,   // H_TOTAL
     0xFF,   // H_DISPLAYED
     0xFF,   // H_SYNC_POS
-    0x0F,   // H_SYNC_WIDTH
+    0xFF,   // SYNC_WIDTHS
     0x7F,   // V_TOTAL
     0x1F,   // V_TOTAL_ADJUST
     0x7F,   // V_DISPLAYED
@@ -44,15 +44,17 @@ mc6845::init(enum type t) {
     YAKC_ASSERT(t < NUM_TYPES);
     this->type = int(t);
     this->reset();
-    for (int i = 0; i < NUM_REGS; i++) {
-        this->regs[i] = 0;
-    }
 }
 
 //------------------------------------------------------------------------------
 void
 mc6845::reset() {
-    // NOTE: control registers are not cleared on reset 
+    for (int i = 0; i < NUM_REGS; i++) {
+        this->regs[i] = 0;
+    }
+    this->reg_sel = 0;
+    this->hsync_width = 0;
+    this->vsync_width = 0;
     this->bits = 0;
     this->prev_bits = 0;
     this->ma = 0;
@@ -63,7 +65,6 @@ mc6845::reset() {
     this->vsync_count = 0;
     this->scanline_count = 0;
     this->adjust_scanline_count = 0;
-    this->reg_sel = 0;
     this->set(DISPEN_H|DISPEN_V);
 }
 
@@ -81,6 +82,9 @@ mc6845::write(uint8_t val) {
         if (reg_access[this->type][this->reg_sel] & 1) {
             this->regs[this->reg_sel] = val & reg_bits[this->reg_sel];
         }
+        // NOTE: hsync/vsync == 0 means 16
+        this->hsync_width = this->regs[SYNC_WIDTHS] & 0x0F;
+        this->vsync_width = (this->regs[SYNC_WIDTHS] >> 4) & 0x0F;
     }
 }
 
@@ -130,18 +134,21 @@ mc6845::step() {
     if (this->row_count == this->regs[V_SYNC_POS]) {
         this->set(VSYNC);
     }
+    if (this->h_count == this->regs[H_SYNC_POS]) {
+        this->set(HSYNC);
+    }
 
     // update counters
     this->h_count = (this->h_count + 1) & 0xFF;
     this->ma = (this->ma + 1) & 0x3FFF;
     if (this->test(HSYNC)) {
-        this->hsync_count++;
+        this->hsync_count = (this->hsync_count + 1) & 0x0F;
     }
     if (this->h_count == (1 + this->regs[H_TOTAL])) {
         // new scanline
         this->h_count = 0;
         if (this->test(VSYNC)) {
-            this->vsync_count++;
+            this->vsync_count = (this->vsync_count + 1) & 0x0F;
         }
         if ((1 == this->type) && (0 == this->row_count)) {
             this->ma_row_start = (this->regs[START_ADDR_HI]<<8) | this->regs[START_ADDR_LO];
@@ -170,20 +177,16 @@ mc6845::step() {
     }
 
     // horizontal status bits
-    if (this->h_count == this->regs[H_SYNC_POS]) {
-        this->set(HSYNC);
+    if (this->hsync_count == this->hsync_width) {
+        this->clear(HSYNC);
         this->hsync_count = 0;
-    }    
+    }
     if (this->h_count == 0) {
         this->clear(HSYNC);
         this->set(DISPEN_H);
     }
     if (this->h_count == this->regs[H_DISPLAYED]) {
         this->clear(DISPEN_H);
-    }
-    if (this->hsync_count == this->regs[H_SYNC_WIDTH]) {
-        this->clear(HSYNC);
-        this->hsync_count = 0;
     }
 
     // vertical status bits
@@ -193,7 +196,7 @@ mc6845::step() {
     if (this->row_count == this->regs[V_DISPLAYED]) {
         this->clear(DISPEN_V);
     }
-    if (this->vsync_count == 16) {
+    if (this->vsync_count == this->vsync_width) {
         this->clear(VSYNC);
         this->vsync_count = 0;
     }

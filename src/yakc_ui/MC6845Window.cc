@@ -24,7 +24,7 @@ MC6845Window::Draw(yakc& emu) {
         ImGui::Text("H Total:       0x%02X", mc.regs[mc6845::H_TOTAL]);
         ImGui::Text("H Displayed:   0x%02X", mc.regs[mc6845::H_DISPLAYED]);
         ImGui::Text("H Sync Pos:    0x%02X", mc.regs[mc6845::H_SYNC_POS]);
-        ImGui::Text("H Sync Width:  0x%02X", mc.regs[mc6845::H_SYNC_WIDTH]);
+        ImGui::Text("H Sync Width:  0x%02X", mc.regs[mc6845::SYNC_WIDTHS]);
         ImGui::Text("V Total:       0x%02X", mc.regs[mc6845::V_TOTAL]);
         ImGui::Text("V Total Adj:   0x%02X", mc.regs[mc6845::V_TOTAL_ADJUST]);
         ImGui::Text("V Displayed:   0x%02X", mc.regs[mc6845::V_DISPLAYED]);

@@ -56,7 +56,7 @@ public:
         H_TOTAL = 0,
         H_DISPLAYED,
         H_SYNC_POS,
-        H_SYNC_WIDTH,
+        SYNC_WIDTHS,
         V_TOTAL,
         V_TOTAL_ADJUST,
         V_DISPLAYED,
@@ -90,17 +90,17 @@ public:
     bool off(uint8_t mask) const;
 
     /// horizontal counter
-    int h_count;
+    int h_count = 0;
     /// hsync counter
-    int hsync_count;
+    int hsync_count = 0;
     /// character row counter
-    int row_count;
+    int row_count = 0;
     /// vsync counter
-    int vsync_count;
+    int vsync_count = 0;
     /// scanline counter
-    int scanline_count;
+    int scanline_count = 0;
     /// vtotal_adjust additional scanline counter
-    int adjust_scanline_count;
+    int adjust_scanline_count = 0;
 
     /// set a status bit
     void set(uint8_t mask);
@@ -109,6 +109,8 @@ public:
 
     int type = 0;
     int reg_sel = 0;                // currently selected register
+    int hsync_width = 0;
+    int vsync_width = 0;
     uint8_t prev_bits = 0;
     uint8_t bits = 0;
     uint16_t ma_row_start = 0;      // memory address at row start
