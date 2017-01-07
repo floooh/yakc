@@ -578,7 +578,7 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             cpu.I = hdr->I;
             cpu.R = (hdr->R & 0x7F) | ((hdr->flags0 & 1)<<7);
             cpu.IFF2 = hdr->IFF2;
-            cpu.enable_interrupt = hdr->EI != 0;
+            cpu.int_enable = hdr->EI != 0;
             if (hdr->flags1 != 0xFF) {
                 cpu.IM = (hdr->flags1 & 3);
             }

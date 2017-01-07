@@ -13,8 +13,8 @@ BC_(0), DE_(0), HL_(0), AF_(0), WZ_(0),
 SP(0), PC(0), I(0), R(0), IM(0),
 HALT(false), IFF1(false), IFF2(false), INV(false),
 irq_device(nullptr),
-irq_received(false),
-enable_interrupt(false),
+int_active(false),
+int_enable(false),
 break_on_invalid_opcode(false) {
     this->init_tables();
 }
@@ -62,8 +62,8 @@ z80::reset() {
     this->IFF2 = false;
     this->I = 0;
     this->R = 0;
-    this->irq_received = false;
-    this->enable_interrupt = false;
+    this->int_active = false;
+    this->int_enable = false;
 }
 
 //------------------------------------------------------------------------------
@@ -101,15 +101,15 @@ z80::rst(ubyte vec) {
 
 //------------------------------------------------------------------------------
 void
-z80::irq() {
-    this->irq_received = true;
+z80::irq(bool b) {
+    this->int_active = b;
 }
 
 //------------------------------------------------------------------------------
 int
 z80::handle_irq(system_bus* bus) {
     int tstates = 0;
-    if (this->irq_received) {
+    if (this->int_active) {
         YAKC_ASSERT(this->IM <= 2);
 
         tstates += 2;
@@ -122,7 +122,7 @@ z80::handle_irq(system_bus* bus) {
 
         if (this->IFF1) {
             this->IFF1 = this->IFF2 = false;
-            this->irq_received = false;
+            this->int_active = false;
             if (0 == this->IM) {
                 // NOT IMPLEMENTED
             }
@@ -131,7 +131,7 @@ z80::handle_irq(system_bus* bus) {
                 SP -= 2;
                 mem.w16(SP, PC);
                 this->PC = 0x38;
-                tstates += 13;
+                tstates += 11;
                 if (bus) {
                     bus->iack();
                 }
@@ -183,7 +183,7 @@ z80::ei() {
     // NOTE: interrupts are actually enabled *after the next instruction*,
     // thus we only set a flag here, the IFF flags will then be changed
     // during the next instruction decode in step()
-    this->enable_interrupt = true;
+    this->int_enable = true;
 }
 
 //------------------------------------------------------------------------------

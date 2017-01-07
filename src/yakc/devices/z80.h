@@ -76,10 +76,10 @@ public:
 
     /// highest priority interrupt controller in daisy chain
     z80int* irq_device;
-    /// an interrupt request has been received
-    bool irq_received;
+    /// INT line is currently active
+    bool int_active;
     /// delayed-interrupt-enable flag set bei ei()
-    bool enable_interrupt;
+    bool int_enable;
     /// break on invalid opcode?
     bool break_on_invalid_opcode;
 
@@ -101,9 +101,9 @@ public:
     /// helper method to swap 2 16-bit registers
     static void swap16(uword& r0, uword& r1);
 
-    /// receive an interrupt request
-    void irq();
-    /// handle an interrupt request, must be called after step(), return num tstates taken
+    /// trigger interrupt request line on or off
+    void irq(bool b);
+    /// handle interrupt request
     int handle_irq(system_bus* bus);
     /// implement the RETI instruction
     void reti();
@@ -503,9 +503,9 @@ z80::fetch_op() {
 inline uint32_t
 z80::step(system_bus* bus) {
     INV = false;
-    if (enable_interrupt) {
+    if (int_enable) {
         IFF1 = IFF2 = true;
-        enable_interrupt = false;
+        int_enable = false;
     }
     return do_op(bus);
 }

@@ -102,11 +102,13 @@ void
 cpc_video::reset() {
     clear(this->pens, sizeof(this->pens));
     this->board->mc6845.reset();
+    this->board->crt.reset();
     this->cycle_counter.reset();
     this->hsync_irq_count = 0;
     this->hsync_after_vsync_counter = 0;
     this->hsync_start_count = 0;
     this->hsync_end_count = 0;
+    this->int_acknowledge_counter = 0;
     this->request_interrupt = false;
     this->next_video_mode = 1;
     this->video_mode = 1;
@@ -128,27 +130,21 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
     // at most 4us unless CRTC HSYNC is triggered off earlier
     auto& crtc = this->board->mc6845;
     auto& crt = this->board->crt;
-    if (crtc.on(mc6845::HSYNC)) {
-        this->hsync_start_count = 2;
-        this->hsync_end_count = 6;
-    }
-    if (crtc.on(mc6845::VSYNC)) {
-        crt.trigger_vsync();
-        this->hsync_after_vsync_counter = 3;
-        bus->vblank();
-    }
     if (hsync_start_count > 0) {
         this->hsync_start_count--;
         if (this->hsync_start_count == 0) {
             crt.trigger_hsync();
         }
     }
-    if (crtc.off(mc6845::HSYNC)) {
-        // check if CRTC hsync needs to end early
-        if (this->hsync_end_count > 1) {
-            this->hsync_end_count = 1;
+    if (this->int_acknowledge_counter > 0) {
+        this->int_acknowledge_counter--;
+        if (this->int_acknowledge_counter == 0) {
+            // clear top bit of hsync counter, makes sure the next hsync irq
+            // won't happen until at least 32 lines later
+            this->hsync_irq_count &= 0x1F;
+            bus->irq(false);
         }
-    }
+    }    
     if (this->hsync_end_count > 0) {
         this->hsync_end_count--;
         if (0 == this->hsync_end_count) {
@@ -175,10 +171,21 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
                 this->request_interrupt = true;
             }
             if (this->request_interrupt) {
-                bus->irq();
+                bus->irq(true);
             }
         }
     }
+    if (crtc.on(mc6845::HSYNC)) {
+        this->hsync_start_count = 2;
+    }
+    if (crtc.off(mc6845::HSYNC)) {
+        this->hsync_end_count = 2;
+    }
+    if (crtc.on(mc6845::VSYNC)) {
+        crt.trigger_vsync();
+        this->hsync_after_vsync_counter = 3;
+        bus->vblank();
+    }    
 }
 
 //------------------------------------------------------------------------------

@@ -101,8 +101,8 @@ public:
             ubyte HALT, IFF1, IFF2;
 
             ubyte INV;
-            ubyte irq_received;
-            ubyte enable_interrupt;
+            ubyte int_active;
+            ubyte int_enable;
             ubyte padding[3];
         } cpu;
         static_assert((sizeof(cpu_t)&3)==0, "cpu_t odd size!");

@@ -391,9 +391,9 @@ zx::cpu_in(uword port) {
 
 //------------------------------------------------------------------------------
 void
-zx::irq() {
+zx::irq(bool b) {
     // forward interrupt request to CPU
-    this->board->cpu.irq();
+    this->board->cpu.irq(b);
 }
 
 //------------------------------------------------------------------------------
@@ -441,7 +441,7 @@ zx::scanline() {
         this->cur_kbd_mask = this->next_kbd_mask;
         this->scanline_counter = 0;
         this->blink_counter++;
-        this->irq();
+        this->irq(true);
     }
 }
 

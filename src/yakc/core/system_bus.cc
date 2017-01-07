@@ -49,7 +49,7 @@ system_bus::ctc_zcto(int ctc_id, int chn_id) {
 
 //------------------------------------------------------------------------------
 void
-system_bus::irq() {
+system_bus::irq(bool /*b*/) {
     // empty
 }
 

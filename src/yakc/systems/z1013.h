@@ -82,7 +82,7 @@ public:
     /// PIO in callback
     virtual ubyte pio_in(int pio_id, int port_id) override;
     /// interrupt request callback
-    virtual void irq() override;
+    virtual void irq(bool b) override;
 
     /// initialize the key translation table for the basic 8x4 keyboard (z1013.01)
     void init_keymap_8x4();

@@ -58,7 +58,7 @@ public:
     /// PIO input callback
     virtual ubyte pio_in(int pio_id, int port_id) override;
     /// interrupt request callback
-    virtual void irq() override;
+    virtual void irq(bool b) override;
     /// interrupt acknowledge callback
     virtual void iack() override;
     /// vblank callback

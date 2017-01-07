@@ -13,8 +13,8 @@ static ubyte ram[0x4000];
 class daisyChainTestBus : public system_bus {
 public:
     z80 cpu;
-    virtual void irq() {
-        cpu.irq();
+    virtual void irq(bool b) {
+        cpu.irq(b);
     }
 };
 
@@ -57,14 +57,14 @@ TEST(daisychain) {
 
     // EI
     step(bus);
-    CHECK(bus.cpu.enable_interrupt);
+    CHECK(bus.cpu.int_enable);
     CHECK(!bus.cpu.IFF1);
     CHECK(!bus.cpu.IFF2);
 
     // LD SP,0x0100, and delayed interrupt-enable from EI
     step(bus);
     CHECK(bus.cpu.SP == 0x0100);
-    CHECK(!bus.cpu.enable_interrupt);
+    CHECK(!bus.cpu.int_enable);
     CHECK(bus.cpu.IFF1);
     CHECK(bus.cpu.IFF2);
 
@@ -75,9 +75,9 @@ TEST(daisychain) {
     CHECK(!dev0.int_enabled);
     CHECK(!dev1.int_enabled);
     CHECK(!dev2.int_enabled);
-    CHECK(bus.cpu.irq_received);
+    CHECK(bus.cpu.int_active);
     step(bus);
-    CHECK(!bus.cpu.irq_received);
+    CHECK(!bus.cpu.int_active);
     CHECK(!dev0.int_requested);
     CHECK(dev0.int_pending);
     CHECK(!dev0.int_enabled);
@@ -89,13 +89,13 @@ TEST(daisychain) {
 
     // interrupt handler, first execute an EI
     bus.cpu.step(&bus);
-    CHECK(bus.cpu.enable_interrupt);
+    CHECK(bus.cpu.int_enable);
     CHECK(!bus.cpu.IFF1);
     CHECK(!bus.cpu.IFF2);
 
     // a NOP following the EI, interrupts should be enabled again afterwards
     bus.cpu.step(&bus);
-    CHECK(!bus.cpu.enable_interrupt);
+    CHECK(!bus.cpu.int_enable);
     CHECK(bus.cpu.IFF1);
     CHECK(bus.cpu.IFF2);
 

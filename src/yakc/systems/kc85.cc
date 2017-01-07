@@ -409,9 +409,9 @@ kc85::pio_out(int pio_id, int port_id, ubyte val) {
 
 //------------------------------------------------------------------------------
 void
-kc85::irq() {
+kc85::irq(bool b) {
     // forward interrupt request to CPU
-    this->board->cpu.irq();
+    this->board->cpu.irq(b);
 }
 
 //------------------------------------------------------------------------------

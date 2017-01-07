@@ -27,8 +27,8 @@ public:
     /// CTC ZCTO callback
     virtual void ctc_zcto(int ctc_id, int chn_id);
 
-    /// request a CPU interrupt
-    virtual void irq();
+    /// trigger CPU INT line on/off
+    virtual void irq(bool b);
     /// interrupt acknowled CPU
     virtual void iack();
     /// clock timer triggered

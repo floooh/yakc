@@ -25,7 +25,7 @@ public:
     /// set display mode (0..2)
     void set_video_mode(ubyte val);
     /// called when bit 4 in CPU OUT 0x7Fxx is set (resets HSYNC counter)
-    void interrupt_control();
+    void interrupt_control(system_bus* bus);
     /// called when CPU acknowledges interrupt, clears bit 5 of HSYNC counter
     void interrupt_acknowledge();
 
@@ -45,6 +45,7 @@ public:
     int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
     int hsync_start_count = 0;
     int hsync_end_count = 0;
+    int int_acknowledge_counter = 0;
     bool request_interrupt = false;
 
     static const int max_display_width = 768;
@@ -97,16 +98,15 @@ cpc_video::vsync_bit() const {
 
 //------------------------------------------------------------------------------
 inline void
-cpc_video::interrupt_control() {
+cpc_video::interrupt_control(system_bus* bus) {
     this->hsync_irq_count = 0;
+    bus->irq(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 cpc_video::interrupt_acknowledge() {
-    // clear top bit of hsync counter, makes sure the next hsync irq
-    // won't happen until at least 32 lines later
-    this->hsync_irq_count &= ~(1<<5);
+    this->int_acknowledge_counter = 2;
 }
 
 } // namespace YAKC

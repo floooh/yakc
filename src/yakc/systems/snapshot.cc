@@ -220,8 +220,8 @@ snapshot::write_cpu_state(const yakc& emu, state_t& state) {
     state.cpu.IFF1 = cpu.IFF1;
     state.cpu.IFF2 = cpu.IFF2;
     state.cpu.INV  = cpu.INV;
-    state.cpu.irq_received = cpu.irq_received;
-    state.cpu.enable_interrupt = cpu.enable_interrupt;
+    state.cpu.int_active = cpu.int_active;
+    state.cpu.int_enable = cpu.int_enable;
 }
 
 //------------------------------------------------------------------------------
@@ -249,8 +249,8 @@ snapshot::apply_cpu_state(const state_t& state, yakc& emu) {
     cpu.IFF1 = 0 != state.cpu.IFF1;
     cpu.IFF2 = 0 != state.cpu.IFF2;
     cpu.INV  = 0 != state.cpu.INV;
-    cpu.irq_received = 0 != state.cpu.irq_received;
-    cpu.enable_interrupt = 0 != state.cpu.enable_interrupt;
+    cpu.int_active = 0 != state.cpu.int_active;
+    cpu.int_enable = 0 != state.cpu.int_enable;
 }
 
 //------------------------------------------------------------------------------

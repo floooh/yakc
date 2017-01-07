@@ -202,17 +202,13 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         }
         dbg.store_pc_history(cpu); // FIXME: only if debug window open?
         int ticks_step = cpu.step(this);
+        ticks_step += cpu.handle_irq(this);
         // need to round up ticks to 4, this is a CPC specialty
         ticks_step = (ticks_step + 3) & ~3;
-        this->board->clck.step(this, ticks_step);
+
         this->video.step(this, ticks_step);
         this->board->ay8910.step(ticks_step);
 
-        // hmm: handling the IRQ after the chips fixes some subtle
-        // scrolling problem in Boulderdash (no flickering in
-        // the hiscore line when scrolling down) BUT WHY?
-        ticks_step += cpu.handle_irq(this);
-        ticks_step = (ticks_step + 3) & ~3;
         cur_tick += ticks_step;
     }
     return cur_tick;
@@ -251,7 +247,7 @@ cpc::cpu_out(uword port, ubyte val) {
                     this->ga_config = val;
                     this->video.set_video_mode(val & 3);
                     if (val & (1<<4)) {
-                        this->video.interrupt_control();
+                        this->video.interrupt_control(this);
                     }
                     this->update_memory_mapping();
                     break;
@@ -490,8 +486,8 @@ cpc::put_input(ubyte ascii, ubyte joy0_mask) {
 
 //------------------------------------------------------------------------------
 void
-cpc::irq() {
-    this->board->cpu.irq();
+cpc::irq(bool b) {
+    this->board->cpu.irq(b);
 }
 
 //------------------------------------------------------------------------------

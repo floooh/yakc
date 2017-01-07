@@ -95,7 +95,7 @@ public:
     /// Z80 PIO output callback
     virtual void pio_out(int pio_id, int port_id, ubyte val) override;
     /// interrupt request callback
-    virtual void irq() override;
+    virtual void irq(bool b) override;
     /// clock timer-trigger callback
     virtual void timer(int timer_id) override;
 

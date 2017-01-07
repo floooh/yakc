@@ -53,7 +53,7 @@ public:
     /// the z80 in callback
     virtual ubyte cpu_in(uword port) override;
     /// interrupt request callback
-    virtual void irq() override;
+    virtual void irq(bool b) override;
     /// clock timer-trigger callback
     virtual void timer(int timer_id) override;
 

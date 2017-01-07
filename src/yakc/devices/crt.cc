@@ -9,12 +9,27 @@ namespace YAKC {
 void
 crt::init(int std, int x, int y, int w, int h) {
     // FIXME: support NTSC
+    this->reset();
     this->video_standard = std;
     this->visible = false;
     this->vis_area.x0 = this->h_disp_start + x;
     this->vis_area.y0 = this->v_disp_start + y;
     this->vis_area.x1 = this->vis_area.x0 + w;
     this->vis_area.y1 = this->vis_area.y0 + h;
+}
+
+//------------------------------------------------------------------------------
+void
+crt::reset() {
+    this->visible = false;
+    this->x = 0;
+    this->y = 0;
+    this->h_pos = 0;
+    this->v_pos = 0;
+    this->h_black = false;
+    this->v_black = false;
+    this->h_retrace = 0;
+    this->v_retrace = 0;
 }
 
 //------------------------------------------------------------------------------

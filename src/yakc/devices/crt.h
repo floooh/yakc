@@ -38,6 +38,8 @@ public:
 
     /// initialize with PAL or NTSC and visible area
     void init(int video_standard, int x, int y, int w, int h);
+    /// reset the object
+    void reset();
     /// step the crt once per micro-second
     void step();
     /// trigger the HSYNC signal (start horizontal retrace)

@@ -444,9 +444,9 @@ z9001::ctc_zcto(int ctc_id, int chn_id) {
 
 //------------------------------------------------------------------------------
 void
-z9001::irq() {
+z9001::irq(bool b) {
     // forward interrupt request to CPU
-    this->board->cpu.irq();
+    this->board->cpu.irq(b);
 }
 
 //------------------------------------------------------------------------------
