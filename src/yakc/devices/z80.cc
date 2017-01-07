@@ -157,7 +157,7 @@ z80::handle_irq(system_bus* bus) {
                 this->SP -= 2;
                 this->mem.w16(this->SP, this->PC);
                 this->PC = this->mem.r16(addr);
-                tstates += 19;
+                tstates += 17;
             }
         }
         this->WZ = this->PC;
