@@ -130,11 +130,18 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
     // at most 4us unless CRTC HSYNC is triggered off earlier
     auto& crtc = this->board->mc6845;
     auto& crt = this->board->crt;
-    if (hsync_start_count > 0) {
-        this->hsync_start_count--;
-        if (this->hsync_start_count == 0) {
-            crt.trigger_hsync();
+    if (crtc.on(mc6845::HSYNC)) {
+        this->hsync_start_count = 2;
+    }
+    if (crtc.off(mc6845::HSYNC)) {
+        if (this->hsync_end_count > 2) {
+            this->hsync_end_count = 2;
         }
+    }
+    if (crtc.on(mc6845::VSYNC)) {
+        crt.trigger_vsync();
+        this->hsync_after_vsync_counter = 2;
+        bus->vblank();
     }
     if (this->int_acknowledge_counter > 0) {
         this->int_acknowledge_counter--;
@@ -145,6 +152,13 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
             bus->irq(false);
         }
     }    
+    if (hsync_start_count > 0) {
+        this->hsync_start_count--;
+        if (this->hsync_start_count == 0) {
+            crt.trigger_hsync();
+            this->hsync_end_count = 4;
+        }
+    }
     if (this->hsync_end_count > 0) {
         this->hsync_end_count--;
         if (0 == this->hsync_end_count) {
@@ -175,17 +189,6 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
             }
         }
     }
-    if (crtc.on(mc6845::HSYNC)) {
-        this->hsync_start_count = 2;
-    }
-    if (crtc.off(mc6845::HSYNC)) {
-        this->hsync_end_count = 2;
-    }
-    if (crtc.on(mc6845::VSYNC)) {
-        crt.trigger_vsync();
-        this->hsync_after_vsync_counter = 3;
-        bus->vblank();
-    }    
 }
 
 //------------------------------------------------------------------------------

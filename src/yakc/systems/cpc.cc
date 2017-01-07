@@ -202,13 +202,16 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
         }
         dbg.store_pc_history(cpu); // FIXME: only if debug window open?
         int ticks_step = cpu.step(this);
-        ticks_step += cpu.handle_irq(this);
         // need to round up ticks to 4, this is a CPC specialty
         ticks_step = (ticks_step + 3) & ~3;
 
         this->video.step(this, ticks_step);
         this->board->ay8910.step(ticks_step);
 
+        // this improves screen timing in some games and
+        // demos, BUT WHYHYHY??? also the IRQ handling cycles are
+        // 'lost' to the video and audio hardware
+        ticks_step += cpu.handle_irq(this);
         cur_tick += ticks_step;
     }
     return cur_tick;
