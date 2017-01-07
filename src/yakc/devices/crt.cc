@@ -77,19 +77,15 @@ crt::step() {
 //------------------------------------------------------------------------------
 void
 crt::trigger_hsync() {
-    if (0 == this->h_retrace) {
-        this->h_retrace = 7;
-        this->h_black = true;
-    }
+    this->h_retrace = 7;
+    this->h_black = true;
 }
 
 //------------------------------------------------------------------------------
 void
 crt::trigger_vsync() {
-    if (0 == this->v_retrace) {
-        this->v_retrace = 3;
-        this->v_black = true;
-    }
+    this->v_retrace = 3;
+    this->v_black = true;
 }
 
 } // namespace YAKC
