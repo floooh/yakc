@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
-Version = 2
+Version = 3 
 
 # tab-width for generated code
 TabWidth = 2
@@ -525,7 +525,7 @@ def l(s) :
 #-------------------------------------------------------------------------------
 # write source header
 #
-def write_header(f) :
+def write_header() :
     l('// #version:{}#'.format(Version))
     l('// machine generated, do not edit!')
     l('#include "z80.h"')
@@ -535,7 +535,7 @@ def write_header(f) :
 #-------------------------------------------------------------------------------
 # begin a new instruction group (begins a switch statement)
 #
-def write_begin_group(f, indent, ext_byte=None, read_offset=False) :
+def write_begin_group(indent, ext_byte=None, read_offset=False) :
     if ext_byte :
         # this is a prefix instruction, need to write a case
         l('{}case {}:'.format(tab(indent), hex(ext_byte)))
@@ -552,14 +552,14 @@ def write_begin_group(f, indent, ext_byte=None, read_offset=False) :
 #-------------------------------------------------------------------------------
 # write a single (writes a case inside the current switch)
 #
-def write_op(f, indent, op) :
+def write_op(indent, op) :
     if op.src :
         l('{}case {}: {} // {}'.format(tab(indent), hex(op.byte), op.src, op.cmt))
 
 #-------------------------------------------------------------------------------
 # finish an instruction group (ends current statement)
 #
-def write_end_group(f, indent, inv_op_bytes, ext_byte=None, read_offset=False) :
+def write_end_group(indent, inv_op_bytes, ext_byte=None, read_offset=False) :
     l('{}default: return invalid_opcode({});'.format(tab(indent), inv_op_bytes))
     indent -= 1
     l('{}}}'.format(tab(indent)))
@@ -574,7 +574,7 @@ def write_end_group(f, indent, inv_op_bytes, ext_byte=None, read_offset=False) :
 #-------------------------------------------------------------------------------
 # write source footer
 #
-def write_footer(f) :
+def write_footer() :
     l('}')
     l('} // namespace YAKC');
 
@@ -587,43 +587,43 @@ def do_it(f) :
     global Out
     Out = f
 
-    write_header(f)
+    write_header()
     
     # loop over all instruction bytes
-    indent = write_begin_group(f, 0)
+    indent = write_begin_group(0)
     for i in range(0, 256) :
         # DD or FD prefix instruction?
         if i == 0xDD or i == 0xFD:
-            indent = write_begin_group(f, indent, i)
+            indent = write_begin_group(indent, i)
             patch_reg_tables('IX' if i==0xDD else 'IY')
             for ii in range(0, 256) :
                 if ii == 0xCB:
                     # DD/FD CB prefix
-                    indent = write_begin_group(f, indent, ii, True)
+                    indent = write_begin_group(indent, ii, True)
                     for iii in range(0, 256) :
-                        write_op(f, indent, enc_cb_op(iii, 4, True))
-                    indent = write_end_group(f, indent, 4, True, True)
+                        write_op(indent, enc_cb_op(iii, 4, True))
+                    indent = write_end_group(indent, 4, True, True)
                 else:
-                    write_op(f, indent, enc_op(ii, 4, True))
+                    write_op(indent, enc_op(ii, 4, True))
             unpatch_reg_tables()
-            indent = write_end_group(f, indent, 2, True)
+            indent = write_end_group(indent, 2, True)
         # ED prefix instructions
         elif i == 0xED:
-            indent = write_begin_group(f, indent, i)
+            indent = write_begin_group(indent, i)
             for ii in range(0, 256) :
-                write_op(f, indent, enc_ed_op(ii))
-            indent = write_end_group(f, indent, 2, True)
+                write_op(indent, enc_ed_op(ii))
+            indent = write_end_group(indent, 2, True)
         # CB prefix instructions
         elif i == 0xCB:
-            indent = write_begin_group(f, indent, i, False)
+            indent = write_begin_group(indent, i, False)
             for ii in range(0, 256) :
-                write_op(f, indent, enc_cb_op(ii, 0, False))
-            indent = write_end_group(f, indent, 2, True)
+                write_op(indent, enc_cb_op(ii, 0, False))
+            indent = write_end_group(indent, 2, True)
         # non-prefixed instruction
         else:
-            write_op(f, indent, enc_op(i, 0, False))
-    write_end_group(f, indent, 1)
-    write_footer(f)
+            write_op(indent, enc_op(i, 0, False))
+    write_end_group(indent, 1)
+    write_footer()
 
 #-------------------------------------------------------------------------------
 # fips code generator entry 
