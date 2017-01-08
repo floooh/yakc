@@ -492,6 +492,8 @@ UI::OnFrame(yakc& emu) {
                 }
                 ImGui::EndMenu();
             }
+            ImGui::SameLine(ImGui::GetWindowWidth() - 100);
+            ImGui::Text("emu: %.2fms\n", this->EmulationTime.AsMilliSeconds());
             ImGui::EndMainMenuBar();
         }
 

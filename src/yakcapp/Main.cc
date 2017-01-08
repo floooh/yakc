@@ -134,6 +134,7 @@ YakcApp::OnRunning() {
     Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(clear));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     uint64_t processed_audio_cycles = this->audio.GetProcessedCycles();
+    TimePoint emu_start_time = Clock::Now();
     #if YAKC_UI
         o_trace_begin(yakc_kc);
         // keep CPU synchronized to a small time window ahead of audio playback
@@ -149,6 +150,7 @@ YakcApp::OnRunning() {
         o_trace_end();
         this->draw.UpdateParams(true, true, glm::vec2(1.0f/64.0f));
     #endif
+    this->ui.EmulationTime = Clock::Since(emu_start_time);
     this->audio.Update();
     int width = 0;
     int height = 0;

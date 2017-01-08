@@ -50,6 +50,8 @@ public:
         float crtWarp = 1.0f/64.0f;
     } Settings;
 
+    Oryol::Duration EmulationTime;
+
 private:
     FileLoader fileLoader;
     SnapshotStorage snapshotStorage;
