@@ -17,6 +17,7 @@ fips_begin_module(yakc)
         z80pio.h z80pio.cc
         z80ctc.h z80ctc.cc 
         z80dbg.h z80dbg.cc
+        mos6502.h mos6502.cc
         i8255.h i8255.cc
         mc6845.h mc6845.cc
         sound.h sound.cc
@@ -25,6 +26,7 @@ fips_begin_module(yakc)
         ay8910.h ay8910.cc
     )
     fips_generate(FROM z80_opcodes.py SOURCE z80_opcodes.cc)
+    fips_generate(FROM mos6502_opcodes.py SOURCE mos6502_opcodes.cc)
     fips_dir(systems)
     fips_files(
         rom_images.h rom_images.cc
