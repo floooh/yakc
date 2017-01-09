@@ -80,7 +80,6 @@ public:
     void lda(uint16_t addr);
     void ldx(uint16_t addr);
     void ldy(uint16_t addr);
-
     void sta(uint16_t addr);
     void stx(uint16_t addr);
     void sty(uint16_t addr);
@@ -132,6 +131,9 @@ public:
     void bit(uint16_t addr);
 };
 
+// set N and Z flags on P depending on V, return new P
+#define YAKC_MOS6502_NZ(p,v) ((p & ~(NF|ZF)) | ((v & 0xFF) ? (v & NF):ZF))
+
 //------------------------------------------------------------------------------
 inline uint8_t
 mos6502::fetch_op() {
@@ -139,15 +141,22 @@ mos6502::fetch_op() {
 }
 
 //------------------------------------------------------------------------------
+inline uint32_t
+mos6502::step(system_bus* bus) {
+    return do_op(bus);
+}
+
+//------------------------------------------------------------------------------
 inline uint16_t
 mos6502::addr_imm() {
-    uint16_t addr = PC++;
-    return addr;
+    cycles++;
+    return PC++;
 }
 
 //------------------------------------------------------------------------------
 inline uint16_t
 mos6502::addr_a() {
+    cycles += 3;
     uint16_t addr = mem.r16(PC);
     PC += 2;
     return addr;
@@ -156,36 +165,54 @@ mos6502::addr_a() {
 //------------------------------------------------------------------------------
 inline uint16_t
 mos6502::addr_z() {
-    uint16_t addr = mem.r8(PC++);
-    return addr;
+    cycles += 2;
+    return mem.r8(PC++);
 }
 
 //------------------------------------------------------------------------------
 inline uint16_t
 mos6502::addr_ai(uint8_t i) {
-    uint16_t addr = mem.r16(PC) + i;
+    cycles += 3;
+    uint16_t a0 = mem.r16(PC);
     PC += 2;
+    uint16_t addr = a0 + i;
+    if ((a0 & 0xFF00) != (addr & 0xFF00)) {
+        // page boundary crossed
+        cycles += 1;
+    }
     return addr;
 }
 
 //------------------------------------------------------------------------------
 inline uint16_t
 mos6502::addr_zi(uint8_t i) {
-    uint16_t addr = (mem.r8(PC++) + i) & 0xFF;
-    return addr;
+    cycles += 3;
+    return (mem.r8(PC++) + i) & 0x00FF;
 }
 
 //------------------------------------------------------------------------------
 inline uint16_t
 mos6502::addr_ix() {
-    uint16_t addr = mem.r16((mem.r8(PC++) + X) & 0xFF);
-    return addr;
+    cycles += 5;
+    uint16_t z = mem.r8(PC++) + X;
+    uint8_t al = mem.r8(z);
+    uint8_t ah = mem.r8((z + 1) & 0xFF);
+    return ah<<8 | al;
 }
 
 //------------------------------------------------------------------------------
 inline uint16_t
 mos6502::addr_iy() {
-    uint16_t addr = mem.r16(mem.r8(PC++)) + Y;
+    cycles += 4;
+    uint16_t z = mem.r8(PC++);
+    uint8_t al = mem.r8(z);
+    uint8_t ah = mem.r8((z + 1) & 0xFF);
+    uint16_t a0 = ah<<8 | al;
+    uint16_t addr = a0 + Y;
+    if ((a0 & 0xFF00) != (addr & 0xFF00)) {
+        // page boundary crossed
+        cycles += 1;
+    }
     return addr;
 }
 
@@ -204,19 +231,22 @@ mos6502::brk() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::lda(uint16_t addr) {
-    // FIXME
+    A = mem.r8(addr);
+    P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ldx(uint16_t addr) {
-    // FIXME
+    X = mem.r8(addr);
+    P = YAKC_MOS6502_NZ(P,X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ldy(uint16_t addr) {
-    // FIXME
+    Y = mem.r8(addr);
+    P = YAKC_MOS6502_NZ(P,Y);
 }
 
 //------------------------------------------------------------------------------

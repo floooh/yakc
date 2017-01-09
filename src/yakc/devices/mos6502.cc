@@ -22,7 +22,7 @@ mos6502::init() {
 void
 mos6502::reset() {
     P = (IF | XF);
-    S = 0xFE;
+    S = 0xFD;
     PC = mem.r16(0xFFFC);
 }
 
