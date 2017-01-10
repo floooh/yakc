@@ -64,14 +64,18 @@ public:
     uint16_t addr_a();
     /// address mode: zero page
     uint16_t addr_z();
-    /// address mode: absolute,X/Y
-    uint16_t addr_ai(uint8_t i);
+    /// address mode: absolute,X/Y (load: +1 cycle if page boundary crossed)
+    uint16_t addr_ail(uint8_t i);
+    /// address mode: absolute,X/Y (store: always +1 cycle)
+    uint16_t addr_ais(uint8_t i);
     /// address mode: zeropage,X/Y
     uint16_t addr_zi(uint8_t i);
     /// address mode: indirect,X
     uint16_t addr_ix();
-    /// address mode: indirect,Y
-    uint16_t addr_iy();
+    /// address mode: indirect,Y (load: +1 cycle if page boundary crossed)
+    uint16_t addr_iyl();
+    /// address mode: indirect,Y (store: always +1 cycle)
+    uint16_t addr_iys();
 
     // instructions
     void nop();
@@ -171,7 +175,7 @@ mos6502::addr_z() {
 
 //------------------------------------------------------------------------------
 inline uint16_t
-mos6502::addr_ai(uint8_t i) {
+mos6502::addr_ail(uint8_t i) {
     cycles += 3;
     uint16_t a0 = mem.r16(PC);
     PC += 2;
@@ -180,6 +184,15 @@ mos6502::addr_ai(uint8_t i) {
         // page boundary crossed
         cycles += 1;
     }
+    return addr;
+}
+
+//------------------------------------------------------------------------------
+inline uint16_t
+mos6502::addr_ais(uint8_t i) {
+    cycles += 4;
+    uint16_t addr = mem.r16(PC) + i;
+    PC += 2;
     return addr;
 }
 
@@ -202,7 +215,7 @@ mos6502::addr_ix() {
 
 //------------------------------------------------------------------------------
 inline uint16_t
-mos6502::addr_iy() {
+mos6502::addr_iyl() {
     cycles += 4;
     uint16_t z = mem.r8(PC++);
     uint8_t al = mem.r8(z);
@@ -214,6 +227,16 @@ mos6502::addr_iy() {
         cycles += 1;
     }
     return addr;
+}
+
+//------------------------------------------------------------------------------
+inline uint16_t
+mos6502::addr_iys() {
+    cycles += 5;
+    uint16_t z = mem.r8(PC++);
+    uint8_t al = mem.r8(z);
+    uint8_t ah = mem.r8((z + 1) & 0xFF);
+    return (ah<<8 | al) + Y;
 }
 
 //------------------------------------------------------------------------------
@@ -252,19 +275,19 @@ mos6502::ldy(uint16_t addr) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::sta(uint16_t addr) {
-    // FIXME
+    mem.w8(addr, A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::stx(uint16_t addr) {
-    // FIXME
+    mem.w8(addr, X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::sty(uint16_t addr) {
-    // FIXME
+    mem.w8(addr, Y);
 }
 
 //------------------------------------------------------------------------------

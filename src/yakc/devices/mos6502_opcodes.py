@@ -62,12 +62,15 @@ op_implied_fun = {
 #   'A'     accumulator
 #   'a'     absolute 
 #   'z'     zero page
-#   'ax'    absolute indexed with X
-#   'ay'    absolute indexed with Y
+#   'axl'   load absolute indexed with X
+#   'ayl'   load absolute indexed with Y
+#   'axs'   store absolute indexed with X
+#   'ays'   store absolute indexed with Y
 #   'zx'    zero page indexed with X
 #   'zy'    zero page indexed with Y
 #   'ix'    indexed indirect
-#   'iy'    indirect indexed
+#   'iyl'   indirect indexed load
+#   'iys'   indirect indexed store
 #   'x'     implied instruction
 #   '-'     invalid instruction
 #
@@ -82,7 +85,7 @@ op_tbl = [
         [ 'x',  'x',  'x',  'x',  'x',  'x',  'x',  'x' ],   # bbb=100 
         [ '-',  '-',  '-',  '-',  'zx', 'zx', '-',  '-' ],   # bbb=101
         [ '-',  '-',  '-',  '-',  '-',  '-',  '-',  '-' ],   # bbb=110
-        [ '-',  '-',  '-',  '-',  '-',  'ax',  '-',  '-'],   # bbb=111
+        [ '-',  '-',  '-',  '-',  '-',  'axl','-',  '-'],   # bbb=111
     ],
     # cc=01
     [
@@ -91,10 +94,10 @@ op_tbl = [
         [ 'z',  'z',  'z',  'z',  'z',  'z',  'z',  'z'  ],  # bbb=001
         [ '#',  '#',  '#',  '#',  '-',  '#',  '#',  '#'  ],  # bbb=010
         [ 'a',  'a',  'a',  'a',  'a',  'a',  'a',  'a'  ],  # bbb=011
-        [ 'iy', 'iy', 'iy', 'iy', 'iy', 'iy', 'iy', 'iy' ],  # bbb=100 
+        [ 'iyl','iyl','iyl','iyl','iys','iyl','iyl','iyl'],  # bbb=100
         [ 'zx', 'zx', 'zx', 'zx', 'zx', 'zx', 'zx', 'zx' ],  # bbb=101
-        [ 'ay', 'ay', 'ay', 'ay', 'ay', 'ay', 'ay', 'ay' ],  # bbb=110
-        [ 'ax', 'ax', 'ax', 'ax', 'ax', 'ax', 'ax', 'ax' ],  # bbb 111
+        [ 'ayl','ayl','ayl','ayl','ays','ayl','ayl','ayl'],  # bbb=110
+        [ 'axl','axl','axl','axl','axs','axl','axl','axl'],  # bbb 111
     ],
     # cc=10
     [
@@ -106,7 +109,7 @@ op_tbl = [
         [ '-',  '-',  '-',  '-',  '-',  '-',  '-',  '-'  ],  # bbb=100
         [ 'zx', 'zx', 'zx', 'zx', 'zy', 'zy', 'zx', 'zx' ],  # bbb=101
         [ '-',  '-',  '-',  '-',  'x',  'x',  '-',  '-'  ],  # bbb=110
-        [ 'ax', 'ax', 'ax', 'ax', 'ay', 'ay', 'ax', 'ax' ],  # bbb=111
+        [ 'axs','axs','axs','axs','-',  'ayl','axs','axs'],  # bbb=111
     ],
     # cc=11
     [
@@ -127,12 +130,15 @@ addr_fun = {
     'A':    '',
     'a':    'addr_a()',
     'z':    'addr_z()',
-    'ax':   'addr_ai(X)',
-    'ay':   'addr_ai(Y)',
+    'axl':  'addr_ail(X)',
+    'ayl':  'addr_ail(Y)',
+    'axs':  'addr_ais(X)',
+    'ays':  'addr_ais(Y)',
     'zx':   'addr_zi(X)',
     'zy':   'addr_zi(Y)',
     'ix':   'addr_ix()',
-    'iy':   'addr_iy()',
+    'iyl':  'addr_iyl()',
+    'iys':  'addr_iys()',
 }
 
 # branch flag bits
