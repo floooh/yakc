@@ -87,6 +87,7 @@ uint32_t mos6502::do_op(system_bus* bus) {
     case 0x94: sty(addr_zi(X)); break;
     case 0x95: sta(addr_zi(X)); break;
     case 0x96: stx(addr_zi(Y)); break;
+    case 0x98: tya(); break;
     case 0x99: sta(addr_ais(Y)); break;
     case 0x9a: txs(); break;
     case 0x9d: sta(addr_ais(X)); break;
