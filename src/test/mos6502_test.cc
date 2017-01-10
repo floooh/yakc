@@ -477,3 +477,139 @@ TEST(TXS_TSX) {
     CHECK(2 == cpu.step(&bus)); CHECK(cpu.X == 0x00); CHECK(tf(cpu, f::ZF));
     CHECK(2 == cpu.step(&bus)); CHECK(cpu.X == 0xAA); CHECK(tf(cpu, f::NF));
 }
+
+TEST(NOP) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xEA,       // NOP
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+    cpu.PC = 0x200;
+
+    CHECK(2 == cpu.step(&bus));
+}
+
+TEST(ORA) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xa9, 0x00,         // LDA #$00
+        0xa2, 0x01,         // LDX #$01
+        0xa0, 0x02,         // LDY #$02
+        0x09, 0x00,         // ORA #$00
+        0x05, 0x10,         // ORA $10
+        0x15, 0x10,         // ORA $10,X
+        0x0d, 0x00, 0x10,   // ORA $1000
+        0x1d, 0x00, 0x10,   // ORA $1000,X
+        0x19, 0x00, 0x10,   // ORA $1000,Y
+        0x01, 0x22,         // ORA ($22,X)
+        0x11, 0x20,         // ORA ($20),Y
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+    cpu.PC = 0x200;
+    cpu.mem.w16(0x0020, 0x1002);
+    cpu.mem.w16(0x0023, 0x1003);
+    cpu.mem.w8(0x0010, (1<<0));
+    cpu.mem.w8(0x0011, (1<<1));
+    cpu.mem.w8(0x1000, (1<<2));
+    cpu.mem.w8(0x1001, (1<<3));
+    cpu.mem.w8(0x1002, (1<<4));
+    cpu.mem.w8(0x1003, (1<<5));
+    cpu.mem.w8(0x1004, (1<<6));
+
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.A == 0x00); CHECK(tf(cpu, f::ZF));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.X == 0x01); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.Y == 0x02); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.A == 0x00); CHECK(tf(cpu, f::ZF));
+    CHECK(3 == cpu.step(&bus)); CHECK(cpu.A == 0x01); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x03); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x07); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x0F); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x1F); CHECK(tf(cpu, 0));
+    CHECK(6 == cpu.step(&bus)); CHECK(cpu.A == 0x3F); CHECK(tf(cpu, 0));
+    CHECK(5 == cpu.step(&bus)); CHECK(cpu.A == 0x7F); CHECK(tf(cpu, 0));
+}
+
+TEST(AND) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xa9, 0xFF,         // LDA #$FF
+        0xa2, 0x01,         // LDX #$01
+        0xa0, 0x02,         // LDY #$02
+        0x29, 0xFF,         // AND #$FF
+        0x25, 0x10,         // AND $10
+        0x35, 0x10,         // AND $10,X
+        0x2d, 0x00, 0x10,   // AND $1000
+        0x3d, 0x00, 0x10,   // AND $1000,X
+        0x39, 0x00, 0x10,   // AND $1000,Y
+        0x21, 0x22,         // AND ($22,X)
+        0x31, 0x20,         // AND ($20),Y
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+    cpu.PC = 0x200;
+    cpu.mem.w16(0x0020, 0x1002);
+    cpu.mem.w16(0x0023, 0x1003);
+    cpu.mem.w8(0x0010, 0x7F);
+    cpu.mem.w8(0x0011, 0x3F);
+    cpu.mem.w8(0x1000, 0x1F);
+    cpu.mem.w8(0x1001, 0x0F);
+    cpu.mem.w8(0x1002, 0x07);
+    cpu.mem.w8(0x1003, 0x03);
+    cpu.mem.w8(0x1004, 0x01);
+
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.A == 0xFF); CHECK(tf(cpu, f::NF));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.X == 0x01); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.Y == 0x02); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.A == 0xFF); CHECK(tf(cpu, f::NF));
+    CHECK(3 == cpu.step(&bus)); CHECK(cpu.A == 0x7F); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x3F); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x1F); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x0F); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x07); CHECK(tf(cpu, 0));
+    CHECK(6 == cpu.step(&bus)); CHECK(cpu.A == 0x03); CHECK(tf(cpu, 0));
+    CHECK(5 == cpu.step(&bus)); CHECK(cpu.A == 0x01); CHECK(tf(cpu, 0));
+}
+
+TEST(EOR) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xa9, 0xFF,         // LDA #$FF
+        0xa2, 0x01,         // LDX #$01
+        0xa0, 0x02,         // LDY #$02
+        0x49, 0xFF,         // EOR #$FF
+        0x45, 0x10,         // EOR $10
+        0x55, 0x10,         // EOR $10,X
+        0x4d, 0x00, 0x10,   // EOR $1000
+        0x5d, 0x00, 0x10,   // EOR $1000,X
+        0x59, 0x00, 0x10,   // EOR $1000,Y
+        0x41, 0x22,         // EOR ($22,X)
+        0x51, 0x20,         // EOR ($20),Y
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+    cpu.PC = 0x200;
+    cpu.mem.w16(0x0020, 0x1002);
+    cpu.mem.w16(0x0023, 0x1003);
+    cpu.mem.w8(0x0010, 0x7F);
+    cpu.mem.w8(0x0011, 0x3F);
+    cpu.mem.w8(0x1000, 0x1F);
+    cpu.mem.w8(0x1001, 0x0F);
+    cpu.mem.w8(0x1002, 0x07);
+    cpu.mem.w8(0x1003, 0x03);
+    cpu.mem.w8(0x1004, 0x01);
+
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.A == 0xFF); CHECK(tf(cpu, f::NF));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.X == 0x01); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.Y == 0x02); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step(&bus)); CHECK(cpu.A == 0x00); CHECK(tf(cpu, f::ZF));
+    CHECK(3 == cpu.step(&bus)); CHECK(cpu.A == 0x7F); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x40); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x5F); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x50); CHECK(tf(cpu, 0));
+    CHECK(4 == cpu.step(&bus)); CHECK(cpu.A == 0x57); CHECK(tf(cpu, 0));
+    CHECK(6 == cpu.step(&bus)); CHECK(cpu.A == 0x54); CHECK(tf(cpu, 0));
+    CHECK(5 == cpu.step(&bus)); CHECK(cpu.A == 0x55); CHECK(tf(cpu, 0));
+}
+
