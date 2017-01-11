@@ -28,10 +28,40 @@ public:
     // registers
     uint8_t A,X,Y,S,P;
     uint16_t PC;
+    uint8_t OP;
 
-    bool inv;           // invalid opcode has been hit
-    bool irq_active;    // state of IRQ line
-    uint32_t cycles;    // current instruction cycles
+    // pins
+    bool RW;            // read: true, write: false
+    uint16_t ADDR;      // current address bus value
+    uint8_t DATA;       // current data bus value
+    uint16_t tmp;
+
+    // current instruction cycle
+    int Cycle;
+    // ready to fetch and decode next instruction
+    bool FetchReady;
+    // address mode handling ready
+    bool AddrReady;
+    // ready to execute instruction
+    bool ExecReady;
+
+    // addressing mode codes
+    enum {
+        A____,
+        A_IMM,
+        A_ZER,
+        A_ZPX,
+        A_ZPY,
+        A_ABS,
+        A_ABX,
+        A_ABY,
+        A_IDX,
+        A_IDY,
+    };
+    int AddrMode;       // currently active addressing mode
+
+    // addressing mode table
+    uint8_t addr_modes[4][8][8];
 
     // memory map
     memory mem;
@@ -51,31 +81,35 @@ public:
     /// handle an interrupt request
     int handle_irq(system_bus* bus);
 
-    /// execute a single instruction, return number of cycles
-    uint32_t step(system_bus* bus);
-    /// fetch next opcode byte
-    uint8_t fetch_op();
-    /// top-level opcode decoder (generated)
-    uint32_t do_op(system_bus* bus);
+    /// execute a single cycle
+    void step(system_bus* bus);
+    /// execute a single instruction, return cycles
+    uint32_t step_op(system_bus* bus);
 
+    /// fetch and decode the next instruction
+    void step_fetch();
+    /// addr state: determine address and put on address bus
+    void step_addr();
+    /// exec state: execute instruction
+    void step_exec(system_bus* bus);
     /// address mode: immediate
-    uint16_t addr_imm();
-    /// address mode: absolute
-    uint16_t addr_a();
+    void step_addr_imm();
     /// address mode: zero page
-    uint16_t addr_z();
-    /// address mode: absolute,X/Y (load: +1 cycle if page boundary crossed)
-    uint16_t addr_ail(uint8_t i);
-    /// address mode: absolute,X/Y (store: always +1 cycle)
-    uint16_t addr_ais(uint8_t i);
-    /// address mode: zeropage,X/Y
-    uint16_t addr_zi(uint8_t i);
-    /// address mode: indirect,X
-    uint16_t addr_ix();
-    /// address mode: indirect,Y (load: +1 cycle if page boundary crossed)
-    uint16_t addr_iyl();
-    /// address mode: indirect,Y (store: always +1 cycle)
-    uint16_t addr_iys();
+    void step_addr_zer();
+    /// address mode: zeropage + X
+    void step_addr_zpx();
+    /// address mode: zeropage + Y
+    void step_addr_zpy();
+    /// address mode: absolute
+    void step_addr_abs();
+    /// address mode: absolute + X
+    void step_addr_abx();
+    /// address mode: absolute + Y
+    void step_addr_aby();
+    /// address mode: indexed X
+    void step_addr_idx();
+    /// address mode: indexed Y
+    void step_addr_idy();
 
     // instructions
     void nop();
