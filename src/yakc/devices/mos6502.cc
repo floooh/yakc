@@ -165,7 +165,7 @@ mos6502::step_addr_imm() {
 //------------------------------------------------------------------------------
 void
 mos6502::step_addr_zer() {
-    switch (AddrCycle) {
+    switch (Cycle) {
         case 1: ADDR = PC++; break;
         case 2: ADDR = DATA; ExecReady = true; break;
     }
@@ -174,17 +174,17 @@ mos6502::step_addr_zer() {
 //------------------------------------------------------------------------------
 void
 mos6502::step_addr_zpx() {
-    switch (AddrCycle) {
+    switch (Cycle) {
         case 1: ADDR = PC++; break;
         case 2: ADDR = DATA; break;
-        case 3: ADDR = (ADDR + X) & 0x00FF; ExecReady = true; break;
+        case 3: ADDR = (DATA + X) & 0x00FF; ExecReady = true; break;
     }
 }
 
 //------------------------------------------------------------------------------
 void
 mos6502::step_addr_zpy() {
-    switch (AddrCycle) {
+    switch (Cycle) {
         case 1: ADDR = PC++; break;
         case 2: ADDR = DATA; break;
         case 3: ADDR = (ADDR + Y) & 0x00FF; ExecReady = true; break;
@@ -194,7 +194,7 @@ mos6502::step_addr_zpy() {
 //------------------------------------------------------------------------------
 void
 mos6502::step_addr_abs() {
-    switch (AddrCycle) {
+    switch (Cycle) {
         case 1: ADDR = PC++; break;
         case 2: tmp = DATA; ADDR = PC++; break;
         case 3: ADDR = DATA<<8 | tmp; ExecReady = true; break;
@@ -204,10 +204,11 @@ mos6502::step_addr_abs() {
 //------------------------------------------------------------------------------
 void
 mos6502::step_abx() {
-    switch (AddrCycle) {
+    switch (Cycle) {
         case 1: ADDR = PC++; break;
         case 2: tmp = DATA + X; ADDR = PC++; break;
         case 3:
+            // first read from within current page
             ADDR = (DATA<<8) | (tmp&0xFF);
             if ((tmp & 0xFF00) == 0x00) {
                 // page boundary not crossed, can exit early
