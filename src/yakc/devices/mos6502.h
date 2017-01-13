@@ -25,14 +25,6 @@ public:
         NF = (1<<7),    // negative
     };
 
-    // CPU states
-    enum {
-        Fetch,
-        Decode,
-        Addr,
-        Exec,
-    };
-
     // registers
     uint8_t A,X,Y,S,P;
     uint16_t PC;
@@ -45,7 +37,9 @@ public:
     uint16_t tmp;
 
     int Cycle;              // current instruction cycle
-    int State;              // current CPU state
+    bool Fetch;             // true: currently in fetch/decode cycle
+    int AddrCycle;          // > 0: currently in address mode state
+    int ExecCycle;          // > 0: currently in execute state
     uint8_t AddrMode;       // currently active addressing mode
     uint8_t MemAccess;      // M_R, M_W, M_RW
 
@@ -86,25 +80,6 @@ public:
     /// exec state: execute instruction
     void step_exec();
     
-    /// address mode: immediate
-    void step_addr_imm();
-    /// address mode: zero page
-    void step_addr_zer();
-    /// address mode: zeropage + X
-    void step_addr_zpx();
-    /// address mode: zeropage + Y
-    void step_addr_zpy();
-    /// address mode: absolute
-    void step_addr_abs();
-    /// address mode: absolute + X
-    void step_addr_abx();
-    /// address mode: absolute + Y
-    void step_addr_aby();
-    /// address mode: indexed X
-    void step_addr_idx();
-    /// address mode: indexed Y
-    void step_addr_idy();
-
     // instructions
     void nop();
     void brk();
@@ -174,10 +149,15 @@ mos6502::brk() {
 
 //------------------------------------------------------------------------------
 inline void
+mos6502::nop() {
+    // nop
+}
+
+//------------------------------------------------------------------------------
+inline void
 mos6502::lda() {
     A = DATA;
     P = YAKC_MOS6502_NZ(P,A);
-    State = Fetch;
 }
 
 //------------------------------------------------------------------------------
@@ -185,7 +165,6 @@ inline void
 mos6502::ldx() {
     X = DATA;
     P = YAKC_MOS6502_NZ(P,X);
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
@@ -193,31 +172,24 @@ inline void
 mos6502::ldy() {
     Y = DATA;
     P = YAKC_MOS6502_NZ(P,Y);
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::sta() {
-    RW = false;
     DATA = A;
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::stx() {
-    RW = false;
     DATA = X;
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::sty() {
-    RW = false;
     DATA = Y;
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
@@ -225,7 +197,6 @@ inline void
 mos6502::tax() {
     X = A;
     P = YAKC_MOS6502_NZ(P,X);
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
@@ -233,7 +204,6 @@ inline void
 mos6502::tay() {
     Y = A;
     P = YAKC_MOS6502_NZ(P,Y);
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
@@ -241,7 +211,6 @@ inline void
 mos6502::txa() {
     A = X;
     P = YAKC_MOS6502_NZ(P,A);
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
@@ -249,14 +218,12 @@ inline void
 mos6502::tya() {
     A = Y;
     P = YAKC_MOS6502_NZ(P,A);
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::txs() {
     S = X;
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
@@ -264,7 +231,6 @@ inline void
 mos6502::tsx() {
     X = S;
     P = YAKC_MOS6502_NZ(P,X);
-    State = Fetch;    
 }
 
 //------------------------------------------------------------------------------
@@ -344,7 +310,6 @@ inline void
 mos6502::ora() {
     A |= DATA;
     P = YAKC_MOS6502_NZ(P,A);
-    State = Fetch;
 }
 
 //------------------------------------------------------------------------------
@@ -352,7 +317,6 @@ inline void
 mos6502::anda() {
     A &= DATA;
     P = YAKC_MOS6502_NZ(P,A);
-    State = Fetch;
 }
 
 //------------------------------------------------------------------------------
@@ -360,7 +324,6 @@ inline void
 mos6502::eor() {
     A ^= DATA;
     P = YAKC_MOS6502_NZ(P,A);
-    State = Fetch;
 }
 
 //------------------------------------------------------------------------------
@@ -404,7 +367,6 @@ inline void
 mos6502::dex() {
     X--;
     P = YAKC_MOS6502_NZ(P, X);
-    State = Fetch;
 }
 
 //------------------------------------------------------------------------------
@@ -412,7 +374,6 @@ inline void
 mos6502::dey() {
     Y--;
     P = YAKC_MOS6502_NZ(P, Y);
-    State = Fetch;
 }
 
 //------------------------------------------------------------------------------
@@ -426,7 +387,6 @@ inline void
 mos6502::inx() {
     X++;
     P = YAKC_MOS6502_NZ(P, X);
-    State = Fetch;
 }
 
 //------------------------------------------------------------------------------
@@ -434,7 +394,6 @@ inline void
 mos6502::iny() {
     Y++;
     P = YAKC_MOS6502_NZ(P, Y);
-    State = Fetch;
 }
 
 //------------------------------------------------------------------------------

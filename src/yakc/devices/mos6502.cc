@@ -109,7 +109,9 @@ mos6502::init() {
     OP = 0;
     RW = true;
     Cycle = 0;
-    State = Fetch;
+    Fetch = true;
+    AddrCycle = 0;
+    ExecCycle = 0;
     AddrMode = A____;
     MemAccess = M___;
 }
@@ -122,7 +124,9 @@ mos6502::reset() {
     PC = mem.r16(0xFFFC);
     RW = true;
     Cycle = 0;
-    State = Fetch;
+    Fetch = true;
+    AddrCycle = 0;
+    ExecCycle = 0;
     AddrMode = A____;
     MemAccess = M___;
 }
@@ -133,26 +137,26 @@ mos6502::step_op(system_bus* bus) {
     do {
         this->step(bus);
     }
-    while (State != Fetch);
+    while (!Fetch);
     return Cycle;
 }
 
 //------------------------------------------------------------------------------
 void
 mos6502::step(system_bus* bus) {
-    if (State == Fetch) {
+    if (Fetch) {
         this->step_fetch();
     }
     if (RW) {
         DATA = mem.r8(ADDR);
     }
-    if (State == Decode) {
+    if (Fetch) {
         step_decode();
     }
-    if (State == Addr) {
+    if (AddrCycle > 0) {
         step_addr();
     }
-    if (State == Exec) {
+    if (ExecCycle > 0) {
         step_exec();
     }
     if (!RW) {
@@ -166,7 +170,8 @@ void
 mos6502::step_fetch() {
     this->ADDR = PC++;
     RW = true;
-    State = Decode;
+    AddrCycle = 0;
+    ExecCycle = 0;
     Cycle = 0;
 }
 
@@ -179,155 +184,146 @@ mos6502::step_decode() {
     uint8_t cc  = OP & 0x03;
     uint8_t bbb = (OP >> 2) & 0x07;
     uint8_t aaa = (OP >> 5) & 0x07;
-    State = Addr;
     AddrMode  = addr_modes[cc][bbb][aaa];
     MemAccess = rw_table[cc][aaa];
+    Fetch = false;
+    AddrCycle = 1;
 }
 
 //------------------------------------------------------------------------------
 void
 mos6502::step_addr() {
+    bool done = false;
     switch (AddrMode) {
-        case A_IMM: this->step_addr_imm(); break;
-        case A_ZER: this->step_addr_zer(); break;
-        case A_ZPX: this->step_addr_zpx(); break;
-        case A_ZPY: this->step_addr_zpy(); break;
-        case A_ABS: this->step_addr_abs(); break;
-        case A_ABX: this->step_addr_abx(); break;
-        case A_ABY: this->step_addr_aby(); break;
-        case A_IDX: this->step_addr_idx(); break;
-        case A_IDY: this->step_addr_idy(); break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_imm() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_zer() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        case 1: ADDR = DATA; break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_zpx() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        case 1: ADDR = DATA; break;
-        case 2: ADDR = (ADDR + X) & 0x00FF; break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_zpy() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        case 1: ADDR = DATA; break;
-        case 2: ADDR = (ADDR + Y) & 0x00FF; break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_abs() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        case 1: tmp = DATA; ADDR = PC++; break;
-        case 2: ADDR = DATA<<8 | tmp; break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_abx() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        case 1: tmp = DATA + X; ADDR = PC++; break;
-        case 2: ADDR = (DATA<<8) | (tmp&0xFF); break;
-        case 3:
-            // if page boundary was not crossed, and not store, can exit early
-            if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
-                State = Exec;
-            }
-            else {
-                // add carry and read again
-                ADDR = (ADDR & 0xFF00) + tmp;
+        //-- no addressing, this still puts the PC on the ADDR bus
+        //-- without incrementing the PC, so the same instruction
+        //-- byte is read 2x
+        case A____:
+            switch (AddrCycle) {
+                case 1:  ADDR = PC; break;
+                default: done = true; break;
             }
             break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_aby() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        case 1: tmp = DATA + Y; ADDR = PC++; break;
-        case 2: ADDR = (DATA<<8) | (tmp&0xFF); break;
-        case 3:
-            // if page boundary was not crossed, and not store, can exit early
-            if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
-                State = Exec;
-            }
-            else {
-                // add carry and read again
-                ADDR = (ADDR & 0xFF00) + tmp;
+        //-- immediate mode
+        case A_IMM:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                default: done = true; break;
             }
             break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_idx() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        case 1: ADDR = DATA; break;
-        case 2: ADDR = (ADDR + X) & 0x00FF; break;
-        case 3: tmp = DATA; ADDR = (ADDR + 1) & 0x00FF; break;
-        case 4: ADDR = (DATA<<8) | tmp; break;
-        default: State = Exec; break;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-mos6502::step_addr_idy() {
-    switch (Cycle) {
-        case 0: ADDR = PC++; break;
-        case 1: ADDR = DATA; break;
-        case 2: tmp = DATA + Y; ADDR = (ADDR + 1) & 0x00FF; break;
-        case 3: ADDR = (DATA<<8) | (tmp&0xFF); break;
-        case 4:
-            // if page boundary was not crossed, and not store, can exit early
-            if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
-                // page boundary not crossed, can exit early
-                State = Exec;
-            }
-            else {
-                // add carry and read again
-                ADDR = (ADDR & 0xFF00) + tmp;
+        //-- zero page
+        case A_ZER:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                case 2: ADDR = DATA; break;
+                default: done = true; break;
             }
             break;
-        default: State = Exec; break;
+        //-- zero page + X
+        case A_ZPX:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                case 2: ADDR = DATA; break;
+                case 3: ADDR = (ADDR + X) & 0x00FF; break;
+                default: done = true; break;
+            }
+            break;
+        //-- zero page + Y
+        case A_ZPY:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                case 2: ADDR = DATA; break;
+                case 3: ADDR = (ADDR + Y) & 0x00FF; break;
+                default: done = true; break;
+            }
+            break;
+        //--- absolute
+        case A_ABS:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                case 2: tmp = DATA; ADDR = PC++; break;
+                case 3: ADDR = DATA<<8 | tmp; break;
+                default: done = true; break;
+            }
+            break;
+        //--- absolute + X
+        case A_ABX:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                case 2: tmp = DATA + X; ADDR = PC++; break;
+                case 3: ADDR = (DATA<<8) | (tmp&0xFF); break;
+                case 4:
+                    // if page boundary was not crossed, and not store, can exit early
+                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
+                        done = true;
+                    }
+                    else {
+                        // add carry and read again
+                        ADDR = (ADDR & 0xFF00) + tmp;
+                    }
+                    break;
+                default: done = true; break;
+            }
+            break;
+        //--- absolute + Y
+        case A_ABY:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                case 2: tmp = DATA + Y; ADDR = PC++; break;
+                case 3: ADDR = (DATA<<8) | (tmp&0xFF); break;
+                case 4:
+                    // if page boundary was not crossed, and not store, can exit early
+                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
+                        done = true;
+                    }
+                    else {
+                        // add carry and read again
+                        ADDR = (ADDR & 0xFF00) + tmp;
+                    }
+                    break;
+                default: done = true; break;
+            }
+            break;
+        //--- (zp,X)
+        case A_IDX:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                case 2: ADDR = DATA; break;
+                case 3: ADDR = (ADDR + X) & 0x00FF; break;
+                case 4: tmp = DATA; ADDR = (ADDR + 1) & 0x00FF; break;
+                case 5: ADDR = (DATA<<8) | tmp; break;
+                default: done = true; break;
+            }
+            break;
+        //--- (zp),Y
+        case A_IDY:
+            switch (AddrCycle) {
+                case 1: ADDR = PC++; break;
+                case 2: ADDR = DATA; break;
+                case 3: tmp = DATA + Y; ADDR = (ADDR + 1) & 0x00FF; break;
+                case 4: ADDR = (DATA<<8) | (tmp&0xFF); break;
+                case 5:
+                    // if page boundary was not crossed, and not store, can exit early
+                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
+                        done = true;
+                    }
+                    else {
+                        // add carry and read again
+                        ADDR = (ADDR & 0xFF00) + tmp;
+                    }
+                    break;
+                default: done=true; break;
+            }
+            break;
+        //--- can't happen
+        default: YAKC_ASSERT(false); break;
+    }
+    AddrCycle++;
+
+    // transition to Exec state?
+    if (done) {
+        AddrCycle = 0;
+        ExecCycle = 1;
     }
 }
 
@@ -336,16 +332,65 @@ void
 mos6502::step_exec() {
     uint8_t cc  = OP & 0x03;
     uint8_t aaa = (OP >> 5) & 0x07;
+    uint8_t bbb = (OP >> 2) & 0x07;
     switch (cc) {
         case 0:
             switch (aaa) {
-                case 1: this->bit(); break;
-                case 2: this->jmp(); break;
-                case 3: this->jmpi(); break;
-                case 4: this->sty(); break;
-                case 5: this->ldy(); break;
-                case 6: this->cpy(); break;
-                case 7: this->cpx(); break;
+                case 0:
+                    switch (bbb) {
+                        case 2:  this->php(); break;    // 0x08: aaa=000 bbb=010 cc=00
+                        case 6:  this->cl(CF); break;   // 0x18: aaa=000 bbb=110 cc=00
+                    }
+                    break;
+                case 1:
+                    switch (bbb) {
+                        case 2:  this->plp(); break;    // 0x28: aaa=001 bbb=010 cc=00
+                        case 6:  this->se(CF); break;   // 0x38: aaa=001 bbb=110 cc=00
+                        default: this->bit(); break;
+                    }
+                    break;
+                case 2:
+                    switch (bbb) {
+                        case 2:  this->pha(); break;    // 0x48: aaa=010 bbb=010 cc=00
+                        case 6:  this->cl(IF); break;   // 0x58: aaa=010 bbb=110 cc=00
+                        default: this->jmp(); break;
+                    }
+                    break;
+                case 3:
+                    switch (bbb) {
+                        case 2:  this->pla(); break;    // 0x68: aaa=011 bbb=010 cc=00
+                        case 6:  this->se(IF); break;   // 0x78: aaa=011 bbb=110 cc=00
+                        default: this->jmpi(); break;
+                    }
+                    break;
+                case 4:
+                    switch (bbb) {
+                        case 2:  this->dey(); break;    // 0x88: aaa=100 bbb=010 cc=00
+                        case 6:  this->tya(); break;    // 0x98: aaa=100 bbb=110 cc=00
+                        default: this->sty(); break;
+                    }
+                    break;
+                case 5:
+                    switch (bbb) {
+                        case 2:  this->tay(); break;    // 0xA8: aaa=101 bbb=010 cc=00
+                        case 6:  this->cl(VF); break;   // 0xB8: aaa=101 bbb=110 cc=00
+                        default: this->ldy(); break;
+                    }
+                    break;
+                case 6:
+                    switch (bbb) {
+                        case 2:  this->iny(); break;    // 0xC8: aaa=110 bbb=010 cc=00
+                        case 6:  this->cl(DF); break;   // 0xD8: aaa=110 bbb=110 cc=00
+                        default: this->cpy(); break;
+                    }
+                    break;
+                case 7:
+                    switch (bbb) {
+                        case 2:  this->inx(); break;    // 0xE8: aaa=111 bbb=010 cc=00
+                        case 6:  this->se(DF); break;   // 0xF8: aaa=111 bbb=110 cc=00
+                        default: this->cpx(); break;
+                    }
+                    break;
             }
             break;
 
@@ -368,13 +413,44 @@ mos6502::step_exec() {
                 case 1: this->rol(); break;
                 case 2: this->lsr(); break;
                 case 3: this->ror(); break;
-                case 4: this->stx(); break;
-                case 5: this->ldx(); break;
-                case 6: this->dec(); break;
-                case 7: this->inc(); break;
+                case 4:
+                    switch (bbb) {
+                        case 2:  this->txa(); break;    // 0x8A: aaa=100 bbb=010 cc=10
+                        case 6:  this->txs(); break;    // 0x9A: aaa=100 bbb=110 cc=10
+                        default: this->stx(); break;
+                    }
+                    break;
+                case 5:
+                    switch (bbb) {
+                        case 2:  this->tax(); break;    // 0xAA: aaa=101 bbb=010 cc=10
+                        case 6:  this->tsx(); break;    // 0xBA: aaa=101 bbb=110 cc=10
+                        default: this->ldx(); break;
+                    }
+                    break;
+                case 6:
+                    switch (bbb) {
+                        case 2:  this->dex(); break;    // 0xCA: aaa=110 bbb=010 cc=10
+                        default: this->dec(); break;
+                    }
+                    break;
+                case 7:
+                    switch (bbb) {
+                        case 2:  this->nop(); break;    // 0xEA: aaa=111 bbb=010 cc=10
+                        default: this->inc(); break;
+                    }
+                    break;
             }
             break;
     }
+
+    // write back to memory?
+    if (MemAccess == M_W) {
+        RW = false;
+    }
+
+    // transition to fetch state
+    ExecCycle = 0;
+    Fetch = true;
 }
 
 } // namespace YAKC
