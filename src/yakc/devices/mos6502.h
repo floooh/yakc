@@ -28,10 +28,25 @@ public:
     // registers
     uint8_t A,X,Y,S,P;
     uint16_t PC;
+    uint8_t OP;
 
-    bool inv;           // invalid opcode has been hit
-    bool irq_active;    // state of IRQ line
-    uint32_t cycles;    // current instruction cycles
+    // pins
+    bool RW;            // read: true, write: false
+    uint16_t ADDR;      // current address bus value
+    uint8_t DATA;       // current data bus value
+    uint16_t tmp;
+
+    int Cycle;              // current instruction cycle
+    bool Fetch;             // true: currently in fetch/decode cycle
+    int AddrCycle;          // > 0: currently in address mode state
+    int ExecCycle;          // > 0: currently in execute state
+    uint8_t AddrMode;       // currently active addressing mode
+    uint8_t MemAccess;      // M_R, M_W, M_RW
+
+    // addressing mode table
+    static uint8_t addr_modes[4][8][8];
+    // memory access table
+    static uint8_t rw_table[4][8];
 
     // memory map
     memory mem;
@@ -51,42 +66,30 @@ public:
     /// handle an interrupt request
     int handle_irq(system_bus* bus);
 
-    /// execute a single instruction, return number of cycles
-    uint32_t step(system_bus* bus);
-    /// fetch next opcode byte
-    uint8_t fetch_op();
-    /// top-level opcode decoder (generated)
-    uint32_t do_op(system_bus* bus);
+    /// execute a single cycle
+    void step(system_bus* bus);
+    /// execute a single instruction, return cycles
+    uint32_t step_op(system_bus* bus);
 
-    /// address mode: immediate
-    uint16_t addr_imm();
-    /// address mode: absolute
-    uint16_t addr_a();
-    /// address mode: zero page
-    uint16_t addr_z();
-    /// address mode: absolute,X/Y (load: +1 cycle if page boundary crossed)
-    uint16_t addr_ail(uint8_t i);
-    /// address mode: absolute,X/Y (store: always +1 cycle)
-    uint16_t addr_ais(uint8_t i);
-    /// address mode: zeropage,X/Y
-    uint16_t addr_zi(uint8_t i);
-    /// address mode: indirect,X
-    uint16_t addr_ix();
-    /// address mode: indirect,Y (load: +1 cycle if page boundary crossed)
-    uint16_t addr_iyl();
-    /// address mode: indirect,Y (store: always +1 cycle)
-    uint16_t addr_iys();
-
+    /// prepare to fetch next instruction
+    void step_fetch();
+    /// decode fetched instruction (same cycle as fetch)
+    void step_decode();
+    /// addr state: determine address and put on address bus
+    void step_addr();
+    /// exec state: execute instruction
+    void step_exec();
+    
     // instructions
     void nop();
     void brk();
 
-    void lda(uint16_t addr);
-    void ldx(uint16_t addr);
-    void ldy(uint16_t addr);
-    void sta(uint16_t addr);
-    void stx(uint16_t addr);
-    void sty(uint16_t addr);
+    void lda();
+    void ldx();
+    void ldy();
+    void sta();
+    void stx();
+    void sty();
     void tax();
     void tay();
     void txa();
@@ -103,147 +106,40 @@ public:
     void cl(uint8_t f);
 
     void br(uint8_t m, uint8_t v); // branch if (p & m) == v
-    void jmp(uint16_t addr);
-    void jmpi(uint16_t addr);
+    void jmp();
+    void jmpi();
 
     void jsr();
     void rts();
     void rti();
 
-    void ora(uint16_t addr);
-    void anda(uint16_t addr);
-    void eor(uint16_t addr);
-    void adc(uint16_t addr);
-    void cmp(uint16_t addr);
-    void cpx(uint16_t addr);
-    void cpy(uint16_t addr);
-    void sbc(uint16_t addr);
-    void dec(uint16_t addr);
+    void ora();
+    void anda();
+    void eor();
+    void adc();
+    void cmp();
+    void cpx();
+    void cpy();
+    void sbc();
+    void dec();
     void dex();
     void dey();
-    void inc(uint16_t addr);
+    void inc();
     void inx();
     void iny();
-    void asl(uint16_t addr);
+    void asl();
     void asla();
-    void lsr(uint16_t addr);
+    void lsr();
     void lsra();
-    void rol(uint16_t addr);
+    void rol();
     void rola();
-    void ror(uint16_t addr);
+    void ror();
     void rora();
-    void bit(uint16_t addr);
+    void bit();
 };
 
 // set N and Z flags on P depending on V, return new P
 #define YAKC_MOS6502_NZ(p,v) ((p & ~(NF|ZF)) | ((v & 0xFF) ? (v & NF):ZF))
-
-//------------------------------------------------------------------------------
-inline uint8_t
-mos6502::fetch_op() {
-    return mem.r8(PC++);
-}
-
-//------------------------------------------------------------------------------
-inline uint32_t
-mos6502::step(system_bus* bus) {
-    return do_op(bus);
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_imm() {
-    cycles++;
-    return PC++;
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_a() {
-    cycles += 3;
-    uint16_t addr = mem.r16(PC);
-    PC += 2;
-    return addr;
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_z() {
-    cycles += 2;
-    return mem.r8(PC++);
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_ail(uint8_t i) {
-    cycles += 3;
-    uint16_t a0 = mem.r16(PC);
-    PC += 2;
-    uint16_t addr = a0 + i;
-    if ((a0 & 0xFF00) != (addr & 0xFF00)) {
-        // page boundary crossed
-        cycles += 1;
-    }
-    return addr;
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_ais(uint8_t i) {
-    cycles += 4;
-    uint16_t addr = mem.r16(PC) + i;
-    PC += 2;
-    return addr;
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_zi(uint8_t i) {
-    cycles += 3;
-    return (mem.r8(PC++) + i) & 0x00FF;
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_ix() {
-    cycles += 5;
-    uint16_t z = mem.r8(PC++) + X;
-    uint8_t al = mem.r8(z);
-    uint8_t ah = mem.r8((z + 1) & 0xFF);
-    return ah<<8 | al;
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_iyl() {
-    cycles += 4;
-    uint16_t z = mem.r8(PC++);
-    uint8_t al = mem.r8(z);
-    uint8_t ah = mem.r8((z + 1) & 0xFF);
-    uint16_t a0 = ah<<8 | al;
-    uint16_t addr = a0 + Y;
-    if ((a0 & 0xFF00) != (addr & 0xFF00)) {
-        // page boundary crossed
-        cycles += 1;
-    }
-    return addr;
-}
-
-//------------------------------------------------------------------------------
-inline uint16_t
-mos6502::addr_iys() {
-    cycles += 5;
-    uint16_t z = mem.r8(PC++);
-    uint8_t al = mem.r8(z);
-    uint8_t ah = mem.r8((z + 1) & 0xFF);
-    return (ah<<8 | al) + Y;
-}
-
-//------------------------------------------------------------------------------
-inline void
-mos6502::nop() {
-    cycles += 1;
-}
 
 //------------------------------------------------------------------------------
 inline void
@@ -253,47 +149,52 @@ mos6502::brk() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::lda(uint16_t addr) {
-    A = mem.r8(addr);
+mos6502::nop() {
+    // nop
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::lda() {
+    A = DATA;
     P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::ldx(uint16_t addr) {
-    X = mem.r8(addr);
+mos6502::ldx() {
+    X = DATA;
     P = YAKC_MOS6502_NZ(P,X);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::ldy(uint16_t addr) {
-    Y = mem.r8(addr);
+mos6502::ldy() {
+    Y = DATA;
     P = YAKC_MOS6502_NZ(P,Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::sta(uint16_t addr) {
-    mem.w8(addr, A);
+mos6502::sta() {
+    DATA = A;
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::stx(uint16_t addr) {
-    mem.w8(addr, X);
+mos6502::stx() {
+    DATA = X;
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::sty(uint16_t addr) {
-    mem.w8(addr, Y);
+mos6502::sty() {
+    DATA = Y;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tax() {
-    cycles += 1;
     X = A;
     P = YAKC_MOS6502_NZ(P,X);
 }
@@ -301,7 +202,6 @@ mos6502::tax() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::tay() {
-    cycles += 1;
     Y = A;
     P = YAKC_MOS6502_NZ(P,Y);
 }
@@ -309,7 +209,6 @@ mos6502::tay() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::txa() {
-    cycles += 1;
     A = X;
     P = YAKC_MOS6502_NZ(P,A);
 }
@@ -317,7 +216,6 @@ mos6502::txa() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::tya() {
-    cycles += 1;
     A = Y;
     P = YAKC_MOS6502_NZ(P,A);
 }
@@ -325,14 +223,12 @@ mos6502::tya() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::txs() {
-    cycles += 1;
     S = X;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tsx() {
-    cycles += 1;
     X = S;
     P = YAKC_MOS6502_NZ(P,X);
 }
@@ -381,13 +277,13 @@ mos6502::br(uint8_t m, uint8_t v) {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::jmp(uint16_t addr) {
+mos6502::jmp() {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::jmpi(uint16_t addr) {
+mos6502::jmpi() {
     // FIXME
 }
 
@@ -411,65 +307,64 @@ mos6502::rti() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::ora(uint16_t addr) {
-    A |= mem.r8(addr);
+mos6502::ora() {
+    A |= DATA;
     P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::anda(uint16_t addr) {
-    A &= mem.r8(addr);
+mos6502::anda() {
+    A &= DATA;
     P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::eor(uint16_t addr) {
-    A ^= mem.r8(addr);
+mos6502::eor() {
+    A ^= DATA;
     P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::adc(uint16_t addr) {
+mos6502::adc() {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::cmp(uint16_t addr) {
+mos6502::cmp() {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::cpx(uint16_t addr) {
+mos6502::cpx() {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::cpy(uint16_t addr) {
+mos6502::cpy() {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::sbc(uint16_t addr) {
+mos6502::sbc() {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::dec(uint16_t addr) {
+mos6502::dec() {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::dex() {
-    cycles += 1;
     X--;
     P = YAKC_MOS6502_NZ(P, X);
 }
@@ -477,21 +372,19 @@ mos6502::dex() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::dey() {
-    cycles += 1;
     Y--;
     P = YAKC_MOS6502_NZ(P, Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::inc(uint16_t addr) {
+mos6502::inc() {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::inx() {
-    cycles += 1;
     X++;
     P = YAKC_MOS6502_NZ(P, X);
 }
@@ -499,14 +392,13 @@ mos6502::inx() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::iny() {
-    cycles += 1;
     Y++;
     P = YAKC_MOS6502_NZ(P, Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::asl(uint16_t addr) {
+mos6502::asl() {
     // FIXME
 }
 
@@ -518,7 +410,7 @@ mos6502::asla() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::lsr(uint16_t addr) {
+mos6502::lsr() {
     // FIXME
 }
 
@@ -530,7 +422,7 @@ mos6502::lsra() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::rol(uint16_t addr) {
+mos6502::rol() {
     // FIXME
 }
 
@@ -542,7 +434,7 @@ mos6502::rola() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::ror(uint16_t addr) {
+mos6502::ror() {
     // FIXME
 }
 
@@ -554,7 +446,7 @@ mos6502::rora() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::bit(uint16_t addr) {
+mos6502::bit() {
     // FIXME
 }
 
