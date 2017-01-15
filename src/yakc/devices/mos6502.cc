@@ -218,25 +218,25 @@ mos6502::step_addr() {
         case A_ABS:
             switch (AddrCycle) {
                 case 1: ADDR = PC++; break;
-                case 2: tmp = DATA; ADDR = PC++; break;
-                case 3: ADDR = DATA<<8 | tmp; done = true; break;
+                case 2: tmp16 = DATA; ADDR = PC++; break;
+                case 3: ADDR = DATA<<8 | tmp16; done = true; break;
             }
             break;
         //--- absolute + X
         case A_ABX:
             switch (AddrCycle) {
                 case 1: ADDR = PC++; break;
-                case 2: tmp = DATA + X; ADDR = PC++; break;
+                case 2: tmp16 = DATA + X; ADDR = PC++; break;
                 case 3:
-                    ADDR = (DATA<<8) | (tmp&0xFF);
-                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
+                    ADDR = (DATA<<8) | (tmp16&0xFF);
+                    if (((tmp16 & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                         // page boundary was not crossed, and not store, can exit early
                         done = true;
                     }
                     break;
                 case 4:
                     // page boundary was crossed, add carry and read again
-                    ADDR = (ADDR & 0xFF00) + tmp;
+                    ADDR = (ADDR & 0xFF00) + tmp16;
                     done = true;
                     break;
             }
@@ -245,17 +245,17 @@ mos6502::step_addr() {
         case A_ABY:
             switch (AddrCycle) {
                 case 1: ADDR = PC++; break;
-                case 2: tmp = DATA + Y; ADDR = PC++; break;
+                case 2: tmp16 = DATA + Y; ADDR = PC++; break;
                 case 3:
-                    ADDR = (DATA<<8) | (tmp&0xFF);
-                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
+                    ADDR = (DATA<<8) | (tmp16&0xFF);
+                    if (((tmp16 & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                         // page boundary was not crossed, and not store, can exit early
                         done = true;
                     }
                     break;
                 case 4:
                     // page boundary was crossed, add carry and read again
-                    ADDR = (ADDR & 0xFF00) + tmp;
+                    ADDR = (ADDR & 0xFF00) + tmp16;
                     done = true;
                     break;
             }
@@ -266,8 +266,8 @@ mos6502::step_addr() {
                 case 1: ADDR = PC++; break;
                 case 2: ADDR = DATA; break;
                 case 3: ADDR = (ADDR + X) & 0x00FF; break;
-                case 4: tmp = DATA; ADDR = (ADDR + 1) & 0x00FF; break;
-                case 5: ADDR = (DATA<<8) | tmp; done = true; break;
+                case 4: tmp16 = DATA; ADDR = (ADDR + 1) & 0x00FF; break;
+                case 5: ADDR = (DATA<<8) | tmp16; done = true; break;
             }
             break;
         //--- (zp),Y
@@ -275,17 +275,17 @@ mos6502::step_addr() {
             switch (AddrCycle) {
                 case 1: ADDR = PC++; break;
                 case 2: ADDR = DATA; break;
-                case 3: tmp = DATA + Y; ADDR = (ADDR + 1) & 0x00FF; break;
+                case 3: tmp16 = DATA + Y; ADDR = (ADDR + 1) & 0x00FF; break;
                 case 4:
-                    ADDR = (DATA<<8) | (tmp&0xFF);
-                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
+                    ADDR = (DATA<<8) | (tmp16&0xFF);
+                    if (((tmp16 & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                         // page boundary was not crossed, and not store, can exit early
                         done = true;
                     }
                     break;
                 case 5:
                     // page boundary was crossed, add carry and read again
-                    ADDR = (ADDR & 0xFF00) + tmp;
+                    ADDR = (ADDR & 0xFF00) + tmp16;
                     done = true;
                     break;
             }

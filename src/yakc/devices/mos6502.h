@@ -34,7 +34,7 @@ public:
     bool RW;            // read: true, write: false
     uint16_t ADDR;      // current address bus value
     uint8_t DATA;       // current data bus value
-    uint16_t tmp;
+    uint16_t tmp16;
 
     int Cycle;              // current instruction cycle
     bool Fetch;             // true: currently in fetch/decode cycle
@@ -240,7 +240,7 @@ mos6502::php() {
 inline void
 mos6502::plp() {
     switch (ExecCycle) {
-        case 2: ADDR = 0x0100|S++; break;   // first puts reads junk from current SP
+        case 2: ADDR = 0x0100|S++; break;   // first read junk from current SP
         case 3: ADDR = 0x0100|S; break;     // read actual byte
         case 4: P = (DATA & ~BF); Fetch=true; break;
     }
@@ -259,7 +259,7 @@ mos6502::pha() {
 inline void
 mos6502::pla() {
     switch (ExecCycle) {
-        case 2: ADDR = 0x0100|S++; break;   // first puts reads junk from current SP
+        case 2: ADDR = 0x0100|S++; break;   // first read junk from current SP
         case 3: ADDR = 0x0100|S; break;     // read actual byte
         case 4: A = DATA; Fetch=true; break;
     }
@@ -375,8 +375,11 @@ mos6502::sbc() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::dec() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2: RW=false; break;    // first the unmodified value is written
+        case 3: DATA--; P = YAKC_MOS6502_NZ(P, DATA); break;
+        case 4: RW=true; Fetch=true; break;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -394,8 +397,11 @@ mos6502::dey() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::inc() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2: RW=false; break;    // first the unmodified value is written
+        case 3: DATA++; P = YAKC_MOS6502_NZ(P, DATA); break;
+        case 4: RW=true; Fetch=true; break;
+    }
 }
 
 //------------------------------------------------------------------------------

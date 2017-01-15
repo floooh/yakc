@@ -648,3 +648,30 @@ TEST(CLC_SEC_CLI_SEI_CLV_CLD_SED) {
     CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::DF));
     CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, 0));
 }
+
+TEST(INC_DEC) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xA2, 0x10,         // LDX #$10
+        0xE6, 0x33,         // INC $33
+        0xF6, 0x33,         // INC $33,X
+        0xEE, 0x00, 0x10,   // INC $1000
+        0xFE, 0x00, 0x10,   // INC $1000,X
+        0xC6, 0x33,         // DEC $33
+        0xD6, 0x33,         // DEC $33,X
+        0xCE, 0x00, 0x10,   // DEC $1000
+        0xDE, 0x00, 0x10,   // DEC $1000,X
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x10 == cpu.X);
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x01 == cpu.mem.r8(0x0033)); CHECK(tf(cpu, 0));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(0x01 == cpu.mem.r8(0x0043)); CHECK(tf(cpu, 0));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(0x01 == cpu.mem.r8(0x1000)); CHECK(tf(cpu, 0));
+    CHECK(7 == cpu.step_op(&bus)); CHECK(0x01 == cpu.mem.r8(0x1010)); CHECK(tf(cpu, 0));
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x00 == cpu.mem.r8(0x0033)); CHECK(tf(cpu, f::ZF));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(0x00 == cpu.mem.r8(0x0043)); CHECK(tf(cpu, f::ZF));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(tf(cpu, f::ZF));
+    CHECK(7 == cpu.step_op(&bus)); CHECK(0x00 == cpu.mem.r8(0x1010)); CHECK(tf(cpu, f::ZF));
+}
