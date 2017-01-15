@@ -9,6 +9,7 @@ namespace YAKC {
 //------------------------------------------------------------------------------
 //  address mode table [cc][bbb][aaa]
 //
+// addressing modes
 enum {
     A____,      // no addressing mode
     A_IMM,      // #
@@ -23,79 +24,64 @@ enum {
 
     A_INV,      // this is an invalid instruction
 };
-uint8_t mos6502::addr_modes[4][8][8] = {
-    // cc = 00
-    {
-        //---    BIT    JMP    JMP()  STY    LDY    CPY    CPX
-        { A____, A____, A____, A____, A_INV, A_IMM, A_IMM, A_IMM },
-        { A_INV, A_ZER, A_INV, A_INV, A_ZER, A_ZER, A_ZER, A_ZER },
-        { A____, A____, A____, A____, A____, A____, A____, A____ },
-        { A_INV, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS },
-        { A____, A____, A____, A____, A____, A____, A____, A____ },
-        { A_INV, A_INV, A_INV, A_INV, A_ZPX, A_ZPX, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A____, A_INV, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_ABX, A_INV, A_INV },
-    },
-    // cc = 01
-    {
-        //ORA    AND    EOR    ADC    STA    LDA    CMP    SBC
-        { A_IDX, A_IDX, A_IDX, A_IDX, A_IDX, A_IDX, A_IDX, A_IDX },
-        { A_ZER, A_ZER, A_ZER, A_ZER, A_ZER, A_ZER, A_ZER, A_ZER },
-        { A_IMM, A_IMM, A_IMM, A_IMM, A_INV, A_IMM, A_IMM, A_IMM },
-        { A_ABS, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS },
-        { A_IDY, A_IDY, A_IDY, A_IDY, A_IDY, A_IDY, A_IDY, A_IDY },
-        { A_ZPX, A_ZPX, A_ZPX, A_ZPX, A_ZPX, A_ZPX, A_ZPX, A_ZPX },
-        { A_ABY, A_ABY, A_ABY, A_ABY, A_ABY, A_ABY, A_ABY, A_ABY },
-        { A_ABX, A_ABX, A_ABX, A_ABX, A_ABX, A_ABX, A_ABX, A_ABX },
-    },
-    // cc = 02
-    {
-        //ASL    ROL    LSR    ROR    STX    LDX    DEC    INC
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_IMM, A_INV, A_INV },
-        { A_ZER, A_ZER, A_ZER, A_ZER, A_ZER, A_ZER, A_ZER, A_ZER },
-        { A____, A____, A____, A____, A____, A____, A____, A____ },
-        { A_ABS, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS, A_ABS },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-        { A_ZPX, A_ZPX, A_ZPX, A_ZPX, A_ZPY, A_ZPY, A_ZPX, A_ZPX },
-        { A_INV, A_INV, A_INV, A_INV, A____, A____, A_INV, A_INV },
-        { A_ABX, A_ABX, A_ABX, A_ABX, A_INV, A_ABY, A_ABX, A_ABX },
-    },
-    // cc = 03
-    {
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-        { A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV, A_INV },
-    },
-};
-
-//------------------------------------------------------------------------------
-// memory r/w modes tables [cc][aaa]
-//  M_R:  read
-//  M_W:  read
-//  M_RW: read/modify/write
-//
+// memory addressing modes
 enum {
     M___,       // no memory access
-    M_R,        // read
-    M_W,        // write
+    M_R_,        // read
+    M__W,        // write in current cycle
     M_RW,       // read-modify-write
 };
-uint8_t mos6502::rw_table[4][8] = {
-    //---    BIT    JMP    JMP()  STY    LDY    CPY    CPX
-    { M___,  M_R,   M_R,   M_R,   M_W,   M_R,   M_R,   M_R },
-    //ORA    AND    EOR    ADC    STA    LDA    CMP    SBC
-    { M_R,   M_R,   M_R,   M_R,   M_W,   M_R,   M_R,   M_R },
-    //ASL    ROL    LSR    ROR    STX    LDX    DEC    INC
-    { M_RW,  M_RW,  M_RW,  M_RW,  M_W,   M_R,   M_RW,  M_RW},
-    //
-    { M___,  M___,  M___,  M___,  M___,  M___,  M___,  M___},
-};
 
+// opcode descriptions
+mos6502::op_desc mos6502::ops[4][8][8] = {
+// cc = 00
+{
+//---         BIT          JMP          JMP()        STY          LDY          CPY          CPX
+{{A____,M___},{A____,M_R_},{A____,M_R_},{A____,M_R_},{A_INV,M___},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},
+{{A_INV,M___},{A_ZER,M_R_},{A_INV,M___},{A_INV,M___},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_}},
+{{A____,M___},{A____,M___},{A____,M__W},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
+{{A_INV,M___},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_}},
+{{A____,M___},{A____,M_R_},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ZPX,M__W},{A_ZPX,M_R_},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A____,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ABX,M_R_},{A_INV,M___},{A_INV,M___}}
+},
+// cc = 01
+{
+//ORA         AND          EOR          ADC          STA          LDA          CMP          SBC
+{{A_IDX,M_R_},{A_IDX,M_R_},{A_IDX,M_R_},{A_IDX,M_R_},{A_IDX,M__W},{A_IDX,M_R_},{A_IDX,M_R_},{A_IDX,M_R_}},
+{{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_}},
+{{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_INV,M__W},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},
+{{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_}},
+{{A_IDY,M_R_},{A_IDY,M_R_},{A_IDY,M_R_},{A_IDY,M_R_},{A_IDY,M__W},{A_IDY,M_R_},{A_IDY,M_R_},{A_IDY,M_R_}},
+{{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M__W},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_}},
+{{A_ABY,M_R_},{A_ABY,M_R_},{A_ABY,M_R_},{A_ABY,M_R_},{A_ABY,M__W},{A_ABY,M_R_},{A_ABY,M_R_},{A_ABY,M_R_}},
+{{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M__W},{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M_R_}},
+},
+// cc = 02
+{
+//ASL         ROL          LSR          ROR          STX          LDX          DEC          INC
+{{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_INV,M__W},{A_IMM,M_R_},{A_INV,M_RW},{A_INV,M_RW}},
+{{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_RW},{A_ZER,M_RW}},
+{{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
+{{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_RW},{A_ABS,M_RW}},
+{{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_INV,M__W},{A_INV,M_R_},{A_INV,M_RW},{A_INV,M_RW}},
+{{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPY,M__W},{A_ZPY,M_R_},{A_ZPX,M_RW},{A_ZPX,M_RW}},
+{{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A____,M___},{A____,M___},{A_INV,M_RW},{A_INV,M_RW}},
+{{A_ABX,M_RW},{A_ABX,M_RW},{A_ABX,M_RW},{A_ABX,M_RW},{A_INV,M__W},{A_ABY,M_R_},{A_ABX,M_RW},{A_ABX,M_RW}},
+},
+// cc = 03
+{
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}},
+{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___}}
+}
+};
 
 //------------------------------------------------------------------------------
 mos6502::mos6502() {
@@ -110,6 +96,8 @@ mos6502::init() {
     RW = true;
     Cycle = 0;
     Fetch = true;
+    Decode = false;
+    Store = false;
     AddrCycle = 0;
     ExecCycle = 0;
     AddrMode = A____;
@@ -125,6 +113,8 @@ mos6502::reset() {
     RW = true;
     Cycle = 0;
     Fetch = true;
+    Decode = false;
+    Store = false;
     AddrCycle = 0;
     ExecCycle = 0;
     AddrMode = A____;
@@ -147,10 +137,15 @@ mos6502::step(system_bus* bus) {
     if (Fetch) {
         this->step_fetch();
     }
+    if (Store) {
+        Store = false;
+        RW = false;
+        Fetch = true;
+    }
     if (RW) {
         DATA = mem.r8(ADDR);
     }
-    if (Fetch) {
+    if (Decode) {
         step_decode();
     }
     if (AddrCycle > 0) {
@@ -161,6 +156,7 @@ mos6502::step(system_bus* bus) {
     }
     if (!RW) {
         mem.w8(ADDR, DATA);
+        RW = true;
     }
     Cycle++;
 }
@@ -170,6 +166,9 @@ void
 mos6502::step_fetch() {
     this->ADDR = PC++;
     RW = true;
+    Fetch = false;
+    Store = false;
+    Decode = true;
     AddrCycle = 0;
     ExecCycle = 0;
     Cycle = 0;
@@ -184,9 +183,10 @@ mos6502::step_decode() {
     uint8_t cc  = OP & 0x03;
     uint8_t bbb = (OP >> 2) & 0x07;
     uint8_t aaa = (OP >> 5) & 0x07;
-    AddrMode  = addr_modes[cc][bbb][aaa];
-    MemAccess = rw_table[cc][aaa];
+    AddrMode  = ops[cc][bbb][aaa].addr;
+    MemAccess = ops[cc][bbb][aaa].mem;
     Fetch = false;
+    Decode = false;
     AddrCycle = 1;
 }
 
@@ -254,7 +254,7 @@ mos6502::step_addr() {
                 case 3: ADDR = (DATA<<8) | (tmp&0xFF); break;
                 case 4:
                     // if page boundary was not crossed, and not store, can exit early
-                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
+                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                         done = true;
                     }
                     else {
@@ -273,7 +273,7 @@ mos6502::step_addr() {
                 case 3: ADDR = (DATA<<8) | (tmp&0xFF); break;
                 case 4:
                     // if page boundary was not crossed, and not store, can exit early
-                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
+                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                         done = true;
                     }
                     else {
@@ -304,7 +304,7 @@ mos6502::step_addr() {
                 case 4: ADDR = (DATA<<8) | (tmp&0xFF); break;
                 case 5:
                     // if page boundary was not crossed, and not store, can exit early
-                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R)) {
+                    if (((tmp & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                         done = true;
                     }
                     else {
@@ -443,14 +443,22 @@ mos6502::step_exec() {
             break;
     }
 
-    // write back to memory?
-    if (MemAccess == M_W) {
-        RW = false;
-    }
-
-    // transition to fetch state
+    // separate store cycle or write in same cycle?
     ExecCycle = 0;
-    Fetch = true;
+    if (MemAccess == M__W) {
+        if (AddrMode == A____) {
+            // write in next cycle
+            Store = true;
+        }
+        else {
+            // write in same cycle
+            RW = false;
+            Fetch = true;
+        }
+    }
+    else {
+        Fetch = true;
+    }
 }
 
 } // namespace YAKC

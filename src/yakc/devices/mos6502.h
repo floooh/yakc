@@ -38,15 +38,19 @@ public:
 
     int Cycle;              // current instruction cycle
     bool Fetch;             // true: currently in fetch/decode cycle
+    bool Decode;            // true: decode currently fetched instruction
+    bool Store;             // true: a separate store cycle
     int AddrCycle;          // > 0: currently in address mode state
     int ExecCycle;          // > 0: currently in execute state
     uint8_t AddrMode;       // currently active addressing mode
     uint8_t MemAccess;      // M_R, M_W, M_RW
 
     // addressing mode table
-    static uint8_t addr_modes[4][8][8];
-    // memory access table
-    static uint8_t rw_table[4][8];
+    struct op_desc {
+        uint8_t addr;       // addressing mode
+        uint8_t mem;        // memory access mode
+    };
+    static op_desc ops[4][8][8];
 
     // memory map
     memory mem;
@@ -150,7 +154,7 @@ mos6502::brk() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::nop() {
-    // nop
+    // nothing to do here
 }
 
 //------------------------------------------------------------------------------
@@ -236,6 +240,7 @@ mos6502::tsx() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::php() {
+
     // FIXME
 }
 
@@ -248,7 +253,8 @@ mos6502::plp() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::pha() {
-    // FIXME
+    ADDR = 0x0100 | S--;
+    DATA = A;
 }
 
 //------------------------------------------------------------------------------
