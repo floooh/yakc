@@ -602,16 +602,49 @@ TEST(EOR) {
     CHECK(5 == cpu.step_op(&bus)); CHECK(cpu.A == 0x55); CHECK(tf(cpu, 0));
 }
 
-TEST(PHA_PLA) {
+TEST(PHA_PLA_PHP_PLP) {
     system_bus bus;
     auto cpu = init_cpu();
     uint8_t prog[] = {
         0xA9, 0x23,     // LDA #$23
         0x48,           // PHA
+        0xA9, 0x32,     // LDA #$32
+        0x68,           // PLA
+        0x08,           // PHP
+        0xA9, 0x00,     // LDA #$00
+        0x28,           // PLP
     };
     cpu.mem.write(0x0200, prog, sizeof(prog));
 
     CHECK(2 == cpu.step_op(&bus)); CHECK(cpu.A == 0x23); CHECK(cpu.S == 0xFD);
     CHECK(3 == cpu.step_op(&bus)); CHECK(cpu.S == 0xFC); CHECK(cpu.mem.r8(0x01FD) == 0x23);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(cpu.A == 0x32);
+    CHECK(4 == cpu.step_op(&bus)); CHECK(cpu.A == 0x23); CHECK(cpu.S == 0xFD); CHECK(tf(cpu, 0));
+    CHECK(3 == cpu.step_op(&bus)); CHECK(cpu.S == 0xFC); CHECK(cpu.mem.r8(0x01FD) == (f::XF|f::IF|f::BF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::ZF));
+    CHECK(4 == cpu.step_op(&bus)); CHECK(cpu.S == 0xFD); CHECK(tf(cpu, 0));
+}
 
+TEST(CLC_SEC_CLI_SEI_CLV_CLD_SED) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xB8,       // CLV
+        0x78,       // SEI
+        0x58,       // CLI
+        0x38,       // SEC
+        0x18,       // CLC
+        0xF8,       // SED
+        0xD8,       // CLD
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+    cpu.P |= f::VF;
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::IF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::DF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, 0));
 }
