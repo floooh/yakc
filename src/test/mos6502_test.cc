@@ -675,3 +675,55 @@ TEST(INC_DEC) {
     CHECK(6 == cpu.step_op(&bus)); CHECK(0x00 == cpu.mem.r8(0x1000)); CHECK(tf(cpu, f::ZF));
     CHECK(7 == cpu.step_op(&bus)); CHECK(0x00 == cpu.mem.r8(0x1010)); CHECK(tf(cpu, f::ZF));
 }
+
+TEST(ADC_SBC) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xA9, 0x01,         // LDA #$01
+        0x85, 0x10,         // STA $10
+        0x8D, 0x00, 0x10,   // STA $1000
+        0xA9, 0xFC,         // LDA #$FC
+        0xA2, 0x08,         // LDX #$08
+        0xA0, 0x04,         // LDY #$04
+        0x18,               // CLC
+        0x69, 0x01,         // ADC #$01
+        0x65, 0x10,         // ADC $10
+        0x75, 0x08,         // ADC $8,X
+        0x6D, 0x00, 0x10,   // ADC $1000
+        0x7D, 0xF8, 0x0F,   // ADC $0FF8,X
+        0x79, 0xFC, 0x0F,   // ADC $0FFC,Y
+        // FIXME: ADC (zp,X) and ADC (zp),X
+        0xF9, 0xFC, 0x0F,   // SBC $0FFC,Y
+        0xFD, 0xF8, 0x0F,   // SBC $0FF8,X
+        0xED, 0x00, 0x10,   // SBC $1000
+        0xF5, 0x08,         // SBC $8,X
+        0xE5, 0x10,         // SBC $10
+        0xE9, 0x01,         // SBC #$10
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x01 == cpu.A);
+    CHECK(3 == cpu.step_op(&bus)); CHECK(0x01 == cpu.mem.r8(0x0010));
+    CHECK(4 == cpu.step_op(&bus)); CHECK(0x01 == cpu.mem.r8(0x1000));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0xFC == cpu.A);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x08 == cpu.X);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x04 == cpu.Y);
+    CHECK(2 == cpu.step_op(&bus));  // CLC
+    // ADC
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0xFD == cpu.A); CHECK(tf(cpu, f::NF));
+    CHECK(3 == cpu.step_op(&bus)); CHECK(0xFE == cpu.A); CHECK(tf(cpu, f::NF));
+    CHECK(4 == cpu.step_op(&bus)); CHECK(0xFF == cpu.A); CHECK(tf(cpu, f::NF));
+    CHECK(4 == cpu.step_op(&bus)); CHECK(0x00 == cpu.A); CHECK(tf(cpu, f::ZF|f::CF));
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x02 == cpu.A); CHECK(tf(cpu, 0));
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x03 == cpu.A); CHECK(tf(cpu, 0));
+    // SBC
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x01 == cpu.A); CHECK(tf(cpu, f::CF));
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x00 == cpu.A); CHECK(tf(cpu, f::ZF|f::CF));
+    CHECK(4 == cpu.step_op(&bus)); CHECK(0xFF == cpu.A); CHECK(tf(cpu, f::NF));
+    CHECK(4 == cpu.step_op(&bus)); CHECK(0xFD == cpu.A); CHECK(tf(cpu, f::NF|f::CF));
+    CHECK(3 == cpu.step_op(&bus)); CHECK(0xFC == cpu.A); CHECK(tf(cpu, f::NF|f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0xFB == cpu.A); CHECK(tf(cpu, f::NF|f::CF));
+}
+
+

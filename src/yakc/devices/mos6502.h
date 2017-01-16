@@ -340,8 +340,94 @@ mos6502::eor() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::adc() {
-    // FIXME
     Fetch = true;
+    // from MAME
+    if (P & DF) {
+        // decimal mode
+        P &= ~(NF|VF|ZF|CF);
+        uint8_t c  = P & CF ? 1 : 0;
+        uint8_t al = (A & 0x0F) + (DATA & 0x0F) + c;
+        if (al > 9) {
+            al += 6;
+        }
+        uint8_t ah = (A >> 4) + (DATA >> 4) + (al > 0x0F);
+        if (0 == (A + DATA + c)) {
+            P |= ZF;
+        }
+        else if (ah & 0x08) {
+            P |= NF;
+        }
+        if (~(A^DATA) & (A^(ah<<4)) & 0x80) {
+            P |= VF;
+        }
+        if (ah > 0) {
+            ah += 6;
+        }
+        if (ah > 0x0F) {
+            P |= CF;
+        }
+        A = (ah<<4) | (al & 0x0F);
+    }
+    else {
+        // default mode
+        uint16_t sum = A + DATA + (P & CF ? 1:0);
+        P &= ~(VF|CF);
+        P = YAKC_MOS6502_NZ(P, uint8_t(sum));
+        if (~(A^DATA) & (A^sum) & 0x80) {
+            P |= VF;
+        }
+        if (sum & 0xFF00) {
+            P |= CF;
+        }
+        A = sum;
+    }
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::sbc() {
+    Fetch = true;
+    // from MAME
+    if (P & DF) {
+        // decimal mode
+        uint8_t c = P & CF ? 0 : 1;
+        P &= ~(NF|VF|ZF|CF);
+        uint16_t diff = A - DATA - c;
+        uint8_t al = (A & 0x0F) - (DATA & 0x0F) - c;
+        if (int8_t(al) < 0) {
+            al -= 6;
+        }
+        uint8_t ah = (A>>4) - (DATA>>4) - (int8_t(al) < 0);
+        if (0 == uint8_t(diff)) {
+            P |= ZF;
+        }
+        else if (diff & 0x80) {
+            P |= NF;
+        }
+        if ((A^DATA) & (A^diff) & 0x80) {
+            P |= VF;
+        }
+        if (!(diff & 0xFF00)) {
+            P |= CF;
+        }
+        if (ah & 0x80) {
+            ah -= 6;
+        }
+        A = (ah<<4) | (al & 15);
+    }
+    else {
+        // default mode
+        uint16_t diff = A - DATA - (P & CF ? 0 : 1);
+        P &= ~(VF|CF);
+        P = YAKC_MOS6502_NZ(P, uint8_t(diff));
+        if ((A^DATA) & (A^diff) & 0x80) {
+            P |= VF;
+        }
+        if (!(diff & 0xFF00)) {
+            P |= CF;
+        }
+        A = diff;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -361,13 +447,6 @@ mos6502::cpx() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::cpy() {
-    // FIXME
-    Fetch = true;
-}
-
-//------------------------------------------------------------------------------
-inline void
-mos6502::sbc() {
     // FIXME
     Fetch = true;
 }
