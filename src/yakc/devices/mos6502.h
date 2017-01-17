@@ -634,7 +634,11 @@ mos6502::rora() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::bit() {
-    // FIXME
+    uint8_t v = A & DATA;
+    P = YAKC_MOS6502_NZ(P, v) & ~VF;
+    if (v & 0x40) {
+        P |= VF;
+    }
     Fetch = true;
 }
 

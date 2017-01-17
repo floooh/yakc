@@ -838,3 +838,30 @@ TEST(ROR_ROL) {
     CHECK(2 == cpu.step_op(&bus)); CHECK(0x81 == cpu.A); CHECK(tf(cpu, f::NF));
 }
 
+TEST(BIT) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xA9, 0x00,         // LDA #$00
+        0x85, 0x1F,         // STA $1F
+        0xA9, 0x80,         // LDA #$80
+        0x85, 0x20,         // STA $20
+        0xA9, 0xC0,         // LDA #$C0
+        0x8D, 0x00, 0x10,   // STA $1000
+        0x24, 0x1F,         // BIT $1F
+        0x24, 0x20,         // BIT $20
+        0x2C, 0x00, 0x10    // BIT $1000
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x00 == cpu.A);
+    CHECK(3 == cpu.step_op(&bus)); CHECK(0x00 == cpu.mem.r8(0x001F));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x80 == cpu.A);
+    CHECK(3 == cpu.step_op(&bus)); CHECK(0x80 == cpu.mem.r8(0x0020));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0xC0 == cpu.A);
+    CHECK(4 == cpu.step_op(&bus)); CHECK(0xC0 == cpu.mem.r8(0x1000));
+    CHECK(3 == cpu.step_op(&bus)); CHECK(tf(cpu, f::ZF));
+    CHECK(3 == cpu.step_op(&bus)); CHECK(tf(cpu, f::NF));
+    CHECK(4 == cpu.step_op(&bus)); CHECK(tf(cpu, f::NF|f::VF));
+}
+
