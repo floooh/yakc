@@ -433,21 +433,33 @@ mos6502::sbc() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::cmp() {
-    // FIXME
+    uint16_t v = A - DATA;
+    P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
+    if (!(v & 0xFF00)) {
+        P |= CF;
+    }
     Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::cpx() {
-    // FIXME
+    uint16_t v = X - DATA;
+    P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
+    if (!(v & 0xFF00)) {
+        P |= CF;
+    }
     Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::cpy() {
-    // FIXME
+    uint16_t v = Y - DATA;
+    P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
+    if (!(v & 0xFF00)) {
+        P |= CF;
+    }
     Fetch = true;
 }
 

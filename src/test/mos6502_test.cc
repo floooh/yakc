@@ -726,4 +726,36 @@ TEST(ADC_SBC) {
     CHECK(2 == cpu.step_op(&bus)); CHECK(0xFB == cpu.A); CHECK(tf(cpu, f::NF|f::CF));
 }
 
+TEST(CMP_CPX_CPY) {
+    system_bus bus;
+    auto cpu = init_cpu();
+
+    // I'm lazy and only test the immediate ops
+    uint8_t prog[] = {
+        0xA9, 0x01,     // LDA #$01
+        0xA2, 0x02,     // LDX #$02
+        0xA0, 0x03,     // LDY #$03
+        0xC9, 0x00,     // CMP #$00
+        0xC9, 0x01,     // CMP #$01
+        0xC9, 0x02,     // CMP #$02
+        0xE0, 0x01,     // CPX #$01
+        0xE0, 0x02,     // CPX #$02
+        0xE0, 0x03,     // CPX #$03
+        0xC0, 0x02,     // CPY #$02
+        0xC0, 0x02,     // CPY #$03
+        0xC0, 0x03,     // CPY #$04
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x01 == cpu.A);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x02 == cpu.X);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x03 == cpu.Y);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::ZF|f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::NF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::ZF|f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::NF));
+}
+
 
