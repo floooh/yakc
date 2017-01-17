@@ -510,56 +510,124 @@ mos6502::iny() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::asl() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2: RW=false; break;    // first the unmodified value is written
+        case 3:
+            P = (P & ~CF) | ((DATA & 0x80) ? CF : 0);
+            DATA <<= 1;
+            P = YAKC_MOS6502_NZ(P, DATA);
+            break;
+        case 4: RW=true; Fetch=true; break;
+    }
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::asla() {
-    // FIXME
+    P = (P & ~CF) | ((A & 0x80) ? CF : 0);
+    A <<= 1;
+    P = YAKC_MOS6502_NZ(P, A);
     Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::lsr() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2: RW=false; break;    // first the unmodified value is written
+        case 3:
+            P = (P & ~CF) | ((DATA & 0x01) ? CF : 0);
+            DATA >>= 1;
+            P = YAKC_MOS6502_NZ(P, DATA);   // N can actually never be set
+            break;
+        case 4: RW=true; Fetch=true; break;
+    }
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::lsra() {
-    // FIXME
+    P = (P & ~CF) | ((A & 0x01) ? CF : 0);
+    A >>= 1;
+    P = YAKC_MOS6502_NZ(P, A);   // N can actually never be set
     Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rol() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2: RW=false; break;    // first the unmodified value is written
+        case 3:
+            {
+                bool c = P & CF;
+                P &= ~(NF|ZF|CF);
+                if (DATA & 0x80) {
+                    P |= CF;
+                }
+                DATA <<= 1;
+                if (c) {
+                    DATA |= 0x01;
+                }
+                P = YAKC_MOS6502_NZ(P, DATA);
+            }
+            break;
+        case 4: RW=true; Fetch=true; break;
+    }
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rola() {
-    // FIXME
+    bool c = P & CF;
+    P &= ~(NF|ZF|CF);
+    if (A & 0x80) {
+        P |= CF;
+    }
+    A <<= 1;
+    if (c) {
+        A |= 0x01;
+    }
+    P = YAKC_MOS6502_NZ(P, A);
     Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ror() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2: RW=false; break;    // first the unmodified value is written
+        case 3:
+            {
+                bool c = P & CF;
+                P &= ~(NF|ZF|CF);
+                if (DATA & 0x01) {
+                    P |= CF;
+                }
+                DATA >>= 1;
+                if (c) {
+                    DATA |= 0x80;
+                }
+                P = YAKC_MOS6502_NZ(P, DATA);
+            }
+            break;
+        case 4: RW=true; Fetch=true; break;
+    }
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rora() {
-    // FIXME
+    bool c = P & CF;
+    P &= ~(NF|ZF|CF);
+    if (A & 0x01) {
+        P |= CF;
+    }
+    A >>= 1;
+    if (c) {
+        A |= 0x80;
+    }
+    P = YAKC_MOS6502_NZ(P, A);
     Fetch = true;
 }
 

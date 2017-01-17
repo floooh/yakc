@@ -730,7 +730,7 @@ TEST(CMP_CPX_CPY) {
     system_bus bus;
     auto cpu = init_cpu();
 
-    // I'm lazy and only test the immediate ops
+    // FIXME: non-immediate addressing modes
     uint8_t prog[] = {
         0xA9, 0x01,     // LDA #$01
         0xA2, 0x02,     // LDX #$02
@@ -758,4 +758,83 @@ TEST(CMP_CPX_CPY) {
     CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::NF));
 }
 
+TEST(ASL) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    // FIXME: more addressing modes
+    uint8_t prog[] = {
+        0xA9, 0x81,     // LDA #$81
+        0xA2, 0x01,     // LDX #$01
+        0x85, 0x10,     // STA #$10
+        0x06, 0x10,     // ASL $10
+        0x16, 0x0F,     // ASL $0F,X
+        0x0A,           // ASL
+        0x0A,           // ASL
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x81 == cpu.A);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x01 == cpu.X);
+    CHECK(3 == cpu.step_op(&bus)); CHECK(0x81 == cpu.mem.r8(0x0010));
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x02 == cpu.mem.r8(0x0010)); CHECK(tf(cpu, f::CF));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(0x04 == cpu.mem.r8(0x0010)); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x02 == cpu.A); CHECK(tf(cpu, f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x04 == cpu.A); CHECK(tf(cpu, 0));
+}
+
+TEST(LSR) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    // FIXME: more addressing modes
+    uint8_t prog[] = {
+        0xA9, 0x81,     // LDA #$81
+        0xA2, 0x01,     // LDX #$01
+        0x85, 0x10,     // STA #$10
+        0x46, 0x10,     // ASL $10
+        0x56, 0x0F,     // ASL $0F,X
+        0x4A,           // ASL
+        0x4A,           // ASL
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x81 == cpu.A);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x01 == cpu.X);
+    CHECK(3 == cpu.step_op(&bus)); CHECK(0x81 == cpu.mem.r8(0x0010));
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x40 == cpu.mem.r8(0x0010)); CHECK(tf(cpu, f::CF));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(0x20 == cpu.mem.r8(0x0010)); CHECK(tf(cpu, 0));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x40 == cpu.A); CHECK(tf(cpu, f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x20 == cpu.A); CHECK(tf(cpu, 0));
+}
+
+TEST(ROR_ROL) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    // FIXME: more adressing modes
+    uint8_t prog[] = {
+        0xA9, 0x81,     // LDA #$81
+        0xA2, 0x01,     // LDX #$01
+        0x85, 0x10,     // STA #$10
+        0x26, 0x10,     // ROL $10
+        0x36, 0x0F,     // ROL $0F,X
+        0x76, 0x0F,     // ROR $0F,X
+        0x66, 0x10,     // ROR $10
+        0x6A,           // ROR
+        0x6A,           // ROR
+        0x2A,           // ROL
+        0x2A,           // ROL
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x81 == cpu.A);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x01 == cpu.X);
+    CHECK(3 == cpu.step_op(&bus)); CHECK(0x81 == cpu.mem.r8(0x0010));
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x02 == cpu.mem.r8(0x0010)); CHECK(tf(cpu, f::CF));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(0x05 == cpu.mem.r8(0x0010)); CHECK(tf(cpu, 0));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(0x02 == cpu.mem.r8(0x0010)); CHECK(tf(cpu, f::CF));
+    CHECK(5 == cpu.step_op(&bus)); CHECK(0x81 == cpu.mem.r8(0x0010)); CHECK(tf(cpu, f::NF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x40 == cpu.A); CHECK(tf(cpu, f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0xA0 == cpu.A); CHECK(tf(cpu, f::NF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x40 == cpu.A); CHECK(tf(cpu, f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x81 == cpu.A); CHECK(tf(cpu, f::NF));
+}
 

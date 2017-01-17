@@ -386,10 +386,30 @@ mos6502::step_exec() {
 
             case 2:
                 switch (aaa) {
-                    case 0: this->asl(); break;
-                    case 1: this->rol(); break;
-                    case 2: this->lsr(); break;
-                    case 3: this->ror(); break;
+                    case 0:
+                        switch (bbb) {
+                            case 2:  this->asla(); break;
+                            default: this->asl(); break;
+                        }
+                        break;
+                    case 1:
+                        switch (bbb) {
+                            case 2:  this->rola(); break;
+                            default: this->rol(); break;
+                        }
+                        break;
+                    case 2:
+                        switch (bbb) {
+                            case 2:  this->lsra(); break;
+                            default: this->lsr(); break;
+                        }
+                        break;
+                    case 3:
+                        switch (bbb) {
+                            case 2:  this->rora(); break;
+                            default: this->ror(); break;
+                        }
+                        break;
                     case 4:
                         switch (bbb) {
                             case 2:  this->txa(); break;    // 0x8A: aaa=100 bbb=010 cc=10
