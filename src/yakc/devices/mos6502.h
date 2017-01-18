@@ -280,8 +280,26 @@ mos6502::cl(uint8_t f) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::br(uint8_t m, uint8_t v) {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2:
+            // check if the branch is taken, if not return after 2 cycles
+            if ((P & m) != v) {
+                Fetch = true;
+            }
+            break;
+        case 3:
+            // branch was taken, compute target address, return after 3
+            // cycles if target address is in same 256 bytes page
+            tmp16 = PC + int8_t(DATA);
+            if ((tmp16 & 0xFF00) == (PC & 0xFF00)) {
+                PC = tmp16; Fetch=true;
+            }
+            break;
+        case 4:
+            // page boundary was crossed, return after 4 cycles
+            PC = tmp16; Fetch=true;
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------

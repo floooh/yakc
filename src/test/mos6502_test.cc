@@ -865,3 +865,35 @@ TEST(BIT) {
     CHECK(4 == cpu.step_op(&bus)); CHECK(tf(cpu, f::NF|f::VF));
 }
 
+TEST(BNE_BEQ) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xA9, 0x10,         // LDA #$10
+        0xC9, 0x10,         // CMP #$10
+        0xF0, 0x02,         // BEQ eq
+        0xA9, 0x0F,         // ne: LDA #$0F
+        0xC9, 0x0F,         // eq: CMP #$0F
+        0xD0, 0xFA,         // BNE ne -> executed 2x, second time not taken
+        0xEA,
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x10 == cpu.A);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::ZF|f::CF));
+    CHECK(3 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x0208);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::CF));
+    CHECK(3 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x0206);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x0F == cpu.A);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::ZF|f::CF));
+    CHECK(2 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x020C);
+
+    // patch jump target, and test jumping across 256 bytes page
+    cpu.PC = 0x0200;
+    cpu.mem.w8(0x0205, 0xC0);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(0x10 == cpu.A);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(tf(cpu, f::ZF|f::CF));
+    CHECK(4 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x01C6);
+
+    // FIXME: test the other branches
+}

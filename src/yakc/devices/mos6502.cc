@@ -41,7 +41,7 @@ mos6502::op_desc mos6502::ops[4][8][8] = {
 {{A_INV,M___},{A_ZER,M_R_},{A_INV,M___},{A_INV,M___},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_}},
 {{A____,M___},{A____,M___},{A____,M__W},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
 {{A_INV,M___},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_}},
-{{A____,M___},{A____,M_R_},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
+{{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},  // relative branches
 {{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ZPX,M__W},{A_ZPX,M_R_},{A_INV,M___},{A_INV,M___}},
 {{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
 {{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ABX,M_R_},{A_INV,M___},{A_INV,M___}}
@@ -315,56 +315,64 @@ mos6502::step_exec() {
                 switch (aaa) {
                     case 0:
                         switch (bbb) {
-                            case 2:  this->php(); break;    // 0x08: aaa=000 bbb=010 cc=00
-                            case 6:  this->cl(CF); break;   // 0x18: aaa=000 bbb=110 cc=00
+                            case 2:  this->php(); break;        // 0x08: aaa=000 bbb=010 cc=00
+                            case 4:  this->br(NF, 0); break;    // 0x10: aaa=000 bbb=100 cc=00 (BPL)
+                            case 6:  this->cl(CF); break;       // 0x18: aaa=000 bbb=110 cc=00
                         }
                         break;
                     case 1:
                         switch (bbb) {
-                            case 2:  this->plp(); break;    // 0x28: aaa=001 bbb=010 cc=00
-                            case 6:  this->se(CF); break;   // 0x38: aaa=001 bbb=110 cc=00
+                            case 2:  this->plp(); break;        // 0x28: aaa=001 bbb=010 cc=00
+                            case 4:  this->br(NF, NF); break;   // 0x30: aaa=001 bbb=100 cc=00 (BMI)
+                            case 6:  this->se(CF); break;       // 0x38: aaa=001 bbb=110 cc=00
                             default: this->bit(); break;
                         }
                         break;
                     case 2:
                         switch (bbb) {
-                            case 2:  this->pha(); break;    // 0x48: aaa=010 bbb=010 cc=00
-                            case 6:  this->cl(IF); break;   // 0x58: aaa=010 bbb=110 cc=00
+                            case 2:  this->pha(); break;        // 0x48: aaa=010 bbb=010 cc=00
+                            case 4:  this->br(VF, 0); break;    // 0x50: aaa=010 bbb=100 cc=00 (BVC)
+                            case 6:  this->cl(IF); break;       // 0x58: aaa=010 bbb=110 cc=00
                             default: this->jmp(); break;
                         }
                         break;
                     case 3:
                         switch (bbb) {
-                            case 2:  this->pla(); break;    // 0x68: aaa=011 bbb=010 cc=00
-                            case 6:  this->se(IF); break;   // 0x78: aaa=011 bbb=110 cc=00
+                            case 2:  this->pla(); break;        // 0x68: aaa=011 bbb=010 cc=00
+                            case 4:  this->br(VF, VF); break;   // 0x70: aaa=011 bbb=100 cc=00 (BVS)
+                            case 6:  this->se(IF); break;       // 0x78: aaa=011 bbb=110 cc=00
                             default: this->jmpi(); break;
                         }
                         break;
                     case 4:
                         switch (bbb) {
-                            case 2:  this->dey(); break;    // 0x88: aaa=100 bbb=010 cc=00
-                            case 6:  this->tya(); break;    // 0x98: aaa=100 bbb=110 cc=00
+                            case 2:  this->dey(); break;        // 0x88: aaa=100 bbb=010 cc=00
+                            case 4:  this->br(CF, 0); break;    // 0x90: aaa=100 bbb=100 cc=00 (BCC)
+                            case 6:  this->tya(); break;        // 0x98: aaa=100 bbb=110 cc=00
                             default: this->sty(); break;
                         }
                         break;
                     case 5:
                         switch (bbb) {
-                            case 2:  this->tay(); break;    // 0xA8: aaa=101 bbb=010 cc=00
-                            case 6:  this->cl(VF); break;   // 0xB8: aaa=101 bbb=110 cc=00
+                            case 2:  this->tay(); break;        // 0xA8: aaa=101 bbb=010 cc=00
+                            case 4:  this->br(CF, 0); break;    // 0xB0: aaa=101 bbb=100 cc=00 (BCS)
+                            case 6:  this->cl(VF); break;       // 0xB8: aaa=101 bbb=110 cc=00
                             default: this->ldy(); break;
                         }
                         break;
                     case 6:
                         switch (bbb) {
-                            case 2:  this->iny(); break;    // 0xC8: aaa=110 bbb=010 cc=00
-                            case 6:  this->cl(DF); break;   // 0xD8: aaa=110 bbb=110 cc=00
+                            case 2:  this->iny(); break;        // 0xC8: aaa=110 bbb=010 cc=00
+                            case 4:  this->br(ZF, 0); break;    // 0xD0: aaa=110 bbb=100 cc=00 (BNE)
+                            case 6:  this->cl(DF); break;       // 0xD8: aaa=110 bbb=110 cc=00
                             default: this->cpy(); break;
                         }
                         break;
                     case 7:
                         switch (bbb) {
-                            case 2:  this->inx(); break;    // 0xE8: aaa=111 bbb=010 cc=00
-                            case 6:  this->se(DF); break;   // 0xF8: aaa=111 bbb=110 cc=00
+                            case 2:  this->inx(); break;        // 0xE8: aaa=111 bbb=010 cc=00
+                            case 4:  this->br(ZF, ZF); break;   // 0xF0: aaa=111 bbb=100 cc=00 (BEQ)
+                            case 6:  this->se(DF); break;       // 0xF8: aaa=111 bbb=110 cc=00
                             default: this->cpx(); break;
                         }
                         break;
