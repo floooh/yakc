@@ -897,3 +897,14 @@ TEST(BNE_BEQ) {
 
     // FIXME: test the other branches
 }
+
+TEST(JMP) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0x4C, 0x00, 0x10,   // JMP $1000
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(3 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x1000);
+}
