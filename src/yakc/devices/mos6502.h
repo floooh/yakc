@@ -312,8 +312,22 @@ mos6502::jmp() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::jmpi() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2:
+            // load first byte of target address
+            ADDR = (DATA<<8) | (tmp16 & 0x00FF);
+            break;
+        case 3:
+            // load second byte of target address, wrap around in current page
+            tmp16 = DATA;
+            ADDR = (ADDR & 0xFF00) | ((ADDR + 1) & 0x00FF);
+            break;
+        case 4:
+            // form target address in PC
+            PC = (DATA<<8) | (tmp16 & 0x00FF);
+            Fetch = true;
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------

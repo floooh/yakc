@@ -908,3 +908,41 @@ TEST(JMP) {
 
     CHECK(3 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x1000);
 }
+
+TEST(JMP_indirect_samepage) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xA9, 0x33,         // LDA #$33
+        0x8D, 0x10, 0x21,   // STA $2110
+        0xA9, 0x22,         // LDA #$22
+        0x8D, 0x11, 0x21,   // STA $2111
+        0x6C, 0x10, 0x21,   // JMP ($2110)
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(cpu.A == 0x33);
+    CHECK(4 == cpu.step_op(&bus)); CHECK(cpu.mem.r8(0x2110) == 0x33);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(cpu.A == 0x22);
+    CHECK(4 == cpu.step_op(&bus)); CHECK(cpu.mem.r8(0x2111) == 0x22);
+    CHECK(5 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x2233);
+}
+
+TEST(JMP_indirect_wrap) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0xA9, 0x33,         // LDA #$33
+        0x8D, 0xFF, 0x21,   // STA $21FF
+        0xA9, 0x22,         // LDA #$22
+        0x8D, 0x00, 0x21,   // STA $2100    // note: wraps around!
+        0x6C, 0xFF, 0x21,   // JMP ($21FF)
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+
+    CHECK(2 == cpu.step_op(&bus)); CHECK(cpu.A == 0x33);
+    CHECK(4 == cpu.step_op(&bus)); CHECK(cpu.mem.r8(0x21FF) == 0x33);
+    CHECK(2 == cpu.step_op(&bus)); CHECK(cpu.A == 0x22);
+    CHECK(4 == cpu.step_op(&bus)); CHECK(cpu.mem.r8(0x2100) == 0x22);
+    CHECK(5 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x2233);
+}

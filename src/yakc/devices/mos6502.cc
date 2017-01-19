@@ -41,7 +41,7 @@ mos6502::op_desc mos6502::ops[4][8][8] = {
 {{A____,M___},{A____,M_R_},{A____,M_R_},{A____,M_R_},{A_INV,M___},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},
 {{A_INV,M___},{A_ZER,M_R_},{A_INV,M___},{A_INV,M___},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_}},
 {{A____,M___},{A____,M___},{A____,M__W},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
-{{A_INV,M___},{A_ABS,M_R_},{A_JMP,M_R_},{A_ABS,M_R_},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_}},
+{{A_INV,M___},{A_ABS,M_R_},{A_JMP,M_R_},{A_JMP,M_R_},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_}},
 {{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},  // relative branches
 {{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ZPX,M__W},{A_ZPX,M_R_},{A_INV,M___},{A_INV,M___}},
 {{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
