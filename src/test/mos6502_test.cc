@@ -946,3 +946,21 @@ TEST(JMP_indirect_wrap) {
     CHECK(4 == cpu.step_op(&bus)); CHECK(cpu.mem.r8(0x2100) == 0x22);
     CHECK(5 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x2233);
 }
+
+TEST(JSR_RTS) {
+    system_bus bus;
+    auto cpu = init_cpu();
+    uint8_t prog[] = {
+        0x20, 0x05, 0x03,   // JSR fun
+        0xEA, 0xEA,         // NOP, NOP
+        0xEA,               // fun: NOP
+        0x60,               // RTS
+    };
+    cpu.mem.write(0x0300, prog, sizeof(prog));
+    cpu.PC = 0x0300;
+
+    CHECK(cpu.S == 0xFD);
+    CHECK(6 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x0305); CHECK(cpu.S == 0xFB); CHECK(cpu.mem.r16(0x01FC)==0x0302);
+    CHECK(2 == cpu.step_op(&bus));
+    CHECK(6 == cpu.step_op(&bus)); CHECK(cpu.PC == 0x0303); CHECK(cpu.S == 0xFD);
+}

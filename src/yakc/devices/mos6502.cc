@@ -22,6 +22,7 @@ enum {
     A_IDX,      // (zp,X)
     A_IDY,      // (zp),Y
     A_JMP,      // special JMP abs
+    A_JSR,      // special JSR abs
 
     A_INV,      // this is an invalid instruction
 };
@@ -38,7 +39,7 @@ mos6502::op_desc mos6502::ops[4][8][8] = {
 // cc = 00
 {
 //---         BIT          JMP          JMP()        STY          LDY          CPY          CPX
-{{A____,M___},{A____,M_R_},{A____,M_R_},{A____,M_R_},{A_INV,M___},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},
+{{A____,M___},{A_JSR,M_R_},{A____,M_R_},{A____,M_R_},{A_INV,M___},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},
 {{A_INV,M___},{A_ZER,M_R_},{A_INV,M___},{A_INV,M___},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_}},
 {{A____,M___},{A____,M___},{A____,M__W},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
 {{A_INV,M___},{A_ABS,M_R_},{A_JMP,M_R_},{A_JMP,M_R_},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_}},
@@ -188,7 +189,7 @@ mos6502::step_addr() {
         case A____:
             ADDR = PC; done = true; break;
             break;
-        //-- immediate mode
+        //-- immediate mode, special JSR mode
         case A_IMM:
             ADDR = PC++; done = true; break;
             break;
@@ -298,6 +299,11 @@ mos6502::step_addr() {
                 case 2: tmp16 = DATA; ADDR = PC++; done = true; break;
             }
             break;
+        //--- JSR, this is weird, reads one byte from PC++, then writes
+        //--- PC to stack before reading the next target address byte
+        case A_JSR:
+            ADDR = PC++; done = true; break;
+            break;
         //--- can't happen
         default: YAKC_ASSERT(false); break;
     }
@@ -330,6 +336,7 @@ mos6502::step_exec() {
                         break;
                     case 1:
                         switch (bbb) {
+                            case 0:  this->jsr(); break;        // 0x20: aaa=001 bbb=000 cc=00
                             case 2:  this->plp(); break;        // 0x28: aaa=001 bbb=010 cc=00
                             case 4:  this->br(NF, NF); break;   // 0x30: aaa=001 bbb=100 cc=00 (BMI)
                             case 6:  this->se(CF); break;       // 0x38: aaa=001 bbb=110 cc=00
@@ -346,6 +353,7 @@ mos6502::step_exec() {
                         break;
                     case 3:
                         switch (bbb) {
+                            case 0:  this->rts(); break;        // 0x60: aaa=011 bbb=000 cc=00
                             case 2:  this->pla(); break;        // 0x68: aaa=011 bbb=010 cc=00
                             case 4:  this->br(VF, VF); break;   // 0x70: aaa=011 bbb=100 cc=00 (BVS)
                             case 6:  this->se(IF); break;       // 0x78: aaa=011 bbb=110 cc=00

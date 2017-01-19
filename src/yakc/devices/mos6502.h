@@ -333,15 +333,62 @@ mos6502::jmpi() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::jsr() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2:
+            // low-byte of target address loaded, and put SP
+            // on addr bus, but the next cycle is a junk read
+            tmp16 = DATA; ADDR = 0x0100 | S;
+            break;
+        case 3:
+            // write PC high byte to stack
+            RW = false;
+            DATA = PC >> 8;
+            ADDR = 0x0100 | S--;
+            break;
+        case 4:
+            // write PC low byte to stack
+            ADDR = 0x0100 | S--;
+            DATA = PC;
+            break;
+        case 5:
+            // load the target address high-byte
+            RW = true;
+            ADDR = PC;
+            break;
+        case 6:
+            // and finally jump to target address
+            PC = (DATA<<8) | (tmp16 & 0x00FF);
+            Fetch = true;
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rts() {
-    // FIXME
-    Fetch = true;
+    switch (ExecCycle) {
+        case 2:
+            // first put SP on addr bus and do a junk read
+            ADDR = 0x0100 | S++;
+            break;
+        case 3:
+            // read return addr low byte
+            ADDR = 0x0100 | S++;
+            break;
+        case 4:
+            // keep return addr low byte, and read high byte from stack
+            tmp16 = DATA; ADDR = 0x0100 | S;
+            break;
+        case 5:
+            // put return address in PC, this is one byte before next op, do a junk read
+            PC = (DATA<<8) | (tmp16 & 0x00FF);
+            ADDR = PC++;
+            break;
+        case 6:
+            // and we're done
+            Fetch = true;
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------
