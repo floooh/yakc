@@ -122,11 +122,16 @@ static uint8_t mem_cb(bool write, uint16_t addr, uint8_t inval) {
 
 TEST(memory_mapped_io) {
     memory mem;
-    const int size = 0x4000;
-    ubyte ram0[size];
-    mem.map(0, 0x0000, size, ram0, true);
-    mem.map_io(0, 0x4000, size, mem_cb);
+    mem.map_io(0, 0x0000, 0x4000, mem_cb);
 
-    // FIXME!
+    mem.w8io(0x1234, 0x56);
+    CHECK(1 == num_writes);
+    CHECK(0 == num_reads);
+    CHECK(0x1234 == last_addr);
+    CHECK(0x56 == last_inval);
+    CHECK(0x33 == mem.r8io(0x1235));
+    CHECK(1 == num_writes);
+    CHECK(1 == num_reads);
+    CHECK(0x1235 == last_addr);
 }
 

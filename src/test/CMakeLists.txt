@@ -7,7 +7,7 @@ fips_begin_unittest(yakc_test)
         z80_test.cc z80pio_test.cc
         zex_test.cc
     )
-    fips_generate(FROM zex.yml TYPE dump)
+    fips_generate(FROM dump.yml TYPE dump)
     fips_deps(Core yakc)
 fips_end_unittest()
 endif()
