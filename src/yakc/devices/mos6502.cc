@@ -107,7 +107,7 @@ void
 mos6502::reset() {
     P = (IF | XF);
     S = 0xFD;
-    PC = mem.r16(0xFFFC);
+    PC = mem.r16io(0xFFFC);
     RW = true;
     Cycle = 0;
     AddrMode = A____;
@@ -128,10 +128,10 @@ mos6502::step() {
 void
 mos6502::rw(bool read) {
     if (read) {
-        DATA = mem.r8(ADDR);
+        DATA = mem.r8io(ADDR);
     }
     else {
-        mem.w8(ADDR, DATA);
+        mem.w8io(ADDR, DATA);
     }
     Cycle++;
     if (bus) {

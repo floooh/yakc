@@ -102,6 +102,31 @@ TEST(memory) {
     CHECK(mem.r8(0x0005) == 6);
     CHECK(mem.r8(0x0006) == 7);
     CHECK(mem.r8(0x0007) == 8);
+}
 
+static uint16_t last_addr = 0;
+static uint8_t last_inval = 0;
+static int num_reads  = 0;
+static int num_writes = 0;
+static uint8_t mem_cb(bool write, uint16_t addr, uint8_t inval) {
+    last_addr = addr;
+    last_inval = inval;
+    if (write) {
+        num_writes++;
+    }
+    else {
+        num_reads++;
+    }
+    return 0x33;
+}
+
+TEST(memory_mapped_io) {
+    memory mem;
+    const int size = 0x4000;
+    ubyte ram0[size];
+    mem.map(0, 0x0000, size, ram0, true);
+    mem.map_io(0, 0x4000, size, mem_cb);
+
+    // FIXME!
 }
 

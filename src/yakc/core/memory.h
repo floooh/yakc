@@ -71,7 +71,7 @@ public:
     /// constructor
     memory();
     /// map a range of memory with identical read/write pointer
-    void map(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, bool writable);
+    void map(int layer, uint16_t addr, uint32_t size, uint8_t* ptr, bool writable);
     /// map a range of memory with different read/write pointers
     void map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8_t* write_ptr, mem_cb cb=nullptr);
     /// map a range of memory to a callback for memory-mapped-io
