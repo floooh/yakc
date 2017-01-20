@@ -13,7 +13,7 @@ memory::memory() {
 
 //------------------------------------------------------------------------------
 void
-memory::map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8_t* write_ptr) {
+memory::map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8_t* write_ptr, mem_cb cb) {
     YAKC_ASSERT((layer >= 0) && (layer < num_layers));
     YAKC_ASSERT((addr & page::mask) == 0);
     YAKC_ASSERT((size & page::mask) == 0);
@@ -25,17 +25,29 @@ memory::map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8
         const uint16_t offset = i * page::size;
         const uint16_t page_index = ((addr+offset)&addr_mask) >> page::shift;    // page index will wrap around
 
-        // the pointers are 'pre-offsetted' by the upper 6 bits of the 16-bit
-        // page-start address, this saves us a masking operation later when
-        // when accessing the page
         const int pre_offset = page_index * page::size;
         YAKC_ASSERT(page_index < num_pages);
-        this->layers[layer][page_index].read_ptr = (read_ptr - pre_offset) + offset;
-        if (nullptr != write_ptr) {
-            this->layers[layer][page_index].write_ptr = (write_ptr - pre_offset) + offset;
+        auto& page = this->layers[layer][page_index];
+        if (cb) {
+            YAKC_ASSERT((!read_ptr) && (!write_ptr));
+            // special case memory-mapped-io area, an access to this calls
+            // the callback function 'cb', to detect a memory-mapped
+            // page, the write_ptr is set to nullptr, and the read_ptr
+            // is actually the callback function pointer
+            page.read_ptr  = (uint8_t*) cb;
+            page.write_ptr = nullptr;
         }
         else {
-            this->layers[layer][page_index].write_ptr = this->junk_page - pre_offset;
+            // the pointers are 'pre-offsetted' by the upper 6 bits of the 16-bit
+            // page-start address, this saves us a masking operation later when
+            // when accessing the page
+            page.read_ptr = (read_ptr - pre_offset) + offset;
+            if (nullptr != write_ptr) {
+                page.write_ptr = (write_ptr - pre_offset) + offset;
+            }
+            else {
+                page.write_ptr = this->junk_page - pre_offset;
+            }
         }
         this->update_mapping(page_index);
     }
@@ -45,11 +57,17 @@ memory::map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8
 void
 memory::map(int layer, uint16_t addr, uint32_t size, uint8_t* ptr, bool writable) {
     if (writable) {
-        this->map_rw(layer, addr, size, ptr, ptr);
+        this->map_rw(layer, addr, size, ptr, ptr, nullptr);
     }
     else {
-        this->map_rw(layer, addr, size, ptr, nullptr);
+        this->map_rw(layer, addr, size, ptr, nullptr, nullptr);
     }
+}
+
+//------------------------------------------------------------------------------
+void
+memory::map_io(int layer, uint16_t addr, uint32_t size, mem_cb cb) {
+    this->map_rw(layer, addr, size, nullptr, nullptr, cb);
 }
 
 //------------------------------------------------------------------------------

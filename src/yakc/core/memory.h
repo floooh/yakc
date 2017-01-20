@@ -42,6 +42,9 @@ public:
     static const int addr_range = 1<<16;
     static const int addr_mask = addr_range - 1;
 
+    /// memory-mapped-io callback function typedef
+    typedef uint8_t (*mem_cb)(bool write, uint16_t addr, uint8_t inval);
+
     /// a memory page mapping description
     struct page {
         static const int shift = 10;
@@ -70,7 +73,9 @@ public:
     /// map a range of memory with identical read/write pointer
     void map(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, bool writable);
     /// map a range of memory with different read/write pointers
-    void map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8_t* write_ptr);
+    void map_rw(int layer, uint16_t addr, uint32_t size, uint8_t* read_ptr, uint8_t* write_ptr, mem_cb cb=nullptr);
+    /// map a range of memory to a callback for memory-mapped-io
+    void map_io(int layer, uint16_t addr, uint32_t size, mem_cb cb);
     /// unmap all memory pages in a mapping layer
     void unmap_layer(int layer);
     /// unmap all memory pages
@@ -78,17 +83,29 @@ public:
     /// map a Z80 address to host memory pointer (read-only)
     const uint8_t* read_ptr(uint16_t addr) const;
 
-    /// read a byte at cpu address
+    /// read a byte at cpu address, no memory-mapped-io support
     uint8_t r8(uint16_t addr) const;
-    /// read a signed byte at cpu address
+    /// read a signed byte at cpu address, no memory-mapped-io support
     int8_t rs8(uint16_t addr) const;
-    /// write a byte to cpu address
+    /// write a byte to cpu address, no memory-mapped-io support
     void w8(uint16_t addr, uint8_t b) const;
-    /// read a word at cpu address
+    /// read a word at cpu address, no memory-mapped-io support
     uint16_t r16(uint16_t addr) const;
-    /// write a word to cpu address
+    /// write a word to cpu address, no memory-mapped-io support
     void w16(uint16_t addr, uint16_t w) const;
-    /// write a byte range
+
+    /// read a byte at cpu address, with memory-mapped-io support
+    uint8_t r8io(uint16_t addr) const;
+    /// read a signed byte at cpu address, with memory-mapped-io support
+    int8_t rs8io(uint16_t addr) const;
+    /// write a byte to cpu address, with memory-mapped-io support
+    void w8io(uint16_t addr, uint8_t b) const;
+    /// read a word at cpu address, with memory-mapped-io support
+    uint16_t r16io(uint16_t addr) const;
+    /// write a word to cpu address, with memory-mapped-io support
+    void w16io(uint16_t addr, uint16_t w) const;
+
+    /// write a byte range (calls w8() internally)
     void write(uint16_t addr, const uint8_t* src, int num) const;
 
 private:
@@ -110,15 +127,54 @@ memory::w8(uint16_t addr, uint8_t b) const {
 }
 
 //------------------------------------------------------------------------------
+inline void
+memory::w8io(uint16_t addr, uint8_t b) const {
+    const auto& page = this->page_table[addr>>page::shift];
+    if (page.write_ptr) {
+        page.write_ptr[addr] = b;
+    }
+    else {
+        // memory-mapped-io page
+        ((mem_cb)page.read_ptr)(true, addr, b);
+    }
+}
+
+//------------------------------------------------------------------------------
 inline uint8_t
 memory::r8(uint16_t addr) const {
     return this->page_table[addr>>page::shift].read_ptr[addr];
 }
 
 //------------------------------------------------------------------------------
+inline uint8_t
+memory::r8io(uint16_t addr) const {
+    const auto& page = this->page_table[addr>>page::shift];
+    if (page.write_ptr) {
+        return page.read_ptr[addr];
+    }
+    else {
+        // memory-mapped-io page
+        return ((mem_cb)page.read_ptr)(false, addr, 0);
+    }
+}
+
+//------------------------------------------------------------------------------
 inline int8_t
 memory::rs8(uint16_t addr) const {
-    return (int8_t) this->page_table[addr>>page::shift].read_ptr[addr];
+    return (int8_t)this->page_table[addr>>page::shift].read_ptr[addr];
+}
+
+//------------------------------------------------------------------------------
+inline int8_t
+memory::rs8io(uint16_t addr) const {
+    const auto& page = this->page_table[addr>>page::shift];
+    if (page.write_ptr) {
+        return (int8_t)page.read_ptr[addr];
+    }
+    else {
+        // memory-mapped-io page
+        return (int8_t)((mem_cb)page.read_ptr)(false, addr, 0);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -129,10 +185,26 @@ memory::w16(uint16_t addr, uint16_t w) const {
 }
 
 //------------------------------------------------------------------------------
+inline void
+memory::w16io(uint16_t addr, uint16_t w) const {
+    this->w8io(addr, w & 0xFF);
+    this->w8io(addr + 1, (w>>8));
+}
+
+//------------------------------------------------------------------------------
 inline uint16_t
 memory::r16(uint16_t addr) const {
     uint8_t l = this->r8(addr);
     uint8_t h = this->r8(addr+1);
+    uint16_t w = h << 8 | l;
+    return w;
+}
+
+//------------------------------------------------------------------------------
+inline uint16_t
+memory::r16io(uint16_t addr) const {
+    uint8_t l = this->r8io(addr);
+    uint8_t h = this->r8io(addr+1);
     uint16_t w = h << 8 | l;
     return w;
 }
