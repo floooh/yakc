@@ -37,9 +37,6 @@ public:
     uint16_t tmp16;
 
     int Cycle;              // current instruction cycle
-    bool Fetch;             // true: currently in fetch/decode cycle
-    int AddrCycle;          // > 0: currently in address mode state
-    int ExecCycle;          // > 0: currently in execute state
     uint8_t AddrMode;       // currently active addressing mode
     uint8_t MemAccess;      // M_R, M_W, M_RW
 
@@ -53,11 +50,14 @@ public:
     // memory map
     memory mem;
 
+    // pointer to system bus object
+    system_bus* bus;
+
     /// constructor
     mos6502();
 
     /// one-time init
-    void init();
+    void init(system_bus* bus);
     /// reset the CPU
     void reset();
     /// called when an invalid opcode has been hit
@@ -66,21 +66,19 @@ public:
     /// trigger interrupt request line on/off
     void irq(bool b);
     /// handle an interrupt request
-    int handle_irq(system_bus* bus);
+    int handle_irq();
 
-    /// execute a single cycle
-    void step(system_bus* bus);
-    /// execute a single instruction, return cycles
-    uint32_t step_op(system_bus* bus);
+    /// execute next instruction, return cycles
+    uint32_t step();
 
-    /// prepare to fetch next instruction
-    void step_fetch();
-    /// decode fetched instruction (same cycle as fetch)
-    void step_decode();
-    /// addr state: determine address and put on address bus
-    void step_addr();
-    /// exec state: execute instruction
-    void step_exec();
+    /// read or write next byte, incr cycle, tick bus
+    void rw(bool read);
+    /// fetch and decode the next instruction
+    void fetch();
+    /// determine address and put on address bus
+    void addr();
+    /// execute instruction
+    void exec();
     
     // instructions
     void nop();
@@ -152,274 +150,268 @@ mos6502::brk() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::nop() {
-    Fetch = true;
+    rw(true);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::lda() {
-    A = DATA; P = YAKC_MOS6502_NZ(P,A); Fetch = true;
+    rw(true);
+    A = DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ldx() {
-    X = DATA; P = YAKC_MOS6502_NZ(P,X); Fetch = true;
+    rw(true);
+    X = DATA; P = YAKC_MOS6502_NZ(P,X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ldy() {
-    Y = DATA; P = YAKC_MOS6502_NZ(P,Y); Fetch = true;
+    rw(true);
+    Y = DATA; P = YAKC_MOS6502_NZ(P,Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::sta() {
-    DATA = A; RW=false; Fetch=true;
+    DATA = A;
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::stx() {
-    DATA = X; RW=false; Fetch=true;
+    DATA = X;
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::sty() {
-    DATA = Y; RW=false; Fetch=true;
+    DATA = Y;
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tax() {
-    X = A; P = YAKC_MOS6502_NZ(P,X); Fetch = true;
+    rw(true);
+    X = A; P = YAKC_MOS6502_NZ(P,X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tay() {
-    Y = A; P = YAKC_MOS6502_NZ(P,Y); Fetch = true;
+    rw(true);
+    Y = A; P = YAKC_MOS6502_NZ(P,Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::txa() {
-    A = X; P = YAKC_MOS6502_NZ(P,A); Fetch = true;
+    rw(true);
+    A = X; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tya() {
-    A = Y; P = YAKC_MOS6502_NZ(P,A); Fetch = true;
+    rw(true);
+    A = Y; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::txs() {
-    S = X; Fetch = true;
+    rw(true);
+    S = X;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tsx() {
-    X = S; P = YAKC_MOS6502_NZ(P,X); Fetch = true;
+    rw(true);
+    X = S; P = YAKC_MOS6502_NZ(P,X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::php() {
-    switch (ExecCycle) {
-        case 2: ADDR = 0x0100|S--; DATA = (P | BF); RW=false; break;
-        case 3: RW=true; Fetch=true; break;
-    }
+    rw(true);
+    //--
+    ADDR = 0x0100|S--; DATA = (P | BF);
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::plp() {
-    switch (ExecCycle) {
-        case 2: ADDR = 0x0100|S++; break;   // first read junk from current SP
-        case 3: ADDR = 0x0100|S; break;     // read actual byte
-        case 4: P = (DATA & ~BF); Fetch=true; break;
-    }
+    rw(true);
+    //-- first read junk from current SP
+    ADDR = 0x0100|S++;
+    rw(true);
+    //-- read actual byte
+    ADDR = 0x0100|S;
+    rw(true);
+    P = (DATA & ~BF);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::pha() {
-    switch (ExecCycle) {
-        case 2: ADDR = 0x0100|S--; DATA = A; RW=false; break;
-        case 3: RW=true; Fetch=true; break;
-    }
+    rw(true);
+    //--
+    ADDR = 0x0100|S--; DATA = A;
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::pla() {
-    switch (ExecCycle) {
-        case 2: ADDR = 0x0100|S++; break;   // first read junk from current SP
-        case 3: ADDR = 0x0100|S; break;     // read actual byte
-        case 4: A = DATA; Fetch=true; break;
-    }
+    rw(true);
+    //-- first read junk from current SP
+    ADDR = 0x0100|S++;
+    rw(true);
+    // read actual byte
+    ADDR = 0x0100|S;
+    rw(true);
+    A = DATA;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::se(uint8_t f) {
-    P |= f; Fetch = true;
+    rw(true);
+    P |= f;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::cl(uint8_t f) {
-    P &= ~f; Fetch = true;
+    rw(true);
+    P &= ~f;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::br(uint8_t m, uint8_t v) {
-    switch (ExecCycle) {
-        case 2:
-            // check if the branch is taken, if not return after 2 cycles
-            if ((P & m) != v) {
-                Fetch = true;
-            }
-            break;
-        case 3:
-            // branch was taken, compute target address, return after 3
-            // cycles if target address is in same 256 bytes page
-            tmp16 = PC + int8_t(DATA);
-            if ((tmp16 & 0xFF00) == (PC & 0xFF00)) {
-                PC = tmp16; Fetch=true;
-            }
-            break;
-        case 4:
-            // page boundary was crossed, return after 4 cycles
-            PC = tmp16; Fetch=true;
-            break;
+    rw(true);
+    // check if the branch is taken, if not return after 2 cycles
+    if ((P & m) != v) {
+        return;
     }
+    //--
+    rw(true);
+    // branch was taken, compute target address, return after 3
+    // cycles if target address is in same 256 bytes page
+    tmp16 = PC + int8_t(DATA);
+    if ((tmp16 & 0xFF00) == (PC & 0xFF00)) {
+        PC = tmp16;
+        return;
+    }
+    rw(true);
+    // page boundary was crossed, return after 4 cycles
+    PC = tmp16;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::jmp() {
+    rw(true);
     PC = (DATA<<8) | (tmp16 & 0x00FF);
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::jmpi() {
-    switch (ExecCycle) {
-        case 2:
-            // load first byte of target address
-            ADDR = (DATA<<8) | (tmp16 & 0x00FF);
-            break;
-        case 3:
-            // load second byte of target address, wrap around in current page
-            tmp16 = DATA;
-            ADDR = (ADDR & 0xFF00) | ((ADDR + 1) & 0x00FF);
-            break;
-        case 4:
-            // form target address in PC
-            PC = (DATA<<8) | (tmp16 & 0x00FF);
-            Fetch = true;
-            break;
-    }
+    rw(true);
+    // load first byte of target address
+    ADDR = (DATA<<8) | (tmp16 & 0x00FF);
+    rw(true);
+    // load second byte of target address, wrap around in current page
+    tmp16 = DATA;
+    ADDR = (ADDR & 0xFF00) | ((ADDR + 1) & 0x00FF);
+    rw(true);
+    // form target address in PC
+    PC = (DATA<<8) | (tmp16 & 0x00FF);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::jsr() {
-    switch (ExecCycle) {
-        case 2:
-            // low-byte of target address loaded, and put SP
-            // on addr bus, but the next cycle is a junk read
-            tmp16 = DATA; ADDR = 0x0100 | S;
-            break;
-        case 3:
-            // write PC high byte to stack
-            RW = false;
-            DATA = PC >> 8;
-            ADDR = 0x0100 | S--;
-            break;
-        case 4:
-            // write PC low byte to stack
-            ADDR = 0x0100 | S--;
-            DATA = PC;
-            break;
-        case 5:
-            // load the target address high-byte
-            RW = true;
-            ADDR = PC;
-            break;
-        case 6:
-            // and finally jump to target address
-            PC = (DATA<<8) | (tmp16 & 0x00FF);
-            Fetch = true;
-            break;
-    }
+    rw(true);
+    // low-byte of target address loaded, and put SP
+    // on addr bus, but the next cycle is a junk read
+    tmp16 = DATA; ADDR = 0x0100 | S;
+    rw(true);
+    // write PC high byte to stack
+    DATA = PC >> 8;
+    ADDR = 0x0100 | S--;
+    rw(false);
+    // write PC low byte to stack
+    ADDR = 0x0100 | S--;
+    DATA = PC;
+    rw(false);
+    // load the target address high-byte
+    ADDR = PC;
+    rw(true);
+    // and finally jump to target address
+    PC = (DATA<<8) | (tmp16 & 0x00FF);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rts() {
-    switch (ExecCycle) {
-        case 2:
-            // first put SP on addr bus and do a junk read
-            ADDR = 0x0100 | S++;
-            break;
-        case 3:
-            // read return addr low byte
-            ADDR = 0x0100 | S++;
-            break;
-        case 4:
-            // keep return addr low byte, and read high byte from stack
-            tmp16 = DATA; ADDR = 0x0100 | S;
-            break;
-        case 5:
-            // put return address in PC, this is one byte before next op, do a junk read
-            PC = (DATA<<8) | (tmp16 & 0x00FF);
-            ADDR = PC++;
-            break;
-        case 6:
-            // and we're done
-            Fetch = true;
-            break;
-    }
+    rw(true);
+    // first put SP on addr bus and do a junk read
+    ADDR = 0x0100 | S++;
+    rw(true);
+    // read return addr low byte
+    ADDR = 0x0100 | S++;
+    rw(true);
+    // keep return addr low byte, and read high byte from stack
+    tmp16 = DATA; ADDR = 0x0100 | S;
+    rw(true);
+    // put return address in PC, this is one byte before next op, do a junk read
+    PC = (DATA<<8) | (tmp16 & 0x00FF);
+    ADDR = PC++;
+    rw(true);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rti() {
     // FIXME
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ora() {
-    A |= DATA; P = YAKC_MOS6502_NZ(P,A); Fetch = true;
+    rw(true);
+    A |= DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::anda() {
-    A &= DATA; P = YAKC_MOS6502_NZ(P,A); Fetch = true;
+    rw(true);
+    A &= DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::eor() {
-    A ^= DATA; P = YAKC_MOS6502_NZ(P,A); Fetch = true;
+    rw(true);
+    A ^= DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::adc() {
-    Fetch = true;
+    rw(true);
     // from MAME
     if (P & DF) {
         // decimal mode
@@ -465,7 +457,7 @@ mos6502::adc() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::sbc() {
-    Fetch = true;
+    rw(true);
     // from MAME
     if (P & DF) {
         // decimal mode
@@ -512,152 +504,154 @@ mos6502::sbc() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::cmp() {
+    rw(true);
     uint16_t v = A - DATA;
     P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
     if (!(v & 0xFF00)) {
         P |= CF;
     }
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::cpx() {
+    rw(true);
     uint16_t v = X - DATA;
     P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
     if (!(v & 0xFF00)) {
         P |= CF;
     }
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::cpy() {
+    rw(true);
     uint16_t v = Y - DATA;
     P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
     if (!(v & 0xFF00)) {
         P |= CF;
     }
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::dec() {
-    switch (ExecCycle) {
-        case 2: RW=false; break;    // first the unmodified value is written
-        case 3: DATA--; P = YAKC_MOS6502_NZ(P, DATA); break;
-        case 4: RW=true; Fetch=true; break;
-    }
+    rw(true);
+    //-- first, the unmodified value is written
+    rw(false);
+    //-- next cycle the modified value is written
+    DATA--; P = YAKC_MOS6502_NZ(P, DATA);
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::dex() {
-    X--; P = YAKC_MOS6502_NZ(P, X); Fetch = true;
+    rw(true);
+    X--; P = YAKC_MOS6502_NZ(P, X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::dey() {
-    Y--; P = YAKC_MOS6502_NZ(P, Y); Fetch = true;
+    rw(true);
+    Y--; P = YAKC_MOS6502_NZ(P, Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::inc() {
-    switch (ExecCycle) {
-        case 2: RW=false; break;    // first the unmodified value is written
-        case 3: DATA++; P = YAKC_MOS6502_NZ(P, DATA); break;
-        case 4: RW=true; Fetch=true; break;
-    }
+    rw(true);
+    //-- first, the unmodified value is written
+    rw(false);
+    //-- next cycle the modified value is written
+    DATA++; P = YAKC_MOS6502_NZ(P, DATA);
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::inx() {
-    X++; P = YAKC_MOS6502_NZ(P, X); Fetch = true;
+    rw(true);
+    X++; P = YAKC_MOS6502_NZ(P, X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::iny() {
-    Y++; P = YAKC_MOS6502_NZ(P, Y); Fetch = true;
+    rw(true);
+    Y++; P = YAKC_MOS6502_NZ(P, Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::asl() {
-    switch (ExecCycle) {
-        case 2: RW=false; break;    // first the unmodified value is written
-        case 3:
-            P = (P & ~CF) | ((DATA & 0x80) ? CF : 0);
-            DATA <<= 1;
-            P = YAKC_MOS6502_NZ(P, DATA);
-            break;
-        case 4: RW=true; Fetch=true; break;
-    }
+    rw(true);
+    //-- first the unmodified value is written
+    rw(false);
+    //-- next the modified value is written
+    P = (P & ~CF) | ((DATA & 0x80) ? CF : 0);
+    DATA <<= 1;
+    P = YAKC_MOS6502_NZ(P, DATA);
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::asla() {
+    rw(true);
     P = (P & ~CF) | ((A & 0x80) ? CF : 0);
     A <<= 1;
     P = YAKC_MOS6502_NZ(P, A);
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::lsr() {
-    switch (ExecCycle) {
-        case 2: RW=false; break;    // first the unmodified value is written
-        case 3:
-            P = (P & ~CF) | ((DATA & 0x01) ? CF : 0);
-            DATA >>= 1;
-            P = YAKC_MOS6502_NZ(P, DATA);   // N can actually never be set
-            break;
-        case 4: RW=true; Fetch=true; break;
-    }
+    rw(true);
+    //-- first the unmodified value is written
+    rw(false);
+    //-- next the modified value is written
+    P = (P & ~CF) | ((DATA & 0x01) ? CF : 0);
+    DATA >>= 1;
+    P = YAKC_MOS6502_NZ(P, DATA);   // N can actually never be set
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::lsra() {
+    rw(true);
     P = (P & ~CF) | ((A & 0x01) ? CF : 0);
     A >>= 1;
     P = YAKC_MOS6502_NZ(P, A);   // N can actually never be set
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rol() {
-    switch (ExecCycle) {
-        case 2: RW=false; break;    // first the unmodified value is written
-        case 3:
-            {
-                bool c = P & CF;
-                P &= ~(NF|ZF|CF);
-                if (DATA & 0x80) {
-                    P |= CF;
-                }
-                DATA <<= 1;
-                if (c) {
-                    DATA |= 0x01;
-                }
-                P = YAKC_MOS6502_NZ(P, DATA);
-            }
-            break;
-        case 4: RW=true; Fetch=true; break;
+    rw(true);
+    //-- first the unmodified value is written
+    rw(false);
+    //-- next the modified value is written
+    bool c = P & CF;
+    P &= ~(NF|ZF|CF);
+    if (DATA & 0x80) {
+        P |= CF;
     }
+    DATA <<= 1;
+    if (c) {
+        DATA |= 0x01;
+    }
+    P = YAKC_MOS6502_NZ(P, DATA);
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rola() {
+    rw(true);
     bool c = P & CF;
     P &= ~(NF|ZF|CF);
     if (A & 0x80) {
@@ -668,35 +662,32 @@ mos6502::rola() {
         A |= 0x01;
     }
     P = YAKC_MOS6502_NZ(P, A);
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ror() {
-    switch (ExecCycle) {
-        case 2: RW=false; break;    // first the unmodified value is written
-        case 3:
-            {
-                bool c = P & CF;
-                P &= ~(NF|ZF|CF);
-                if (DATA & 0x01) {
-                    P |= CF;
-                }
-                DATA >>= 1;
-                if (c) {
-                    DATA |= 0x80;
-                }
-                P = YAKC_MOS6502_NZ(P, DATA);
-            }
-            break;
-        case 4: RW=true; Fetch=true; break;
+    rw(true);
+    //-- first the unmodified value is written
+    rw(false);
+    //-- next the modified value is written
+    bool c = P & CF;
+    P &= ~(NF|ZF|CF);
+    if (DATA & 0x01) {
+        P |= CF;
     }
+    DATA >>= 1;
+    if (c) {
+        DATA |= 0x80;
+    }
+    P = YAKC_MOS6502_NZ(P, DATA);
+    rw(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rora() {
+    rw(true);
     bool c = P & CF;
     P &= ~(NF|ZF|CF);
     if (A & 0x01) {
@@ -707,18 +698,17 @@ mos6502::rora() {
         A |= 0x80;
     }
     P = YAKC_MOS6502_NZ(P, A);
-    Fetch = true;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::bit() {
+    rw(true);
     uint8_t v = A & DATA;
     P = YAKC_MOS6502_NZ(P, v) & ~VF;
     if (v & 0x40) {
         P |= VF;
     }
-    Fetch = true;
 }
 
 } // namespace YAKC

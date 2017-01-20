@@ -10,6 +10,9 @@ namespace YAKC {
 
 class system_bus {
 public:
+    /// called by cycle-stepped CPU per 'subcycle'
+    virtual void cpu_tick();
+
     /// CPU IN callback
     virtual ubyte cpu_in(uword port);
     /// CPU OUT callback
