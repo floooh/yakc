@@ -93,7 +93,8 @@ mos6502::mos6502() {
 //------------------------------------------------------------------------------
 void
 mos6502::init(system_bus* bus_) {
-    this->bus = bus_;
+    bus = bus_;
+    bcd_enabled = true;
     A = 0; X = 0; Y = 0; S = 0; P = XF; PC = 0;
     OP = 0;
     RW = true;

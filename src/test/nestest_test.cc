@@ -13,29 +13,12 @@
 
 using namespace YAKC;
 
-static int write_cycles = 0;
-static int read_cycles = 0;
-
 static uint8_t mem_cb(bool write, uint16_t addr, uint8_t inval) {
     return 0x00;
 }
 
 static ubyte ram[0x0800];
 static ubyte sram[0x2000];
-
-// parses the nestest dump and loads it into the emulators memory
-struct nes_header {
-    uint8_t magic_N, magic_E, magic_S, magic_1A;
-    uint8_t num_rom = 0;
-    uint8_t num_chr = 0;
-    uint8_t flags6 = 0;
-    uint8_t flags7 = 0;
-    uint8_t num_ram = 0;
-    uint8_t flags9 = 0;
-    uint8_t flags10 = 0;
-    uint8_t zero[5];
-};
-static_assert(sizeof(nes_header) == 16, "sizeof(nes_header)");
 
 class nes_bus : public system_bus {
 public:
@@ -61,7 +44,7 @@ TEST(nestest) {
     cpu.mem.map(0, 0x1000, sizeof(ram), ram, true);
     cpu.mem.map(0, 0x1800, sizeof(ram), ram, true);
 
-    // memory-mapped-IO (2000..401F), but we 1KB page size...
+    // memory-mapped-IO (2000..401F), don't actually need this...
     cpu.mem.map_io(0, 0x2000, 0x4400, mem_cb);
 
     // SRAM 0x6000..0x8000
