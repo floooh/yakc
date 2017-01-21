@@ -82,7 +82,16 @@ public:
     void addr();
     /// execute instruction
     void exec();
-    
+
+    /// helper funcs
+    void do_sbc(uint8_t val);
+    void do_adc(uint8_t val);
+    void do_cmp(uint8_t val);
+    uint8_t do_asl(uint8_t val);
+    uint8_t do_rol(uint8_t val);
+    uint8_t do_lsr(uint8_t val);
+    uint8_t do_ror(uint8_t val);
+
     // instructions
     void nop();
     void brk();
@@ -146,6 +155,11 @@ public:
     void u_sax();
     void u_sbc();
     void u_dcp();
+    void u_isb();
+    void u_slo();
+    void u_rla();
+    void u_sre();
+    void u_rra();
 };
 
 // set N and Z flags on P depending on V, return new P
@@ -454,25 +468,24 @@ mos6502::eor() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::adc() {
-    rw(true);
+mos6502::do_adc(uint8_t val) {
     // from MAME
     if (bcd_enabled && (P & DF)) {
         // decimal mode
         uint8_t c  = P & CF ? 1 : 0;
         P &= ~(NF|VF|ZF|CF);
-        uint8_t al = (A & 0x0F) + (DATA & 0x0F) + c;
+        uint8_t al = (A & 0x0F) + (val & 0x0F) + c;
         if (al > 9) {
             al += 6;
         }
-        uint8_t ah = (A >> 4) + (DATA >> 4) + (al > 0x0F);
-        if (0 == (A + DATA + c)) {
+        uint8_t ah = (A >> 4) + (val >> 4) + (al > 0x0F);
+        if (0 == (A + val + c)) {
             P |= ZF;
         }
         else if (ah & 0x08) {
             P |= NF;
         }
-        if (~(A^DATA) & (A^(ah<<4)) & 0x80) {
+        if (~(A^val) & (A^(ah<<4)) & 0x80) {
             P |= VF;
         }
         if (ah > 9) {
@@ -485,10 +498,10 @@ mos6502::adc() {
     }
     else {
         // default mode
-        uint16_t sum = A + DATA + (P & CF ? 1:0);
+        uint16_t sum = A + val + (P & CF ? 1:0);
         P &= ~(VF|CF);
         P = YAKC_MOS6502_NZ(P, uint8_t(sum));
-        if (~(A^DATA) & (A^sum) & 0x80) {
+        if (~(A^val) & (A^sum) & 0x80) {
             P |= VF;
         }
         if (sum & 0xFF00) {
@@ -500,26 +513,32 @@ mos6502::adc() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::sbc() {
+mos6502::adc() {
     rw(true);
+    do_adc(DATA);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::do_sbc(uint8_t val) {
     // from MAME
     if (bcd_enabled && (P & DF)) {
         // decimal mode
         uint8_t c = P & CF ? 0 : 1;
         P &= ~(NF|VF|ZF|CF);
-        uint16_t diff = A - DATA - c;
-        uint8_t al = (A & 0x0F) - (DATA & 0x0F) - c;
+        uint16_t diff = A - val - c;
+        uint8_t al = (A & 0x0F) - (val & 0x0F) - c;
         if (int8_t(al) < 0) {
             al -= 6;
         }
-        uint8_t ah = (A>>4) - (DATA>>4) - (int8_t(al) < 0);
+        uint8_t ah = (A>>4) - (val>>4) - (int8_t(al) < 0);
         if (0 == uint8_t(diff)) {
             P |= ZF;
         }
         else if (diff & 0x80) {
             P |= NF;
         }
-        if ((A^DATA) & (A^diff) & 0x80) {
+        if ((A^val) & (A^diff) & 0x80) {
             P |= VF;
         }
         if (!(diff & 0xFF00)) {
@@ -532,10 +551,10 @@ mos6502::sbc() {
     }
     else {
         // default mode
-        uint16_t diff = A - DATA - (P & CF ? 0 : 1);
+        uint16_t diff = A - val - (P & CF ? 0 : 1);
         P &= ~(VF|CF);
         P = YAKC_MOS6502_NZ(P, uint8_t(diff));
-        if ((A^DATA) & (A^diff) & 0x80) {
+        if ((A^val) & (A^diff) & 0x80) {
             P |= VF;
         }
         if (!(diff & 0xFF00)) {
@@ -547,19 +566,32 @@ mos6502::sbc() {
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::u_sbc() {
-    sbc();
+mos6502::sbc() {
+    rw(true);
+    do_sbc(DATA);
 }
 
 //------------------------------------------------------------------------------
 inline void
-mos6502::cmp() {
+mos6502::u_sbc() {
     rw(true);
-    uint16_t v = A - DATA;
+    do_sbc(DATA);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::do_cmp(uint8_t val) {
+    uint16_t v = A - val;
     P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
     if (!(v & 0xFF00)) {
         P |= CF;
     }
+}
+//------------------------------------------------------------------------------
+inline void
+mos6502::cmp() {
+    rw(true);
+    do_cmp(DATA);
 }
 
 //------------------------------------------------------------------------------
@@ -604,12 +636,7 @@ mos6502::u_dcp() {
     //-- next cycle the modified value is written
     DATA--; P = YAKC_MOS6502_NZ(P, DATA);
     rw(false);
-    // update flags
-    uint16_t v = A - DATA;
-    P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
-    if (!(v & 0xFF00)) {
-        P |= CF;
-    }
+    do_cmp(DATA);
 }
 
 //------------------------------------------------------------------------------
@@ -653,14 +680,33 @@ mos6502::iny() {
 
 //------------------------------------------------------------------------------
 inline void
+mos6502::u_isb() {
+    rw(true);
+    //-- first, the unmodified value is written
+    rw(false);
+    //-- next cycle the modified value is written
+    DATA++;
+    rw(false);
+    do_sbc(DATA);
+}
+
+//------------------------------------------------------------------------------
+inline uint8_t
+mos6502::do_asl(uint8_t val) {
+    P = (P & ~CF) | ((val & 0x80) ? CF : 0);
+    val <<= 1;
+    P = YAKC_MOS6502_NZ(P, val);
+    return val;
+}
+
+//------------------------------------------------------------------------------
+inline void
 mos6502::asl() {
     rw(true);
     //-- first the unmodified value is written
     rw(false);
     //-- next the modified value is written
-    P = (P & ~CF) | ((DATA & 0x80) ? CF : 0);
-    DATA <<= 1;
-    P = YAKC_MOS6502_NZ(P, DATA);
+    DATA = do_asl(DATA);
     rw(false);
 }
 
@@ -668,9 +714,29 @@ mos6502::asl() {
 inline void
 mos6502::asla() {
     rw(true);
-    P = (P & ~CF) | ((A & 0x80) ? CF : 0);
-    A <<= 1;
+    A = do_asl(A);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::u_slo() {
+    rw(true);
+    //-- first the unmodified value is written
+    rw(false);
+    //-- next the modified value is written
+    DATA = do_asl(DATA);
+    rw(false);
+    A |= DATA;
     P = YAKC_MOS6502_NZ(P, A);
+}
+
+//------------------------------------------------------------------------------
+inline uint8_t
+mos6502::do_lsr(uint8_t val) {
+    P = (P & ~CF) | ((val & 0x01) ? CF : 0);
+    val >>= 1;
+    P = YAKC_MOS6502_NZ(P, val);   // N can actually never be set
+    return val;
 }
 
 //------------------------------------------------------------------------------
@@ -680,9 +746,7 @@ mos6502::lsr() {
     //-- first the unmodified value is written
     rw(false);
     //-- next the modified value is written
-    P = (P & ~CF) | ((DATA & 0x01) ? CF : 0);
-    DATA >>= 1;
-    P = YAKC_MOS6502_NZ(P, DATA);   // N can actually never be set
+    DATA = do_lsr(DATA);
     rw(false);
 }
 
@@ -690,9 +754,36 @@ mos6502::lsr() {
 inline void
 mos6502::lsra() {
     rw(true);
-    P = (P & ~CF) | ((A & 0x01) ? CF : 0);
-    A >>= 1;
-    P = YAKC_MOS6502_NZ(P, A);   // N can actually never be set
+    A = do_lsr(A);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::u_sre() {
+    rw(true);
+    //-- first the unmodified value is written
+    rw(false);
+    //-- next the modified value is written
+    DATA = do_lsr(DATA);
+    rw(false);
+    A ^= DATA;
+    P = YAKC_MOS6502_NZ(P, A);
+}
+
+//------------------------------------------------------------------------------
+inline uint8_t
+mos6502::do_rol(uint8_t val) {
+    bool c = P & CF;
+    P &= ~(NF|ZF|CF);
+    if (val & 0x80) {
+        P |= CF;
+    }
+    val <<= 1;
+    if (c) {
+        val |= 0x01;
+    }
+    P = YAKC_MOS6502_NZ(P, val);
+    return val;
 }
 
 //------------------------------------------------------------------------------
@@ -702,16 +793,7 @@ mos6502::rol() {
     //-- first the unmodified value is written
     rw(false);
     //-- next the modified value is written
-    bool c = P & CF;
-    P &= ~(NF|ZF|CF);
-    if (DATA & 0x80) {
-        P |= CF;
-    }
-    DATA <<= 1;
-    if (c) {
-        DATA |= 0x01;
-    }
-    P = YAKC_MOS6502_NZ(P, DATA);
+    DATA = do_rol(DATA);
     rw(false);
 }
 
@@ -719,16 +801,36 @@ mos6502::rol() {
 inline void
 mos6502::rola() {
     rw(true);
+    A = do_rol(A);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::u_rla() {
+    rw(true);
+    //-- first the unmodified value is written
+    rw(false);
+    //-- next the modified value is written
+    DATA = do_rol(DATA);
+    rw(false);
+    A &= DATA;
+    P = YAKC_MOS6502_NZ(P, A);
+}
+
+//------------------------------------------------------------------------------
+inline uint8_t
+mos6502::do_ror(uint8_t val) {
     bool c = P & CF;
     P &= ~(NF|ZF|CF);
-    if (A & 0x80) {
+    if (val & 0x01) {
         P |= CF;
     }
-    A <<= 1;
+    val >>= 1;
     if (c) {
-        A |= 0x01;
+        val |= 0x80;
     }
-    P = YAKC_MOS6502_NZ(P, A);
+    P = YAKC_MOS6502_NZ(P, val);
+    return val;
 }
 
 //------------------------------------------------------------------------------
@@ -738,16 +840,7 @@ mos6502::ror() {
     //-- first the unmodified value is written
     rw(false);
     //-- next the modified value is written
-    bool c = P & CF;
-    P &= ~(NF|ZF|CF);
-    if (DATA & 0x01) {
-        P |= CF;
-    }
-    DATA >>= 1;
-    if (c) {
-        DATA |= 0x80;
-    }
-    P = YAKC_MOS6502_NZ(P, DATA);
+    DATA = do_ror(DATA);
     rw(false);
 }
 
@@ -755,16 +848,19 @@ mos6502::ror() {
 inline void
 mos6502::rora() {
     rw(true);
-    bool c = P & CF;
-    P &= ~(NF|ZF|CF);
-    if (A & 0x01) {
-        P |= CF;
-    }
-    A >>= 1;
-    if (c) {
-        A |= 0x80;
-    }
-    P = YAKC_MOS6502_NZ(P, A);
+    A = do_ror(A);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::u_rra() {
+    rw(true);
+    //-- first the unmodified value is written
+    rw(false);
+    //-- next the modified value is written
+    DATA = do_ror(DATA);
+    rw(false);
+    do_adc(DATA);
 }
 
 //------------------------------------------------------------------------------

@@ -13,8 +13,10 @@
 
 using namespace YAKC;
 
+static int write_cycles = 0;
+static int read_cycles = 0;
+
 static uint8_t mem_cb(bool write, uint16_t addr, uint8_t inval) {
-    // FIXME
     return 0x00;
 }
 
@@ -35,8 +37,18 @@ struct nes_header {
 };
 static_assert(sizeof(nes_header) == 16, "sizeof(nes_header)");
 
+class nes_bus : public system_bus {
+public:
+    int ticks = 0;
+    virtual void cpu_tick() {
+        ticks++;
+    }
+};
+
 TEST(nestest) {
-    system_bus bus;
+    printf(">>> RUNNING NESTEST...\n");
+
+    nes_bus bus;
     mos6502 cpu;
 
     // need to implement a minimal NES emulation here
@@ -90,4 +102,5 @@ TEST(nestest) {
         // and run the next instruction
         cpu.step();
     }
+    printf(">>> NESTEST OK (%d ops, %d cycles)\n\n", i, bus.ticks);
 }

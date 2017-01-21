@@ -74,14 +74,14 @@ mos6502::op_desc mos6502::ops[4][8][8] = {
 },
 // cc = 03
 {
-{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_IDX,M__W},{A_IDX,M_R_},{A_IDX,M_RW},{A_INV,M___}},
-{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_RW},{A_INV,M___}},
+{{A_IDX,M_RW},{A_IDX,M_RW},{A_IDX,M_RW},{A_IDX,M_RW},{A_IDX,M__W},{A_IDX,M_R_},{A_IDX,M_RW},{A_IDX,M_RW}},
+{{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_RW},{A_ZER,M_RW}},
 {{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_IMM,M_R_}},
-{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_RW},{A_INV,M___}},
-{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_IDY,M_R_},{A_IDY,M_RW},{A_INV,M___}},
-{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ZPY,M__W},{A_ZPY,M_R_},{A_ZPX,M_RW},{A_INV,M___}},
-{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ABY,M_RW},{A_INV,M___}},
-{{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_ABY,M_R_},{A_ABX,M_RW},{A_INV,M___}}
+{{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_RW},{A_ABS,M_RW}},
+{{A_IDY,M_RW},{A_IDY,M_RW},{A_IDY,M_RW},{A_IDY,M_RW},{A_INV,M___},{A_IDY,M_R_},{A_IDY,M_RW},{A_IDY,M_RW}},
+{{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPY,M__W},{A_ZPY,M_R_},{A_ZPX,M_RW},{A_ZPX,M_RW}},
+{{A_ABY,M_RW},{A_ABY,M_RW},{A_ABY,M_RW},{A_ABY,M_RW},{A_INV,M___},{A_INV,M___},{A_ABY,M_RW},{A_ABY,M_RW}},
+{{A_ABX,M_RW},{A_ABX,M_RW},{A_ABX,M_RW},{A_ABX,M_RW},{A_INV,M___},{A_ABY,M_R_},{A_ABX,M_RW},{A_ABX,M_RW}}
 }
 };
 
@@ -485,15 +485,17 @@ mos6502::exec() {
 
         case 3:
             switch (aaa) {
-                case 4:
-                    this->u_sax(); break;   // undoc SAX
-                case 5:
-                    this->u_lax(); break;   // undoc LAX
-                case 6:
-                    this->u_dcp(); break;   // undoc DCP
+                case 0: this->u_slo(); break;   // undoc SLO
+                case 1: this->u_rla(); break;   // undoc RLA
+                case 2: this->u_sre(); break;   // undoc SRE
+                case 3: this->u_rra(); break;   // undoc RRA
+                case 4: this->u_sax(); break;   // undoc SAX
+                case 5: this->u_lax(); break;   // undoc LAX
+                case 6: this->u_dcp(); break;   // undoc DCP
                 case 7:
                     switch (bbb) {
-                        case 2: this->u_sbc(); break;   // undoc SBC #
+                        case 2:  this->u_sbc(); break;  // undoc SBC #
+                        default: this->u_isb(); break;  // undoc ISB
                     }
                     break;
             }
