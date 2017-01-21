@@ -61,8 +61,8 @@ static bool cpm_bdos(z80& cpu) {
 static void run_test(z80& cpu, system_bus& bus, const char* name) {
     auto startTime = Clock::Now();
     bool running = true;
-    std::uint64_t t = 0;
-    std::uint64_t num = 0;
+    uint64_t t = 0;
+    uint64_t num = 0;
     while (running) {
         t += cpu.step(&bus);
         num++;

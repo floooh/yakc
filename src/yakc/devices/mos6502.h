@@ -25,6 +25,9 @@ public:
         NF = (1<<7),    // negative
     };
 
+    // behaviour flags
+    bool bcd_enabled;   // default is true, set to false on CPUs that don't support BCD
+
     // registers
     uint8_t A,X,Y,S,P;
     uint16_t PC;
@@ -256,7 +259,7 @@ mos6502::plp() {
     //-- read actual byte
     ADDR = 0x0100|S;
     rw(true);
-    P = (DATA & ~BF);
+    P = (DATA & ~BF) | XF;
 }
 
 //------------------------------------------------------------------------------
@@ -278,7 +281,7 @@ mos6502::pla() {
     // read actual byte
     ADDR = 0x0100|S;
     rw(true);
-    A = DATA;
+    A = DATA; P = YAKC_MOS6502_NZ(P, A);
 }
 
 //------------------------------------------------------------------------------
@@ -413,10 +416,10 @@ inline void
 mos6502::adc() {
     rw(true);
     // from MAME
-    if (P & DF) {
+    if (bcd_enabled && (P & DF)) {
         // decimal mode
-        P &= ~(NF|VF|ZF|CF);
         uint8_t c  = P & CF ? 1 : 0;
+        P &= ~(NF|VF|ZF|CF);
         uint8_t al = (A & 0x0F) + (DATA & 0x0F) + c;
         if (al > 9) {
             al += 6;
@@ -431,10 +434,10 @@ mos6502::adc() {
         if (~(A^DATA) & (A^(ah<<4)) & 0x80) {
             P |= VF;
         }
-        if (ah > 0) {
+        if (ah > 9) {
             ah += 6;
         }
-        if (ah > 0x0F) {
+        if (ah > 15) {
             P |= CF;
         }
         A = (ah<<4) | (al & 0x0F);
@@ -459,7 +462,7 @@ inline void
 mos6502::sbc() {
     rw(true);
     // from MAME
-    if (P & DF) {
+    if (bcd_enabled && (P & DF)) {
         // decimal mode
         uint8_t c = P & CF ? 0 : 1;
         P &= ~(NF|VF|ZF|CF);
@@ -705,10 +708,11 @@ inline void
 mos6502::bit() {
     rw(true);
     uint8_t v = A & DATA;
-    P = YAKC_MOS6502_NZ(P, v) & ~VF;
-    if (v & 0x40) {
-        P |= VF;
+    P &= ~(NF|VF|ZF);
+    if (!v) {
+        P |= ZF;
     }
+    P |= DATA & (NF|VF);
 }
 
 } // namespace YAKC

@@ -5,9 +5,10 @@ fips_begin_unittest(yakc_test)
         memory_test.cc daisychain_test.cc        
         mos6502_test.cc
         z80_test.cc z80pio_test.cc
-        zex_test.cc
+        zex_test.cc nestest_test.cc
     )
     fips_generate(FROM dump.yml TYPE dump)
+    fips_generate(FROM nestest.log.txt TYPE nestestlog HEADER nestestlog.h)
     fips_deps(Core yakc)
 fips_end_unittest()
 endif()

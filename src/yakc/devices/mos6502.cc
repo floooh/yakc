@@ -358,7 +358,7 @@ mos6502::exec() {
                 case 5:
                     switch (bbb) {
                         case 2:  this->tay(); break;        // 0xA8: aaa=101 bbb=010 cc=00
-                        case 4:  this->br(CF, 0); break;    // 0xB0: aaa=101 bbb=100 cc=00 (BCS)
+                        case 4:  this->br(CF, CF); break;    // 0xB0: aaa=101 bbb=100 cc=00 (BCS)
                         case 6:  this->cl(VF); break;       // 0xB8: aaa=101 bbb=110 cc=00
                         default: this->ldy(); break;
                     }
