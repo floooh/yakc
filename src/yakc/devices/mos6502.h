@@ -139,6 +139,13 @@ public:
     void ror();
     void rora();
     void bit();
+
+    // undocumented instructions
+    void u_nop();
+    void u_lax();
+    void u_sax();
+    void u_sbc();
+    void u_dcp();
 };
 
 // set N and Z flags on P depending on V, return new P
@@ -147,12 +154,18 @@ public:
 //------------------------------------------------------------------------------
 inline void
 mos6502::brk() {
-    // FIXME
+    YAKC_ASSERT(false);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::nop() {
+    rw(true);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::u_nop() {
     rw(true);
 }
 
@@ -179,6 +192,13 @@ mos6502::ldy() {
 
 //------------------------------------------------------------------------------
 inline void
+mos6502::u_lax() {
+    rw(true);
+    A = X = DATA; P = YAKC_MOS6502_NZ(P,A);
+}
+
+//------------------------------------------------------------------------------
+inline void
 mos6502::sta() {
     DATA = A;
     rw(false);
@@ -195,6 +215,13 @@ mos6502::stx() {
 inline void
 mos6502::sty() {
     DATA = Y;
+    rw(false);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::u_sax() {
+    DATA = A & X;
     rw(false);
 }
 
@@ -387,7 +414,21 @@ mos6502::rts() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::rti() {
-    // FIXME
+    rw(true);
+    // first put SP on addr bus and do a junk read
+    ADDR = 0x0100 | S++;
+    rw(true);
+    // read processor status flag
+    ADDR = 0x0100 | S++;
+    rw(true);
+    // store P, read return addr low byte
+    P = (DATA & ~BF) | XF; ADDR = 0x0100 | S++;
+    rw(true);
+    // store return-addr low byte, read high byte
+    tmp16 = DATA; ADDR = 0x0100 | S;
+    rw(true);
+    // update PC
+    PC = (DATA<<8) | (tmp16 & 0x00FF);
 }
 
 //------------------------------------------------------------------------------
@@ -506,6 +547,12 @@ mos6502::sbc() {
 
 //------------------------------------------------------------------------------
 inline void
+mos6502::u_sbc() {
+    sbc();
+}
+
+//------------------------------------------------------------------------------
+inline void
 mos6502::cmp() {
     rw(true);
     uint16_t v = A - DATA;
@@ -546,6 +593,23 @@ mos6502::dec() {
     //-- next cycle the modified value is written
     DATA--; P = YAKC_MOS6502_NZ(P, DATA);
     rw(false);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::u_dcp() {
+    rw(true);
+    //-- first, the unmodified value is written
+    rw(false);
+    //-- next cycle the modified value is written
+    DATA--; P = YAKC_MOS6502_NZ(P, DATA);
+    rw(false);
+    // update flags
+    uint16_t v = A - DATA;
+    P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
+    if (!(v & 0xFF00)) {
+        P |= CF;
+    }
 }
 
 //------------------------------------------------------------------------------

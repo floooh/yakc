@@ -925,3 +925,26 @@ TEST(JSR_RTS) {
     CHECK(6 == cpu.step()); CHECK(cpu.PC == 0x0303); CHECK(cpu.S == 0xFD);
 }
 
+TEST(RTI) {
+    init_cpu();
+    uint8_t prog[] = {
+        0xA9, 0x11,     // LDA #$11
+        0x48,           // PHA
+        0xA9, 0x22,     // LDA #$22
+        0x48,           // PHA
+        0xA9, 0x33,     // LDA #$33
+        0x48,           // PHA
+        0x40,           // RTI
+    };
+    cpu.mem.write(0x0200, prog, sizeof(prog));
+    cpu.PC = 0x0200;
+
+    CHECK(cpu.S == 0xFD);
+    CHECK(2 == cpu.step()); CHECK(cpu.A == 0x11);
+    CHECK(3 == cpu.step()); CHECK(cpu.S == 0xFC);
+    CHECK(2 == cpu.step()); CHECK(cpu.A == 0x22);
+    CHECK(3 == cpu.step()); CHECK(cpu.S == 0xFB);
+    CHECK(2 == cpu.step()); CHECK(cpu.A == 0x33);
+    CHECK(3 == cpu.step()); CHECK(cpu.S == 0xFA);
+    CHECK(6 == cpu.step()); CHECK(cpu.S == 0xFD); CHECK(cpu.PC == 0x1122); CHECK(tf(cpu, f::ZF|f::CF));
+}
