@@ -3,10 +3,12 @@
 //------------------------------------------------------------------------------
 #include "Disasm.h"
 #include "z80dasm.h"
+#include "mos6502dasm.h"
 #include "Core/Memory/Memory.h"
 
 using namespace Oryol;
 using namespace z80dasm;
+using namespace mos6502dasm;
 
 namespace YAKC {
 
@@ -20,14 +22,25 @@ emu(0) {
 ubyte
 Disasm::fetch(uword base, int offset, void* userdata) {
     Disasm* self = (Disasm*) userdata;
-    return self->emu->board.cpu.mem.r8(base + offset);
+    if (self->emu->cpu_type() == cpu::mos6502) {
+        return self->emu->board.m6502cpu.mem.r8(base + offset);
+    }
+    else {
+        return self->emu->board.z80cpu.mem.r8(base + offset);
+    }
 }
 
 //------------------------------------------------------------------------------
 uword
 Disasm::Disassemble(const yakc& emu, uword addr) {
+    int res = 0;
     this->emu = &emu;
-    int res = z80disasm(fetch, addr, this->buffer, this);
+    if (this->emu->cpu_type() == cpu::mos6502) {
+        res = mos6502disasm(fetch, addr, this->buffer, this);
+    }
+    else {
+        res = z80disasm(fetch, addr, this->buffer, this);
+    }
     return (res & 0xFFFF);
 }
 

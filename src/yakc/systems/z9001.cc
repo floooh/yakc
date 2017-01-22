@@ -104,7 +104,7 @@ z9001::check_roms(const rom_images& roms, device model, os_rom os) {
 //------------------------------------------------------------------------------
 void
 z9001::init_memory_mapping() {
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     cpu.mem.unmap_all();
     if (device::z9001 == this->cur_model) {
         // emulate a Z9001 with 16 KByte RAM module and BASIC module
@@ -127,7 +127,7 @@ z9001::init_memory_mapping() {
 void
 z9001::on_context_switched() {
     this->init_memory_mapping();
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     z80pio& pio1 = this->board->z80pio;
     z80pio& pio2 = this->board->z80pio2;
     z80ctc& ctc = this->board->z80ctc;
@@ -164,7 +164,7 @@ z9001::poweron(device m, os_rom os) {
     this->board->clck.init(2458);
 
     // initialize hardware components
-    this->board->cpu.init();
+    this->board->z80cpu.init();
     this->board->z80pio.init(0);
     this->board->z80pio2.init(1);
     this->board->z80ctc.init(0);
@@ -172,7 +172,7 @@ z9001::poweron(device m, os_rom os) {
 
     // setup interrupt daisy chain, from highest to lowest priority:
     //  CPU -> PIO1 -> PIO2 -> CTC
-    this->board->cpu.connect_irq_device(&this->board->z80pio.int_ctrl);
+    this->board->z80cpu.connect_irq_device(&this->board->z80pio.int_ctrl);
     this->board->z80pio.int_ctrl.connect_irq_device(&this->board->z80pio2.int_ctrl);
     this->board->z80pio2.int_ctrl.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
     this->board->z80ctc.init_daisychain(nullptr);
@@ -181,7 +181,7 @@ z9001::poweron(device m, os_rom os) {
     this->board->clck.config_timer_hz(0, 100);
 
     // execution on power-on starts at 0xF000
-    this->board->cpu.PC = 0xF000;
+    this->board->z80cpu.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
@@ -189,7 +189,7 @@ void
 z9001::poweroff() {
     YAKC_ASSERT(this->on);
     this->board->speaker.stop_all();
-    this->board->cpu.mem.unmap_all();
+    this->board->z80cpu.mem.unmap_all();
     this->on = false;
 }
 
@@ -206,17 +206,17 @@ z9001::reset() {
     this->board->z80ctc.reset();
     this->board->z80pio.reset();
     this->board->z80pio2.reset();
-    this->board->cpu.reset();
+    this->board->z80cpu.reset();
     this->keybuf.reset();
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
-    this->board->cpu.PC = 0xF000;
+    this->board->z80cpu.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
 uint64_t
 z9001::step(uint64_t start_tick, uint64_t end_tick) {
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     z80dbg& dbg = this->board->dbg;
     this->handle_key();
     this->cur_tick = start_tick;
@@ -446,7 +446,7 @@ z9001::ctc_zcto(int ctc_id, int chn_id) {
 void
 z9001::irq(bool b) {
     // forward interrupt request to CPU
-    this->board->cpu.irq(b);
+    this->board->z80cpu.irq(b);
 }
 
 //------------------------------------------------------------------------------

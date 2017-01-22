@@ -48,7 +48,7 @@ kc85::on_context_switched() {
     YAKC_ASSERT(this->board);
     this->update_rom_pointers();
     this->update_bank_switching();
-    this->board->cpu.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
+    this->board->z80cpu.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
     this->board->z80ctc.init_daisychain(&this->board->z80pio.int_ctrl);
 }
 
@@ -98,16 +98,16 @@ kc85::poweron(device m, os_rom os) {
     this->board->clck.init((m == device::kc85_4) ? 1770 : 1750);
 
     // initialize hardware components
-    this->board->cpu.mem.unmap_all();
+    this->board->z80cpu.mem.unmap_all();
     this->board->z80pio.init(0);
     this->board->z80ctc.init(0);
-    this->board->cpu.init();
+    this->board->z80cpu.init();
     this->exp.init();
     this->video.init(m, this->board);
     this->audio.init(this->board);
 
     // setup interrupt controller daisy chain (CTC has highest priority before PIO)
-    this->board->cpu.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
+    this->board->z80cpu.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
     this->board->z80ctc.init_daisychain(&this->board->z80pio.int_ctrl);
 
     // a 50Hz timer which trigger every vertical blank
@@ -116,10 +116,10 @@ kc85::poweron(device m, os_rom os) {
     this->board->clck.config_timer_cycles(1, (m == device::kc85_4) ? 113 : 112);
 
     // initial memory map
-    this->board->cpu.out(this, 0x88, 0x9f);
+    this->board->z80cpu.out(this, 0x88, 0x9f);
 
     // execution on power-on starts at 0xF000
-    this->board->cpu.PC = 0xF000;
+    this->board->z80cpu.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ void
 kc85::poweroff() {
     YAKC_ASSERT(this->on);
     this->audio.reset();
-    this->board->cpu.mem.unmap_all();
+    this->board->z80cpu.mem.unmap_all();
     this->on = false;
 }
 
@@ -139,11 +139,11 @@ kc85::reset() {
     this->audio.reset();
     this->board->z80ctc.reset();
     this->board->z80pio.reset();
-    this->board->cpu.reset();
+    this->board->z80cpu.reset();
     this->io84 = 0;
     this->io86 = 0;
     // execution after reset starts at 0xE000
-    this->board->cpu.PC = 0xE000;
+    this->board->z80cpu.PC = 0xE000;
 }
 
 //------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ kc85::update_rom_pointers() {
 //------------------------------------------------------------------------------
 uint64_t
 kc85::step(uint64_t start_tick, uint64_t end_tick) {
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     z80ctc& ctc = this->board->z80ctc;
     clock& clk = this->board->clck;
     z80dbg& dbg = this->board->dbg;
@@ -232,7 +232,7 @@ kc85::handle_keyboard_input() {
 
     // don't do anything if interrupts disabled, IX might point
     // to the wrong base address!
-    if (!this->board->cpu.IFF1) {
+    if (!this->board->z80cpu.IFF1) {
         return;
     }
 
@@ -243,8 +243,8 @@ kc85::handle_keyboard_input() {
     static const ubyte short_repeat_count = 8;
     static const ubyte long_repeat_count = 60;
 
-    auto& mem = this->board->cpu.mem;
-    const uword ix = this->board->cpu.IX;
+    auto& mem = this->board->z80cpu.mem;
+    const uword ix = this->board->z80cpu.IX;
     if (0 == this->key_code) {
         // if keycode is 0, this basically means the CTC3 timeout was hit
         mem.w8(ix+0x8, mem.r8(ix+0x8)|timeout); // set the CTC3 timeout bit
@@ -411,7 +411,7 @@ kc85::pio_out(int pio_id, int port_id, ubyte val) {
 void
 kc85::irq(bool b) {
     // forward interrupt request to CPU
-    this->board->cpu.irq(b);
+    this->board->z80cpu.irq(b);
 }
 
 //------------------------------------------------------------------------------
@@ -434,7 +434,7 @@ kc85::timer(int timer_id) {
 //------------------------------------------------------------------------------
 void
 kc85::update_bank_switching() {
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     cpu.mem.unmap_layer(0);
 
     if ((device::kc85_2 == this->cur_model) || (device::kc85_3 == this->cur_model)) {

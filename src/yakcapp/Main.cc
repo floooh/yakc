@@ -261,6 +261,12 @@ YakcApp::initRoms() {
     IO::Load("rom:kcc_bas.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::kcc_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
+    IO::Load("rom:bbc_b_os12.rom", [this](IO::LoadResult ioRes) {
+        this->emu.add_rom(rom_images::bbcmicro_b_os, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:bbc_b_basic2.rom", [this](IO::LoadResult ioRes) {
+        this->emu.add_rom(rom_images::bbcmicro_b_basic, ioRes.Data.Data(), ioRes.Data.Size());
+    });
 }
 
 //------------------------------------------------------------------------------

@@ -63,7 +63,14 @@ DisasmWindow::drawMainContent(const yakc& emu, uword start_addr, int num_lines) 
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            ImGui::Text("%02X ", emu.board.cpu.mem.r8(cur_addr++));
+            uint8_t val = 0x00;
+            if (emu.cpu_type() == cpu::mos6502) {
+                val = emu.board.m6502cpu.mem.r8(cur_addr++);
+            }
+            else {
+                val = emu.board.z80cpu.mem.r8(cur_addr++);
+            }
+            ImGui::Text("%02X ", val);
         }
 
         // print disassembled instruction

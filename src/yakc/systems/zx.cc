@@ -142,7 +142,7 @@ zx::init_keymap() {
 //------------------------------------------------------------------------------
 void
 zx::init_memory_map() {
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     cpu.mem.unmap_all();
     if (device::zxspectrum48k == this->cur_model) {
         // 48k RAM between 0x4000 and 0xFFFF
@@ -215,15 +215,15 @@ zx::poweron(device m) {
     this->board->beeper.init(this->board->clck.base_freq_khz, SOUND_SAMPLE_RATE);
 
     // cpu start state
-    this->board->cpu.init();
-    this->board->cpu.PC = 0x0000;
+    this->board->z80cpu.init();
+    this->board->z80cpu.PC = 0x0000;
 }
 
 //------------------------------------------------------------------------------
 void
 zx::poweroff() {
     YAKC_ASSERT(this->on);
-    this->board->cpu.mem.unmap_all();
+    this->board->z80cpu.mem.unmap_all();
     this->on = false;
 }
 
@@ -239,8 +239,8 @@ zx::reset() {
     this->scanline_counter = 0;
     this->blink_counter = 0;
     this->display_ram_bank = 5;
-    this->board->cpu.reset();
-    this->board->cpu.PC = 0x0000;
+    this->board->z80cpu.reset();
+    this->board->z80cpu.PC = 0x0000;
     this->init_memory_map();
 }
 
@@ -249,7 +249,7 @@ uint64_t
 zx::step(uint64_t start_tick, uint64_t end_tick) {
     // step the system for given number of cycles, return actually
     // executed number of cycles
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     z80dbg& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
@@ -292,7 +292,7 @@ zx::cpu_out(uword port, ubyte val) {
                 // bit 3 defines the video scanout memory bank (5 or 7)
                 this->display_ram_bank = (val & (1<<3)) ? 7 : 5;
 
-                auto& mem = this->board->cpu.mem;
+                auto& mem = this->board->z80cpu.mem;
 
                 // only last memory bank is mappable
                 mem.map(0, 0xC000, 0x4000, this->board->ram[val & 0x7], true);
@@ -393,7 +393,7 @@ zx::cpu_in(uword port) {
 void
 zx::irq(bool b) {
     // forward interrupt request to CPU
-    this->board->cpu.irq(b);
+    this->board->z80cpu.irq(b);
 }
 
 //------------------------------------------------------------------------------

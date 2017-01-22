@@ -18,14 +18,14 @@ MemoryWindow::Setup(yakc& emu) {
 static ubyte
 read_func(void* userdata, uword addr) {
     yakc* emu = (yakc*) userdata;
-    return emu->board.cpu.mem.r8(addr);
+    return emu->board.z80cpu.mem.r8(addr);
 }
 
 //------------------------------------------------------------------------------
 static void
 write_func(void* userdata, uword addr, ubyte value) {
     yakc* emu = (yakc*) userdata;
-    emu->board.cpu.mem.w8(addr, value);
+    emu->board.z80cpu.mem.w8(addr, value);
 }
 
 //------------------------------------------------------------------------------

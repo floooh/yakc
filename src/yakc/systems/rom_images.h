@@ -42,6 +42,8 @@ public:
         z1013_font,             // Z1013 font ROM
         kcc_os,                 // KC Compact OS ROM
         kcc_basic,              // KC Compact OS Basic
+        bbcmicro_b_os,          // BBC Micro Model B ROM
+        bbcmicro_b_basic,       // BBC Micro Model B BASIC
 
         num_roms
     };

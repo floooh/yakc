@@ -58,13 +58,20 @@ enum class device {
     cpc464          = (1<<11),
     cpc6128         = (1<<12),
     kccompact       = (1<<13),
+    bbcmicro_b      = (1<<14),
     none = 0,
     any_kc85        = (kc85_2|kc85_3|kc85_4),
     any_z1013       = (z1013_01|z1013_16|z1013_64),
     any_z9001       = (z9001|kc87),
     any_zx          = (zxspectrum48k|zxspectrum128k),
     any_cpc         = (cpc464|cpc6128|kccompact),
-    any = 0x00FFFFFF
+    any_bbcmicro    = (bbcmicro_b),
+    any = 0x7FFFFFFF
+};
+
+enum class cpu {
+    z80,
+    mos6502,
 };
 
 enum class os_rom {
@@ -85,6 +92,8 @@ enum class os_rom {
     cpc6128_basic,
     kcc_os,
     kcc_basic,
+    bbcmicro_b_os,
+    bbcmicro_b_basic,
     none,
 };
 

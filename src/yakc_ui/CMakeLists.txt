@@ -10,6 +10,7 @@ fips_begin_module(yakc_ui)
         ImGuiMemoryEditor.h
         DebugWindow.cc DebugWindow.h
         z80dasm.cc z80dasm.h
+        mos6502dasm.cc mos6502dasm.h
         Disasm.cc Disasm.h
         DisasmWindow.cc DisasmWindow.h
         PIOWindow.cc PIOWindow.h

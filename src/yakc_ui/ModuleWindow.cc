@@ -36,10 +36,10 @@ ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
                 const auto& mod = kc.exp.module_template(type);
                 if (ImGui::Selectable(mod.name)) {
                     if (kc.exp.slot_occupied(slot_addr)) {
-                        kc.exp.remove_module(slot_addr, kc.board->cpu.mem);
+                        kc.exp.remove_module(slot_addr, kc.board->z80cpu.mem);
                     }
                     kc.exp.insert_module(slot_addr, type);
-                    kc.board->cpu.out(&kc, slot_addr<<8|0x80, 0x00);
+                    kc.board->z80cpu.out(&kc, slot_addr<<8|0x80, 0x00);
                 }
             }
         }

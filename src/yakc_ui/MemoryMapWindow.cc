@@ -188,7 +188,7 @@ MemoryMapWindow::Draw(yakc& emu) {
 
         // modules
         for (int mem_layer = 1; mem_layer < 3; mem_layer++) {
-            const memory& mem = emu.board.cpu.mem;
+            const memory& mem = emu.board.z80cpu.mem;
             const ubyte slot_addr = mem_layer == 1 ? 0x08 : 0x0C;
             if (emu.kc85.exp.slot_occupied(slot_addr)) {
                 const int draw_layer = (is_kc85_4 ? 5 : 0) + mem_layer;

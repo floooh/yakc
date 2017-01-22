@@ -11,6 +11,35 @@ namespace YAKC {
 
 class system_bus;
 
+namespace mos6502_enums {
+
+// addressing modes
+enum {
+    A____,      // no addressing mode
+    A_IMM,      // #
+    A_ZER,      // zp
+    A_ZPX,      // zp,X
+    A_ZPY,      // zp,Y
+    A_ABS,      // abs
+    A_ABX,      // abs,X
+    A_ABY,      // abs,Y
+    A_IDX,      // (zp,X)
+    A_IDY,      // (zp),Y
+    A_JMP,      // special JMP abs
+    A_JSR,      // special JSR abs
+
+    A_INV,      // this is an invalid instruction
+};
+// memory addressing modes
+enum {
+    M___,       // no memory access
+    M_R_,        // read
+    M__W,        // write in current cycle
+    M_RW,       // read-modify-write
+};
+
+};
+
 class mos6502 {
 public:
     // status flags
@@ -168,7 +197,25 @@ public:
 //------------------------------------------------------------------------------
 inline void
 mos6502::brk() {
-    YAKC_ASSERT(false);
+    rw(true);
+    //--
+    ADDR = 0x0100 | S--; DATA = PC>>8;
+    rw(false);
+    //--
+    ADDR = 0x0100 | S--; DATA = PC;
+    rw(false);
+    //--
+    ADDR = 0x0100 | S--; DATA = P & ~BF;
+    rw(false);
+    //--
+    ADDR = 0xFFFE;
+    rw(true);
+    //--
+    tmp16 = DATA;
+    ADDR = 0xFFFF;
+    rw(true);
+    PC = (DATA<<8) | (tmp16&0x00FF);
+    P = (P | IF) & ~DF;
 }
 
 //------------------------------------------------------------------------------

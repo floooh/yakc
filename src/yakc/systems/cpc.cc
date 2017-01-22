@@ -113,7 +113,7 @@ cpc::check_roms(const rom_images& roms, device model, os_rom os) {
 //------------------------------------------------------------------------------
 void
 cpc::init_memory_map() {
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     cpu.mem.unmap_all();
     YAKC_ASSERT(check_roms(*this->roms, this->cur_model, os_rom::none));
     this->ga_config = 0x00;     // enable both ROMs
@@ -157,15 +157,15 @@ cpc::poweron(device m) {
     this->board->ay8910.init(this->board->clck.base_freq_khz, 1000, SOUND_SAMPLE_RATE);
 
     // CPU start state
-    this->board->cpu.init();
-    this->board->cpu.PC = 0x0000;
+    this->board->z80cpu.init();
+    this->board->z80cpu.PC = 0x0000;
 }
 
 //------------------------------------------------------------------------------
 void
 cpc::poweroff() {
     YAKC_ASSERT(this->on);
-    this->board->cpu.mem.unmap_all();
+    this->board->z80cpu.mem.unmap_all();
     this->on = false;
 }
 
@@ -182,8 +182,8 @@ cpc::reset() {
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
     this->cur_keyboard_mask = key_mask();
-    this->board->cpu.reset();
-    this->board->cpu.PC = 0x0000;
+    this->board->z80cpu.reset();
+    this->board->z80cpu.PC = 0x0000;
     this->init_memory_map();
 }
 
@@ -192,7 +192,7 @@ uint64_t
 cpc::step(uint64_t start_tick, uint64_t end_tick) {
     // step the system for given number of cycles, return actually
     // executed number of cycles
-    z80& cpu = this->board->cpu;
+    z80& cpu = this->board->z80cpu;
     z80dbg& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
@@ -429,7 +429,7 @@ cpc::update_memory_mapping() {
         rom0_ptr = this->roms->ptr(rom_images::cpc464_os);
         rom1_ptr = this->roms->ptr(rom_images::cpc464_basic);
     }
-    auto& cpu = this->board->cpu;
+    auto& cpu = this->board->z80cpu;
     const int i0 = ram_config_table[ram_table_index][0];
     const int i1 = ram_config_table[ram_table_index][1];
     const int i2 = ram_config_table[ram_table_index][2];
@@ -492,7 +492,7 @@ cpc::put_input(ubyte ascii, ubyte joy0_mask) {
 //------------------------------------------------------------------------------
 void
 cpc::irq(bool b) {
-    this->board->cpu.irq(b);
+    this->board->z80cpu.irq(b);
 }
 
 //------------------------------------------------------------------------------

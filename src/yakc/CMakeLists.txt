@@ -37,8 +37,9 @@ fips_begin_module(yakc)
         z1013.h z1013.cc
         z9001.h z9001.cc
         zx.h zx.cc
-        cpc.h cpc.cc 
+        cpc.h cpc.cc
         cpc_video.h cpc_video.cc
+        bbcmicro.h bbcmicro.cc
         keybuffer.h keybuffer.cc
         breadboard.h
         snapshot.h snapshot.cc

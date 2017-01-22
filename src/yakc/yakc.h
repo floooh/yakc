@@ -12,6 +12,7 @@
 #include "yakc/systems/z9001.h"
 #include "yakc/systems/zx.h"
 #include "yakc/systems/cpc.h"
+#include "yakc/systems/bbcmicro.h"
 
 namespace YAKC {
 
@@ -55,6 +56,8 @@ public:
     bool is_device(device mask) const;
     /// check any model against device mask
     static bool is_device(device model, device mask);
+    /// get the cpu type of the current device
+    cpu cpu_type() const;
     /// get human-readable info about current system
     const char* system_info() const;
     /// get current border color
@@ -69,6 +72,7 @@ public:
     class z9001 z9001;
     class zx zx;
     class cpc cpc;
+    class bbcmicro bbcmicro;
     breadboard board;
     class rom_images roms;
 

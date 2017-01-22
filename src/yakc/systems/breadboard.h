@@ -7,6 +7,7 @@
 #include "yakc/core/core.h"
 #include "yakc/core/clock.h"
 #include "yakc/devices/z80.h"
+#include "yakc/devices/mos6502.h"
 #include "yakc/devices/z80dbg.h"
 #include "yakc/devices/z80pio.h"
 #include "yakc/devices/z80ctc.h"
@@ -22,7 +23,8 @@ namespace YAKC {
 class breadboard {
 public:
     clock clck;
-    z80 cpu;
+    z80 z80cpu;
+    mos6502 m6502cpu;
     class z80pio z80pio;
     class z80pio z80pio2;
     class z80ctc z80ctc;

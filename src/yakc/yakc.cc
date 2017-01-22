@@ -18,6 +18,7 @@ yakc::init(const ext_funcs& sys_funcs) {
     this->z9001.init(&this->board, &this->roms);
     this->zx.init(&this->board, &this->roms);
     this->cpc.init(&this->board, &this->roms);
+    this->bbcmicro.init(&this->board, &this->roms);
 }
 
 //------------------------------------------------------------------------------
@@ -43,6 +44,9 @@ yakc::check_roms(device m, os_rom os) {
     }
     else if (is_device(m, device::any_cpc)) {
         return cpc::check_roms(this->roms, m, os);
+    }
+    else if (is_device(m, device::any_bbcmicro)) {
+        return bbcmicro::check_roms(this->roms, m, os);
     }
     else {
         return false;
@@ -73,6 +77,9 @@ yakc::poweron(device m, os_rom rom) {
     else if (this->is_device(device::any_cpc)) {
         this->cpc.poweron(m);
     }
+    else if (this->is_device(device::any_bbcmicro)) {
+        this->bbcmicro.poweron(m);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -93,12 +100,15 @@ yakc::poweroff() {
     if (this->cpc.on) {
         this->cpc.poweroff();
     }
+    if (this->bbcmicro.on) {
+        this->bbcmicro.poweroff();
+    }
 }
 
 //------------------------------------------------------------------------------
 bool
 yakc::switchedon() const {
-    return this->kc85.on || this->z1013.on || this->z9001.on || this->zx.on || this->cpc.on;
+    return this->kc85.on || this->z1013.on || this->z9001.on || this->zx.on || this->cpc.on || this->bbcmicro.on;
 }
 
 //------------------------------------------------------------------------------
@@ -120,12 +130,15 @@ yakc::reset() {
     if (this->cpc.on) {
         this->cpc.reset();
     }
+    if (this->bbcmicro.on) {
+        this->bbcmicro.reset();
+    }
 }
 
 //------------------------------------------------------------------------------
 void
 yakc::clear_daisychain() {
-    this->board.cpu.connect_irq_device(nullptr);
+    this->board.z80cpu.connect_irq_device(nullptr);
     this->board.z80ctc.init_daisychain(nullptr);
     this->board.z80pio.int_ctrl.connect_irq_device(nullptr);
     this->board.z80pio2.int_ctrl.connect_irq_device(nullptr);
@@ -150,6 +163,9 @@ yakc::on_context_switched() {
     else if (this->is_device(device::any_cpc)) {
         this->cpc.on_context_switched();
     }
+    else if (this->is_device(device::any_bbcmicro)) {
+        this->bbcmicro.on_context_switched();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -162,6 +178,17 @@ yakc::is_device(device mask) const {
 bool
 yakc::is_device(device model, device mask) {
     return 0 != (int(model) & int(mask));
+}
+
+//------------------------------------------------------------------------------
+cpu
+yakc::cpu_type() const {
+    if (this->is_device(device::any_bbcmicro)) {
+        return cpu::mos6502;
+    }
+    else {
+        return cpu::z80;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -206,6 +233,9 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
         }
         else if (this->cpc.on) {
             this->abs_cycle_count = this->cpc.step(this->abs_cycle_count, abs_end_cycles);
+        }
+        else if (this->bbcmicro.on) {
+            this->abs_cycle_count = this->bbcmicro.step(this->abs_cycle_count, abs_end_cycles);
         }
         YAKC_ASSERT(this->abs_cycle_count >= abs_end_cycles);
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
@@ -269,6 +299,9 @@ yakc::system_info() const {
     else if (this->cpc.on) {
         return this->cpc.system_info();
     }
+    else if (this->bbcmicro.on) {
+        return this->bbcmicro.system_info();
+    }
     else {
         return "no info available";
     }
@@ -291,6 +324,9 @@ yakc::get_bus() {
     }
     else if (this->is_device(device::any_cpc)) {
         return &this->cpc;
+    }
+    else if (this->is_device(device::any_bbcmicro)) {
+        return &this->bbcmicro;
     }
     else {
         return nullptr;
@@ -345,6 +381,9 @@ yakc::framebuffer(int& out_width, int& out_height) {
     }
     else if (this->cpc.on) {
         return this->cpc.framebuffer(out_width, out_height);
+    }
+    else if (this->bbcmicro.on) {
+        return this->bbcmicro.framebuffer(out_width, out_height);
     }
     else {
         out_width = 0;
