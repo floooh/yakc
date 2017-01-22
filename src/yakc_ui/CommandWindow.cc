@@ -56,14 +56,14 @@ CommandWindow::scan(const yakc& emu, ubyte prologByte) {
     StringBuilder strBuilder;
 
     this->commands.Clear();
-    ubyte prevByte = emu.board.z80cpu.mem.r8(0x0000);
+    ubyte prevByte = emu.board.z80.mem.r8(0x0000);
     for (unsigned int addr = 0x0001; addr < 0x10000; addr++) {
-        const ubyte curByte = emu.board.z80cpu.mem.r8(addr);
+        const ubyte curByte = emu.board.z80.mem.r8(addr);
         if ((curByte == prologByte) && (prevByte == prologByte)) {
             // found a header, scan for 00 or 01 byte
             addr++;
             ubyte c;
-            while (isalnum(c = emu.board.z80cpu.mem.r8(addr++))) {
+            while (isalnum(c = emu.board.z80.mem.r8(addr++))) {
                 strBuilder.Append(c);
             }
             // if it was a valid command, add it to commands array

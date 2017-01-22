@@ -36,7 +36,7 @@ bbcmicro::on_context_switched() {
 //------------------------------------------------------------------------------
 void
 bbcmicro::init_memory_map() {
-    auto& cpu = this->board->m6502cpu;
+    auto& cpu = this->board->mos6502;
     cpu.mem.unmap_all();
     YAKC_ASSERT(check_roms(*this->roms, this->cur_model, os_rom::none));
     cpu.mem.map(0, 0x0000, 0x8000, this->board->ram[0], true);
@@ -79,28 +79,28 @@ bbcmicro::poweron(device m) {
     this->board->clck.init(2000);
 
     // CPU start state
-    this->board->m6502cpu.init(this);
-    this->board->m6502cpu.reset();
+    this->board->mos6502.init(this);
+    this->board->mos6502.reset();
 }
 
 //------------------------------------------------------------------------------
 void
 bbcmicro::poweroff() {
     YAKC_ASSERT(this->on);
-    this->board->m6502cpu.mem.unmap_all();
+    this->board->mos6502.mem.unmap_all();
     this->on = false;
 }
 
 //------------------------------------------------------------------------------
 void
 bbcmicro::reset() {
-    this->board->m6502cpu.reset();
+    this->board->mos6502.reset();
 }
 
 //------------------------------------------------------------------------------
 uint64_t
 bbcmicro::step(uint64_t start_tick, uint64_t end_tick) {
-    auto& cpu = this->board->m6502cpu;
+    auto& cpu = this->board->mos6502;
     auto& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {

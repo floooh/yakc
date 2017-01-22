@@ -23,8 +23,8 @@ namespace YAKC {
 class breadboard {
 public:
     clock clck;
-    z80 z80cpu;
-    mos6502 m6502cpu;
+    class z80 z80;
+    class mos6502 mos6502;
     class z80pio z80pio;
     class z80pio z80pio2;
     class z80ctc z80ctc;

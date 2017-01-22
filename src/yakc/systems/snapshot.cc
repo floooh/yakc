@@ -132,7 +132,7 @@ snapshot::apply_kc_state(const state_t& state, yakc& emu) {
     for (int s = 0; s < 2; s++) {
         const auto& slot = state.kc.slots[s];
         if (kc.exp.slot_occupied(slot.slot_addr)) {
-            kc.exp.remove_module(slot.slot_addr, kc.board->z80cpu.mem);
+            kc.exp.remove_module(slot.slot_addr, kc.board->z80.mem);
         }
         kc.exp.insert_module(slot.slot_addr, (kc85_exp::module_type)slot.module_type);
         kc.exp.update_control_byte(slot.slot_addr, slot.control_byte);
@@ -198,7 +198,7 @@ snapshot::apply_z9001_state(const state_t& state, yakc& emu) {
 //------------------------------------------------------------------------------
 void
 snapshot::write_cpu_state(const yakc& emu, state_t& state) {
-    const z80& cpu = emu.board.z80cpu;
+    const z80& cpu = emu.board.z80;
     state.cpu.AF  = cpu.AF;
     state.cpu.BC  = cpu.BC;
     state.cpu.DE  = cpu.DE;
@@ -227,7 +227,7 @@ snapshot::write_cpu_state(const yakc& emu, state_t& state) {
 //------------------------------------------------------------------------------
 void
 snapshot::apply_cpu_state(const state_t& state, yakc& emu) {
-    z80& cpu = emu.board.z80cpu;
+    z80& cpu = emu.board.z80;
     cpu.AF = state.cpu.AF;
     cpu.BC = state.cpu.BC;
     cpu.DE = state.cpu.DE;

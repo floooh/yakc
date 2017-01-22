@@ -138,7 +138,7 @@ yakc::reset() {
 //------------------------------------------------------------------------------
 void
 yakc::clear_daisychain() {
-    this->board.z80cpu.connect_irq_device(nullptr);
+    this->board.z80.connect_irq_device(nullptr);
     this->board.z80ctc.init_daisychain(nullptr);
     this->board.z80pio.int_ctrl.connect_irq_device(nullptr);
     this->board.z80pio2.int_ctrl.connect_irq_device(nullptr);
@@ -181,13 +181,13 @@ yakc::is_device(device model, device mask) {
 }
 
 //------------------------------------------------------------------------------
-cpu
-yakc::cpu_type() const {
+cpu_model
+yakc::cpu_model() const {
     if (this->is_device(device::any_bbcmicro)) {
-        return cpu::mos6502;
+        return cpu_model::mos6502;
     }
     else {
-        return cpu::z80;
+        return cpu_model::z80;
     }
 }
 

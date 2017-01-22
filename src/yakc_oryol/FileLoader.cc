@@ -393,7 +393,7 @@ FileLoader::load_kctap(yakc* emu, const FileInfo& info, const Buffer& data) {
         ptr++;
         // copy 128 bytes
         for (int i = 0; (i < 128) && (addr < info.EndAddr); i++) {
-            emu->board.z80cpu.mem.w8(addr++, *ptr++);
+            emu->board.z80.mem.w8(addr++, *ptr++);
         }
     }
 }
@@ -520,7 +520,7 @@ FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
         else {
             // KCC, Z80 and BIN file type payload is simply a continuous block of data
             const ubyte* payload = data.Data() + info.PayloadOffset;            
-            emu->board.z80cpu.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
+            emu->board.z80.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
         }
     }
 }
@@ -528,7 +528,7 @@ FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
 //------------------------------------------------------------------------------
 void
 FileLoader::patch(yakc* emu, const FileInfo& info) {
-    auto& mem = emu->board.z80cpu.mem;
+    auto& mem = emu->board.z80.mem;
 
     // FIXME: patch JUNGLE until I have time to do a proper
     // 'restoration', see Alexander Lang's KC emu here:
@@ -563,7 +563,7 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             if ((hdr->PC_h == 0) && (hdr->PC_l == 0)) {
                 ext_hdr = (const zxz80ext_header*) (data.Data() + sizeof(zxz80_header));
             }
-            z80& cpu = emu->board.z80cpu;
+            z80& cpu = emu->board.z80;
             cpu.A = hdr->A; cpu.F = hdr->F;
             cpu.B = hdr->B; cpu.C = hdr->C;
             cpu.D = hdr->D; cpu.E = hdr->E;
@@ -598,7 +598,7 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
         else if (FileType::CPC_SNA == info.Type) {
             const sna_header* hdr = (const sna_header*) data.Data();
             // CPU state
-            auto& cpu = emu->board.z80cpu;
+            auto& cpu = emu->board.z80;
             cpu.F = hdr->F; cpu.A = hdr->A;
             cpu.C = hdr->C; cpu.B = hdr->B;
             cpu.E = hdr->E; cpu.D = hdr->D;
@@ -639,7 +639,7 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             }
         }
         else {
-            z80& cpu = emu->board.z80cpu;
+            z80& cpu = emu->board.z80;
             cpu.A = 0x00;
             cpu.F = 0x10;
             cpu.BC = cpu.BC_ = 0x0000;

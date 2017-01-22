@@ -27,7 +27,7 @@ z1013::check_roms(const rom_images& roms, device model, os_rom os) {
 //------------------------------------------------------------------------------
 void
 z1013::init_memory_mapping() {
-    z80& cpu = this->board->z80cpu;
+    z80& cpu = this->board->z80;
     cpu.mem.unmap_all();
     if (device::z1013_64 == this->cur_model) {
         // 64 kByte RAM
@@ -95,18 +95,18 @@ z1013::poweron(device m) {
     this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
 
     // initialize hardware components
-    this->board->z80cpu.init();
+    this->board->z80.init();
     this->board->z80pio.init(0);
 
     // execution on power-on starts at 0xF000
-    this->board->z80cpu.PC = 0xF000;
+    this->board->z80.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
 void
 z1013::poweroff() {
     YAKC_ASSERT(this->on);
-    this->board->z80cpu.mem.unmap_all();
+    this->board->z80.mem.unmap_all();
     this->on = false;
 }
 
@@ -114,19 +114,19 @@ z1013::poweroff() {
 void
 z1013::reset() {
     this->board->z80pio.reset();
-    this->board->z80cpu.reset();
+    this->board->z80.reset();
     this->kbd_column_nr_requested = 0;
     this->next_kbd_column_bits = 0;
     this->kbd_column_bits = 0;
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
-    this->board->z80cpu.PC = 0xF000;
+    this->board->z80.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
 uint64_t
 z1013::step(uint64_t start_tick, uint64_t end_tick) {
-    auto& cpu = this->board->z80cpu;
+    auto& cpu = this->board->z80;
     auto& dbg = this->board->dbg;
     auto& clk = this->board->clck;
     uint64_t cur_tick = start_tick;
@@ -235,7 +235,7 @@ z1013::pio_in(int pio_id, int port_id) {
 void
 z1013::irq(bool b) {
     // forward interrupt request to CPU
-    this->board->z80cpu.irq(b);
+    this->board->z80.irq(b);
 }
 
 //------------------------------------------------------------------------------

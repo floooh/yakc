@@ -69,7 +69,7 @@ enum class device {
     any = 0x7FFFFFFF
 };
 
-enum class cpu {
+enum class cpu_model {
     z80,
     mos6502,
 };
