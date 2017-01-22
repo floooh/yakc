@@ -81,8 +81,6 @@ bbcmicro::poweron(device m) {
     // CPU start state
     this->board->m6502cpu.init(this);
     this->board->m6502cpu.reset();
-
-    this->board->dbg.enable_breakpoint(0, this->board->m6502cpu.PC);
 }
 
 //------------------------------------------------------------------------------

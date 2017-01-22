@@ -30,6 +30,17 @@ static const cpudbg::z80reg z80regs8[] = {
     cpudbg::z80reg::I, cpudbg::z80reg::R, cpudbg::z80reg::IM
 };
 
+static const cpudbg::m6502reg m6502regs8[] = {
+    cpudbg::m6502reg::A,
+    cpudbg::m6502reg::X,
+    cpudbg::m6502reg::Y,
+    cpudbg::m6502reg::S,
+    cpudbg::m6502reg::P,
+};
+static const cpudbg::m6502reg m6502regs16[] = {
+    cpudbg::m6502reg::PC,
+};
+
 //------------------------------------------------------------------------------
 void
 DebugWindow::Setup(yakc& emu) {
@@ -41,6 +52,12 @@ DebugWindow::Setup(yakc& emu) {
     }
     for (cpudbg::z80reg r : z80regs8) {
         this->z80RegWidget[int(r)].Configure8(cpudbg::reg_name(r), cpudbg::get8(emu.board.z80cpu, r));
+    }
+    for (cpudbg::m6502reg r : m6502regs16) {
+        this->m6502RegWidget[int(r)].Configure16(cpudbg::reg_name(r), cpudbg::get16(emu.board.m6502cpu, r));
+    }
+    for (cpudbg::m6502reg r : m6502regs8) {
+        this->m6502RegWidget[int(r)].Configure8(cpudbg::reg_name(r), cpudbg::get8(emu.board.m6502cpu, r));
     }
     this->breakPointWidget.Configure16("##bp", 0xFFFF);
 }
@@ -57,7 +74,10 @@ DebugWindow::Draw(yakc& emu) {
             ImGui::Separator();
         }
         else {
+            this->draw6502RegisterTable(emu);
+            ImGui::Separator();
             this->drawMainContent(emu, emu.board.m6502cpu.PC, 48);
+            ImGui::Separator();
         }
         this->drawControls(emu);
     }
@@ -67,7 +87,7 @@ DebugWindow::Draw(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawReg16(yakc& emu, cpudbg::z80reg r) {
+DebugWindow::drawZ80Reg16(yakc& emu, cpudbg::z80reg r) {
     if (this->z80RegWidget[int(r)].Draw()) {
         cpudbg::set16(emu.board.z80cpu, r, this->z80RegWidget[int(r)].Get16());
     }
@@ -78,7 +98,7 @@ DebugWindow::drawReg16(yakc& emu, cpudbg::z80reg r) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawReg8(yakc& emu, cpudbg::z80reg r) {
+DebugWindow::drawZ80Reg8(yakc& emu, cpudbg::z80reg r) {
     if (this->z80RegWidget[int(r)].Draw()) {
         cpudbg::set8(emu.board.z80cpu, r, this->z80RegWidget[int(r)].Get8());
     }
@@ -93,28 +113,28 @@ DebugWindow::drawZ80RegisterTable(yakc& emu) {
     const ImVec4 red = UI::DisabledColor;
     const ImVec4 green = UI::EnabledColor;
 
-    this->drawReg16(emu, cpudbg::z80reg::AF); ImGui::SameLine(1 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::BC); ImGui::SameLine(2 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::DE); ImGui::SameLine(3 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::HL); ImGui::SameLine(4 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::WZ); ImGui::SameLine(5 * 72);
-    this->drawReg8(emu, cpudbg::z80reg::I); ImGui::SameLine(5 * 72 + 48);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::AF); ImGui::SameLine(1 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::BC); ImGui::SameLine(2 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::DE); ImGui::SameLine(3 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::HL); ImGui::SameLine(4 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::WZ); ImGui::SameLine(5 * 72);
+    this->drawZ80Reg8(emu, cpudbg::z80reg::I); ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.z80cpu.IFF1 ? green:red, "IFF1");
 
-    this->drawReg16(emu, cpudbg::z80reg::AF_); ImGui::SameLine(1 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::BC_); ImGui::SameLine(2 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::DE_); ImGui::SameLine(3 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::HL_); ImGui::SameLine(4 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::WZ_); ImGui::SameLine(5 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::AF_); ImGui::SameLine(1 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::BC_); ImGui::SameLine(2 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::DE_); ImGui::SameLine(3 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::HL_); ImGui::SameLine(4 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::WZ_); ImGui::SameLine(5 * 72);
     
-    this->drawReg8(emu, cpudbg::z80reg::IM); ImGui::SameLine(5 * 72 + 48);
+    this->drawZ80Reg8(emu, cpudbg::z80reg::IM); ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.z80cpu.IFF2 ? green:red, "IFF2");
 
-    this->drawReg16(emu, cpudbg::z80reg::IX); ImGui::SameLine(1 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::IY); ImGui::SameLine(2 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::SP); ImGui::SameLine(3 * 72);
-    this->drawReg16(emu, cpudbg::z80reg::PC); ImGui::SameLine(4 * 72);
-    this->drawReg8(emu, cpudbg::z80reg::R); ImGui::SameLine();
+    this->drawZ80Reg16(emu, cpudbg::z80reg::IX); ImGui::SameLine(1 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::IY); ImGui::SameLine(2 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::SP); ImGui::SameLine(3 * 72);
+    this->drawZ80Reg16(emu, cpudbg::z80reg::PC); ImGui::SameLine(4 * 72);
+    this->drawZ80Reg8(emu, cpudbg::z80reg::R); ImGui::SameLine();
 
     char strFlags[9];
     const ubyte f = emu.board.z80cpu.F;
@@ -130,6 +150,52 @@ DebugWindow::drawZ80RegisterTable(yakc& emu) {
     ImGui::Text(" %s ", strFlags);
     ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.z80cpu.HALT ? green:red, "HALT");
+}
+
+//------------------------------------------------------------------------------
+void
+DebugWindow::draw6502Reg16(yakc& emu, cpudbg::m6502reg r) {
+    if (this->m6502RegWidget[int(r)].Draw()) {
+        cpudbg::set16(emu.board.m6502cpu, r, this->m6502RegWidget[int(r)].Get16());
+    }
+    else {
+        this->m6502RegWidget[int(r)].Set16(cpudbg::get16(emu.board.m6502cpu, r));
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+DebugWindow::draw6502Reg8(yakc& emu, cpudbg::m6502reg r) {
+    if (this->m6502RegWidget[int(r)].Draw()) {
+        cpudbg::set8(emu.board.m6502cpu, r, this->m6502RegWidget[int(r)].Get8());
+    }
+    else {
+        this->m6502RegWidget[int(r)].Set8(cpudbg::get8(emu.board.m6502cpu, r));
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+DebugWindow::draw6502RegisterTable(yakc& emu) {
+    this->draw6502Reg8(emu, cpudbg::m6502reg::A); ImGui::SameLine(1 * 48 + 4);
+    this->draw6502Reg8(emu, cpudbg::m6502reg::X); ImGui::SameLine(2 * 48);
+    this->draw6502Reg8(emu, cpudbg::m6502reg::Y); ImGui::SameLine(3 * 48);
+    this->draw6502Reg8(emu, cpudbg::m6502reg::S); ImGui::SameLine(4 * 48);
+    this->draw6502Reg8(emu, cpudbg::m6502reg::P); ImGui::SameLine(5 * 48);
+    this->draw6502Reg16(emu, cpudbg::m6502reg::PC); ImGui::SameLine(6 * 46 + 20);
+
+    char strFlags[9];
+    const ubyte f = emu.board.m6502cpu.P;
+    strFlags[0] = (f & mos6502::NF) ? 'N':'-';
+    strFlags[1] = (f & mos6502::VF) ? 'V':'-';
+    strFlags[2] = (f & mos6502::XF) ? 'x':'-';
+    strFlags[3] = (f & mos6502::BF) ? 'B':'-';
+    strFlags[4] = (f & mos6502::DF) ? 'D':'-';
+    strFlags[5] = (f & mos6502::IF) ? 'I':'-';
+    strFlags[6] = (f & mos6502::ZF) ? 'Z':'-';
+    strFlags[7] = (f & mos6502::CF) ? 'C':'-';
+    strFlags[8] = 0;
+    ImGui::Text(" %s ", strFlags);
 }
 
 //------------------------------------------------------------------------------

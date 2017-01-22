@@ -33,7 +33,7 @@ cpudbg::store_pc_history(uint16_t pc) {
 }
 
 //------------------------------------------------------------------------------
-uword
+uint16_t
 cpudbg::get_pc_history(int index) const {
     int i = ((this->pc_history_pos-pc_history_size)+index) & (pc_history_size-1);
     return pc_history[i];
@@ -41,7 +41,7 @@ cpudbg::get_pc_history(int index) const {
 
 //------------------------------------------------------------------------------
 void
-cpudbg::enable_breakpoint(int index, uword addr) {
+cpudbg::enable_breakpoint(int index, uint16_t addr) {
     YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
     this->breakpoints[index].enabled = true;
     this->breakpoints[index].address = addr;
@@ -56,7 +56,7 @@ cpudbg::disable_breakpoint(int index) {
 
 //------------------------------------------------------------------------------
 void
-cpudbg::toggle_breakpoint(int index, uword addr) {
+cpudbg::toggle_breakpoint(int index, uint16_t addr) {
     YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
     if (this->breakpoints[index].address == addr) {
         this->breakpoints[index].enabled = !this->breakpoints[index].enabled;
@@ -68,7 +68,7 @@ cpudbg::toggle_breakpoint(int index, uword addr) {
 
 //------------------------------------------------------------------------------
 bool
-cpudbg::is_breakpoint(uword addr) const {
+cpudbg::is_breakpoint(uint16_t addr) const {
     for (int i = 0; i < max_breakpoints; i++) {
         if ((this->breakpoints[i].enabled) && (this->breakpoints[i].address == addr)) {
             return true;
@@ -85,7 +85,7 @@ cpudbg::breakpoint_enabled(int index) const {
 }
 
 //------------------------------------------------------------------------------
-uword
+uint16_t
 cpudbg::breakpoint_addr(int index) const {
     YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
     return this->breakpoints[index].address;
@@ -95,7 +95,7 @@ cpudbg::breakpoint_addr(int index) const {
 void
 cpudbg::step_pc_modified(system_bus* bus, z80& cpu) {
     YAKC_ASSERT(bus);
-    uword pc;
+    uint16_t pc;
     do {
         pc = cpu.PC;
         this->store_pc_history(pc);
@@ -107,7 +107,7 @@ cpudbg::step_pc_modified(system_bus* bus, z80& cpu) {
 //------------------------------------------------------------------------------
 void
 cpudbg::step_pc_modified(mos6502& cpu) {
-    uword pc;
+    uint16_t pc;
     do {
         pc = cpu.PC;
         this->store_pc_history(pc);
@@ -118,7 +118,7 @@ cpudbg::step_pc_modified(mos6502& cpu) {
 
 //------------------------------------------------------------------------------
 void
-cpudbg::set8(z80& cpu, z80reg r, ubyte v) {
+cpudbg::set8(z80& cpu, z80reg r, uint8_t v) {
     switch (r) {
         case z80reg::A:     cpu.A = v; break;
         case z80reg::F:     cpu.F = v; break;
@@ -131,12 +131,12 @@ cpudbg::set8(z80& cpu, z80reg r, ubyte v) {
         case z80reg::I:     cpu.I = v; break;
         case z80reg::R:     cpu.R = v; break;
         case z80reg::IM:    cpu.IM = v; break;
-        default:    YAKC_ASSERT(false); break;
+        default:break;
     }
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 cpudbg::get8(const z80& cpu, z80reg r) {
     switch (r) {
         case z80reg::A:    return cpu.A;
@@ -150,15 +150,13 @@ cpudbg::get8(const z80& cpu, z80reg r) {
         case z80reg::I:    return cpu.I;
         case z80reg::R:    return cpu.R;
         case z80reg::IM:   return cpu.IM;
-        default:
-            YAKC_ASSERT(false);
-            return 0;
+        default: return 0;
     }
 }
 
 //------------------------------------------------------------------------------
 void
-cpudbg::set16(z80& cpu, z80reg r, uword v) {
+cpudbg::set16(z80& cpu, z80reg r, uint16_t v) {
     switch (r) {
         case z80reg::AF:   cpu.AF = v; break;
         case z80reg::BC:   cpu.BC = v; break;
@@ -174,12 +172,12 @@ cpudbg::set16(z80& cpu, z80reg r, uword v) {
         case z80reg::IY:   cpu.IY = v; break;
         case z80reg::SP:   cpu.SP = v; break;
         case z80reg::PC:   cpu.PC = v; break;
-        default:   YAKC_ASSERT(false);
+        default: break;
     }
 }
 
 //------------------------------------------------------------------------------
-uword
+uint16_t
 cpudbg::get16(const z80& cpu, z80reg r) {
     switch (r) {
         case z80reg::AF:    return cpu.AF;
@@ -196,9 +194,7 @@ cpudbg::get16(const z80& cpu, z80reg r) {
         case z80reg::IY:    return cpu.IY;
         case z80reg::SP:    return cpu.SP;
         case z80reg::PC:    return cpu.PC;
-        default:
-            YAKC_ASSERT(false);
-            return 0;
+        default: return 0;
     }
 }
 
@@ -231,6 +227,65 @@ cpudbg::reg_name(z80reg r) {
         case z80reg::SP: return "SP";
         case z80reg::PC: return "PC";
         case z80reg::IM: return "IM";
+        default: return "?";
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpudbg::set8(mos6502& cpu, m6502reg r, uint8_t v) {
+    switch (r) {
+        case m6502reg::A:   cpu.A = v; break;
+        case m6502reg::X:   cpu.X = v; break;
+        case m6502reg::Y:   cpu.Y = v; break;
+        case m6502reg::S:   cpu.S = v; break;
+        case m6502reg::P:   cpu.P = v; break;
+        default: break;
+    }
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+cpudbg::get8(const mos6502& cpu, m6502reg r) {
+    switch (r) {
+        case m6502reg::A:   return cpu.A;
+        case m6502reg::X:   return cpu.X;
+        case m6502reg::Y:   return cpu.Y;
+        case m6502reg::S:   return cpu.S;
+        case m6502reg::P:   return cpu.P;
+        default: return 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpudbg::set16(mos6502& cpu, m6502reg r, uint16_t v) {
+    if (r == m6502reg::PC) {
+        cpu.PC = v;
+    }
+}
+
+//------------------------------------------------------------------------------
+uint16_t
+cpudbg::get16(const mos6502& cpu, m6502reg r) {
+    if (r == m6502reg::PC) {
+        return cpu.PC;
+    }
+    else {
+        return 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+const char*
+cpudbg::reg_name(m6502reg r) {
+    switch (r) {
+        case m6502reg::A: return "A";
+        case m6502reg::X: return "X";
+        case m6502reg::Y: return "Y";
+        case m6502reg::S: return "S";
+        case m6502reg::P: return "P";
+        case m6502reg::PC: return "PC";
         default: return "?";
     }
 }
