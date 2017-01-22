@@ -1,7 +1,7 @@
 #pragma once
 //------------------------------------------------------------------------------
 /**
-    @class YAKC::z80dbg
+    @class YAKC::cpudbg
     @brief debug helper functions
 */
 #include "yakc/core/core.h"
@@ -9,7 +9,7 @@
 
 namespace YAKC {
 
-class z80dbg {
+class cpudbg {
 public:
     /// register enum for set_reg/get_reg methods
     enum reg {
@@ -31,7 +31,7 @@ public:
     bool paused;
 
     /// constructor
-    z80dbg();
+    cpudbg();
 
     /// test whether breakpoint is enabled and hit
     bool check_break(const z80& cpu) const;

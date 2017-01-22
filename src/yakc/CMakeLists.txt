@@ -16,7 +16,7 @@ fips_begin_module(yakc)
         z80int.h z80int.cc
         z80pio.h z80pio.cc
         z80ctc.h z80ctc.cc 
-        z80dbg.h z80dbg.cc
+        cpudbg.h cpudbg.cc
         mos6502.h mos6502.cc
         i8255.h i8255.cc
         mc6845.h mc6845.cc

@@ -216,8 +216,8 @@ z9001::reset() {
 //------------------------------------------------------------------------------
 uint64_t
 z9001::step(uint64_t start_tick, uint64_t end_tick) {
-    z80& cpu = this->board->z80cpu;
-    z80dbg& dbg = this->board->dbg;
+    auto& cpu = this->board->z80cpu;
+    auto& dbg = this->board->dbg;
     this->handle_key();
     this->cur_tick = start_tick;
     while (this->cur_tick < end_tick) {

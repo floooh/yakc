@@ -81,6 +81,8 @@ bbcmicro::poweron(device m) {
     // CPU start state
     this->board->m6502cpu.init(this);
     this->board->m6502cpu.reset();
+    // FIXME: how does the CPU get to C300?
+    this->board->m6502cpu.PC = 0xC300;
 }
 
 //------------------------------------------------------------------------------
@@ -100,10 +102,6 @@ bbcmicro::reset() {
 //------------------------------------------------------------------------------
 uint64_t
 bbcmicro::step(uint64_t start_tick, uint64_t end_tick) {
-    // step the system for given number of cycles, return actually
-    // executed number of cycles
-return end_tick;
-
     mos6502& cpu = this->board->m6502cpu;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {

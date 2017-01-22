@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
-//  z80dbg.cc
+//  cpudbg.cc
 //------------------------------------------------------------------------------
-#include "z80dbg.h"
+#include "cpudbg.h"
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
-z80dbg::z80dbg() :
+cpudbg::cpudbg() :
 pc_history_pos(0),
 paused(false) {
     memset(&this->pc_history, 0, sizeof(this->pc_history));
@@ -14,7 +14,7 @@ paused(false) {
 
 //------------------------------------------------------------------------------
 bool
-z80dbg::check_break(const z80& cpu) const {
+cpudbg::check_break(const z80& cpu) const {
     for (int i = 0; i < max_breakpoints; i++) {
         if (this->breakpoints[i].enabled) {
             if (cpu.PC == this->breakpoints[i].address) {
@@ -27,21 +27,21 @@ z80dbg::check_break(const z80& cpu) const {
 
 //------------------------------------------------------------------------------
 void
-z80dbg::store_pc_history(const z80& cpu) {
+cpudbg::store_pc_history(const z80& cpu) {
     this->pc_history[pc_history_pos++] = cpu.PC;
     this->pc_history_pos &= this->pc_history_size-1;
 }
 
 //------------------------------------------------------------------------------
 uword
-z80dbg::get_pc_history(int index) const {
+cpudbg::get_pc_history(int index) const {
     int i = ((this->pc_history_pos-pc_history_size)+index) & (pc_history_size-1);
     return pc_history[i];
 }
 
 //------------------------------------------------------------------------------
 void
-z80dbg::enable_breakpoint(int index, uword addr) {
+cpudbg::enable_breakpoint(int index, uword addr) {
     YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
     this->breakpoints[index].enabled = true;
     this->breakpoints[index].address = addr;
@@ -49,14 +49,14 @@ z80dbg::enable_breakpoint(int index, uword addr) {
 
 //------------------------------------------------------------------------------
 void
-z80dbg::disable_breakpoint(int index) {
+cpudbg::disable_breakpoint(int index) {
     YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
     this->breakpoints[index].enabled = false;
 }
 
 //------------------------------------------------------------------------------
 void
-z80dbg::toggle_breakpoint(int index, uword addr) {
+cpudbg::toggle_breakpoint(int index, uword addr) {
     YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
     if (this->breakpoints[index].address == addr) {
         this->breakpoints[index].enabled = !this->breakpoints[index].enabled;
@@ -68,7 +68,7 @@ z80dbg::toggle_breakpoint(int index, uword addr) {
 
 //------------------------------------------------------------------------------
 bool
-z80dbg::is_breakpoint(uword addr) const {
+cpudbg::is_breakpoint(uword addr) const {
     for (int i = 0; i < max_breakpoints; i++) {
         if ((this->breakpoints[i].enabled) && (this->breakpoints[i].address == addr)) {
             return true;
@@ -79,21 +79,21 @@ z80dbg::is_breakpoint(uword addr) const {
 
 //------------------------------------------------------------------------------
 bool
-z80dbg::breakpoint_enabled(int index) const {
+cpudbg::breakpoint_enabled(int index) const {
     YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
     return this->breakpoints[index].enabled;
 }
 
 //------------------------------------------------------------------------------
 uword
-z80dbg::breakpoint_addr(int index) const {
+cpudbg::breakpoint_addr(int index) const {
     YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
     return this->breakpoints[index].address;
 }
 
 //------------------------------------------------------------------------------
 void
-z80dbg::step_pc_modified(system_bus* bus, z80& cpu) {
+cpudbg::step_pc_modified(system_bus* bus, z80& cpu) {
     YAKC_ASSERT(bus);
     uword pc;
     do {
@@ -106,7 +106,7 @@ z80dbg::step_pc_modified(system_bus* bus, z80& cpu) {
 
 //------------------------------------------------------------------------------
 void
-z80dbg::set8(z80& cpu, reg r, ubyte v) {
+cpudbg::set8(z80& cpu, reg r, ubyte v) {
     switch (r) {
         case A:     cpu.A = v; break;
         case F:     cpu.F = v; break;
@@ -125,7 +125,7 @@ z80dbg::set8(z80& cpu, reg r, ubyte v) {
 
 //------------------------------------------------------------------------------
 ubyte
-z80dbg::get8(const z80& cpu, reg r) {
+cpudbg::get8(const z80& cpu, reg r) {
     switch (r) {
         case A:    return cpu.A;
         case F:    return cpu.F;
@@ -146,7 +146,7 @@ z80dbg::get8(const z80& cpu, reg r) {
 
 //------------------------------------------------------------------------------
 void
-z80dbg::set16(z80& cpu, reg r, uword v) {
+cpudbg::set16(z80& cpu, reg r, uword v) {
     switch (r) {
         case AF:   cpu.AF = v; break;
         case BC:   cpu.BC = v; break;
@@ -168,7 +168,7 @@ z80dbg::set16(z80& cpu, reg r, uword v) {
 
 //------------------------------------------------------------------------------
 uword
-z80dbg::get16(const z80& cpu, reg r) {
+cpudbg::get16(const z80& cpu, reg r) {
     switch (r) {
         case AF:    return cpu.AF;
         case BC:    return cpu.BC;
@@ -192,7 +192,7 @@ z80dbg::get16(const z80& cpu, reg r) {
 
 //------------------------------------------------------------------------------
 const char*
-z80dbg::reg_name(reg r) {
+cpudbg::reg_name(reg r) {
     switch (r) {
         case A: return "A";
         case F: return "F";

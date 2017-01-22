@@ -8,7 +8,7 @@
 #include "yakc/core/clock.h"
 #include "yakc/devices/z80.h"
 #include "yakc/devices/mos6502.h"
-#include "yakc/devices/z80dbg.h"
+#include "yakc/devices/cpudbg.h"
 #include "yakc/devices/z80pio.h"
 #include "yakc/devices/z80ctc.h"
 #include "yakc/devices/i8255.h"
@@ -33,7 +33,7 @@ public:
     class beeper beeper;
     class speaker speaker;
     class ay8910 ay8910;
-    z80dbg dbg;
+    cpudbg dbg;
     class crt crt;          // this is not a chip, but a cathode-ray-tube emulation
     ubyte ram[8][0x4000];
 };

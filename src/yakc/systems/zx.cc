@@ -249,8 +249,8 @@ uint64_t
 zx::step(uint64_t start_tick, uint64_t end_tick) {
     // step the system for given number of cycles, return actually
     // executed number of cycles
-    z80& cpu = this->board->z80cpu;
-    z80dbg& dbg = this->board->dbg;
+    auto& cpu = this->board->z80cpu;
+    auto& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
         if (dbg.check_break(cpu)) {
