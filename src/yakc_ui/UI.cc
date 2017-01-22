@@ -236,7 +236,7 @@ UI::OnFrame(yakc& emu) {
                 case device::cpc464:            model = "CPC464"; break;
                 case device::cpc6128:           model = "CPC6128"; break;
                 case device::kccompact:         model = "KCCompact"; break;
-                case device::bbcmicro_b:        model = "BBCMicroB"; break;
+                case device::bbcmicro_b:        model = "BBC Micro-B"; break;
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {

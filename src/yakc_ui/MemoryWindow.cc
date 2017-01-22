@@ -22,7 +22,7 @@ read_func(void* userdata, uword addr) {
         return emu->board.z80cpu.mem.r8(addr);
     }
     else {
-        return emu->board.m6502cpu.mem.r8(addr);
+        return emu->board.m6502cpu.mem.r8io(addr);
     }
 }
 
@@ -34,7 +34,7 @@ write_func(void* userdata, uword addr, ubyte value) {
         emu->board.z80cpu.mem.w8(addr, value);
     }
     else {
-        emu->board.m6502cpu.mem.w8(addr, value);
+        emu->board.m6502cpu.mem.w8io(addr, value);
     }
 }
 

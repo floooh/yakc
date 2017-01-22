@@ -10,7 +10,7 @@ using namespace Oryol;
 
 namespace YAKC {
 
-static const cpudbg::z80reg regs16[] = {
+static const cpudbg::z80reg z80regs16[] = {
     cpudbg::z80reg::AF,
     cpudbg::z80reg::BC,
     cpudbg::z80reg::DE,
@@ -26,7 +26,7 @@ static const cpudbg::z80reg regs16[] = {
     cpudbg::z80reg::SP,
     cpudbg::z80reg::PC
 };
-static const cpudbg::z80reg regs8[] = {
+static const cpudbg::z80reg z80regs8[] = {
     cpudbg::z80reg::I, cpudbg::z80reg::R, cpudbg::z80reg::IM
 };
 
@@ -36,11 +36,11 @@ DebugWindow::Setup(yakc& emu) {
     this->setName("Debugger");
 
     // setup register table widgets
-    for (cpudbg::z80reg r : regs16) {
-        this->regWidget[int(r)].Configure16(cpudbg::reg_name(r), cpudbg::get16(emu.board.z80cpu, r));
+    for (cpudbg::z80reg r : z80regs16) {
+        this->z80RegWidget[int(r)].Configure16(cpudbg::reg_name(r), cpudbg::get16(emu.board.z80cpu, r));
     }
-    for (cpudbg::z80reg r : regs8) {
-        this->regWidget[int(r)].Configure8(cpudbg::reg_name(r), cpudbg::get8(emu.board.z80cpu, r));
+    for (cpudbg::z80reg r : z80regs8) {
+        this->z80RegWidget[int(r)].Configure8(cpudbg::reg_name(r), cpudbg::get8(emu.board.z80cpu, r));
     }
     this->breakPointWidget.Configure16("##bp", 0xFFFF);
 }
@@ -50,10 +50,15 @@ bool
 DebugWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(460, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
-        this->drawRegisterTable(emu);
-        ImGui::Separator();
-        this->drawMainContent(emu, emu.board.z80cpu.PC, 48);
-        ImGui::Separator();
+        if (emu.cpu_type() == cpu::z80) {
+            this->drawZ80RegisterTable(emu);
+            ImGui::Separator();
+            this->drawMainContent(emu, emu.board.z80cpu.PC, 48);
+            ImGui::Separator();
+        }
+        else {
+            this->drawMainContent(emu, emu.board.m6502cpu.PC, 48);
+        }
         this->drawControls(emu);
     }
     ImGui::End();
@@ -63,28 +68,28 @@ DebugWindow::Draw(yakc& emu) {
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawReg16(yakc& emu, cpudbg::z80reg r) {
-    if (this->regWidget[int(r)].Draw()) {
-        cpudbg::set16(emu.board.z80cpu, r, this->regWidget[int(r)].Get16());
+    if (this->z80RegWidget[int(r)].Draw()) {
+        cpudbg::set16(emu.board.z80cpu, r, this->z80RegWidget[int(r)].Get16());
     }
     else {
-        this->regWidget[int(r)].Set16(cpudbg::get16(emu.board.z80cpu, r));
+        this->z80RegWidget[int(r)].Set16(cpudbg::get16(emu.board.z80cpu, r));
     }
 }
 
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawReg8(yakc& emu, cpudbg::z80reg r) {
-    if (this->regWidget[int(r)].Draw()) {
-        cpudbg::set8(emu.board.z80cpu, r, this->regWidget[int(r)].Get8());
+    if (this->z80RegWidget[int(r)].Draw()) {
+        cpudbg::set8(emu.board.z80cpu, r, this->z80RegWidget[int(r)].Get8());
     }
     else {
-        this->regWidget[int(r)].Set8(cpudbg::get8(emu.board.z80cpu, r));
+        this->z80RegWidget[int(r)].Set8(cpudbg::get8(emu.board.z80cpu, r));
     }
 }
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawRegisterTable(yakc& emu) {
+DebugWindow::drawZ80RegisterTable(yakc& emu) {
     const ImVec4 red = UI::DisabledColor;
     const ImVec4 green = UI::EnabledColor;
 
@@ -150,7 +155,12 @@ DebugWindow::drawControls(yakc& emu) {
     if (emu.board.dbg.paused) {
         ImGui::SameLine();
         if (ImGui::Button("step")) {
-            emu.board.dbg.step_pc_modified(emu.get_bus(), emu.board.z80cpu);
+            if (emu.cpu_type() == cpu::z80) {
+                emu.board.dbg.step_pc_modified(emu.get_bus(), emu.board.z80cpu);
+            }
+            else {
+                emu.board.dbg.step_pc_modified(emu.board.m6502cpu);
+            }
         }
     }
     ImGui::Checkbox("break on invalid opcode", &emu.board.z80cpu.break_on_invalid_opcode);
@@ -195,7 +205,8 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
         else {
             display_addr = cur_addr;
             num_bytes = disasm.Disassemble(emu, display_addr);
-                if ((cur_addr == start_addr) && emu.board.z80cpu.INV) {
+                bool inv = emu.cpu_type() == cpu::z80 ? emu.board.z80cpu.INV : false;
+                if ((cur_addr == start_addr) && inv) {
                     // invalid/non-implemented opcode hit
                     ImGui::PushStyleColor(ImGuiCol_Text, UI::InvalidOpCodeColor);
                 }
@@ -228,7 +239,12 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            ImGui::Text("%02X ", emu.board.z80cpu.mem.r8(display_addr++));
+            if (emu.cpu_type() == cpu::z80) {
+                ImGui::Text("%02X ", emu.board.z80cpu.mem.r8(display_addr++));
+            }
+            else {
+                ImGui::Text("%02X ", emu.board.m6502cpu.mem.r8io(display_addr++));
+            }
         }
 
         // print disassembled instruction

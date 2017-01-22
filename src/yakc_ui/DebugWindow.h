@@ -22,13 +22,14 @@ public:
     /// draw an 8-bit register widget
     void drawReg8(yakc& emu, cpudbg::z80reg r);
     /// draw the register table
-    void drawRegisterTable(yakc& emu);
+    void drawZ80RegisterTable(yakc& emu);
     /// draw the main window content, starting at given address
     void drawMainContent(yakc& emu, uword start_addr, int num_lines);
     /// draw control buttons
     void drawControls(yakc& emu);
 
-    HexInputWidget regWidget[int(cpudbg::z80reg::num)];
+    HexInputWidget z80RegWidget[int(cpudbg::z80reg::num)];
+    HexInputWidget m6502RegWidget[int(cpudbg::m6502reg::num)];
     HexInputWidget breakPointWidget;
 };
 

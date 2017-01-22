@@ -23,7 +23,7 @@ ubyte
 Disasm::fetch(uword base, int offset, void* userdata) {
     Disasm* self = (Disasm*) userdata;
     if (self->emu->cpu_type() == cpu::mos6502) {
-        return self->emu->board.m6502cpu.mem.r8(base + offset);
+        return self->emu->board.m6502cpu.mem.r8io(base + offset);
     }
     else {
         return self->emu->board.z80cpu.mem.r8(base + offset);

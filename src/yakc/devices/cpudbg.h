@@ -6,6 +6,7 @@
 */
 #include "yakc/core/core.h"
 #include "yakc/devices/z80.h"
+#include "yakc/devices/mos6502.h"
 
 namespace YAKC {
 
@@ -18,6 +19,10 @@ public:
         AF_, BC_, DE_, HL_, WZ_,
         I, R, IX, IY, SP, PC,
         IM,
+        num
+    };
+    enum class m6502reg {
+        A=0, X, Y, S, P, PC,
         num
     };
 
@@ -34,9 +39,9 @@ public:
     cpudbg();
 
     /// test whether breakpoint is enabled and hit
-    bool check_break(const z80& cpu) const;
+    bool check_break(uint16_t pc) const;
     /// store current pc in history ringbuffer
-    void store_pc_history(const z80& cpu);
+    void store_pc_history(uint16_t pc);
     /// get pc from history ringbuffer (0 is oldest entry)
     uword get_pc_history(int index) const;
 
@@ -55,6 +60,8 @@ public:
 
     /// step until PC changed (or an invalid opcode is hit)
     void step_pc_modified(system_bus* bus, z80& cpu);
+    /// step until PC changed (or an invalid opcode is hit)
+    void step_pc_modified(mos6502& cpu);
 
     /// set an 8-bit register value by enum (slow)
     static void set8(z80& cpu, z80reg r, ubyte v);

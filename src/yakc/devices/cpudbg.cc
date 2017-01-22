@@ -14,10 +14,10 @@ paused(false) {
 
 //------------------------------------------------------------------------------
 bool
-cpudbg::check_break(const z80& cpu) const {
+cpudbg::check_break(uint16_t pc) const {
     for (int i = 0; i < max_breakpoints; i++) {
         if (this->breakpoints[i].enabled) {
-            if (cpu.PC == this->breakpoints[i].address) {
+            if (pc == this->breakpoints[i].address) {
                 return true;
             }
         }
@@ -27,8 +27,8 @@ cpudbg::check_break(const z80& cpu) const {
 
 //------------------------------------------------------------------------------
 void
-cpudbg::store_pc_history(const z80& cpu) {
-    this->pc_history[pc_history_pos++] = cpu.PC;
+cpudbg::store_pc_history(uint16_t pc) {
+    this->pc_history[pc_history_pos++] = pc;
     this->pc_history_pos &= this->pc_history_size-1;
 }
 
@@ -98,10 +98,22 @@ cpudbg::step_pc_modified(system_bus* bus, z80& cpu) {
     uword pc;
     do {
         pc = cpu.PC;
-        this->store_pc_history(cpu);
+        this->store_pc_history(pc);
         cpu.step(bus);
     }
     while ((pc == cpu.PC) && !cpu.INV);
+}
+
+//------------------------------------------------------------------------------
+void
+cpudbg::step_pc_modified(mos6502& cpu) {
+    uword pc;
+    do {
+        pc = cpu.PC;
+        this->store_pc_history(pc);
+        cpu.step();
+    }
+    while (pc == cpu.PC);
 }
 
 //------------------------------------------------------------------------------

@@ -51,7 +51,7 @@ uint8_t
 bbcmicro::memio(bool write, uint16_t addr, uint8_t inval) {
     if (addr >= 0xFF00) {
         if (!write) {
-            return self->board->m6502cpu.mem.r8(addr);
+            return self->roms->ptr(rom_images::bbcmicro_b_os)[addr - 0xC000];
         }
         return 0x00;
     }
@@ -81,8 +81,8 @@ bbcmicro::poweron(device m) {
     // CPU start state
     this->board->m6502cpu.init(this);
     this->board->m6502cpu.reset();
-    // FIXME: how does the CPU get to C300?
-    this->board->m6502cpu.PC = 0xC300;
+
+    this->board->dbg.enable_breakpoint(0, this->board->m6502cpu.PC);
 }
 
 //------------------------------------------------------------------------------
@@ -102,9 +102,15 @@ bbcmicro::reset() {
 //------------------------------------------------------------------------------
 uint64_t
 bbcmicro::step(uint64_t start_tick, uint64_t end_tick) {
-    mos6502& cpu = this->board->m6502cpu;
+    auto& cpu = this->board->m6502cpu;
+    auto& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
+        if (dbg.check_break(cpu.PC)) {
+            dbg.paused = true;
+            return end_tick;
+        }
+        dbg.store_pc_history(cpu.PC); // FIXME: only if debug window open?    
         cur_tick += cpu.step();
     }
     return cur_tick;
