@@ -18,14 +18,24 @@ MemoryWindow::Setup(yakc& emu) {
 static ubyte
 read_func(void* userdata, uword addr) {
     yakc* emu = (yakc*) userdata;
-    return emu->board.z80cpu.mem.r8(addr);
+    if (emu->cpu_type() == cpu::z80) {
+        return emu->board.z80cpu.mem.r8(addr);
+    }
+    else {
+        return emu->board.m6502cpu.mem.r8(addr);
+    }
 }
 
 //------------------------------------------------------------------------------
 static void
 write_func(void* userdata, uword addr, ubyte value) {
     yakc* emu = (yakc*) userdata;
-    emu->board.z80cpu.mem.w8(addr, value);
+    if (emu->cpu_type() == cpu::z80) {
+        emu->board.z80cpu.mem.w8(addr, value);
+    }
+    else {
+        emu->board.m6502cpu.mem.w8(addr, value);
+    }
 }
 
 //------------------------------------------------------------------------------

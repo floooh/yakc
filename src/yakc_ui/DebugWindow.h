@@ -18,9 +18,9 @@ public:
     virtual bool Draw(yakc& emu) override;
 
     /// draw a 16-bit register widget
-    void drawReg16(yakc& emu, z80dbg::reg r);
+    void drawReg16(yakc& emu, cpudbg::z80reg r);
     /// draw an 8-bit register widget
-    void drawReg8(yakc& emu, z80dbg::reg r);
+    void drawReg8(yakc& emu, cpudbg::z80reg r);
     /// draw the register table
     void drawRegisterTable(yakc& emu);
     /// draw the main window content, starting at given address
@@ -28,7 +28,7 @@ public:
     /// draw control buttons
     void drawControls(yakc& emu);
 
-    HexInputWidget regWidget[z80dbg::reg::num];
+    HexInputWidget regWidget[int(cpudbg::z80reg::num)];
     HexInputWidget breakPointWidget;
 };
 

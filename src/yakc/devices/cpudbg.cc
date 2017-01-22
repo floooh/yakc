@@ -106,38 +106,38 @@ cpudbg::step_pc_modified(system_bus* bus, z80& cpu) {
 
 //------------------------------------------------------------------------------
 void
-cpudbg::set8(z80& cpu, reg r, ubyte v) {
+cpudbg::set8(z80& cpu, z80reg r, ubyte v) {
     switch (r) {
-        case A:     cpu.A = v; break;
-        case F:     cpu.F = v; break;
-        case B:     cpu.B = v; break;
-        case C:     cpu.C = v; break;
-        case D:     cpu.D = v; break;
-        case E:     cpu.E = v; break;
-        case H:     cpu.H = v; break;
-        case L:     cpu.L = v; break;
-        case I:     cpu.I = v; break;
-        case R:     cpu.R = v; break;
-        case IM:    cpu.IM = v; break;
+        case z80reg::A:     cpu.A = v; break;
+        case z80reg::F:     cpu.F = v; break;
+        case z80reg::B:     cpu.B = v; break;
+        case z80reg::C:     cpu.C = v; break;
+        case z80reg::D:     cpu.D = v; break;
+        case z80reg::E:     cpu.E = v; break;
+        case z80reg::H:     cpu.H = v; break;
+        case z80reg::L:     cpu.L = v; break;
+        case z80reg::I:     cpu.I = v; break;
+        case z80reg::R:     cpu.R = v; break;
+        case z80reg::IM:    cpu.IM = v; break;
         default:    YAKC_ASSERT(false); break;
     }
 }
 
 //------------------------------------------------------------------------------
 ubyte
-cpudbg::get8(const z80& cpu, reg r) {
+cpudbg::get8(const z80& cpu, z80reg r) {
     switch (r) {
-        case A:    return cpu.A;
-        case F:    return cpu.F;
-        case B:    return cpu.B;
-        case C:    return cpu.C;
-        case D:    return cpu.D;
-        case E:    return cpu.E;
-        case H:    return cpu.H;
-        case L:    return cpu.L;
-        case I:    return cpu.I;
-        case R:    return cpu.R;
-        case IM:   return cpu.IM;
+        case z80reg::A:    return cpu.A;
+        case z80reg::F:    return cpu.F;
+        case z80reg::B:    return cpu.B;
+        case z80reg::C:    return cpu.C;
+        case z80reg::D:    return cpu.D;
+        case z80reg::E:    return cpu.E;
+        case z80reg::H:    return cpu.H;
+        case z80reg::L:    return cpu.L;
+        case z80reg::I:    return cpu.I;
+        case z80reg::R:    return cpu.R;
+        case z80reg::IM:   return cpu.IM;
         default:
             YAKC_ASSERT(false);
             return 0;
@@ -146,44 +146,44 @@ cpudbg::get8(const z80& cpu, reg r) {
 
 //------------------------------------------------------------------------------
 void
-cpudbg::set16(z80& cpu, reg r, uword v) {
+cpudbg::set16(z80& cpu, z80reg r, uword v) {
     switch (r) {
-        case AF:   cpu.AF = v; break;
-        case BC:   cpu.BC = v; break;
-        case DE:   cpu.DE = v; break;
-        case HL:   cpu.HL = v; break;
-        case WZ:   cpu.WZ = v; break;
-        case AF_:  cpu.AF_ = v; break;
-        case BC_:  cpu.BC_ = v; break;
-        case DE_:  cpu.DE_ = v; break;
-        case HL_:  cpu.HL_ = v; break;
-        case WZ_:  cpu.WZ_ = v; break;
-        case IX:   cpu.IX = v; break;
-        case IY:   cpu.IY = v; break;
-        case SP:   cpu.SP = v; break;
-        case PC:   cpu.PC = v; break;
+        case z80reg::AF:   cpu.AF = v; break;
+        case z80reg::BC:   cpu.BC = v; break;
+        case z80reg::DE:   cpu.DE = v; break;
+        case z80reg::HL:   cpu.HL = v; break;
+        case z80reg::WZ:   cpu.WZ = v; break;
+        case z80reg::AF_:  cpu.AF_ = v; break;
+        case z80reg::BC_:  cpu.BC_ = v; break;
+        case z80reg::DE_:  cpu.DE_ = v; break;
+        case z80reg::HL_:  cpu.HL_ = v; break;
+        case z80reg::WZ_:  cpu.WZ_ = v; break;
+        case z80reg::IX:   cpu.IX = v; break;
+        case z80reg::IY:   cpu.IY = v; break;
+        case z80reg::SP:   cpu.SP = v; break;
+        case z80reg::PC:   cpu.PC = v; break;
         default:   YAKC_ASSERT(false);
     }
 }
 
 //------------------------------------------------------------------------------
 uword
-cpudbg::get16(const z80& cpu, reg r) {
+cpudbg::get16(const z80& cpu, z80reg r) {
     switch (r) {
-        case AF:    return cpu.AF;
-        case BC:    return cpu.BC;
-        case DE:    return cpu.DE;
-        case HL:    return cpu.HL;
-        case WZ:    return cpu.WZ;
-        case AF_:   return cpu.AF_;
-        case BC_:   return cpu.BC_;
-        case DE_:   return cpu.DE_;
-        case HL_:   return cpu.HL_;
-        case WZ_:   return cpu.WZ_;
-        case IX:    return cpu.IX;
-        case IY:    return cpu.IY;
-        case SP:    return cpu.SP;
-        case PC:    return cpu.PC;
+        case z80reg::AF:    return cpu.AF;
+        case z80reg::BC:    return cpu.BC;
+        case z80reg::DE:    return cpu.DE;
+        case z80reg::HL:    return cpu.HL;
+        case z80reg::WZ:    return cpu.WZ;
+        case z80reg::AF_:   return cpu.AF_;
+        case z80reg::BC_:   return cpu.BC_;
+        case z80reg::DE_:   return cpu.DE_;
+        case z80reg::HL_:   return cpu.HL_;
+        case z80reg::WZ_:   return cpu.WZ_;
+        case z80reg::IX:    return cpu.IX;
+        case z80reg::IY:    return cpu.IY;
+        case z80reg::SP:    return cpu.SP;
+        case z80reg::PC:    return cpu.PC;
         default:
             YAKC_ASSERT(false);
             return 0;
@@ -192,33 +192,33 @@ cpudbg::get16(const z80& cpu, reg r) {
 
 //------------------------------------------------------------------------------
 const char*
-cpudbg::reg_name(reg r) {
+cpudbg::reg_name(z80reg r) {
     switch (r) {
-        case A: return "A";
-        case F: return "F";
-        case B: return "B";
-        case C: return "C";
-        case D: return "D";
-        case E: return "E";
-        case H: return "H";
-        case L: return "L";
-        case AF: return "AF";
-        case BC: return "BC";
-        case DE: return "DE";
-        case HL: return "HL";
-        case WZ: return "WZ";
-        case AF_: return "AF'";
-        case BC_: return "BC'";
-        case DE_: return "DE'";
-        case HL_: return "HL'";
-        case WZ_: return "WZ'";
-        case I: return "I";
-        case R: return "R";
-        case IX: return "IX";
-        case IY: return "IY";
-        case SP: return "SP";
-        case PC: return "PC";
-        case IM: return "IM";
+        case z80reg::A: return "A";
+        case z80reg::F: return "F";
+        case z80reg::B: return "B";
+        case z80reg::C: return "C";
+        case z80reg::D: return "D";
+        case z80reg::E: return "E";
+        case z80reg::H: return "H";
+        case z80reg::L: return "L";
+        case z80reg::AF: return "AF";
+        case z80reg::BC: return "BC";
+        case z80reg::DE: return "DE";
+        case z80reg::HL: return "HL";
+        case z80reg::WZ: return "WZ";
+        case z80reg::AF_: return "AF'";
+        case z80reg::BC_: return "BC'";
+        case z80reg::DE_: return "DE'";
+        case z80reg::HL_: return "HL'";
+        case z80reg::WZ_: return "WZ'";
+        case z80reg::I: return "I";
+        case z80reg::R: return "R";
+        case z80reg::IX: return "IX";
+        case z80reg::IY: return "IY";
+        case z80reg::SP: return "SP";
+        case z80reg::PC: return "PC";
+        case z80reg::IM: return "IM";
         default: return "?";
     }
 }

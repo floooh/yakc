@@ -12,7 +12,7 @@ namespace YAKC {
 class cpudbg {
 public:
     /// register enum for set_reg/get_reg methods
-    enum reg {
+    enum class z80reg {
         A=0, F, B, C, D, E, H, L,
         AF, BC, DE, HL, WZ,
         AF_, BC_, DE_, HL_, WZ_,
@@ -57,15 +57,15 @@ public:
     void step_pc_modified(system_bus* bus, z80& cpu);
 
     /// set an 8-bit register value by enum (slow)
-    static void set8(z80& cpu, reg r, ubyte v);
+    static void set8(z80& cpu, z80reg r, ubyte v);
     /// get an 8-bit register value by enum (slow)
-    static ubyte get8(const z80& cpu, reg r);
+    static ubyte get8(const z80& cpu, z80reg r);
     /// set a 16-bit register value by enum (slow)
-    static void set16(z80& cpu, reg r, uword v);
+    static void set16(z80& cpu, z80reg r, uword v);
     /// get a 16-bit register value by enum (slow)
-    static uword get16(const z80& cpu, reg r);
+    static uword get16(const z80& cpu, z80reg r);
     /// get a string-name for a register
-    static const char* reg_name(reg r);
+    static const char* reg_name(z80reg r);
 
 private:
     static const int max_breakpoints = 2;

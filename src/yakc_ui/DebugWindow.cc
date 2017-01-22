@@ -10,13 +10,24 @@ using namespace Oryol;
 
 namespace YAKC {
 
-static const z80dbg::reg regs16[] = {
-    z80dbg::AF, z80dbg::BC, z80dbg::DE, z80dbg::HL, z80dbg::WZ,
-    z80dbg::AF_, z80dbg::BC_, z80dbg::DE_, z80dbg::HL_, z80dbg::WZ_,
-    z80dbg::IX, z80dbg::IY, z80dbg::SP, z80dbg::PC
+static const cpudbg::z80reg regs16[] = {
+    cpudbg::z80reg::AF,
+    cpudbg::z80reg::BC,
+    cpudbg::z80reg::DE,
+    cpudbg::z80reg::HL,
+    cpudbg::z80reg::WZ,
+    cpudbg::z80reg::AF_,
+    cpudbg::z80reg::BC_,
+    cpudbg::z80reg::DE_,
+    cpudbg::z80reg::HL_,
+    cpudbg::z80reg::WZ_,
+    cpudbg::z80reg::IX,
+    cpudbg::z80reg::IY,
+    cpudbg::z80reg::SP,
+    cpudbg::z80reg::PC
 };
-static const z80dbg::reg regs8[] = {
-    z80dbg::I, z80dbg::R, z80dbg::IM
+static const cpudbg::z80reg regs8[] = {
+    cpudbg::z80reg::I, cpudbg::z80reg::R, cpudbg::z80reg::IM
 };
 
 //------------------------------------------------------------------------------
@@ -25,11 +36,11 @@ DebugWindow::Setup(yakc& emu) {
     this->setName("Debugger");
 
     // setup register table widgets
-    for (z80dbg::reg r : regs16) {
-        this->regWidget[r].Configure16(z80dbg::reg_name(r), z80dbg::get16(emu.board.z80cpu, r));
+    for (cpudbg::z80reg r : regs16) {
+        this->regWidget[int(r)].Configure16(cpudbg::reg_name(r), cpudbg::get16(emu.board.z80cpu, r));
     }
-    for (z80dbg::reg r : regs8) {
-        this->regWidget[r].Configure8(z80dbg::reg_name(r), z80dbg::get8(emu.board.z80cpu, r));
+    for (cpudbg::z80reg r : regs8) {
+        this->regWidget[int(r)].Configure8(cpudbg::reg_name(r), cpudbg::get8(emu.board.z80cpu, r));
     }
     this->breakPointWidget.Configure16("##bp", 0xFFFF);
 }
@@ -51,23 +62,23 @@ DebugWindow::Draw(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawReg16(yakc& emu, z80dbg::reg r) {
-    if (this->regWidget[r].Draw()) {
-        z80dbg::set16(emu.board.z80cpu, r, this->regWidget[r].Get16());
+DebugWindow::drawReg16(yakc& emu, cpudbg::z80reg r) {
+    if (this->regWidget[int(r)].Draw()) {
+        cpudbg::set16(emu.board.z80cpu, r, this->regWidget[int(r)].Get16());
     }
     else {
-        this->regWidget[r].Set16(z80dbg::get16(emu.board.z80cpu, r));
+        this->regWidget[int(r)].Set16(cpudbg::get16(emu.board.z80cpu, r));
     }
 }
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawReg8(yakc& emu, z80dbg::reg r) {
-    if (this->regWidget[r].Draw()) {
-        z80dbg::set8(emu.board.z80cpu, r, this->regWidget[r].Get8());
+DebugWindow::drawReg8(yakc& emu, cpudbg::z80reg r) {
+    if (this->regWidget[int(r)].Draw()) {
+        cpudbg::set8(emu.board.z80cpu, r, this->regWidget[int(r)].Get8());
     }
     else {
-        this->regWidget[r].Set8(z80dbg::get8(emu.board.z80cpu, r));
+        this->regWidget[int(r)].Set8(cpudbg::get8(emu.board.z80cpu, r));
     }
 }
 
@@ -77,28 +88,28 @@ DebugWindow::drawRegisterTable(yakc& emu) {
     const ImVec4 red = UI::DisabledColor;
     const ImVec4 green = UI::EnabledColor;
 
-    this->drawReg16(emu, z80dbg::AF); ImGui::SameLine(1 * 72);
-    this->drawReg16(emu, z80dbg::BC); ImGui::SameLine(2 * 72);
-    this->drawReg16(emu, z80dbg::DE); ImGui::SameLine(3 * 72);
-    this->drawReg16(emu, z80dbg::HL); ImGui::SameLine(4 * 72);
-    this->drawReg16(emu, z80dbg::WZ); ImGui::SameLine(5 * 72);
-    this->drawReg8(emu, z80dbg::I); ImGui::SameLine(5 * 72 + 48);
+    this->drawReg16(emu, cpudbg::z80reg::AF); ImGui::SameLine(1 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::BC); ImGui::SameLine(2 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::DE); ImGui::SameLine(3 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::HL); ImGui::SameLine(4 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::WZ); ImGui::SameLine(5 * 72);
+    this->drawReg8(emu, cpudbg::z80reg::I); ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.z80cpu.IFF1 ? green:red, "IFF1");
 
-    this->drawReg16(emu, z80dbg::AF_); ImGui::SameLine(1 * 72);
-    this->drawReg16(emu, z80dbg::BC_); ImGui::SameLine(2 * 72);
-    this->drawReg16(emu, z80dbg::DE_); ImGui::SameLine(3 * 72);
-    this->drawReg16(emu, z80dbg::HL_); ImGui::SameLine(4 * 72);
-    this->drawReg16(emu, z80dbg::WZ_); ImGui::SameLine(5 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::AF_); ImGui::SameLine(1 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::BC_); ImGui::SameLine(2 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::DE_); ImGui::SameLine(3 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::HL_); ImGui::SameLine(4 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::WZ_); ImGui::SameLine(5 * 72);
     
-    this->drawReg8(emu, z80dbg::IM); ImGui::SameLine(5 * 72 + 48);
+    this->drawReg8(emu, cpudbg::z80reg::IM); ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.z80cpu.IFF2 ? green:red, "IFF2");
 
-    this->drawReg16(emu, z80dbg::IX); ImGui::SameLine(1 * 72);
-    this->drawReg16(emu, z80dbg::IY); ImGui::SameLine(2 * 72);
-    this->drawReg16(emu, z80dbg::SP); ImGui::SameLine(3 * 72);
-    this->drawReg16(emu, z80dbg::PC); ImGui::SameLine(4 * 72);
-    this->drawReg8(emu, z80dbg::R); ImGui::SameLine();
+    this->drawReg16(emu, cpudbg::z80reg::IX); ImGui::SameLine(1 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::IY); ImGui::SameLine(2 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::SP); ImGui::SameLine(3 * 72);
+    this->drawReg16(emu, cpudbg::z80reg::PC); ImGui::SameLine(4 * 72);
+    this->drawReg8(emu, cpudbg::z80reg::R); ImGui::SameLine();
 
     char strFlags[9];
     const ubyte f = emu.board.z80cpu.F;
@@ -164,14 +175,14 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
     uword cur_addr = start_addr;
 
     // set cur_addr to start of displayed region
-    for (int line_i = z80dbg::pc_history_size; line_i < clipper.DisplayStart; line_i++) {
+    for (int line_i = cpudbg::pc_history_size; line_i < clipper.DisplayStart; line_i++) {
         cur_addr += disasm.Disassemble(emu, cur_addr);
     }
 
     // display only visible items
     for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
         uword display_addr, num_bytes;
-        if (line_i < z80dbg::pc_history_size) {
+        if (line_i < cpudbg::pc_history_size) {
             display_addr = emu.board.dbg.get_pc_history(line_i);
             num_bytes = disasm.Disassemble(emu, display_addr);
             if (emu.board.dbg.is_breakpoint(display_addr)) {
