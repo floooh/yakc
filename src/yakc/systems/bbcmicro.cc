@@ -3,6 +3,8 @@
 //------------------------------------------------------------------------------
 #include "bbcmicro.h"
 
+#include <stdio.h>
+
 namespace YAKC {
 
 bbcmicro* bbcmicro::self = nullptr;
@@ -47,21 +49,6 @@ bbcmicro::init_memory_map() {
 }
 
 //------------------------------------------------------------------------------
-uint8_t
-bbcmicro::memio(bool write, uint16_t addr, uint8_t inval) {
-    if (addr >= 0xFF00) {
-        if (!write) {
-            return self->roms->ptr(rom_images::bbcmicro_b_os)[addr - 0xC000];
-        }
-        return 0x00;
-    }
-    else {
-        // FIXME: memory-mapped-io
-        return 0x00;
-    }
-}
-
-//------------------------------------------------------------------------------
 void
 bbcmicro::poweron(device m) {
     YAKC_ASSERT(this->board);
@@ -81,6 +68,9 @@ bbcmicro::poweron(device m) {
     // CPU start state
     this->board->mos6502.init(this);
     this->board->mos6502.reset();
+
+    // hardware subsystems
+    this->video.init(this->board);
 }
 
 //------------------------------------------------------------------------------
@@ -95,6 +85,7 @@ bbcmicro::poweroff() {
 void
 bbcmicro::reset() {
     this->board->mos6502.reset();
+    this->video.reset();
 }
 
 //------------------------------------------------------------------------------
@@ -115,11 +106,91 @@ bbcmicro::step(uint64_t start_tick, uint64_t end_tick) {
 }
 
 //------------------------------------------------------------------------------
+void
+bbcmicro::cpu_tick() {
+    this->video.step();
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+bbcmicro::memio(bool write, uint16_t addr, uint8_t inval) {
+    if (write) {
+        if (addr >= 0xFF00) {
+            // the last 256 bytes of ROM
+            return 0x00;
+        }
+        else if (addr >= 0xFE00) {
+            // SHEILA write
+            if (addr < 0xFE08) {
+                // CRTC write
+                if ((addr & 0x0001) == 0) {
+                    self->board->mc6845.select(inval);
+                }
+                else {
+                    self->board->mc6845.write(inval);
+                }
+            }
+            else if ((addr >= 0xFE20) && (addr < 0xFE30)) {
+                // ULA
+                if ((addr & 0x0001) == 0) {
+                    self->video.write_video_control(inval);
+                }
+                else {
+                    self->video.write_palette(inval);
+                }
+            }
+        }
+        else if (addr >= 0xFD00) {
+
+        }
+        else if (addr >= 0xFC00) {
+
+        }
+    }
+    else {
+        if (addr >= 0xFF00) {
+            // the last 256 bytes of ROM
+            return self->roms->ptr(rom_images::bbcmicro_b_os)[addr - 0xC000];
+        }
+        else if (addr >= 0xFE00) {
+            // SHEILA read
+            if (addr < 0xFE08) {
+                // CRTC read
+                if ((addr & 0x0001) == 1) {
+                    return self->board->mc6845.read();
+                }
+            }
+            else if ((addr >= 0xFE40) && (addr < 0xFE60)) {
+                // VIA
+                return 0x00;
+            }
+            else if (addr >= 0xFEE0) {
+                // Tube ULA
+                return 0x00;
+            }
+
+            printf("read: %04X\n", addr);
+            return 0xFF;
+        }
+        else if (addr >= 0xFD00) {
+            // JIM (1 MHz) read
+            return 0xFF;
+        }
+        else if (addr >= 0xFC00) {
+            // FRED (1 MHz) read
+            return 0xFF;
+        }
+    }
+    // fallthrough
+    return 0x00;
+}
+
+//------------------------------------------------------------------------------
 const void*
 bbcmicro::framebuffer(int& out_width, int& out_height) {
-    out_width = 320;
-    out_height = 256;
-    return this->rgba8_buffer;
+    out_width = bbcmicro_video::max_display_width;
+    out_height = bbcmicro_video::max_display_height;
+    return this->video.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------

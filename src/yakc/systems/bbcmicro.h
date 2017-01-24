@@ -7,6 +7,7 @@
 #include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
+#include "yakc/systems/bbcmicro_video.h"
 
 namespace YAKC {
 
@@ -44,11 +45,13 @@ public:
 
     /// memory-mapped-io callback
     static uint8_t memio(bool write, uint16_t addr, uint8_t inval);
+    /// called by cycle-stepped CPU per 'subcycle'
+    virtual void cpu_tick();
 
     static bbcmicro* self;
     device cur_model = device::bbcmicro_b;
     bool on = false;
-    uint32_t rgba8_buffer[320*256];
+    bbcmicro_video video;
 };
 
 } // namespace YAKC
