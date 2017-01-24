@@ -57,7 +57,7 @@ public:
     /// check any model against device mask
     static bool is_device(device model, device mask);
     /// get the cpu model of the current device
-    cpu_model cpu_model() const;
+    cpu_model cpu_type() const;
     /// get human-readable info about current system
     const char* system_info() const;
     /// get current border color

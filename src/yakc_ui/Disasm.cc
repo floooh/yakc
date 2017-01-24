@@ -22,7 +22,7 @@ emu(0) {
 ubyte
 Disasm::fetch(uword base, int offset, void* userdata) {
     Disasm* self = (Disasm*) userdata;
-    if (self->emu->cpu_model() == cpu_model::mos6502) {
+    if (self->emu->cpu_type() == cpu_model::mos6502) {
         return self->emu->board.mos6502.mem.r8io(base + offset);
     }
     else {
@@ -35,7 +35,7 @@ uword
 Disasm::Disassemble(const yakc& emu, uword addr) {
     int res = 0;
     this->emu = &emu;
-    if (this->emu->cpu_model() == cpu_model::mos6502) {
+    if (this->emu->cpu_type() == cpu_model::mos6502) {
         res = mos6502disasm(fetch, addr, this->buffer, this);
     }
     else {

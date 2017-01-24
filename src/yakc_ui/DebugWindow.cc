@@ -67,7 +67,7 @@ bool
 DebugWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(460, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
-        if (emu.cpu_model() == cpu_model::z80) {
+        if (emu.cpu_type() == cpu_model::z80) {
             this->drawZ80RegisterTable(emu);
             ImGui::Separator();
             this->drawMainContent(emu, emu.board.z80.PC, 48);
@@ -221,7 +221,7 @@ DebugWindow::drawControls(yakc& emu) {
     if (emu.board.dbg.paused) {
         ImGui::SameLine();
         if (ImGui::Button("step")) {
-            if (emu.cpu_model() == cpu_model::z80) {
+            if (emu.cpu_type() == cpu_model::z80) {
                 emu.board.dbg.step_pc_modified(emu.get_bus(), emu.board.z80);
             }
             else {
@@ -271,7 +271,7 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
         else {
             display_addr = cur_addr;
             num_bytes = disasm.Disassemble(emu, display_addr);
-                bool inv = emu.cpu_model() == cpu_model::z80 ? emu.board.z80.INV : false;
+                bool inv = emu.cpu_type() == cpu_model::z80 ? emu.board.z80.INV : false;
                 if ((cur_addr == start_addr) && inv) {
                     // invalid/non-implemented opcode hit
                     ImGui::PushStyleColor(ImGuiCol_Text, UI::InvalidOpCodeColor);
@@ -305,7 +305,7 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            if (emu.cpu_model() == cpu_model::z80) {
+            if (emu.cpu_type() == cpu_model::z80) {
                 ImGui::Text("%02X ", emu.board.z80.mem.r8(display_addr++));
             }
             else {

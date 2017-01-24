@@ -182,7 +182,7 @@ yakc::is_device(device model, device mask) {
 
 //------------------------------------------------------------------------------
 cpu_model
-yakc::cpu_model() const {
+yakc::cpu_type() const {
     if (this->is_device(device::any_bbcmicro)) {
         return cpu_model::mos6502;
     }
