@@ -237,6 +237,7 @@ UI::OnFrame(yakc& emu) {
                 case device::cpc6128:           model = "CPC6128"; break;
                 case device::kccompact:         model = "KCCompact"; break;
                 case device::bbcmicro_b:        model = "BBC Micro-B"; break;
+                case device::acorn_atom:        model = "Acorn Atom"; break;
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
@@ -347,6 +348,12 @@ UI::OnFrame(yakc& emu) {
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Acorn")) {
+                        if (emu.check_roms(device::acorn_atom)) {
+                            if (ImGui::MenuItem("Acorn Atom")) {
+                                emu.poweroff();
+                                emu.poweron(device::acorn_atom);
+                            }
+                        }
                         if (emu.check_roms(device::bbcmicro_b)) {
                             if (ImGui::MenuItem("BBC Micro Model B")) {
                                 emu.poweroff();

@@ -44,6 +44,10 @@ public:
         kcc_basic,              // KC Compact OS Basic
         bbcmicro_b_os,          // BBC Micro Model B ROM
         bbcmicro_b_basic,       // BBC Micro Model B BASIC
+        atom_kernel,            // Acorn Atom kernel ROM
+        atom_float,             // Acorn Atom floating point ROM
+        atom_basic,             // Acorn Atom BASIC ROM
+        atom_dos,               // Acorn Atom DOS ROM
 
         num_roms
     };

@@ -32,6 +32,7 @@ public:
     Oryol::Id irmTexture320x256;
     Oryol::Id irmTexture320x192;
     Oryol::Id irmTexture256x256;
+    Oryol::Id irmTexture256x192;
     Oryol::Id irmTexture768x272;
     Oryol::Id irmTexture1024x312;
     Oryol::DrawState crtDrawState;

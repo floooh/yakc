@@ -41,6 +41,7 @@ fips_begin_module(yakc)
         cpc_video.h cpc_video.cc
         bbcmicro.h bbcmicro.cc
         bbcmicro_video.h bbcmicro_video.cc
+        atom.h atom.cc
         keybuffer.h keybuffer.cc
         breadboard.h
         snapshot.h snapshot.cc

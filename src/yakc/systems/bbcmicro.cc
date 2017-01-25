@@ -52,7 +52,6 @@ bbcmicro::init_memory_map() {
 void
 bbcmicro::poweron(device m) {
     YAKC_ASSERT(this->board);
-    YAKC_ASSERT(int(device::any_bbcmicro) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;

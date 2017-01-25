@@ -31,6 +31,9 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame_x, int frame_y) {
     irmSetup.Width = 256;
     irmSetup.Height = 256;
     this->irmTexture256x256 = Gfx::CreateResource(irmSetup);
+    irmSetup.Width = 256;
+    irmSetup.Height = 192;
+    this->irmTexture256x192 = Gfx::CreateResource(irmSetup);
     irmSetup.Width = 768;
     irmSetup.Height = 272;
     this->irmTexture768x272 = Gfx::CreateResource(irmSetup);
@@ -85,6 +88,9 @@ Draw::Render(const void* pixels, int width, int height) {
     }
     else if ((256 == width) && (256 == height)) {
         tex = this->irmTexture256x256;
+    }
+    else if ((256 == width) && (192 == height)) {
+        tex = this->irmTexture256x192;
     }
     else if ((768 == width) && (272 == height)) {
         tex = this->irmTexture768x272;

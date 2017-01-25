@@ -18,6 +18,7 @@ yakc::init(const ext_funcs& sys_funcs) {
     this->z9001.init(&this->board, &this->roms);
     this->zx.init(&this->board, &this->roms);
     this->cpc.init(&this->board, &this->roms);
+    this->atom.init(&this->board, &this->roms);
     this->bbcmicro.init(&this->board, &this->roms);
 }
 
@@ -45,7 +46,10 @@ yakc::check_roms(device m, os_rom os) {
     else if (is_device(m, device::any_cpc)) {
         return cpc::check_roms(this->roms, m, os);
     }
-    else if (is_device(m, device::any_bbcmicro)) {
+    else if (is_device(m, device::acorn_atom)) {
+        return atom::check_roms(this->roms, m, os);
+    }
+    else if (is_device(m, device::bbcmicro_b)) {
         return bbcmicro::check_roms(this->roms, m, os);
     }
     else {
@@ -77,7 +81,10 @@ yakc::poweron(device m, os_rom rom) {
     else if (this->is_device(device::any_cpc)) {
         this->cpc.poweron(m);
     }
-    else if (this->is_device(device::any_bbcmicro)) {
+    else if (this->is_device(device::acorn_atom)) {
+        this->atom.poweron();
+    }
+    else if (this->is_device(device::bbcmicro_b)) {
         this->bbcmicro.poweron(m);
     }
 }
@@ -100,6 +107,9 @@ yakc::poweroff() {
     if (this->cpc.on) {
         this->cpc.poweroff();
     }
+    if (this->atom.on) {
+        this->atom.poweroff();
+    }
     if (this->bbcmicro.on) {
         this->bbcmicro.poweroff();
     }
@@ -108,7 +118,9 @@ yakc::poweroff() {
 //------------------------------------------------------------------------------
 bool
 yakc::switchedon() const {
-    return this->kc85.on || this->z1013.on || this->z9001.on || this->zx.on || this->cpc.on || this->bbcmicro.on;
+    return this->kc85.on || this->z1013.on || this->z9001.on ||
+           this->zx.on || this->cpc.on || this->bbcmicro.on ||
+           this->atom.on;
 }
 
 //------------------------------------------------------------------------------
@@ -129,6 +141,9 @@ yakc::reset() {
     }
     if (this->cpc.on) {
         this->cpc.reset();
+    }
+    if (this->atom.on) {
+        this->atom.reset();
     }
     if (this->bbcmicro.on) {
         this->bbcmicro.reset();
@@ -163,7 +178,10 @@ yakc::on_context_switched() {
     else if (this->is_device(device::any_cpc)) {
         this->cpc.on_context_switched();
     }
-    else if (this->is_device(device::any_bbcmicro)) {
+    else if (this->is_device(device::acorn_atom)) {
+        this->atom.on_context_switched();
+    }
+    else if (this->is_device(device::bbcmicro_b)) {
         this->bbcmicro.on_context_switched();
     }
 }
@@ -183,7 +201,7 @@ yakc::is_device(device model, device mask) {
 //------------------------------------------------------------------------------
 cpu_model
 yakc::cpu_type() const {
-    if (this->is_device(device::any_bbcmicro)) {
+    if (this->is_device(device::bbcmicro_b) || this->is_device(device::acorn_atom)) {
         return cpu_model::mos6502;
     }
     else {
@@ -234,6 +252,9 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
         else if (this->cpc.on) {
             this->abs_cycle_count = this->cpc.step(this->abs_cycle_count, abs_end_cycles);
         }
+        else if (this->atom.on) {
+            this->abs_cycle_count = this->atom.step(this->abs_cycle_count, abs_end_cycles);
+        }
         else if (this->bbcmicro.on) {
             this->abs_cycle_count = this->bbcmicro.step(this->abs_cycle_count, abs_end_cycles);
         }
@@ -267,6 +288,9 @@ yakc::put_input(uint8_t ascii, uint8_t joy0_mask) {
     if (this->cpc.on) {
         this->cpc.put_input(ascii, joy0_mask);
     }
+    if (this->atom.on) {
+        this->atom.put_input(ascii, joy0_mask);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -299,6 +323,9 @@ yakc::system_info() const {
     else if (this->cpc.on) {
         return this->cpc.system_info();
     }
+    else if (this->atom.on) {
+        return this->atom.system_info();
+    }
     else if (this->bbcmicro.on) {
         return this->bbcmicro.system_info();
     }
@@ -325,7 +352,10 @@ yakc::get_bus() {
     else if (this->is_device(device::any_cpc)) {
         return &this->cpc;
     }
-    else if (this->is_device(device::any_bbcmicro)) {
+    else if (this->is_device(device::acorn_atom)) {
+        return &this->atom;
+    }
+    else if (this->is_device(device::bbcmicro_b)) {
         return &this->bbcmicro;
     }
     else {
@@ -381,6 +411,9 @@ yakc::framebuffer(int& out_width, int& out_height) {
     }
     else if (this->cpc.on) {
         return this->cpc.framebuffer(out_width, out_height);
+    }
+    else if (this->atom.on) {
+        return this->atom.framebuffer(out_width, out_height);
     }
     else if (this->bbcmicro.on) {
         return this->bbcmicro.framebuffer(out_width, out_height);

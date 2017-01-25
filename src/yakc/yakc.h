@@ -12,6 +12,7 @@
 #include "yakc/systems/z9001.h"
 #include "yakc/systems/zx.h"
 #include "yakc/systems/cpc.h"
+#include "yakc/systems/atom.h"
 #include "yakc/systems/bbcmicro.h"
 
 namespace YAKC {
@@ -72,6 +73,7 @@ public:
     class z9001 z9001;
     class zx zx;
     class cpc cpc;
+    class atom atom;
     class bbcmicro bbcmicro;
     breadboard board;
     class rom_images roms;
