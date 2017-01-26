@@ -13,6 +13,7 @@
 #include "yakc/devices/z80ctc.h"
 #include "yakc/devices/i8255.h"
 #include "yakc/devices/mc6845.h"
+#include "yakc/devices/mc6847.h"
 #include "yakc/devices/beeper.h"
 #include "yakc/devices/speaker.h"
 #include "yakc/devices/ay8910.h"
@@ -30,6 +31,7 @@ public:
     class z80ctc z80ctc;
     class i8255 i8255;
     class mc6845 mc6845;
+    class mc6847 mc6847;
     class beeper beeper;
     class speaker speaker;
     class ay8910 ay8910;

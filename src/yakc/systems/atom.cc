@@ -63,6 +63,7 @@ atom::poweron() {
     this->board->mos6502.init(this);
     this->board->mos6502.reset();
     this->board->i8255.init(0);
+    this->board->mc6847.init(1000);
 }
 
 //------------------------------------------------------------------------------
@@ -106,14 +107,7 @@ atom::put_input(uint8_t ascii, uint8_t joy0_mask) {
 //------------------------------------------------------------------------------
 void
 atom::cpu_tick() {
-    // FIXME: this is just a quick'n'dirty hack to simulate the video
-    // frame sync, this needs to go into the mc6847 chip emulation!
-    // see here: http://stardot.org.uk/forums/viewtopic.php?t=10025
-    this->fsync = this->fsync_count < 2*2034;
-    if (this->fsync_count <= 0) {
-        this->fsync_count = 2*16652;
-    }
-    this->fsync_count--;
+    this->board->mc6847.step();
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +144,8 @@ atom::pio_in(int pio_id, int port_id) {
     // quick'n'dirty vsync flag impl
     if (port_id == 2) {
         uint8_t val = 0x00;
-        if (!this->fsync) {
+        // fsync flag, this is off during the FSYNC, and on otherwise
+        if (!this->board->mc6847.test(mc6847::FSYNC)) {
             val |= (1<<7);
         }
         return val;
@@ -163,9 +158,9 @@ atom::pio_in(int pio_id, int port_id) {
 //------------------------------------------------------------------------------
 const void*
 atom::framebuffer(int& out_width, int& out_height) {
-    out_width = display_width;
-    out_height = display_height;
-    return this->rgba8_buffer;
+    out_width = mc6847::disp_width;
+    out_height = mc6847::disp_height;
+    return this->board->mc6847.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------

@@ -20,6 +20,7 @@ fips_begin_module(yakc)
         mos6502.h mos6502.cc
         i8255.h i8255.cc
         mc6845.h mc6845.cc
+        mc6847.h mc6847.cc
         sound.h sound.cc
         speaker.h speaker.cc
         beeper.h beeper.cc

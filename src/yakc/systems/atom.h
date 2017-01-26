@@ -48,15 +48,8 @@ public:
     /// PIO input callback
     virtual uint8_t pio_in(int pio_id, int port_id) override;
 
-    // FIXME: remove once mc6847 emu is done!
-    int fsync_count = 0;
-    bool fsync = false;
-
     static atom* self;
     bool on = false;
-    static const int display_width = 256;
-    static const int display_height = 192;
-    uint32_t rgba8_buffer[display_width * display_height];
 };
 
 } // namespace YAKC
