@@ -16,6 +16,7 @@ atom::init(breadboard* b, rom_images* r) {
     self = this;
     this->board = b;
     this->roms = r;
+    this->vdg = &(this->board->mc6847);
 }
 
 //------------------------------------------------------------------------------
@@ -58,12 +59,13 @@ atom::poweron() {
     mem.map(0, 0xD000, 0x1000, this->roms->ptr(rom_images::atom_float), false);
     mem.map(0, 0xE000, 0x1000, this->roms->ptr(rom_images::atom_dos), false);
     mem.map(0, 0xF000, 0x1000, this->roms->ptr(rom_images::atom_kernel), false);
+    this->vidmem_base = mem.read_ptr(0x8000);
 
     this->board->clck.init(1000);
     this->board->mos6502.init(this);
     this->board->mos6502.reset();
     this->board->i8255.init(0);
-    this->board->mc6847.init(1000);
+    this->vdg->init(read_vidmem, 1000);
 }
 
 //------------------------------------------------------------------------------
@@ -107,7 +109,7 @@ atom::put_input(uint8_t ascii, uint8_t joy0_mask) {
 //------------------------------------------------------------------------------
 void
 atom::cpu_tick() {
-    this->board->mc6847.step();
+    this->vdg->step();
 }
 
 //------------------------------------------------------------------------------
@@ -133,8 +135,59 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
 }
 
 //------------------------------------------------------------------------------
+uint8_t
+atom::read_vidmem(uint16_t addr) {
+    uint8_t chr = self->vidmem_base[addr];
+    self->vdg->inv(chr & (1<<7));
+    self->vdg->as(chr & (1<<6));
+    self->vdg->int_ext(chr & (1<<6));
+    return chr;
+}
+
+//------------------------------------------------------------------------------
 void
 atom::pio_out(int pio_id, int port_id, uint8_t val) {
+    /*
+    FROM Atom Theory and Praxis (and MAME)
+
+    The  8255  Programmable  Peripheral  Interface  Adapter  contains  three
+    8-bit ports, and all but one of these lines is used by the ATOM.
+
+    Port A - #B000
+           Output bits:      Function:
+                O -- 3     Keyboard row
+                4 -- 7     Graphics mode (4: A/G, 5..7: GM0..2)
+
+    Port B - #B001
+           Input bits:       Function:
+                O -- 5     Keyboard column
+                  6        CTRL key (low when pressed)
+                  7        SHIFT keys {low when pressed)
+
+    Port C - #B002
+           Output bits:      Function:
+                O          Tape output
+                1          Enable 2.4 kHz to cassette output
+                2          Loudspeaker
+                3          Not used
+
+           Input bits:       Function:
+                4          2.4 kHz input
+                5          Cassette input
+                6          REPT key (low when pressed)
+                7          60 Hz sync signal (low during flyback)
+
+    The port C output lines, bits O to 3, may be used for user
+    applications when the cassette interface is not being used.
+    */
+    if (0 == port_id) {
+        // PPIA Port A
+        this->vdg->ag(val & (1<<4));
+        this->vdg->gm0(val & (1<<5));
+        this->vdg->gm1(val & (1<<6));
+        this->vdg->gm2(val & (1<<7));
+    }
+
 //    printf("PPIA OUT: port %d val %02X\n", port_id, val);
 }
 

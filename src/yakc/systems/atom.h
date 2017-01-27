@@ -41,6 +41,8 @@ public:
 
     /// memory-mapped-io callback
     static uint8_t memio(bool write, uint16_t addr, uint8_t inval);
+    /// vidmem reader function (called from mc6847)
+    static uint8_t read_vidmem(uint16_t addr);
     /// called by cycle-stepped CPU per 'subcycle'
     virtual void cpu_tick() override;
     /// PIO output callback
@@ -50,6 +52,8 @@ public:
 
     static atom* self;
     bool on = false;
+    const uint8_t* vidmem_base = nullptr;
+    mc6847* vdg = nullptr;
 };
 
 } // namespace YAKC

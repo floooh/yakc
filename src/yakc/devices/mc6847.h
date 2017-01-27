@@ -28,38 +28,66 @@ namespace YAKC {
 
 class mc6847 {
 public:
+    /// video memory read callback
+    typedef uint8_t(*read_func)(uint16_t addr);
+
     /// initialize the 6847
-    void init(int tick_khz);
+    void init(read_func vidmem_reader_func, int tick_khz);
     /// perform a reset
     void reset();
     /// step the chip one clock cycle
     void step();
 
-    /// status bits
+    /// pin status bits
     enum {
-        HSYNC  = (1<<0),    // set if in horizontal sync
-        FSYNC  = (1<<1),    // set if in field sync
+        HSYNC   = (1<<0),   // out: set if in horizontal sync
+        FSYNC   = (1<<1),   // out: set if in field sync
+        A_G     = (1<<2),   // in: the A/G pin (graphics)
+        A_S     = (1<<3),   // in: the A/S pin (semigraphics)
+        INT_EXT = (1<<4),   // in: the INT/EXT pin (internal/external character rom)
+        GM0     = (1<<5),   // in: the GM0 pin (graphics mode, bit 0)
+        GM1     = (1<<6),   // in: the GM1 pin (graphics mode, bit 1)
+        GM2     = (1<<7),   // in: the GM2 pin (graphics mode, bit 2)
+        CSS     = (1<<8),   // in: the CSS pin (color set selection)
+        INV     = (1<<9),   // in: the INV pin
     };
 
     /// test if any status bit is set
-    bool test(uint8_t mask) const;
+    bool test(uint16_t mask) const;
     /// check if any status bits have changed state to 'on' this step
-    bool on(uint8_t mask) const;
+    bool on(uint16_t mask) const;
     /// check if any status bits have changed state to 'off' this step
-    bool off(uint8_t mask) const;
+    bool off(uint16_t mask) const;
     /// set a status bit
-    void set(uint8_t mask);
+    void set(uint16_t mask);
     /// clear a status bit
-    void clear(uint8_t mask);
+    void clear(uint16_t mask);
+    /// set or clear the A_G bit
+    void ag(bool b);
+    /// set or clear the A_S bit
+    void as(bool b);
+    /// set or clear the GM0 bit
+    void gm0(bool b);
+    /// set or clear the GM1 bit
+    void gm1(bool b);
+    /// set or clear the GM2 bit
+    void gm2(bool b);
+    /// set or clear the INV bit
+    void inv(bool b);
+    /// set or clear the INT_EXT bit
+    void int_ext(bool b);
 
-    /// decode one scanline
+    /// decode one scanline (generic)
     void decode_line(int y);
+    /// decode on alpha-numeric mode scanline
+    void decode_line_alnum(uint32_t* ptr, int y);
 
     /// fixed-point precision multiplicator for counters
     static const int prec = 8;
 
-    uint8_t prev_bits = 0;
-    uint8_t bits = 0;
+    read_func read_addr_func = nullptr;
+    uint16_t prev_bits = 0;
+    uint16_t bits = 0;
 
     static const int l_all = 262;
     static const int l_vblank = 13;     // 13 lines vblank at top of screen
@@ -86,20 +114,69 @@ public:
 
 //------------------------------------------------------------------------------
 inline bool
-mc6847::test(uint8_t mask) const {
+mc6847::test(uint16_t mask) const {
     return 0 != (this->bits & mask);
 }
 
 //------------------------------------------------------------------------------
 inline bool
-mc6847::on(uint8_t mask) const {
+mc6847::on(uint16_t mask) const {
     return 0 != ((this->bits & (this->bits ^ this->prev_bits)) & mask);
 }
 
 //------------------------------------------------------------------------------
 inline bool
-mc6847::off(uint8_t mask) const {
+mc6847::off(uint16_t mask) const {
     return 0 != ((~this->bits & (this->bits ^ this->prev_bits)) & mask);
+}
+
+//------------------------------------------------------------------------------
+inline void
+mc6847::ag(bool b) {
+    if (b) bits |= A_G;
+    else   bits &= ~A_G;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mc6847::as(bool b) {
+    if (b) bits |= A_S;
+    else   bits &= ~A_S;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mc6847::gm0(bool b) {
+    if (b) bits |= GM0;
+    else   bits &= ~GM0;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mc6847::gm1(bool b) {
+    if (b) bits |= GM1;
+    else   bits &= ~GM1;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mc6847::gm2(bool b) {
+    if (b) bits |= GM2;
+    else   bits &= ~GM2;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mc6847::inv(bool b) {
+    if (b) bits |= INV;
+    else   bits &= ~INV;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mc6847::int_ext(bool b) {
+    if (b) bits |= INT_EXT;
+    else   bits &= ~INT_EXT;
 }
 
 } // namespace YAKC
