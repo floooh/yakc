@@ -99,6 +99,11 @@ public:
     static const int l_fsync_start = l_disp_end;    // fsync is active until l_limit
     static_assert(l_all == (l_vblank+l_topborder+l_disp+l_btmborder+l_vretrace), "mc6847 line count");
 
+    static const uint32_t alnum_green = 0xFF44FF44;
+    static const uint32_t alnum_dark_green = 0xFF002400;
+    static const uint32_t alnum_amber = 0xFF2299FF;
+    static const uint32_t alnum_dark_amber = 0xFF000E22;
+
     int h_count = 0;
     int h_sync_start = 0;
     int h_sync_end = 0;

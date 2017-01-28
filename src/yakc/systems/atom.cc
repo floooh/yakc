@@ -287,7 +287,7 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
         //  1:  output: cass 1
         //  2:  output: speaker
         //  3:  output: MC6847 CSS
-        case 1:
+        case 2:
             vdg->css(val & (1<<3));
             break;
     }

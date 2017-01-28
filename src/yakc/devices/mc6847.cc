@@ -162,6 +162,7 @@ mc6847::decode_line_alnum(uint32_t* dst, int y) {
     // and 3 pixels vertically
 
     // the vidmem src address and offset into the font data
+    uint32_t fg, bg;
     uint16_t addr = (y/12)*32;
     const int chr_y = y % 12;
     for (int x = 0; x < 32; x++) {
@@ -170,10 +171,18 @@ mc6847::decode_line_alnum(uint32_t* dst, int y) {
         if (bits & INV) {
             m = ~m;
         }
+        if (bits & CSS) {
+            fg = alnum_amber;
+            bg = alnum_dark_amber;
+        }
+        else {
+            fg = alnum_green;
+            bg = alnum_dark_green;
+        }
         // FIXME: A_S / INT_EXT semigraphics can be toggled
         // per character with bit 6??? (see MAME)
         for (int p = 7; p >= 0; p--) {
-            *dst++ = m & (1<<p) ? 0xFFFFFFFF : 0xFF000000;
+            *dst++ = m & (1<<p) ? fg : bg;
         }
     }
 }
