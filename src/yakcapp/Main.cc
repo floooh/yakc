@@ -267,16 +267,13 @@ YakcApp::initRoms() {
     IO::Load("rom:bbc_b_basic2.rom", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::bbcmicro_b_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    IO::Load("rom:atom_kernel.rom", [this](IO::LoadResult ioRes) {
-        this->emu.add_rom(rom_images::atom_kernel, ioRes.Data.Data(), ioRes.Data.Size());
-    });
-    IO::Load("rom:atom_float.rom", [this](IO::LoadResult ioRes) {
-        this->emu.add_rom(rom_images::atom_float, ioRes.Data.Data(), ioRes.Data.Size());
-    });
-    IO::Load("rom:atom_basic.rom", [this](IO::LoadResult ioRes) {
+    IO::Load("rom:abasic.ic20", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::atom_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
-    IO::Load("rom:atom_dos.rom", [this](IO::LoadResult ioRes) {
+    IO::Load("rom:afloat.ic21", [this](IO::LoadResult ioRes) {
+        this->emu.add_rom(rom_images::atom_float, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:dosrom.u15", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::atom_dos, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }

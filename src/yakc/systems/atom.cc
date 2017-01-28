@@ -86,9 +86,8 @@ atom::init_keymap() {
 bool
 atom::check_roms(const rom_images& roms, device model, os_rom os) {
     if (device::acorn_atom == model) {
-        return roms.has(rom_images::atom_kernel) &&
+        return roms.has(rom_images::atom_basic) &&
                roms.has(rom_images::atom_float) &&
-               roms.has(rom_images::atom_basic) &&
                roms.has(rom_images::atom_dos);
     }
     else {
@@ -124,7 +123,7 @@ atom::poweron() {
     mem.map(0, 0xC000, 0x1000, roms->ptr(rom_images::atom_basic), false);
     mem.map(0, 0xD000, 0x1000, roms->ptr(rom_images::atom_float), false);
     mem.map(0, 0xE000, 0x1000, roms->ptr(rom_images::atom_dos), false);
-    mem.map(0, 0xF000, 0x1000, roms->ptr(rom_images::atom_kernel), false);
+    mem.map(0, 0xF000, 0x1000, roms->ptr(rom_images::atom_basic) + 0x1000, false);
     vidmem_base = mem.read_ptr(0x8000);
 
     board->clck.init(1000);
