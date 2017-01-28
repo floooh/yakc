@@ -205,7 +205,7 @@ mos6502::brk() {
     ADDR = 0x0100 | S--; DATA = PC;
     rw(false);
     //--
-    ADDR = 0x0100 | S--; DATA = P & ~BF;
+    ADDR = 0x0100 | S--; DATA = P | BF;
     rw(false);
     //--
     ADDR = 0xFFFE;
