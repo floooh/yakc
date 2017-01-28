@@ -11,6 +11,7 @@ void
 z1013::init(breadboard* b, rom_images* r) {
     this->board = b;
     this->roms = r;
+    this->rgba8_buffer = this->board->rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------
@@ -393,8 +394,8 @@ z1013::decode_video() {
 //------------------------------------------------------------------------------
 const void*
 z1013::framebuffer(int& out_width, int& out_height) {
-    out_width = 256;
-    out_height = 256;
+    out_width = display_width;
+    out_height = display_height;
     return this->rgba8_buffer;
 }
 

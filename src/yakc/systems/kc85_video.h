@@ -30,7 +30,11 @@ public:
     void decode_one_line(unsigned int* ptr, int y, bool blink_bg);
 
     /// decoded linear RGBA8 video buffer
-    unsigned int rgba8_buffer[320*256];
+    static const int display_width = 320;
+    static const int display_height = 256;
+    static_assert(display_width <= global_max_fb_width, "kc85 fb size");
+    static_assert(display_height <= global_max_fb_height, "kc85 fb size");
+    uint32_t* rgba8_buffer = nullptr;
 
     static const int irm0_page = 4;
     breadboard* board = nullptr;

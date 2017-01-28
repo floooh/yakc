@@ -27,6 +27,7 @@ void
 z9001::init(breadboard* b, rom_images* r) {
     this->board = b;
     this->roms = r;
+    this->rgba8_buffer = this->board->rgba8_buffer;
 
     // setup the key map which translates ASCII to keyboard matrix bits
     const char* kbd_matrix =
@@ -569,8 +570,8 @@ z9001::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 z9001::framebuffer(int& out_width, int& out_height) {
-    out_width = 320;
-    out_height = 192;
+    out_width = display_width;
+    out_height = display_height;
     return this->rgba8_buffer;
 }
 

@@ -32,6 +32,7 @@ zx::init(breadboard* b, rom_images* r) {
     YAKC_ASSERT(b && r);
     this->board = b;
     this->roms = r;
+    this->rgba8_buffer = this->board->rgba8_buffer;
     // setup key translation table
     this->init_keymap();
 }
@@ -458,7 +459,7 @@ zx::system_info() const {
 //------------------------------------------------------------------------------
 void
 zx::decode_video_line(uint16_t y) {
-    YAKC_ASSERT(y < 256);
+    YAKC_ASSERT(y < display_height);
 
     // decode a single line from the ZX framebuffer into the
     // emulator's framebuffer
@@ -469,13 +470,13 @@ zx::decode_video_line(uint16_t y) {
     //
     // the blink flag flips every 16 frames
     //
-    uint32_t* dst = &(this->rgba8_buffer[y*320]);
+    uint32_t* dst = &(this->rgba8_buffer[y*display_width]);
     const uint8_t* vidmem_bank = this->board->ram[this->display_ram_bank];
     const bool blink = 0 != (this->blink_counter & 0x10);
     uint32_t fg, bg;
     if ((y < 32) || (y >= 224)) {
         // upper/lower border
-        for (int x = 0; x < 320; x++) {
+        for (int x = 0; x < display_width; x++) {
             *dst++ = this->border_color;
         }
     }
@@ -537,8 +538,8 @@ zx::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 zx::framebuffer(int& out_width, int& out_height) {
-    out_width = 320;
-    out_height = 256;
+    out_width = display_width;
+    out_height = display_height;
     return this->rgba8_buffer;
 }
 

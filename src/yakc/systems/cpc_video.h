@@ -50,9 +50,13 @@ public:
 
     static const int max_display_width = 768;
     static const int max_display_height = 272;
+    static_assert(max_display_width <= global_max_fb_width, "cpc display size");
+    static_assert(max_display_height <= global_max_fb_height, "cpc display size");
 
     static const int dbg_max_display_width  = 1024;     // 64*16
     static const int dbg_max_display_height = 312;
+    static_assert(dbg_max_display_width <= global_max_fb_width, "cpc display size");
+    static_assert(dbg_max_display_height <= global_max_fb_height, "cpc display size");
 
     uint32_t next_video_mode = 1;
     uint32_t video_mode = 1;
@@ -60,8 +64,7 @@ public:
     uint32_t border_color = 0;
     uint32_t palette[32];
     uint32_t pens[16];
-    uint32_t rgba8_buffer[max_display_width * max_display_height]; // enough pixels for overscan mode
-    uint32_t dbg_rgba8_buffer[dbg_max_display_width * dbg_max_display_height];
+    uint32_t* rgba8_buffer = nullptr;
 };
 
 //------------------------------------------------------------------------------

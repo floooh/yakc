@@ -70,7 +70,11 @@ public:
     uint16_t scanline_counter = 0;
     uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
     uint32_t border_color = 0xFF000000;
-    uint32_t rgba8_buffer[320*256];
+
+    static const int display_width = 320;
+    static const int display_height = 256;
+    uint32_t* rgba8_buffer = nullptr;
+    
     ubyte joy_mask = 0;                 // joystick mask
     uint64_t next_kbd_mask = 0;
     uint64_t cur_kbd_mask = 0;

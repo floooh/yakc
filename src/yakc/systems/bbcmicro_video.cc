@@ -9,8 +9,9 @@ namespace YAKC {
 void
 bbcmicro_video::init(breadboard* board_) {
     this->board = board_;
+    this->rgba8_buffer = this->board->rgba8_buffer;
     this->board->mc6845.init(mc6845::TYPE_UM6845R);
-    this->board->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
+    this->board->crt.init(crt::PAL, 32/16, 32, display_width/16, display_height);
     this->reset();
 }
 
@@ -67,8 +68,8 @@ bbcmicro_video::step() {
         if (crt.visible) {
             int dst_x = crt.x * 16;
             int dst_y = crt.y;
-            YAKC_ASSERT((dst_x <= (max_display_width-16)) && (dst_y < max_display_height));
-            uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * max_display_width]);
+            YAKC_ASSERT((dst_x <= (display_width-16)) && (dst_y < display_height));
+            uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * display_width]);
 
 
             if (crtc.test(mc6845::DISPEN)) {

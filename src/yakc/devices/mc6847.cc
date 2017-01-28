@@ -77,7 +77,7 @@ static const uint8_t fontdata8x12[64 * 12] =
 
 //------------------------------------------------------------------------------
 void
-mc6847::init(read_func reader_func, int cpu_khz) {
+mc6847::init(read_func reader_func, uint32_t* fb_write_ptr, int cpu_khz) {
     // the 6847 is clocked at 3.58 MHz, the CPU clock is lower, thus
     // need to compute tick counter limit in CPU ticks
     const int vdg_khz = 3580;
@@ -90,6 +90,7 @@ mc6847::init(read_func reader_func, int cpu_khz) {
     l_count = 0;
     bits = 0;
     read_addr_func = reader_func;
+    rgba8_buffer = fb_write_ptr;
 }
 
 //------------------------------------------------------------------------------

@@ -23,6 +23,10 @@ struct ext_funcs {
     void (*free_func)(void*) = nullptr;
 };
 
+// biggest host texture resolution needed by any system (see breadboard.h)
+static const int global_max_fb_width = 1024;
+static const int global_max_fb_height = 312;
+
 /// jump table for externally provided functions
 extern struct ext_funcs func;
 /// helper to clear a chunk of memory

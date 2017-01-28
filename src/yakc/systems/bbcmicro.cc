@@ -187,8 +187,8 @@ bbcmicro::memio(bool write, uint16_t addr, uint8_t inval) {
 //------------------------------------------------------------------------------
 const void*
 bbcmicro::framebuffer(int& out_width, int& out_height) {
-    out_width = bbcmicro_video::max_display_width;
-    out_height = bbcmicro_video::max_display_height;
+    out_width = bbcmicro_video::display_width;
+    out_height = bbcmicro_video::display_height;
     return this->video.rgba8_buffer;
 }
 

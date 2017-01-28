@@ -30,9 +30,11 @@ public:
     uint8_t video_control = 0;
     uint8_t palette = 0;
 
-    static const int max_display_width = 768;
-    static const int max_display_height = 272;
-    uint32_t rgba8_buffer[max_display_width * max_display_height];    
+    static const int display_width = 768;
+    static const int display_height = 272;
+    static_assert(display_width <= global_max_fb_width, "bbcmicro fb size");
+    static_assert(display_height <= global_max_fb_height, "bbcmicro fb size");
+    uint32_t* rgba8_buffer = nullptr;
 };
 
 } // namespace YAKC

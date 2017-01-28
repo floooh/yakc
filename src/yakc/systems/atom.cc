@@ -65,7 +65,7 @@ atom::poweron() {
     this->board->mos6502.init(this);
     this->board->mos6502.reset();
     this->board->i8255.init(0);
-    this->vdg->init(read_vidmem, 1000);
+    this->vdg->init(read_vidmem, this->board->rgba8_buffer, 1000);
 }
 
 //------------------------------------------------------------------------------

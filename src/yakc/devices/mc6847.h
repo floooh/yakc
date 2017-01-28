@@ -32,7 +32,7 @@ public:
     typedef uint8_t(*read_func)(uint16_t addr);
 
     /// initialize the 6847
-    void init(read_func vidmem_reader_func, int tick_khz);
+    void init(read_func vidmem_reader_func, uint32_t* fb_write_ptr, int tick_khz);
     /// perform a reset
     void reset();
     /// step the chip one clock cycle
@@ -109,7 +109,9 @@ public:
 
     static const int disp_width = 256;
     static const int disp_height = 192;
-    uint32_t rgba8_buffer[disp_width * disp_height];
+    static_assert(disp_width <= global_max_fb_width, "mc6847 fb size");
+    static_assert(disp_height <= global_max_fb_height, "mc6847 fb size");
+    uint32_t* rgba8_buffer = nullptr;
 };
 
 //------------------------------------------------------------------------------

@@ -99,7 +99,12 @@ public:
     bool blink_flipflop = false;
     uint8_t brd_color = 0;              // border color byte extracted from PIO1-A
     uint32_t blink_counter = 0;
-    uint32_t rgba8_buffer[320*192];     // decoded linear RGBA8 video buffer
+
+    static const int display_width = 320;
+    static const int display_height = 192;
+    static_assert(display_width <= global_max_fb_width, "z9001 fb size");
+    static_assert(display_height <= global_max_fb_height, "z9001 fb size");
+    uint32_t* rgba8_buffer = nullptr;
 
     ubyte ctc0_mode = z80ctc::RESET;    // CTC0 state for audio output
     ubyte ctc0_constant = 0;

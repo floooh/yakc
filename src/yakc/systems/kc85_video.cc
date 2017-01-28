@@ -40,6 +40,7 @@ void
 kc85_video::init(device m, breadboard* b) {
     this->model = m;
     this->board = b;
+    this->rgba8_buffer = this->board->rgba8_buffer;
     this->irm_control = 0;
 }
 
@@ -71,7 +72,7 @@ kc85_video::kc85_4_irm_control(ubyte val) {
 void
 kc85_video::scanline() {
     // this needs to be called for each PAL line (one PAL line: 64 microseconds)
-    if (this->cur_scanline < 256) {
+    if (this->cur_scanline < display_height) {
         const bool blink_bg = this->ctc_blink_flag && this->pio_blink_flag;
         this->decode_one_line(this->rgba8_buffer, this->cur_scanline, blink_bg);
     }
@@ -108,8 +109,8 @@ kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_bg
 //------------------------------------------------------------------------------
 void
 kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
-    const int width = 320>>3;
-    unsigned int* dst_ptr = &(dst_start[y*320]);
+    const int width = display_width>>3;
+    unsigned int* dst_ptr = &(dst_start[y*display_width]);
     if (device::kc85_4 == this->model) {
         // KC85/4
         int irm_index = (this->irm_control & 1) * 2;

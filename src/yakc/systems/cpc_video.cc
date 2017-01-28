@@ -63,6 +63,7 @@ void
 cpc_video::init(device model_, breadboard* board_) {
     this->model = model_;
     this->board = board_;
+    this->rgba8_buffer = this->board->rgba8_buffer;
     this->cycle_counter.init(4);    // step every 4 CPU cycles
     this->board->mc6845.init(mc6845::TYPE_UM6845R);
     this->board->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
@@ -298,7 +299,7 @@ cpc_video::step(system_bus* bus, int cycles) {
             int dst_x = crt.h_pos * 16;
             int dst_y = crt.v_pos;
             if ((dst_x < (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
-                uint32_t* dst = &(this->dbg_rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
+                uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
                 if (!crtc.test(mc6845::DISPEN)) {
                     ubyte r = 0x3F;
                     ubyte g = 0x3F;

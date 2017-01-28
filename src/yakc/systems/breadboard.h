@@ -37,7 +37,8 @@ public:
     class ay8910 ay8910;
     cpudbg dbg;
     class crt crt;          // this is not a chip, but a cathode-ray-tube emulation
-    ubyte ram[8][0x4000];
+    uint8_t ram[8][0x4000];
+    uint32_t rgba8_buffer[global_max_fb_width*global_max_fb_height]; // RGBA8 linear pixel buffer
 };
 
 } // namespace YAKC

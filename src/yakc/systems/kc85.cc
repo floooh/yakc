@@ -61,8 +61,8 @@ kc85::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 kc85::framebuffer(int& out_width, int& out_height) {
-    out_width = 320;
-    out_height = 256;
+    out_width = kc85_video::display_width;
+    out_height = kc85_video::display_height;
     return this->video.rgba8_buffer;
 }
 

@@ -107,7 +107,11 @@ public:
     static const int max_num_keys = 128;
     uint64_t key_map[max_num_keys] = { };   // map ASCII code to keyboard matrix bits
 
-    uint32_t rgba8_buffer[256*256];          // decoded linear RGBA8 video buffer
+    static const int display_width = 256;
+    static const int display_height = 256;
+    static_assert(display_width <= global_max_fb_width, "z1013 fb size");
+    static_assert(display_height <= global_max_fb_height, "z1013 fb size");
+    uint32_t* rgba8_buffer = nullptr;
 };
 
 } // namespace YAKC
