@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "atom.h"
 
-#include <stdio.h>
+// #include <stdio.h>
 
 namespace YAKC {
 
@@ -22,16 +22,23 @@ atom::init(breadboard* b, rom_images* r) {
 
 //------------------------------------------------------------------------------
 void
-atom::init_key_mask(uint8_t ascii, int col, int row, int shift) {
+atom::init_key_mask(uint8_t ascii, int col, int row, bool shift, bool ctrl) {
     YAKC_ASSERT((col >= 0) && (col < 10));
     YAKC_ASSERT((row >= 0) && (row < 6));
-    YAKC_ASSERT((shift >= 0) && (shift < 2));
     key_map[ascii] = key_mask();
     key_map[ascii].col[col] = (1<<row);
+    uint8_t mod = 0x00;
+    if (ctrl) {
+        // ctrl is complete row 6
+        mod |= (1<<6);
+    }
     if (shift) {
         // shift is complete row 7
+        mod |= (1<<7);
+    }
+    if (mod) {
         for (int i = 0; i < 10; i++) {
-            key_map[ascii].col[i] |= (1<<7);
+            key_map[ascii].col[i] |= mod;
         }
     }
 }
@@ -66,20 +73,28 @@ atom::init_keymap() {
         for (int col = 0; col < 10; col++) {
             for (int row = 0; row < 6; row++) {
                 uint8_t ascii = kbd[shift*60 + row*10 + col];
-                init_key_mask(ascii, col, row, shift);
+                init_key_mask(ascii, col, row, shift != 0);
             }
         }
     }
 
     // special keys
-    init_key_mask(0x0B, 2, 0, 0);       // key up
-    init_key_mask(0x09, 3, 0, 0);       // key right
-    //init_key_mask(0x00, 4, 0, 0);     // FIXME capslock
-    //init_key_mask(0x00, 5, 0, 0);     // FIXME tab
-    init_key_mask(0x20, 9, 0, 0);       // space
-    init_key_mask(0x01, 4, 1, 0);       // backspace
-    init_key_mask(0x0D, 6, 1, 0);       // return/enter
-    init_key_mask(0x03, 0, 5, 0);       // escape
+    //init_key_mask(0x00, 4, 0);     // FIXME capslock
+    //init_key_mask(0x00, 5, 0);     // FIXME tab
+    init_key_mask(0x20, 9, 0);       // space
+    init_key_mask(0x01, 4, 1);       // backspace
+    init_key_mask(0x07, 0, 3, false, true);     // Ctrl+G: bleep
+    init_key_mask(0x08, 3, 0, true);            // key left
+    init_key_mask(0x09, 3, 0);                  // key right
+    init_key_mask(0x0A, 2, 0, true);            // key down
+    init_key_mask(0x0B, 2, 0);                  // key up
+    init_key_mask(0x0C, 5, 4, false, true);     // Ctrl+L clear screen
+    init_key_mask(0x0D, 6, 1);                  // return/enter
+    init_key_mask(0x0E, 3, 4, false, true);     // Ctrl+N page mode on
+    init_key_mask(0x0F, 2, 4, false, true);     // Ctrl+O page mode off
+    init_key_mask(0x15, 6, 5, false, true);     // Ctrl+U end screen
+    init_key_mask(0x18, 3, 5, false, true);     // Ctrl+X cancel
+    init_key_mask(0x1B, 0, 5);       // escape
 }
 
 //------------------------------------------------------------------------------
@@ -197,11 +212,11 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
         }
     }
     else if ((addr >= 0xB800) && (addr < 0xBC00)) {
-        printf("VIA: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
+        //printf("VIA: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
         return 0x00;
     }
     else {
-        printf("UNKNOWN: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
+        //printf("UNKNOWN: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
     }
     return 0xFF;
 }

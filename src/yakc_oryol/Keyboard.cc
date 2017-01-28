@@ -21,7 +21,7 @@ is_modifier(Key::Code key) {
 
 //------------------------------------------------------------------------------
 static uint8_t
-translate_special_key(const yakc* emu, Key::Code key, bool shift) {
+translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
     if (emu->is_device(device::any_zx)) {
         switch (key) {
             case Key::Left:         return 0x08;
@@ -32,6 +32,32 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift) {
             case Key::BackSpace:    return 0x0C;
             case Key::Escape:       return 0x07;
             case Key::LeftControl:  return 0x0F;    // unused, for SymShift
+            default:                return 0;
+        }
+    }
+    else if (emu->is_device(device::acorn_atom)) {
+        // http://www.vintagecomputer.net/fjkraan/comp/atom/atap/atap03.html#131
+        switch (key) {
+            case Key::Left:         return 0x08;
+            case Key::Right:        return 0x09;
+            case Key::Down:         return 0x0A;
+            case Key::Up:           return 0x0B;
+            case Key::Enter:        return 0x0D;
+            case Key::BackSpace:    return 0x01;
+            case Key::Escape:       return ctrl ? 0x1E : 0x1B;  // Home, Esc
+            // Atom ctrl+key codes:
+            case Key::G:            return ctrl ? 0x07:0;   // Ctrl+G: bleep
+            case Key::H:            return ctrl ? 0x08:0;   // Ctrl+H: left
+            case Key::I:            return ctrl ? 0x09:0;   // Ctrl+I: right
+            case Key::J:            return ctrl ? 0x0A:0;   // Ctrl+J: down
+            case Key::K:            return ctrl ? 0x0B:0;   // Ctrl+K: up
+            case Key::L:            return ctrl ? 0x0C:0;   // Ctrl+L: formfeed
+            case Key::M:            return ctrl ? 0x0D:0;   // Ctrl+M: return
+            case Key::N:            return ctrl ? 0x0E:0;   // Ctrl+N: pagemode on
+            case Key::O:            return ctrl ? 0x0F:0;   // Ctrl+O: pagemode off
+            case Key::U:            return ctrl ? 0x15:0;   // Ctrl+U: end screen
+            case Key::X:            return ctrl ? 0x18:0;   // Ctrl+X: cancel
+            case Key::LeftBracket:  return ctrl ? 0x1B:0;   // Ctrl+[: escape
             default:                return 0;
         }
     }
@@ -116,7 +142,9 @@ Keyboard::Setup(yakc& emu_) {
                 this->pressedKeys.Add(e.KeyCode);
             }
             // translate any non-alphanumeric keys (Enter, Esc, cursor keys etc...)
-            uint8_t special_ascii = translate_special_key(this->emu, e.KeyCode, Input::KeyPressed(Key::LeftShift));
+            bool shift = Input::KeyPressed(Key::LeftShift);
+            bool ctrl = Input::KeyPressed(Key::LeftControl);
+            uint8_t special_ascii = translate_special_key(this->emu, e.KeyCode, shift, ctrl);
             if (0 != special_ascii) {
                 this->cur_char = special_ascii;
             }

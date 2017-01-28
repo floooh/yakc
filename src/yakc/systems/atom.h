@@ -27,7 +27,7 @@ public:
     /// initialize the keyboard matrix mapping table
     void init_keymap();
     /// initialize a single entry in the key-map table
-    void init_key_mask(uint8_t ascii, int column, int line, int shift);
+    void init_key_mask(uint8_t ascii, int column, int line, bool shift=false, bool ctrl=false);
 
     /// power-on the device
     void poweron();

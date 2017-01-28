@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "bbcmicro.h"
 
-#include <stdio.h>
+// #include <stdio.h>
 
 namespace YAKC {
 
@@ -168,7 +168,7 @@ bbcmicro::memio(bool write, uint16_t addr, uint8_t inval) {
                 return 0x00;
             }
 
-            printf("read: %04X\n", addr);
+            //printf("read: %04X\n", addr);
             return 0xFF;
         }
         else if (addr >= 0xFD00) {
