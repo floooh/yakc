@@ -58,10 +58,6 @@ public:
     bool on(uint16_t mask) const;
     /// check if any status bits have changed state to 'off' this step
     bool off(uint16_t mask) const;
-    /// set a status bit
-    void set(uint16_t mask);
-    /// clear a status bit
-    void clear(uint16_t mask);
     /// set or clear the A_G bit
     void ag(bool b);
     /// set or clear the A_S bit
@@ -76,6 +72,8 @@ public:
     void inv(bool b);
     /// set or clear the INT_EXT bit
     void int_ext(bool b);
+    /// set or clear the CSS bit
+    void css(bool b);
 
     /// decode one scanline (generic)
     void decode_line(int y);
@@ -179,6 +177,13 @@ inline void
 mc6847::int_ext(bool b) {
     if (b) bits |= INT_EXT;
     else   bits &= ~INT_EXT;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mc6847::css(bool b) {
+    if (b) bits |= CSS;
+    else   bits &= ~CSS;
 }
 
 } // namespace YAKC

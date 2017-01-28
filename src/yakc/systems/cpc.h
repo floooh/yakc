@@ -69,7 +69,7 @@ public:
 
     cpc_video video;
 
-    ubyte psg_selected;         // selected AY8910 register
+    ubyte psg_selected = 0;     // selected AY8910 register
     ubyte ga_config = 0x00;     // out to port 0x7Fxx func 0x80
     ubyte ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
     struct key_mask {
@@ -79,17 +79,17 @@ public:
             for (int i = 0; i < num_lines; i++) {
                 this->col[i] |= m.col[i];
             }
-        };
+        }
         void clear(const key_mask& m) {
             for (int i = 0; i < num_lines; i++) {
                 this->col[i] &= ~m.col[i];
             }
         }
     };
-    ubyte scan_kbd_line;    // next keyboard line to be scanned
+    ubyte scan_kbd_line = 0;    // next keyboard line to be scanned
     key_mask next_key_mask;
     key_mask next_joy_mask;
-    key_mask cur_keyboard_mask;
+    key_mask cur_key_mask;
     key_mask key_map[256];
 };
 

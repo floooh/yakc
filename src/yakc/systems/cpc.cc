@@ -142,7 +142,7 @@ cpc::poweron(device m) {
     this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
-    this->cur_keyboard_mask = key_mask();
+    this->cur_key_mask = key_mask();
 
     // map memory
     clear(this->board->ram, sizeof(this->board->ram));
@@ -181,7 +181,7 @@ cpc::reset() {
     this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
-    this->cur_keyboard_mask = key_mask();
+    this->cur_key_mask = key_mask();
     this->board->z80.reset();
     this->board->z80.PC = 0x0000;
     this->init_memory_map();
@@ -357,7 +357,7 @@ cpc::pio_in(int /*pio_id*/, int port_id) {
         // catch keyboard data which is normally in PSG PORT A
         if (this->psg_selected == ay8910::IO_PORT_A) {
             if (this->scan_kbd_line < 10) {
-                return ~(this->cur_keyboard_mask.col[this->scan_kbd_line]);
+                return ~(this->cur_key_mask.col[this->scan_kbd_line]);
             }
             else {
                 return 0xFF;
@@ -505,8 +505,8 @@ cpc::iack() {
 void
 cpc::vblank() {
     // fetch next key mask
-    this->cur_keyboard_mask = this->next_key_mask;
-    this->cur_keyboard_mask.combine(this->next_joy_mask);
+    this->cur_key_mask = this->next_key_mask;
+    this->cur_key_mask.combine(this->next_joy_mask);
 }
 
 //------------------------------------------------------------------------------

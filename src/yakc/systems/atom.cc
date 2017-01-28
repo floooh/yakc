@@ -14,9 +14,72 @@ void
 atom::init(breadboard* b, rom_images* r) {
     YAKC_ASSERT(b && r);
     self = this;
-    this->board = b;
-    this->roms = r;
-    this->vdg = &(this->board->mc6847);
+    board = b;
+    roms = r;
+    vdg = &(board->mc6847);
+    init_keymap();
+}
+
+//------------------------------------------------------------------------------
+void
+atom::init_key_mask(uint8_t ascii, int col, int row, int shift) {
+    YAKC_ASSERT((col >= 0) && (col < 10));
+    YAKC_ASSERT((row >= 0) && (row < 6));
+    YAKC_ASSERT((shift >= 0) && (shift < 2));
+    key_map[ascii] = key_mask();
+    key_map[ascii].col[col] = (1<<row);
+    if (shift) {
+        // shift is complete row 7
+        for (int i = 0; i < 10; i++) {
+            key_map[ascii].col[i] |= (1<<7);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+atom::init_keymap() {
+    clear(key_map, sizeof(key_map));
+
+    // 10x5 keyboard matrix (10 columns, 6 rows,
+    // row 6 is Ctrl, row 7 is Shift,
+    // the shift key simply sets bit 7 which
+    // inverts the visual character
+    const char* kbd =
+        // no shift
+        "     ^]\\[ "   // row 0
+        "3210      "    // row 1
+        "-,;:987654"    // row 2
+        "GFEDCBA@/."    // row 3
+        "QPONMLKJIH"    // row 4
+        " ZYXWVUTSR"    // row 5
+
+        // shift
+        "          "   // row 0
+        "#\"!       "   // row 1
+        "=<+*)('&%$"   // row 2
+        "gfedcba ?>"   // row 3
+        "qponmlkjih"   // row 4
+        " zyxwvutsr";  // row 5
+    YAKC_ASSERT(strlen(kbd) == 120);
+    for (int shift = 0; shift < 2; shift++) {
+        for (int col = 0; col < 10; col++) {
+            for (int row = 0; row < 6; row++) {
+                uint8_t ascii = kbd[shift*60 + row*10 + col];
+                init_key_mask(ascii, col, row, shift);
+            }
+        }
+    }
+
+    // special keys
+    init_key_mask(0x0B, 2, 0, 0);       // key up
+    init_key_mask(0x09, 3, 0, 0);       // key right
+    //init_key_mask(0x00, 4, 0, 0);     // FIXME capslock
+    //init_key_mask(0x00, 5, 0, 0);     // FIXME tab
+    init_key_mask(0x20, 9, 0, 0);       // space
+    init_key_mask(0x01, 4, 1, 0);       // backspace
+    init_key_mask(0x0D, 6, 1, 0);       // return/enter
+    init_key_mask(0x03, 0, 4, 0);       // escape
 }
 
 //------------------------------------------------------------------------------
@@ -42,52 +105,59 @@ atom::on_context_switched() {
 //------------------------------------------------------------------------------
 void
 atom::poweron() {
-    YAKC_ASSERT(this->board && this->roms);
-    YAKC_ASSERT(!this->on);
+    YAKC_ASSERT(board && roms);
+    YAKC_ASSERT(!on);
     
-    this->on = true;
+    on = true;
+    scan_kbd_col = 0;
+    next_key_mask = key_mask();
+    cur_key_mask = key_mask();
 
     // map memory
-    fill_random(this->board->ram[1], sizeof(this->board->ram[1]));
-    fill_random(this->board->ram[2], sizeof(this->board->ram[2]));
-    auto& mem = this->board->mos6502.mem;
+    fill_random(board->ram[1], sizeof(board->ram[1]));
+    fill_random(board->ram[2], sizeof(board->ram[2]));
+    auto& mem = board->mos6502.mem;
     mem.unmap_all();
-    mem.map(0, 0x0000, 0x0400, this->board->ram[0], true);
-    mem.map(0, 0x2000, 0x8000, this->board->ram[1], true);
+    mem.map(0, 0x0000, 0x0400, board->ram[0], true);
+    mem.map(0, 0x2000, 0x8000, board->ram[1], true);
     mem.map_io(0, 0xB000, 0x1000, memio);
-    mem.map(0, 0xC000, 0x1000, this->roms->ptr(rom_images::atom_basic), false);
-    mem.map(0, 0xD000, 0x1000, this->roms->ptr(rom_images::atom_float), false);
-    mem.map(0, 0xE000, 0x1000, this->roms->ptr(rom_images::atom_dos), false);
-    mem.map(0, 0xF000, 0x1000, this->roms->ptr(rom_images::atom_kernel), false);
-    this->vidmem_base = mem.read_ptr(0x8000);
+    mem.map(0, 0xC000, 0x1000, roms->ptr(rom_images::atom_basic), false);
+    mem.map(0, 0xD000, 0x1000, roms->ptr(rom_images::atom_float), false);
+    mem.map(0, 0xE000, 0x1000, roms->ptr(rom_images::atom_dos), false);
+    mem.map(0, 0xF000, 0x1000, roms->ptr(rom_images::atom_kernel), false);
+    vidmem_base = mem.read_ptr(0x8000);
 
-    this->board->clck.init(1000);
-    this->board->mos6502.init(this);
-    this->board->mos6502.reset();
-    this->board->i8255.init(0);
-    this->vdg->init(read_vidmem, this->board->rgba8_buffer, 1000);
+    board->clck.init(1000);
+    board->mos6502.init(this);
+    board->mos6502.reset();
+    board->i8255.init(0);
+    vdg->init(read_vidmem, board->rgba8_buffer, 1000);
 }
 
 //------------------------------------------------------------------------------
 void
 atom::poweroff() {
-    YAKC_ASSERT(this->on);
-    this->board->mos6502.mem.unmap_all();
-    this->on = false;
+    YAKC_ASSERT(on);
+    board->mos6502.mem.unmap_all();
+    on = false;
 }
 
 //------------------------------------------------------------------------------
 void
 atom::reset() {
-    this->board->mos6502.reset();
-    this->board->i8255.reset();
+    board->mos6502.reset();
+    board->i8255.reset();
+    board->mc6847.reset();
+    scan_kbd_col = 0;
+    next_key_mask = key_mask();
+    cur_key_mask = key_mask();
 }
 
 //------------------------------------------------------------------------------
 uint64_t
 atom::step(uint64_t start_tick, uint64_t end_tick) {
-    auto& cpu = this->board->mos6502;
-    auto& dbg = this->board->dbg;
+    auto& cpu = board->mos6502;
+    auto& dbg = board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
         if (dbg.check_break(cpu.PC)) {
@@ -102,14 +172,17 @@ atom::step(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 void
-atom::put_input(uint8_t ascii, uint8_t joy0_mask) {
-    // FIXME
+atom::put_input(uint8_t ascii) {
+    next_key_mask = key_map[ascii];
 }
 
 //------------------------------------------------------------------------------
 void
 atom::cpu_tick() {
-    this->vdg->step();
+    vdg->step();
+    if (vdg->on(mc6847::FSYNC)) {
+        cur_key_mask = next_key_mask;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -155,12 +228,12 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
 
     Port A - #B000
            Output bits:      Function:
-                O -- 3     Keyboard row
+                O -- 3     Keyboard column
                 4 -- 7     Graphics mode (4: A/G, 5..7: GM0..2)
 
     Port B - #B001
            Input bits:       Function:
-                O -- 5     Keyboard column
+                O -- 5     Keyboard row
                   6        CTRL key (low when pressed)
                   7        SHIFT keys {low when pressed)
 
@@ -169,7 +242,7 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
                 O          Tape output
                 1          Enable 2.4 kHz to cassette output
                 2          Loudspeaker
-                3          Not used
+                3          Not used (??? see below)
 
            Input bits:       Function:
                 4          2.4 kHz input
@@ -180,32 +253,58 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
     The port C output lines, bits O to 3, may be used for user
     applications when the cassette interface is not being used.
     */
-    if (0 == port_id) {
-        // PPIA Port A
-        this->vdg->ag(val & (1<<4));
-        this->vdg->gm0(val & (1<<5));
-        this->vdg->gm1(val & (1<<6));
-        this->vdg->gm2(val & (1<<7));
-    }
+    switch (port_id) {
+        // PPI port A
+        //  0..4:   keyboard matrix column
+        //  5:      MC6847 A/G
+        //  6:      MC6847 GM0
+        //  7:      MC6847 GM1
+        //  8:      MC6847 GM2
+        case 0:
+            scan_kbd_col = val & 0x0F;
+            vdg->ag(val & (1<<4));
+            vdg->gm0(val & (1<<5));
+            vdg->gm1(val & (1<<6));
+            vdg->gm2(val & (1<<7));
+            break;
 
-//    printf("PPIA OUT: port %d val %02X\n", port_id, val);
+        // PPI port C output:
+        //  0:  output: cass 0
+        //  1:  output: cass 1
+        //  2:  output: speaker
+        //  3:  output: MC6847 CSS
+        case 1:
+            vdg->css(val & (1<<3));
+            break;
+    }
 }
 
 //------------------------------------------------------------------------------
 uint8_t
 atom::pio_in(int pio_id, int port_id) {
-    // quick'n'dirty vsync flag impl
-    if (port_id == 2) {
-        uint8_t val = 0x00;
-        // fsync flag, this is off during the FSYNC, and on otherwise
-        if (!this->board->mc6847.test(mc6847::FSYNC)) {
-            val |= (1<<7);
-        }
-        return val;
+    uint8_t val = 0x00;
+    switch (port_id) {
+        // PPI port B: keyboard row state
+        case 1:
+            if (this->scan_kbd_col < 10) {
+                val = ~(this->cur_key_mask.col[this->scan_kbd_col]);
+            }
+            else {
+                val = 0xFF;
+            }
+            break;
+        // PPI port C input:
+        //  4:  input: 2400 Hz
+        //  5:  input: cassette
+        //  6:  input: keyboard repeat
+        //  7:  input: MC6847 FSYNC
+        case 2:
+            if (!board->mc6847.test(mc6847::FSYNC)) {
+                val |= (1<<7);
+            }
+            break;
     }
-    else {
-        return 0xFF;
-    }
+    return val;
 }
 
 //------------------------------------------------------------------------------
@@ -213,7 +312,7 @@ const void*
 atom::framebuffer(int& out_width, int& out_height) {
     out_width = mc6847::disp_width;
     out_height = mc6847::disp_height;
-    return this->board->mc6847.rgba8_buffer;
+    return board->mc6847.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------
