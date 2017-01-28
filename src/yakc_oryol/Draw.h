@@ -25,16 +25,16 @@ public:
     /// restore fullscreen viewport
     void restoreViewport();
 
+    /// check if texture size matches, if no, discard old one, create new one
+    void validateTexture(int width, int height);
+
     bool crtEffectEnabled = false;
     bool crtColorEnabled = true;
     glm::vec2 crtWarp;
 
-    Oryol::Id irmTexture320x256;
-    Oryol::Id irmTexture320x192;
-    Oryol::Id irmTexture256x256;
-    Oryol::Id irmTexture256x192;
-    Oryol::Id irmTexture768x272;
-    Oryol::Id irmTexture1024x312;
+    int texWidth = 0;
+    int texHeight = 0;
+    Oryol::Id texture;
     Oryol::DrawState crtDrawState;
     Oryol::DrawState nocrtDrawState;
 

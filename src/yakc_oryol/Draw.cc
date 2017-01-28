@@ -17,29 +17,7 @@ Draw::Setup(const GfxSetup& gfxSetup, int frame_x, int frame_y) {
     this->frameSizeY = frame_y;
     this->texUpdateAttrs.NumFaces = 1;
     this->texUpdateAttrs.NumMipMaps = 1;
-    this->texUpdateAttrs.Sizes[0][0] = 320*256*4;
-
-    auto irmSetup = TextureSetup::Empty(320, 256, 1, TextureType::Texture2D, PixelFormat::RGBA8, Usage::Stream);
-    irmSetup.TextureUsage = Usage::Stream;
-    irmSetup.Sampler.MinFilter = TextureFilterMode::Linear;
-    irmSetup.Sampler.MagFilter = TextureFilterMode::Linear;
-    irmSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
-    irmSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
-    this->irmTexture320x256 = Gfx::CreateResource(irmSetup);
-    irmSetup.Height = 192;
-    this->irmTexture320x192 = Gfx::CreateResource(irmSetup);
-    irmSetup.Width = 256;
-    irmSetup.Height = 256;
-    this->irmTexture256x256 = Gfx::CreateResource(irmSetup);
-    irmSetup.Width = 256;
-    irmSetup.Height = 192;
-    this->irmTexture256x192 = Gfx::CreateResource(irmSetup);
-    irmSetup.Width = 768;
-    irmSetup.Height = 272;
-    this->irmTexture768x272 = Gfx::CreateResource(irmSetup);
-    irmSetup.Width = 1024;
-    irmSetup.Height = 312;
-    this->irmTexture1024x312 = Gfx::CreateResource(irmSetup);
+    this->texUpdateAttrs.Sizes[0][0] = 0;
 
     auto fsqSetup = MeshSetup::FullScreenQuad(true);
     Id fsq = Gfx::CreateResource(fsqSetup);
@@ -78,33 +56,16 @@ void
 Draw::Render(const void* pixels, int width, int height) {
     o_trace_scoped(yakc_draw);
 
-    // copy decoded RGBA8 into texture
-    Id tex;
-    if ((320 == width) && (256 == height)) {
-        tex = this->irmTexture320x256;
+    // create new texture is size mismatch
+    this->validateTexture(width, height);
+    if (!this->texture.IsValid()) {
+        // width or height 0 (can happen if emulator is switched off)
+        return;
     }
-    else if ((320 == width) && (192 == height)) {
-        tex = this->irmTexture320x192;
-    }
-    else if ((256 == width) && (256 == height)) {
-        tex = this->irmTexture256x256;
-    }
-    else if ((256 == width) && (192 == height)) {
-        tex = this->irmTexture256x192;
-    }
-    else if ((768 == width) && (272 == height)) {
-        tex = this->irmTexture768x272;
-    }
-    else if ((1024 == width && (312 == height))) {
-        tex = this->irmTexture1024x312;
-    }
-    else {
-        o_error("Draw::Render(): invalid display size!\n");
-    }
-    this->crtDrawState.FSTexture[YAKCTextures::IRM] = tex;
-    this->nocrtDrawState.FSTexture[YAKCTextures::IRM] = tex;
+    this->crtDrawState.FSTexture[YAKCTextures::IRM] = this->texture;
+    this->nocrtDrawState.FSTexture[YAKCTextures::IRM] = this->texture;
     this->texUpdateAttrs.Sizes[0][0] = width*height*4;
-    Gfx::UpdateTexture(tex, pixels, this->texUpdateAttrs);
+    Gfx::UpdateTexture(this->texture, pixels, this->texUpdateAttrs);
     this->applyViewport(width, height);
     if (this->crtEffectEnabled) {
         Oryol::CRTShader::YAKCFSParams fsParams;
@@ -146,6 +107,35 @@ Draw::restoreViewport() {
     const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
     const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
     Gfx::ApplyViewPort(0, 0, fbWidth, fbHeight);
+}
+
+//------------------------------------------------------------------------------
+void
+Draw::validateTexture(int width, int height) {
+    if ((this->texWidth != width) || (this->texHeight != height)) {
+
+        this->texWidth = width;
+        this->texHeight = height;
+
+        // if a texture exists, discard it
+        if (this->texture.IsValid()) {
+            Gfx::DestroyResources('YAKC');
+            this->texture.Invalidate();
+        }
+
+        // only create a new texture if width and height > 0
+        if ((width > 0) && (height > 0)) {
+            auto texSetup = TextureSetup::Empty(width, height, 1, TextureType::Texture2D, PixelFormat::RGBA8, Usage::Stream);
+            texSetup.Sampler.MinFilter = TextureFilterMode::Linear;
+            texSetup.Sampler.MagFilter = TextureFilterMode::Linear  ;
+            texSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
+            texSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
+            Gfx::PushResourceLabel('YAKC');
+            this->texture = Gfx::CreateResource(texSetup);
+            Gfx::PopResourceLabel();
+
+        }
+    }
 }
 
 } // namespace YAKC
