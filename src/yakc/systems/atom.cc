@@ -79,7 +79,7 @@ atom::init_keymap() {
     init_key_mask(0x20, 9, 0, 0);       // space
     init_key_mask(0x01, 4, 1, 0);       // backspace
     init_key_mask(0x0D, 6, 1, 0);       // return/enter
-    init_key_mask(0x03, 0, 4, 0);       // escape
+    init_key_mask(0x03, 0, 5, 0);       // escape
 }
 
 //------------------------------------------------------------------------------
@@ -115,6 +115,7 @@ atom::poweron() {
     // map memory
     fill_random(board->ram[1], sizeof(board->ram[1]));
     fill_random(board->ram[2], sizeof(board->ram[2]));
+    clear(board->ram[3], sizeof(board->ram[3]));
     auto& mem = board->mos6502.mem;
     mem.unmap_all();
     mem.map(0, 0x0000, 0x0400, board->ram[0], true);
@@ -197,13 +198,12 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
     }
     else if ((addr >= 0xB800) && (addr < 0xBC00)) {
         printf("VIA: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
+        return 0x00;
     }
     else {
         printf("UNKNOWN: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
     }
-
-    // FIXME
-    return 0x00;
+    return 0xFF;
 }
 
 //------------------------------------------------------------------------------
