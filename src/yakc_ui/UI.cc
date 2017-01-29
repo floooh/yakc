@@ -18,6 +18,7 @@
 #include "InfoWindow.h"
 #include "AY8910Window.h"
 #include "MC6845Window.h"
+#include "MC6847Window.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -424,6 +425,9 @@ UI::OnFrame(yakc& emu) {
                 }
                 if (ImGui::MenuItem("MC6845")) {
                     this->OpenWindow(emu, MC6845Window::Create());
+                }
+                if (ImGui::MenuItem("MC6847")) {
+                    this->OpenWindow(emu, MC6847Window::Create());
                 }
                 ImGui::EndMenu();
             }

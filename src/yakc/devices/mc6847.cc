@@ -152,6 +152,15 @@ mc6847::decode_line(int y) {
     uint32_t* dst = &(this->rgba8_buffer[y * disp_width]);
     if (bits & A_G) {
         // one of the 8 graphics modes
+        if (bits & GM0) {
+            // one of the 'resolution modes' (1 bit == 1 pixel)
+            
+        }
+        else {
+            // one of the 'color modes' (2 bits == 4 colors, CSS select
+            // lower or upper half of palette)
+
+        }
         // FIXME!
         uint8_t r = (y & 7) << 5;
         for (int x = 0; x < disp_width; x++) {
