@@ -88,8 +88,8 @@ atom::init_keymap() {
     init_key_mask(0x09, 3, 0);                  // key right
     init_key_mask(0x0A, 2, 0, true);            // key down
     init_key_mask(0x0B, 2, 0);                  // key up
-    init_key_mask(0x0C, 5, 4, false, true);     // Ctrl+L clear screen
     init_key_mask(0x0D, 6, 1);                  // return/enter
+    init_key_mask(0x0C, 5, 4, false, true);     // Ctrl+L clear screen
     init_key_mask(0x0E, 3, 4, false, true);     // Ctrl+N page mode on
     init_key_mask(0x0F, 2, 4, false, true);     // Ctrl+O page mode off
     init_key_mask(0x15, 6, 5, false, true);     // Ctrl+U end screen
@@ -195,6 +195,7 @@ atom::put_input(uint8_t ascii) {
 void
 atom::cpu_tick() {
     vdg->step();
+    // feed the next input key mask so that the OS has 1 frame to read it
     if (vdg->on(mc6847::FSYNC)) {
         cur_key_mask = next_key_mask;
     }
@@ -313,6 +314,8 @@ atom::pio_in(int pio_id, int port_id) {
         //  6:  input: keyboard repeat
         //  7:  input: MC6847 FSYNC
         case 2:
+            // FIXME: always send REPEAT key as 'not pressed'
+            val |= (1<<6);
             if (!board->mc6847.test(mc6847::FSYNC)) {
                 val |= (1<<7);
             }
