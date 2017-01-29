@@ -14,7 +14,7 @@ static const uint32_t colors[8] = {
     0xFFFF0000, // blue
     0xFF0000FF, // red
     0xFFFFFFFF, // buff
-    0xFF00FF77, // cyan
+    0xFFFFFF00, // cyan
     0xFFFF00FF, // magenta
     0xFF0077FF, // orange
 };
@@ -149,116 +149,87 @@ mc6847::step() {
 //------------------------------------------------------------------------------
 void
 mc6847::decode_line(int y) {
-    if (y < disp_height) {
-        uint32_t* ptr = &(this->rgba8_buffer[y * disp_width]);
-        if (bits & A_G) {
-            // one of the 8 graphics modes
-            // FIXME!
-            uint8_t r = (y & 7) << 5;
-            for (int x = 0; x < disp_width; x++) {
-                uint8_t g = (x & 7) << 5;
-                *ptr++ = 0xFF000000 | (g<<8) | r;
-            }
-        }
-        else {
-            // an alphanumeric/semigraphics mode
-            decode_line_alnum(ptr, y);
+    uint32_t* dst = &(this->rgba8_buffer[y * disp_width]);
+    if (bits & A_G) {
+        // one of the 8 graphics modes
+        // FIXME!
+        uint8_t r = (y & 7) << 5;
+        for (int x = 0; x < disp_width; x++) {
+            uint8_t g = (x & 7) << 5;
+            *dst++ = 0xFF000000 | (g<<8) | r;
         }
     }
-}
+    else {
+        // we're in alphanumeric/semigraphics mode, one cell
+        // is 8x12 pixels, bit 6 is connected to A_S+INT_EXT and
+        // may select semigraphics mode per-characters, bit
+        // 7 is connected to INV and may invert the character
+        // (this is ignored in semigraphics mode)
 
-//------------------------------------------------------------------------------
-void
-mc6847::decode_line_alnum(uint32_t* dst, int y) {
-    // we're in alphanumeric mode, one character cell is
-    // 8x12 pixels, the character bitmaps in the internal
-    // ROM are 5x7 pixels, offsetted 2 pixels horizontally
-    // and 3 pixels vertically
-    //
-    // NOTE that the video memory bytes may toogle
-    // the alphanumeric/semigraphics mode, inverse and
-    // other status flags!
+        // the vidmem src address and offset into the font data
+        uint16_t addr = (y/12)*32;
+        uint8_t m;  // the pixel bitmask
+        const int chr_y = y % 12;
+        // bit-shifters to extract a 2x2 or 2x3 semigraphics 2-bit stack
+        const int shift_2x2 = (1 - (chr_y / 6))*2;
+        const int shift_2x3 = (2 - (chr_y / 4))*2;
+        const uint32_t alnum_fg = (bits & CSS) ? alnum_amber : alnum_green;
+        const uint32_t alnum_bg = (bits & CSS) ? alnum_dark_amber : alnum_dark_green;
+        for (int x = 0; x < 32; x++) {
+            const uint8_t chr = this->read_addr_func(addr++);
+            if (bits & A_S) {
+                // semigraphics mode
+                uint32_t fg_color;
+                if (bits & INT_EXT) {
+                    // 2x3 semigraphics, 2 color sets at 4 colors (selected by CSS pin)
+                    // |C1|C0|L5|L4|L3|L2|L1|L0|
+                    //
+                    // +--+--+
+                    // |L5|L4|
+                    // +--+--+
+                    // |L3|L2|
+                    // +--+--+
+                    // |L1|L0|
+                    // +--+--+
 
-    // the vidmem src address and offset into the font data
-    uint16_t addr = (y/12)*32;
-    uint32_t fg, bg;
-    const int chr_y   = y % 12;
-    // bit-shifters to extract a 2x2 or 2x3 semigraphics 2-bit stack
-    const int shift_2x2 = (1 - (chr_y / 6))*2;
-    const int shift_2x3 = (2 - (chr_y / 4))*2;
-    for (int x = 0; x < 32; x++) {
-        const uint8_t chr = this->read_addr_func(addr++);
-        if (bits & A_S) {
-            // background in semigraphics is always black
-            bg = 0xFF000000;
-            // semigraphics mode
-            if (bits & INT_EXT) {
-                // 2x3 semigraphics, 2 color sets at 4 colors (selected by CSS)
-                // |C1|C0|L5|L4|L3|L2|L1|L0|
-                //
-                // +--+--+
-                // |L5|L4|
-                // +--+--+
-                // |L3|L2|
-                // +--+--+
-                // |L1|L0|
-                // +--+--+
+                    // extract the 2 horizontal bits from one of the 3 stacks
+                    m = (chr>>shift_2x3) & 3;
+                    // 2 bits of color, CSS bit selects upper or lower
+                    // half of color palette
+                    fg_color = colors[((chr>>6)&3) + ((bits&CSS)?4:0)];
+                }
+                else {
+                    // 2x2 semigraphics, 8 colors + black
+                    // |xx|C2|C1|C0|L3|L2|L1|L0|
+                    //
+                    // +--+--+
+                    // |L3|L2|
+                    // +--+--+
+                    // |L1|L0|
+                    // +--+--+
 
-                // extract the 2 horizontal bits from one of the 3 stacks
-                uint8_t l = (chr>>shift_2x3) & 3;
-                // 2 bits of color, CSS bit selects upper or lower
-                // half of color palette
-                fg = colors[((chr>>6)&3) + ((bits&CSS)?4:0)];
+                    // extract the 2 horizontal bits from the upper or lower stack
+                    m = (chr>>shift_2x2) & 3;
+                    // 3 color bits directly point into the color palette
+                    fg_color = colors[(chr>>4) & 7];
+                }
+                // write the horizontal pixel blocks (2 blocks @ 4 pixel each)
                 for (int p = 1; p>=0; p--) {
-                    if (l & (1<<p)) {
-                        *dst++=fg; *dst++=fg; *dst++=fg; *dst++=fg;
-                    }
-                    else {
-                        *dst++=bg; *dst++=bg; *dst++=bg; *dst++=bg;
-                    }
+                    uint32_t c = (m & (1<<p)) ? fg_color : 0xFF000000;
+                    *dst++=c; *dst++=c; *dst++=c; *dst++=c;
                 }
             }
             else {
-                // 2x2 semigraphics, 8 colors + black
-                // |xx|C2|C1|C0|L3|L2|L1|L0|
-                //
-                // +--+--+
-                // |L3|L2|
-                // +--+--+
-                // |L1|L0|
-                // +--+--+
-
-                // extract the 2 horizontal bits from the upper or lower stack
-                uint8_t l = (chr>>shift_2x2) & 3;
-                fg = colors[(chr>>4) & 7];
-                for (int p = 1; p>=0; p--) {
-                    if (l & (1<<p)) {
-                        *dst++=fg; *dst++=fg; *dst++=fg; *dst++=fg;
-                    }
-                    else {
-                        *dst++=bg; *dst++=bg; *dst++=bg; *dst++=bg;
-                    }
+                // alphanumeric mode
+                // FIXME: INT_EXT (switch between internal and
+                // external font
+                uint8_t m = fontdata8x12[(chr&0x3F)*12 + chr_y];
+                if (bits & INV) {
+                    m = ~m;
                 }
-            }
-        }
-        else {
-            // alphanumeric mode
-            // FIXME: INT_EXT (switch between internal and
-            // external font
-            uint8_t m = fontdata8x12[(chr&0x3F)*12 + chr_y];
-            if (bits & INV) {
-                m = ~m;
-            }
-            if (bits & CSS) {
-                fg = alnum_amber;
-                bg = alnum_dark_amber;
-            }
-            else {
-                fg = alnum_green;
-                bg = alnum_dark_green;
-            }
-            for (int p = 7; p >= 0; p--) {
-                *dst++ = m & (1<<p) ? fg : bg;
+                for (int p = 7; p >= 0; p--) {
+                    *dst++ = m & (1<<p) ? alnum_fg : alnum_bg;
+                }
             }
         }
     }

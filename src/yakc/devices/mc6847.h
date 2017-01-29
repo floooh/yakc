@@ -77,8 +77,6 @@ public:
 
     /// decode one scanline (generic)
     void decode_line(int y);
-    /// decode on alpha-numeric mode scanline
-    void decode_line_alnum(uint32_t* ptr, int y);
 
     /// fixed-point precision multiplicator for counters
     static const int prec = 8;
