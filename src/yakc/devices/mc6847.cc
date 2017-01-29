@@ -153,19 +153,32 @@ mc6847::decode_line(int y) {
     if (bits & A_G) {
         // one of the 8 graphics modes
         if (bits & GM0) {
-            // one of the 'resolution modes' (1 bit == 1 pixel)
-            
+            // one of the 'resolution modes' (1 bit == 1 pixel block)
+            // GM2|GM1:
+            //      00:    RG1, 128x64, 16 bytes per row
+            //      01:    RG2, 128x96, 16 bytes per row
+            //      10:    RG3, 128x192, 16 bytes per row
+            //      11:    RG6, 256x192, 32 bytes per row
+            uint8_t sub_mode = (bits & (GM2|GM1)) >> 6;
+            const int bytes_per_row = (sub_mode < 3) ? 16 : 32;
+            const int dots_per_bit = (sub_mode < 3) ? 2 : 1;
+            const int row_height = (bits & GM2) ? 1 : ((bits & GM1) ? 2 : 3);
+            uint16_t addr = (y / row_height) * bytes_per_row;
+            const uint32_t fg_color = (bits & CSS) ? colors[4] : colors[0];
+            for (int x = 0; x < bytes_per_row; x++) {
+                const uint8_t m = this->read_addr_func(addr++);
+                for (int p = 7; p >= 0; p--) {
+                    const uint32_t c = m & (1<<p) ? fg_color : 0xFF000000;
+                    for (int d = 0; d < dots_per_bit; d++) {
+                        *dst++ = c;
+                    }
+                }
+            }
         }
         else {
             // one of the 'color modes' (2 bits == 4 colors, CSS select
             // lower or upper half of palette)
 
-        }
-        // FIXME!
-        uint8_t r = (y & 7) << 5;
-        for (int x = 0; x < disp_width; x++) {
-            uint8_t g = (x & 7) << 5;
-            *dst++ = 0xFF000000 | (g<<8) | r;
         }
     }
     else {
