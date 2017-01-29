@@ -51,9 +51,8 @@ public:
     } Settings;
 
     Oryol::Duration EmulationTime;
+    FileLoader FileLoader;
 
-private:
-    FileLoader fileLoader;
     SnapshotStorage snapshotStorage;
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;

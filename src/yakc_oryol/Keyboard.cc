@@ -211,10 +211,57 @@ void
 Keyboard::HandleInput() {
     o_assert_dbg(this->emu);
     if (this->hasInputFocus) {
-        this->emu->put_input(this->cur_char, this->cur_joystick);
+        if (!this->playbackBuffer.Empty()) {
+            this->handleTextPlayback();
+        }
+        else {
+            this->emu->put_input(this->cur_char, this->cur_joystick);
+        }
     }
     else {
         this->emu->put_input(0, 0);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+Keyboard::StartPlayback(Buffer&& buf) {
+    this->playbackBuffer = std::move(buf);
+    this->playbackPos = 0;
+}
+
+//------------------------------------------------------------------------------
+void
+Keyboard::handleTextPlayback() {
+    if (this->playbackPos < this->playbackBuffer.Size()) {
+        if (this->playbackCounter-- > 0) {
+            this->emu->put_input(this->playbackChar, 0);
+        }
+        else {
+            // alternate between press and release
+            this->playbackFlipFlop = !this->playbackFlipFlop;
+            if (this->playbackFlipFlop) {
+                this->playbackCounter = 2;
+                // feed the next character from buffer
+                // filter out unwanted characters and convert
+                do {
+                    this->playbackChar = this->playbackBuffer.Data()[this->playbackPos++];
+                }
+                while ((this->playbackChar == '\t') ||
+                       (this->playbackChar == '\r'));
+                if (this->playbackChar == '\n') {
+                    this->playbackChar = 0x0D;
+                }
+            }
+            else {
+                this->playbackChar = 0;
+                this->playbackCounter = 2;
+            }
+        }
+    }
+    else {
+        this->playbackBuffer.Clear();
+        this->playbackPos = 0;
     }
 }
 

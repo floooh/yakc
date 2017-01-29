@@ -49,7 +49,8 @@ LoadWindow::Draw(yakc& emu) {
                 "KC Z80",
                 "ZX TAP",
                 "ZX Z80",
-                "CPC SNA"
+                "CPC SNA",
+                "TEXT"
             };
             int curFileType = (int) ldr.Info.Type;
             if (ImGui::Combo("File Type", &curFileType, typeNames, int(FileLoader::FileType::Num))) {

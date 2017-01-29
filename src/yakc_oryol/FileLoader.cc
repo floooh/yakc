@@ -236,6 +236,13 @@ FileLoader::Start() {
 }
 
 //------------------------------------------------------------------------------
+Buffer&&
+FileLoader::ObtainTextBuffer() {
+    this->State = Waiting;
+    return std::move(this->FileData);
+}
+
+//------------------------------------------------------------------------------
 void
 FileLoader::load(const Item& item, bool autostart) {
     StringBuilder strBuilder;
@@ -270,7 +277,10 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
     if (FileType::None == item.Type) {
         // guess the file type
         StringBuilder strb(item.Filename);
-        if (strb.Contains(".TAP") || strb.Contains(".tap")) {
+        if (strb.Contains(".TXT") || strb.Contains(".txt")) {
+            info.Type = FileLoader::FileType::TEXT;
+        }
+        else if (strb.Contains(".TAP") || strb.Contains(".tap")) {
             if (this->emu->is_device(device::any_zx)) {
                 info.Type = FileLoader::FileType::ZX_TAP;
             }
@@ -508,8 +518,10 @@ FileLoader::load_sna(yakc* emu, const FileInfo& info, const Buffer& data) {
 void
 FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
     if (!info.FileSizeError) {
+        enum State newState = FileLoader::Waiting;
         if (FileType::KC_TAP == info.Type) {
             FileLoader::load_kctap(emu, info, data);
+
         }
         else if (FileType::ZX_Z80 == info.Type) {
             FileLoader::load_zxz80(emu, info, data);
@@ -517,11 +529,17 @@ FileLoader::copy(yakc* emu, const FileInfo& info, const Buffer& data) {
         else if (FileType::CPC_SNA == info.Type) {
             FileLoader::load_sna(emu, info, data);
         }
+        else if (FileType::TEXT == info.Type) {
+            // do nothing for text files, this will be checked
+            // and caught from the outside
+            newState = FileLoader::TextReady;
+        }
         else {
             // KCC, Z80 and BIN file type payload is simply a continuous block of data
             const ubyte* payload = data.Data() + info.PayloadOffset;            
             emu->board.z80.mem.write(info.StartAddr, payload, info.EndAddr-info.StartAddr);
         }
+        FileLoader::pointer->State = newState;
     }
 }
 

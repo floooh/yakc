@@ -120,6 +120,10 @@ YakcApp::OnRunning() {
     if (Input::KeyDown(Key::Tab)) {
         this->ui.Toggle();
     }
+    // check if a text dump is ready to feed into keyboard handler
+    if (this->ui.FileLoader.State == FileLoader::TextReady) {
+        this->keyboard.StartPlayback(this->ui.FileLoader.ObtainTextBuffer());
+    }
     // don't handle KC input if IMGUI has the keyboard focus
     if (!ImGui::GetIO().WantCaptureKeyboard) {
         this->keyboard.HandleInput();

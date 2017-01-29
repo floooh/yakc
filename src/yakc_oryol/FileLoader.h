@@ -24,6 +24,7 @@ public:
         ZX_TAP,
         ZX_Z80,
         CPC_SNA,
+        TEXT,
 
         Num,
         None,
@@ -51,6 +52,7 @@ public:
         Waiting,
         Loading,
         Ready,
+        TextReady,      // special case external text stream ready
         Failed,
     } State = Waiting;
 
@@ -87,6 +89,8 @@ public:
     bool Copy();
     /// copy to memory and start the previously loaded file
     bool Start();
+    /// obtain text buffer (if a text file has been loaded)
+    Oryol::Buffer&& ObtainTextBuffer();
 
     /// get file info from loaded file data
     FileInfo parseHeader(const Oryol::Buffer& data, const Item& item);

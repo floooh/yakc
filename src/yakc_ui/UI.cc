@@ -103,14 +103,14 @@ UI::Setup(yakc& emu, Audio* audio_) {
 
     this->EnableLightTheme();
 
-    this->fileLoader.Setup(emu);
+    this->FileLoader.Setup(emu);
     this->curTime = Clock::Now();
 }
 
 //------------------------------------------------------------------------------
 void
 UI::Discard() {
-    this->fileLoader.Discard();
+    this->FileLoader.Discard();
     this->windows.Clear();
     IMUI::Discard();
 }
@@ -210,12 +210,12 @@ UI::OnFrame(yakc& emu) {
     ImGui::End();
 
     // check if a file has been drag'n'dropped
-    if (this->fileLoader.ExtFileReady) {
-        this->fileLoader.ExtFileReady = false;
+    if (this->FileLoader.ExtFileReady) {
+        this->FileLoader.ExtFileReady = false;
         if (this->loadWindow.isValid()) {
             this->loadWindow->Visible = false;
         }
-        this->loadWindow = LoadWindow::Create(&this->fileLoader);
+        this->loadWindow = LoadWindow::Create(&this->FileLoader);
         this->OpenWindow(emu, this->loadWindow);
         this->uiEnabled = true;
     }
@@ -372,7 +372,7 @@ UI::OnFrame(yakc& emu) {
                     if (this->loadWindow.isValid()) {
                         this->loadWindow->Visible = false;
                     }
-                    this->loadWindow = LoadWindow::Create(&this->fileLoader);
+                    this->loadWindow = LoadWindow::Create(&this->FileLoader);
                     this->OpenWindow(emu, loadWindow);
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
@@ -385,10 +385,10 @@ UI::OnFrame(yakc& emu) {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Software")) {
-                for (const auto& item : this->fileLoader.Items) {
+                for (const auto& item : this->FileLoader.Items) {
                     if (int(item.Compat) & int(emu.model)) {
                         if (ImGui::MenuItem(item.Name.AsCStr())) {
-                            this->fileLoader.LoadAndStart(item);
+                            this->FileLoader.LoadAndStart(item);
                         }
                     }
                 }
