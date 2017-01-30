@@ -303,6 +303,9 @@ atom::pio_in(int pio_id, int port_id) {
         case 1:
             if (this->scan_kbd_col < 10) {
                 val = ~(this->cur_key_mask.col[this->scan_kbd_col]);
+                if (this->scan_kbd_col == 9) {
+                    this->cur_key_mask = this->next_key_mask;
+                }
             }
             else {
                 val = 0xFF;
