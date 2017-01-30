@@ -241,7 +241,7 @@ Keyboard::handleTextPlayback() {
             // alternate between press and release
             this->playbackFlipFlop = !this->playbackFlipFlop;
             if (this->playbackFlipFlop) {
-                this->playbackCounter = 3;
+                this->playbackCounter = 4;
                 // feed the next character from buffer
                 // filter out unwanted characters and convert
                 do {
@@ -255,7 +255,7 @@ Keyboard::handleTextPlayback() {
             }
             else {
                 this->playbackChar = 0;
-                this->playbackCounter = 3;
+                this->playbackCounter = 4;
             }
         }
     }

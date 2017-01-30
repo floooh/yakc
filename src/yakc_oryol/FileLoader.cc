@@ -187,6 +187,9 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Cyclone", "cyclone.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
     this->Items.Add("Boulderdash", "boulderdash_zx.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
     this->Items.Add("Bomb Jack", "bombjack_zx.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
+    this->Items.Add("Hello World!", "atom_hello.txt", FileType::TEXT, device::acorn_atom, true);
+    this->Items.Add("Text Mode Test", "atom_alnum_test.txt", FileType::TEXT, device::acorn_atom, true);
+    this->Items.Add("Graphics Mode Test", "atom_graphics_test.txt", FileType::TEXT, device::acorn_atom, true);
 }
 
 //------------------------------------------------------------------------------
