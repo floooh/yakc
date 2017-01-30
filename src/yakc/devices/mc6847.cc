@@ -6,20 +6,32 @@
 namespace YAKC {
 
 // 8 color palette
-// FIXME: these are pure colors currently, fix
-// those according to the YUV values from the 6847
+//
+// the MC6847 outputs three color values:
+//
+//  Y' - six level analog luminance
+//  phiA - three level analog (U)
+//  phiB - three level analog (V)
+//
+// see discussion here: http://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=64986
+//
 static const uint32_t colors[8] = {
-    0xFF00FF00, // green
+    0xFF00FF07, // green
     0xFF00FFFF, // yellow
-    0xFFFF0000, // blue
-    0xFF0000FF, // red
-    0xFFFFFFFF, // buff
-    0xFFFFFF00, // cyan
-    0xFFFF00FF, // magenta
-    0xFF0077FF, // orange
+    0xFFFF083B, // blue
+    0xFF3B00CC, // red
+    0xFFFFFFFF, // buff (white)
+    0xFF99E307, // cyan
+    0xFFFF1CFF, // magenta
+    0xFF0081FF, // orange
 };
 
 static const uint32_t black = 0xFF111111;
+static const uint32_t alnum_green = 0xFF00FF07;
+static const uint32_t alnum_dark_green = 0xFF002400;
+static const uint32_t alnum_orange = 0xFF0081FF;
+static const uint32_t alnum_dark_orange = 0xFF000E22;
+
 
 // internal character ROM dump from MAME
 // (ntsc_square_fontdata8x12 in devices/video/mc6847.cpp)
@@ -258,8 +270,8 @@ mc6847::decode_line(int y) {
         // bit-shifters to extract a 2x2 or 2x3 semigraphics 2-bit stack
         const int shift_2x2 = (1 - (chr_y / 6))*2;
         const int shift_2x3 = (2 - (chr_y / 4))*2;
-        const uint32_t alnum_fg = (bits & CSS) ? alnum_amber : alnum_green;
-        const uint32_t alnum_bg = (bits & CSS) ? alnum_dark_amber : alnum_dark_green;
+        const uint32_t alnum_fg = (bits & CSS) ? alnum_orange : alnum_green;
+        const uint32_t alnum_bg = (bits & CSS) ? alnum_dark_orange : alnum_dark_green;
         for (int x = 0; x < 32; x++) {
             const uint8_t chr = this->read_addr_func(addr++);
             if (bits & A_S) {

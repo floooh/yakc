@@ -116,11 +116,6 @@ public:
     static const int h_border = (disp_width_with_border - disp_width) / 2;
     static_assert((2 * h_border + disp_width) == disp_width_with_border, "mc6847 horizontal border");
 
-    static const uint32_t alnum_green = 0xFF44FF44;
-    static const uint32_t alnum_dark_green = 0xFF002400;
-    static const uint32_t alnum_amber = 0xFF2299FF;
-    static const uint32_t alnum_dark_amber = 0xFF000E22;
-
     int h_count = 0;
     int h_sync_start = 0;
     int h_sync_end = 0;
