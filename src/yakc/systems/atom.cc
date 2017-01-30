@@ -327,8 +327,8 @@ atom::pio_in(int pio_id, int port_id) {
 //------------------------------------------------------------------------------
 const void*
 atom::framebuffer(int& out_width, int& out_height) {
-    out_width = mc6847::disp_width;
-    out_height = mc6847::disp_height;
+    out_width = mc6847::disp_width_with_border;
+    out_height = mc6847::disp_height_with_border;
     return board->mc6847.rgba8_buffer;
 }
 

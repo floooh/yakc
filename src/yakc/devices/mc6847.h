@@ -21,6 +21,11 @@
         - 26 lines bottom border
         - 6 lines vertical retrace
         - 13+25+192+26+6 = 262
+        
+    FIXME this is not implemented (from the MC6847 datasheet p.14):
+    - "Color burst is also suppressed in the most dense two colour graphics
+       modes. This leads to some interesing rainbow effects on the display
+       which is frequency and pattern dependent" 
 */
 #include "yakc/core/core.h"
 
@@ -75,8 +80,12 @@ public:
     /// set or clear the CSS bit
     void css(bool b);
 
-    /// decode one scanline (generic)
+    /// decode a visible scanline (all video modes)
     void decode_line(int y);
+    /// decode a complete border line (top or bottom border)
+    void decode_border(int y);
+    /// determine current border color
+    uint32_t border_color();
 
     /// fixed-point precision multiplicator for counters
     static const int prec = 8;
@@ -84,6 +93,7 @@ public:
     read_func read_addr_func = nullptr;
     uint16_t prev_bits = 0;
     uint16_t bits = 0;
+
 
     static const int l_all = 262;
     static const int l_vblank = 13;     // 13 lines vblank at top of screen
@@ -93,9 +103,18 @@ public:
     static const int l_vretrace = 6;    // 6 lines vertical retrace
     static const int l_disp_start = l_vblank + l_topborder;
     static const int l_disp_end = l_disp_start + l_disp;
+    static const int l_btmborder_end = l_disp_end + l_btmborder;
     static const int l_limit = 262;
     static const int l_fsync_start = l_disp_end;    // fsync is active until l_limit
     static_assert(l_all == (l_vblank+l_topborder+l_disp+l_btmborder+l_vretrace), "mc6847 line count");
+
+    static const int disp_width_with_border = 320;
+    static const int disp_height_with_border = l_disp + l_btmborder + l_topborder;
+    static const int disp_width = 256;
+    static const int disp_height = 192;
+
+    static const int h_border = (disp_width_with_border - disp_width) / 2;
+    static_assert((2 * h_border + disp_width) == disp_width_with_border, "mc6847 horizontal border");
 
     static const uint32_t alnum_green = 0xFF44FF44;
     static const uint32_t alnum_dark_green = 0xFF002400;
@@ -108,10 +127,8 @@ public:
     int h_limit = 0;
     int l_count = 0;
 
-    static const int disp_width = 256;
-    static const int disp_height = 192;
-    static_assert(disp_width <= global_max_fb_width, "mc6847 fb size");
-    static_assert(disp_height <= global_max_fb_height, "mc6847 fb size");
+    static_assert(disp_width_with_border <= global_max_fb_width, "mc6847 fb size");
+    static_assert(disp_height_with_border <= global_max_fb_height, "mc6847 fb size");
     uint32_t* rgba8_buffer = nullptr;
 };
 

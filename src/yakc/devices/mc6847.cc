@@ -19,6 +19,8 @@ static const uint32_t colors[8] = {
     0xFF0077FF, // orange
 };
 
+static const uint32_t black = 0xFF111111;
+
 // internal character ROM dump from MAME
 // (ntsc_square_fontdata8x12 in devices/video/mc6847.cpp)
 static const uint8_t fontdata8x12[64 * 12] =
@@ -140,16 +142,59 @@ mc6847::step() {
             l_count = 0;
             bits &= ~FSYNC;
         }
-        if ((l_count >= l_disp_start) && (l_count < l_disp_end)) {
+        if (l_count < l_vblank) {
+            // skip
+        }
+        else if (l_count < l_disp_start) {
+            // top border (y=0..243)
+            decode_border(l_count - l_vblank);
+        }
+        else if (l_count < l_disp_end) {
+            // visible area (y=0..192)
             decode_line(l_count - l_disp_start);
         }
+        else if (l_count < l_btmborder_end) {
+            // bottom border (y=0..243)
+            decode_border(l_count - l_vblank);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+uint32_t
+mc6847::border_color() {
+    // determine the currently active border color
+    if (bits & A_G) {
+        // a graphics mode, either green or buff depending on CSS bit
+        return (bits & CSS) ? colors[4] : colors[0];
+    }
+    else {
+        // alphanumeric or semigraphics mode, always 'black'
+        return black;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+mc6847::decode_border(int y) {
+    uint32_t* dst = &(this->rgba8_buffer[y * disp_width_with_border]);
+    const uint32_t c = this->border_color();
+    for (int x = 0; x < disp_width_with_border; x++) {
+        *dst++ = c;
     }
 }
 
 //------------------------------------------------------------------------------
 void
 mc6847::decode_line(int y) {
-    uint32_t* dst = &(this->rgba8_buffer[y * disp_width]);
+    uint32_t* dst = &(this->rgba8_buffer[(y+l_topborder) * disp_width_with_border]);
+    const uint32_t b_color = this->border_color();
+    // left border
+    for (int i = 0; i < h_border; i++) {
+        *dst++ = b_color;
+    }
+
+    // visible pixels
     if (bits & A_G) {
         // one of the 8 graphics modes
         uint8_t sub_mode = (bits & (GM2|GM1)) >> 6;
@@ -168,7 +213,7 @@ mc6847::decode_line(int y) {
             for (int x = 0; x < bytes_per_row; x++) {
                 const uint8_t m = this->read_addr_func(addr++);
                 for (int p = 7; p >= 0; p--) {
-                    const uint32_t c = ((m >> p) & 1) ? fg_color : 0xFF000000;
+                    const uint32_t c = ((m >> p) & 1) ? fg_color : black;
                     for (int d = 0; d < dots_per_bit; d++) {
                         *dst++ = c;
                     }
@@ -255,7 +300,7 @@ mc6847::decode_line(int y) {
                 }
                 // write the horizontal pixel blocks (2 blocks @ 4 pixel each)
                 for (int p = 1; p>=0; p--) {
-                    uint32_t c = (m & (1<<p)) ? fg_color : 0xFF000000;
+                    uint32_t c = (m & (1<<p)) ? fg_color : black;
                     *dst++=c; *dst++=c; *dst++=c; *dst++=c;
                 }
             }
@@ -272,6 +317,11 @@ mc6847::decode_line(int y) {
                 }
             }
         }
+    }
+
+    // right border
+    for (int i = 0; i < h_border; i++) {
+        *dst++ = b_color;
     }
 }
 
