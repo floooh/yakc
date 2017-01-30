@@ -355,12 +355,6 @@ UI::OnFrame(yakc& emu) {
                                 emu.poweron(device::acorn_atom);
                             }
                         }
-                        if (emu.check_roms(device::bbcmicro_b)) {
-                            if (ImGui::MenuItem("BBC Micro Model B")) {
-                                emu.poweroff();
-                                emu.poweron(device::bbcmicro_b);
-                            }
-                        }
                         ImGui::EndMenu();
                     }
                     ImGui::EndMenu();
