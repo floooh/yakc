@@ -37,7 +37,10 @@ public:
     class ay8910 ay8910;
     cpudbg dbg;
     class crt crt;          // this is not a chip, but a cathode-ray-tube emulation
-    uint8_t ram[8][0x4000];
+    static const int num_ram_banks = 8;
+    static const int ram_bank_size = 0x4000;
+    uint8_t ram[num_ram_banks][ram_bank_size];
+    uint8_t random[ram_bank_size]; // a 16-kbyte bank filled with random numbers
     uint32_t rgba8_buffer[global_max_fb_width*global_max_fb_height]; // RGBA8 linear pixel buffer
 };
 

@@ -128,8 +128,9 @@ atom::poweron() {
     cur_key_mask = key_mask();
 
     // map memory
-    fill_random(board->ram[1], sizeof(board->ram[1]));
-    fill_random(board->ram[2], sizeof(board->ram[2]));
+    memcpy(board->ram[0], board->random, breadboard::ram_bank_size);
+    memcpy(board->ram[1], board->random, breadboard::ram_bank_size);
+    memcpy(board->ram[2], board->random, breadboard::ram_bank_size);
     clear(board->ram[3], sizeof(board->ram[3]));
     auto& mem = board->mos6502.mem;
     mem.unmap_all();

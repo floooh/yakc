@@ -88,7 +88,9 @@ kc85::poweron(device m, os_rom os) {
         clear(this->board->ram, sizeof(this->board->ram));
     }
     else {
-        fill_random(this->board->ram, sizeof(this->board->ram));
+        for (int i = 0; i < breadboard::num_ram_banks; i++) {
+            memcpy(this->board->ram[i], this->board->random, breadboard::ram_bank_size);
+        }
     }
 
     // set operating system pointers

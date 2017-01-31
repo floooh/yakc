@@ -9,6 +9,7 @@ namespace YAKC {
 void
 yakc::init(const ext_funcs& sys_funcs) {
     func = sys_funcs;
+    fill_random(this->board.random, sizeof(this->board.random));
     this->cpu_ahead = false;
     this->cpu_behind = false;
     this->abs_cycle_count = 0;

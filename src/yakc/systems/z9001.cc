@@ -156,9 +156,9 @@ z9001::poweron(device m, os_rom os) {
     this->ctc0_constant = 0;
 
     // map memory
-    clear(this->board->ram, sizeof(this->board->ram));
-    fill_random(this->board->ram[color_ram_page], sizeof(this->board->ram[color_ram_page]));
-    fill_random(this->board->ram[video_ram_page], sizeof(this->board->ram[video_ram_page]));
+    for (int i = 0; i < breadboard::num_ram_banks; i++) {
+        memcpy(this->board->ram[i], this->board->random, breadboard::ram_bank_size);
+    }
     this->init_memory_mapping();
 
     // initialize the clock at 2.4576 MHz
