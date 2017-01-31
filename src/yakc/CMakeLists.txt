@@ -27,7 +27,6 @@ fips_begin_module(yakc)
         ay8910.h ay8910.cc
     )
     fips_generate(FROM z80_opcodes.py SOURCE z80_opcodes.cc)
-    # fips_generate(FROM mos6502_opcodes.py SOURCE mos6502_opcodes.cc)
     fips_dir(systems)
     fips_files(
         rom_images.h rom_images.cc
