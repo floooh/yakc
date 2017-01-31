@@ -20,7 +20,7 @@ public:
     rom_images* roms = nullptr;
 
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, device model, os_rom os);    
+    static bool check_roms(const rom_images& roms, system model, os_rom os);
 
     /// one-time setup
     void init(breadboard* board, rom_images* roms);

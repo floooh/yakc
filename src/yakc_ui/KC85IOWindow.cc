@@ -45,7 +45,7 @@ KC85IOWindow::Draw(yakc& emu) {
         if (ImGui::CollapsingHeader("PIO B (0x89)", "#kc85_io_b", true, true)) {
             const ubyte b = emu.board.z80pio.port[z80pio::B].output;
             ImGui::Text("Bit 0..5: Volume"); ImGui::SameLine(float(offset)); ImGui::Text("%02X", b & kc85::PIO_B_VOLUME_MASK);
-            if (emu.is_device(device::kc85_4)) {
+            if (emu.is_system(system::kc85_4)) {
                 onOffLine("Bit 5: RAM8", 0 != (b&kc85::PIO_B_RAM8));
                 onOffLine("Bit 6: RAM8 R/O", 0 != (b&kc85::PIO_B_RAM8_RO));
             }
@@ -55,7 +55,7 @@ KC85IOWindow::Draw(yakc& emu) {
             }
             onOffLine("Bit 7: blinking", 0 != (b&kc85::PIO_B_BLINK_ENABLED));
         }
-        if (emu.is_device(device::kc85_4)) {
+        if (emu.is_system(system::kc85_4)) {
             if (ImGui::CollapsingHeader("Port 0x84", "#kc85_io_84", true, true)) {
                 const ubyte v = emu.kc85.io84;
                 onOffLine("Bit 0: view image 0/1", 0 != (v&kc85::IO84_SEL_VIEW_IMG));

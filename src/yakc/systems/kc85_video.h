@@ -11,7 +11,7 @@ namespace YAKC {
 class kc85_video {
 public:
     /// initialize the video hardware
-    void init(device m, breadboard* b);
+    void init(system m, breadboard* b);
     /// reset the video hardware
     void reset();
 
@@ -38,7 +38,7 @@ public:
 
     static const int irm0_page = 4;
     breadboard* board = nullptr;
-    device model = device::kc85_3;
+    system model = system::kc85_3;
     ubyte irm_control = 0;
     bool pio_blink_flag = true;
     bool ctc_blink_flag = true;

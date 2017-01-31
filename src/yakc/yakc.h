@@ -24,9 +24,9 @@ public:
     /// add a ROM image
     void add_rom(rom_images::rom type, const uint8_t* ptr, int size);
     /// check if the required ROM images for a model/os combination are loaded
-    bool check_roms(device model, os_rom os=os_rom::none);
+    bool check_roms(system model, os_rom os=os_rom::none);
     /// poweron one of the emus
-    void poweron(device m, os_rom os=os_rom::none);
+    void poweron(system m, os_rom os=os_rom::none);
     /// poweroff the emu
     void poweroff();
     /// reset the emu
@@ -53,11 +53,11 @@ public:
 
     /// return true if switched on
     bool switchedon() const;
-    /// check if currently emulated device matches
-    bool is_device(device mask) const;
-    /// check any model against device mask
-    static bool is_device(device model, device mask);
-    /// get the cpu model of the current device
+    /// check if currently emulated system matches
+    bool is_system(system mask) const;
+    /// check any model against system mask
+    static bool is_system(system model, system mask);
+    /// get the cpu model of the current system
     cpu_model cpu_type() const;
     /// get human-readable info about current system
     const char* system_info() const;
@@ -66,7 +66,7 @@ public:
     /// get the currently active system_bus
     system_bus* get_bus();
 
-    device model = device::none;
+    system model = system::none;
     os_rom os = os_rom::none;
     class kc85 kc85;
     class z1013 z1013;

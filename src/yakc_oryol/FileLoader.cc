@@ -138,58 +138,58 @@ FileLoader::Setup(yakc& emu_) {
     o_assert(nullptr == pointer);
     this->emu = &emu_;
     pointer = this;
-    this->Items.Add("Pengo", "pengo.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("Pengo", "pengo4.kcc", FileType::KCC, device::kc85_4);
-    this->Items.Add("Cave", "cave.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("Labyrinth", "labyrinth.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("House", "house.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("House", "house4.tap", FileType::KC_TAP, device::kc85_4);
-    this->Items.Add("Jungle", "jungle.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("Jungle", "jungle4.tap", FileType::KC_TAP, device::kc85_4);
-    this->Items.Add("Pacman", "pacman.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("Breakout", "breakout.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("Mad Breakin", "breakin.853", FileType::KCC, device::kc85_3);
-    this->Items.Add("Boulderdash", "boulder3.tap", FileType::KC_TAP, device::kc85_3);
-    this->Items.Add("Boulderdash", "boulder4.tap", FileType::KC_TAP, device::kc85_4);
-    this->Items.Add("Digger", "digger3.tap", FileType::KC_TAP, device::kc85_3);
-    this->Items.Add("Digger", "digger4.tap", FileType::KC_TAP, device::kc85_4);
-    this->Items.Add("Tetris", "tetris.kcc", FileType::KCC, device::kc85_4);
-    this->Items.Add("Ladder", "ladder-3.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("Enterprise", "enterpri.tap", FileType::KC_TAP, device::any_kc85);
-    this->Items.Add("Chess", "chess.kcc", FileType::KCC, device::any_kc85);
-    this->Items.Add("Testbild", "testbild.kcc", FileType::KCC, device::kc85_3);
-    this->Items.Add("Demo1", "demo1.kcc", FileType::KCC, device::kc85_4);
-    this->Items.Add("Demo2", "demo2.kcc", FileType::KCC, device::kc85_4);
-    this->Items.Add("Demo3", "demo3.kcc", FileType::KCC, device::kc85_4);
-    this->Items.Add("Tiny-Basic 3.01", "tinybasic-3.01.z80", FileType::KC_Z80, device::z1013_01);
-    this->Items.Add("KC-Basic", "kc_basic.z80", FileType::KC_Z80, device::any_z1013);
-    this->Items.Add("Z1013 Forth", "z1013_forth.z80", FileType::KC_Z80, device::any_z1013);
-    this->Items.Add("Boulderdash", "boulderdash_1_0.z80", FileType::KC_Z80, device(int(device::z1013_16)|int(device::z1013_64)));
-    this->Items.Add("Demolation", "demolation.z80", FileType::KC_Z80, device::any_z1013);
-    this->Items.Add("Cosmic Ball", "cosmic_ball.z80", FileType::KC_Z80, device::z1013_01);
-    this->Items.Add("Galactica", "galactica.z80", FileType::KC_Z80, device::any_z1013);
-    this->Items.Add("Mazogs", "mazog_deutsch.z80", FileType::KC_Z80, device::any_z1013);
-    this->Items.Add("Monitor ZM30 (start with 'ZM')", "zm30.kcc", FileType::KCC, device::any_z9001);
-    this->Items.Add("Forth 83 (start with 'F83')", "F83_COM.TAP", FileType::KC_TAP, device::any_z9001);
-    this->Items.Add("Arkanoid", "arkanoid.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Ghosts'n'Goblins", "ghosts_n_goblins.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Gryzor", "gryzor.sna", FileType::CPC_SNA, device::cpc6128, true);
-    this->Items.Add("Dragon Ninja", "dragon_ninja.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Head over Heels", "head_over_heels.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Boulderdash", "boulder_dash.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Bomb Jack", "bomb_jack.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Chase HQ", "chase_hq.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Cybernoid", "cybernoid.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Fruity Frank", "fruity_frank.sna", FileType::CPC_SNA, device(int(device::kccompact)|int(device::cpc6128)), true);
-    this->Items.Add("Ikari Warriors", "ikari_warriors.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("1943", "1943.sna", FileType::CPC_SNA, device::any_cpc, true);
-    this->Items.Add("Exolon", "exolon.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
-    this->Items.Add("Cyclone", "cyclone.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
-    this->Items.Add("Boulderdash", "boulderdash_zx.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
-    this->Items.Add("Bomb Jack", "bombjack_zx.z80", FileType::ZX_Z80, device::zxspectrum48k, true);
-    this->Items.Add("Hello World!", "atom_hello.txt", FileType::TEXT, device::acorn_atom, true);
-    this->Items.Add("Text Mode Test", "atom_alnum_test.txt", FileType::TEXT, device::acorn_atom, true);
-    this->Items.Add("Graphics Mode Test", "atom_graphics_test.txt", FileType::TEXT, device::acorn_atom, true);
+    this->Items.Add("Pengo", "pengo.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("Pengo", "pengo4.kcc", FileType::KCC, system::kc85_4);
+    this->Items.Add("Cave", "cave.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("Labyrinth", "labyrinth.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("House", "house.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("House", "house4.tap", FileType::KC_TAP, system::kc85_4);
+    this->Items.Add("Jungle", "jungle.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("Jungle", "jungle4.tap", FileType::KC_TAP, system::kc85_4);
+    this->Items.Add("Pacman", "pacman.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("Breakout", "breakout.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("Mad Breakin", "breakin.853", FileType::KCC, system::kc85_3);
+    this->Items.Add("Boulderdash", "boulder3.tap", FileType::KC_TAP, system::kc85_3);
+    this->Items.Add("Boulderdash", "boulder4.tap", FileType::KC_TAP, system::kc85_4);
+    this->Items.Add("Digger", "digger3.tap", FileType::KC_TAP, system::kc85_3);
+    this->Items.Add("Digger", "digger4.tap", FileType::KC_TAP, system::kc85_4);
+    this->Items.Add("Tetris", "tetris.kcc", FileType::KCC, system::kc85_4);
+    this->Items.Add("Ladder", "ladder-3.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("Enterprise", "enterpri.tap", FileType::KC_TAP, system::any_kc85);
+    this->Items.Add("Chess", "chess.kcc", FileType::KCC, system::any_kc85);
+    this->Items.Add("Testbild", "testbild.kcc", FileType::KCC, system::kc85_3);
+    this->Items.Add("Demo1", "demo1.kcc", FileType::KCC, system::kc85_4);
+    this->Items.Add("Demo2", "demo2.kcc", FileType::KCC, system::kc85_4);
+    this->Items.Add("Demo3", "demo3.kcc", FileType::KCC, system::kc85_4);
+    this->Items.Add("Tiny-Basic 3.01", "tinybasic-3.01.z80", FileType::KC_Z80, system::z1013_01);
+    this->Items.Add("KC-Basic", "kc_basic.z80", FileType::KC_Z80, system::any_z1013);
+    this->Items.Add("Z1013 Forth", "z1013_forth.z80", FileType::KC_Z80, system::any_z1013);
+    this->Items.Add("Boulderdash", "boulderdash_1_0.z80", FileType::KC_Z80, system(int(system::z1013_16)|int(system::z1013_64)));
+    this->Items.Add("Demolation", "demolation.z80", FileType::KC_Z80, system::any_z1013);
+    this->Items.Add("Cosmic Ball", "cosmic_ball.z80", FileType::KC_Z80, system::z1013_01);
+    this->Items.Add("Galactica", "galactica.z80", FileType::KC_Z80, system::any_z1013);
+    this->Items.Add("Mazogs", "mazog_deutsch.z80", FileType::KC_Z80, system::any_z1013);
+    this->Items.Add("Monitor ZM30 (start with 'ZM')", "zm30.kcc", FileType::KCC, system::any_z9001);
+    this->Items.Add("Forth 83 (start with 'F83')", "F83_COM.TAP", FileType::KC_TAP, system::any_z9001);
+    this->Items.Add("Arkanoid", "arkanoid.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Ghosts'n'Goblins", "ghosts_n_goblins.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Gryzor", "gryzor.sna", FileType::CPC_SNA, system::cpc6128, true);
+    this->Items.Add("Dragon Ninja", "dragon_ninja.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Head over Heels", "head_over_heels.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Boulderdash", "boulder_dash.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Bomb Jack", "bomb_jack.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Chase HQ", "chase_hq.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Cybernoid", "cybernoid.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Fruity Frank", "fruity_frank.sna", FileType::CPC_SNA, system(int(system::kccompact)|int(system::cpc6128)), true);
+    this->Items.Add("Ikari Warriors", "ikari_warriors.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("1943", "1943.sna", FileType::CPC_SNA, system::any_cpc, true);
+    this->Items.Add("Exolon", "exolon.z80", FileType::ZX_Z80, system::zxspectrum48k, true);
+    this->Items.Add("Cyclone", "cyclone.z80", FileType::ZX_Z80, system::zxspectrum48k, true);
+    this->Items.Add("Boulderdash", "boulderdash_zx.z80", FileType::ZX_Z80, system::zxspectrum48k, true);
+    this->Items.Add("Bomb Jack", "bombjack_zx.z80", FileType::ZX_Z80, system::zxspectrum48k, true);
+    this->Items.Add("Hello World!", "atom_hello.txt", FileType::TEXT, system::acorn_atom, true);
+    this->Items.Add("Text Mode Test", "atom_alnum_test.txt", FileType::TEXT, system::acorn_atom, true);
+    this->Items.Add("Graphics Mode Test", "atom_graphics_test.txt", FileType::TEXT, system::acorn_atom, true);
 }
 
 //------------------------------------------------------------------------------
@@ -284,7 +284,7 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
             info.Type = FileLoader::FileType::TEXT;
         }
         else if (strb.Contains(".TAP") || strb.Contains(".tap")) {
-            if (this->emu->is_device(device::any_zx)) {
+            if (this->emu->is_system(system::any_zx)) {
                 info.Type = FileLoader::FileType::ZX_TAP;
             }
             else {
@@ -295,7 +295,7 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
             info.Type = FileLoader::FileType::KCC;
         }
         else if (strb.Contains(".Z80") || strb.Contains(".z80")) {
-            if (this->emu->is_device(device::any_zx)) {
+            if (this->emu->is_system(system::any_zx)) {
                 info.Type = FileLoader::FileType::ZX_Z80;
             }
             else {
@@ -362,14 +362,14 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
             ext_hdr = (const zxz80ext_header*) (ptr + sizeof(zxz80_header));
             pc = (ext_hdr->PC_h<<8 | ext_hdr->PC_l) & 0xFFFF;
             if (ext_hdr->hw_mode < 3) {
-                info.RequiredSystem = device::zxspectrum48k;
+                info.RequiredSystem = system::zxspectrum48k;
             }
             else {
-                info.RequiredSystem = device::zxspectrum128k;
+                info.RequiredSystem = system::zxspectrum128k;
             }
         }
         else {
-            info.RequiredSystem = device::zxspectrum48k;
+            info.RequiredSystem = system::zxspectrum48k;
         }
         info.StartAddr = 0x4000;
         info.EndAddr = 0x10000;
@@ -388,7 +388,7 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         info.ExecAddr = (hdr->PC_h<<8)|hdr->PC_l;
         info.HasExecAddr = true;
         info.PayloadOffset = 0x100;
-        info.RequiredSystem = device::any_cpc;  // FIXME
+        info.RequiredSystem = system::any_cpc;  // FIXME
     }
     return info;
 }
@@ -416,7 +416,7 @@ void
 FileLoader::load_zxz80(yakc* emu, const FileInfo& info, const Buffer& data) {
     // http://www.worldofspectrum.org/faq/reference/z80format.htm
     o_assert_dbg(emu);
-    if (emu->is_device(device::any_zx)) {
+    if (emu->is_system(system::any_zx)) {
         const ubyte* payload = data.Data() + info.PayloadOffset;
         const zxz80_header* hdr = (const zxz80_header*) data.Data();
         bool is_version1 = ((hdr->PC_h != 0) || (hdr->PC_l != 0));
@@ -437,7 +437,7 @@ FileLoader::load_zxz80(yakc* emu, const FileInfo& info, const Buffer& data) {
                 src_len = (phdr->len_h<<8 | phdr->len_l) & 0xFFFF;
                 dst_len = 0x4000;
                 page_index = phdr->page_nr - 3;
-                if (emu->is_device(device::zxspectrum48k) && (page_index == 5)) {
+                if (emu->is_system(system::zxspectrum48k) && (page_index == 5)) {
                     page_index = 0;
                 }
             }
@@ -503,7 +503,7 @@ void
 FileLoader::load_sna(yakc* emu, const FileInfo& info, const Buffer& data) {
     // http://cpctech.cpc-live.com/docs/snapshot.html
     o_assert_dbg(emu);
-    if (emu->is_device(device::any_cpc)) {
+    if (emu->is_system(system::any_cpc)) {
         const sna_header* hdr = (const sna_header*) data.Data();
         const ubyte* payload = data.Data() + info.PayloadOffset;
         if (hdr->dump_size == 64) {
@@ -667,7 +667,7 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
             cpu.DE = cpu.DE_ = 0x0000;
             cpu.HL = cpu.HL_ = 0x0000;
             cpu.AF_ = 0x0000;
-            if (emu->is_device(device::any_kc85)) {
+            if (emu->is_system(system::any_kc85)) {
 
                 // initialize registers
                 cpu.SP = 0x01C2;
@@ -677,11 +677,11 @@ FileLoader::start(yakc* emu, const FileInfo& info, const Buffer& data) {
                     cpu.mem.w8(addr, 0);
                 }
                 cpu.mem.w8(0xb7a0, 0);
-                if (emu->model == device::kc85_3) {
+                if (emu->model == system::kc85_3) {
                     cpu.out(&emu->kc85, 0x89, 0x9f);
                     cpu.mem.w16(cpu.SP, 0xf15c);
                 }
-                else if (emu->model == device::kc85_4) {
+                else if (emu->model == system::kc85_4) {
                     cpu.out(&emu->kc85, 0x89, 0xFF);
                     cpu.mem.w16(cpu.SP, 0xf17e);
                 }
@@ -702,7 +702,7 @@ extern "C" {
 void emsc_pass_data(const char* name, const uint8_t* data, int size) {
     Log::Info("External data received: %s, %p, %d\n", name, data, size);
     if (FileLoader::pointer && data && (size > 0)) {
-        FileLoader::Item item(name, name, FileLoader::FileType::None, device::any);
+        FileLoader::Item item(name, name, FileLoader::FileType::None, system::any);
         FileLoader* loader = FileLoader::pointer;
         loader->FileData.Clear();
         loader->FileData.Add(data, size);

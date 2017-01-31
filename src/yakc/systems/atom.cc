@@ -99,8 +99,8 @@ atom::init_keymap() {
 
 //------------------------------------------------------------------------------
 bool
-atom::check_roms(const rom_images& roms, device model, os_rom os) {
-    if (device::acorn_atom == model) {
+atom::check_roms(const rom_images& roms, system model, os_rom os) {
+    if (system::acorn_atom == model) {
         return roms.has(rom_images::atom_basic) &&
                roms.has(rom_images::atom_float) &&
                roms.has(rom_images::atom_dos);

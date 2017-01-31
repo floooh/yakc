@@ -16,8 +16,8 @@ z1013::init(breadboard* b, rom_images* r) {
 
 //------------------------------------------------------------------------------
 bool
-z1013::check_roms(const rom_images& roms, device model, os_rom os) {
-    if (device::z1013_01 == model) {
+z1013::check_roms(const rom_images& roms, system model, os_rom os) {
+    if (system::z1013_01 == model) {
         return roms.has(rom_images::z1013_mon202) && roms.has(rom_images::z1013_font);
     }
     else {
@@ -30,7 +30,7 @@ void
 z1013::init_memory_mapping() {
     z80& cpu = this->board->z80;
     cpu.mem.unmap_all();
-    if (device::z1013_64 == this->cur_model) {
+    if (system::z1013_64 == this->cur_model) {
         // 64 kByte RAM
         cpu.mem.map(1, 0x0000, 0x10000, this->board->ram[0], true);
     }
@@ -52,7 +52,7 @@ z1013::init_memory_mapping() {
 //------------------------------------------------------------------------------
 void
 z1013::init_keymaps() {
-    if (this->cur_model == device::z1013_01) {
+    if (this->cur_model == system::z1013_01) {
         this->init_keymap_8x4();
     }
     else {
@@ -69,13 +69,13 @@ z1013::on_context_switched() {
 
 //------------------------------------------------------------------------------
 void
-z1013::poweron(device m) {
+z1013::poweron(system m) {
     YAKC_ASSERT(this->board);
-    YAKC_ASSERT(int(device::any_z1013) & int(m));
+    YAKC_ASSERT(int(system::any_z1013) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
-    if (m == device::z1013_01) {
+    if (m == system::z1013_01) {
         this->cur_os = os_rom::z1013_mon202;
     }
     else {
@@ -93,7 +93,7 @@ z1013::poweron(device m) {
     this->init_memory_mapping();
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
-    this->board->clck.init((m == device::z1013_01) ? 1000 : 2000);
+    this->board->clck.init((m == system::z1013_01) ? 1000 : 2000);
 
     // initialize hardware components
     this->board->z80.init();
@@ -216,7 +216,7 @@ z1013::pio_in(int pio_id, int port_id) {
         // FIXME: handle bit 7 for cassette input
         // read keyboard matrix state into lower 4 bits
         ubyte val = 0;
-        if (device::z1013_01 == this->cur_model) {
+        if (system::z1013_01 == this->cur_model) {
             ubyte col = this->kbd_column_nr_requested & 7;
             val = 0xF & ~((this->kbd_column_bits >> (col*4)) & 0xF);
         }
@@ -262,7 +262,7 @@ z1013::init_key(ubyte ascii, int col, int line, int shift, int num_lines) {
     YAKC_ASSERT((ascii < 128) && (col>=0) && (col<8) && (line>=0) && (line<num_lines) && (shift>=0) && (shift<5));
     uint64_t mask = kbd_bit(col, line, num_lines);
     if (shift != 0) {
-        if (device::z1013_01 == this->cur_model) {
+        if (system::z1013_01 == this->cur_model) {
             mask |= kbd_bit(shift-1, 3, num_lines);
         }
         else {
@@ -402,7 +402,7 @@ z1013::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 const char*
 z1013::system_info() const {
-    if (this->cur_model == device::z1013_01) {
+    if (this->cur_model == system::z1013_01) {
         return
             "The Z1013 was the only East German home computer that was "
             "available to the general public and cheap enough to be "
@@ -422,7 +422,7 @@ z1013::system_info() const {
             "Display:           32x32 ASCII, monochrome\n"
             "Special Power:     the keyboard has 4 shift keys";
     }
-    else if (this->cur_model == device::z1013_16) {
+    else if (this->cur_model == system::z1013_16) {
         return
             "The Z1013.16 was an improved version of the original Z1013 "
             "hobbyist kit. It had a CPU with higher quality-rating allowing "

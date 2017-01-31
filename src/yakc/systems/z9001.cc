@@ -85,14 +85,14 @@ z9001::init(breadboard* b, rom_images* r) {
 
 //------------------------------------------------------------------------------
 bool
-z9001::check_roms(const rom_images& roms, device model, os_rom os) {
-    if ((device::z9001 == model) && (os_rom::z9001_os_1_2 == os)) {
+z9001::check_roms(const rom_images& roms, system model, os_rom os) {
+    if ((system::z9001 == model) && (os_rom::z9001_os_1_2 == os)) {
         return roms.has(rom_images::z9001_os12_1) &&
                roms.has(rom_images::z9001_os12_2) &&
                roms.has(rom_images::z9001_basic_507_511) &&
                roms.has(rom_images::z9001_font);
     }
-    else if ((device::kc87 == model) && (os_rom::kc87_os_2 == os)) {
+    else if ((system::kc87 == model) && (os_rom::kc87_os_2 == os)) {
         return roms.has(rom_images::kc87_os_2) &&
                roms.has(rom_images::z9001_basic) &&
                roms.has(rom_images::kc87_font_2);
@@ -107,14 +107,14 @@ void
 z9001::init_memory_mapping() {
     z80& cpu = this->board->z80;
     cpu.mem.unmap_all();
-    if (device::z9001 == this->cur_model) {
+    if (system::z9001 == this->cur_model) {
         // emulate a Z9001 with 16 KByte RAM module and BASIC module
         cpu.mem.map(0, 0x0000, 0x8000, this->board->ram[0], true);
         cpu.mem.map(1, 0xC000, 0x2800, this->roms->ptr(rom_images::z9001_basic_507_511), false);
         cpu.mem.map(1, 0xF000, 0x0800, this->roms->ptr(rom_images::z9001_os12_1), false);
         cpu.mem.map(1, 0xF800, 0x0800, this->roms->ptr(rom_images::z9001_os12_2), false);
     }
-    else if (device::kc87 == this->cur_model) {
+    else if (system::kc87 == this->cur_model) {
         // emulate a KC87 with 48 KByte RAM
         cpu.mem.map(0, 0x0000, 0xC000, this->board->ram[0], true);
         cpu.mem.map(1, 0xC000, 0x2000, this->roms->ptr(rom_images::z9001_basic), false);
@@ -140,9 +140,9 @@ z9001::on_context_switched() {
 
 //------------------------------------------------------------------------------
 void
-z9001::poweron(device m, os_rom os) {
+z9001::poweron(system m, os_rom os) {
     YAKC_ASSERT(this->board);
-    YAKC_ASSERT(int(device::any_z9001) & int(m));
+    YAKC_ASSERT(int(system::any_z9001) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
@@ -493,7 +493,7 @@ z9001::handle_key() {
 //------------------------------------------------------------------------------
 void
 z9001::border_color(float& out_red, float& out_green, float& out_blue) {
-    if (device::kc87 == this->cur_model) {
+    if (system::kc87 == this->cur_model) {
         uint32_t bc = palette[this->brd_color & 7];
         out_red   = float(bc & 0xFF) / 255.0f;
         out_green = float((bc>>8)&0xFF) / 255.0f;
@@ -513,14 +513,14 @@ z9001::decode_video() {
     const ubyte* vidmem = this->board->ram[video_ram_page];
     const ubyte* colmem = this->board->ram[color_ram_page];
     ubyte* font;
-    if (device::kc87 == this->cur_model) {
+    if (system::kc87 == this->cur_model) {
         font = this->roms->ptr(rom_images::kc87_font_2);
     }
     else {
         font = this->roms->ptr(rom_images::z9001_font);
     }
     int off = 0;
-    if (device::kc87 == this->cur_model) {
+    if (system::kc87 == this->cur_model) {
         uint32_t fg, bg;
         for (int y = 0; y < 24; y++) {
             for (int py = 0; py < 8; py++) {
@@ -578,7 +578,7 @@ z9001::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 const char*
 z9001::system_info() const {
-    if (device::z9001 == this->cur_model) {
+    if (system::z9001 == this->cur_model) {
         return
             "The Z9001 (later retconned to KC85/1) was independently developed "
             "to the HC900 (aka KC85/2) by Robotron Dresden. It had a pretty "

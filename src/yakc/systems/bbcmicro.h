@@ -21,12 +21,12 @@ public:
     /// one-time setup
     void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, device model, os_rom os);    
+    static bool check_roms(const rom_images& roms, system model, os_rom os);
     /// initialize memory mapping (called from poweron or snapshot restore)
     void init_memory_map();
     
     /// power-on the device
-    void poweron(device m);
+    void poweron(system m);
     /// power-off the device
     void poweroff();
     /// reset the device
@@ -49,7 +49,7 @@ public:
     virtual void cpu_tick();
 
     static bbcmicro* self;
-    device cur_model = device::bbcmicro_b;
+    system cur_model = system::bbcmicro_b;
     bool on = false;
     bbcmicro_video video;
 };

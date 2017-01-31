@@ -58,10 +58,10 @@ public:
     /// one-time init
     void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, device model, os_rom os);
+    static bool check_roms(const rom_images& roms, system model, os_rom os);
 
     /// power-on the device
-    void poweron(device m, os_rom os);
+    void poweron(system m, os_rom os);
     /// power-off the device
     void poweroff();
     /// reset the device
@@ -104,7 +104,7 @@ public:
     /// update the rom pointers
     void update_rom_pointers();
 
-    device cur_model = device::kc85_3;
+    system cur_model = system::kc85_3;
     os_rom cur_caos = os_rom::caos_3_1;
     bool on = false;
     ubyte key_code = 0;

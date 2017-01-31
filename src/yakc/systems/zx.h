@@ -20,7 +20,7 @@ public:
     /// one-time setup
     void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, device model, os_rom os);    
+    static bool check_roms(const rom_images& roms, system model, os_rom os);
     /// initialize the memory map
     void init_memory_map();
     /// initialize the keyboard matrix mapping table
@@ -28,7 +28,7 @@ public:
     /// initialize a single entry in the key-map table
     void init_key_mask(ubyte ascii, int column, int line, int shift);
     /// power-on the device
-    void poweron(device m);
+    void poweron(system m);
     /// power-off the device
     void poweroff();
     /// reset the device
@@ -62,7 +62,7 @@ public:
 
     static uint32_t palette[8];
 
-    device cur_model = device::zxspectrum48k;
+    system cur_model = system::zxspectrum48k;
     bool on = false;
     bool memory_paging_disabled = false;
     uint8_t last_fe_out = 0;            // last OUT value to xxFE port

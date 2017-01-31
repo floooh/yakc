@@ -49,14 +49,14 @@ public:
     /// one-time setup
     void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, device model, os_rom os);    
+    static bool check_roms(const rom_images& roms, system model, os_rom os);
     /// initialize memory mapping (called from poweron or snapshot restore)
     void init_memory_mapping();
     /// initialize keymap tables (called from poweron or snapshot restore)
     void init_keymaps();
 
     /// power-on the device
-    void poweron(device m);
+    void poweron(system m);
     /// power-off the device
     void poweroff();
     /// reset the device
@@ -97,7 +97,7 @@ public:
     void decode_video();
 
     static const int vidmem_page = 4;
-    device cur_model = device::z1013_01;
+    system cur_model = system::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;
     bool on = false;
     ubyte kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)

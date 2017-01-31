@@ -22,7 +22,7 @@ is_modifier(Key::Code key) {
 //------------------------------------------------------------------------------
 static uint8_t
 translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
-    if (emu->is_device(device::any_zx)) {
+    if (emu->is_system(system::any_zx)) {
         switch (key) {
             case Key::Left:         return 0x08;
             case Key::Right:        return 0x09;
@@ -35,7 +35,7 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
             default:                return 0;
         }
     }
-    else if (emu->is_device(device::acorn_atom)) {
+    else if (emu->is_system(system::acorn_atom)) {
         // http://www.vintagecomputer.net/fjkraan/comp/atom/atap/atap03.html#131
         switch (key) {
             case Key::Left:         return 0x08;
@@ -61,7 +61,7 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
             default:                return 0;
         }
     }
-    else if (emu->is_device(device::any_cpc)) {
+    else if (emu->is_system(system::any_cpc)) {
         switch (key) {
             case Key::Left:         return 0x08;
             case Key::Right:        return 0x09;
@@ -125,7 +125,7 @@ Keyboard::Setup(yakc& emu_) {
             if ((e.WCharCode >= 32) && (e.WCharCode < 127)) {
                 uint8_t ascii = (uint8_t) e.WCharCode;
                 // invert case (not on ZX or CPC machines)
-                if (!(this->emu->is_device(device::any_zx)||this->emu->is_device(device::any_cpc))) {
+                if (!(this->emu->is_system(system::any_zx)||this->emu->is_system(system::any_cpc))) {
                     if (islower(ascii)) {
                         ascii = toupper(ascii);
                     }

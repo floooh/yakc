@@ -21,7 +21,7 @@ public:
     /// one-time setup
     void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, device model, os_rom os);        
+    static bool check_roms(const rom_images& roms, system model, os_rom os);
     /// initialize the memory map
     void init_memory_map();
     /// initialize the keycode translation map
@@ -29,7 +29,7 @@ public:
     /// initialize a single entry in the key-map table
     void init_key_mask(ubyte ascii, int column, int line, int shift);    
     /// power-on the device
-    void poweron(device m);
+    void poweron(system m);
     /// power-off the device
     void poweroff();
     /// reset the device
@@ -64,7 +64,7 @@ public:
     /// vblank callback
     virtual void vblank() override;
 
-    device cur_model = device::cpc464;
+    system cur_model = system::cpc464;
     bool on = false;
 
     cpc_video video;

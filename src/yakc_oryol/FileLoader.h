@@ -32,14 +32,14 @@ public:
 
     /// a load item
     struct Item {
-        Item(const char* n, const char* fn, FileType t, device compat, bool enableJoystick=false) :
+        Item(const char* n, const char* fn, FileType t, system compat, bool enableJoystick=false) :
             Name(n), Filename(fn), Type(t), Compat(compat), OptStartAddr(0), OptExecAddr(0), EnableJoystick(true) {};
-        Item(const char* n, const char* fn, FileType t, device compat, uword startAddr, uword execAddr) :
+        Item(const char* n, const char* fn, FileType t, system compat, uword startAddr, uword execAddr) :
             Name(n), Filename(fn), Type(t), Compat(compat), OptStartAddr(startAddr), OptExecAddr(execAddr) {};
         Oryol::String Name;
         Oryol::String Filename;
         FileType Type;
-        device Compat;
+        system Compat;
         uword OptStartAddr;
         uword OptExecAddr;
         bool EnableJoystick;
@@ -67,7 +67,7 @@ public:
         bool HasExecAddr = false;
         bool FileSizeError = false;
         int PayloadOffset = 0;
-        device RequiredSystem = device::any;
+        system RequiredSystem = system::any;
         bool EnableJoystick = false;
     } Info;
     /// url of last loaded file

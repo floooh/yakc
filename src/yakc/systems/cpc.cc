@@ -95,14 +95,14 @@ cpc::init(breadboard* b, rom_images* r) {
 
 //------------------------------------------------------------------------------
 bool
-cpc::check_roms(const rom_images& roms, device model, os_rom os) {
-    if (device::cpc464 == model) {
+cpc::check_roms(const rom_images& roms, system model, os_rom os) {
+    if (system::cpc464 == model) {
         return roms.has(rom_images::cpc464_os) && roms.has(rom_images::cpc464_basic);
     }
-    else if (device::cpc6128 == model) {
+    else if (system::cpc6128 == model) {
         return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
     }
-    else if (device::kccompact == model) {
+    else if (system::kccompact == model) {
         return roms.has(rom_images::kcc_os) && roms.has(rom_images::kcc_basic);
     }
     else {
@@ -129,9 +129,9 @@ cpc::on_context_switched() {
 
 //------------------------------------------------------------------------------
 void
-cpc::poweron(device m) {
+cpc::poweron(system m) {
     YAKC_ASSERT(this->board);
-    YAKC_ASSERT(int(device::any_cpc) & int(m));
+    YAKC_ASSERT(int(system::any_cpc) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
@@ -259,7 +259,7 @@ cpc::cpu_out(uword port, ubyte val) {
             }
         }
         // CPC6128 RAM configuration
-        if (((val & 0xC0) == 0xC0) && (device::cpc6128 == this->cur_model)) {
+        if (((val & 0xC0) == 0xC0) && (system::cpc6128 == this->cur_model)) {
             this->ram_config = val;
             this->update_memory_mapping();
         }
@@ -414,12 +414,12 @@ cpc::update_memory_mapping() {
     // index into RAM config array
     int ram_table_index;
     ubyte* rom0_ptr,*rom1_ptr;
-    if (device::kccompact == this->cur_model) {
+    if (system::kccompact == this->cur_model) {
         ram_table_index = 0;
         rom0_ptr = this->roms->ptr(rom_images::kcc_os);
         rom1_ptr = this->roms->ptr(rom_images::kcc_basic);
     }
-    else if (device::cpc6128 == this->cur_model) {
+    else if (system::cpc6128 == this->cur_model) {
         ram_table_index = this->ram_config & 0x07;
         rom0_ptr = this->roms->ptr(rom_images::cpc6128_os);
         rom1_ptr = this->roms->ptr(rom_images::cpc6128_basic);

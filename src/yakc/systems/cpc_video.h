@@ -12,7 +12,7 @@ namespace YAKC {
 class cpc_video {
 public:
     /// initialize the object
-    void init(device model, breadboard* board);
+    void init(system model, breadboard* board);
     /// perform a reset
     void reset();
     /// call after each CPU instruction, calls the scanline() method
@@ -37,7 +37,7 @@ public:
     void decode_pixels(uint32_t* dst);
 
     breadboard* board = nullptr;
-    device model = device::none;
+    system model = system::none;
     bool debug_video = false;
 
     counter cycle_counter;

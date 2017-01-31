@@ -15,8 +15,8 @@ kc85::init(breadboard* b, rom_images* r) {
 
 //------------------------------------------------------------------------------
 bool
-kc85::check_roms(const rom_images& roms, device model, os_rom os) {
-    if (device::kc85_2 == model) {
+kc85::check_roms(const rom_images& roms, system model, os_rom os) {
+    if (system::kc85_2 == model) {
         if (os_rom::caos_hc900 == os) {
             return roms.has(rom_images::hc900);
         }
@@ -24,7 +24,7 @@ kc85::check_roms(const rom_images& roms, device model, os_rom os) {
             return roms.has(rom_images::caos22);
         }
     }
-    else if (device::kc85_3 == model) {
+    else if (system::kc85_3 == model) {
         if (os_rom::caos_3_1 == os) {
             return roms.has(rom_images::caos31) && roms.has(rom_images::kc85_basic_rom);
         }
@@ -32,7 +32,7 @@ kc85::check_roms(const rom_images& roms, device model, os_rom os) {
             return roms.has(rom_images::caos34) && roms.has(rom_images::kc85_basic_rom);
         }
     }
-    else if (device::kc85_4 == model) {
+    else if (system::kc85_4 == model) {
         if (os_rom::caos_4_2 == os) {
             return roms.has(rom_images::caos42c) &&
                    roms.has(rom_images::caos42e) &&
@@ -68,9 +68,9 @@ kc85::framebuffer(int& out_width, int& out_height) {
 
 //------------------------------------------------------------------------------
 void
-kc85::poweron(device m, os_rom os) {
+kc85::poweron(system m, os_rom os) {
     YAKC_ASSERT(this->board);
-    YAKC_ASSERT(int(device::any_kc85) & int(m));
+    YAKC_ASSERT(int(system::any_kc85) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
@@ -84,7 +84,7 @@ kc85::poweron(device m, os_rom os) {
 
     // fill RAM banks with noise (but not on KC85/4? at least the 4
     // doesn't have the random-color-pattern when switching it on)
-    if (device::kc85_4 == m) {
+    if (system::kc85_4 == m) {
         clear(this->board->ram, sizeof(this->board->ram));
     }
     else {
@@ -97,7 +97,7 @@ kc85::poweron(device m, os_rom os) {
     this->update_rom_pointers();
 
     // initialize the clock, the 85/4 runs at 1.77 MHz, the others at 1.75 MHz
-    this->board->clck.init((m == device::kc85_4) ? 1770 : 1750);
+    this->board->clck.init((m == system::kc85_4) ? 1770 : 1750);
 
     // initialize hardware components
     this->board->z80.mem.unmap_all();
@@ -115,7 +115,7 @@ kc85::poweron(device m, os_rom os) {
     // a 50Hz timer which trigger every vertical blank
     this->board->clck.config_timer_hz(0, 50);
     // a timer which triggers every PAL line for video memory decoding
-    this->board->clck.config_timer_cycles(1, (m == device::kc85_4) ? 113 : 112);
+    this->board->clck.config_timer_cycles(1, (m == system::kc85_4) ? 113 : 112);
 
     // initial memory map
     this->board->z80.out(this, 0x88, 0x9f);
@@ -303,14 +303,14 @@ kc85::cpu_out(uword port, ubyte val) {
             }
             break;
         case 0x84:
-            if (device::kc85_4 == this->cur_model) {
+            if (system::kc85_4 == this->cur_model) {
                 this->io84 = val;
                 this->video.kc85_4_irm_control(val);
                 this->update_bank_switching();
             }
             break;
         case 0x86:
-            if (device::kc85_4 == this->cur_model) {
+            if (system::kc85_4 == this->cur_model) {
                 this->io86 = val;
                 this->update_bank_switching();
             }
@@ -439,7 +439,7 @@ kc85::update_bank_switching() {
     auto& cpu = this->board->z80;
     cpu.mem.unmap_layer(0);
 
-    if ((device::kc85_2 == this->cur_model) || (device::kc85_3 == this->cur_model)) {
+    if ((system::kc85_2 == this->cur_model) || (system::kc85_3 == this->cur_model)) {
         // ** KC85/3 or KC85/2 **
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
@@ -451,7 +451,7 @@ kc85::update_bank_switching() {
             cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[kc85_video::irm0_page], true);
         }
         // 8 KByte BASIC ROM at 0xC000 (only KC85/3)
-        if (device::kc85_3 == this->cur_model) {
+        if (system::kc85_3 == this->cur_model) {
             if (pio_a & PIO_A_BASIC_ROM) {
                 cpu.mem.map(0, 0xC000, this->basic_size, this->basic_ptr, false);
             }
@@ -461,7 +461,7 @@ kc85::update_bank_switching() {
             cpu.mem.map(0, 0xE000, this->caos_e_size, this->caos_e_ptr, false);
         }
     }
-    else if (device::kc85_4 == this->cur_model) {
+    else if (system::kc85_4 == this->cur_model) {
         // ** KC85/4 **
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
@@ -513,7 +513,7 @@ kc85::update_bank_switching() {
 //------------------------------------------------------------------------------
 const char*
 kc85::system_info() const {
-    if (this->cur_model == device::kc85_2) {
+    if (this->cur_model == system::kc85_2) {
         return
             "The KC85/2 was originally named HC900 (HC: Home Computer), "
             "but it soon became clear that the system would be too expensive "
@@ -543,7 +543,7 @@ kc85::system_info() const {
             "Special Power:     great graphics for an 8-bitter without custom chips";
 
     }
-    else if (this->cur_model == device::kc85_3) {
+    else if (this->cur_model == system::kc85_3) {
         return
             "The hardware of the KC85/3 was identical to it's "
             "predecessor KC85/2, except for an additional 8 KByte "

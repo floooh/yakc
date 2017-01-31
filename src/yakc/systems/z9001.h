@@ -32,12 +32,12 @@ public:
     /// one-time setup
     void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, device model, os_rom os);
+    static bool check_roms(const rom_images& roms, system model, os_rom os);
     /// init the memory map
     void init_memory_mapping();
 
     /// power-on the device
-    void poweron(device m, os_rom os);
+    void poweron(system m, os_rom os);
     /// power-off the device
     void poweroff();
     /// reset the device
@@ -84,7 +84,7 @@ public:
     static const int video_ram_page = 4;
     static const int color_ram_page = 5;
 
-    device cur_model = device::kc87;
+    system cur_model = system::kc87;
     os_rom cur_os = os_rom::kc87_os_2;
     bool on = false;
     uint64_t cur_tick = 0;

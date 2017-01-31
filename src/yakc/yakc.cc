@@ -31,26 +31,26 @@ yakc::add_rom(rom_images::rom type, const uint8_t* ptr, int size) {
 
 //------------------------------------------------------------------------------
 bool
-yakc::check_roms(device m, os_rom os) {
-    if (is_device(m, device::any_kc85)) {
+yakc::check_roms(system m, os_rom os) {
+    if (is_system(m, system::any_kc85)) {
         return kc85::check_roms(this->roms, m, os);
     }
-    else if (is_device(m, device::any_z1013)) {
+    else if (is_system(m, system::any_z1013)) {
         return z1013::check_roms(this->roms, m, os);
     }
-    else if (is_device(m, device::any_z9001)) {
+    else if (is_system(m, system::any_z9001)) {
         return z9001::check_roms(this->roms, m, os);
     }
-    else if (is_device(m, device::any_zx)) {
+    else if (is_system(m, system::any_zx)) {
         return zx::check_roms(this->roms, m, os);
     }
-    else if (is_device(m, device::any_cpc)) {
+    else if (is_system(m, system::any_cpc)) {
         return cpc::check_roms(this->roms, m, os);
     }
-    else if (is_device(m, device::acorn_atom)) {
+    else if (is_system(m, system::acorn_atom)) {
         return atom::check_roms(this->roms, m, os);
     }
-    else if (is_device(m, device::bbcmicro_b)) {
+    else if (is_system(m, system::bbcmicro_b)) {
         return bbcmicro::check_roms(this->roms, m, os);
     }
     else {
@@ -60,32 +60,32 @@ yakc::check_roms(device m, os_rom os) {
 
 //------------------------------------------------------------------------------
 void
-yakc::poweron(device m, os_rom rom) {
+yakc::poweron(system m, os_rom rom) {
     YAKC_ASSERT(!this->kc85.on && !this->z1013.on);
     this->clear_daisychain();
     this->model = m;
     this->os = rom;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
-    if (this->is_device(device::any_kc85)) {
+    if (this->is_system(system::any_kc85)) {
         this->kc85.poweron(m, rom);
     }
-    else if (this->is_device(device::any_z1013)) {
+    else if (this->is_system(system::any_z1013)) {
         this->z1013.poweron(m);
     }
-    else if (this->is_device(device::any_z9001)) {
+    else if (this->is_system(system::any_z9001)) {
         this->z9001.poweron(m, rom);
     }
-    else if (this->is_device(device::any_zx)) {
+    else if (this->is_system(system::any_zx)) {
         this->zx.poweron(m);
     }
-    else if (this->is_device(device::any_cpc)) {
+    else if (this->is_system(system::any_cpc)) {
         this->cpc.poweron(m);
     }
-    else if (this->is_device(device::acorn_atom)) {
+    else if (this->is_system(system::acorn_atom)) {
         this->atom.poweron();
     }
-    else if (this->is_device(device::bbcmicro_b)) {
+    else if (this->is_system(system::bbcmicro_b)) {
         this->bbcmicro.poweron(m);
     }
 }
@@ -164,45 +164,45 @@ yakc::clear_daisychain() {
 void
 yakc::on_context_switched() {
     this->clear_daisychain();
-    if (this->is_device(device::any_kc85)) {
+    if (this->is_system(system::any_kc85)) {
         this->kc85.on_context_switched();
     }
-    else if (this->is_device(device::any_z1013)) {
+    else if (this->is_system(system::any_z1013)) {
         this->z1013.on_context_switched();
     }
-    else if (this->is_device(device::any_z9001)) {
+    else if (this->is_system(system::any_z9001)) {
         this->z9001.on_context_switched();
     }
-    else if (this->is_device(device::any_zx)) {
+    else if (this->is_system(system::any_zx)) {
         this->zx.on_context_switched();
     }
-    else if (this->is_device(device::any_cpc)) {
+    else if (this->is_system(system::any_cpc)) {
         this->cpc.on_context_switched();
     }
-    else if (this->is_device(device::acorn_atom)) {
+    else if (this->is_system(system::acorn_atom)) {
         this->atom.on_context_switched();
     }
-    else if (this->is_device(device::bbcmicro_b)) {
+    else if (this->is_system(system::bbcmicro_b)) {
         this->bbcmicro.on_context_switched();
     }
 }
 
 //------------------------------------------------------------------------------
 bool
-yakc::is_device(device mask) const {
+yakc::is_system(system mask) const {
     return 0 != (int(this->model) & int(mask));
 }
 
 //------------------------------------------------------------------------------
 bool
-yakc::is_device(device model, device mask) {
+yakc::is_system(system model, system mask) {
     return 0 != (int(model) & int(mask));
 }
 
 //------------------------------------------------------------------------------
 cpu_model
 yakc::cpu_type() const {
-    if (this->is_device(device::bbcmicro_b) || this->is_device(device::acorn_atom)) {
+    if (this->is_system(system::bbcmicro_b) || this->is_system(system::acorn_atom)) {
         return cpu_model::mos6502;
     }
     else {
@@ -338,25 +338,25 @@ yakc::system_info() const {
 //------------------------------------------------------------------------------
 system_bus*
 yakc::get_bus() {
-    if (this->is_device(device::any_kc85)) {
+    if (this->is_system(system::any_kc85)) {
         return &this->kc85;
     }
-    else if (this->is_device(device::any_z1013)) {
+    else if (this->is_system(system::any_z1013)) {
         return &this->z1013;
     }
-    else if (this->is_device(device::any_z9001)) {
+    else if (this->is_system(system::any_z9001)) {
         return &this->z9001;
     }
-    else if (this->is_device(device::any_zx)) {
+    else if (this->is_system(system::any_zx)) {
         return &this->zx;
     }
-    else if (this->is_device(device::any_cpc)) {
+    else if (this->is_system(system::any_cpc)) {
         return &this->cpc;
     }
-    else if (this->is_device(device::acorn_atom)) {
+    else if (this->is_system(system::acorn_atom)) {
         return &this->atom;
     }
-    else if (this->is_device(device::bbcmicro_b)) {
+    else if (this->is_system(system::bbcmicro_b)) {
         return &this->bbcmicro;
     }
     else {

@@ -224,135 +224,135 @@ UI::OnFrame(yakc& emu) {
         if (ImGui::BeginMainMenuBar()) {
             const char* model;
             switch (emu.model) {
-                case device::kc85_2:            model = "KC85/2"; break;
-                case device::kc85_3:            model = "KC85/3"; break;
-                case device::kc85_4:            model = "KC85/4"; break;
-                case device::z1013_01:          model = "Z1013.01"; break;
-                case device::z1013_16:          model = "Z1013.16"; break;
-                case device::z1013_64:          model = "Z1013.64"; break;
-                case device::z9001:             model = "Z9001"; break;
-                case device::kc87:              model = "KC87"; break;
-                case device::zxspectrum48k:     model = "Spectrum48K"; break;
-                case device::zxspectrum128k:    model = "Spectrum128K"; break;
-                case device::cpc464:            model = "CPC464"; break;
-                case device::cpc6128:           model = "CPC6128"; break;
-                case device::kccompact:         model = "KCCompact"; break;
-                case device::bbcmicro_b:        model = "BBC Micro-B"; break;
-                case device::acorn_atom:        model = "Acorn Atom"; break;
+                case system::kc85_2:            model = "KC85/2"; break;
+                case system::kc85_3:            model = "KC85/3"; break;
+                case system::kc85_4:            model = "KC85/4"; break;
+                case system::z1013_01:          model = "Z1013.01"; break;
+                case system::z1013_16:          model = "Z1013.16"; break;
+                case system::z1013_64:          model = "Z1013.64"; break;
+                case system::z9001:             model = "Z9001"; break;
+                case system::kc87:              model = "KC87"; break;
+                case system::zxspectrum48k:     model = "Spectrum48K"; break;
+                case system::zxspectrum128k:    model = "Spectrum128K"; break;
+                case system::cpc464:            model = "CPC464"; break;
+                case system::cpc6128:           model = "CPC6128"; break;
+                case system::kccompact:         model = "KCCompact"; break;
+                case system::bbcmicro_b:        model = "BBC Micro-B"; break;
+                case system::acorn_atom:        model = "Acorn Atom"; break;
                 default: model="??"; break;
             }
             if (ImGui::BeginMenu(model)) {
                 if (ImGui::BeginMenu("System")) {
                     if (ImGui::BeginMenu("VEB MPM")) {
-                        if (emu.check_roms(device::kc85_2, os_rom::caos_hc900)) {
+                        if (emu.check_roms(system::kc85_2, os_rom::caos_hc900)) {
                             if (ImGui::MenuItem("KC85/2 (HC900-CAOS)")) {
                                 emu.poweroff();
-                                emu.poweron(device::kc85_2, os_rom::caos_hc900);
+                                emu.poweron(system::kc85_2, os_rom::caos_hc900);
                             }
                         }
-                        if (emu.check_roms(device::kc85_2, os_rom::caos_2_2)) {
+                        if (emu.check_roms(system::kc85_2, os_rom::caos_2_2)) {
                             if (ImGui::MenuItem("KC85/2 (HC-CAOS 2.2)")) {
                                 emu.poweroff();
-                                emu.poweron(device::kc85_2, os_rom::caos_2_2);
+                                emu.poweron(system::kc85_2, os_rom::caos_2_2);
                             }
                         }
-                        if (emu.check_roms(device::kc85_3, os_rom::caos_3_1)) {
+                        if (emu.check_roms(system::kc85_3, os_rom::caos_3_1)) {
                             if (ImGui::MenuItem("KC85/3 (HC-CAOS 3.1)")) {
                                 emu.poweroff();
-                                emu.poweron(device::kc85_3, os_rom::caos_3_1);
+                                emu.poweron(system::kc85_3, os_rom::caos_3_1);
                             }
                         }
-                        if (emu.check_roms(device::kc85_3, os_rom::caos_3_4)) {
+                        if (emu.check_roms(system::kc85_3, os_rom::caos_3_4)) {
                             if (ImGui::MenuItem("KC85/3 (HC-CAOS 3.4i)")) {
                                 emu.poweroff();
-                                emu.poweron(device::kc85_3, os_rom::caos_3_4);
+                                emu.poweron(system::kc85_3, os_rom::caos_3_4);
                             }
                         }
-                        if (emu.check_roms(device::kc85_4, os_rom::caos_4_2)) {
+                        if (emu.check_roms(system::kc85_4, os_rom::caos_4_2)) {
                             if (ImGui::MenuItem("KC85/4 (KC-CAOS 4.2)")) {
                                 emu.poweroff();
-                                emu.poweron(device::kc85_4, os_rom::caos_4_2);
+                                emu.poweron(system::kc85_4, os_rom::caos_4_2);
                             }
                         }
-                        if (emu.check_roms(device::kccompact)) {
+                        if (emu.check_roms(system::kccompact)) {
                             if (ImGui::MenuItem("KC Compact (CPC clone)")) {
                                 emu.poweroff();
-                                emu.poweron(device::kccompact);
+                                emu.poweron(system::kccompact);
                             }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Robotron Dresden")) {
-                        if (emu.check_roms(device::z9001, os_rom::z9001_os_1_2)) {
+                        if (emu.check_roms(system::z9001, os_rom::z9001_os_1_2)) {
                             if (ImGui::MenuItem("Z9001 (32KB)")) {
                                 emu.poweroff();
-                                emu.poweron(device::z9001, os_rom::z9001_os_1_2);
+                                emu.poweron(system::z9001, os_rom::z9001_os_1_2);
                             }
                         }
-                        if (emu.check_roms(device::kc87, os_rom::kc87_os_2)) {
+                        if (emu.check_roms(system::kc87, os_rom::kc87_os_2)) {
                             if (ImGui::MenuItem("KC87  (48KB)")) {
                                 emu.poweroff();
-                                emu.poweron(device::kc87, os_rom::kc87_os_2);
+                                emu.poweron(system::kc87, os_rom::kc87_os_2);
                             }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Robotron Riesa")) {
-                        if (emu.check_roms(device::z1013_01)) {
+                        if (emu.check_roms(system::z1013_01)) {
                             if (ImGui::MenuItem("Z1013.01 (1MHz, 16KB)")) {
                                 emu.poweroff();
-                                emu.poweron(device::z1013_01);
+                                emu.poweron(system::z1013_01);
                             }
                         }
-                        if (emu.check_roms(device::z1013_16)) {
+                        if (emu.check_roms(system::z1013_16)) {
                             if (ImGui::MenuItem("Z1013.16 (2MHz, 16KB)")) {
                                 emu.poweroff();
-                                emu.poweron(device::z1013_16);
+                                emu.poweron(system::z1013_16);
                             }
                         }
-                        if (emu.check_roms(device::z1013_64)) {
+                        if (emu.check_roms(system::z1013_64)) {
                             if (ImGui::MenuItem("Z1013.64 (2MHz, 64KB)")) {
                                 emu.poweroff();
-                                emu.poweron(device::z1013_64);
+                                emu.poweron(system::z1013_64);
                             }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Sinclair")) {
-                        if (emu.check_roms(device::zxspectrum48k)) {
+                        if (emu.check_roms(system::zxspectrum48k)) {
                             if (ImGui::MenuItem("ZX Spectrum 48K")) {
                                 emu.poweroff();
-                                emu.poweron(device::zxspectrum48k);
+                                emu.poweron(system::zxspectrum48k);
                             }
                         }
-                        if (emu.check_roms(device::zxspectrum128k)) {
+                        if (emu.check_roms(system::zxspectrum128k)) {
                             if (ImGui::MenuItem("ZX Spectrum 128K")) {
                                 emu.poweroff();
-                                emu.poweron(device::zxspectrum128k);
+                                emu.poweron(system::zxspectrum128k);
                             }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Amstrad")) {
-                        if (emu.check_roms(device::cpc464)) {
+                        if (emu.check_roms(system::cpc464)) {
                             if (ImGui::MenuItem("CPC 464")) {
                                 emu.poweroff();
-                                emu.poweron(device::cpc464);
+                                emu.poweron(system::cpc464);
                             }
                         }
-                        if (emu.check_roms(device::cpc6128)) {
+                        if (emu.check_roms(system::cpc6128)) {
                             if (ImGui::MenuItem("CPC 6128")) {
                                 emu.poweroff();
-                                emu.poweron(device::cpc6128);
+                                emu.poweron(system::cpc6128);
                             }
                         }
                         ImGui::EndMenu();
                     }
                     if (ImGui::BeginMenu("Acorn")) {
-                        if (emu.check_roms(device::acorn_atom)) {
+                        if (emu.check_roms(system::acorn_atom)) {
                             if (ImGui::MenuItem("Acorn Atom")) {
                                 emu.poweroff();
-                                emu.poweron(device::acorn_atom);
+                                emu.poweron(system::acorn_atom);
                             }
                         }
                         ImGui::EndMenu();
@@ -389,7 +389,7 @@ UI::OnFrame(yakc& emu) {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Hardware")) {
-                if (emu.is_device(device::any_kc85)) {
+                if (emu.is_system(system::any_kc85)) {
                     if (ImGui::MenuItem("Expansion Slots")) {
                         this->OpenWindow(emu, ModuleWindow::Create());
                     }
@@ -438,17 +438,17 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Memory Editor")) {
                     this->OpenWindow(emu, MemoryWindow::Create());
                 }
-                if (emu.is_device(device::any_kc85)) {
+                if (emu.is_system(system::any_kc85)) {
                     if (ImGui::MenuItem("Scan for Commands...")) {
                         this->OpenWindow(emu, CommandWindow::Create());
                     }
                 }
-                if (emu.is_device(device::any_cpc)) {
+                if (emu.is_system(system::any_cpc)) {
                     if (ImGui::MenuItem("CPC CRTC Visualization", nullptr, emu.cpc.video.debug_video)) {
                         emu.cpc.video.debug_video = !emu.cpc.video.debug_video;
                     }
                 }
-                if (!(emu.is_device(device::any_zx) || emu.is_device(device::any_cpc))) {
+                if (!(emu.is_system(system::any_zx) || emu.is_system(system::any_cpc))) {
                     if (ImGui::BeginMenu("Take Snapshot")) {
                         for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
                             strBuilder.Format(32, "Snapshot %d", i);

@@ -39,11 +39,11 @@ zx::init(breadboard* b, rom_images* r) {
 
 //------------------------------------------------------------------------------
 bool
-zx::check_roms(const rom_images& roms, device model, os_rom os) {
-    if (device::zxspectrum48k == model) {
+zx::check_roms(const rom_images& roms, system model, os_rom os) {
+    if (system::zxspectrum48k == model) {
         return roms.has(rom_images::zx48k);
     }
-    else if (device::zxspectrum128k == model) {
+    else if (system::zxspectrum128k == model) {
         return roms.has(rom_images::zx128k_0) && roms.has(rom_images::zx128k_1);
     }
     return false;
@@ -145,7 +145,7 @@ void
 zx::init_memory_map() {
     z80& cpu = this->board->z80;
     cpu.mem.unmap_all();
-    if (device::zxspectrum48k == this->cur_model) {
+    if (system::zxspectrum48k == this->cur_model) {
         // 48k RAM between 0x4000 and 0xFFFF
         cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[0], true);
         cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[1], true);
@@ -174,9 +174,9 @@ zx::on_context_switched() {
 
 //------------------------------------------------------------------------------
 void
-zx::poweron(device m) {
+zx::poweron(system m) {
     YAKC_ASSERT(this->board);
-    YAKC_ASSERT(int(device::any_zx) & int(m));
+    YAKC_ASSERT(int(system::any_zx) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
@@ -188,7 +188,7 @@ zx::poweron(device m) {
     this->joy_mask = 0;
     this->next_kbd_mask = 0;
     this->cur_kbd_mask = 0;
-    if (device::zxspectrum48k == this->cur_model) {
+    if (system::zxspectrum48k == this->cur_model) {
         this->display_ram_bank = 0;
     }
     else {
@@ -201,7 +201,7 @@ zx::poweron(device m) {
     this->init_memory_map();
 
     // initialize the system clock and PAL-line timer
-    if (device::zxspectrum48k == m) {
+    if (system::zxspectrum48k == m) {
         // Spectrum48K is exactly 3.5 MHz
         this->board->clck.init(3500);
         this->board->clck.config_timer_cycles(0, 224);
@@ -285,7 +285,7 @@ zx::cpu_out(uword port, ubyte val) {
     }
 
     // Spectrum128K specific out ports
-    if (device::zxspectrum128k == this->cur_model) {
+    if (system::zxspectrum128k == this->cur_model) {
         // control memory bank switching on 128K
         // http://8bit.yarek.pl/computer/zx.128/
         if (0x7FFD == port) {
@@ -420,8 +420,8 @@ zx::scanline() {
     // one PAL line takes 224 T-states on 48K, and 228 T-states on 128K
     // one PAL frame is 312 lines on 48K, and 311 lines on 128K
     //
-    const uint32_t frame_scanlines = this->cur_model == device::zxspectrum128k ? 311 : 312;
-    const uint32_t top_border = this->cur_model == device::zxspectrum128k ? 63 : 64;
+    const uint32_t frame_scanlines = this->cur_model == system::zxspectrum128k ? 311 : 312;
+    const uint32_t top_border = this->cur_model == system::zxspectrum128k ? 63 : 64;
 
     // decode the next videomem line into the emulator framebuffer,
     // the border area of a real Spectrum is bigger than the emulator

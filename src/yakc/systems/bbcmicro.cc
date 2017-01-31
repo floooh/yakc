@@ -20,8 +20,8 @@ bbcmicro::init(breadboard* b, rom_images* r) {
 
 //------------------------------------------------------------------------------
 bool
-bbcmicro::check_roms(const rom_images& roms, device model, os_rom os) {
-    if (device::bbcmicro_b == model) {
+bbcmicro::check_roms(const rom_images& roms, system model, os_rom os) {
+    if (system::bbcmicro_b == model) {
         return roms.has(rom_images::bbcmicro_b_os) && roms.has(rom_images::bbcmicro_b_basic);
     }
     else {
@@ -50,7 +50,7 @@ bbcmicro::init_memory_map() {
 
 //------------------------------------------------------------------------------
 void
-bbcmicro::poweron(device m) {
+bbcmicro::poweron(system m) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(!this->on);
 

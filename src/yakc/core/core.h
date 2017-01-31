@@ -48,7 +48,7 @@ extern void fill_random(void* ptr, int num_bytes);
 #define YAKC_ASSERT(cond) do { if(!(cond)) { func.assertmsg_func(#cond,nullptr,__FILE__,__LINE__,__PRETTY_FUNCTION__); abort(); } } while(0)
 #endif
 
-enum class device {
+enum class system {
     kc85_2          = (1<<0),
     kc85_3          = (1<<1),
     kc85_4          = (1<<2),

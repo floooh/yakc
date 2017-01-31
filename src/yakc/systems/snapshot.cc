@@ -54,7 +54,7 @@ snapshot::write_emu_state(const yakc& emu, state_t& state) {
 //------------------------------------------------------------------------------
 void
 snapshot::apply_emu_state(const state_t& state, yakc& emu) {
-    emu.model = (device) state.emu.model;
+    emu.model = (system) state.emu.model;
     emu.os = (os_rom) state.emu.os;
 }
 
@@ -113,13 +113,13 @@ void
 snapshot::apply_kc_state(const state_t& state, yakc& emu) {
     kc85& kc = emu.kc85;
     kc.on = 0 != state.kc.on;
-    kc.cur_model = (device) state.kc.model;
+    kc.cur_model = (system) state.kc.model;
     kc.cur_caos  = (os_rom) state.kc.caos;
     kc.io84      = state.kc.io84;
     kc.io86      = state.kc.io86;
     kc.pio_a     = state.kc.pio_a;
     kc.pio_b     = state.kc.pio_b;
-    kc.video.model = (device) state.kc.model;
+    kc.video.model = (system) state.kc.model;
     kc.video.cur_scanline = state.kc.cur_scanline;
     kc.video.irm_control = state.kc.irm_control;
     kc.video.pio_blink_flag = 0 != state.kc.pio_blink_flag;
@@ -155,7 +155,7 @@ snapshot::write_z1013_state(const yakc& emu, state_t& state) {
 void
 snapshot::apply_z1013_state(const state_t& state, yakc& emu) {
     emu.z1013.on = 0 != state.z1013.on;
-    emu.z1013.cur_model = (device) state.z1013.model;
+    emu.z1013.cur_model = (system) state.z1013.model;
     emu.z1013.cur_os = (os_rom) state.z1013.os;
     emu.z1013.kbd_column_nr_requested = state.z1013.kbd_column_nr_requested;
     emu.z1013.kbd_8x8_requested = 0 != state.z1013.kbd_8x8_requested;
@@ -183,7 +183,7 @@ snapshot::write_z9001_state(const yakc& emu, state_t& state) {
 void
 snapshot::apply_z9001_state(const state_t& state, yakc& emu) {
     emu.z9001.on = 0 != state.z9001.on;
-    emu.z9001.cur_model = (device) state.z9001.model;
+    emu.z9001.cur_model = (system) state.z9001.model;
     emu.z9001.cur_os = (os_rom) state.z9001.os;
     emu.z9001.ctc0_mode = state.z9001.ctc0_mode;
     emu.z9001.kbd_column_mask = state.z9001.kbd_column_mask;
@@ -336,7 +336,7 @@ void
 snapshot::write_memory_state(const yakc& emu, state_t& state) {
     static_assert(sizeof(emu.board.ram) == sizeof(state.ram), "Breadboard RAM size mismatch");
     memcpy(state.ram, emu.board.ram, sizeof(emu.board.ram));
-    if (emu.is_device(device::any_kc85)) {
+    if (emu.is_system(system::any_kc85)) {
         // copy content of KC85 RAM modules
         const kc85& kc = emu.kc85;
         const auto& slot08 = kc.exp.slot_by_addr(0x08);
@@ -355,7 +355,7 @@ void
 snapshot::apply_memory_state(const state_t& state, yakc& emu) {
     static_assert(sizeof(emu.board.ram) == sizeof(state.ram), "Breadboard RAM size mismatch");
     memcpy(emu.board.ram, state.ram, sizeof(emu.board.ram));
-    if (emu.is_device(device::any_kc85)) {
+    if (emu.is_system(system::any_kc85)) {
         // copy content of KC85 RAM modules
         kc85& kc = emu.kc85;
         const auto& slot08 = kc.exp.slot_by_addr(0x08);

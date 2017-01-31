@@ -60,7 +60,7 @@ static uint32_t kcc_color_rom[32] = {
 
 //------------------------------------------------------------------------------
 void
-cpc_video::init(device model_, breadboard* board_) {
+cpc_video::init(system model_, breadboard* board_) {
     this->model = model_;
     this->board = board_;
     this->rgba8_buffer = this->board->rgba8_buffer;
@@ -69,7 +69,7 @@ cpc_video::init(device model_, breadboard* board_) {
     this->board->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
 
     // initialize the color palette (CPC and KC Compact have slightly different colors)
-    if (device::kccompact != this->model) {
+    if (system::kccompact != this->model) {
         // CPC models
         for (int i = 0; i < 32; i++) {
             this->palette[i] = cpc_palette[i];

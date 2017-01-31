@@ -37,7 +37,7 @@ static uint32_t bg_palette[8] = {
 
 //------------------------------------------------------------------------------
 void
-kc85_video::init(device m, breadboard* b) {
+kc85_video::init(system m, breadboard* b) {
     this->model = m;
     this->board = b;
     this->rgba8_buffer = this->board->rgba8_buffer;
@@ -111,7 +111,7 @@ void
 kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
     const int width = display_width>>3;
     unsigned int* dst_ptr = &(dst_start[y*display_width]);
-    if (device::kc85_4 == this->model) {
+    if (system::kc85_4 == this->model) {
         // KC85/4
         int irm_index = (this->irm_control & 1) * 2;
         const ubyte* pixel_data = this->board->ram[irm0_page + irm_index];

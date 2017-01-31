@@ -36,7 +36,7 @@ LoadWindow::Draw(yakc& emu) {
             static char urlBuf[256] = "";
             ImGui::Text("http://localhost:8000/"); ImGui::SameLine();
             if (ImGui::InputText("##url", urlBuf, sizeof(urlBuf), ImGuiInputTextFlags_EnterReturnsTrue)) {
-                FileLoader::Item item("", urlBuf, FileLoader::FileType::None, device::any);
+                FileLoader::Item item("", urlBuf, FileLoader::FileType::None, system::any);
                 ldr.Load(item);
             }
             #endif
@@ -55,7 +55,7 @@ LoadWindow::Draw(yakc& emu) {
             int curFileType = (int) ldr.Info.Type;
             if (ImGui::Combo("File Type", &curFileType, typeNames, int(FileLoader::FileType::Num))) {
                 // reparse loaded data
-                FileLoader::Item item("", ldr.Info.Filename.AsCStr(), (FileLoader::FileType)curFileType, device::any);
+                FileLoader::Item item("", ldr.Info.Filename.AsCStr(), (FileLoader::FileType)curFileType, system::any);
                 ldr.Info = ldr.parseHeader(ldr.FileData, item);
             }
             ImGui::Text("Filename: %s", ldr.Info.Filename.AsCStr());
@@ -82,18 +82,18 @@ LoadWindow::Draw(yakc& emu) {
             ImGui::Checkbox("Enable Joystick", &ldr.Info.EnableJoystick);
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
             const char* compatMsg = " ";
-            if (!emu.is_device(ldr.Info.RequiredSystem)) {
+            if (!emu.is_system(ldr.Info.RequiredSystem)) {
                 switch (ldr.Info.RequiredSystem) {
-                    case device::zxspectrum48k:
+                    case system::zxspectrum48k:
                         compatMsg = "Please reboot to ZX Spectrum 48K";
                         break;
-                    case device::zxspectrum128k:
+                    case system::zxspectrum128k:
                         compatMsg = "Please reboot to ZX Spectrum 128K";
                         break;
-                    case device::cpc464:
+                    case system::cpc464:
                         compatMsg = "Please reboot to Amstrad CPC464";
                         break;
-                    case device::cpc6128:
+                    case system::cpc6128:
                         compatMsg = "Please reboot to Amstrad CPC6128";
                         break;
                     default:
