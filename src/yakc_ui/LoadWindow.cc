@@ -42,6 +42,7 @@ LoadWindow::Draw(yakc& emu) {
             #endif
         }
         else {
+            // these must match the FileLoader::FileType enum
             static const char* typeNames[] = {
                 "RAW",
                 "KCC",
@@ -50,8 +51,10 @@ LoadWindow::Draw(yakc& emu) {
                 "ZX TAP",
                 "ZX Z80",
                 "CPC SNA",
+                "ATOM TAP",
                 "TEXT"
             };
+            static_assert(int(sizeof(typeNames)/sizeof(const char*)) == int(FileLoader::FileType::Num), "FileType mismatch");
             int curFileType = (int) ldr.Info.Type;
             if (ImGui::Combo("File Type", &curFileType, typeNames, int(FileLoader::FileType::Num))) {
                 // reparse loaded data
