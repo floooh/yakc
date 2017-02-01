@@ -24,6 +24,7 @@ public:
         ZX_TAP,
         ZX_Z80,
         CPC_SNA,
+        ATOM_TAP,
         TEXT,
 
         Num,
@@ -109,6 +110,8 @@ public:
     static void load_zxz80(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
     /// load CPC SNA file into memory
     static void load_sna(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
+    /// load Atom TAP file into memory
+    static void load_atomtap(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
 
     Oryol::Buffer FileData;
 private:
