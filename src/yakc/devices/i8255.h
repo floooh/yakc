@@ -36,8 +36,9 @@ public:
     };
 
     static const int num_ports = 3;
-    uint8_t output[num_ports] = { };      // output latch
-    uint8_t control = 0;                  // control word
+    uint8_t output[num_ports] = { };    // output latch
+    uint8_t control = 0;                // control word
+    uint8_t last_read[num_ports] = { }; // store last input value (for debugging)
 
     /// initialize a i8255 instance
     void init(int id);
@@ -48,7 +49,6 @@ public:
     /// read from the PIO, addr is A,B,C (CTRL can't be read)
     uint8_t read(system_bus* bus, int addr);
 
-private:
     /// change the control bits
     void set_mode(system_bus* bus, uint8_t val);
     /// return input or output mode for port A

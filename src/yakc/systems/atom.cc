@@ -196,7 +196,8 @@ atom::put_input(uint8_t ascii) {
 void
 atom::cpu_tick() {
     vdg->step();
-    // feed the next input key mask so that the OS has 1 frame to read it
+    // on FSYNC, feed next input key mask, this gives the OS
+    // 1 full frame to scan the keyboard matrix
     if (vdg->on(mc6847::FSYNC)) {
         cur_key_mask = next_key_mask;
     }
@@ -227,6 +228,12 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
 uint8_t
 atom::read_vidmem(uint16_t addr) {
     uint8_t chr = self->vidmem_base[addr];
+
+    // the upper 2 databus bits are directly wired to MC6847 pins:
+    //  bit 7 -> INV pin (in text mode, invert pixel pattern)
+    //  bit 6 -> A/S and INT/EXT pin, A/S actives semigraphics mode
+    //           and INT/EXT selects the 2x3 semigraphics pattern
+    //           (so 4x4 semigraphics isn't possible)
     self->vdg->inv(chr & (1<<7));
     self->vdg->as(chr & (1<<6));
     self->vdg->int_ext(chr & (1<<6));
@@ -276,7 +283,7 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
         //  6:      MC6847 GM0
         //  7:      MC6847 GM1
         //  8:      MC6847 GM2
-        case 0:
+        case i8255::PORT_A:
             scan_kbd_col = val & 0x0F;
             vdg->ag(val & (1<<4));
             vdg->gm0(val & (1<<5));
@@ -289,7 +296,7 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
         //  1:  output: cass 1
         //  2:  output: speaker
         //  3:  output: MC6847 CSS
-        case 2:
+        case i8255::PORT_C:
             vdg->css(val & (1<<3));
             break;
     }
@@ -301,7 +308,7 @@ atom::pio_in(int pio_id, int port_id) {
     uint8_t val = 0x00;
     switch (port_id) {
         // PPI port B: keyboard row state
-        case 1:
+        case i8255::PORT_B:
             if (this->scan_kbd_col < 10) {
                 val = ~(this->cur_key_mask.col[this->scan_kbd_col]);
                 if (this->scan_kbd_col == 9) {
@@ -317,7 +324,7 @@ atom::pio_in(int pio_id, int port_id) {
         //  5:  input: cassette
         //  6:  input: keyboard repeat
         //  7:  input: MC6847 FSYNC
-        case 2:
+        case i8255::PORT_C:
             // FIXME: always send REPEAT key as 'not pressed'
             val |= (1<<6);
             if (!board->mc6847.test(mc6847::FSYNC)) {

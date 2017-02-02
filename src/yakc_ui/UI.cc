@@ -19,6 +19,7 @@
 #include "AY8910Window.h"
 #include "MC6845Window.h"
 #include "MC6847Window.h"
+#include "I8255Window.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -407,10 +408,6 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Z80 PIO 2")) {
                     this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.z80pio2));
                 }
-                // all others have 1 PIO
-                if (ImGui::MenuItem("Z80 PIO")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO", &emu.board.z80pio));
-                }
                 if (ImGui::MenuItem("Z80 CTC")) {
                     this->OpenWindow(emu, CTCWindow::Create());
                 }
@@ -422,6 +419,9 @@ UI::OnFrame(yakc& emu) {
                 }
                 if (ImGui::MenuItem("MC6847")) {
                     this->OpenWindow(emu, MC6847Window::Create());
+                }
+                if (ImGui::MenuItem("i8255")) {
+                    this->OpenWindow(emu, I8255Window::Create());
                 }
                 ImGui::EndMenu();
             }

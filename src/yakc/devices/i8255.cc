@@ -145,29 +145,38 @@ i8255::input_port_c(system_bus* bus) {
 //------------------------------------------------------------------------------
 uint8_t
 i8255::read(system_bus* bus, int addr) {
+    uint8_t val = 0xFF;
     switch (addr & 3) {
         case PORT_A:
             if (this->port_a_mode() == MODE_OUTPUT) {
-                return this->output[PORT_A];    // read data from output latch
+                val = this->output[PORT_A];    // read data from output latch
             }
             else {
-                return bus ? bus->pio_in(this->id, PORT_A) : 0xFF;
+                val = bus ? bus->pio_in(this->id, PORT_A) : 0xFF;
             }
+            this->last_read[PORT_A] = val;
+            break;
+
         case PORT_B:
             if (this->port_b_mode() == MODE_OUTPUT) {
-                return this->output[PORT_B];
+                val = this->output[PORT_B];
             }
             else {
-                return bus ? bus->pio_in(this->id, PORT_B) : 0xFF;
+                val = bus ? bus->pio_in(this->id, PORT_B) : 0xFF;
             }
+            this->last_read[PORT_B] = val;
+            break;
+
         case PORT_C:
-            return this->input_port_c(bus);
+            val = this->input_port_c(bus);
+            this->last_read[PORT_C] = val;
+            break;
 
         case CONTROL:
-            return this->control;
+            val = this->control;
+            break;
     }
-    // shouldn't happen
-    return 0xFF;
+    return val;
 }
 
 } // namespace YAKC
