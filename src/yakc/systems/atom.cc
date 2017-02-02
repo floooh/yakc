@@ -202,7 +202,10 @@ void
 atom::cpu_tick() {
     vdg->step();
 
-    // step the sound beeper
+    // update the sound beeper
+    // NOTE: don't make the cassette output audible, since it
+    // seems to get stuck at a 2.4kHz sound at the end of saving BASIC programs
+    board->beeper.write(out_beep);// || ((!state_2_4khz && out_cass1) && out_cass0));
     board->beeper.step(1);
 
     // tick the 2.4kHz counter
@@ -310,8 +313,20 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
         //  1:  output: cass 1
         //  2:  output: speaker
         //  3:  output: MC6847 CSS
+        //
+        // the resulting cassette out signal is
+        // created like this (see the Atom circuit diagram
+        // right of the keyboard matrix:
+        //
+        //  (((not 2.4khz) and cass1) & and cass0)
+        //
+        // but the cassette out bits seem to get stuck on 0
+        // after saving a BASIC program, so don't make it audible
+        //
         case i8255::PORT_C:
-            board->beeper.write(0 == (val & (1<<2)));
+            out_cass0 = 0 == (val & 1);
+            out_cass1 = 0 == (val & 2);
+            out_beep = 0 == (val & 4);
             vdg->css(val & (1<<3));
             break;
     }
@@ -364,7 +379,7 @@ atom::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 void
 atom::decode_audio(float* buffer, int num_samples) {
-    this->board->beeper.fill_samples(buffer, num_samples);
+    board->beeper.fill_samples(buffer, num_samples);
 }
 
 //------------------------------------------------------------------------------

@@ -66,6 +66,9 @@ public:
     mc6847* vdg = nullptr;
     counter counter_2_4khz;
     bool state_2_4khz = false;
+    bool out_beep = false;
+    bool out_cass0 = false;
+    bool out_cass1 = false;
 
     // keyboard matrix has 10 columns @ 8 rows,
     // complete row 6 is ctrl
