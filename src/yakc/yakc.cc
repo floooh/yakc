@@ -286,11 +286,11 @@ yakc::put_input(uint8_t ascii, uint8_t joy0_mask) {
     if (this->zx.on) {
         this->zx.put_input(ascii, joy0_mask);
     }
-    if (this->cpc.on) {
-        this->cpc.put_input(ascii, joy0_mask);
-    }
     if (this->atom.on) {
         this->atom.put_input(ascii);
+    }
+    if (this->cpc.on) {
+        this->cpc.put_input(ascii, joy0_mask);
     }
 }
 
@@ -389,6 +389,9 @@ yakc::fill_sound_samples(float* buffer, int num_samples) {
     }
     else if (this->cpc.on) {
         return this->cpc.decode_audio(buffer, num_samples);
+    }
+    else if (this->atom.on) {
+        return this->atom.decode_audio(buffer, num_samples);
     }
     else {
         clear(buffer, num_samples * sizeof(float));

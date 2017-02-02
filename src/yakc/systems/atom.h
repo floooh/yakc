@@ -40,6 +40,8 @@ public:
 
     /// get framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
+    /// decode audio data
+    void decode_audio(float* buffer, int num_samples);    
     /// get info about emulated system
     const char* system_info() const;
     /// called after snapshot restore
@@ -62,6 +64,8 @@ public:
     bool on = false;
     const uint8_t* vidmem_base = nullptr;
     mc6847* vdg = nullptr;
+    counter counter_2_4khz;
+    bool state_2_4khz = false;
 
     // keyboard matrix has 10 columns @ 8 rows,
     // complete row 6 is ctrl

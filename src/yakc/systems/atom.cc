@@ -143,11 +143,15 @@ atom::poweron() {
     mem.map(0, 0xF000, 0x1000, roms->ptr(rom_images::atom_basic) + 0x1000, false);
     vidmem_base = mem.read_ptr(0x8000);
 
-    board->clck.init(1000);
+    // 1 MHz CPU clock frequency
+    const int freq_khz = 1000;
+    board->clck.init(freq_khz);
     board->mos6502.init(this);
     board->mos6502.reset();
     board->i8255.init(0);
-    vdg->init(read_vidmem, board->rgba8_buffer, 1000);
+    vdg->init(read_vidmem, board->rgba8_buffer, freq_khz);
+    counter_2_4khz.init(freq_khz * 1000 / 4800);
+    board->beeper.init(freq_khz, SOUND_SAMPLE_RATE);
 }
 
 //------------------------------------------------------------------------------
@@ -164,6 +168,7 @@ atom::reset() {
     board->mos6502.reset();
     board->i8255.reset();
     board->mc6847.reset();
+    board->beeper.reset();
     scan_kbd_col = 0;
     next_key_mask = key_mask();
     cur_key_mask = key_mask();
@@ -196,6 +201,15 @@ atom::put_input(uint8_t ascii) {
 void
 atom::cpu_tick() {
     vdg->step();
+
+    // step the sound beeper
+    board->beeper.step(1);
+
+    // tick the 2.4kHz counter
+    if (counter_2_4khz.tick()) {
+        state_2_4khz = !state_2_4khz;
+    }
+
     // on FSYNC, feed next input key mask, this gives the OS
     // 1 full frame to scan the keyboard matrix
     if (vdg->on(mc6847::FSYNC)) {
@@ -297,6 +311,7 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
         //  2:  output: speaker
         //  3:  output: MC6847 CSS
         case i8255::PORT_C:
+            board->beeper.write(0 == (val & (1<<2)));
             vdg->css(val & (1<<3));
             break;
     }
@@ -309,10 +324,10 @@ atom::pio_in(int pio_id, int port_id) {
     switch (port_id) {
         // PPI port B: keyboard row state
         case i8255::PORT_B:
-            if (this->scan_kbd_col < 10) {
-                val = ~(this->cur_key_mask.col[this->scan_kbd_col]);
-                if (this->scan_kbd_col == 9) {
-                    this->cur_key_mask = this->next_key_mask;
+            if (scan_kbd_col < 10) {
+                val = ~(cur_key_mask.col[scan_kbd_col]);
+                if (scan_kbd_col == 9) {
+                    cur_key_mask = next_key_mask;
                 }
             }
             else {
@@ -325,6 +340,9 @@ atom::pio_in(int pio_id, int port_id) {
         //  6:  input: keyboard repeat
         //  7:  input: MC6847 FSYNC
         case i8255::PORT_C:
+            if (state_2_4khz) {
+                val |= (1<<4);
+            }
             // FIXME: always send REPEAT key as 'not pressed'
             val |= (1<<6);
             if (!board->mc6847.test(mc6847::FSYNC)) {
@@ -341,6 +359,12 @@ atom::framebuffer(int& out_width, int& out_height) {
     out_width = mc6847::disp_width_with_border;
     out_height = mc6847::disp_height_with_border;
     return board->mc6847.rgba8_buffer;
+}
+
+//------------------------------------------------------------------------------
+void
+atom::decode_audio(float* buffer, int num_samples) {
+    this->board->beeper.fill_samples(buffer, num_samples);
 }
 
 //------------------------------------------------------------------------------

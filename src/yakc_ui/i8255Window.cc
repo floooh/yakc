@@ -105,6 +105,7 @@ I8255Window::Draw(yakc& emu) {
     const i8255& ppi = emu.board.i8255;
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+        ImGui::Text("only updated on CPU I/O!");
         if (ImGui::CollapsingHeader("Port A", "#ppi_a", true, true)) {
             if (ppi.port_a_mode() == i8255::MODE_INPUT) {
                 put_bits(emu, 0, 8, i8255::PORT_A, ppi.last_read[i8255::PORT_A], "<=");

@@ -20,6 +20,8 @@ public:
     void update(int ticks);
     /// after update, call step() until it returns false
     bool step();
+    /// alternative single-tick (don't call update/step)
+    bool tick();
     
     int period = 0;
     int value = 0;
@@ -28,8 +30,9 @@ public:
 //------------------------------------------------------------------------------
 inline void
 counter::init(int p) {
+    YAKC_ASSERT(p > 0);
     this->period = p;
-    this->value = 0;
+    this->value = p;
 }
 
 //------------------------------------------------------------------------------
@@ -56,6 +59,17 @@ counter::step() {
     }
 }
 
+//------------------------------------------------------------------------------
+inline bool
+counter::tick() {
+    if (--this->value == 0) {
+        this->value = this->period;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 
 } // namespace YAKC
 
