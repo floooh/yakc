@@ -237,7 +237,7 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
         abs_end_cycles = min_cycle_count;
         this->cpu_behind = true;
     }
-    if (!this->board.dbg.paused) {
+    if (!this->board.dbg.active) {
         if (this->kc85.on) {
             this->abs_cycle_count = this->kc85.step(this->abs_cycle_count, abs_end_cycles);
         }

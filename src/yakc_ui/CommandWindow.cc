@@ -38,7 +38,7 @@ CommandWindow::Draw(yakc& emu) {
             }
             ImGui::PushID(i);
             if (ImGui::Button(" B ")) {
-                emu.board.dbg.toggle_breakpoint(0, cmd.addr);
+                emu.board.dbg.toggle_breakpoint(cmd.addr);
             }
             ImGui::PopID();
             ImGui::SameLine();

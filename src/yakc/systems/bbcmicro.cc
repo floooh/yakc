@@ -94,12 +94,11 @@ bbcmicro::step(uint64_t start_tick, uint64_t end_tick) {
     auto& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
-        if (dbg.check_break(cpu.PC)) {
-            dbg.paused = true;
+        uint32_t ticks = cpu.step();
+        if (dbg.step(cpu.PC, ticks)) {
             return end_tick;
         }
-        dbg.store_pc_history(cpu.PC); // FIXME: only if debug window open?    
-        cur_tick += cpu.step();
+        cur_tick += ticks;
     }
     return cur_tick;
 }

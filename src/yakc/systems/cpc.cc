@@ -196,25 +196,22 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
     auto& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
-        if (dbg.check_break(cpu.PC)) {
-            dbg.paused = true;
-            return end_tick;
-        }
-        dbg.store_pc_history(cpu.PC); // FIXME: only if debug window open?
-
         // FIXME: the whole "CPU instructions are aligned to 4 cycles" is
         // quite hacky at the moment and doesn't work right!
-        int ticks_step = cpu.handle_irq(this);
-        if (ticks_step > 0) {
-            ticks_step -= 2;
+        uint32_t ticks = cpu.handle_irq(this);
+        if (ticks > 0) {
+            ticks -= 2;
         }
-        ticks_step += cpu.step(this);
-        ticks_step = (ticks_step + 3) & ~3;
+        ticks += cpu.step(this);
+        ticks = (ticks + 3) & ~3;
 
-        this->video.step(this, ticks_step);
-        this->board->ay8910.step(ticks_step);
+        this->video.step(this, ticks);
+        this->board->ay8910.step(ticks);
 
-        cur_tick += ticks_step;
+        if (dbg.step(cpu.PC, ticks)) {
+            return end_tick;
+        }
+        cur_tick += ticks;
     }
     return cur_tick;
 }

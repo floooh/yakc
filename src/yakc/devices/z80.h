@@ -104,7 +104,7 @@ public:
     /// trigger interrupt request line on or off
     void irq(bool b);
     /// handle interrupt request
-    int handle_irq(system_bus* bus);
+    uint32_t handle_irq(system_bus* bus);
     /// implement the RETI instruction
     void reti();
     /// implement the EI instruction

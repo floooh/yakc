@@ -6,30 +6,8 @@
 namespace YAKC {
 
 //------------------------------------------------------------------------------
-cpudbg::cpudbg() :
-pc_history_pos(0),
-paused(false) {
+cpudbg::cpudbg() {
     memset(&this->pc_history, 0, sizeof(this->pc_history));
-}
-
-//------------------------------------------------------------------------------
-bool
-cpudbg::check_break(uint16_t pc) const {
-    for (int i = 0; i < max_breakpoints; i++) {
-        if (this->breakpoints[i].enabled) {
-            if (pc == this->breakpoints[i].address) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-//------------------------------------------------------------------------------
-void
-cpudbg::store_pc_history(uint16_t pc) {
-    this->pc_history[pc_history_pos++] = pc;
-    this->pc_history_pos &= this->pc_history_size-1;
 }
 
 //------------------------------------------------------------------------------
@@ -41,79 +19,74 @@ cpudbg::get_pc_history(int index) const {
 
 //------------------------------------------------------------------------------
 void
-cpudbg::enable_breakpoint(int index, uint16_t addr) {
-    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
-    this->breakpoints[index].enabled = true;
-    this->breakpoints[index].address = addr;
+cpudbg::enable_breakpoint(uint16_t addr) {
+    this->bp.enabled = true;
+    this->bp.address = addr;
 }
 
 //------------------------------------------------------------------------------
 void
-cpudbg::disable_breakpoint(int index) {
-    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
-    this->breakpoints[index].enabled = false;
+cpudbg::disable_breakpoint() {
+    this->bp.enabled = false;
 }
 
 //------------------------------------------------------------------------------
 void
-cpudbg::toggle_breakpoint(int index, uint16_t addr) {
-    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
-    if (this->breakpoints[index].address == addr) {
-        this->breakpoints[index].enabled = !this->breakpoints[index].enabled;
+cpudbg::toggle_breakpoint(uint16_t addr) {
+    if (this->bp.address == addr) {
+        this->bp.enabled = !this->bp.enabled;
     }
     else {
-        this->enable_breakpoint(index, addr);
+        this->enable_breakpoint(addr);
     }
 }
 
 //------------------------------------------------------------------------------
 bool
 cpudbg::is_breakpoint(uint16_t addr) const {
-    for (int i = 0; i < max_breakpoints; i++) {
-        if ((this->breakpoints[i].enabled) && (this->breakpoints[i].address == addr)) {
-            return true;
-        }
+    if ((this->bp.enabled) && (this->bp.address == addr)) {
+        return true;
     }
-    return false;
+    else {
+        return false;
+    }
 }
 
 //------------------------------------------------------------------------------
 bool
-cpudbg::breakpoint_enabled(int index) const {
-    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
-    return this->breakpoints[index].enabled;
+cpudbg::breakpoint_enabled() const {
+    return this->bp.enabled;
 }
 
 //------------------------------------------------------------------------------
 uint16_t
-cpudbg::breakpoint_addr(int index) const {
-    YAKC_ASSERT((index >= 0) && (index < max_breakpoints));
-    return this->breakpoints[index].address;
+cpudbg::breakpoint_addr() const {
+    return this->bp.address;
 }
 
 //------------------------------------------------------------------------------
 void
 cpudbg::step_pc_modified(system_bus* bus, z80& cpu) {
     YAKC_ASSERT(bus);
-    uint16_t pc;
+    uint16_t old_pc;
     do {
-        pc = cpu.PC;
-        this->store_pc_history(pc);
-        cpu.step(bus);
+        old_pc = cpu.PC;
+        uint32_t ticks = cpu.step(bus);
+        this->step(cpu.PC, ticks);
     }
-    while ((pc == cpu.PC) && !cpu.INV);
+    while ((old_pc == cpu.PC) && !cpu.INV);
 }
 
 //------------------------------------------------------------------------------
 void
 cpudbg::step_pc_modified(mos6502& cpu) {
-    uint16_t pc;
+    uint16_t old_pc;
     do {
-        pc = cpu.PC;
-        this->store_pc_history(pc);
-        cpu.step();
+        old_pc = cpu.PC;
+        uint32_t ticks = cpu.step();
+        this->step(cpu.PC, ticks);
     }
-    while (pc == cpu.PC);
+    while (old_pc == cpu.PC);
 }
 
 } // namespace YAKC

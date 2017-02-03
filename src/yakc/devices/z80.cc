@@ -106,9 +106,9 @@ z80::irq(bool b) {
 }
 
 //------------------------------------------------------------------------------
-int
+uint32_t
 z80::handle_irq(system_bus* bus) {
-    int tstates = 0;
+    uint32_t tstates = 0;
     if (this->int_active) {
         YAKC_ASSERT(this->IM <= 2);
 

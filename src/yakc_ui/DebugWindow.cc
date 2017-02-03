@@ -115,20 +115,20 @@ DebugWindow::draw6502RegisterTable(yakc& emu) {
 void
 DebugWindow::drawControls(yakc& emu) {
     uint16_t bp_addr = 0xFFFF;
-    if (emu.board.dbg.breakpoint_enabled(0)) {
-        bp_addr = emu.board.dbg.breakpoint_addr(0);
+    if (emu.board.dbg.breakpoint_enabled()) {
+        bp_addr = emu.board.dbg.breakpoint_addr();
     }
     if (Util::InputHex16("", bp_addr)) {
         if (bp_addr != 0xFFFF) {
-            emu.board.dbg.enable_breakpoint(0, bp_addr);
+            emu.board.dbg.enable_breakpoint(bp_addr);
         }
         else {
-            emu.board.dbg.disable_breakpoint(0);
+            emu.board.dbg.disable_breakpoint();
         }
     }
     ImGui::SameLine();
-    ImGui::Checkbox("break", &emu.board.dbg.paused);
-    if (emu.board.dbg.paused) {
+    ImGui::Checkbox("break", &emu.board.dbg.active);
+    if (emu.board.dbg.active) {
         ImGui::SameLine();
         if (ImGui::Button("step")) {
             if (emu.cpu_type() == cpu_model::z80) {
@@ -161,14 +161,14 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
     uword cur_addr = start_addr;
 
     // set cur_addr to start of displayed region
-    for (int line_i = cpudbg::pc_history_size; line_i < clipper.DisplayStart; line_i++) {
+    for (int line_i = cpudbg::pc_history_size-1; line_i < clipper.DisplayStart; line_i++) {
         cur_addr += disasm.Disassemble(emu, cur_addr);
     }
 
     // display only visible items
     for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
         uword display_addr, num_bytes;
-        if (line_i < cpudbg::pc_history_size) {
+        if (line_i < cpudbg::pc_history_size-1) {
             display_addr = emu.board.dbg.get_pc_history(line_i);
             num_bytes = disasm.Disassemble(emu, display_addr);
             if (emu.board.dbg.is_breakpoint(display_addr)) {
@@ -201,7 +201,7 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
         // set breakpoint
         ImGui::PushID(line_i);
         if (ImGui::Button(" B ")) {
-            emu.board.dbg.toggle_breakpoint(0, display_addr);
+            emu.board.dbg.toggle_breakpoint(display_addr);
         }
         ImGui::PopID();
         ImGui::SameLine(32);
