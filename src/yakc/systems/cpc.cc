@@ -217,6 +217,30 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
 }
 
 //------------------------------------------------------------------------------
+uint32_t
+cpc::step_debug() {
+    auto& cpu = this->board->z80;
+    auto& dbg = this->board->dbg;
+    uint32_t all_ticks = 0;
+    uint16_t old_pc;
+    do {
+        old_pc = cpu.PC;
+        uint32_t ticks = cpu.handle_irq(this);
+        if (ticks > 0) {
+            ticks -= 2;
+        }
+        ticks += cpu.step(this);
+        ticks = (ticks + 3) & ~3;
+        this->video.step(this, ticks);
+        this->board->ay8910.step(ticks);
+        dbg.step(cpu.PC, ticks);
+        all_ticks += ticks;
+    }
+    while ((old_pc == cpu.PC) && !cpu.INV);
+    return all_ticks;
+}
+
+//------------------------------------------------------------------------------
 void
 cpc::cpu_out(uword port, ubyte val) {
     // http://cpcwiki.eu/index.php/Default_I/O_Port_Summary

@@ -39,8 +39,12 @@ public:
     void on_context_switched();
     /// put a key and joystick input (Kempston)
     void put_input(ubyte ascii, ubyte joy0_mask);
+
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
+    /// perform a single debug-step
+    uint32_t step_debug();
+    
     /// decode the next line into RGBA8Buffer
     void decode_video_line(uint16_t y);
     /// decode audio data

@@ -22,7 +22,7 @@ read_func(void* userdata, uword addr) {
         return emu->board.z80.mem.r8(addr);
     }
     else {
-        return emu->board.mos6502.mem.r8io(addr);
+        return emu->board.mos6502.mem.r8(addr);
     }
 }
 

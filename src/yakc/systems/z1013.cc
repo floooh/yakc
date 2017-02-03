@@ -145,6 +145,27 @@ z1013::step(uint64_t start_tick, uint64_t end_tick) {
 }
 
 //------------------------------------------------------------------------------
+uint32_t
+z1013::step_debug() {
+    auto& cpu = this->board->z80;
+    auto& dbg = this->board->dbg;
+    auto& clk = this->board->clck;
+    uint64_t all_ticks = 0;
+    uint16_t old_pc;
+    do {
+        old_pc = cpu.PC;
+        uint32_t ticks = cpu.step(this);
+        ticks += cpu.handle_irq(this);
+        clk.step(this, ticks);
+        dbg.step(cpu.PC, ticks);
+        all_ticks += ticks;
+    }
+    while ((old_pc == cpu.PC) && !cpu.INV);    
+    this->decode_video();
+    return all_ticks;
+}
+
+//------------------------------------------------------------------------------
 void
 z1013::cpu_out(uword port, ubyte val) {
     switch (port & 0xFF) {

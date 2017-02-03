@@ -191,6 +191,15 @@ atom::step(uint64_t start_tick, uint64_t end_tick) {
 }
 
 //------------------------------------------------------------------------------
+uint32_t
+atom::step_debug() {
+    auto& cpu = board->mos6502;
+    uint32_t ticks = cpu.step();
+    board->dbg.step(cpu.PC, ticks);
+    return ticks;
+}
+
+//------------------------------------------------------------------------------
 void
 atom::put_input(uint8_t ascii) {
     next_key_mask = key_map[ascii];

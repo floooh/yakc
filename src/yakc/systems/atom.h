@@ -37,6 +37,8 @@ public:
     void reset();
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
+    /// perform a single debug-step
+    uint32_t step_debug();
 
     /// get framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);

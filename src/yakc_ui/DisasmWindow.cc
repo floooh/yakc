@@ -64,7 +64,7 @@ DisasmWindow::drawMainContent(const yakc& emu, uword start_addr, int num_lines) 
             ImGui::SameLine(line_start_x + cell_width * n);
             uint8_t val = 0x00;
             if (emu.cpu_type() == cpu_model::mos6502) {
-                val = emu.board.mos6502.mem.r8io(cur_addr++);
+                val = emu.board.mos6502.mem.r8(cur_addr++);
             }
             else {
                 val = emu.board.z80.mem.r8(cur_addr++);

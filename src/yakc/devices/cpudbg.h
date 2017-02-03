@@ -12,21 +12,25 @@ namespace YAKC {
 
 class cpudbg {
 private:
+    /// must be 2^N!
+    static const int ringbuffer_size = 16;
 public:
-    /// size of PC history ringbuffer, must be 2^N!
-    static const int pc_history_size = 8;
+    /// number of valid PC history items
+    static const int history_size = ringbuffer_size-1;
+    /// an item in the history
+    struct history_item {
+        uint16_t pc = 0;
+        uint16_t cycles = 0;
+    };
     /// debugger is currently active
     bool active = false;
 
     /// constructor
     cpudbg();
-
     /// check if breakpoint hit, and store pc in history, return if breakkpoint hit
-    bool step(uint16_t pc, uint8_t op_cycles);
-    
+    bool step(uint16_t pc, uint16_t op_cycles);
     /// get pc from history ringbuffer (0 is oldest entry)
-    uint16_t get_pc_history(int index) const;
-
+    history_item get_pc_history(int index) const;
     /// enable breakpoint
     void enable_breakpoint(uint16_t addr);
     /// disable breakpoint
@@ -40,14 +44,9 @@ public:
     /// get breakpoint address
     uint16_t breakpoint_addr() const;
 
-    /// step until PC changed (or an invalid opcode is hit)
-    void step_pc_modified(system_bus* bus, z80& cpu);
-    /// step until PC changed (or an invalid opcode is hit)
-    void step_pc_modified(mos6502& cpu);
-
 private:
-    int pc_history_pos = 0;
-    uint16_t pc_history[pc_history_size];
+    int hist_pos = 0;
+    history_item history[ringbuffer_size];
     struct breakpoint {
         breakpoint() : enabled(false), address(0) {};
         bool enabled;
@@ -57,10 +56,12 @@ private:
 
 //------------------------------------------------------------------------------
 inline bool
-cpudbg::step(uint16_t pc, uint8_t op_cycles) {
+cpudbg::step(uint16_t pc, uint16_t op_cycles) {
     // store pc in history
-    this->pc_history[pc_history_pos++] = pc;
-    this->pc_history_pos &= pc_history_size-1;
+    history[hist_pos].cycles = op_cycles;
+    hist_pos = (this->hist_pos+1) & (ringbuffer_size-1);
+    history[hist_pos].pc = pc;
+    history[hist_pos].cycles = 0;
 
     // check breakpoint
     if (this->bp.enabled) {

@@ -237,6 +237,28 @@ z9001::step(uint64_t start_tick, uint64_t end_tick) {
 }
 
 //------------------------------------------------------------------------------
+uint32_t
+z9001::step_debug() {
+    auto& cpu = this->board->z80;
+    auto& dbg = this->board->dbg;
+    uint64_t all_ticks = 0;
+    uint16_t old_pc;
+    do {
+        old_pc = cpu.PC;
+        uint32_t ticks = cpu.step(this);
+        ticks += cpu.handle_irq(this);
+        this->board->clck.step(this, ticks);
+        this->board->z80ctc.step(this, ticks);
+        this->board->speaker.step(ticks);
+        dbg.step(cpu.PC, ticks);
+        all_ticks += ticks;
+    }
+    while ((old_pc == cpu.PC) && !cpu.INV);    
+    this->decode_video();
+    return all_ticks;
+}
+
+//------------------------------------------------------------------------------
 void
 z9001::cpu_out(uword port, ubyte val) {
     // NOTE: there are 2 port numbers each for all CTC and PIO ports!

@@ -70,7 +70,7 @@ DebugWindow::drawZ80RegisterTable(yakc& emu) {
     Util::InputHex8("R", cpu.R); ImGui::SameLine();
 
     char strFlags[9];
-    const ubyte f = emu.board.z80.F;
+    const uint8_t f = emu.board.z80.F;
     strFlags[0] = (f & z80::SF) ? 'S':'-';
     strFlags[1] = (f & z80::ZF) ? 'Z':'-';
     strFlags[2] = (f & z80::YF) ? 'Y':'-';
@@ -98,7 +98,7 @@ DebugWindow::draw6502RegisterTable(yakc& emu) {
     Util::InputHex16("PC", cpu.PC); ImGui::SameLine(6 * 46 + 20);
 
     char strFlags[9];
-    const ubyte f = emu.board.mos6502.P;
+    const uint8_t f = emu.board.mos6502.P;
     strFlags[0] = (f & mos6502::NF) ? 'N':'-';
     strFlags[1] = (f & mos6502::VF) ? 'V':'-';
     strFlags[2] = (f & mos6502::XF) ? 'x':'-';
@@ -131,12 +131,7 @@ DebugWindow::drawControls(yakc& emu) {
     if (emu.board.dbg.active) {
         ImGui::SameLine();
         if (ImGui::Button("step")) {
-            if (emu.cpu_type() == cpu_model::z80) {
-                emu.board.dbg.step_pc_modified(emu.get_bus(), emu.board.z80);
-            }
-            else {
-                emu.board.dbg.step_pc_modified(emu.board.mos6502);
-            }
+            emu.step_debug();
         }
     }
     ImGui::Checkbox("break on invalid opcode", &emu.board.z80.break_on_invalid_opcode);
@@ -144,7 +139,7 @@ DebugWindow::drawControls(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
+DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
     // this is a modified version of ImGuiMemoryEditor.h
     ImGui::BeginChild("##scrolling", ImVec2(0, -2 * ImGui::GetItemsLineHeightWithSpacing()));
 
@@ -158,20 +153,22 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
     ImGuiListClipper clipper(line_total_count, line_height);
 
     Disasm disasm;
-    uword cur_addr = start_addr;
+    uint16_t cur_addr = start_addr;
 
     // set cur_addr to start of displayed region
-    for (int line_i = cpudbg::pc_history_size-1; line_i < clipper.DisplayStart; line_i++) {
+    for (int line_i = cpudbg::history_size; line_i < clipper.DisplayStart; line_i++) {
         cur_addr += disasm.Disassemble(emu, cur_addr);
     }
 
     // display only visible items
     for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
-        uword display_addr, num_bytes;
-        if (line_i < cpudbg::pc_history_size-1) {
-            display_addr = emu.board.dbg.get_pc_history(line_i);
-            num_bytes = disasm.Disassemble(emu, display_addr);
-            if (emu.board.dbg.is_breakpoint(display_addr)) {
+        uint16_t op_addr, op_cycles, num_bytes;
+        if (line_i < cpudbg::history_size) {
+            auto hist_item = emu.board.dbg.get_pc_history(line_i);
+            op_addr = hist_item.pc;
+            op_cycles = hist_item.cycles;
+            num_bytes = disasm.Disassemble(emu, hist_item.pc);
+            if (emu.board.dbg.is_breakpoint(hist_item.pc)) {
                 ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
             }
             else {
@@ -179,35 +176,41 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
             }
         }
         else {
-            display_addr = cur_addr;
-            num_bytes = disasm.Disassemble(emu, display_addr);
-                bool inv = emu.cpu_type() == cpu_model::z80 ? emu.board.z80.INV : false;
-                if ((cur_addr == start_addr) && inv) {
-                    // invalid/non-implemented opcode hit
-                    ImGui::PushStyleColor(ImGuiCol_Text, UI::InvalidOpCodeColor);
-                }
-                else if (emu.board.dbg.is_breakpoint(cur_addr)) {
-                    ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
-                }
-                else if (cur_addr == start_addr) {
-                    ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledColor);
-                }
-                else {
-                    ImGui::PushStyleColor(ImGuiCol_Text, UI::DefaultTextColor);
-                }
+            op_addr = cur_addr;
+            op_cycles = 0;
+            num_bytes = disasm.Disassemble(emu, op_addr);
+            bool inv = emu.cpu_type() == cpu_model::z80 ? emu.board.z80.INV : false;
+            if ((cur_addr == start_addr) && inv) {
+                // invalid/non-implemented opcode hit
+                ImGui::PushStyleColor(ImGuiCol_Text, UI::InvalidOpCodeColor);
+            }
+            else if (emu.board.dbg.is_breakpoint(cur_addr)) {
+                ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
+            }
+            else if (cur_addr == start_addr) {
+                ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledColor);
+            }
+            else {
+                ImGui::PushStyleColor(ImGuiCol_Text, UI::DefaultTextColor);
+            }
             cur_addr += num_bytes;
+        }
+
+        // wrap current PC into 2 separator lines
+        if ((line_i == cpudbg::history_size) || (line_i == cpudbg::history_size+1)) {
+            ImGui::Separator();
         }
 
         // set breakpoint
         ImGui::PushID(line_i);
         if (ImGui::Button(" B ")) {
-            emu.board.dbg.toggle_breakpoint(display_addr);
+            emu.board.dbg.toggle_breakpoint(op_addr);
         }
         ImGui::PopID();
         ImGui::SameLine(32);
 
         // draw the address
-        ImGui::Text("%04X: ", display_addr);
+        ImGui::Text("%04X: ", op_addr);
         ImGui::SameLine();
 
         // print instruction bytes
@@ -215,16 +218,22 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
             if (emu.cpu_type() == cpu_model::z80) {
-                ImGui::Text("%02X ", emu.board.z80.mem.r8(display_addr++));
+                ImGui::Text("%02X ", emu.board.z80.mem.r8(op_addr++));
             }
             else {
-                ImGui::Text("%02X ", emu.board.mos6502.mem.r8io(display_addr++));
+                ImGui::Text("%02X ", emu.board.mos6502.mem.r8(op_addr++));
             }
         }
 
         // print disassembled instruction
-        ImGui::SameLine(line_start_x + cell_width * 4 + glyph_width * 2);
+        int offset = line_start_x + cell_width * 4 + glyph_width * 2;
+        ImGui::SameLine(offset);
         ImGui::Text("%s", disasm.Result());
+        if (op_cycles > 0) {
+            offset += glyph_width * 24;
+            ImGui::SameLine(offset);
+            ImGui::Text("%d", op_cycles);
+        }
         ImGui::PopStyleColor();
     }
     clipper.End();

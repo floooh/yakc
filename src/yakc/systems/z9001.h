@@ -51,6 +51,8 @@ public:
 
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
+    /// perform a single debug-step
+    uint32_t step_debug();
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;

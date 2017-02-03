@@ -214,6 +214,29 @@ kc85::step(uint64_t start_tick, uint64_t end_tick) {
 }
 
 //------------------------------------------------------------------------------
+uint32_t
+kc85::step_debug() {
+    auto& cpu = this->board->z80;
+    auto& ctc = this->board->z80ctc;
+    auto& clk = this->board->clck;
+    auto& dbg = this->board->dbg;
+    uint64_t all_ticks = 0;
+    uint16_t old_pc;
+    do {
+        old_pc = cpu.PC;
+        uint32_t ticks = cpu.step(this);
+        ticks += cpu.handle_irq(this);
+        clk.step(this, ticks);
+        ctc.step(this, ticks);
+        this->audio.step(ticks);
+        dbg.step(cpu.PC, ticks);
+        all_ticks += ticks;
+    }
+    while ((old_pc == cpu.PC) && !cpu.INV);    
+    return all_ticks;
+}
+
+//------------------------------------------------------------------------------
 void
 kc85::put_key(ubyte ascii) {
     this->key_code = ascii;

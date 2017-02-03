@@ -248,8 +248,6 @@ zx::reset() {
 //------------------------------------------------------------------------------
 uint64_t
 zx::step(uint64_t start_tick, uint64_t end_tick) {
-    // step the system for given number of cycles, return actually
-    // executed number of cycles
     auto& cpu = this->board->z80;
     auto& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
@@ -264,6 +262,26 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
         cur_tick += ticks;
     }
     return cur_tick;
+}
+
+//------------------------------------------------------------------------------
+uint32_t
+zx::step_debug() {
+    auto& cpu = this->board->z80;
+    auto& dbg = this->board->dbg;
+    uint64_t all_ticks = 0;
+    uint16_t old_pc;
+    do {
+        old_pc = cpu.PC;
+        uint32_t ticks = cpu.step(this);
+        ticks += cpu.handle_irq(this);
+        this->board->clck.step(this, ticks);
+        this->board->beeper.step(ticks);
+        dbg.step(cpu.PC, ticks);
+        all_ticks += ticks;
+    }
+    while ((old_pc == cpu.PC) && !cpu.INV);    
+    return all_ticks;
 }
 
 //------------------------------------------------------------------------------

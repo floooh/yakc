@@ -34,7 +34,7 @@ public:
     /// process one frame, up to absolute number of cycles
     void step(int micro_secs, uint64_t audio_cycle_count);
     /// step over one instruction and return number of cycles (called by debuggers)
-    int step_dbg();
+    uint32_t step_debug();
 
     /// put key and joystick input
     void put_input(uint8_t ascii, uint8_t joy0_mask);

@@ -22,7 +22,7 @@ public:
     void draw6502RegisterTable(yakc& emu);
     
     /// draw the main window content, starting at given address
-    void drawMainContent(yakc& emu, uword start_addr, int num_lines);
+    void drawMainContent(yakc& emu, uint16_t start_addr, int num_lines);
     /// draw control buttons
     void drawControls(yakc& emu);
 };

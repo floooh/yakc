@@ -269,6 +269,35 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
 }
 
 //------------------------------------------------------------------------------
+uint32_t
+yakc::step_debug() {
+    if (this->kc85.on) {
+        return this->kc85.step_debug();
+    }
+    else if (this->z1013.on) {
+        return this->z1013.step_debug();
+    }
+    else if (this->z9001.on) {
+        return this->z9001.step_debug();
+    }
+    else if (this->zx.on) {
+        return this->zx.step_debug();
+    }
+    else if (this->cpc.on) {
+        return this->cpc.step_debug();
+    }
+    else if (this->atom.on) {
+        return this->atom.step_debug();
+    }
+    else if (this->bbcmicro.on) {
+        return this->bbcmicro.step_debug();
+    }
+    else {
+        return 0;
+    }
+}
+
+//------------------------------------------------------------------------------
 void
 yakc::put_input(uint8_t ascii, uint8_t joy0_mask) {
     if (!this->joystick_enabled) {
@@ -378,24 +407,25 @@ yakc::border_color(float& out_red, float& out_green, float& out_blue) {
 //------------------------------------------------------------------------------
 void
 yakc::fill_sound_samples(float* buffer, int num_samples) {
-    if (this->kc85.on) {
-        return this->kc85.decode_audio(buffer, num_samples);
+    if (!this->board.dbg.active) {
+        if (this->kc85.on) {
+            return this->kc85.decode_audio(buffer, num_samples);
+        }
+        else if (this->z9001.on) {
+            return this->z9001.decode_audio(buffer, num_samples);
+        }
+        else if (this->zx.on) {
+            return this->zx.decode_audio(buffer, num_samples);
+        }
+        else if (this->cpc.on) {
+            return this->cpc.decode_audio(buffer, num_samples);
+        }
+        else if (this->atom.on) {
+            return this->atom.decode_audio(buffer, num_samples);
+        }
     }
-    else if (this->z9001.on) {
-        return this->z9001.decode_audio(buffer, num_samples);
-    }
-    else if (this->zx.on) {
-        return this->zx.decode_audio(buffer, num_samples);
-    }
-    else if (this->cpc.on) {
-        return this->cpc.decode_audio(buffer, num_samples);
-    }
-    else if (this->atom.on) {
-        return this->atom.decode_audio(buffer, num_samples);
-    }
-    else {
-        clear(buffer, num_samples * sizeof(float));
-    }
+    // fallthrough: all systems off, or debugging active: return silence
+    clear(buffer, num_samples * sizeof(float));
 }
 
 //------------------------------------------------------------------------------
