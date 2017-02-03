@@ -4,7 +4,8 @@
 #include "CommandWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
-#include "yakc_ui/UI.h"
+#include "UI.h"
+#include "Util.h"
 #include <ctype.h>
 
 using namespace Oryol;
@@ -15,7 +16,6 @@ namespace YAKC {
 void
 CommandWindow::Setup(yakc& emu) {
     this->setName("Find Commands");
-    this->prologByteWidget.Configure8("Prolog Byte", 0x7F);
 }
 
 //------------------------------------------------------------------------------
@@ -23,10 +23,10 @@ bool
 CommandWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 250), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
-        this->prologByteWidget.Draw();
+        Util::InputHex8("Prolog Byte", this->prologByte);
         ImGui::SameLine();
         if (ImGui::Button("Scan...")) {
-            this->scan(emu, this->prologByteWidget.Get8());
+            this->scan(emu, this->prologByte);
         }
         for (int i = 0; i < this->commands.Size(); i++) {
             const Cmd& cmd = this->commands[i];

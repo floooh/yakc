@@ -4,6 +4,7 @@
 #include "LoadWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
+#include "Util.h"
 #include <string.h>
 
 using namespace Oryol;
@@ -63,24 +64,17 @@ LoadWindow::Draw(yakc& emu) {
             }
             ImGui::Text("Filename: %s", ldr.Info.Filename.AsCStr());
             ImGui::Text("Name:     %s", ldr.Info.Name.AsCStr());
-            this->startAddr.Configure16("Start Address", ldr.Info.StartAddr);
-            if (this->startAddr.Draw()) {
-                ldr.Info.StartAddr = this->startAddr.Get16();
+            uint16_t startAddr = ldr.Info.StartAddr;
+            if (Util::InputHex16("Start Address", startAddr)) {
+                ldr.Info.StartAddr = startAddr;
             }
-            this->endAddr.Configure16("End Address", ldr.Info.EndAddr);
-            if (this->endAddr.Draw()) {
-                ldr.Info.EndAddr = this->endAddr.Get16();
+            uint16_t endAddr = ldr.Info.EndAddr;
+            if (Util::InputHex16("End Address", endAddr)) {
+                ldr.Info.EndAddr = endAddr;
             }
-            this->execAddr.Configure16("Exec Address", ldr.Info.ExecAddr);
-            const bool execAddrInvalid = ((ldr.Info.ExecAddr < ldr.Info.StartAddr) || (ldr.Info.ExecAddr > ldr.Info.EndAddr));
-            if (execAddrInvalid) {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-            }
-            if (this->execAddr.Draw()) {
-                ldr.Info.ExecAddr = this->execAddr.Get16();
-            }
-            if (execAddrInvalid) {
-                ImGui::PopStyleColor();
+            uint16_t execAddr = ldr.Info.ExecAddr;
+            if (Util::InputHex16("Exec Address", execAddr)) {
+                ldr.Info.ExecAddr = execAddr;
             }
             ImGui::Checkbox("Enable Joystick", &ldr.Info.EnableJoystick);
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));

@@ -4,7 +4,6 @@
     @class PIOWindow
     @brief visualize the current PIO state
 */
-#include "yakc_ui/HexInputWidget.h"
 #include "yakc_ui/WindowBase.h"
 
 namespace YAKC {

@@ -5,61 +5,16 @@
 #include "IMUI/IMUI.h"
 #include "yakc_ui/UI.h"
 #include "Disasm.h"
+#include "Util.h"
 
 using namespace Oryol;
 
 namespace YAKC {
 
-static const cpudbg::z80reg z80regs16[] = {
-    cpudbg::z80reg::AF,
-    cpudbg::z80reg::BC,
-    cpudbg::z80reg::DE,
-    cpudbg::z80reg::HL,
-    cpudbg::z80reg::WZ,
-    cpudbg::z80reg::AF_,
-    cpudbg::z80reg::BC_,
-    cpudbg::z80reg::DE_,
-    cpudbg::z80reg::HL_,
-    cpudbg::z80reg::WZ_,
-    cpudbg::z80reg::IX,
-    cpudbg::z80reg::IY,
-    cpudbg::z80reg::SP,
-    cpudbg::z80reg::PC
-};
-static const cpudbg::z80reg z80regs8[] = {
-    cpudbg::z80reg::I, cpudbg::z80reg::R, cpudbg::z80reg::IM
-};
-
-static const cpudbg::m6502reg m6502regs8[] = {
-    cpudbg::m6502reg::A,
-    cpudbg::m6502reg::X,
-    cpudbg::m6502reg::Y,
-    cpudbg::m6502reg::S,
-    cpudbg::m6502reg::P,
-};
-static const cpudbg::m6502reg m6502regs16[] = {
-    cpudbg::m6502reg::PC,
-};
-
 //------------------------------------------------------------------------------
 void
 DebugWindow::Setup(yakc& emu) {
     this->setName("Debugger");
-
-    // setup register table widgets
-    for (cpudbg::z80reg r : z80regs16) {
-        this->z80RegWidget[int(r)].Configure16(cpudbg::reg_name(r), cpudbg::get16(emu.board.z80, r));
-    }
-    for (cpudbg::z80reg r : z80regs8) {
-        this->z80RegWidget[int(r)].Configure8(cpudbg::reg_name(r), cpudbg::get8(emu.board.z80, r));
-    }
-    for (cpudbg::m6502reg r : m6502regs16) {
-        this->m6502RegWidget[int(r)].Configure16(cpudbg::reg_name(r), cpudbg::get16(emu.board.mos6502, r));
-    }
-    for (cpudbg::m6502reg r : m6502regs8) {
-        this->m6502RegWidget[int(r)].Configure8(cpudbg::reg_name(r), cpudbg::get8(emu.board.mos6502, r));
-    }
-    this->breakPointWidget.Configure16("##bp", 0xFFFF);
 }
 
 //------------------------------------------------------------------------------
@@ -87,54 +42,32 @@ DebugWindow::Draw(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::drawZ80Reg16(yakc& emu, cpudbg::z80reg r) {
-    if (this->z80RegWidget[int(r)].Draw()) {
-        cpudbg::set16(emu.board.z80, r, this->z80RegWidget[int(r)].Get16());
-    }
-    else {
-        this->z80RegWidget[int(r)].Set16(cpudbg::get16(emu.board.z80, r));
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-DebugWindow::drawZ80Reg8(yakc& emu, cpudbg::z80reg r) {
-    if (this->z80RegWidget[int(r)].Draw()) {
-        cpudbg::set8(emu.board.z80, r, this->z80RegWidget[int(r)].Get8());
-    }
-    else {
-        this->z80RegWidget[int(r)].Set8(cpudbg::get8(emu.board.z80, r));
-    }
-}
-
-//------------------------------------------------------------------------------
-void
 DebugWindow::drawZ80RegisterTable(yakc& emu) {
     const ImVec4 red = UI::DisabledColor;
     const ImVec4 green = UI::EnabledColor;
 
-    this->drawZ80Reg16(emu, cpudbg::z80reg::AF); ImGui::SameLine(1 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::BC); ImGui::SameLine(2 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::DE); ImGui::SameLine(3 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::HL); ImGui::SameLine(4 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::WZ); ImGui::SameLine(5 * 72);
-    this->drawZ80Reg8(emu, cpudbg::z80reg::I); ImGui::SameLine(5 * 72 + 48);
+    auto& cpu = emu.board.z80;
+    Util::InputHex16("AF", cpu.AF); ImGui::SameLine(1 * 72);
+    Util::InputHex16("BC", cpu.BC); ImGui::SameLine(2 * 72);
+    Util::InputHex16("DE", cpu.DE); ImGui::SameLine(3 * 72);
+    Util::InputHex16("HL", cpu.HL); ImGui::SameLine(4 * 72);
+    Util::InputHex16("WZ", cpu.WZ); ImGui::SameLine(5 * 72);
+    Util::InputHex8("I", cpu.I); ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.z80.IFF1 ? green:red, "IFF1");
 
-    this->drawZ80Reg16(emu, cpudbg::z80reg::AF_); ImGui::SameLine(1 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::BC_); ImGui::SameLine(2 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::DE_); ImGui::SameLine(3 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::HL_); ImGui::SameLine(4 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::WZ_); ImGui::SameLine(5 * 72);
-    
-    this->drawZ80Reg8(emu, cpudbg::z80reg::IM); ImGui::SameLine(5 * 72 + 48);
+    Util::InputHex16("AF'", cpu.AF_); ImGui::SameLine(1 * 72);
+    Util::InputHex16("BC'", cpu.BC_); ImGui::SameLine(2 * 72);
+    Util::InputHex16("DE'", cpu.DE_); ImGui::SameLine(3 * 72);
+    Util::InputHex16("HL'", cpu.HL_); ImGui::SameLine(4 * 72);
+    Util::InputHex16("WZ'", cpu.WZ_); ImGui::SameLine(5 * 72);
+    Util::InputHex8("IM", cpu.IM); ImGui::SameLine(5 * 72 + 48);
     ImGui::TextColored(emu.board.z80.IFF2 ? green:red, "IFF2");
 
-    this->drawZ80Reg16(emu, cpudbg::z80reg::IX); ImGui::SameLine(1 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::IY); ImGui::SameLine(2 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::SP); ImGui::SameLine(3 * 72);
-    this->drawZ80Reg16(emu, cpudbg::z80reg::PC); ImGui::SameLine(4 * 72);
-    this->drawZ80Reg8(emu, cpudbg::z80reg::R); ImGui::SameLine();
+    Util::InputHex16("IX", cpu.IX); ImGui::SameLine(1 * 72);
+    Util::InputHex16("IY", cpu.IY); ImGui::SameLine(2 * 72);
+    Util::InputHex16("SP", cpu.SP); ImGui::SameLine(3 * 72);
+    Util::InputHex16("PC", cpu.PC); ImGui::SameLine(4 * 72);
+    Util::InputHex8("R", cpu.R); ImGui::SameLine();
 
     char strFlags[9];
     const ubyte f = emu.board.z80.F;
@@ -154,35 +87,15 @@ DebugWindow::drawZ80RegisterTable(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-DebugWindow::draw6502Reg16(yakc& emu, cpudbg::m6502reg r) {
-    if (this->m6502RegWidget[int(r)].Draw()) {
-        cpudbg::set16(emu.board.mos6502, r, this->m6502RegWidget[int(r)].Get16());
-    }
-    else {
-        this->m6502RegWidget[int(r)].Set16(cpudbg::get16(emu.board.mos6502, r));
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-DebugWindow::draw6502Reg8(yakc& emu, cpudbg::m6502reg r) {
-    if (this->m6502RegWidget[int(r)].Draw()) {
-        cpudbg::set8(emu.board.mos6502, r, this->m6502RegWidget[int(r)].Get8());
-    }
-    else {
-        this->m6502RegWidget[int(r)].Set8(cpudbg::get8(emu.board.mos6502, r));
-    }
-}
-
-//------------------------------------------------------------------------------
-void
 DebugWindow::draw6502RegisterTable(yakc& emu) {
-    this->draw6502Reg8(emu, cpudbg::m6502reg::A); ImGui::SameLine(1 * 48 + 4);
-    this->draw6502Reg8(emu, cpudbg::m6502reg::X); ImGui::SameLine(2 * 48);
-    this->draw6502Reg8(emu, cpudbg::m6502reg::Y); ImGui::SameLine(3 * 48);
-    this->draw6502Reg8(emu, cpudbg::m6502reg::S); ImGui::SameLine(4 * 48);
-    this->draw6502Reg8(emu, cpudbg::m6502reg::P); ImGui::SameLine(5 * 48);
-    this->draw6502Reg16(emu, cpudbg::m6502reg::PC); ImGui::SameLine(6 * 46 + 20);
+
+    auto& cpu = emu.board.mos6502;
+    Util::InputHex8("A", cpu.A); ImGui::SameLine(1 * 48 + 4);
+    Util::InputHex8("X", cpu.X); ImGui::SameLine(2 * 48);
+    Util::InputHex8("Y", cpu.Y); ImGui::SameLine(3 * 48);
+    Util::InputHex8("S", cpu.S); ImGui::SameLine(4 * 48);
+    Util::InputHex8("P", cpu.P); ImGui::SameLine(5 * 48);
+    Util::InputHex16("PC", cpu.PC); ImGui::SameLine(6 * 46 + 20);
 
     char strFlags[9];
     const ubyte f = emu.board.mos6502.P;
@@ -201,16 +114,13 @@ DebugWindow::draw6502RegisterTable(yakc& emu) {
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawControls(yakc& emu) {
+    uint16_t bp_addr = 0xFFFF;
     if (emu.board.dbg.breakpoint_enabled(0)) {
-        this->breakPointWidget.Set16(emu.board.dbg.breakpoint_addr(0));
+        bp_addr = emu.board.dbg.breakpoint_addr(0);
     }
-    else {
-        this->breakPointWidget.Set16(0xFFFF);
-    }
-    if (this->breakPointWidget.Draw()) {
-        const uword bp_addr = this->breakPointWidget.Get16();
+    if (Util::InputHex16("", bp_addr)) {
         if (bp_addr != 0xFFFF) {
-            emu.board.dbg.enable_breakpoint(0, this->breakPointWidget.Get16());
+            emu.board.dbg.enable_breakpoint(0, bp_addr);
         }
         else {
             emu.board.dbg.disable_breakpoint(0);
@@ -292,7 +202,6 @@ DebugWindow::drawMainContent(yakc& emu, uword start_addr, int num_lines) {
         ImGui::PushID(line_i);
         if (ImGui::Button(" B ")) {
             emu.board.dbg.toggle_breakpoint(0, display_addr);
-            this->breakPointWidget.Set16(display_addr);
         }
         ImGui::PopID();
         ImGui::SameLine(32);

@@ -5,7 +5,6 @@
     @brief scan memory for commands
 */
 #include "yakc_ui/WindowBase.h"
-#include "yakc_ui/HexInputWidget.h"
 #include "Core/Containers/Array.h"
 
 namespace YAKC {
@@ -21,7 +20,7 @@ public:
     /// populate commands array
     void scan(const yakc& emu, ubyte prologByte);
 
-    HexInputWidget prologByteWidget;
+    uint8_t prologByte = 0x7F;
     struct Cmd {
         Cmd(const Oryol::String& n, uword a) : name(n), addr(a) {};
         Oryol::String name;

@@ -4,7 +4,6 @@
     @class I8255Window
     @brief visualize the i8255 state
 */
-#include "yakc_ui/HexInputWidget.h"
 #include "yakc_ui/WindowBase.h"
 
 namespace YAKC {

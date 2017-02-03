@@ -4,7 +4,6 @@
     @class DisasmWindow
     @brief a disassembler window
 */
-#include "yakc_ui/HexInputWidget.h"
 #include "yakc_ui/WindowBase.h"
 
 namespace YAKC {
@@ -22,8 +21,8 @@ public:
     /// draw control buttons
     void drawControls();
 
-    HexInputWidget startWidget;
-    HexInputWidget lengthWidget;
+    uint16_t startAddr = 0;
+    uint16_t numLines = 64;
 };
 
 } // namespace YAKC

@@ -2,7 +2,7 @@
 //  UI.cc
 //------------------------------------------------------------------------------
 #include "UI.h"
-#include "yakc_ui/Util.h"
+#include "Util.h"
 #include "MemoryWindow.h"
 #include "MemoryMapWindow.h"
 #include "DebugWindow.h"

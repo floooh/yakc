@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "DisasmWindow.h"
 #include "IMUI/IMUI.h"
+#include "Util.h"
 #include "Disasm.h"
 
 using namespace Oryol;
@@ -13,8 +14,6 @@ namespace YAKC {
 void
 DisasmWindow::Setup(yakc& emu) {
     this->setName("Disassembler");
-    this->startWidget.Configure16("Start", 0x0000);
-    this->lengthWidget.Configure16("Num", 64);
 }
 
 //------------------------------------------------------------------------------
@@ -22,7 +21,7 @@ bool
 DisasmWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
-        this->drawMainContent(emu, this->startWidget.Get16(), this->lengthWidget.Get16());
+        this->drawMainContent(emu, this->startAddr, this->numLines);
         ImGui::Separator();
         this->drawControls();
     }
@@ -85,9 +84,9 @@ DisasmWindow::drawMainContent(const yakc& emu, uword start_addr, int num_lines) 
 //------------------------------------------------------------------------------
 void
 DisasmWindow::drawControls() {
-    this->startWidget.Draw();
+    Util::InputHex16("Start", this->startAddr);
     ImGui::SameLine();
-    this->lengthWidget.Draw();
+    Util::InputHex16("Lines", this->numLines);
 }
 
 } // namespace YAKC

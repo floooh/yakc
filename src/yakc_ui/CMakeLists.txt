@@ -1,9 +1,8 @@
 fips_begin_module(yakc_ui)
     fips_vs_warning_level(3)
     fips_files(
-        Util.h
+        Util.cc Util.h
         UI.cc UI.h
-        HexInputWidget.h
         MemoryWindow.cc MemoryWindow.h
         MemoryMapWindow.cc MemoryMapWindow.h
         WindowBase.cc WindowBase.h

@@ -12,20 +12,6 @@ namespace YAKC {
 
 class cpudbg {
 public:
-    /// register enum for set_reg/get_reg methods
-    enum class z80reg {
-        A=0, F, B, C, D, E, H, L,
-        AF, BC, DE, HL, WZ,
-        AF_, BC_, DE_, HL_, WZ_,
-        I, R, IX, IY, SP, PC,
-        IM,
-        num
-    };
-    enum class m6502reg {
-        A=0, X, Y, S, P, PC,
-        num
-    };
-
     /// size of PC history ringbuffer (must be 2^N!)
     static const int pc_history_size = 8;
     /// current pc history position
@@ -62,28 +48,6 @@ public:
     void step_pc_modified(system_bus* bus, z80& cpu);
     /// step until PC changed (or an invalid opcode is hit)
     void step_pc_modified(mos6502& cpu);
-
-    /// set a Z80 8-bit register value by enum (slow)
-    static void set8(z80& cpu, z80reg r, uint8_t v);
-    /// get a Z80 8-bit register value by enum (slow)
-    static uint8_t get8(const z80& cpu, z80reg r);
-    /// set a Z80 16-bit register value by enum (slow)
-    static void set16(z80& cpu, z80reg r, uint16_t v);
-    /// get a Z80 16-bit register value by enum (slow)
-    static uint16_t get16(const z80& cpu, z80reg r);
-    /// get a string-name for a Z80 register
-    static const char* reg_name(z80reg r);
-
-    /// set a 6502 8-bit register value by enum (slow)
-    static void set8(mos6502& cpu, m6502reg r, uint8_t v);
-    /// get a 6502 8-bit register value by enum (slow)
-    static uint8_t get8(const mos6502& cpu, m6502reg r);
-    /// set a 6502 16-bit register value by enum (slow)
-    static void set16(mos6502& cpu, m6502reg r, uint16_t v);
-    /// get a 6502 16-bit register value by enum (slow)
-    static uint16_t get16(const mos6502& cpu, m6502reg r);
-    /// get a string-name for a register
-    static const char* reg_name(m6502reg r);
 
 private:
     static const int max_breakpoints = 2;
