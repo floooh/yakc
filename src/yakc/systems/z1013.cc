@@ -419,6 +419,52 @@ z1013::framebuffer(int& out_width, int& out_height) {
 }
 
 //------------------------------------------------------------------------------
+bool
+z1013::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+
+    auto fp = fs->open(name, filesystem::mode::read);
+    if (!fp) {
+        return false;
+    }
+
+    kcz80_header hdr;
+    uint16_t exec_addr = 0;
+    bool hdr_valid = false;
+    if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
+        hdr_valid = true;
+        uint16_t addr = (hdr.load_addr_h<<8 | hdr.load_addr_l) & 0xFFFF;
+        uint16_t end_addr = (hdr.end_addr_h<<8 | hdr.end_addr_l) & 0xFFFF;
+        exec_addr = (hdr.exec_addr_h<<8 | hdr.exec_addr_l) & 0xFFFF;
+        auto& mem = this->board->z80.mem;
+        while (addr < end_addr) {
+            static const int buf_size = 1024;
+            uint8_t buf[buf_size];
+            fs->read(fp, buf, buf_size);
+            for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
+                mem.w8(addr++, buf[i]);
+            }
+        }
+    }
+    fs->close(fp);
+    fs->rm(name);
+    if (!hdr_valid) {
+        return false;
+    }
+
+    if (start) {
+        auto& cpu = this->board->z80;
+        cpu.A = 0x00;
+        cpu.F = 0x10;
+        cpu.BC = cpu.BC_ = 0x0000;
+        cpu.DE = cpu.DE_ = 0x0000;
+        cpu.HL = cpu.HL_ = 0x0000;
+        cpu.AF_ = 0x0000;
+        cpu.PC = exec_addr;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 const char*
 z1013::system_info() const {
     if (this->cur_model == system::z1013_01) {

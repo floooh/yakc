@@ -465,6 +465,18 @@ yakc::quickload(const char* name, filetype type, bool start) {
     if (this->kc85.on) {
         return this->kc85.quickload(&this->filesystem, name, type, start);
     }
+    else if (this->z9001.on) {
+        return this->z9001.quickload(&this->filesystem, name, type, start);
+    }
+    else if (this->z1013.on) {
+        return this->z1013.quickload(&this->filesystem, name, type, start);
+    }
+    else if (this->zx.on) {
+        return this->zx.quickload(&this->filesystem, name, type, start);
+    }
+    else if (this->cpc.on) {
+        return this->cpc.quickload(&this->filesystem, name, type, start);
+    }
     else {
         return false;
     }

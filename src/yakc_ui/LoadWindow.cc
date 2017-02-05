@@ -64,18 +64,6 @@ LoadWindow::Draw(yakc& emu) {
             }
             ImGui::Text("Filename: %s", ldr.Info.Filename.AsCStr());
             ImGui::Text("Name:     %s", ldr.Info.Name.AsCStr());
-            uint16_t startAddr = ldr.Info.StartAddr;
-            if (Util::InputHex16("Start Address", startAddr)) {
-                ldr.Info.StartAddr = startAddr;
-            }
-            uint16_t endAddr = ldr.Info.EndAddr;
-            if (Util::InputHex16("End Address", endAddr)) {
-                ldr.Info.EndAddr = endAddr;
-            }
-            uint16_t execAddr = ldr.Info.ExecAddr;
-            if (Util::InputHex16("Exec Address", execAddr)) {
-                ldr.Info.ExecAddr = execAddr;
-            }
             ImGui::Checkbox("Enable Joystick", &ldr.Info.EnableJoystick);
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
             const char* compatMsg = " ";

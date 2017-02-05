@@ -391,6 +391,14 @@ atom::decode_audio(float* buffer, int num_samples) {
 }
 
 //------------------------------------------------------------------------------
+bool
+atom::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+    // FIXME
+    fs->rm(name);
+    return false;
+}
+
+//------------------------------------------------------------------------------
 const char*
 atom::system_info() const {
     return "FIXME!";

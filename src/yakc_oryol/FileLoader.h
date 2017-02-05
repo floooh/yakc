@@ -46,12 +46,6 @@ public:
         Oryol::String Filename;
         Oryol::String Name;
         filetype Type = filetype::none;
-        int StartAddr = 0;
-        int EndAddr = 0;
-        int ExecAddr = 0;
-        bool HasExecAddr = false;
-        bool FileSizeError = false;
-        int PayloadOffset = 0;
         system RequiredSystem = system::any;
         bool EnableJoystick = false;
     } Info;
@@ -79,21 +73,10 @@ public:
 
     /// get file info from loaded file data
     FileInfo parseHeader(const Oryol::Buffer& data, const Item& item);
-    /// copy data from loaded stream object into KC memory
-    static void copy(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
-    /// auto-start the loaded program
-    static void start(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
-
-    /// internal generic load method
+    /// quickload the provided file data
+    static void quickload(yakc* emu, const FileInfo& info, const Oryol::Buffer& data, bool autostart);
+    /// start loading, and then call quickload
     void load(const Item& item, bool autostart);
-    /// load KC TAP file into memory
-    static void load_kctap(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
-    /// load ZX Z80 file into memory
-    static void load_zxz80(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
-    /// load CPC SNA file into memory
-    static void load_sna(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
-    /// load Atom TAP file into memory
-    static void load_atomtap(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
 
     Oryol::Buffer FileData;
 private:

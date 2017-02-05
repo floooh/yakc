@@ -532,50 +532,25 @@ kc85::update_bank_switching() {
 }
 
 //------------------------------------------------------------------------------
-
-// KCC file format header block
-#pragma pack(push,1)
-struct kcc_header {
-    uint8_t name[16];
-    uint8_t num_addr;
-    uint8_t load_addr_l;    // NOTE: odd offset!
-    uint8_t load_addr_h;
-    uint8_t end_addr_l;
-    uint8_t end_addr_h;
-    uint8_t exec_addr_l;
-    uint8_t exec_addr_h;
-    uint8_t pad[128 - 23];  // pad to 128 bytes
-};
-
-// KC TAP file format header block
-struct tap_header {
-    uint8_t sig[16];              // "\xC3KC-TAPE by AF. ";
-    uint8_t type;                 // 00: KCTAP_Z9001, 01: KCTAP_KC85, else: KCTAB_SYS
-    kcc_header kcc;             // from here on identical with KCC
-};
-#pragma pack(pop)
-
 bool
 kc85::quickload(filesystem* fs, const char* name, filetype type, bool start) {
 
-    // read data into memory
-    auto& mem = this->board->z80.mem;
     auto fp = fs->open(name, filesystem::mode::read);
     if (!fp) {
         return false;
     }
-    tap_header hdr;
-    uint16_t start_addr = 0;
-    uint16_t end_addr = 0;
+    kctap_header hdr;
     uint16_t exec_addr = 0;
     bool has_exec_addr = false;
+    bool hdr_valid = false;
+    auto& mem = this->board->z80.mem;
     if (filetype::kc_tap == type) {
         if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
-            start_addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
-            end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
+            hdr_valid = true;
+            uint16_t addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
+            uint16_t end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
             exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
             has_exec_addr = hdr.kcc.num_addr > 2;
-            uint16_t addr = start_addr;
             while (addr < end_addr) {
                 // each block is 1 lead byte + 128 bytes data
                 static const int block_size = 129;
@@ -589,11 +564,11 @@ kc85::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     }
     else if (filetype::kcc == type) {
         if (fs->read(fp, &hdr.kcc, sizeof(hdr.kcc)) == sizeof(hdr.kcc)) {
-            start_addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
-            end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
+            hdr_valid = true;
+            uint16_t addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
+            uint16_t end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
             exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
             has_exec_addr = hdr.kcc.num_addr > 2;
-            uint16_t addr = start_addr;
             while (addr < end_addr) {
                 static const int buf_size = 1024;
                 uint8_t buf[buf_size];
@@ -606,6 +581,9 @@ kc85::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     }
     fs->close(fp);
     fs->rm(name);
+    if (!hdr_valid) {
+        return false;
+    }
 
     // FIXME: patch JUNGLE until I have time to do a proper
     // 'restoration', see Alexander Lang's KC emu here:

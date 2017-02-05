@@ -152,9 +152,18 @@ filesystem::close(file h) {
 int
 filesystem::size(file h) const {
     YAKC_ASSERT((h != invalid_file) && (h < max_num_files));
-    auto& f = files[h];
+    const auto& f = files[h];
     YAKC_ASSERT(f.valid && f.open_mode != mode::none);
     return f.size;
+}
+
+//------------------------------------------------------------------------------
+bool
+filesystem::eof(file h) const {
+    YAKC_ASSERT((h != invalid_file) && (h < max_num_files));
+    const auto& f = files[h];
+    YAKC_ASSERT(f.valid && f.open_mode != mode::none);
+    return f.pos == f.size;
 }
 
 //------------------------------------------------------------------------------
@@ -226,6 +235,29 @@ filesystem::read(file h, void* ptr, int num_bytes) {
         *u8_ptr++ = store[f.blocks[block_index(f.pos)]][f.pos & block::mask];
     }
     return bytes_read;
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+filesystem::peek_u8(file h, int rel_pos) {
+    YAKC_ASSERT((h != invalid_file) && (h < max_num_files));
+    const auto& f = files[h];
+    YAKC_ASSERT(f.valid && f.open_mode == mode::read && f.size > 0);
+    int pos = (f.pos + rel_pos) % f.size;
+    return store[f.blocks[block_index(pos)]][pos & block::mask];
+}
+
+//------------------------------------------------------------------------------
+void
+filesystem::skip(file h, int num_bytes) {
+    YAKC_ASSERT((h != invalid_file) && (h < max_num_files));
+    YAKC_ASSERT(num_bytes > 0);
+    auto& f = files[h];
+    YAKC_ASSERT(f.valid && f.open_mode == mode::read);
+    f.pos += num_bytes;
+    if (f.pos > f.size) {
+        f.pos = f.size;
+    }
 }
 
 } // namespace YAKC

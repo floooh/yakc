@@ -551,6 +551,80 @@ cpc::framebuffer(int& out_width, int& out_height) {
 }
 
 //------------------------------------------------------------------------------
+bool
+cpc::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+    auto fp = fs->open(name, filesystem::mode::read);
+    if (!fp) {
+        return false;
+    }
+    sna_header hdr;
+    bool hdr_valid = false;
+    if (filetype::cpc_sna == type) {
+        if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
+            hdr_valid = true;
+            const uint16_t dump_size = (hdr.dump_size_h<<8 | hdr.dump_size_l) & 0xFFFF;
+            if (dump_size == 64) {
+                YAKC_ASSERT(sizeof(this->board->ram) >= 0x10000);
+                fs->read(fp, this->board->ram, 0x10000);
+            }
+            else {
+                YAKC_ASSERT(sizeof(this->board->ram) >= 0x20000);
+                fs->read(fp, this->board->ram, 0x20000);
+            }
+        }
+    }
+    fs->close(fp);
+    fs->rm(name);
+    if (!hdr_valid) {
+        return false;
+    }
+
+    // CPU state
+    auto& cpu = this->board->z80;
+    cpu.F = hdr.F; cpu.A = hdr.A;
+    cpu.C = hdr.C; cpu.B = hdr.B;
+    cpu.E = hdr.E; cpu.D = hdr.D;
+    cpu.L = hdr.L; cpu.H = hdr.H;
+    cpu.R = hdr.R; cpu.I = hdr.I;
+    cpu.IFF1 = (hdr.IFF1 & 1) != 0;
+    cpu.IFF2 = (hdr.IFF2 & 1) != 0;
+    cpu.IX = (hdr.IX_h<<8 | hdr.IX_l) & 0xFFFF;
+    cpu.IY = (hdr.IY_h<<8 | hdr.IY_l) & 0xFFFF;
+    cpu.SP = (hdr.SP_h<<8 | hdr.SP_l) & 0xFFFF;
+    cpu.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
+    cpu.IM = hdr.IM;
+    cpu.AF_ = (hdr.A_<<8 | hdr.F_) & 0xFFFF;
+    cpu.BC_ = (hdr.B_<<8 | hdr.C_) & 0xFFFF;
+    cpu.DE_ = (hdr.D_<<8 | hdr.E_) & 0xFFFF;
+    cpu.HL_ = (hdr.H_<<8 | hdr.L_) & 0xFFFF;
+    // gate array state
+    for (int i = 0; i < 17; i++) {
+        this->cpu_out(0x7FFF, i);
+        this->cpu_out(0x7FFF, (hdr.pens[i] & 0x1F) | 0x40);
+    }
+    this->cpu_out(0x7FFF, hdr.selected_pen & 0x1F);
+    this->cpu_out(0x7FFF, (hdr.gate_array_config & 0x3F) | 0x80);
+    this->cpu_out(0x7FFF, (hdr.ram_config & 0x3F) | 0xC0);
+    auto& vdg = this->board->mc6845;
+    for (int i = 0; i < 18; i++) {
+        vdg.select(i);
+        vdg.write(hdr.crtc_regs[i]);
+    }
+    vdg.select(hdr.crtc_selected);
+    // FIXME: rom_config
+    auto& ppi = this->board->i8255;
+    ppi.output[i8255::PORT_A] = hdr.ppi_a;
+    ppi.output[i8255::PORT_B] = hdr.ppi_b;
+    ppi.output[i8255::PORT_C] = hdr.ppi_c;
+    this->psg_selected = hdr.psg_selected;
+    for (int i = 0; i < 16; i++) {
+        this->board->ay8910.regs[i] = hdr.psg_regs[i];
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
 const char*
 cpc::system_info() const {
     return "FIXME!";

@@ -7,6 +7,7 @@
 #include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
+#include "yakc/systems/filesystem.h"
 
 namespace YAKC {
 
@@ -51,6 +52,8 @@ public:
     void decode_audio(float* buffer, int num_samples);
     /// get framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
+    /// file quickloading
+    bool quickload(filesystem* fs, const char* name, filetype type, bool start);    
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;

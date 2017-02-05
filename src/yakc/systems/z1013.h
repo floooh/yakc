@@ -36,6 +36,7 @@
 #include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
+#include "yakc/systems/filesystem.h"
 
 namespace YAKC {
 
@@ -67,6 +68,8 @@ public:
     void on_context_switched();
     /// get framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
+    /// file quickloading
+    bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
     /// put a key as ASCII code
     void put_key(ubyte ascii);

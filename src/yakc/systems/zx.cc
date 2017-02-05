@@ -559,4 +559,168 @@ zx::framebuffer(int& out_width, int& out_height) {
     return this->rgba8_buffer;
 }
 
+//------------------------------------------------------------------------------
+bool
+zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+    auto fp = fs->open(name, filesystem::mode::read);
+    if (!fp) {
+        return false;
+    }
+    zxz80_header hdr;
+    zxz80ext_header ext_hdr;
+    bool ext_hdr_valid = false;
+    if (filetype::zx_z80 == type) {
+        if (fs->read(fp, &hdr, sizeof(hdr)) != sizeof(hdr)) {
+            goto error;
+        }
+        uint16_t pc = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
+        const bool is_version1 = 0 != pc;
+        if (!is_version1) {
+            if (fs->read(fp, &ext_hdr, sizeof(ext_hdr)) != sizeof(ext_hdr)) {
+                goto error;
+            }
+            ext_hdr_valid = true;
+            if (ext_hdr.hw_mode < 3) {
+                if (this->cur_model != system::zxspectrum48k) {
+                    goto error;
+                }
+            }
+            else {
+                if (this->cur_model != system::zxspectrum128k) {
+                    goto error;
+                }
+            }
+        }
+        else {
+            if (this->cur_model != system::zxspectrum48k) {
+                goto error;
+            }
+        }
+        const bool v1_compr = 0 != (hdr.flags0 & (1<<5));
+
+        while (!fs->eof(fp)) {
+            int page_index = 0;
+            int src_len = 0, dst_len = 0;
+            if (is_version1) {
+                src_len = fs->size(fp) - sizeof(zxz80_header);
+                dst_len = 48 * 1024;
+            }
+            else {
+                zxz80page_header phdr;
+                if (fs->read(fp, &phdr, sizeof(phdr)) == sizeof(phdr)) {
+                    src_len = (phdr.len_h<<8 | phdr.len_l) & 0xFFFF;
+                    dst_len = 0x4000;
+                    page_index = phdr.page_nr - 3;
+                    if ((system::zxspectrum48k == this->cur_model) && (page_index == 5)) {
+                        page_index = 0;
+                    }
+                }
+                else {
+                    goto error;
+                }
+            }
+            uint8_t* dst_ptr = this->board->ram[page_index];
+            const uint8_t* dst_end_ptr = dst_ptr + dst_len;
+            if ((page_index >= 0) && (page_index < 8)) {
+                if (0xFFFF == src_len) {
+                    // FIXME: uncompressed not supported yet
+                    goto error;
+                }
+                else {
+                    // compressed
+                    int src_pos = 0;
+                    bool v1_done = false;
+                    uint8_t val[4];
+                    while ((src_pos < src_len) && !v1_done) {
+                        val[0] = fs->peek_u8(fp, src_pos);
+                        val[1] = fs->peek_u8(fp, src_pos+1);
+                        val[2] = fs->peek_u8(fp, src_pos+2);
+                        val[3] = fs->peek_u8(fp, src_pos+3);
+                        // check for version 1 end marker
+                        if (v1_compr && (0==val[0]) && (0xED==val[1]) && (0xED==val[2]) && (0==val[3])) {
+                            v1_done = true;
+                            src_pos += 4;
+                        }
+                        else if (0xED == val[0]) {
+                            if (0xED == val[1]) {
+                                uint8_t count = val[2];
+                                YAKC_ASSERT(0 != count);
+                                uint8_t data = val[3];
+                                src_pos += 4;
+                                for (int i = 0; i < count; i++) {
+                                    YAKC_ASSERT(dst_ptr < dst_end_ptr);
+                                    *dst_ptr++ = data;
+                                }
+                            }
+                            else {
+                                // single ED
+                                YAKC_ASSERT(dst_ptr < dst_end_ptr);
+                                *dst_ptr++ = val[0];
+                                src_pos++;
+                            }
+                        }
+                        else {
+                            // any value
+                            YAKC_ASSERT(dst_ptr < dst_end_ptr);
+                            *dst_ptr++ = val[0];
+                            src_pos++;
+                        }
+                    }
+                    YAKC_ASSERT(dst_ptr == dst_end_ptr);
+                    YAKC_ASSERT(src_pos == src_len);
+                }
+            }
+            if (0xFFFF == src_len) {
+                fs->skip(fp, 0x4000);
+            }
+            else {
+                fs->skip(fp, src_len);
+            }
+        }
+    }
+    fs->close(fp);
+    fs->rm(name);
+
+    // start loaded image
+    if (start) {
+        z80& cpu = this->board->z80;
+        cpu.A = hdr.A; cpu.F = hdr.F;
+        cpu.B = hdr.B; cpu.C = hdr.C;
+        cpu.D = hdr.D; cpu.E = hdr.E;
+        cpu.H = hdr.H; cpu.L = hdr.L;
+        cpu.IXH = hdr.IX_h; cpu.IXL = hdr.IX_l;
+        cpu.IYH = hdr.IY_h; cpu.IYL = hdr.IY_l;
+        cpu.AF_ = (hdr.A_<<8 | hdr.F_) & 0xFFFF;
+        cpu.BC_ = (hdr.B_<<8 | hdr.C_) & 0xFFFF;
+        cpu.DE_ = (hdr.D_<<8 | hdr.E_) & 0xFFFF;
+        cpu.HL_ = (hdr.H_<<8 | hdr.L_) & 0xFFFF;
+        cpu.SP = (hdr.SP_h<<8 | hdr.SP_l) & 0xFFFF;
+        cpu.I = hdr.I;
+        cpu.R = (hdr.R & 0x7F) | ((hdr.flags0 & 1)<<7);
+        cpu.IFF2 = hdr.IFF2;
+        cpu.int_enable = hdr.EI != 0;
+        if (hdr.flags1 != 0xFF) {
+            cpu.IM = (hdr.flags1 & 3);
+        }
+        else {
+            cpu.IM = 1;
+        }
+        if (ext_hdr_valid) {
+            cpu.PC = (ext_hdr.PC_h<<8 | ext_hdr.PC_l) & 0xFFFF;
+            cpu.out(this, 0xFFFD, ext_hdr.out_fffd);
+            cpu.out(this, 0x7FFD, ext_hdr.out_7ffd);
+        }
+        else {
+            cpu.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
+        }
+        this->border_color = zx::palette[(hdr.flags0>>1) & 7] & 0xFFD7D7D7;
+    }
+    return true;
+
+error:
+    fs->close(fp);
+    fs->rm(name);
+    return false;
+}
+
 } // namespace YAKC

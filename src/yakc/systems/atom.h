@@ -9,6 +9,7 @@
 #include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
+#include "yakc/systems/filesystem.h"
 
 namespace YAKC {
 
@@ -50,6 +51,8 @@ public:
     void on_context_switched();    
     /// put a key and joystick input
     void put_input(uint8_t ascii);
+    /// file quickloading
+    bool quickload(filesystem* fs, const char* name, filetype type, bool start);    
 
     /// memory-mapped-io callback
     static uint8_t memio(bool write, uint16_t addr, uint8_t inval);

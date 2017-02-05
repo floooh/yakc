@@ -596,6 +596,76 @@ z9001::framebuffer(int& out_width, int& out_height) {
 }
 
 //------------------------------------------------------------------------------
+bool
+z9001::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+
+    auto fp = fs->open(name, filesystem::mode::read);
+    if (!fp) {
+        return false;
+    }
+
+    // same fileformats as KC85/2..4
+    kctap_header hdr;
+    uint16_t exec_addr = 0;
+    bool has_exec_addr = false;
+    bool hdr_valid = false;
+    auto& mem = this->board->z80.mem;
+    if (filetype::kc_tap == type) {
+        if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
+            hdr_valid = true;
+            uint16_t addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
+            uint16_t end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
+            exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
+            has_exec_addr = hdr.kcc.num_addr > 2;
+            while (addr < end_addr) {
+                // each block is 1 lead byte + 128 bytes data
+                static const int block_size = 129;
+                uint8_t block[block_size];
+                fs->read(fp, block, block_size);
+                for (int i = 1; (i < block_size) && (addr < end_addr); i++) {
+                    mem.w8(addr++, block[i]);
+                }
+            }
+        }
+    }
+    else if (filetype::kcc == type) {
+        if (fs->read(fp, &hdr.kcc, sizeof(hdr.kcc)) == sizeof(hdr.kcc)) {
+            hdr_valid = true;
+            uint16_t addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
+            uint16_t end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
+            exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
+            has_exec_addr = hdr.kcc.num_addr > 2;
+            while (addr < end_addr) {
+                static const int buf_size = 1024;
+                uint8_t buf[buf_size];
+                fs->read(fp, buf, buf_size);
+                for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
+                    mem.w8(addr++, buf[i]);
+                }
+            }
+        }
+    }
+    fs->close(fp);
+    fs->rm(name);
+    if (!hdr_valid) {
+        return false;
+    }
+
+    // start loaded image
+    if (start && has_exec_addr) {
+        auto& cpu = this->board->z80;
+        cpu.A = 0x00;
+        cpu.F = 0x10;
+        cpu.BC = cpu.BC_ = 0x0000;
+        cpu.DE = cpu.DE_ = 0x0000;
+        cpu.HL = cpu.HL_ = 0x0000;
+        cpu.AF_ = 0x0000;
+        cpu.PC = exec_addr;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 const char*
 z9001::system_info() const {
     if (system::z9001 == this->cur_model) {
