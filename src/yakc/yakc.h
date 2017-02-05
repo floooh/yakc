@@ -7,6 +7,7 @@
 #include "yakc/core/core.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
+#include "yakc/systems/filesystem.h"
 #include "yakc/systems/kc85.h"
 #include "yakc/systems/z1013.h"
 #include "yakc/systems/z9001.h"
@@ -42,6 +43,9 @@ public:
     void enable_joystick(bool b);
     /// return true if joystick is enabled
     bool is_joystick_enabled() const;
+
+    /// start a quickload (may not be finished when function returns)
+    bool quickload(const char* name, filetype type, bool start);
 
     /// fill sample buffer for external audio system (may be called from a thread!)
     void fill_sound_samples(float* buffer, int num_samples);
@@ -79,6 +83,7 @@ public:
     class bbcmicro bbcmicro;
     breadboard board;
     class rom_images roms;
+    class filesystem filesystem;
 
     bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count

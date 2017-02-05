@@ -459,4 +459,15 @@ yakc::framebuffer(int& out_width, int& out_height) {
     }
 }
 
+//------------------------------------------------------------------------------
+bool
+yakc::quickload(const char* name, filetype type, bool start) {
+    if (this->kc85.on) {
+        return this->kc85.quickload(&this->filesystem, name, type, start);
+    }
+    else {
+        return false;
+    }
+}
+
 } // namespace YAKC

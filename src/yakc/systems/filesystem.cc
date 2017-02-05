@@ -184,7 +184,7 @@ filesystem::set_pos(file h, int pos) {
 
 //------------------------------------------------------------------------------
 int
-filesystem::write(file h, const uint8_t* ptr, int num_bytes) {
+filesystem::write(file h, const void* ptr, int num_bytes) {
     YAKC_ASSERT((h != invalid_file) && (h < max_num_files));
     YAKC_ASSERT(ptr && (num_bytes > 0));
     auto& f = files[h];
@@ -192,6 +192,7 @@ filesystem::write(file h, const uint8_t* ptr, int num_bytes) {
     YAKC_ASSERT(f.size == f.pos);
     const int end_pos = f.pos + num_bytes;
     int bytes_written = 0;
+    const uint8_t* u8_ptr = (const uint8_t*) ptr;
     for (; f.pos < end_pos; f.pos++, f.size++, bytes_written++) {
         if (f.b_index != block_index(f.pos)) {
             // need to start a new block
@@ -203,14 +204,14 @@ filesystem::write(file h, const uint8_t* ptr, int num_bytes) {
             f.b_index = block_index(f.pos);
             f.blocks[f.b_index] = i;
         }
-        store[f.blocks[f.b_index]][f.pos&block::mask] = *ptr++;
+        store[f.blocks[f.b_index]][f.pos&block::mask] = *u8_ptr++;
     }
     return bytes_written;
 }
 
 //------------------------------------------------------------------------------
 int
-filesystem::read(file h, uint8_t* ptr, int num_bytes) {
+filesystem::read(file h, void* ptr, int num_bytes) {
     YAKC_ASSERT((h != invalid_file) && (h < max_num_files));
     YAKC_ASSERT(ptr && (num_bytes > 0));
     auto& f = files[h];
@@ -220,8 +221,9 @@ filesystem::read(file h, uint8_t* ptr, int num_bytes) {
         end_pos = f.size;
     }
     int bytes_read = 0;
+    uint8_t* u8_ptr = (uint8_t*) ptr;
     for (; f.pos < end_pos; f.pos++, bytes_read++) {
-        *ptr++ = store[f.blocks[block_index(f.pos)]][f.pos & block::mask];
+        *u8_ptr++ = store[f.blocks[block_index(f.pos)]][f.pos & block::mask];
     }
     return bytes_read;
 }

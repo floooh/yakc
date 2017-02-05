@@ -101,6 +101,21 @@ enum class os_rom {
     none,
 };
 
+enum class filetype {
+    raw,
+    kcc,
+    kc_tap,
+    kc_z80,
+    zx_tap,
+    zx_z80,
+    cpc_sna,
+    atom_tap,
+    text,
+
+    num,
+    none,
+};
+
 class joystick {
 public:
     enum {

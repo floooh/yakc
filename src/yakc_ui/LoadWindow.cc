@@ -37,7 +37,7 @@ LoadWindow::Draw(yakc& emu) {
             static char urlBuf[256] = "";
             ImGui::Text("http://localhost:8000/"); ImGui::SameLine();
             if (ImGui::InputText("##url", urlBuf, sizeof(urlBuf), ImGuiInputTextFlags_EnterReturnsTrue)) {
-                FileLoader::Item item("", urlBuf, FileLoader::FileType::None, system::any);
+                FileLoader::Item item("", urlBuf, filetype::none, system::any);
                 ldr.Load(item);
             }
             #endif
@@ -55,11 +55,11 @@ LoadWindow::Draw(yakc& emu) {
                 "ATOM TAP",
                 "TEXT"
             };
-            static_assert(int(sizeof(typeNames)/sizeof(const char*)) == int(FileLoader::FileType::Num), "FileType mismatch");
+            static_assert(int(sizeof(typeNames)/sizeof(const char*)) == int(filetype::num), "FileType mismatch");
             int curFileType = (int) ldr.Info.Type;
-            if (ImGui::Combo("File Type", &curFileType, typeNames, int(FileLoader::FileType::Num))) {
+            if (ImGui::Combo("File Type", &curFileType, typeNames, int(filetype::num))) {
                 // reparse loaded data
-                FileLoader::Item item("", ldr.Info.Filename.AsCStr(), (FileLoader::FileType)curFileType, system::any);
+                FileLoader::Item item("", ldr.Info.Filename.AsCStr(), (filetype)curFileType, system::any);
                 ldr.Info = ldr.parseHeader(ldr.FileData, item);
             }
             ImGui::Text("Filename: %s", ldr.Info.Filename.AsCStr());

@@ -15,31 +15,15 @@ class FileLoader {
 public:
     static FileLoader* pointer;
 
-    /// file types
-    enum class FileType {
-        RAW = 0,
-        KCC,
-        KC_TAP,
-        KC_Z80,
-        ZX_TAP,
-        ZX_Z80,
-        CPC_SNA,
-        ATOM_TAP,
-        TEXT,
-
-        Num,
-        None,
-    };
-
     /// a load item
     struct Item {
-        Item(const char* n, const char* fn, FileType t, system compat, bool enableJoystick=false) :
+        Item(const char* n, const char* fn, filetype t, system compat, bool enableJoystick=false) :
             Name(n), Filename(fn), Type(t), Compat(compat), OptStartAddr(0), OptExecAddr(0), EnableJoystick(true) {};
-        Item(const char* n, const char* fn, FileType t, system compat, uword startAddr, uword execAddr) :
+        Item(const char* n, const char* fn, filetype t, system compat, uword startAddr, uword execAddr) :
             Name(n), Filename(fn), Type(t), Compat(compat), OptStartAddr(startAddr), OptExecAddr(execAddr) {};
         Oryol::String Name;
         Oryol::String Filename;
-        FileType Type;
+        filetype Type;
         system Compat;
         uword OptStartAddr;
         uword OptExecAddr;
@@ -61,7 +45,7 @@ public:
     struct FileInfo {
         Oryol::String Filename;
         Oryol::String Name;
-        FileType Type = FileType::None;
+        filetype Type = filetype::none;
         int StartAddr = 0;
         int EndAddr = 0;
         int ExecAddr = 0;
@@ -97,8 +81,6 @@ public:
     FileInfo parseHeader(const Oryol::Buffer& data, const Item& item);
     /// copy data from loaded stream object into KC memory
     static void copy(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
-    /// special-case patch loaded files
-    static void patch(yakc* emu, const FileInfo& info);
     /// auto-start the loaded program
     static void start(yakc* emu, const FileInfo& info, const Oryol::Buffer& data);
 

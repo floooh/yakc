@@ -28,9 +28,9 @@ public:
     /// open a file
     file open(const char* name, mode m);
     /// read data from file
-    int read(file fp, uint8_t* ptr, int num_bytes);
+    int read(file fp, void* ptr, int num_bytes);
     /// write data to file
-    int write(file fp, const uint8_t* ptr, int num_bytes);
+    int write(file fp, const void* ptr, int num_bytes);
     /// set current file position, only in read mode!
     bool set_pos(file fp, int pos);
     /// get current file position

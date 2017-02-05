@@ -7,6 +7,7 @@
 #include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
+#include "yakc/systems/filesystem.h"
 #include "yakc/systems/kc85_video.h"
 #include "yakc/systems/kc85_audio.h"
 #include "yakc/systems/kc85_exp.h"
@@ -84,6 +85,8 @@ public:
     void put_key(ubyte ascii);
     /// handle keyboard input
     void handle_keyboard_input();
+    /// file quickloading
+    bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
     /// the z80 out callback
     virtual void cpu_out(uword port, ubyte val) override;

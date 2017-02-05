@@ -532,6 +532,134 @@ kc85::update_bank_switching() {
 }
 
 //------------------------------------------------------------------------------
+
+// KCC file format header block
+#pragma pack(push,1)
+struct kcc_header {
+    uint8_t name[16];
+    uint8_t num_addr;
+    uint8_t load_addr_l;    // NOTE: odd offset!
+    uint8_t load_addr_h;
+    uint8_t end_addr_l;
+    uint8_t end_addr_h;
+    uint8_t exec_addr_l;
+    uint8_t exec_addr_h;
+    uint8_t pad[128 - 23];  // pad to 128 bytes
+};
+
+// KC TAP file format header block
+struct tap_header {
+    uint8_t sig[16];              // "\xC3KC-TAPE by AF. ";
+    uint8_t type;                 // 00: KCTAP_Z9001, 01: KCTAP_KC85, else: KCTAB_SYS
+    kcc_header kcc;             // from here on identical with KCC
+};
+#pragma pack(pop)
+
+bool
+kc85::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+
+    // read data into memory
+    auto& mem = this->board->z80.mem;
+    auto fp = fs->open(name, filesystem::mode::read);
+    if (!fp) {
+        return false;
+    }
+    tap_header hdr;
+    uint16_t start_addr = 0;
+    uint16_t end_addr = 0;
+    uint16_t exec_addr = 0;
+    bool has_exec_addr = false;
+    if (filetype::kc_tap == type) {
+        if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
+            start_addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
+            end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
+            exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
+            has_exec_addr = hdr.kcc.num_addr > 2;
+            uint16_t addr = start_addr;
+            while (addr < end_addr) {
+                // each block is 1 lead byte + 128 bytes data
+                static const int block_size = 129;
+                uint8_t block[block_size];
+                fs->read(fp, block, block_size);
+                for (int i = 1; (i < block_size) && (addr < end_addr); i++) {
+                    mem.w8(addr++, block[i]);
+                }
+            }
+        }
+    }
+    else if (filetype::kcc == type) {
+        if (fs->read(fp, &hdr.kcc, sizeof(hdr.kcc)) == sizeof(hdr.kcc)) {
+            start_addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
+            end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
+            exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
+            has_exec_addr = hdr.kcc.num_addr > 2;
+            uint16_t addr = start_addr;
+            while (addr < end_addr) {
+                static const int buf_size = 1024;
+                uint8_t buf[buf_size];
+                fs->read(fp, buf, buf_size);
+                for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
+                    mem.w8(addr++, buf[i]);
+                }
+            }
+        }
+    }
+    fs->close(fp);
+    fs->rm(name);
+
+    // FIXME: patch JUNGLE until I have time to do a proper
+    // 'restoration', see Alexander Lang's KC emu here:
+    // http://lanale.de/kc85_emu/KC85_Emu.html
+    char image_name[sizeof(hdr.kcc.name) + 1];
+    memcpy(image_name, hdr.kcc.name, sizeof(hdr.kcc.name));
+    image_name[sizeof(image_name)-1] = 0;
+    if (strcmp(image_name, "JUNGLE     ") == 0) {
+        // patch start level 1 into memory
+        mem.w8(0x36b7, 1);
+        mem.w8(0x3697, 1);
+        for (int i = 0; i < 5; i++) {
+            mem.w8(0x1770 + i, mem.r8(0x36b6 + i));
+        }
+    }
+    // FIXME: patch Digger (see http://lanale.de/kc85_emu/KC85_Emu.html)
+    if (strcmp(image_name, "DIGGER  COM\x01") == 0) {
+        mem.w16(0x09AA, 0x0160);    // time for delay-loop 0160 instead of 0260
+        mem.w8(0x3d3a, 0xB5);   // OR L instead of OR (HL)
+    }
+    if (strcmp(image_name, "DIGGERJ") == 0) {
+        mem.w16(0x09AA, 0x0260);
+        mem.w8(0x3d3a, 0xB5);   // OR L instead of OR (HL)
+    }
+
+    // start loaded image
+    if (start && has_exec_addr) {
+        auto& cpu = this->board->z80;
+        cpu.A = 0x00;
+        cpu.F = 0x10;
+        cpu.BC = cpu.BC_ = 0x0000;
+        cpu.DE = cpu.DE_ = 0x0000;
+        cpu.HL = cpu.HL_ = 0x0000;
+        cpu.AF_ = 0x0000;
+        cpu.SP = 0x01C2;
+        // delete ASCII buffer
+        for (uint16_t addr = 0xb200; addr < 0xb700; addr++) {
+            cpu.mem.w8(addr, 0);
+        }
+        cpu.mem.w8(0xb7a0, 0);
+        if (system::kc85_3 == this->cur_model) {
+            cpu.out(this, 0x89, 0x9f);
+            cpu.mem.w16(cpu.SP, 0xf15c);
+        }
+        else if (system::kc85_4 == this->cur_model) {
+            cpu.out(this, 0x89, 0xFF);
+            cpu.mem.w16(cpu.SP, 0xf17e);
+        }
+        cpu.PC = exec_addr;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 const char*
 kc85::system_info() const {
     if (this->cur_model == system::kc85_2) {
