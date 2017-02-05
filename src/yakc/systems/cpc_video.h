@@ -19,11 +19,11 @@ public:
     void step(system_bus* bus, int cycles);
 
     /// called from CPU OUT handler to select pen for modification
-    void select_pen(ubyte val);
+    void select_pen(uint8_t val);
     /// called from CPU OUT handler to assign color to selected pen
-    void assign_color(ubyte val);
+    void assign_color(uint8_t val);
     /// set display mode (0..2)
-    void set_video_mode(ubyte val);
+    void set_video_mode(uint8_t val);
     /// called when bit 4 in CPU OUT 0x7Fxx is set (resets HSYNC counter)
     void interrupt_control(system_bus* bus);
     /// called when CPU acknowledges interrupt, clears bit 5 of HSYNC counter
@@ -69,13 +69,13 @@ public:
 
 //------------------------------------------------------------------------------
 inline void
-cpc_video::select_pen(ubyte val) {
+cpc_video::select_pen(uint8_t val) {
     this->selected_pen = val & 0x1F;
 }
 
 //------------------------------------------------------------------------------
 inline void
-cpc_video::assign_color(ubyte val) {
+cpc_video::assign_color(uint8_t val) {
     if (this->selected_pen & 0x10) {
         // set border color
         this->border_color = this->palette[val & 0x1F];
@@ -88,7 +88,7 @@ cpc_video::assign_color(ubyte val) {
 
 //------------------------------------------------------------------------------
 inline void
-cpc_video::set_video_mode(ubyte val) {
+cpc_video::set_video_mode(uint8_t val) {
     // video mode is realized at the end of HSYNC
     this->next_video_mode = val & 3;
 }

@@ -79,13 +79,13 @@ cpc_video::init(system model_, breadboard* board_) {
         // KC Compact
         for (int i = 0; i < 32; i++) {
             uint32_t rgba8 = 0xFF000000;
-            const ubyte val = kcc_color_rom[i];
+            const uint8_t val = kcc_color_rom[i];
             // color bits:
             //  xx|gg|rr|bb
             //
-            const ubyte b = val & 0x03;
-            const ubyte r = (val>>2) & 0x03;
-            const ubyte g = (val>>4) & 0x03;
+            const uint8_t b = val & 0x03;
+            const uint8_t r = (val>>2) & 0x03;
+            const uint8_t g = (val>>4) & 0x03;
             if (b == 0x03)     rgba8 |= 0x00FF0000;    // full blue
             else if (b != 0)   rgba8 |= 0x007F0000;    // half blue
             if (g == 0x03)     rgba8 |= 0x0000FF00;    // full green
@@ -207,7 +207,7 @@ cpc_video::decode_pixels(uint32_t* dst) {
     auto& crtc = this->board->mc6845;
     const uint32_t page_index  = (crtc.ma>>12) & 3;
     const uint32_t page_offset = ((crtc.ma & 0x03FF)<<1) | ((crtc.ra & 7)<<11);
-    const ubyte* src = &(this->board->ram[page_index][page_offset]);
+    const uint8_t* src = &(this->board->ram[page_index][page_offset]);
     uint8_t c;
     uint32_t p;
     if (0 == this->video_mode) {
@@ -301,9 +301,9 @@ cpc_video::step(system_bus* bus, int cycles) {
             if ((dst_x < (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
                 uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
                 if (!crtc.test(mc6845::DISPEN)) {
-                    ubyte r = 0x3F;
-                    ubyte g = 0x3F;
-                    ubyte b = 0x3F;
+                    uint8_t r = 0x3F;
+                    uint8_t g = 0x3F;
+                    uint8_t b = 0x3F;
                     if (crtc.test(mc6845::HSYNC)) {
                         r = 0x7F;
                     }

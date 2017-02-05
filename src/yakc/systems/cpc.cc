@@ -17,7 +17,7 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-cpc::init_key_mask(ubyte ascii, int col, int bit, int shift) {
+cpc::init_key_mask(uint8_t ascii, int col, int bit, int shift) {
     YAKC_ASSERT((col >= 0) && (col < 10));
     YAKC_ASSERT((bit >= 0) && (bit < 8));
     YAKC_ASSERT((shift >= 0) && (shift < 2));
@@ -57,7 +57,7 @@ cpc::init_keymap() {
     for (int shift = 0; shift < 2; shift++) {
         for (int col = 0; col < 10; col++) {
             for (int bit = 0; bit < 8; bit++) {
-                ubyte ascii = kbd[shift*80 + bit*10 + col];
+                uint8_t ascii = kbd[shift*80 + bit*10 + col];
                 this->init_key_mask(ascii, col, bit, shift);
             }
         }
@@ -242,7 +242,7 @@ cpc::step_debug() {
 
 //------------------------------------------------------------------------------
 void
-cpc::cpu_out(uword port, ubyte val) {
+cpc::cpu_out(uint16_t port, uint8_t val) {
     // http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
     if (0 == (port & (1<<15))) {
         // Gate Array or RAM configuration
@@ -287,7 +287,7 @@ cpc::cpu_out(uword port, ubyte val) {
     }
     if (0 == (port & (1<<14))) {
         // CRTC function
-        const uword crtc_func = port & 0x0300;
+        const uint16_t crtc_func = port & 0x0300;
         if (crtc_func == 0x0000) {
             // 0xBCxx: select CRTC register
             this->board->mc6845.select(val);
@@ -320,12 +320,12 @@ cpc::cpu_out(uword port, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-cpc::cpu_in(uword port) {
+uint8_t
+cpc::cpu_in(uint16_t port) {
     if (0 == (port & (1<<14))) {
         // CRTC function
         // FIXME: untested
-        const uword crtc_func = port & 0x0300;
+        const uint16_t crtc_func = port & 0x0300;
         if (crtc_func == 0x0200) {
             // 0xBExx: read status register on type 1 CRTC
             return this->board->mc6845.read_status();
@@ -351,10 +351,10 @@ cpc::cpu_in(uword port) {
 
 //------------------------------------------------------------------------------
 void
-cpc::pio_out(int /*pio_id*/, int port_id, ubyte val) {
+cpc::pio_out(int /*pio_id*/, int port_id, uint8_t val) {
     if (i8255::PORT_C == port_id) {
         // PSG function
-        const ubyte func = val & 0xC0;
+        const uint8_t func = val & 0xC0;
         switch (func) {
             case 0xC0:
                 // select PSG register from PIO Port A
@@ -372,7 +372,7 @@ cpc::pio_out(int /*pio_id*/, int port_id, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 cpc::pio_in(int /*pio_id*/, int port_id) {
     if (i8255::PORT_A == port_id) {
         // catch keyboard data which is normally in PSG PORT A
@@ -405,7 +405,7 @@ cpc::pio_in(int /*pio_id*/, int port_id) {
         //      7: Amstrad
         //  Bit 0: vsync
         //
-        ubyte val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
+        uint8_t val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
         if (this->video.vsync_bit()) {
             val |= (1<<0);
         }
@@ -434,7 +434,7 @@ void
 cpc::update_memory_mapping() {
     // index into RAM config array
     int ram_table_index;
-    ubyte* rom0_ptr,*rom1_ptr;
+    uint8_t* rom0_ptr,*rom1_ptr;
     if (system::kccompact == this->cur_model) {
         ram_table_index = 0;
         rom0_ptr = this->roms->ptr(rom_images::kcc_os);
@@ -481,7 +481,7 @@ cpc::update_memory_mapping() {
 
 //------------------------------------------------------------------------------
 void
-cpc::put_input(ubyte ascii, ubyte joy0_mask) {
+cpc::put_input(uint8_t ascii, uint8_t joy0_mask) {
     // ascii=0 means no key pressed, joystick input mutes keyboard input
     this->next_joy_mask = key_mask();
     if (0 == joy0_mask) {

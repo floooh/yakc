@@ -28,7 +28,7 @@ public:
     /// initialize the keycode translation map
     void init_keymap();
     /// initialize a single entry in the key-map table
-    void init_key_mask(ubyte ascii, int column, int line, int shift);    
+    void init_key_mask(uint8_t ascii, int column, int line, int shift);
     /// power-on the device
     void poweron(system m);
     /// power-off the device
@@ -40,7 +40,7 @@ public:
     /// called after snapshot restore
     void on_context_switched();
     /// put a key and joystick input
-    void put_input(ubyte ascii, ubyte joy0_mask);
+    void put_input(uint8_t ascii, uint8_t joy0_mask);
 
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
@@ -57,13 +57,13 @@ public:
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
     /// the z80 out callback
-    virtual void cpu_out(uword port, ubyte val) override;
+    virtual void cpu_out(uint16_t port, uint8_t val) override;
     /// the z80 in callback
-    virtual ubyte cpu_in(uword port) override;
+    virtual uint8_t cpu_in(uint16_t port) override;
     /// PIO output callback
-    virtual void pio_out(int pio_id, int port_id, ubyte val) override;
+    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
     /// PIO input callback
-    virtual ubyte pio_in(int pio_id, int port_id) override;
+    virtual uint8_t pio_in(int pio_id, int port_id) override;
     /// interrupt request callback
     virtual void irq(bool b) override;
     /// interrupt acknowledge callback
@@ -76,12 +76,12 @@ public:
 
     cpc_video video;
 
-    ubyte psg_selected = 0;     // selected AY8910 register
-    ubyte ga_config = 0x00;     // out to port 0x7Fxx func 0x80
-    ubyte ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
+    uint8_t psg_selected = 0;     // selected AY8910 register
+    uint8_t ga_config = 0x00;     // out to port 0x7Fxx func 0x80
+    uint8_t ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
     struct key_mask {
         static const int num_lines = 10;
-        ubyte col[num_lines] = { };
+        uint8_t col[num_lines] = { };
         void combine(const key_mask& m) {
             for (int i = 0; i < num_lines; i++) {
                 this->col[i] |= m.col[i];
@@ -93,7 +93,7 @@ public:
             }
         }
     };
-    ubyte scan_kbd_line = 0;    // next keyboard line to be scanned
+    uint8_t scan_kbd_line = 0;    // next keyboard line to be scanned
     key_mask next_key_mask;
     key_mask next_joy_mask;
     key_mask cur_key_mask;
