@@ -61,8 +61,11 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Fruity Frank", "fruity_frank.sna", filetype::cpc_sna, system(int(system::kccompact)|int(system::cpc6128)), true);
     this->Items.Add("Ikari Warriors", "ikari_warriors.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("1943", "1943.sna", filetype::cpc_sna, system::any_cpc, true);
+    this->Items.Add("1942 (TAP)", "1942.tap", filetype::cpc_tap, system::any_cpc, true);
     this->Items.Add("Ghosts'n'Goblins (TAP)", "ghostsng.tap", filetype::cpc_tap, system::any_cpc, true);
     this->Items.Add("Tir Na Nog (TAP)", "tirnanog.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Back to Reality (TAP)", "backtore.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("ASSMON (TAP)", "assmon.tap", filetype::cpc_tap, system::any_cpc, true);
     this->Items.Add("Exolon", "exolon.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Cyclone", "cyclone.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Boulderdash", "boulderdash_zx.z80", filetype::zx_z80, system::zxspectrum48k, true);

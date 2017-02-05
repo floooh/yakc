@@ -137,8 +137,14 @@ cpc::poweron(system m) {
     this->cur_model = m;
     this->on = true;
     // http://www.cpcwiki.eu/index.php/Format:TAP_tape_image_file_format
-    this->casread_trap = 0x29A6;
-    this->casread_ret = 0x29E2;
+    if (m == system::cpc464) {
+        this->casread_trap = 0x2836;
+        this->casread_ret = 0x2872;
+    }
+    else {
+        this->casread_trap = 0x29A6;
+        this->casread_ret = 0x29E2;
+    }
     this->ga_config = 0;
     this->ram_config = 0;
     this->psg_selected = 0;
@@ -676,13 +682,13 @@ cpc::casread() {
                 cpu.mem.w8(cpu.HL++, val);
             }
         }
+        if (this->tap_fs->eof(this->tap_fp)) {
+            this->tap_fs->close_rm(this->tap_fp);
+            this->tap_fp = filesystem::invalid_file;
+        }
     }
     cpu.F = success ? 0x45 : 0x00;
     cpu.PC = this->casread_ret;
-    if (this->tap_fs->eof(this->tap_fp)) {
-        this->tap_fs->close_rm(this->tap_fp);
-        this->tap_fp = filesystem::invalid_file;
-    }
 }
 
 //------------------------------------------------------------------------------
