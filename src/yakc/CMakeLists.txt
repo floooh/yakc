@@ -30,6 +30,7 @@ fips_begin_module(yakc)
     fips_dir(systems)
     fips_files(
         rom_images.h rom_images.cc
+        filesystem.h filesystem.cc
         kc85.h kc85.cc 
         kc85_video.h kc85_video.cc
         kc85_audio.h kc85_audio.cc 
