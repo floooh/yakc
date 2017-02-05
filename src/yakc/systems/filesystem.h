@@ -57,7 +57,7 @@ public:
 
     static const int max_num_files = 16;
     struct file_item {
-        static const int max_name_size = 32;
+        static const int max_name_size = 128;
         char name[max_name_size] = { };
         mode open_mode = mode::none;
         bool valid = false;

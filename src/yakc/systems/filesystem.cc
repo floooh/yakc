@@ -23,7 +23,7 @@ filesystem::find(const char* name) {
     YAKC_ASSERT(name);
     for (int i = 0; i < max_num_files; i++) {
         if (files[i].valid) {
-            if (strcmp(name, files[i].name) == 0) {
+            if (strncmp(name, files[i].name, sizeof(files[i].name)) == 0) {
                 return i;
             }
         }

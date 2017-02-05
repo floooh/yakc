@@ -264,12 +264,13 @@ FileLoader::load(const Item& item, bool autostart) {
             this->FileData = std::move(ioResult.Data);
             this->Info = parseHeader(this->FileData, item);
             this->State = Ready;
+            String path = ioResult.Url.Path();
             if (this->emu->is_system(system::any_kc85)) {
-                auto fp = this->emu->filesystem.open(this->Info.Name.AsCStr(), filesystem::mode::write);
+                auto fp = this->emu->filesystem.open(path.AsCStr(), filesystem::mode::write);
                 if (fp) {
                     this->emu->filesystem.write(fp, this->FileData.Data(), this->FileData.Size());
                     this->emu->filesystem.close(fp);
-                    this->emu->quickload(this->Info.Name.AsCStr(), this->Info.Type, autostart);
+                    this->emu->quickload(path.AsCStr(), this->Info.Type, autostart);
                 }
             }
             else if (autostart) {
