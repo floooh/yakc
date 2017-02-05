@@ -109,6 +109,7 @@ enum class filetype {
     zx_tap,
     zx_z80,
     cpc_sna,
+    cpc_tap,
     atom_tap,
     text,
 

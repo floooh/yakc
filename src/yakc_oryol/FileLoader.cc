@@ -61,6 +61,8 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Fruity Frank", "fruity_frank.sna", filetype::cpc_sna, system(int(system::kccompact)|int(system::cpc6128)), true);
     this->Items.Add("Ikari Warriors", "ikari_warriors.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("1943", "1943.sna", filetype::cpc_sna, system::any_cpc, true);
+    this->Items.Add("Ghosts'n'Goblins (TAP)", "ghostsng.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Tir Na Nog (TAP)", "tirnanog.tap", filetype::cpc_tap, system::any_cpc, true);
     this->Items.Add("Exolon", "exolon.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Cyclone", "cyclone.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Boulderdash", "boulderdash_zx.z80", filetype::zx_z80, system::zxspectrum48k, true);
@@ -158,6 +160,9 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
             if (this->emu->is_system(system::any_zx)) {
                 info.Type = filetype::zx_tap;
             }
+            else if (this->emu->is_system(system::any_cpc)) {
+                info.Type = filetype::cpc_tap;
+            }
             else if (this->emu->is_system(system::acorn_atom)) {
                 info.Type = filetype::atom_tap;
             }
@@ -229,6 +234,10 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         // http://cpctech.cpc-live.com/docs/snapshot.html
         info.Name = item.Filename;
         info.RequiredSystem = system::any_cpc;  // FIXME
+    }
+    else if (filetype::cpc_tap == info.Type) {
+        const cpctap_header* hdr = (const cpctap_header*) ptr;
+        info.Name = String((const char*)hdr->name, 0, 16);
     }
     else if (filetype::atom_tap == info.Type) {
         const atomtap_header* hdr = (const atomtap_header*) ptr;

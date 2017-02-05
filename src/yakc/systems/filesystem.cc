@@ -149,6 +149,19 @@ filesystem::close(file h) {
 }
 
 //------------------------------------------------------------------------------
+void
+filesystem::close_rm(file h) {
+    YAKC_ASSERT((h != invalid_file) && (h < max_num_files));
+    auto& f = files[h];
+    YAKC_ASSERT(f.valid && f.open_mode != mode::none);
+    f.open_mode = mode::none;
+    for (int i = 0; i < num_blocks(f.size); i++) {
+        free_block(f.blocks[i]);
+    }
+    f = file_item();
+}
+
+//------------------------------------------------------------------------------
 int
 filesystem::size(file h) const {
     YAKC_ASSERT((h != invalid_file) && (h < max_num_files));

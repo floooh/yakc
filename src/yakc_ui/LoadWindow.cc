@@ -52,6 +52,7 @@ LoadWindow::Draw(yakc& emu) {
                 "ZX TAP",
                 "ZX Z80",
                 "CPC SNA",
+                "CPC TAP",
                 "ATOM TAP",
                 "TEXT"
             };

@@ -45,6 +45,8 @@ public:
     uint8_t peek_u8(file fp, int rel_pos);
     /// close a file
     void close(file fp);
+    /// close and delete a file
+    void close_rm(file fp);
     /// delete a file
     void rm(const char* name);
     /// test if a file exists
@@ -208,6 +210,27 @@ struct sna_header {
     uint8_t pad1[0x93];
 };
 static_assert(sizeof(sna_header) == 256, "SNA header size");
+
+// CPC TAP file format header
+// http://www.cpcwiki.eu/index.php/Format:TAP_tape_image_file_format
+struct cpctap_header {
+    uint8_t block_len[2];
+    uint8_t block_flags;
+    uint8_t name[16];
+    uint8_t block_nr;
+    uint8_t last_block;
+    uint8_t filetype;
+    uint8_t block_length_l;
+    uint8_t block_length_h;
+    uint8_t location_l;
+    uint8_t location_h;
+    uint8_t first_block;
+    uint8_t total_length_l;
+    uint8_t total_length_h;
+    uint8_t entry_addr_l;
+    uint8_t entry_addr_h;
+};
+static_assert(sizeof(cpctap_header) == 28 + 3, "CPC TAP header size");
 
 // Atom TAP / ATM header (https://github.com/hoglet67/Atomulator/blob/master/docs/atommmc2.txt )
 struct atomtap_header {

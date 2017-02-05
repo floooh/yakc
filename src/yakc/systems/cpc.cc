@@ -136,6 +136,9 @@ cpc::poweron(system m) {
 
     this->cur_model = m;
     this->on = true;
+    // http://www.cpcwiki.eu/index.php/Format:TAP_tape_image_file_format
+    this->casread_trap = 0x29A6;
+    this->casread_ret = 0x29E2;
     this->ga_config = 0;
     this->ram_config = 0;
     this->psg_selected = 0;
@@ -210,6 +213,11 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
 
         if (dbg.step(cpu.PC, ticks)) {
             return end_tick;
+        }
+
+        if (cpu.PC == this->casread_trap) {
+            // trapped cassette read function
+            this->casread();
         }
         cur_tick += ticks;
     }
@@ -552,33 +560,25 @@ cpc::framebuffer(int& out_width, int& out_height) {
 
 //------------------------------------------------------------------------------
 bool
-cpc::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     auto fp = fs->open(name, filesystem::mode::read);
     if (!fp) {
         return false;
     }
     sna_header hdr;
     bool hdr_valid = false;
-    if (filetype::cpc_sna == type) {
-        if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
-            hdr_valid = true;
-            const uint16_t dump_size = (hdr.dump_size_h<<8 | hdr.dump_size_l) & 0xFFFF;
-            if (dump_size == 64) {
-                YAKC_ASSERT(sizeof(this->board->ram) >= 0x10000);
-                fs->read(fp, this->board->ram, 0x10000);
-            }
-            else {
-                YAKC_ASSERT(sizeof(this->board->ram) >= 0x20000);
-                fs->read(fp, this->board->ram, 0x20000);
-            }
+    if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
+        hdr_valid = true;
+        const uint16_t dump_size = (hdr.dump_size_h<<8 | hdr.dump_size_l) & 0xFFFF;
+        if (dump_size == 64) {
+            YAKC_ASSERT(sizeof(this->board->ram) >= 0x10000);
+            fs->read(fp, this->board->ram, 0x10000);
+        }
+        else {
+            YAKC_ASSERT(sizeof(this->board->ram) >= 0x20000);
+            fs->read(fp, this->board->ram, 0x20000);
         }
     }
-    fs->close(fp);
-    fs->rm(name);
-    if (!hdr_valid) {
-        return false;
-    }
-
     // CPU state
     auto& cpu = this->board->z80;
     cpu.F = hdr.F; cpu.A = hdr.A;
@@ -620,8 +620,69 @@ cpc::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     for (int i = 0; i < 16; i++) {
         this->board->ay8910.regs[i] = hdr.psg_regs[i];
     }
-
+    fs->close(fp);
+    fs->rm(name);
+    if (!hdr_valid) {
+        return false;
+    }
     return true;
+}
+
+//------------------------------------------------------------------------------
+bool
+cpc::load_tap(filesystem* fs, const char* name, filetype type, bool start) {
+    this->tap_fs = fs;
+    // if still loading another file, close and delete that first
+    if (this->tap_fp) {
+        fs->close_rm(this->tap_fp);
+        this->tap_fp = filesystem::invalid_file;
+    }
+
+    // open new file
+    this->tap_fp = fs->open(name, filesystem::mode::read);
+    return this->tap_fp != filesystem::invalid_file;
+}
+
+//------------------------------------------------------------------------------
+bool
+cpc::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+    if (filetype::cpc_sna == type) {
+        return this->load_sna(fs, name, type, start);
+    }
+    else if (filetype::cpc_tap == type) {
+        return this->load_tap(fs, name, type, start);
+    }
+    else {
+        return true;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc::casread() {
+    auto& cpu = this->board->z80;
+    bool success = false;
+    if (this->tap_fp) {
+        // read the next block
+        uint16_t len = 0;
+        this->tap_fs->read(this->tap_fp, &len, sizeof(len));
+        uint8_t sync = 0;
+        this->tap_fs->read(this->tap_fp, &sync, sizeof(sync));
+        if (sync == cpu.A) {
+            success = true;
+            for (uint16_t i = 0; i < (len-1); i++) {
+                uint8_t val;
+                this->tap_fs->read(this->tap_fp, &val, sizeof(val));
+                cpu.mem.w8(cpu.HL++, val);
+            }
+        }
+    }
+    cpu.F = success ? 0x45 : 0x00;
+    cpu.PC = this->casread_ret;
+    if (this->tap_fs->eof(this->tap_fp)) {
+        this->tap_fs->close_rm(this->tap_fp);
+        this->tap_fp = filesystem::invalid_file;
+    }
 }
 
 //------------------------------------------------------------------------------

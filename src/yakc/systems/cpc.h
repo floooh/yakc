@@ -55,6 +55,12 @@ public:
     const void* framebuffer(int& out_width, int& out_height);
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
+    /// load an SNA snapshot file
+    bool load_sna(filesystem* fs, const char* name, filetype type, bool start);
+    /// start loading a TAP file
+    bool load_tap(filesystem* fs, const char* name, filetype type, bool start);
+    /// the trapped casread function for TAP files
+    void casread();
 
     /// the z80 out callback
     virtual void cpu_out(uint16_t port, uint8_t val) override;
@@ -73,6 +79,10 @@ public:
 
     system cur_model = system::cpc464;
     bool on = false;
+    uint16_t casread_trap = 0x0000;
+    uint16_t casread_ret = 0x0000;
+    filesystem::file tap_fp = filesystem::invalid_file;
+    filesystem* tap_fs = nullptr;
 
     cpc_video video;
 
