@@ -3,8 +3,6 @@
 //------------------------------------------------------------------------------
 #include "atom.h"
 
-// #include <stdio.h>
-
 namespace YAKC {
 
 atom* atom::self = nullptr;

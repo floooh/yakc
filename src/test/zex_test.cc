@@ -2,7 +2,7 @@
 //  zexdoc_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "yakc/devices/z80.h"
+#include "yakc/chips/z80.h"
 #include "yakc/core/system_bus.h"
 #include "test/dump.h"
 #include "Core/Time/Clock.h"

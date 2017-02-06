@@ -5,8 +5,8 @@
     @brief debug helper functions
 */
 #include "yakc/core/core.h"
-#include "yakc/devices/z80.h"
-#include "yakc/devices/mos6502.h"
+#include "yakc/chips/z80.h"
+#include "yakc/chips/mos6502.h"
 
 namespace YAKC {
 

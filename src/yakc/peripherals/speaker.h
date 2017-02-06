@@ -4,7 +4,7 @@
     @class YAKC::speaker
     @brief a simple square-wave sound generator
 */
-#include "yakc/devices/sound.h"
+#include "yakc/core/sound.h"
 
 namespace YAKC {
 

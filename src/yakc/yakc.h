@@ -7,7 +7,8 @@
 #include "yakc/core/core.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
-#include "yakc/systems/filesystem.h"
+#include "yakc/core/filesystem.h"
+#include "yakc/peripherals/tapedeck.h"
 #include "yakc/systems/kc85.h"
 #include "yakc/systems/z1013.h"
 #include "yakc/systems/z9001.h"
@@ -84,6 +85,7 @@ public:
     breadboard board;
     class rom_images roms;
     class filesystem filesystem;
+    class tapedeck tapedeck;
 
     bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count

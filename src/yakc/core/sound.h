@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 /**
     @class YAKC::sound
-    @brief sound generator for simple beeper sound
+    @brief base class for sound generators
 */
 #include "yakc/core/core.h"
 #include "yakc/core/counter.h"

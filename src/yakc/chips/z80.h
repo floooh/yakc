@@ -6,7 +6,7 @@
 */
 #include "yakc/core/core.h"
 #include "yakc/core/memory.h"
-#include "yakc/devices/z80int.h"
+#include "yakc/chips/z80int.h"
 
 namespace YAKC {
 

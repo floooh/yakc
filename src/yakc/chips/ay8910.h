@@ -4,7 +4,7 @@
     @class YAKC::ay38910
     @brief AY-3-8910 sound chip emulation (no I/O ports)
 */
-#include "yakc/devices/sound.h"
+#include "yakc/core/sound.h"
 
 namespace YAKC {
 

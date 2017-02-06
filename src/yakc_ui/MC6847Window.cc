@@ -4,7 +4,7 @@
 #include "MC6847Window.h"
 #include "IMUI/IMUI.h"
 #include "yakc_ui/UI.h"
-#include "yakc/devices/mc6847.h"
+#include "yakc/chips/mc6847.h"
 
 using namespace Oryol;
 

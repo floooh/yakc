@@ -2,7 +2,7 @@
 //  z80pio_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "yakc/devices/z80pio.h"
+#include "yakc/chips/z80pio.h"
 #include "yakc/core/system_bus.h"
 
 using namespace YAKC;

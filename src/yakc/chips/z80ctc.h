@@ -9,8 +9,8 @@
     (see here: https://github.com/mamedev/mame/blob/dfa148ff8022e9f1a544c8603dd0e8c4aa469c1e/src/mame/machine/kc.cpp#L710)
 */
 #include "yakc/core/core.h"
-#include "yakc/devices/z80.h"
-#include "yakc/devices/z80int.h"
+#include "yakc/chips/z80.h"
+#include "yakc/chips/z80int.h"
 
 namespace YAKC {
 

@@ -13,7 +13,7 @@
         - http://www.z80.info/zip/um0081.pdf
         - MAME z80 pio emulation (https://github.com/mamedev/mame/blob/master/src/devices/machine/z80pio.cpp)
 */
-#include "yakc/devices/z80int.h"
+#include "yakc/chips/z80int.h"
 
 namespace YAKC {
 

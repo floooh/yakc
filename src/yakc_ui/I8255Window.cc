@@ -4,7 +4,7 @@
 #include "I8255Window.h"
 #include "IMUI/IMUI.h"
 #include "yakc_ui/UI.h"
-#include "yakc/devices/i8255.h"
+#include "yakc/chips/i8255.h"
 
 using namespace Oryol;
 

@@ -6,7 +6,7 @@
 //  http://www.qmtpro.com/~nes/misc/nestest.log
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "yakc/devices/mos6502.h"
+#include "yakc/chips/mos6502.h"
 #include "yakc/core/system_bus.h"
 #include "test/dump.h"
 #include "test/nestestlog.h"

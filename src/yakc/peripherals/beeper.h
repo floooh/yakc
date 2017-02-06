@@ -4,7 +4,7 @@
     @class YAKC::beeper.cc
     @brief simple CPU-driven beeper sound
 */
-#include "yakc/devices/sound.h"
+#include "yakc/core/sound.h"
 
 namespace YAKC {
 

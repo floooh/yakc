@@ -2,7 +2,7 @@
 //  mos6502dasm.cc
 //------------------------------------------------------------------------------
 #include "mos6502dasm.h"
-#include "yakc/devices/mos6502.h"
+#include "yakc/chips/mos6502.h"
 #include <stdio.h>
 
 using namespace YAKC;

@@ -19,7 +19,7 @@
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/keybuffer.h"
 #include "yakc/systems/rom_images.h"
-#include "yakc/systems/filesystem.h"
+#include "yakc/core/filesystem.h"
 
 namespace YAKC {
 

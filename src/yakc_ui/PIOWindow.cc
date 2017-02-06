@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "PIOWindow.h"
 #include "IMUI/IMUI.h"
-#include "yakc/devices/z80pio.h"
+#include "yakc/chips/z80pio.h"
 #include "yakc_ui/UI.h"
 
 using namespace Oryol;

@@ -20,6 +20,7 @@
 #include "MC6845Window.h"
 #include "MC6847Window.h"
 #include "I8255Window.h"
+#include "TapeDeckWindow.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -369,6 +370,9 @@ UI::OnFrame(yakc& emu) {
                     }
                     this->loadWindow = LoadWindow::Create(&this->FileLoader);
                     this->OpenWindow(emu, loadWindow);
+                }
+                if (ImGui::MenuItem("Tape Deck...")) {
+                    this->OpenWindow(emu, TapeDeckWindow::Create());
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
                     emu.poweroff();

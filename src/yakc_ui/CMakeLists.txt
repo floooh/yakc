@@ -25,6 +25,7 @@ fips_begin_module(yakc_ui)
         MC6845Window.cc MC6845Window.h
         MC6847Window.cc MC6847Window.h
         I8255Window.cc I8255Window.h
+        TapeDeckWindow.cc TapeDeckWindow.h
     )
     fips_deps(IMUI yakc yakc_oryol soloud)
 fips_end_module()

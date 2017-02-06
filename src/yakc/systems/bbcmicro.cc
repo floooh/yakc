@@ -3,8 +3,6 @@
 //------------------------------------------------------------------------------
 #include "bbcmicro.h"
 
-// #include <stdio.h>
-
 namespace YAKC {
 
 bbcmicro* bbcmicro::self = nullptr;

@@ -7,11 +7,12 @@ fips_begin_module(yakc)
         memory.h memory.cc
         counter.h
         clock.h clock.cc
+        sound.h sound.cc
         system_bus.h system_bus.cc
+        filesystem.h filesystem.cc
     )
-    fips_dir(devices)
+    fips_dir(chips)
     fips_files(
-        crt.h crt.cc
         z80.h z80.cc 
         z80int.h z80int.cc
         z80pio.h z80pio.cc
@@ -21,16 +22,19 @@ fips_begin_module(yakc)
         i8255.h i8255.cc
         mc6845.h mc6845.cc
         mc6847.h mc6847.cc
-        sound.h sound.cc
-        speaker.h speaker.cc
-        beeper.h beeper.cc
         ay8910.h ay8910.cc
     )
     fips_generate(FROM z80_opcodes.py SOURCE z80_opcodes.cc)
+    fips_dir(peripherals)
+    fips_files(
+        crt.h crt.cc
+        beeper.h beeper.cc
+        speaker.h speaker.cc
+        tapedeck.h tapedeck.cc
+    )
     fips_dir(systems)
     fips_files(
         rom_images.h rom_images.cc
-        filesystem.h filesystem.cc
         kc85.h kc85.cc 
         kc85_video.h kc85_video.cc
         kc85_audio.h kc85_audio.cc 

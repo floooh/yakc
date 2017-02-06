@@ -2,8 +2,8 @@
 //  mos6502_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "yakc/devices/mos6502.h"
 #include "yakc/core/system_bus.h"
+#include "yakc/chips/mos6502.h"
 
 using namespace YAKC;
 

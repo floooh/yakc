@@ -7,7 +7,7 @@
 #include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
-#include "yakc/systems/filesystem.h"
+#include "yakc/core/filesystem.h"
 #include "yakc/systems/kc85_video.h"
 #include "yakc/systems/kc85_audio.h"
 #include "yakc/systems/kc85_exp.h"
