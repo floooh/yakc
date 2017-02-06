@@ -15,6 +15,10 @@ public:
     virtual void Setup(yakc& emu) override;
     /// draw method
     virtual bool Draw(yakc& emu) override;
+
+    float angle = 0.0f;
+    bool playing = false;
+    int counter = 0;
 };
 
 } // namespace YAKC
