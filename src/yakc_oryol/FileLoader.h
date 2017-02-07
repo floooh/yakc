@@ -64,6 +64,8 @@ public:
     void Load(const Item& item);
     /// load and auto-start a file
     void LoadAndStart(const Item& item);
+    /// load and insert into tape deck
+    void LoadTape(const Item& item);
     /// copy the previously loaded file into Z80 memory
     bool Copy();
     /// copy to memory and start the previously loaded file

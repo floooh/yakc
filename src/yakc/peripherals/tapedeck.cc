@@ -76,6 +76,16 @@ tapedeck::stop() {
 }
 
 //------------------------------------------------------------------------------
+void
+tapedeck::stop_rewind() {
+    playing = false;
+    count = 0;
+    if (fp) {
+        fs.set_pos(fp, 0);
+    }
+}
+
+//------------------------------------------------------------------------------
 const char*
 tapedeck::tape_name() const {
     return name;
@@ -91,6 +101,18 @@ tapedeck::tape_filetype() const {
 bool
 tapedeck::is_playing() const {
     return playing;
+}
+
+//------------------------------------------------------------------------------
+void
+tapedeck::inc_counter(int val) {
+    count += val;
+}
+
+//------------------------------------------------------------------------------
+int
+tapedeck::counter() const {
+    return count;
 }
 
 } // namespace YAKC

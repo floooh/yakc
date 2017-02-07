@@ -86,10 +86,11 @@ cpc::init_keymap() {
 
 //------------------------------------------------------------------------------
 void
-cpc::init(breadboard* b, rom_images* r) {
-    YAKC_ASSERT(b && r);
+cpc::init(breadboard* b, rom_images* r, tapedeck* t) {
+    YAKC_ASSERT(b && r && t);
     this->board = b;
     this->roms = r;
+    this->tape = t;
     this->init_keymap();
 }
 
@@ -379,9 +380,21 @@ cpc::pio_out(int /*pio_id*/, int port_id, uint8_t val) {
                 this->board->ay8910.write(this->psg_selected, this->board->i8255.output[i8255::PORT_A]);
                 break;
         }
-        // FIXME: cassette write data, cassette motor control
+        // FIXME: cassette write data
         // bits 0..5: select keyboard matrix line
         this->scan_kbd_line = val & 0x1F;
+
+        // cassette deck motor control
+        if (val & (1<<4)) {
+            if (!this->tape->is_playing()) {
+                this->tape->play();
+            }
+        }
+        else {
+            if (this->tape->is_playing()) {
+                this->tape->stop();
+            }
+        }
     }
 }
 
@@ -636,30 +649,12 @@ cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
 
 //------------------------------------------------------------------------------
 bool
-cpc::load_tap(filesystem* fs, const char* name, filetype type, bool start) {
-    this->tap_fs = fs;
-    // if still loading another file, close and delete that first
-    if (this->tap_fp) {
-        fs->close_rm(this->tap_fp);
-        this->tap_fp = filesystem::invalid_file;
-    }
-
-    // open new file
-    this->tap_fp = fs->open(name, filesystem::mode::read);
-    return this->tap_fp != filesystem::invalid_file;
-}
-
-//------------------------------------------------------------------------------
-bool
 cpc::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     if (filetype::cpc_sna == type) {
         return this->load_sna(fs, name, type, start);
     }
-    else if (filetype::cpc_tap == type) {
-        return this->load_tap(fs, name, type, start);
-    }
     else {
-        return true;
+        return false;
     }
 }
 
@@ -668,23 +663,18 @@ void
 cpc::casread() {
     auto& cpu = this->board->z80;
     bool success = false;
-    if (this->tap_fp) {
-        // read the next block
-        uint16_t len = 0;
-        this->tap_fs->read(this->tap_fp, &len, sizeof(len));
-        uint8_t sync = 0;
-        this->tap_fs->read(this->tap_fp, &sync, sizeof(sync));
-        if (sync == cpu.A) {
-            success = true;
-            for (uint16_t i = 0; i < (len-1); i++) {
-                uint8_t val;
-                this->tap_fs->read(this->tap_fp, &val, sizeof(val));
-                cpu.mem.w8(cpu.HL++, val);
-            }
-        }
-        if (this->tap_fs->eof(this->tap_fp)) {
-            this->tap_fs->close_rm(this->tap_fp);
-            this->tap_fp = filesystem::invalid_file;
+    // read the next block
+    uint16_t len = 0;
+    this->tape->read(&len, sizeof(len));
+    uint8_t sync = 0;
+    this->tape->read(&sync, sizeof(sync));
+    if (sync == cpu.A) {
+        success = true;
+        this->tape->inc_counter(1);
+        for (uint16_t i = 0; i < (len-1); i++) {
+            uint8_t val;
+            this->tape->read(&val, sizeof(val));
+            cpu.mem.w8(cpu.HL++, val);
         }
     }
     cpu.F = success ? 0x45 : 0x00;

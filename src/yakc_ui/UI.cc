@@ -372,7 +372,7 @@ UI::OnFrame(yakc& emu) {
                     this->OpenWindow(emu, loadWindow);
                 }
                 if (ImGui::MenuItem("Tape Deck...")) {
-                    this->OpenWindow(emu, TapeDeckWindow::Create());
+                    this->OpenWindow(emu, TapeDeckWindow::Create(&FileLoader));
                 }
                 if (ImGui::MenuItem("Power Cycle")) {
                     emu.poweroff();
@@ -383,11 +383,13 @@ UI::OnFrame(yakc& emu) {
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Software")) {
+            if (ImGui::BeginMenu("Quickload")) {
                 for (const auto& item : this->FileLoader.Items) {
                     if (int(item.Compat) & int(emu.model)) {
-                        if (ImGui::MenuItem(item.Name.AsCStr())) {
-                            this->FileLoader.LoadAndStart(item);
+                        if (filetype_quickloadable(item.Type)) {
+                            if (ImGui::MenuItem(item.Name.AsCStr())) {
+                                this->FileLoader.LoadAndStart(item);
+                            }
                         }
                     }
                 }

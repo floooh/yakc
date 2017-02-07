@@ -117,6 +117,17 @@ enum class filetype {
     none,
 };
 
+/// return true for quickloadable filetypes
+inline bool filetype_quickloadable(filetype t) {
+    switch (t) {
+        case filetype::cpc_tap:
+        case filetype::atom_tap:
+            return false;
+        default:
+            return true;
+    }
+}
+
 class joystick {
 public:
     enum {

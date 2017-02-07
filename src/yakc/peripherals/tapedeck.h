@@ -17,6 +17,8 @@ public:
     void play();
     /// press the stop button
     void stop();
+    /// stop and rewind the tape
+    void stop_rewind();
 
     /// read data from the tape
     int read(void* ptr, int num_bytes);

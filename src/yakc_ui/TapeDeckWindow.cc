@@ -10,27 +10,31 @@ using namespace Oryol;
 namespace YAKC {
 
 //------------------------------------------------------------------------------
+TapeDeckWindow::TapeDeckWindow(FileLoader* loader) {
+    this->fileLoader = loader;
+}
+
+//------------------------------------------------------------------------------
 void
 TapeDeckWindow::Setup(yakc& emu) {
-    this->setName("GERACORD 2000");
+    this->setName("Tape Deck");
     this->angle = 0.0f;
 }
 
 //------------------------------------------------------------------------------
 bool
 TapeDeckWindow::Draw(yakc& emu) {
-    ImGui::SetNextWindowSize(ImVec2(320, 200), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    ImGui::SetNextWindowSize(ImVec2(180, 136), ImGuiSetCond_Once);
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders|ImGuiWindowFlags_NoResize)) {
 
-        if (this->playing) {
+        if (emu.tapedeck.is_playing()) {
             this->angle += 0.025f;
-            this->counter = angle;
         }
 
         // cassette tape window
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 p = ImGui::GetCursorScreenPos();
-        ImVec2 s(152, 48);
+        ImVec2 s(164, 48);
         const ImVec2 p_mid(p.x + s.x/2, p.y + s.y/2);
         ImGui::InvisibleButton("canvas", s);
         ImVec2 l_mid(p_mid.x-36, p_mid.y), r_mid(p_mid.x+36, p_mid.y);
@@ -50,58 +54,71 @@ TapeDeckWindow::Draw(yakc& emu) {
         draw_list->AddLine(ImVec2(ln_x0, ln_y1), ImVec2(ln_x1, ln_y1), black, 1);
         float da = 2*3.141526 / 6;
         float a = angle;
-        float r0 = 15.5f, r1 = 10.0f;
+        float rd0 = 15.5f, rd1 = 10.0f;
         for (int i=0; i < 6; i++, a+=da) {
             float s = sin(a);
             float c = cos(a);
-            draw_list->AddLine(ImVec2(l_mid.x+s*r0, l_mid.y+c*r0), ImVec2(l_mid.x+s*r1, l_mid.y+c*r1), black, 1);
-            draw_list->AddLine(ImVec2(r_mid.x+s*r0, r_mid.y+c*r0), ImVec2(r_mid.x+s*r1, r_mid.y+c*r1), black, 1);
+            draw_list->AddLine(ImVec2(l_mid.x+s*rd0, l_mid.y+c*rd0), ImVec2(l_mid.x+s*rd1, l_mid.y+c*rd1), black, 1);
+            draw_list->AddLine(ImVec2(r_mid.x+s*rd0, r_mid.y+c*rd0), ImVec2(r_mid.x+s*rd1, r_mid.y+c*rd1), black, 1);
         }
-
-        // draw tape counter
-        p = ImGui::GetCursorScreenPos();
-        ImVec2 ts = ImGui::CalcTextSize("0");
-        ImGui::SetCursorScreenPos(ImVec2(p_mid.x-1.8f*ts.x, p_mid.y-0.5f*ts.y));
-        ImGui::Text("%03d", this->counter);
-        ImGui::SetCursorScreenPos(p);
 
         // draw control buttons
-        ImVec2 btn_s(32, 32);
-        {
-            //
-            p = ImGui::GetCursorScreenPos();
-            if (ImGui::Button("##back", btn_s)) {
+        ImVec2 btn_s(24, 24);
+        ImVec2 t0(0, 0), t1(9, 8), t2(0, 18);
+        ImVec2 r0(0, 0), r1(14, 14);
+        ImVec2 p0, p1, p2;
 
-            }
+        // play button
+        p = ImGui::GetCursorScreenPos();
+        if (ImGui::Button("##play", btn_s)) {
+            emu.tapedeck.play();
         }
+        p.x += 8; p.y += 3;
+        p0.x=p.x+t0.x; p0.y=p.y+t0.y;
+        p1.x=p.x+t1.x; p1.y=p.y+t1.y; p2.x=p.x+t2.x; p2.y=p.y+t2.y;
+        draw_list->AddTriangleFilled(p0, p1, p2, darker_gray);
+
+        // stop button
         ImGui::SameLine();
         p = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##ffwd", btn_s)) {
+        if (ImGui::Button("##stop", btn_s)) {
+            emu.tapedeck.stop_rewind();
+        }
+        p.x += 5; p.y += 5;
+        draw_list->AddRectFilled(ImVec2(p.x+r0.x, p.y+r0.y), ImVec2(p.x+r1.x, p.y+r1.y), darker_gray);
 
-        }
+        // draw tape counter
+        p0 = ImGui::GetCursorScreenPos();
         ImGui::SameLine();
-        {
-            // play button
-            p = ImGui::GetCursorScreenPos();
-            if (ImGui::Button("##play", btn_s)) {
-                this->playing = true;
-            }
-            ImVec2 p0(p.x+7, p.y+6), p1(p.x+27, p.y+16), p2(p.x+7, p.y+26);
-            draw_list->AddTriangleFilled(p0, p1, p2, darker_gray);
+        p1 = ImGui::GetCursorScreenPos();
+        ImGui::SetWindowFontScale(2.0f);
+        ImGui::SetCursorScreenPos(ImVec2(p1.x+32, p1.y-4));
+        ImGui::Text("%03d", emu.tapedeck.counter());
+        ImGui::SetWindowFontScale(1.0f);
+        ImGui::SetCursorScreenPos(p0);
+
+        // insert tape button
+        const char* tape_name = emu.tapedeck.tape_name();
+        if (!tape_name[0]) {
+            tape_name = "insert tape";
         }
-        ImGui::SameLine();
-        {
-            // the stop button
-            p = ImGui::GetCursorScreenPos();
-            if (ImGui::Button("##stop", btn_s)) {
-                this->playing = false;
+        if (ImGui::Button(tape_name, ImVec2(164,0))) {
+            ImGui::OpenPopup("select");
+        }
+        if (ImGui::BeginPopup("select")) {
+            for (const auto& item : this->fileLoader->Items) {
+                if (!filetype_quickloadable(item.Type) && (int(item.Compat) & int(emu.model)))
+                {
+                    if (ImGui::MenuItem(item.Name.AsCStr())) {
+                        this->fileLoader->LoadTape(item);
+                    }
+                }
             }
-            draw_list->AddRectFilled(ImVec2(p.x+7, p.y+7), ImVec2(p.x+25, p.y+25), darker_gray, 2);
+            ImGui::EndPopup();
         }
     }
     ImGui::End();
     return this->Visible;
 }
-
 
 } // namespace YAKC

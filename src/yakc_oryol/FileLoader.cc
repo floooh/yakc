@@ -61,11 +61,23 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Fruity Frank", "fruity_frank.sna", filetype::cpc_sna, system(int(system::kccompact)|int(system::cpc6128)), true);
     this->Items.Add("Ikari Warriors", "ikari_warriors.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("1943", "1943.sna", filetype::cpc_sna, system::any_cpc, true);
-    this->Items.Add("1942 (TAP)", "1942.tap", filetype::cpc_tap, system::any_cpc, true);
-    this->Items.Add("Ghosts'n'Goblins (TAP)", "ghostsng.tap", filetype::cpc_tap, system::any_cpc, true);
-    this->Items.Add("Tir Na Nog (TAP)", "tirnanog.tap", filetype::cpc_tap, system::any_cpc, true);
-    this->Items.Add("Back to Reality (TAP)", "backtore.tap", filetype::cpc_tap, system::any_cpc, true);
-    this->Items.Add("ASSMON (TAP)", "assmon.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("1942", "1942.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Ghosts'n'Goblins", "ghostsng.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Tir Na Nog", "tirnanog.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Back to Reality", "backtore.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("ASSMON", "assmon.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("KC Pascal", "kcpascal.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Bombjack 2", "bombjac1.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Beverly Hills Cop", "beverlyh.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Biff", "biff.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Bubbler", "bubbler.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Boulderdash 4", "boulder1.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Combat Zone", "combatzo.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Commandos", "commando.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Curse of Sherwood", "curseofs.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Kingdom of Speldom", "kingdomo.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("Haunted Hedges", "hauntedh.tap", filetype::cpc_tap, system::any_cpc, true);
+    this->Items.Add("2088", "2088.tap", filetype::cpc_tap, system::any_cpc, true);
     this->Items.Add("Exolon", "exolon.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Cyclone", "cyclone.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Boulderdash", "boulderdash_zx.z80", filetype::zx_z80, system::zxspectrum48k, true);
@@ -92,6 +104,28 @@ FileLoader::Load(const Item& item) {
 void
 FileLoader::LoadAndStart(const Item& item) {
     this->load(item, true);
+}
+
+//------------------------------------------------------------------------------
+void
+FileLoader::LoadTape(const Item& item) {
+    StringBuilder strBuilder;
+    strBuilder.Format(128, "kcc:%s", item.Filename.AsCStr());
+    this->Url = strBuilder.GetString();
+    this->State = Loading;
+    IO::Load(strBuilder.GetString(),
+        // load succeeded
+        [this, item](IO::LoadResult ioResult) {
+            this->FileData = std::move(ioResult.Data);
+            this->Info = parseHeader(this->FileData, item);
+            this->State = Ready;
+            this->emu->tapedeck.insert_tape(item.Name.AsCStr(), item.Type, this->FileData.Data(), this->FileData.Size());
+        },
+        // load failed
+        [this](const URL& url, IOStatus::Code ioStatus) {
+            this->State = Failed;
+            this->FailedStatus = ioStatus;
+        });
 }
 
 //------------------------------------------------------------------------------

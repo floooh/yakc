@@ -8,6 +8,7 @@
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
+#include "yakc/peripherals/tapedeck.h"
 #include "yakc/systems/cpc_video.h"
 
 namespace YAKC {
@@ -18,9 +19,11 @@ public:
     breadboard* board = nullptr;
     /// rom image storage
     rom_images* roms = nullptr;
+    /// tapedeck
+    class tapedeck* tape = nullptr;
 
     /// one-time setup
-    void init(breadboard* board, rom_images* roms);
+    void init(breadboard* board, rom_images* roms, class tapedeck* tape);
     /// check if required roms are loaded
     static bool check_roms(const rom_images& roms, system model, os_rom os);
     /// initialize the memory map
@@ -57,8 +60,6 @@ public:
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
     /// load an SNA snapshot file
     bool load_sna(filesystem* fs, const char* name, filetype type, bool start);
-    /// start loading a TAP file
-    bool load_tap(filesystem* fs, const char* name, filetype type, bool start);
     /// the trapped casread function for TAP files
     void casread();
 
@@ -81,8 +82,6 @@ public:
     bool on = false;
     uint16_t casread_trap = 0x0000;
     uint16_t casread_ret = 0x0000;
-    filesystem::file tap_fp = filesystem::invalid_file;
-    filesystem* tap_fs = nullptr;
 
     cpc_video video;
 
