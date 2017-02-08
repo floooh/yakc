@@ -19,7 +19,7 @@ yakc::init(const ext_funcs& sys_funcs) {
     this->z9001.init(&this->board, &this->roms);
     this->zx.init(&this->board, &this->roms);
     this->cpc.init(&this->board, &this->roms, &this->tapedeck);
-    this->atom.init(&this->board, &this->roms);
+    this->atom.init(&this->board, &this->roms, &this->tapedeck);
     this->bbcmicro.init(&this->board, &this->roms);
 }
 

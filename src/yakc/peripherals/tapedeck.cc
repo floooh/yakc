@@ -44,7 +44,7 @@ tapedeck::insert_tape(const char* name_, filetype type_, const void* data, int n
 //------------------------------------------------------------------------------
 int
 tapedeck::read(void* ptr, int num_bytes) {
-    if (fp && playing) {
+    if (fp) {
         return fs.read(fp, ptr, num_bytes);
     }
     else {
@@ -55,7 +55,7 @@ tapedeck::read(void* ptr, int num_bytes) {
 //------------------------------------------------------------------------------
 bool
 tapedeck::eof() {
-    if (fp && playing) {
+    if (fp) {
         return fs.eof(fp);
     }
     else {

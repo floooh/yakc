@@ -9,11 +9,12 @@ atom* atom::self = nullptr;
 
 //------------------------------------------------------------------------------
 void
-atom::init(breadboard* b, rom_images* r) {
-    YAKC_ASSERT(b && r);
+atom::init(breadboard* b, rom_images* r, tapedeck* t) {
+    YAKC_ASSERT(b && r && t);
     self = this;
     board = b;
     roms = r;
+    tape = t;
     vdg = &(board->mc6847);
     init_keymap();
 }
@@ -150,6 +151,10 @@ atom::poweron() {
     vdg->init(read_vidmem, board->rgba8_buffer, freq_khz);
     counter_2_4khz.init(freq_khz * 1000 / 4800);
     board->beeper.init(freq_khz, SOUND_SAMPLE_RATE);
+
+    // trap the OSLOAD function
+    // http://ladybug.xs4all.nl/arlet/fpga/6502/kernel.dis
+    this->osload_trap = 0xF96E;
 }
 
 //------------------------------------------------------------------------------
@@ -182,6 +187,10 @@ atom::step(uint64_t start_tick, uint64_t end_tick) {
         uint32_t ticks = cpu.step();
         if (dbg.step(cpu.PC, ticks)) {
             return end_tick;
+        }
+        if (cpu.PC == osload_trap) {
+            // trapped OSLOAD function
+            osload();
         }
         cur_tick += ticks;
     }
@@ -394,6 +403,93 @@ atom::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     // FIXME
     fs->rm(name);
     return false;
+}
+
+//------------------------------------------------------------------------------
+void
+atom::osload() {
+    //
+    // trapped OSLOAD function, load ATM block in a TAP file:
+    //   https://github.com/hoglet67/Atomulator/blob/master/docs/atommmc2.txt
+    //
+    //
+    // from: http://ladybug.xs4all.nl/arlet/fpga/6502/kernel.dis
+    //
+    //   OSLOAD Load File subroutine
+    //    ---------------------------
+    //  
+    //  - Entry: 0,X = LSB File name string address
+    //           1,X = MSB File name string address
+    //           2,X = LSB Data dump start address
+    //           3,X = MSB Data dump start address
+    //           4,X : If bit 7 is clear, then the file's own start address is
+    //                 to be used
+    //           #DD = FLOAD flag - bit 7 is set if in FLOAD mode
+    //  
+    //  - Uses:  #C9 = LSB File name string address
+    //           #CA = MSB File name string address
+    //           #CB = LSB Data dump start address
+    //           #CC = MSB Data dump start address
+    //           #CD = load flag - if bit 7 is set, then the load address at
+    //                 (#CB) is to be used instead of the file's load address
+    //           #D0 = MSB Current block number
+    //           #D1 = LSB Current block number
+    //  
+    //  - Header format: <*>                      )
+    //                   <*>                      )
+    //                   <*>                      )
+    //                   <*>                      ) Header preamble
+    //                   <Filename>               ) Name is 1 to 13 bytes long
+    //                   <Status Flag>            ) Bit 7 clear if last block
+    //                                            ) Bit 6 clear to skip block
+    //                                            ) Bit 5 clear if first block
+    //                   <LSB block number>
+    //                   <MSB block number>       ) Always zero
+    //                   <Bytes in block>
+    //                   <MSB run address>
+    //                   <LSB run address>
+    //                   <MSB block load address>
+    //                   <LSB block load address>
+    //  
+    //  - Data format:   <....data....>           ) 1 to #FF bytes
+    //                   <Checksum>               ) LSB sum of all data bytes
+    //
+    bool success = false;
+
+    // load the ATM header
+    auto& cpu = this->board->mos6502;
+    atomtap_header hdr;
+    if (tape->read(&hdr, sizeof(hdr)) == sizeof(hdr)) {
+        uint16_t addr = hdr.load_addr;
+        // use file load address?
+        if (cpu.mem.r8io(0xCD) & 0x80) {
+            addr = cpu.mem.r16io(0xCB);
+        }
+        for (int i = 0; i < hdr.length; i++) {
+            uint8_t val;
+            tape->read(&val, sizeof(val));
+            cpu.mem.w8io(addr++, val);
+        }
+        success = true;
+    }
+    // set or clear bit 6 and clear bit 7 of 0xDD
+    uint8_t dd = cpu.mem.r8io(0xDD);
+    if (success) {
+        dd |= (1<<6);
+    }
+    else {
+        dd &= ~(1<<6);
+    }
+    dd &= ~(1<<7);
+    cpu.mem.w8io(0xDD, dd);
+
+    // execute RTS
+    cpu.rts();
+
+    // FIXME: patch PC????
+    if (success) {
+        cpu.PC = hdr.exec_addr;
+    }
 }
 
 //------------------------------------------------------------------------------

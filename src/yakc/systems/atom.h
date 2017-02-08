@@ -10,6 +10,7 @@
 #include "yakc/systems/breadboard.h"
 #include "yakc/core/filesystem.h"
 #include "yakc/systems/rom_images.h"
+#include "yakc/peripherals/tapedeck.h"
 
 namespace YAKC {
 
@@ -19,12 +20,14 @@ public:
     breadboard* board = nullptr;
     /// rom image storage
     rom_images* roms = nullptr;
+    /// tapedeck
+    class tapedeck* tape = nullptr;
 
     /// check if required roms are loaded
     static bool check_roms(const rom_images& roms, system model, os_rom os);
 
     /// one-time setup
-    void init(breadboard* board, rom_images* roms);
+    void init(breadboard* board, rom_images* roms, tapedeck* tape);
     /// initialize the keyboard matrix mapping table
     void init_keymap();
     /// initialize a single entry in the key-map table
@@ -53,6 +56,8 @@ public:
     void put_input(uint8_t ascii);
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);    
+    /// the trapped osload() function for TAP files
+    void osload();
 
     /// memory-mapped-io callback
     static uint8_t memio(bool write, uint16_t addr, uint8_t inval);
@@ -74,6 +79,7 @@ public:
     bool out_beep = false;
     bool out_cass0 = false;
     bool out_cass1 = false;
+    uint16_t osload_trap = 0x0000;
 
     // keyboard matrix has 10 columns @ 8 rows,
     // complete row 6 is ctrl
