@@ -15,21 +15,32 @@ namespace YAKC {
 //
 // see discussion here: http://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=64986
 //
+// NEW VALUES from here: http://www.stardot.org.uk/forums/viewtopic.php?f=44&t=12503
+//
+//  green:      19 146  11
+//  yellow:    155 150  10
+//  blue:        2  22 175
+//  red:       155  22   7
+//  buff:      141 150 154
+//  cyan:       15 143 155
+//  magenta:   139  39 155
+//  orange:    140  31  11
+//
 static const uint32_t colors[8] = {
-    0xFF00FF07, // green
-    0xFF00FFFF, // yellow
-    0xFFFF083B, // blue
-    0xFF3B00CC, // red
-    0xFFFFFFFF, // buff (white)
-    0xFF99E307, // cyan
-    0xFFFF1CFF, // magenta
-    0xFF0081FF, // orange
+    0xFF0B9213, // green
+    0xFF0A969B, // yellow
+    0xFFAF1602, // blue
+    0xFF07229B, // red
+    0xFF8D969A, // buff (white)
+    0xFF9B8F0F, // cyan
+    0xFF9B278B, // magenta
+    0xFF0B1F8C, // orange
 };
 
 static const uint32_t black = 0xFF111111;
-static const uint32_t alnum_green = 0xFF00FF07;
+static const uint32_t alnum_green = 0xFF0B9213;
 static const uint32_t alnum_dark_green = 0xFF002400;
-static const uint32_t alnum_orange = 0xFF0081FF;
+static const uint32_t alnum_orange = 0xFF0B1F8C;
 static const uint32_t alnum_dark_orange = 0xFF000E22;
 
 

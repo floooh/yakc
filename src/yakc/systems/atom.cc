@@ -250,6 +250,7 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
     }
     else if ((addr >= 0xB800) && (addr < 0xBC00)) {
         //printf("VIA: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
+        //http://www.acornatom.nl/sites/fpga/www.howell1964.freeserve.co.uk/acorn/atom/amb/amb_6522.htm
         return 0x00;
     }
     else {
