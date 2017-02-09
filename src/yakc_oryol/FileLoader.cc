@@ -85,6 +85,9 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Hello World!", "atom_hello.txt", filetype::text, system::acorn_atom, true);
     this->Items.Add("Text Mode Test", "atom_alnum_test.txt", filetype::text, system::acorn_atom, true);
     this->Items.Add("Graphics Mode Test", "atom_graphics_test.txt", filetype::text, system::acorn_atom, true);
+    this->Items.Add("Atomic Memory Checker", "atom_memcheck.txt", filetype::text, system::acorn_atom, true);
+    this->Items.Add("Keyboard Joystick Test", "atom_kbdjoytest.txt", filetype::text, system::acorn_atom, true);
+    this->Items.Add("AtoMMC Joystick Test", "atom_mmcjoytest.txt", filetype::text, system::acorn_atom, true);
     this->Items.Add("Jet Set Willy", "JSW.TAP", filetype::atom_tap, system::acorn_atom, true);
     this->Items.Add("Atomic Chuckie Egg", "CCHUCK.TAP", filetype::atom_tap, system::acorn_atom, true);
     this->Items.Add("Hard Hat Harry", "hardhatharry.tap", filetype::atom_tap, system::acorn_atom, true);
