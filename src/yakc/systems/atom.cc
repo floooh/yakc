@@ -133,8 +133,10 @@ atom::poweron() {
     clear(board->ram[3], sizeof(board->ram[3]));
     auto& mem = board->mos6502.mem;
     mem.unmap_all();
-    mem.map(0, 0x0000, 0x0400, board->ram[0], true);
-    mem.map(0, 0x2000, 0x8000, board->ram[1], true);
+    // give it the full 32 KByte RAM (0x0000..0x7FFF) + 8 KByte videomem (0x8000..0x9FFF)
+    mem.map(0, 0x0000, 0xA000, board->ram[0], true);
+    // hole in 0xA000 to 0xAFFF (utility rom)
+    // 0xB000 to 0xBFFF: I/O area
     mem.map_io(0, 0xB000, 0x1000, memio);
     mem.map(0, 0xC000, 0x1000, roms->ptr(rom_images::atom_basic), false);
     mem.map(0, 0xD000, 0x1000, roms->ptr(rom_images::atom_float), false);
