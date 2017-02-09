@@ -92,6 +92,7 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Atomic Chuckie Egg", "CCHUCK.TAP", filetype::atom_tap, system::acorn_atom, true);
     this->Items.Add("Hard Hat Harry", "hardhatharry.tap", filetype::atom_tap, system::acorn_atom, true);
     this->Items.Add("Jet Set Miner", "cjetsetminer.tap", filetype::atom_tap, system::acorn_atom, true);
+    this->Items.Add("Dormann 6502 Test", "dormann6502.tap", filetype::atom_tap, system::acorn_atom, true);
 }
 
 //------------------------------------------------------------------------------
