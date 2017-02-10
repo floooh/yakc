@@ -51,7 +51,7 @@ public:
     } Settings;
 
     Oryol::Duration EmulationTime;
-    FileLoader FileLoader;
+    class FileLoader FileLoader;
 
     SnapshotStorage snapshotStorage;
     Oryol::TimePoint curTime;

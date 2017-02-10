@@ -88,7 +88,7 @@ YakcApp::OnInit() {
     this->initRoms();
 
     // switch the emulator on
-    this->emu.poweron(system::kc85_3, os_rom::caos_3_1);
+    this->emu.poweron(YAKC::system::kc85_3, os_rom::caos_3_1);
 
     #if YAKC_UI
     this->ui.Setup(this->emu, &this->audio);
