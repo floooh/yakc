@@ -263,7 +263,6 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         if (0 == pc) {
             // Z80 version 2 or 3
             ext_hdr = (const zxz80ext_header*) (ptr + sizeof(zxz80_header));
-            pc = (ext_hdr->PC_h<<8 | ext_hdr->PC_l) & 0xFFFF;
             if (ext_hdr->hw_mode < 3) {
                 info.RequiredSystem = system::zxspectrum48k;
             }

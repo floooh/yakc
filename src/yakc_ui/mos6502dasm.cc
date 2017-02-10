@@ -250,6 +250,7 @@ int mos6502disasm(fetch_func fetch, unsigned short pc, char* buffer, void* userd
             dst += sprintf(dst, " ($%02X),Y", l);
             break;
     }
+    *dst = 0;
     return pos;
 }
 

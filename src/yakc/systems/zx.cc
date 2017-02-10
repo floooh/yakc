@@ -568,11 +568,13 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     }
     zxz80_header hdr;
     zxz80ext_header ext_hdr;
+    bool hdr_valid = false;
     bool ext_hdr_valid = false;
     if (filetype::zx_z80 == type) {
         if (fs->read(fp, &hdr, sizeof(hdr)) != sizeof(hdr)) {
             goto error;
         }
+        hdr_valid = true;
         uint16_t pc = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
         const bool is_version1 = 0 != pc;
         if (!is_version1) {
@@ -682,7 +684,7 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     fs->rm(name);
 
     // start loaded image
-    if (start) {
+    if (start && hdr_valid) {
         z80& cpu = this->board->z80;
         cpu.A = hdr.A; cpu.F = hdr.F;
         cpu.B = hdr.B; cpu.C = hdr.C;
