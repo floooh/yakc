@@ -6,10 +6,9 @@
 */
 #include "yakc/core/core.h"
 #include "yakc/core/memory.h"
+#include "yakc/core/system_bus.h"
 
 namespace YAKC {
-
-class system_bus;
 
 namespace mos6502_enums {
 
@@ -218,6 +217,45 @@ mos6502::brk() {
     read();
     PC = (DATA<<8) | (tmp16&0x00FF);
     P = (P | IF) & ~DF;
+}
+
+//------------------------------------------------------------------------------
+inline uint32_t
+mos6502::step() {
+    Cycle = 0;
+    fetch();
+    addr();
+    exec();
+    return Cycle;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::read() {
+    DATA = mem.r8io(ADDR);
+    Cycle++;
+    bus->cpu_tick();
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::write() {
+    mem.w8io(ADDR, DATA);
+    Cycle++;
+    bus->cpu_tick();
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::fetch() {
+    ADDR = PC++;
+    read();
+    OP = DATA;
+    uint8_t cc  = OP & 0x03;
+    uint8_t bbb = (OP >> 2) & 0x07;
+    uint8_t aaa = (OP >> 5) & 0x07;
+    AddrMode  = ops[cc][bbb][aaa].addr;
+    MemAccess = ops[cc][bbb][aaa].mem;
 }
 
 //------------------------------------------------------------------------------
