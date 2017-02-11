@@ -181,10 +181,15 @@ atom::reset() {
     ppi->reset();
     via->reset();
     vdg->reset();
+    counter_2_4khz.reset();
+    state_2_4khz = false;
     board->beeper.reset();
     scan_kbd_col = 0;
     next_key_mask = key_mask();
     cur_key_mask = key_mask();
+    out_beep = false;
+    out_cass0 = false;
+    out_cass1 = false;
 }
 
 //------------------------------------------------------------------------------
