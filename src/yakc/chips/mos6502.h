@@ -103,8 +103,10 @@ public:
     /// execute next instruction, return cycles
     uint32_t step();
 
-    /// read or write next byte, incr cycle, tick bus
-    void rw(bool read);
+    /// read byte from mem, incr cycle, tick bus
+    void read();
+    /// write byte to mem, incr cycle, tick bus
+    void write();
     /// fetch and decode the next instruction
     void fetch();
     /// determine address and put on address bus
@@ -197,23 +199,23 @@ public:
 //------------------------------------------------------------------------------
 inline void
 mos6502::brk() {
-    rw(true);
+    read();
     //--
     ADDR = 0x0100 | S--; DATA = PC>>8;
-    rw(false);
+    write();
     //--
     ADDR = 0x0100 | S--; DATA = PC;
-    rw(false);
+    write();
     //--
     ADDR = 0x0100 | S--; DATA = P | BF;
-    rw(false);
+    write();
     //--
     ADDR = 0xFFFE;
-    rw(true);
+    read();
     //--
     tmp16 = DATA;
     ADDR = 0xFFFF;
-    rw(true);
+    read();
     PC = (DATA<<8) | (tmp16&0x00FF);
     P = (P | IF) & ~DF;
 }
@@ -221,40 +223,40 @@ mos6502::brk() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::nop() {
-    rw(true);
+    read();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_nop() {
-    rw(true);
+    read();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::lda() {
-    rw(true);
+    read();
     A = DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ldx() {
-    rw(true);
+    read();
     X = DATA; P = YAKC_MOS6502_NZ(P,X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::ldy() {
-    rw(true);
+    read();
     Y = DATA; P = YAKC_MOS6502_NZ(P,Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_lax() {
-    rw(true);
+    read();
     A = X = DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
@@ -262,140 +264,140 @@ mos6502::u_lax() {
 inline void
 mos6502::sta() {
     DATA = A;
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::stx() {
     DATA = X;
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::sty() {
     DATA = Y;
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_sax() {
     DATA = A & X;
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tax() {
-    rw(true);
+    read();
     X = A; P = YAKC_MOS6502_NZ(P,X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tay() {
-    rw(true);
+    read();
     Y = A; P = YAKC_MOS6502_NZ(P,Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::txa() {
-    rw(true);
+    read();
     A = X; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tya() {
-    rw(true);
+    read();
     A = Y; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::txs() {
-    rw(true);
+    read();
     S = X;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::tsx() {
-    rw(true);
+    read();
     X = S; P = YAKC_MOS6502_NZ(P,X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::php() {
-    rw(true);
+    read();
     //--
     ADDR = 0x0100|S--; DATA = (P | BF);
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::plp() {
-    rw(true);
+    read();
     //-- first read junk from current SP
     ADDR = 0x0100|S++;
-    rw(true);
+    read();
     //-- read actual byte
     ADDR = 0x0100|S;
-    rw(true);
+    read();
     P = (DATA & ~BF) | XF;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::pha() {
-    rw(true);
+    read();
     //--
     ADDR = 0x0100|S--; DATA = A;
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::pla() {
-    rw(true);
+    read();
     //-- first read junk from current SP
     ADDR = 0x0100|S++;
-    rw(true);
+    read();
     // read actual byte
     ADDR = 0x0100|S;
-    rw(true);
+    read();
     A = DATA; P = YAKC_MOS6502_NZ(P, A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::se(uint8_t f) {
-    rw(true);
+    read();
     P |= f;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::cl(uint8_t f) {
-    rw(true);
+    read();
     P &= ~f;
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::br(uint8_t m, uint8_t v) {
-    rw(true);
+    read();
     // check if the branch is taken, if not return after 2 cycles
     if ((P & m) != v) {
         return;
     }
     //--
-    rw(true);
+    read();
     // branch was taken, compute target address, return after 3
     // cycles if target address is in same 256 bytes page
     tmp16 = PC + int8_t(DATA);
@@ -403,7 +405,7 @@ mos6502::br(uint8_t m, uint8_t v) {
         PC = tmp16;
         return;
     }
-    rw(true);
+    read();
     // page boundary was crossed, return after 4 cycles
     PC = tmp16;
 }
@@ -411,21 +413,21 @@ mos6502::br(uint8_t m, uint8_t v) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::jmp() {
-    rw(true);
+    read();
     PC = (DATA<<8) | (tmp16 & 0x00FF);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::jmpi() {
-    rw(true);
+    read();
     // load first byte of target address
     ADDR = (DATA<<8) | (tmp16 & 0x00FF);
-    rw(true);
+    read();
     // load second byte of target address, wrap around in current page
     tmp16 = DATA;
     ADDR = (ADDR & 0xFF00) | ((ADDR + 1) & 0x00FF);
-    rw(true);
+    read();
     // form target address in PC
     PC = (DATA<<8) | (tmp16 & 0x00FF);
 }
@@ -433,22 +435,22 @@ mos6502::jmpi() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::jsr() {
-    rw(true);
+    read();
     // low-byte of target address loaded, and put SP
     // on addr bus, but the next cycle is a junk read
     tmp16 = DATA; ADDR = 0x0100 | S;
-    rw(true);
+    read();
     // write PC high byte to stack
     DATA = PC >> 8;
     ADDR = 0x0100 | S--;
-    rw(false);
+    write();
     // write PC low byte to stack
     ADDR = 0x0100 | S--;
     DATA = PC;
-    rw(false);
+    write();
     // load the target address high-byte
     ADDR = PC;
-    rw(true);
+    read();
     // and finally jump to target address
     PC = (DATA<<8) | (tmp16 & 0x00FF);
 }
@@ -456,38 +458,38 @@ mos6502::jsr() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::rts() {
-    rw(true);
+    read();
     // first put SP on addr bus and do a junk read
     ADDR = 0x0100 | S++;
-    rw(true);
+    read();
     // read return addr low byte
     ADDR = 0x0100 | S++;
-    rw(true);
+    read();
     // keep return addr low byte, and read high byte from stack
     tmp16 = DATA; ADDR = 0x0100 | S;
-    rw(true);
+    read();
     // put return address in PC, this is one byte before next op, do a junk read
     PC = (DATA<<8) | (tmp16 & 0x00FF);
     ADDR = PC++;
-    rw(true);
+    read();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rti() {
-    rw(true);
+    read();
     // first put SP on addr bus and do a junk read
     ADDR = 0x0100 | S++;
-    rw(true);
+    read();
     // read processor status flag
     ADDR = 0x0100 | S++;
-    rw(true);
+    read();
     // store P, read return addr low byte
     P = (DATA & ~BF) | XF; ADDR = 0x0100 | S++;
-    rw(true);
+    read();
     // store return-addr low byte, read high byte
     tmp16 = DATA; ADDR = 0x0100 | S;
-    rw(true);
+    read();
     // update PC
     PC = (DATA<<8) | (tmp16 & 0x00FF);
 }
@@ -495,21 +497,21 @@ mos6502::rti() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::ora() {
-    rw(true);
+    read();
     A |= DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::anda() {
-    rw(true);
+    read();
     A &= DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::eor() {
-    rw(true);
+    read();
     A ^= DATA; P = YAKC_MOS6502_NZ(P,A);
 }
 
@@ -561,7 +563,7 @@ mos6502::do_adc(uint8_t val) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::adc() {
-    rw(true);
+    read();
     do_adc(DATA);
 }
 
@@ -614,14 +616,14 @@ mos6502::do_sbc(uint8_t val) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::sbc() {
-    rw(true);
+    read();
     do_sbc(DATA);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_sbc() {
-    rw(true);
+    read();
     do_sbc(DATA);
 }
 
@@ -637,14 +639,14 @@ mos6502::do_cmp(uint8_t val) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::cmp() {
-    rw(true);
+    read();
     do_cmp(DATA);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::cpx() {
-    rw(true);
+    read();
     uint16_t v = X - DATA;
     P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
     if (!(v & 0xFF00)) {
@@ -655,7 +657,7 @@ mos6502::cpx() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::cpy() {
-    rw(true);
+    read();
     uint16_t v = Y - DATA;
     P = YAKC_MOS6502_NZ(P, uint8_t(v)) & ~CF;
     if (!(v & 0xFF00)) {
@@ -666,74 +668,74 @@ mos6502::cpy() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::dec() {
-    rw(true);
+    read();
     //-- first, the unmodified value is written
-    rw(false);
+    write();
     //-- next cycle the modified value is written
     DATA--; P = YAKC_MOS6502_NZ(P, DATA);
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_dcp() {
-    rw(true);
+    read();
     //-- first, the unmodified value is written
-    rw(false);
+    write();
     //-- next cycle the modified value is written
     DATA--; P = YAKC_MOS6502_NZ(P, DATA);
-    rw(false);
+    write();
     do_cmp(DATA);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::dex() {
-    rw(true);
+    read();
     X--; P = YAKC_MOS6502_NZ(P, X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::dey() {
-    rw(true);
+    read();
     Y--; P = YAKC_MOS6502_NZ(P, Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::inc() {
-    rw(true);
+    read();
     //-- first, the unmodified value is written
-    rw(false);
+    write();
     //-- next cycle the modified value is written
     DATA++; P = YAKC_MOS6502_NZ(P, DATA);
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::inx() {
-    rw(true);
+    read();
     X++; P = YAKC_MOS6502_NZ(P, X);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::iny() {
-    rw(true);
+    read();
     Y++; P = YAKC_MOS6502_NZ(P, Y);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_isb() {
-    rw(true);
+    read();
     //-- first, the unmodified value is written
-    rw(false);
+    write();
     //-- next cycle the modified value is written
     DATA++;
-    rw(false);
+    write();
     do_sbc(DATA);
 }
 
@@ -749,30 +751,30 @@ mos6502::do_asl(uint8_t val) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::asl() {
-    rw(true);
+    read();
     //-- first the unmodified value is written
-    rw(false);
+    write();
     //-- next the modified value is written
     DATA = do_asl(DATA);
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::asla() {
-    rw(true);
+    read();
     A = do_asl(A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_slo() {
-    rw(true);
+    read();
     //-- first the unmodified value is written
-    rw(false);
+    write();
     //-- next the modified value is written
     DATA = do_asl(DATA);
-    rw(false);
+    write();
     A |= DATA;
     P = YAKC_MOS6502_NZ(P, A);
 }
@@ -789,30 +791,30 @@ mos6502::do_lsr(uint8_t val) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::lsr() {
-    rw(true);
+    read();
     //-- first the unmodified value is written
-    rw(false);
+    write();
     //-- next the modified value is written
     DATA = do_lsr(DATA);
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::lsra() {
-    rw(true);
+    read();
     A = do_lsr(A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_sre() {
-    rw(true);
+    read();
     //-- first the unmodified value is written
-    rw(false);
+    write();
     //-- next the modified value is written
     DATA = do_lsr(DATA);
-    rw(false);
+    write();
     A ^= DATA;
     P = YAKC_MOS6502_NZ(P, A);
 }
@@ -836,30 +838,30 @@ mos6502::do_rol(uint8_t val) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::rol() {
-    rw(true);
+    read();
     //-- first the unmodified value is written
-    rw(false);
+    write();
     //-- next the modified value is written
     DATA = do_rol(DATA);
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rola() {
-    rw(true);
+    read();
     A = do_rol(A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_rla() {
-    rw(true);
+    read();
     //-- first the unmodified value is written
-    rw(false);
+    write();
     //-- next the modified value is written
     DATA = do_rol(DATA);
-    rw(false);
+    write();
     A &= DATA;
     P = YAKC_MOS6502_NZ(P, A);
 }
@@ -883,37 +885,37 @@ mos6502::do_ror(uint8_t val) {
 //------------------------------------------------------------------------------
 inline void
 mos6502::ror() {
-    rw(true);
+    read();
     //-- first the unmodified value is written
-    rw(false);
+    write();
     //-- next the modified value is written
     DATA = do_ror(DATA);
-    rw(false);
+    write();
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::rora() {
-    rw(true);
+    read();
     A = do_ror(A);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::u_rra() {
-    rw(true);
+    read();
     //-- first the unmodified value is written
-    rw(false);
+    write();
     //-- next the modified value is written
     DATA = do_ror(DATA);
-    rw(false);
+    write();
     do_adc(DATA);
 }
 
 //------------------------------------------------------------------------------
 inline void
 mos6502::bit() {
-    rw(true);
+    read();
     uint8_t v = A & DATA;
     P &= ~(NF|VF|ZF);
     if (!v) {

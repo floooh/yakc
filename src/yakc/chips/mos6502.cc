@@ -104,24 +104,25 @@ mos6502::step() {
 
 //------------------------------------------------------------------------------
 void
-mos6502::rw(bool read) {
-    if (read) {
-        DATA = mem.r8io(ADDR);
-    }
-    else {
-        mem.w8io(ADDR, DATA);
-    }
+mos6502::read() {
+    DATA = mem.r8io(ADDR);
     Cycle++;
-    if (bus) {
-        bus->cpu_tick();
-    }
+    bus->cpu_tick();
+}
+
+//------------------------------------------------------------------------------
+void
+mos6502::write() {
+    mem.w8io(ADDR, DATA);
+    Cycle++;
+    bus->cpu_tick();
 }
 
 //------------------------------------------------------------------------------
 void
 mos6502::fetch() {
     ADDR = PC++;
-    rw(true);
+    read();
     OP = DATA;
     uint8_t cc  = OP & 0x03;
     uint8_t bbb = (OP >> 2) & 0x07;
@@ -152,7 +153,7 @@ mos6502::addr() {
         case A_ZER:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             ADDR = DATA;
             break;
@@ -160,10 +161,10 @@ mos6502::addr() {
         case A_ZPX:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             ADDR = DATA;
-            rw(true);
+            read();
             //--
             ADDR = (ADDR + X) & 0x00FF;
             break;
@@ -171,10 +172,10 @@ mos6502::addr() {
         case A_ZPY:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             ADDR = DATA;
-            rw(true);
+            read();
             //--
             ADDR = (ADDR + Y) & 0x00FF;
             break;
@@ -182,10 +183,10 @@ mos6502::addr() {
         case A_ABS:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             tmp16 = DATA; ADDR = PC++;
-            rw(true);
+            read();
             //--
             ADDR = DATA<<8 | tmp16;
             break;
@@ -193,17 +194,17 @@ mos6502::addr() {
         case A_ABX:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             tmp16 = DATA + X; ADDR = PC++;
-            rw(true);
+            read();
             //--
             ADDR = (DATA<<8) | (tmp16&0xFF);
             if (((tmp16 & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                 // page boundary was not crossed, and not store, can exit early
                 break;
             }
-            rw(true);
+            read();
             //-- page boundary was crossed, add carry and read again
             ADDR = (ADDR & 0xFF00) + tmp16;
             break;
@@ -212,17 +213,17 @@ mos6502::addr() {
         case A_ABY:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             tmp16 = DATA + Y; ADDR = PC++;
-            rw(true);
+            read();
             //--
             ADDR = (DATA<<8) | (tmp16&0xFF);
             if (((tmp16 & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                 // page boundary was not crossed, and not store, can exit early
                 break;
             }
-            rw(true);
+            read();
             //-- page boundary was crossed, add carry and read again
             ADDR = (ADDR & 0xFF00) + tmp16;
             break;
@@ -230,16 +231,16 @@ mos6502::addr() {
         case A_IDX:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             ADDR = DATA;
-            rw(true);
+            read();
             //--
             ADDR = (ADDR + X) & 0x00FF;
-            rw(true);
+            read();
             //--
             tmp16 = DATA; ADDR = (ADDR + 1) & 0x00FF;
-            rw(true);
+            read();
             //--
             ADDR = (DATA<<8) | tmp16;
             break;
@@ -247,20 +248,20 @@ mos6502::addr() {
         case A_IDY:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             ADDR = DATA;
-            rw(true);
+            read();
             //--
             tmp16 = DATA + Y; ADDR = (ADDR + 1) & 0x00FF;
-            rw(true);
+            read();
             //--
             ADDR = (DATA<<8) | (tmp16&0xFF);
             if (((tmp16 & 0xFF00) == 0x0000) && (MemAccess == M_R_)) {
                 // page boundary was not crossed, and not store, can exit early
                 break;
             }
-            rw(true);
+            read();
             //-- page boundary was crossed, add carry and read again
             ADDR = (ADDR & 0xFF00) + tmp16;
             break;
@@ -268,7 +269,7 @@ mos6502::addr() {
         case A_JMP:
             //--
             ADDR = PC++;
-            rw(true);
+            read();
             //--
             tmp16 = DATA; ADDR = PC++;
             break;
