@@ -2,8 +2,7 @@
 //  atom.cc
 //------------------------------------------------------------------------------
 #include "atom.h"
-
-#include <stdio.h>
+#include "yakc/core/filetypes.h"
 
 namespace YAKC {
 
@@ -362,7 +361,7 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
     }
     else if (1 == pio_id) {
         // the 6522 VIA
-        printf("write to VIA Port %s: %d\n", port_id==0?"A":"B", val);
+        //printf("write to VIA Port %s: %d\n", port_id==0?"A":"B", val);
     }
 }
 
@@ -404,7 +403,7 @@ atom::pio_in(int pio_id, int port_id) {
     }
     else if (1 == pio_id) {
         // the 6522 VIA
-        printf("read from VIA Port %s\n", port_id==0?"A":"B");
+        //printf("read from VIA Port %s\n", port_id==0?"A":"B");
     }
     return val;
 }

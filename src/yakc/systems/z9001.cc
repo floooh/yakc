@@ -2,7 +2,7 @@
 //  z9001.cc
 //------------------------------------------------------------------------------
 #include "z9001.h"
-#include "yakc/roms/rom_dumps.h"
+#include "yakc/core/filetypes.h"
 
 namespace YAKC {
 

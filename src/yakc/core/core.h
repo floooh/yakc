@@ -101,33 +101,6 @@ enum class os_rom {
     none,
 };
 
-enum class filetype {
-    raw,
-    kcc,
-    kc_tap,
-    kc_z80,
-    zx_tap,
-    zx_z80,
-    cpc_sna,
-    cpc_tap,
-    atom_tap,
-    text,
-
-    num,
-    none,
-};
-
-/// return true for quickloadable filetypes
-inline bool filetype_quickloadable(filetype t) {
-    switch (t) {
-        case filetype::cpc_tap:
-        case filetype::atom_tap:
-            return false;
-        default:
-            return true;
-    }
-}
-
 class joystick {
 public:
     enum {

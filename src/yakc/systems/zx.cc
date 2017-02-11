@@ -12,6 +12,7 @@
 //
 //------------------------------------------------------------------------------
 #include "zx.h"
+#include "yakc/core/filetypes.h"
 
 namespace YAKC {
 

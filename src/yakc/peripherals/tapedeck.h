@@ -6,6 +6,7 @@
 */
 #include "yakc/core/core.h"
 #include "yakc/core/filesystem.h"
+#include "yakc/core/filetypes.h"
 
 namespace YAKC {
 

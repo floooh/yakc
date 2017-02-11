@@ -2,6 +2,7 @@
 //  kc85.cc
 //------------------------------------------------------------------------------
 #include "kc85.h"
+#include "yakc/core/filetypes.h"
 
 namespace YAKC {
 

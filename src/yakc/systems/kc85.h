@@ -8,6 +8,7 @@
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
+#include "yakc/core/filetypes.h"
 #include "yakc/systems/kc85_video.h"
 #include "yakc/systems/kc85_audio.h"
 #include "yakc/systems/kc85_exp.h"

@@ -2,7 +2,7 @@
 //  z1013.cc
 //------------------------------------------------------------------------------
 #include "z1013.h"
-#include "yakc/roms/rom_dumps.h"
+#include "yakc/core/filetypes.h"
 
 namespace YAKC {
 

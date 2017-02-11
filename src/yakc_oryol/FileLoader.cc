@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "FileLoader.h"
 #include "Core/String/StringBuilder.h"
+#include "yakc/core/filetypes.h"
 
 using namespace Oryol;
 

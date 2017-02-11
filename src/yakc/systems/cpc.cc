@@ -12,6 +12,7 @@
 //
 //------------------------------------------------------------------------------
 #include "cpc.h"
+#include "yakc/core/filetypes.h"
 
 namespace YAKC {
 

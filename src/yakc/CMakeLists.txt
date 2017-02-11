@@ -10,6 +10,7 @@ fips_begin_module(yakc)
         sound.h sound.cc
         system_bus.h system_bus.cc
         filesystem.h filesystem.cc
+        filetypes.h
     )
     fips_dir(chips)
     fips_files(

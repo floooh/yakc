@@ -37,6 +37,7 @@
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
+#include "yakc/core/filetypes.h"
 
 namespace YAKC {
 
