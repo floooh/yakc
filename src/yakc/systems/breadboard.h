@@ -12,6 +12,7 @@
 #include "yakc/chips/z80pio.h"
 #include "yakc/chips/z80ctc.h"
 #include "yakc/chips/i8255.h"
+#include "yakc/chips/mos6522.h"
 #include "yakc/chips/mc6845.h"
 #include "yakc/chips/mc6847.h"
 #include "yakc/chips/ay8910.h"
@@ -30,6 +31,7 @@ public:
     class z80pio z80pio2;
     class z80ctc z80ctc;
     class i8255 i8255;
+    class mos6522 mos6522;
     class mc6845 mc6845;
     class mc6847 mc6847;
     class beeper beeper;

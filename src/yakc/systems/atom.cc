@@ -3,6 +3,8 @@
 //------------------------------------------------------------------------------
 #include "atom.h"
 
+#include <stdio.h>
+
 namespace YAKC {
 
 atom* atom::self = nullptr;
@@ -150,6 +152,7 @@ atom::poweron() {
     board->mos6502.init(this);
     board->mos6502.reset();
     board->i8255.init(0);
+    board->mos6522.init(1);
     vdg->init(read_vidmem, board->rgba8_buffer, freq_khz);
     counter_2_4khz.init(freq_khz * 1000 / 4800);
     board->beeper.init(freq_khz, SOUND_SAMPLE_RATE);
@@ -172,6 +175,7 @@ void
 atom::reset() {
     board->mos6502.reset();
     board->i8255.reset();
+    board->mos6522.reset();
     board->mc6847.reset();
     board->beeper.reset();
     scan_kbd_col = 0;
@@ -218,6 +222,7 @@ atom::put_input(uint8_t ascii) {
 void
 atom::cpu_tick() {
     vdg->step();
+    board->mos6522.step();
 
     // update the sound beeper
     // NOTE: don't make the cassette output audible, since it
@@ -241,6 +246,7 @@ atom::cpu_tick() {
 uint8_t
 atom::memio(bool write, uint16_t addr, uint8_t inval) {
     if ((addr >= 0xB000) && (addr < 0xB400)) {
+        // i8255: http://www.acornatom.nl/sites/fpga/www.howell1964.freeserve.co.uk/acorn/atom/amb/amb_8255.htm
         if (write) {
             self->board->i8255.write(self, addr & 0x0003, inval);
         }
@@ -249,9 +255,13 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
         }
     }
     else if ((addr >= 0xB800) && (addr < 0xBC00)) {
-        //printf("VIA: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
-        //http://www.acornatom.nl/sites/fpga/www.howell1964.freeserve.co.uk/acorn/atom/amb/amb_6522.htm
-        return 0x00;
+        // 6522 VIA: http://www.acornatom.nl/sites/fpga/www.howell1964.freeserve.co.uk/acorn/atom/amb/amb_6522.htm
+        if (write) {
+            self->board->mos6522.write(self, addr & 0x000F, inval);
+        }
+        else {
+            return self->board->mos6522.read(self, addr & 0x000F);
+        }
     }
     else {
         //printf("UNKNOWN: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
@@ -278,75 +288,81 @@ atom::read_vidmem(uint16_t addr) {
 //------------------------------------------------------------------------------
 void
 atom::pio_out(int pio_id, int port_id, uint8_t val) {
-    /*
-    FROM Atom Theory and Praxis (and MAME)
+    if (0 == pio_id) {
+        /*
+        FROM Atom Theory and Praxis (and MAME)
 
-    The  8255  Programmable  Peripheral  Interface  Adapter  contains  three
-    8-bit ports, and all but one of these lines is used by the ATOM.
+        The  8255  Programmable  Peripheral  Interface  Adapter  contains  three
+        8-bit ports, and all but one of these lines is used by the ATOM.
 
-    Port A - #B000
-           Output bits:      Function:
-                O -- 3     Keyboard column
-                4 -- 7     Graphics mode (4: A/G, 5..7: GM0..2)
+        Port A - #B000
+               Output bits:      Function:
+                    O -- 3     Keyboard column
+                    4 -- 7     Graphics mode (4: A/G, 5..7: GM0..2)
 
-    Port B - #B001
-           Input bits:       Function:
-                O -- 5     Keyboard row
-                  6        CTRL key (low when pressed)
-                  7        SHIFT keys {low when pressed)
+        Port B - #B001
+               Input bits:       Function:
+                    O -- 5     Keyboard row
+                      6        CTRL key (low when pressed)
+                      7        SHIFT keys {low when pressed)
 
-    Port C - #B002
-           Output bits:      Function:
-                O          Tape output
-                1          Enable 2.4 kHz to cassette output
-                2          Loudspeaker
-                3          Not used (??? see below)
+        Port C - #B002
+               Output bits:      Function:
+                    O          Tape output
+                    1          Enable 2.4 kHz to cassette output
+                    2          Loudspeaker
+                    3          Not used (??? see below)
 
-           Input bits:       Function:
-                4          2.4 kHz input
-                5          Cassette input
-                6          REPT key (low when pressed)
-                7          60 Hz sync signal (low during flyback)
+               Input bits:       Function:
+                    4          2.4 kHz input
+                    5          Cassette input
+                    6          REPT key (low when pressed)
+                    7          60 Hz sync signal (low during flyback)
 
-    The port C output lines, bits O to 3, may be used for user
-    applications when the cassette interface is not being used.
-    */
-    switch (port_id) {
-        // PPI port A
-        //  0..4:   keyboard matrix column
-        //  5:      MC6847 A/G
-        //  6:      MC6847 GM0
-        //  7:      MC6847 GM1
-        //  8:      MC6847 GM2
-        case i8255::PORT_A:
-            scan_kbd_col = val & 0x0F;
-            vdg->ag(val & (1<<4));
-            vdg->gm0(val & (1<<5));
-            vdg->gm1(val & (1<<6));
-            vdg->gm2(val & (1<<7));
-            break;
+        The port C output lines, bits O to 3, may be used for user
+        applications when the cassette interface is not being used.
+        */
+        switch (port_id) {
+            // PPI port A
+            //  0..4:   keyboard matrix column
+            //  5:      MC6847 A/G
+            //  6:      MC6847 GM0
+            //  7:      MC6847 GM1
+            //  8:      MC6847 GM2
+            case i8255::PORT_A:
+                scan_kbd_col = val & 0x0F;
+                vdg->ag(val & (1<<4));
+                vdg->gm0(val & (1<<5));
+                vdg->gm1(val & (1<<6));
+                vdg->gm2(val & (1<<7));
+                break;
 
-        // PPI port C output:
-        //  0:  output: cass 0
-        //  1:  output: cass 1
-        //  2:  output: speaker
-        //  3:  output: MC6847 CSS
-        //
-        // the resulting cassette out signal is
-        // created like this (see the Atom circuit diagram
-        // right of the keyboard matrix:
-        //
-        //  (((not 2.4khz) and cass1) & and cass0)
-        //
-        // but the cassette out bits seem to get stuck on 0
-        // after saving a BASIC program, so don't make it audible
-        //
-        case i8255::PORT_C:
-            out_cass0 = 0 == (val & 1);
-            out_cass1 = 0 == (val & 2);
-            out_beep = 0 == (val & 4);
-            vdg->css(val & (1<<3));
-            break;
+            // PPI port C output:
+            //  0:  output: cass 0
+            //  1:  output: cass 1
+            //  2:  output: speaker
+            //  3:  output: MC6847 CSS
+            //
+            // the resulting cassette out signal is
+            // created like this (see the Atom circuit diagram
+            // right of the keyboard matrix:
+            //
+            //  (((not 2.4khz) and cass1) & and cass0)
+            //
+            // but the cassette out bits seem to get stuck on 0
+            // after saving a BASIC program, so don't make it audible
+            //
+            case i8255::PORT_C:
+                out_cass0 = 0 == (val & 1);
+                out_cass1 = 0 == (val & 2);
+                out_beep = 0 == (val & 4);
+                vdg->css(val & (1<<3));
+                break;
+        }
+    }
+    else if (1 == pio_id) {
+        // the 6522 VIA
+        printf("write to VIA Port %s: %d\n", port_id==0?"A":"B", val);
     }
 }
 
@@ -354,34 +370,41 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
 uint8_t
 atom::pio_in(int pio_id, int port_id) {
     uint8_t val = 0x00;
-    switch (port_id) {
-        // PPI port B: keyboard row state
-        case i8255::PORT_B:
-            if (scan_kbd_col < 10) {
-                val = ~(cur_key_mask.col[scan_kbd_col]);
-                if (scan_kbd_col == 9) {
-                    cur_key_mask = next_key_mask;
+    if (0 == pio_id) {
+        // the i8255 PIO
+        switch (port_id) {
+            // PPI port B: keyboard row state
+            case i8255::PORT_B:
+                if (scan_kbd_col < 10) {
+                    val = ~(cur_key_mask.col[scan_kbd_col]);
+                    if (scan_kbd_col == 9) {
+                        cur_key_mask = next_key_mask;
+                    }
                 }
-            }
-            else {
-                val = 0xFF;
-            }
-            break;
-        // PPI port C input:
-        //  4:  input: 2400 Hz
-        //  5:  input: cassette
-        //  6:  input: keyboard repeat
-        //  7:  input: MC6847 FSYNC
-        case i8255::PORT_C:
-            if (state_2_4khz) {
-                val |= (1<<4);
-            }
-            // FIXME: always send REPEAT key as 'not pressed'
-            val |= (1<<6);
-            if (!board->mc6847.test(mc6847::FSYNC)) {
-                val |= (1<<7);
-            }
-            break;
+                else {
+                    val = 0xFF;
+                }
+                break;
+            // PPI port C input:
+            //  4:  input: 2400 Hz
+            //  5:  input: cassette
+            //  6:  input: keyboard repeat
+            //  7:  input: MC6847 FSYNC
+            case i8255::PORT_C:
+                if (state_2_4khz) {
+                    val |= (1<<4);
+                }
+                // FIXME: always send REPEAT key as 'not pressed'
+                val |= (1<<6);
+                if (!board->mc6847.test(mc6847::FSYNC)) {
+                    val |= (1<<7);
+                }
+                break;
+        }
+    }
+    else if (1 == pio_id) {
+        // the 6522 VIA
+        printf("read from VIA Port %s\n", port_id==0?"A":"B");
     }
     return val;
 }
