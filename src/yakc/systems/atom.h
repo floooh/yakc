@@ -73,7 +73,10 @@ public:
     static atom* self;
     bool on = false;
     const uint8_t* vidmem_base = nullptr;
+    mos6502* cpu = nullptr;
     mc6847* vdg = nullptr;
+    i8255* ppi = nullptr;
+    mos6522* via = nullptr;
     counter counter_2_4khz;
     bool state_2_4khz = false;
     bool out_beep = false;

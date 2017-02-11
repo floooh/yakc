@@ -16,7 +16,10 @@ atom::init(breadboard* b, rom_images* r, tapedeck* t) {
     board = b;
     roms = r;
     tape = t;
+    cpu = &(board->mos6502);
     vdg = &(board->mc6847);
+    ppi = &(board->i8255);
+    via = &(board->mos6522);
     init_keymap();
 }
 
@@ -48,7 +51,7 @@ void
 atom::init_keymap() {
     clear(key_map, sizeof(key_map));
 
-    // 10x5 keyboard matrix (10 columns, 6 rows,
+    // 10x5 keyboard matrix (10 columns, 7 rows,
     // row 6 is Ctrl, row 7 is Shift,
     // the shift key simply sets bit 7 which
     // inverts the visual character
@@ -127,18 +130,20 @@ atom::poweron() {
     next_key_mask = key_mask();
     cur_key_mask = key_mask();
 
-    // map memory
+    // initialize the memory map
+    // fill memory with random junk
     memcpy(board->ram[0], board->random, breadboard::ram_bank_size);
     memcpy(board->ram[1], board->random, breadboard::ram_bank_size);
     memcpy(board->ram[2], board->random, breadboard::ram_bank_size);
     clear(board->ram[3], sizeof(board->ram[3]));
-    auto& mem = board->mos6502.mem;
+    auto& mem = cpu->mem;
     mem.unmap_all();
     // give it the full 32 KByte RAM (0x0000..0x7FFF) + 8 KByte videomem (0x8000..0x9FFF)
     mem.map(0, 0x0000, 0xA000, board->ram[0], true);
-    // hole in 0xA000 to 0xAFFF (utility rom)
+    // hole in 0xA000 to 0xAFFF (for utility roms)
     // 0xB000 to 0xBFFF: I/O area
     mem.map_io(0, 0xB000, 0x1000, memio);
+    // ROM area
     mem.map(0, 0xC000, 0x1000, roms->ptr(rom_images::atom_basic), false);
     mem.map(0, 0xD000, 0x1000, roms->ptr(rom_images::atom_float), false);
     mem.map(0, 0xE000, 0x1000, roms->ptr(rom_images::atom_dos), false);
@@ -148,10 +153,10 @@ atom::poweron() {
     // 1 MHz CPU clock frequency
     const int freq_khz = 1000;
     board->clck.init(freq_khz);
-    board->mos6502.init(this);
-    board->mos6502.reset();
-    board->i8255.init(0);
-    board->mos6522.init(1);
+    cpu->init(this);
+    cpu->reset();
+    ppi->init(0);
+    via->init(1);
     vdg->init(read_vidmem, board->rgba8_buffer, freq_khz);
     counter_2_4khz.init(freq_khz * 1000 / 4800);
     board->beeper.init(freq_khz, SOUND_SAMPLE_RATE);
@@ -165,17 +170,17 @@ atom::poweron() {
 void
 atom::poweroff() {
     YAKC_ASSERT(on);
-    board->mos6502.mem.unmap_all();
+    cpu->mem.unmap_all();
     on = false;
 }
 
 //------------------------------------------------------------------------------
 void
 atom::reset() {
-    board->mos6502.reset();
-    board->i8255.reset();
-    board->mos6522.reset();
-    board->mc6847.reset();
+    cpu->reset();
+    ppi->reset();
+    via->reset();
+    vdg->reset();
     board->beeper.reset();
     scan_kbd_col = 0;
     next_key_mask = key_mask();
@@ -185,15 +190,14 @@ atom::reset() {
 //------------------------------------------------------------------------------
 uint64_t
 atom::step(uint64_t start_tick, uint64_t end_tick) {
-    auto& cpu = board->mos6502;
     auto& dbg = board->dbg;
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
-        uint32_t ticks = cpu.step();
-        if (dbg.step(cpu.PC, ticks)) {
+        uint32_t ticks = cpu->step();
+        if (dbg.step(cpu->PC, ticks)) {
             return end_tick;
         }
-        if (cpu.PC == osload_trap) {
+        if (cpu->PC == osload_trap) {
             // trapped OSLOAD function
             osload();
         }
@@ -205,9 +209,8 @@ atom::step(uint64_t start_tick, uint64_t end_tick) {
 //------------------------------------------------------------------------------
 uint32_t
 atom::step_debug() {
-    auto& cpu = board->mos6502;
-    uint32_t ticks = cpu.step();
-    board->dbg.step(cpu.PC, ticks);
+    uint32_t ticks = cpu->step();
+    board->dbg.step(cpu->PC, ticks);
     return ticks;
 }
 
@@ -221,7 +224,7 @@ atom::put_input(uint8_t ascii) {
 void
 atom::cpu_tick() {
     vdg->step();
-    board->mos6522.step();
+    via->step();
 
     // update the sound beeper
     // NOTE: don't make the cassette output audible, since it
@@ -247,19 +250,19 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
     if ((addr >= 0xB000) && (addr < 0xB400)) {
         // i8255: http://www.acornatom.nl/sites/fpga/www.howell1964.freeserve.co.uk/acorn/atom/amb/amb_8255.htm
         if (write) {
-            self->board->i8255.write(self, addr & 0x0003, inval);
+            self->ppi->write(self, addr & 0x0003, inval);
         }
         else {
-            return self->board->i8255.read(self, addr & 0x0003);
+            return self->ppi->read(self, addr & 0x0003);
         }
     }
     else if ((addr >= 0xB800) && (addr < 0xBC00)) {
         // 6522 VIA: http://www.acornatom.nl/sites/fpga/www.howell1964.freeserve.co.uk/acorn/atom/amb/amb_6522.htm
         if (write) {
-            self->board->mos6522.write(self, addr & 0x000F, inval);
+            self->via->write(self, addr & 0x000F, inval);
         }
         else {
-            return self->board->mos6522.read(self, addr & 0x000F);
+            return self->via->read(self, addr & 0x000F);
         }
     }
     else {
@@ -482,23 +485,22 @@ atom::osload() {
     bool success = false;
 
     // load the ATM header
-    auto& cpu = this->board->mos6502;
     atomtap_header hdr;
     if (tape->read(&hdr, sizeof(hdr)) == sizeof(hdr)) {
         uint16_t addr = hdr.load_addr;
         // use file load address?
-        if (cpu.mem.r8io(0xCD) & 0x80) {
-            addr = cpu.mem.r16io(0xCB);
+        if (cpu->mem.r8io(0xCD) & 0x80) {
+            addr = cpu->mem.r16io(0xCB);
         }
         for (int i = 0; i < hdr.length; i++) {
             uint8_t val;
             tape->read(&val, sizeof(val));
-            cpu.mem.w8io(addr++, val);
+            cpu->mem.w8io(addr++, val);
         }
         success = true;
     }
     // set or clear bit 6 and clear bit 7 of 0xDD
-    uint8_t dd = cpu.mem.r8io(0xDD);
+    uint8_t dd = cpu->mem.r8io(0xDD);
     if (success) {
         dd |= (1<<6);
     }
@@ -506,14 +508,14 @@ atom::osload() {
         dd &= ~(1<<6);
     }
     dd &= ~(1<<7);
-    cpu.mem.w8io(0xDD, dd);
+    cpu->mem.w8io(0xDD, dd);
 
     // execute RTS
-    cpu.rts();
+    cpu->rts();
 
     // FIXME: patch PC????
     if (success) {
-        cpu.PC = hdr.exec_addr;
+        cpu->PC = hdr.exec_addr;
     }
 }
 
