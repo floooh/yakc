@@ -14,14 +14,14 @@ public:
     virtual void cpu_tick();
 
     /// CPU IN callback
-    virtual ubyte cpu_in(uword port);
+    virtual uint8_t cpu_in(uint16_t port);
     /// CPU OUT callback
-    virtual void cpu_out(uword port, ubyte val);
+    virtual void cpu_out(uint16_t port, uint8_t val);
 
     /// PIO input callback
-    virtual ubyte pio_in(int pio_id, int port_id);
+    virtual uint8_t pio_in(int pio_id, int port_id);
     /// PIO output callback
-    virtual void pio_out(int pio_id, int port_id, ubyte val);
+    virtual void pio_out(int pio_id, int port_id, uint8_t val);
     /// PIO ready callback
     virtual void pio_rdy(int pio_id, int port_id, bool active);
 

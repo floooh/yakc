@@ -12,26 +12,26 @@ system_bus::cpu_tick() {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-system_bus::cpu_in(uword port) {
+uint8_t
+system_bus::cpu_in(uint16_t port) {
     return 0;
 }
 
 //------------------------------------------------------------------------------
 void
-system_bus::cpu_out(uword port, ubyte val) {
+system_bus::cpu_out(uint16_t port, uint8_t val) {
     // empty
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 system_bus::pio_in(int pio_id, int port_id) {
     return 0;
 }
 
 //------------------------------------------------------------------------------
 void
-system_bus::pio_out(int pio_id, int port_id, ubyte val) {
+system_bus::pio_out(int pio_id, int port_id, uint8_t val) {
     // empty
 }
 
