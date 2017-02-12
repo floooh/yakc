@@ -26,23 +26,24 @@ namespace YAKC {
 //  magenta:   139  39 155
 //  orange:    140  31  11
 //
+#define clamp(x) ((x)>255?255:(x))
+#define rgba(r,g,b) (0xFF000000 | clamp((r*3)/2) | (clamp((g*3)/2)<<8) | (clamp((b*3)/2)<<16))
 static const uint32_t colors[8] = {
-    0xFF0B9213, // green
-    0xFF0A969B, // yellow
-    0xFFAF1602, // blue
-    0xFF07229B, // red
-    0xFF8D969A, // buff (white)
-    0xFF9B8F0F, // cyan
-    0xFF9B278B, // magenta
-    0xFF0B1F8C, // orange
+    rgba(19, 146, 11),      // green
+    rgba(155, 150, 10),     // yellow
+    rgba(2, 22, 175),       // blue
+    rgba(155, 22, 7),       // red
+    rgba(141, 150, 154),    // buff
+    rgba(15, 143, 155),     // cyan
+    rgba(139, 39, 155),     // cyan
+    rgba(140, 31, 11)       // orange
 };
 
 static const uint32_t black = 0xFF111111;
-static const uint32_t alnum_green = 0xFF0B9213;
+static const uint32_t alnum_green = rgba(19, 146, 11);
 static const uint32_t alnum_dark_green = 0xFF002400;
-static const uint32_t alnum_orange = 0xFF0B1F8C;
+static const uint32_t alnum_orange = rgba(140, 31, 11);
 static const uint32_t alnum_dark_orange = 0xFF000E22;
-
 
 // internal character ROM dump from MAME
 // (ntsc_square_fontdata8x12 in devices/video/mc6847.cpp)
