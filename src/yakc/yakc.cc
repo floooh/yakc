@@ -316,7 +316,7 @@ yakc::put_input(uint8_t ascii, uint8_t joy0_mask) {
         this->zx.put_input(ascii, joy0_mask);
     }
     if (this->atom.on) {
-        this->atom.put_input(ascii);
+        this->atom.put_input(ascii, joy0_mask);
     }
     if (this->cpc.on) {
         this->cpc.put_input(ascii, joy0_mask);

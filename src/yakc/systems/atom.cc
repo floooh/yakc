@@ -129,6 +129,9 @@ atom::poweron() {
     scan_kbd_col = 0;
     next_key_mask = key_mask();
     cur_key_mask = key_mask();
+    mmc_joymask = 0;
+    mmc_cmd = 0;
+    mmc_latch = 0;
 
     // initialize the memory map
     // fill memory with random junk
@@ -221,8 +224,30 @@ atom::step_debug() {
 
 //------------------------------------------------------------------------------
 void
-atom::put_input(uint8_t ascii) {
-    next_key_mask = key_map[ascii];
+atom::put_input(uint8_t ascii, uint8_t joy0mask) {
+    mmc_joymask = 0;
+    if (0 == joy0mask) {
+        next_key_mask = key_map[ascii];
+    }
+    else {
+        //
+        if (joy0mask & joystick::left) {
+            mmc_joymask |= 0x2;
+        }
+        if (joy0mask & joystick::right) {
+            mmc_joymask |= 0x1;
+        }
+        if (joy0mask & joystick::up) {
+            mmc_joymask |= 0x8;
+        }
+        if (joy0mask & joystick::down) {
+            mmc_joymask |= 0x4;
+        }
+        if (joy0mask & joystick::btn0) {
+            mmc_joymask |= 0x10;
+        }
+        next_key_mask = key_mask();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -259,6 +284,23 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
         }
         else {
             return self->ppi->read(self, addr & 0x0003);
+        }
+    }
+    else if ((addr >= 0xB400) && (addr < 0xB800)) {
+        // extensions (only rudimentary)
+        // FIXME: implement a proper AtoMMC emulation, for now just
+        // a quick'n'dirty hack for joystick input
+        
+        if (write) {
+            if (addr == 0xB400) {
+                self->mmc_cmd = inval;
+            }
+        }
+        else {
+            if ((addr == 0xB401) && (self->mmc_cmd == 0xA2)) {
+                // read MMC joystick
+                return ~self->mmc_joymask;
+            }
         }
     }
     else if ((addr >= 0xB800) && (addr < 0xBC00)) {

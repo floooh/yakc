@@ -53,7 +53,7 @@ public:
     /// called after snapshot restore
     void on_context_switched();    
     /// put a key and joystick input
-    void put_input(uint8_t ascii);
+    void put_input(uint8_t ascii, uint8_t joy0mask);
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);    
     /// the trapped osload() function for TAP files
@@ -105,6 +105,11 @@ public:
     key_mask next_key_mask;
     key_mask cur_key_mask;
     key_mask key_map[256];
+
+    // FIXME: implement a proper AtomMMC emulation
+    uint8_t mmc_joymask = 0;
+    uint8_t mmc_cmd = 0;
+    uint8_t mmc_latch = 0;
 };
 
 } // namespace YAKC

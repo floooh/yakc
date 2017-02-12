@@ -26,8 +26,10 @@ namespace YAKC {
 //  magenta:   139  39 155
 //  orange:    140  31  11
 //
+//  color intensities are slightly boosted
+//
 #define clamp(x) ((x)>255?255:(x))
-#define rgba(r,g,b) (0xFF000000 | clamp((r*3)/2) | (clamp((g*3)/2)<<8) | (clamp((b*3)/2)<<16))
+#define rgba(r,g,b) (0xFF000000 | clamp((r*4)/3) | (clamp((g*4)/3)<<8) | (clamp((b*4)/3)<<16))
 static const uint32_t colors[8] = {
     rgba(19, 146, 11),      // green
     rgba(155, 150, 10),     // yellow
