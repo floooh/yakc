@@ -3,6 +3,7 @@ fips_begin_unittest(yakc_test)
     fips_vs_warning_level(3)
     fips_files(
         filesystem_test.cc memory_test.cc daisychain_test.cc        
+        mos6522_test.cc
         mos6502_test.cc
         z80_test.cc z80pio_test.cc
         zex_test.cc nestest_test.cc

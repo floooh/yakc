@@ -229,7 +229,7 @@ atom::put_input(uint8_t ascii) {
 void
 atom::cpu_tick() {
     vdg->step();
-    via->step();
+    via->step(this);
 
     // update the sound beeper
     // NOTE: don't make the cassette output audible, since it

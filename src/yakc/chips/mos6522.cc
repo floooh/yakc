@@ -1,5 +1,7 @@
 //------------------------------------------------------------------------------
 //  mos6522.cc
+//
+//  reference: https://github.com/mamedev/mame/blob/master/src/devices/machine/6522via.cpp
 //------------------------------------------------------------------------------
 #include "mos6522.h"
 #include "yakc/core/system_bus.h"
@@ -21,12 +23,39 @@ mos6522::reset() {
     ddr_b = ddr_a = 0;
     acr = pcr = 0;
     t1_pb7 = 0;
+    t1ll = t2lh = 0;
+    t2ll = t2lh = 0;
+    t1 = 0;
+    t2 = 0;
 }
 
 //------------------------------------------------------------------------------
 void
-mos6522::step() {
-    // FIXME
+mos6522::step(system_bus* bus) {
+    t1--;
+    if (t1 == 0) {
+        // FIXME: implement 3 cycle delay
+        if (acr_t1_cont_int()) {
+            // continuous interval, reset counter
+            t1_pb7 = !t1_pb7;
+            t1 = (t1lh<<8) | t1ll;
+        }
+        else {
+            // one-shot, don't reset counter
+            t1_pb7 = 1;
+            t1_active = false;
+        }
+        if (acr_t1_pb7()) {
+            bus_out_b(bus);
+        }
+        // FIXME: interrupt
+    }
+    t2--;
+    if (t2 == 0) {
+        // FIXME: implement 3 cycle delay
+        t2_active = false;
+        // FIXME: interrupt
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -73,7 +102,7 @@ mos6522::bus_in_a(system_bus* bus) {
 void
 mos6522::write(system_bus* bus, int addr, uint8_t val) {
     switch (addr & 0x0F) {
-        case IORB:
+        case PB:
             out_b = val;
             // notify bus if any data-direction-bit is set to output
             if (ddr_b != 0) {
@@ -83,7 +112,7 @@ mos6522::write(system_bus* bus, int addr, uint8_t val) {
             // FIXME: CB2 data ready handshake
             break;
 
-        case IORA:
+        case PA:
             out_a = val;
             if (ddr_a != 0) {
                 bus_out_a(bus);
@@ -92,7 +121,7 @@ mos6522::write(system_bus* bus, int addr, uint8_t val) {
             // FIXME: CA2 ready handshake, pulse
             break;
 
-        case IORA_NOH:
+        case PA_NOH:
             // no handshake
             out_a = val;
             if (ddr_a != 0) {
@@ -116,23 +145,43 @@ mos6522::write(system_bus* bus, int addr, uint8_t val) {
 
         case T1CL:
         case T1LL:
-            // FIXME
+            t1ll = val;
             break;
 
         case T1LH:
-            // FIXME
+            // FIXME: clear interrupt
+            t1lh = val;
             break;
 
         case T1CH:
-            // FIXME
+            // FIXME: clear interrupt
+            t1lh = val;
+            t1 = ((t1lh<<8) | t1ll);
+            t1_pb7 = 0;
+            if (acr_t1_pb7()) {
+                bus_out_b(bus);
+            }
+            t1_active = true;
             break;
 
         case T2CL:
-            // FIXME
+            t2ll = val;
             break;
 
         case T2CH:
-            // FIXME
+            // FIXME: clear interrupt
+            t2lh = val;
+            t2 = (t2lh<<8) | t2ll;
+            if (acr_t2_count_pb6()) {
+                // count down on PB6 pulses
+                t2 = (t2lh<<8) | t2ll;
+                t2_active = true;
+            }
+            else {
+                // regular countdown
+                t2 = ((t2lh<<8) | t2ll);
+                t2_active = true;
+            }
             break;
 
         case SR:
@@ -147,7 +196,10 @@ mos6522::write(system_bus* bus, int addr, uint8_t val) {
         case ACR:
             acr = val;
             bus_out_b(bus);
-            // FIXME: shift timer, continuous timer reset
+            // FIXME: shift timer
+            if (acr_t1_cont_int()) {
+                t1_active = true;
+            }
             break;
 
         case IER:
@@ -165,7 +217,7 @@ uint8_t
 mos6522::read(system_bus* bus, int addr) {
     uint8_t val = 0;
     switch (addr & 0x0F) {
-        case IORB:
+        case PB:
             if (acr_latch_b()) {
                 val = in_b;
             }
@@ -175,7 +227,7 @@ mos6522::read(system_bus* bus, int addr) {
             // FIXME: clear interrupt
             break;
 
-        case IORA:
+        case PA:
             if (acr_latch_a()) {
                 val = in_a;
             }
@@ -186,7 +238,7 @@ mos6522::read(system_bus* bus, int addr) {
             // FIXME: handshake, pulse
             break;
 
-        case IORA_NOH:
+        case PA_NOH:
             // port A input, no handshake
             if (acr_latch_a()) {
                 val = in_a;
@@ -205,27 +257,29 @@ mos6522::read(system_bus* bus, int addr) {
             break;
 
         case T1CL:
-            // FIXME
+            // FIXME: clear interrupt
+            val = t1 & 0x00FF;
             break;
 
         case T1CH:
-            // FIXME
+            val = t1>>8;
             break;
 
         case T1LL:
-            // FIXME
+            val = t1ll;
             break;
 
         case T1LH:
-            // FIMXE
+            val = t1lh;
             break;
 
         case T2CL:
-            // FIXME
+            // FIXME: clear interrupt
+            val = t2 & 0x00FF;
             break;
 
         case T2CH:
-            // FIXME
+            val = t2>>8;
             break;
 
         case SR:

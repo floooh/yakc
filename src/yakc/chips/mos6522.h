@@ -14,8 +14,8 @@ class mos6522 {
 public:
     /// register identifiers
     enum {
-        IORB = 0,   // Output/Input Register A
-        IORA,       // Output/Input Register B
+        PB = 0,     // Output/Input Register A
+        PA,         // Output/Input Register B
         DDRB,       // Data Direction Register B
         DDRA,       // Data Direction Register A
         T1CL,       // T1-Low-Order-Latches/Counter
@@ -29,13 +29,14 @@ public:
         PCR,        // Peripheral Control Register
         IFR,        // Interrupt Flag Register
         IER,        // Interrupt Enable Register
-        IORA_NOH,   // same as Reg 1 except "no Handshake"
+        PA_NOH,     // same as Reg 1 except "no Handshake"
     };
 
     /// port id's
     enum {
         PORT_A = 0,
         PORT_B,
+        NUM_PORTS,
     };
 
     /// initialize 6522 instance
@@ -43,7 +44,7 @@ public:
     /// reset the 6522
     void reset();
     /// step the 6522 one tick
-    void step();
+    void step(system_bus* bus);
 
     /// write to VIA
     void write(system_bus* bus, int addr, uint8_t val);
@@ -70,6 +71,14 @@ public:
     uint8_t acr = 0;        // auxilary control register
     uint8_t pcr = 0;        // peripheral control register
     uint8_t t1_pb7 = 0;     // timer1 toggle bit (masked into port B bit 7)
+    uint8_t t1ll = 0;       // timer1 latch low
+    uint8_t t1lh = 0;       // timer1 latch high
+    uint8_t t2ll = 0;       // timer2 latch low
+    uint8_t t2lh = 0;       // timer2 latch high
+    uint16_t t1 = 0;        // timer1 counter
+    uint16_t t2 = 0;        // timer2 counter
+    bool t1_active = false; // timer1 is active
+    bool t2_active = false; // timer2 is active
 
     /// auxilary control register bits
     bool acr_latch_a() const { return acr & 0x01; }
@@ -83,7 +92,7 @@ public:
     bool acr_sr_out_02() const      { return ((acr>>2) & 7) == 6; }
     bool acr_sr_out_ext() const     { return ((acr>>2) & 7) == 7; }
     bool acr_t2_int() const         { return (acr & (1<<5)) == 0; }
-    bool acr_t2_countt_pb6() const  { return (acr & (1<<5)) != 0; }
+    bool acr_t2_count_pb6() const   { return (acr & (1<<5)) != 0; }
     bool acr_t1_timed_int() const   { return (acr & (1<<6)) == 0; }
     bool acr_t1_cont_int() const    { return (acr & (1<<6)) != 0; }
     bool acr_t1_pb7() const         { return (acr & (1<<7)) != 0; }

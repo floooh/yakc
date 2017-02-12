@@ -20,6 +20,7 @@
 #include "MC6845Window.h"
 #include "MC6847Window.h"
 #include "I8255Window.h"
+#include "MOS6522Window.h"
 #include "TapeDeckWindow.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
@@ -428,6 +429,9 @@ UI::OnFrame(yakc& emu) {
                 }
                 if (ImGui::MenuItem("i8255")) {
                     this->OpenWindow(emu, I8255Window::Create());
+                }
+                if (ImGui::MenuItem("MOS6522")) {
+                    this->OpenWindow(emu, MOS6522Window::Create());
                 }
                 ImGui::EndMenu();
             }
