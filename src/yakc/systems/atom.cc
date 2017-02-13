@@ -290,14 +290,19 @@ atom::memio(bool write, uint16_t addr, uint8_t inval) {
         // extensions (only rudimentary)
         // FIXME: implement a proper AtoMMC emulation, for now just
         // a quick'n'dirty hack for joystick input
-        
         if (write) {
             if (addr == 0xB400) {
                 self->mmc_cmd = inval;
             }
         }
         else {
-            if ((addr == 0xB401) && (self->mmc_cmd == 0xA2)) {
+            if (addr == 0xB400) {
+                // reading from 0xB400 returns a status/error code, the important
+                // ones are STATUS_OK=0x3F, and STATUS_BUSY=0x80, STATUS_COMPLETE
+                // together with an error code is used to communicate errors
+                return 0x3F;
+            }
+            else if ((addr == 0xB401) && (self->mmc_cmd == 0xA2)) {
                 // read MMC joystick
                 return ~self->mmc_joymask;
             }
