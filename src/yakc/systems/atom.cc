@@ -1,5 +1,10 @@
 //------------------------------------------------------------------------------
 //  atom.cc
+//
+//  TODO
+//      - interrupt from VIA
+//      - handle Shift key (some games use this as jump button)
+//
 //------------------------------------------------------------------------------
 #include "atom.h"
 #include "yakc/core/filetypes.h"
@@ -98,6 +103,13 @@ atom::init_keymap() {
     init_key_mask(0x15, 6, 5, false, true);     // Ctrl+U end screen
     init_key_mask(0x18, 3, 5, false, true);     // Ctrl+X cancel
     init_key_mask(0x1B, 0, 5);       // escape
+
+    // keyboard joystick (just use some unused upper ascii codes)
+    init_key_mask(0xF0, 0, 0);
+    init_key_mask(0xF1, 0, 1);
+    init_key_mask(0xF2, 0, 2);
+    init_key_mask(0xF3, 0, 3);
+    init_key_mask(0xF4, 0, 4);
 }
 
 //------------------------------------------------------------------------------
@@ -230,23 +242,27 @@ atom::put_input(uint8_t ascii, uint8_t joy0mask) {
         next_key_mask = key_map[ascii];
     }
     else {
-        //
+        next_key_mask = key_mask();
         if (joy0mask & joystick::left) {
             mmc_joymask |= 0x2;
+            next_key_mask.combine(this->key_map[0xF1]);
         }
         if (joy0mask & joystick::right) {
             mmc_joymask |= 0x1;
+            next_key_mask.combine(this->key_map[0xF3]);
         }
         if (joy0mask & joystick::up) {
             mmc_joymask |= 0x8;
+            next_key_mask.combine(this->key_map[0xF4]);
         }
         if (joy0mask & joystick::down) {
             mmc_joymask |= 0x4;
+            next_key_mask.combine(this->key_map[0xF2]);
         }
         if (joy0mask & joystick::btn0) {
             mmc_joymask |= 0x10;
+            next_key_mask.combine(this->key_map[0xF0]);
         }
-        next_key_mask = key_mask();
     }
 }
 
@@ -429,11 +445,8 @@ atom::pio_in(int pio_id, int port_id) {
         switch (port_id) {
             // PPI port B: keyboard row state
             case i8255::PORT_B:
-                if (scan_kbd_col < 10) {
+                if (scan_kbd_col < key_mask::num_cols) {
                     val = ~(cur_key_mask.col[scan_kbd_col]);
-                    if (scan_kbd_col == 9) {
-                        cur_key_mask = next_key_mask;
-                    }
                 }
                 else {
                     val = 0xFF;
