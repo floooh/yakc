@@ -6,7 +6,9 @@
       {% include hamburger.html %}
       {% include main-nav-bar.html %}
     </div>
-    <canvas class="game" id="canvas" hidden oncontextmenu="event.preventDefault()" width="640" height="512"></canvas>
+    <div class="game-border" id="game-border">
+      <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+    </div>
 
     <script type="text/javascript" src="emsc.js"></script>
     <script>
