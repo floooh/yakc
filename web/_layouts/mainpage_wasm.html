@@ -2,12 +2,11 @@
 <html>
   {% include head.html %}
   <body>
-    {% include main-header-wasm.html %}
-    {% include main-nav-bar.html %}
-
-    <div class="game-border">
-    <canvas class="game" id="canvas" hidden oncontextmenu="event.preventDefault()" width="640" height="512"></canvas>
+    <div id="nav">
+      {% include hamburger.html %}
+      {% include main-nav-bar.html %}
     </div>
+    <canvas class="game" id="canvas" hidden oncontextmenu="event.preventDefault()" width="640" height="512"></canvas>
 
     <script type="text/javascript" src="emsc.js"></script>
     <script>
@@ -22,7 +21,6 @@
         };
         xhr.send(null);
     </script>
-
   </body>
 </html>
 

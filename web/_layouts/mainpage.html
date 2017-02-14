@@ -2,16 +2,15 @@
 <html>
   {% include head.html %}
   <body>
-    {% include main-header-asmjs.html %}
-    {% include main-nav-bar.html %}
-
-    <div class="game-border">
-    <canvas class="game" id="canvas" hidden oncontextmenu="event.preventDefault()" width="640" height="512"></canvas>
+    <div id="nav">
+      {% include hamburger.html %}
+      {% include main-nav-bar.html %}
     </div>
-
+    <div class="game-border" id="game-border">
+      <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+    </div>
     <script type="text/javascript" src="emsc.js"></script>
     <script async type="text/javascript" src="yakcapp.js"></script>
-
   </body>
 </html>
 

@@ -188,16 +188,6 @@ UI::OnFrame(yakc& emu) {
                 this->keyboardWindow->Setup(emu);
             }
         }
-        #if ORYOL_EMSCRIPTEN
-        if (ImGui::Button("FS ")) {
-            if (is_soft_fullscreen_active()) {
-                leave_soft_fullscreen();
-            }
-            else {
-                enter_soft_fullscreen();
-            }
-        }
-        #endif
         if (emu.is_joystick_enabled()) {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.5f, 0.0f, 1.0f));
         }

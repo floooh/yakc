@@ -1,35 +1,40 @@
 // style definitions for main page horizontal nav bar
 
 .main-nav-bar {
-    margin-top: 8px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 10px;
-    height: auto;
-    background-color: rgb(254, 233, 80);
-    outline: black solid thin;
+    position: absolute;
+    top: 50px;
+    left: -100px;
+    width: 92px;
+    z-index: 1;
+    background-color: #FF5722;
+    transition: 0.25s ease-out;
 }
+
+.change .main-nav-bar {
+    left: 0px;
+}
+
 .main-nav-list {
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 0px;
+    margin-right: 0px;
     margin-top: 0px; 
     margin-bottom: 0px;
     list-style-type: none;
-    padding: 0px;
+    padding: 2px;
 }
+
 .main-nav-item {
-    display: inline;
-    float: left;
+    margin: 5px;
 }
 a.main-nav-link:link, a.main-nav-link:visited {
-    font-family: "Arial Black", Gadget, sans-serif;
-    font-size: 16px;    
+    font-family: "Arial", Gadget, sans-serif;
+    font-size: 14px;    
     display: block;
-    color: black;
+    color: white;
     text-align: center;
     text-decoration: none;
 }
 a.main-nav-link:hover, a.main-nav-link:active {
-    background-color: rgb(254, 244, 167);
+    background-color: #D84315;
 }
 
