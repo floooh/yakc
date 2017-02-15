@@ -28,6 +28,8 @@ public:
     void OpenWindow(yakc& emu, const Oryol::Ptr<WindowBase>& window);
     /// toggle the UI on/off
     void Toggle();
+    /// toggle the onscreen keyboard on/off
+    void ToggleKeyboard(yakc& emu);
     /// switch to dark UI theme
     void EnableDarkTheme();
     /// switch to light UI theme

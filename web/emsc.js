@@ -42,6 +42,15 @@ function callAsEventHandler(func_name) {
     --JSEvents.inEventHandler;
 }
 
+// send a message to the emulator
+function yakc_send_msg(msg) {
+    Module.ccall('emsc_put_msg',  // C function name
+        null,           // return type (void)
+        ['string'],     // param types
+        [msg]);         // param values
+}
+
+// drag-n-drop functions
 function initDragAndDrop() {
     // add a drag'n'drop handler to the WebGL canvas
     var canvas = document.getElementById('canvas');
@@ -95,3 +104,7 @@ function onDrop(dropEvent) {
     console.log('onDrop called!')
 }
 
+// toggle the nav bar
+function nav_toggle() {
+    document.getElementById("nav").classList.toggle("toggle");
+}

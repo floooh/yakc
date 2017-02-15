@@ -23,6 +23,9 @@ using namespace YAKC;
 
 class YakcApp : public App {
 public:
+    static YakcApp* self;
+    YakcApp() { self = this; };
+    ~YakcApp() { self = nullptr; };
     AppState::Code OnInit();
     AppState::Code OnRunning();
     AppState::Code OnCleanup();
@@ -39,6 +42,8 @@ public:
     TimePoint lapTimePoint;
 };
 OryolMain(YakcApp);
+
+YakcApp* YakcApp::self = nullptr;
 
 //------------------------------------------------------------------------------
 AppState::Code
@@ -363,4 +368,33 @@ YakcApp::initModules() {
             "...where [SLOT] is 08 or 0C");
     });
 }
+
+//------------------------------------------------------------------------------
+//  emscripten-specific website communication function to pass string
+//  messages into the emscripten app
+//
+extern "C" {
+
+void emsc_put_msg(const char* msg) {
+    Log::Info("Msg from website: %s\n", msg);
+    if (YakcApp::self) {
+        String str(msg);
+        if (str == "toggle-ui") {
+            #if YAKC_UI
+            YakcApp::self->ui.Toggle();
+            #endif
+        }
+        else if (str == "toggle-keyboard") {
+            #if YAKC_UI
+            YakcApp::self->ui.ToggleKeyboard(YakcApp::self->emu);
+            #endif
+        }
+        else if (str == "toggle-joystick") {
+            YakcApp::self->emu.enable_joystick(!YakcApp::self->emu.is_joystick_enabled());
+        }
+    }
+}
+
+} // extern "C"
+
 

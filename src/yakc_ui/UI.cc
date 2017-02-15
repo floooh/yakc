@@ -126,6 +126,18 @@ UI::Toggle() {
 
 //------------------------------------------------------------------------------
 void
+UI::ToggleKeyboard(yakc& emu) {
+    if (this->keyboardWindow) {
+        this->keyboardWindow = nullptr;
+    }
+    else {
+        this->keyboardWindow = KeyboardWindow::Create();
+        this->keyboardWindow->Setup(emu);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
 UI::OpenWindow(yakc& emu, const Ptr<WindowBase>& win) {
     win->Setup(emu);
     this->windows.Add(win);
@@ -170,7 +182,8 @@ UI::OnFrame(yakc& emu) {
 
     StringBuilder strBuilder;
     IMUI::NewFrame(Clock::LapTime(this->curTime));
-    // render a single button to enable UI
+
+    #if !ORYOL_EMSCRIPTEN
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 40, 16));
     if (ImGui::Begin("Menu", nullptr, ImVec2(0,0), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize))
     {
@@ -180,13 +193,7 @@ UI::OnFrame(yakc& emu) {
             this->uiEnabled = !this->uiEnabled;
         }
         if (ImGui::Button("KBD")) {
-            if (this->keyboardWindow) {
-                this->keyboardWindow = nullptr;
-            }
-            else {
-                this->keyboardWindow = KeyboardWindow::Create();
-                this->keyboardWindow->Setup(emu);
-            }
+            this->ToggleKeyboard(emu);
         }
         if (emu.is_joystick_enabled()) {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.5f, 0.0f, 1.0f));
@@ -201,6 +208,7 @@ UI::OnFrame(yakc& emu) {
         ImGui::PopStyleColor(2);
     }
     ImGui::End();
+    #endif
 
     // check if a file has been drag'n'dropped
     if (this->FileLoader.ExtFileReady) {
@@ -511,8 +519,10 @@ UI::OnFrame(yakc& emu) {
                 }
                 ImGui::EndMenu();
             }
-            ImGui::SameLine(ImGui::GetWindowWidth() - 100);
-            ImGui::Text("emu: %.2fms\n", this->EmulationTime.AsMilliSeconds());
+            ImGui::SameLine(ImGui::GetWindowWidth() - 150);
+            ImGui::Text("joy: %s", emu.is_joystick_enabled()?"ON ":"OFF");
+            ImGui::SameLine();
+            ImGui::Text("emu: %.2fms", this->EmulationTime.AsMilliSeconds());
             ImGui::EndMainMenuBar();
         }
 

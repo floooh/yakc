@@ -1,13 +1,34 @@
-<ul class="navigation">
-    <li class="nav-item">
-        <a href="index.html">Back To The Emulator</a>
-    </li>
-    {% for page in site.pages %}
-        {% if page.title %}
-        <li class="nav-item">
-            <a href="{{ page.url | prepend: site.baseurl }}">{{ page.title }}</a>
+<div class="nav-btn" onclick="nav_toggle()">
+    <div class="nav-btn-bar1"></div>
+    <div class="nav-btn-bar2"></div>
+    <div class="nav-btn-bar3"></div>
+</div>
+<div class="main-nav-bar" id="main-nav-bar">
+    <ul class="main-nav-list">
+        <li class="main-nav-item">
+            <a class="main-nav-link" onclick="nav_toggle()" href="p010_kc85.html" target="_blank">about yakc</a>
+        </li>
+        <li class="main-nav-item">
+            <div class="main-nav-link" onclick="nav_toggle();yakc_send_msg('toggle-ui')">toggle ui (tab)</div> 
+        </li>
+        <li class="main-nav-item">
+            <div class="main-nav-link" onclick="nav_toggle();yakc_send_msg('toggle-keyboard')">toggle keyboard</div> 
+        </li>
+        <li class="main-nav-item">
+            <div class="main-nav-link" onclick="nav_toggle();yakc_send_msg('toggle-joystick')">toggle joystick</div> 
+        </li>
+        {% if wasm == true %}
+        <li class="main-nav-item">
+            <a class="main-nav-link" onclick="nav_toggle()" href="index.html">asm.js version</a>
+        </li>
+        {% elsif asmjs == true %}
+        <li class="main-nav-item">
+            <a class="main-nav-link" onclick="nav_toggle()" href="index_wasm.html">wasm version</a>
         </li>
         {% endif %}
-    {% endfor %}
-</ul>
+        <li class="main-nav-item">
+            <a class="main-nav-link" onclick="nav_toggle()" href="http://github.com/floooh/yakc" target="_blank">source</a>
+        </li>
+    </ul>
+</div>
 

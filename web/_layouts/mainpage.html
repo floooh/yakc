@@ -1,10 +1,10 @@
 <!DOCTYPE html>
+{% assign asmjs = true %}
 <html>
   {% include head.html %}
   <body>
     <div id="nav">
-      {% include hamburger.html %}
-      {% include main-nav-bar.html %}
+      {% include nav.html %}
     </div>
     <div class="game-border" id="game-border">
       <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>

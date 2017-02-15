@@ -1,16 +1,51 @@
 // style definitions for main page horizontal nav bar
 
+$navbar_width: 140px;
+$navbar_color: #FF3D00;
+$navbar_text: #EEEEEE;
+
+.nav-btn {
+    position: absolute;
+    top: 20px;
+    left: 10px;
+    display: inline-block;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.nav-btn-bar1, .nav-btn-bar2, .nav-btn-bar3 {
+    width: 35px;
+    height: 5px;
+    border-radius: 2px;
+    background-color: $navbar_text;
+    margin: 6px 0;
+}
+
+.toggle .nav-btn-bar1 {
+    -webkit-transform: rotate(-45deg) translate(-9px, 6px);
+    transform: rotate(-45deg) translate(-9px, 6px);
+}
+
+.toggle .nav-btn-bar2 {
+    opacity: 0;
+}
+
+.toggle .nav-btn-bar3 {
+    -webkit-transform: rotate(45deg) translate(-8px, -8px);
+    transform: rotate(45deg) translate(-8px, -8px);
+}
+
 .main-nav-bar {
     position: absolute;
     top: 60px;
-    left: -100px;
-    width: 92px;
+    left: -$navbar_width * 1.5;
+    width: $navbar_width;
     z-index: 1;
-    background-color: #FF5722;
+    background-color: $navbar_color;
     transition: 0.25s ease-out;
 }
 
-.change .main-nav-bar {
+.toggle .main-nav-bar {
     left: 0px;
 }
 
@@ -26,15 +61,18 @@
 .main-nav-item {
     margin: 5px;
 }
-a.main-nav-link:link, a.main-nav-link:visited {
+.main-nav-link, .main-nav-link:link, .main-nav-link:visited {
+    padding-left: 5px;
     font-family: "Arial", Gadget, sans-serif;
     font-size: 14px;    
     display: block;
-    color: white;
-    text-align: center;
+    color: $navbar_text;
+    text-align: left;
     text-decoration: none;
+    cursor: pointer;
 }
-a.main-nav-link:hover, a.main-nav-link:active {
-    background-color: #D84315;
+.main-nav-link:hover, .main-nav-link:active {
+    color: $navbar_color;
+    background-color: $navbar_text;
 }
 

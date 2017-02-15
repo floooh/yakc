@@ -1,0 +1,13 @@
+<ul class="navigation">
+    <li class="nav-item">
+        <a href="index.html">Back To The Emulator</a>
+    </li>
+    {% for page in site.pages %}
+        {% if page.title %}
+        <li class="nav-item">
+            <a href="{{ page.url | prepend: site.baseurl }}">{{ page.title }}</a>
+        </li>
+        {% endif %}
+    {% endfor %}
+</ul>
+
