@@ -31,6 +31,8 @@ $quote-text-color:  #666666;
 $code-background-color: #eeeeee;
 
 $nav-width:         200px;
+$ui-background-color: #FF3D00;
+$ui-color: #EEEEEE;
 
 // Import partials from `sass_dir` (defaults to `_sass`)
 @import
@@ -39,5 +41,6 @@ $nav-width:         200px;
     "syntax-highlighting",
     "kc",
     "game",
-    "navbar"
+    "navbar",
+    "ui"
 ;

@@ -2,9 +2,8 @@
 <html>
   {% include head.html %}
   <body>
-    <div id="nav">
-      {% include nav.html %}
-    </div>
+    {% include nav.html %}
+    {% include systems-panel.html %}
     <div class="game-border" id="game-border">
       <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>

@@ -1,8 +1,6 @@
 // style definitions for main page horizontal nav bar
 
 $navbar_width: 140px;
-$navbar_color: #FF3D00;
-$navbar_text: #EEEEEE;
 
 .nav-btn {
     position: absolute;
@@ -17,7 +15,7 @@ $navbar_text: #EEEEEE;
     width: 35px;
     height: 5px;
     border-radius: 2px;
-    background-color: $navbar_text;
+    background-color: $ui-color;
     margin: 6px 0;
 }
 
@@ -41,7 +39,7 @@ $navbar_text: #EEEEEE;
     left: -$navbar_width * 1.5;
     width: $navbar_width;
     z-index: 1;
-    background-color: $navbar_color;
+    background-color: $ui-background-color;
     transition: 0.25s ease-out;
 }
 
@@ -66,13 +64,13 @@ $navbar_text: #EEEEEE;
     font-family: "Arial", Gadget, sans-serif;
     font-size: 14px;    
     display: block;
-    color: $navbar_text;
+    color: $ui-color;
     text-align: left;
     text-decoration: none;
     cursor: pointer;
 }
 .main-nav-link:hover, .main-nav-link:active {
-    color: $navbar_color;
-    background-color: $navbar_text;
+    color: $ui-background-color;
+    background-color: $ui-color;
 }
 

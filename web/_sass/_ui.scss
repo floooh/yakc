@@ -1,0 +1,65 @@
+$panel-background-color:    #DD2C00;
+$panel-title-color:         $ui-background-color;
+$panel-list-item-color:     $ui-background-color;   
+.panel {
+    position: absolute;
+    background-color: $panel-background-color; 
+    left: 25%;
+    top: 25%;
+    width: 50%;
+    height: 50%;
+    margin: 0 auto;
+    z-index: 1;
+    overflow: hidden;
+}
+.panel.hidden {
+    display: none;
+}
+
+.panel-title {
+    position: absolute;
+    background-color: $panel-title-color;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 20px;
+    margin: 0 auto;
+    font-family: "Arial", Gadget, sans-serif;
+    font-size: 14px;    
+    color: $ui-color;
+    text-align: center;
+}
+
+.panel-content {
+    position: absolute;
+    left: 0px;
+    top: 20px;
+    margin: 0 auto;
+    padding: 5px;
+}
+
+.panel-list {
+    margin: 5px;
+}
+
+.panel-list.hidden {
+    display: none;
+}
+
+.panel-list-item {
+    display: inline-block;
+    background-color: $panel-list-item-color;
+    cursor: pointer;
+    padding: 5px;
+    margin: 2px;
+    margin-bottom: 5px;
+    font-family: "Arial", Gadget, sans-serif;
+    font-size: 10px;    
+    color: $ui-color;
+    text-align: center;
+}
+
+.panel-list-item:hover {
+    background-color: $ui-color;
+    color: $panel-list-item-color;
+}

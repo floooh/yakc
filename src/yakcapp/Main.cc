@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "Pre.h"
 #include "Core/Main.h"
+#include "Core/String/StringBuilder.h"
 #include "Core/Time/Clock.h"
 #include "Gfx/Gfx.h"
 #include "Input/Input.h"
@@ -378,19 +379,32 @@ extern "C" {
 void emsc_put_msg(const char* msg) {
     Log::Info("Msg from website: %s\n", msg);
     if (YakcApp::self) {
-        String str(msg);
-        if (str == "toggle-ui") {
-            #if YAKC_UI
-            YakcApp::self->ui.Toggle();
-            #endif
-        }
-        else if (str == "toggle-keyboard") {
-            #if YAKC_UI
-            YakcApp::self->ui.ToggleKeyboard(YakcApp::self->emu);
-            #endif
-        }
-        else if (str == "toggle-joystick") {
-            YakcApp::self->emu.enable_joystick(!YakcApp::self->emu.is_joystick_enabled());
+        YakcApp* app = YakcApp::self;
+        StringBuilder strBuilder(msg);
+        Array<String> tok;
+        strBuilder.Tokenize(" ", tok);
+        if (tok.Size() > 0) {
+            if (tok[0] == "toggle-ui") {
+                #if YAKC_UI
+                app->ui.Toggle();
+                #endif
+            }
+            else if (tok[0] == "toggle-keyboard") {
+                #if YAKC_UI
+                app->ui.ToggleKeyboard(YakcApp::self->emu);
+                #endif
+            }
+            else if (tok[0] == "toggle-joystick") {
+                app->emu.enable_joystick(!YakcApp::self->emu.is_joystick_enabled());
+            }
+            else if ((tok[0] == "boot") && (tok.Size() == 3)) {
+                enum system sys = system_from_string(tok[1].AsCStr());
+                os_rom os = os_from_string(tok[2].AsCStr());
+                if (system::none != sys) {
+                    app->emu.poweroff();
+                    app->emu.poweron(sys, os);
+                }
+            }
         }
     }
 }

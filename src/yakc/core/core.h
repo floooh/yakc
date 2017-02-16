@@ -73,6 +73,7 @@ enum class system {
     any = 0x7FFFFFFF
 };
 
+
 enum class cpu_model {
     z80,
     mos6502,
@@ -100,6 +101,9 @@ enum class os_rom {
     bbcmicro_b_basic,
     none,
 };
+
+extern system system_from_string(const char* str);
+extern os_rom os_from_string(const char* str);
 
 class joystick {
 public:

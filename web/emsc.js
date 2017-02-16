@@ -108,3 +108,26 @@ function onDrop(dropEvent) {
 function nav_toggle() {
     document.getElementById("nav").classList.toggle("toggle");
 }
+
+// boot into system UI functions
+function system_panel_hide_all() {
+    var c = document.getElementById('systems_panel_container').children;
+    for (var i=0; i<c.length; i++) {
+        c[i].classList.add('hidden');
+    }
+}
+function toggle_systems_panel() {
+    document.getElementById("systems_panel").classList.toggle("hidden");
+    system_panel_hide_all();
+    document.getElementById("companies").classList.remove("hidden");
+}
+function show_company_systems(company_name) {
+    system_panel_hide_all();
+    document.getElementById(company_name).classList.remove("hidden");
+}
+function boot_system(self, system_id) {
+    system_panel_hide_all();
+    document.getElementById("companies").classList.remove("hidden");
+    document.getElementById("systems_panel").classList.add("hidden");
+    yakc_send_msg('boot ' + system_id);
+}
