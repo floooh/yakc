@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-{% assign asmjs = true %}
 <html>
   {% include head.html %}
   <body>
@@ -10,7 +9,22 @@
       <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>
     <script type="text/javascript" src="emsc.js"></script>
+    {% if page.asmjs == true %}
     <script async type="text/javascript" src="yakcapp.js"></script>
+    {% else %}
+    <script>
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'yakcapp.wasm.txt', true)
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function() {
+          Module.wasmBinary = xhr.response;
+          var script = document.createElement('script');
+          script.src = "yakcapp.wasm.js";
+          document.body.appendChild(script);
+        };
+        xhr.send(null);
+    </script>
+    {% endif %}
   </body>
 </html>
 

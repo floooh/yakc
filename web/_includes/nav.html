@@ -14,11 +14,11 @@
         <li class="main-nav-item">
             <div class="main-nav-link" onclick="nav_toggle();yakc_send_msg('toggle-joystick')">toggle joystick</div> 
         </li>
-        {% if wasm == true %}
+        {% if page.wasm == true %}
         <li class="main-nav-item">
             <a class="main-nav-link" onclick="nav_toggle()" href="index.html">asm.js version</a>
         </li>
-        {% elsif asmjs == true %}
+        {% elsif page.asmjs == true %}
         <li class="main-nav-item">
             <a class="main-nav-link" onclick="nav_toggle()" href="index_wasm.html">wasm version</a>
         </li>
