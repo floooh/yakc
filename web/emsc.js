@@ -121,6 +121,10 @@ function toggle_systems_panel() {
     system_panel_hide_all();
     document.getElementById("companies").classList.remove("hidden");
 }
+function show_companies() {
+    system_panel_hide_all();
+    document.getElementById("companies").classList.remove("hidden");
+}
 function show_company_systems(company_name) {
     system_panel_hide_all();
     document.getElementById(company_name).classList.remove("hidden");
