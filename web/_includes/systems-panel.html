@@ -1,47 +1,22 @@
 <div class="panel hidden" id="systems_panel">
     <div class="panel-title">Boot To System</div>
     <div class="panel-content" id="systems_panel_container">
-        <ul class="panel-list" id="companies">
-            <li class="panel-list-item" onclick="show_company_systems('VEB MPM')")>VEB MPM</li>
-            <li class="panel-list-item" onclick="show_company_systems('Robotron Dresden')">Robotron Dresden</li>
-            <li class="panel-list-item" onclick="show_company_systems('Robotron Riesa')">Robotron Riesa</li>
-            <li class="panel-list-item" onclick="show_company_systems('Sinclair')">Sinclair</li>
-            <li class="panel-list-item" onclick="show_company_systems('Amstrad')">Amstrad</li>
-            <li class="panel-list-item" onclick="show_company_systems('Acorn')">Acorn</li>
-        </ul>
-        <ul class="panel-list hidden" id="VEB MPM">
-            <li class="panel-list-item" onclick="boot_system(this, 'kc85_2 caos_hc900')">KC 85/2 (HC-900 CAOS)</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'kc85_2 caos_2_2')">KC 85/2 (HC-CAOS 2.2)</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'kc85_3 caos_3_1')">KC 85/3 (HC-CAOS 3.1)</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'kc85_3 caos_3_4')">KC 85/3 (HC-CAOS 3.4i)</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'kc85_4 caos_4_2')">KC 85/4 (KC-CAOS 4.2)</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'kccompact none')">KC Compact (CPC clone)</li>
-            <li class="panel-list-item" onclick="show_companies()">Back...</li>
-        </ul>
-        <ul class="panel-list hidden" id="Robotron Dresden">
-            <li class="panel-list-item" onclick="boot_system(this, 'z9001 none')">Z9001 (32 KB)</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'kc87 none')">KC 87 (48 KB)</li>
-            <li class="panel-list-item" onclick="show_companies()">Back...</li>
-        </ul>
-        <ul class="panel-list hidden" id="Robotron Riesa">
-            <li class="panel-list-item" onclick="boot_system(this, 'z1013_01 none')">Z1013.01 (1 MHz, 16 KB)</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'z1013_16 none')">Z1013.16 (2 MHz, 16 KB)</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'z1013_64 none')">Z1013.64 (2 MHz, 64 KB)</li>
-            <li class="panel-list-item" onclick="show_companies()">Back...</li>
-        </ul>
-        <ul class="panel-list hidden" id="Sinclair">
-            <li class="panel-list-item" onclick="boot_system(this, 'zxspectrum48k none')">ZX Spectrum 48K</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'zxspectrum128k none')">ZX Spectrum 128K</li>
-            <li class="panel-list-item" onclick="show_companies()">Back...</li>
-        </ul>
-        <ul class="panel-list hidden" id="Amstrad">
-            <li class="panel-list-item" onclick="boot_system(this, 'cpc464 none')">CPC 464</li>
-            <li class="panel-list-item" onclick="boot_system(this, 'cpc6128 none')">CPC 6128</li>
-            <li class="panel-list-item" onclick="show_companies()">Back...</li>
-        </ul>
-        <ul class="panel-list hidden" id="Acorn">
-            <li class="panel-list-item" onclick="boot_system(this, 'acorn_atom none')">Atom</li>
-            <li class="panel-list-item" onclick="show_companies()">Back...</li>
+        <ul class="panel-list" id="systems">
+            <li class="panel-list-item mpm" onclick="boot_system(this, 'kc85_2 caos_hc900')">HC-900</li>
+            <li class="panel-list-item mpm" onclick="boot_system(this, 'kc85_2 caos_2_2')">KC 85/2</li>
+            <li class="panel-list-item mpm" onclick="boot_system(this, 'kc85_3 caos_3_1')">KC 85/3</li>
+            <li class="panel-list-item mpm" onclick="boot_system(this, 'kc85_4 caos_4_2')">KC 85/4</li>
+            <li class="panel-list-item mpm" onclick="boot_system(this, 'kccompact none')">KC Compact</li>
+            <li class="panel-list-item robotron-dresden" onclick="boot_system(this, 'z9001 none')">Z9001</li>
+            <li class="panel-list-item robotron-dresden" onclick="boot_system(this, 'kc87 none')">KC 87</li>
+            <li class="panel-list-item robotron-riesa" onclick="boot_system(this, 'z1013_01 none')">Z1013.01</li>
+            <li class="panel-list-item robotron-riesa" onclick="boot_system(this, 'z1013_16 none')">Z1013.16</li>
+            <li class="panel-list-item robotron-riesa" onclick="boot_system(this, 'z1013_64 none')">Z1013.64</li>
+            <li class="panel-list-item sinclar" onclick="boot_system(this, 'zxspectrum48k none')">Spectrum 48K</li>
+            <li class="panel-list-item sinclar" onclick="boot_system(this, 'zxspectrum128k none')">Spectrum 128K</li>
+            <li class="panel-list-item amstrad" onclick="boot_system(this, 'cpc464 none')">CPC 464</li>
+            <li class="panel-list-item amstrad" onclick="boot_system(this, 'cpc6128 none')">CPC 6128</li>
+            <li class="panel-list-item acorn" onclick="boot_system(this, 'acorn_atom none')">Acorn Atom</li>
         </ul>
     </div>
 </div>

@@ -405,6 +405,13 @@ void emsc_put_msg(const char* msg) {
                     app->emu.poweron(sys, os);
                 }
             }
+            else if (tok[0] == "power") {
+                app->emu.poweroff();
+                app->emu.poweron(app->emu.model, app->emu.os);
+            }
+            else if (tok[0] == "reset") {
+                app->emu.reset();
+            }
         }
     }
 }

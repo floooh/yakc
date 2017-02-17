@@ -1,3 +1,8 @@
+/** helpers */
+function $(id) {
+    return document.getElementById(id);
+}
+
 /** emscripten wrapper page Javascript functions **/
 
 var loaded = false;
@@ -19,7 +24,7 @@ var Module = {
         console.error(text);
     },
     canvas: (function() {
-        var canvas = document.getElementById('canvas');
+        var canvas = $('canvas');
         canvas.addEventListener("webglcontextlost", function(e) { alert('FIXME: WebGL context lost, please reload the page'); e.preventDefault(); }, false);
         return canvas;
     })(),
@@ -43,7 +48,7 @@ function callAsEventHandler(func_name) {
 }
 
 // send a message to the emulator
-function yakc_send_msg(msg) {
+function yakc_put(msg) {
     Module.ccall('emsc_put_msg',  // C function name
         null,           // return type (void)
         ['string'],     // param types
@@ -53,9 +58,8 @@ function yakc_send_msg(msg) {
 // drag-n-drop functions
 function initDragAndDrop() {
     // add a drag'n'drop handler to the WebGL canvas
-    var canvas = document.getElementById('canvas');
-    canvas.addEventListener('dragover', onDragOver, false);
-    canvas.addEventListener('drop', onDrop, false);
+    $('canvas').addEventListener('dragover', onDragOver, false);
+    $('canvas').addEventListener('drop', onDrop, false);
 }
 
 function onDragOver(e) {
@@ -106,32 +110,14 @@ function onDrop(dropEvent) {
 
 // toggle the nav bar
 function nav_toggle() {
-    document.getElementById("nav").classList.toggle("toggle");
+    $('nav').classList.toggle('toggle');
 }
 
 // boot into system UI functions
-function system_panel_hide_all() {
-    var c = document.getElementById('systems_panel_container').children;
-    for (var i=0; i<c.length; i++) {
-        c[i].classList.add('hidden');
-    }
-}
 function toggle_systems_panel() {
-    document.getElementById("systems_panel").classList.toggle("hidden");
-    system_panel_hide_all();
-    document.getElementById("companies").classList.remove("hidden");
-}
-function show_companies() {
-    system_panel_hide_all();
-    document.getElementById("companies").classList.remove("hidden");
-}
-function show_company_systems(company_name) {
-    system_panel_hide_all();
-    document.getElementById(company_name).classList.remove("hidden");
+    $('systems_panel').classList.toggle('hidden');
 }
 function boot_system(self, system_id) {
-    system_panel_hide_all();
-    document.getElementById("companies").classList.remove("hidden");
-    document.getElementById("systems_panel").classList.add("hidden");
-    yakc_send_msg('boot ' + system_id);
+    $('systems_panel').classList.add('hidden');
+    yakc_put('boot ' + system_id);
 }

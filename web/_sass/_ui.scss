@@ -1,6 +1,7 @@
 $panel-background-color:    #DD2C00;
 $panel-title-color:         $ui-background-color;
 $panel-list-item-color:     $ui-background-color;   
+
 .panel {
     position: absolute;
     background-color: $panel-background-color; 
@@ -57,6 +58,25 @@ $panel-list-item-color:     $ui-background-color;
     font-size: 12px;    
     color: $ui-color;
     text-align: center;
+}
+
+.panel-list-item.mpm {
+    background-color: $ui-background-color; // FIXME
+}
+.panel-list-item.robotron-dresden {
+    background-color: $ui-background-color; // FIXME
+}
+.panel-list-item.robotron-riesa {
+    background-color: $ui-background-color; // FIXME
+}
+.panel-list-item.sinclair {
+    background-color: $ui-background-color; // FIXME
+}
+.panel-list-item.amstrad {
+    background-color: $ui-background-color; // FIXME
+}
+.panel-list-item.acorn {
+    background-color: $ui-background-color; // FIXME
 }
 
 .panel-list-item:hover {
