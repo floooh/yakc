@@ -61,6 +61,29 @@ system_from_string(const char* str) {
 }
 
 //------------------------------------------------------------------------------
+const char*
+string_from_system(system sys) {
+    switch (sys) {
+        case system::kc85_2:            return "kc85_2";
+        case system::kc85_3:            return "kc85_3";
+        case system::kc85_4:            return "kc85_4";
+        case system::z1013_01:          return "z1013_01";
+        case system::z1013_16:          return "z1013_16";
+        case system::z1013_64:          return "z1013_64";
+        case system::z9001:             return "z9001";
+        case system::kc87:              return "kc87";
+        case system::zxspectrum48k:     return "zxspectrum48k";
+        case system::zxspectrum128k:    return "zxspectrum128k";
+        case system::cpc464:            return "cpc464";
+        case system::cpc6128:           return "cpc6128";
+        case system::kccompact:         return "kccompact";
+        case system::bbcmicro_b:        return "bbcmicro_b";
+        case system::acorn_atom:        return "acorn_atom";
+        default:                        return "none";
+    }
+}
+
+//------------------------------------------------------------------------------
 os_rom
 os_from_string(const char* str) {
     if (strcmp(str, "caos_hc900")==0) return os_rom::caos_hc900;

@@ -7,22 +7,22 @@
     <div class="main-nav-bar" id="main-nav-bar">
         <ul class="main-nav-list">
             <li class="main-nav-item">
-                <div class="main-nav-link" onclick="nav_toggle();yakc_put('toggle-ui')">toggle ui (tab)</div> 
+                <div class="main-nav-link" onclick="nav_toggle();yakc_toggle_ui();">toggle ui (tab)</div> 
             </li>
             <li class="main-nav-item">
-                <div class="main-nav-link" onclick="nav_toggle();toggle_systems_panel()">switch system...</div>
+                <div class="main-nav-link" onclick="nav_toggle();toggle_systems_panel();">switch system...</div>
             </li>
             <li class="main-nav-item">
-                <div class="main-nav-link" onclick="nav_toggle();yakc_put('power')">power cycle</div>
+                <div class="main-nav-link" onclick="nav_toggle();yakc_power();">power cycle</div>
             </li>
             <li class="main-nav-item">
-                <div class="main-nav-link" onclick="nav_toggle();yakc_put('reset')">reset</div>
+                <div class="main-nav-link" onclick="nav_toggle();yakc_reset();">reset</div>
             </li>
             <li class="main-nav-item">
-                <div class="main-nav-link" onclick="nav_toggle();yakc_put('toggle-keyboard')">toggle keyboard</div> 
+                <div class="main-nav-link" onclick="nav_toggle();yakc_toggle_keyboard();">toggle keyboard</div> 
             </li>
             <li class="main-nav-item">
-                <div class="main-nav-link" onclick="nav_toggle();yakc_put('toggle-joystick')">toggle joystick</div> 
+                <div class="main-nav-link" onclick="nav_toggle();yakc_toggle_joystick();">toggle joystick</div> 
             </li>
             {% if page.wasm == true %}
             <li class="main-nav-item">

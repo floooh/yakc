@@ -103,6 +103,7 @@ enum class os_rom {
 };
 
 extern system system_from_string(const char* str);
+extern const char* string_from_system(system sys);
 extern os_rom os_from_string(const char* str);
 
 class joystick {

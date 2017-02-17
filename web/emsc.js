@@ -3,6 +3,35 @@ function $(id) {
     return document.getElementById(id);
 }
 
+/** C interface wrappers */
+function yakc_boot(sys, os) {
+    Module.ccall('yakc_boot', null, ['string','string'], [sys, os]);
+}
+
+function yakc_toggle_ui() {
+    Module.ccall('yakc_toggle_ui', null, [], []);
+}
+
+function yakc_toggle_keyboard() {
+    Module.ccall('yakc_toggle_keyboard', null, [], []);
+}
+
+function yakc_toggle_joystick() {
+    Module.ccall('yakc_toggle_joystick', null, [], []);
+}
+
+function yakc_power() {
+    Module.ccall('yakc_power', null, [], []);
+}
+
+function yakc_reset() {
+    Module.ccall('yakc_reset', null, [], []);
+}
+
+function yakc_get_system() {
+    return Module.ccall('yakc_get_system', 'string', [], []);
+}
+
 /** emscripten wrapper page Javascript functions **/
 
 var loaded = false;
@@ -45,14 +74,6 @@ function callAsEventHandler(func_name) {
     JSEvents.currentEventHandler = eventHandler;
     Module.cwrap(func_name)()
     --JSEvents.inEventHandler;
-}
-
-// send a message to the emulator
-function yakc_put(msg) {
-    Module.ccall('emsc_put_msg',  // C function name
-        null,           // return type (void)
-        ['string'],     // param types
-        [msg]);         // param values
 }
 
 // drag-n-drop functions
@@ -117,7 +138,7 @@ function nav_toggle() {
 function toggle_systems_panel() {
     $('systems_panel').classList.toggle('hidden');
 }
-function boot_system(self, system_id) {
+function boot_system(self, sys, os) {
     $('systems_panel').classList.add('hidden');
-    yakc_put('boot ' + system_id);
+    yakc_boot(sys, os);
 }

@@ -371,48 +371,62 @@ YakcApp::initModules() {
 }
 
 //------------------------------------------------------------------------------
-//  emscripten-specific website communication function to pass string
-//  messages into the emscripten app
+//  Javascript interface functions
 //
 extern "C" {
 
-void emsc_put_msg(const char* msg) {
-    Log::Info("Msg from website: %s\n", msg);
-    if (YakcApp::self) {
-        YakcApp* app = YakcApp::self;
-        StringBuilder strBuilder(msg);
-        Array<String> tok;
-        strBuilder.Tokenize(" ", tok);
-        if (tok.Size() > 0) {
-            if (tok[0] == "toggle-ui") {
-                #if YAKC_UI
-                app->ui.Toggle();
-                #endif
-            }
-            else if (tok[0] == "toggle-keyboard") {
-                #if YAKC_UI
-                app->ui.ToggleKeyboard(YakcApp::self->emu);
-                #endif
-            }
-            else if (tok[0] == "toggle-joystick") {
-                app->emu.enable_joystick(!YakcApp::self->emu.is_joystick_enabled());
-            }
-            else if ((tok[0] == "boot") && (tok.Size() == 3)) {
-                enum system sys = system_from_string(tok[1].AsCStr());
-                os_rom os = os_from_string(tok[2].AsCStr());
-                if (system::none != sys) {
-                    app->emu.poweroff();
-                    app->emu.poweron(sys, os);
-                }
-            }
-            else if (tok[0] == "power") {
-                app->emu.poweroff();
-                app->emu.poweron(app->emu.model, app->emu.os);
-            }
-            else if (tok[0] == "reset") {
-                app->emu.reset();
-            }
+void yakc_boot(const char* sys_str, const char* os_str) {
+    YakcApp* app = YakcApp::self;
+    if (app) {
+        enum system sys = system_from_string(sys_str);
+        os_rom os = os_from_string(os_str);
+        if (system::none != sys) {
+            app->emu.poweroff();
+            app->emu.poweron(sys, os);
         }
+    }
+}
+
+void yakc_toggle_ui() {
+    if (YakcApp::self) {
+        YakcApp::self->ui.Toggle();
+    }
+}
+
+void yakc_toggle_keyboard() {
+    auto* app = YakcApp::self;
+    if (app) {
+        app->ui.ToggleKeyboard(app->emu);
+    }
+}
+
+void yakc_toggle_joystick() {
+    auto* app = YakcApp::self;
+    if (app) {
+        app->emu.enable_joystick(!app->emu.is_joystick_enabled());
+    }
+}
+
+void yakc_power() {
+    auto* app = YakcApp::self;
+    if (app) {
+        app->emu.poweroff();
+        app->emu.poweron(app->emu.model, app->emu.os);
+    }
+}
+
+void yakc_reset() {
+    if (YakcApp::self) {
+        YakcApp::self->emu.reset();
+    }
+}
+
+const char* yakc_get_system() {
+    if (YakcApp::self) {
+        return string_from_system(YakcApp::self->emu.model);
+    }
+    else {
+        return "";
     }
 }
 
