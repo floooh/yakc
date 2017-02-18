@@ -2,8 +2,10 @@
 <html>
   {% include emu-head.html %}
   <body>
+    {% include quicktoggles.html %}
     {% include nav.html %}
     {% include systems-panel.html %}
+    {% include quickload-panel.html %}
     <div class="game-border" id="game-border">
       <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     </div>

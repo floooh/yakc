@@ -247,8 +247,7 @@ Keyboard::handleTextPlayback() {
                 do {
                     this->playbackChar = this->playbackBuffer.Data()[this->playbackPos++];
                 }
-                while ((this->playbackChar == '\t') ||
-                       (this->playbackChar == '\r'));
+                while ((this->playbackChar == '\t') || (this->playbackChar == '\r'));
                 if (this->playbackChar == '\n') {
                     this->playbackChar = 0x0D;
                 }

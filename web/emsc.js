@@ -9,27 +9,37 @@ function yakc_boot(sys, os) {
 }
 
 function yakc_toggle_ui() {
-    Module.ccall('yakc_toggle_ui', null, [], []);
+    return Module.ccall('yakc_toggle_ui', 'int', null, null);
 }
 
 function yakc_toggle_keyboard() {
-    Module.ccall('yakc_toggle_keyboard', null, [], []);
+    return Module.ccall('yakc_toggle_keyboard', 'int', null, null); 
 }
 
 function yakc_toggle_joystick() {
-    Module.ccall('yakc_toggle_joystick', null, [], []);
+    return Module.ccall('yakc_toggle_joystick', 'int', null, null);
+}
+
+function yakc_toggle_crt() {
+    return Module.ccall('yakc_toggle_crt', 'int', null, null);
 }
 
 function yakc_power() {
-    Module.ccall('yakc_power', null, [], []);
+    Module.ccall('yakc_power', null, null, null);
 }
 
 function yakc_reset() {
-    Module.ccall('yakc_reset', null, [], []);
+    Module.ccall('yakc_reset', null, null, null);
 }
 
 function yakc_get_system() {
-    return Module.ccall('yakc_get_system', 'string', [], []);
+    return Module.ccall('yakc_get_system', 'string', null, null);
+}
+
+function yakc_quickload(name, filename, filetype, system) {
+    Module.ccall('yakc_quickload', null,
+        ['string','string','string','string'],
+        [name, filename, filetype, system]);
 }
 
 /** emscripten wrapper page Javascript functions **/
@@ -134,14 +144,139 @@ function nav_toggle() {
     id('nav').classList.toggle('toggle');
 }
 
-// boot into system UI functions
+// show/hide panels
 function toggle_systems_panel() {
     id('systems_panel').classList.toggle('hidden');
+    id('quickload_panel').classList.add('hidden')
 }
+function toggle_quickload_panel() {
+    id('quickload_panel').classList.toggle('hidden');
+    id('systems_panel').classList.add('hidden');    
+    clear_quickload_panel();
+    populate_quickload_panel();
+}
+
 function boot_system(self, sys, os) {
     id('systems_panel').classList.add('hidden');
     yakc_boot(sys, os);
 }
+
+function match_system(sys, pattern) {
+    if (pattern == 'any_kc85') {
+        return ['kc85_2','kc85_3','kc85_4'].indexOf(sys) != -1;
+    }
+    else if (pattern == 'any_z1013') {
+        return ['z1013_01','z1013_16','z1013_64'].indexOf(sys) != -1;
+    }
+    else if (pattern == 'any_z9001') {
+        return ['z9001', 'kc87'].indexOf(sys) != -1;
+    }
+    else if (pattern == 'any_zx') {
+        return ['zxspectrum48k', 'zxspectrum128k']
+    }
+    else if (pattern == 'any_cpc') {
+        return ['cpc464', 'cpc6128', 'kccompact'].indexOf(sys) != -1;
+    }
+    else {
+        return sys == pattern;
+    }
+}
+
+function company_by_system(sys) {
+    if (['kc85_2','kc85_3','kc85_4','kccompact','any_kc85'].indexOf(sys) != -1) {
+        return 'mpm';
+    }
+    else if (['z9001','kc87','any_z9001'].indexOf(sys) != -1) {
+        return 'robotron-dresden';
+    }
+    else if (['z1013_01','z1013_16','z1013_64','any_z1013'].indexOf(sys) != -1) {
+        return 'robotron-riesa';
+    }
+    else if (['zxspectrum48k','zxspectrum128k','any_zx'].indexOf(sys) != -1) {
+        return 'sinclair';
+    }
+    else if (['cpc464','cpc6128','any_cpc'].indexOf(sys) != -1) {
+        // FIXME: not quite right, might trigger on KC Compact
+        return 'amstrad';
+    }
+    else if (['acorn_atom','any_acorn'].indexOf(sys) != -1) {
+        return 'acorn';
+    }
+    else {
+        return 'unknown';
+    }
+}
+
+function clear_quickload_panel() {
+    var list = id('quickload-list');    
+    while (list.hasChildNodes()) {
+        list.removeChild(list.lastChild);
+    }
+}
+
+function create_quickload_handler(name, filename, filetype, system) {
+    return function() { 
+        id('quickload_panel').classList.add('hidden');
+        yakc_quickload(name, filename, filetype, system); };
+}
+
+function populate_quickload_panel() {
+    var sys = yakc_get_system();
+    var list = id('quickload-list');
+    // a close button
+    var li = document.createElement('li');
+    var text = document.createTextNode('Back...');
+    li.appendChild(text);
+    li.className = 'panel-list-item';
+    li.onclick = toggle_quickload_panel;
+    list.appendChild(li);
+    for (var i = 0; i < software.length; i++) {
+        var item = software[i];
+        if (match_system(sys, item[3])) {
+            var li = document.createElement('li');
+            var text = document.createTextNode(item[0]);
+            li.appendChild(text);
+            li.className = 'panel-list-item ' + company_by_system(item[3]);
+            li.onclick = create_quickload_handler(item[0], item[1], item[2], item[3]);
+            list.appendChild(li);
+        }
+    }
+}
+
+// quick toggle handlers
+function ui_toggle_ui() {
+    if (yakc_toggle_ui()) {
+        id('ui_btn').classList.add('enabled');
+    }
+    else {
+        id('ui_btn').classList.remove('enabled');
+    }
+}
+function ui_toggle_keyboard() {
+    if (yakc_toggle_keyboard()) {
+        id('kbd_btn').classList.add('enabled');
+    }
+    else {
+        id('kbd_btn').classList.remove('enabled');
+    }
+}
+function ui_toggle_joystick() {
+    if (yakc_toggle_joystick()) {
+        id('joy_btn').classList.add('enabled');
+    }
+    else {
+        id('joy_btn').classList.remove('enabled');
+    }
+}
+function ui_toggle_crt() {
+    if (yakc_toggle_crt()) {
+        id('crt_btn').classList.add('enabled');
+    }
+    else {
+        id('crt_btn').classList.remove('enabled');
+    }
+}
+
 
 // the software browser classList
 var software = [
@@ -210,10 +345,10 @@ var software = [
     [ 'Kingdom of Speldom', 'kingdomo.tap', 'cpc_tap', 'any_cpc'],
     [ 'Haunted Hedges', 'hauntedh.tap', 'cpc_tap', 'any_cpc'],
     [ '2088', '2088.tap', 'cpc_tap', 'any_cpc'],
-    [ 'Exolon', 'exolon.z80', 'zx_z80', 'zxspectrum48'],
-    [ 'Cyclone', 'cyclone.z80', 'zx_z80', 'zxspectrum48'],
-    [ 'Boulderdash', 'boulderdash_zx.z80', 'zx_z80', 'zxspectrum48'],
-    [ 'Bomb Jack', 'bombjack_zx.z80', 'zx_z80', 'zxspectrum48'],
+    [ 'Exolon', 'exolon.z80', 'zx_z80', 'zxspectrum48k'],
+    [ 'Cyclone', 'cyclone.z80', 'zx_z80', 'zxspectrum48k'],
+    [ 'Boulderdash', 'boulderdash_zx.z80', 'zx_z80', 'zxspectrum48k'],
+    [ 'Bomb Jack', 'bombjack_zx.z80', 'zx_z80', 'zxspectrum48k'],
     [ 'Hello World!', 'atom_hello.txt', 'text', 'acorn_atom'],
     [ 'Text Mode Test', 'atom_alnum_test.txt', 'text', 'acorn_atom'],
     [ 'Graphics Mode Test', 'atom_graphics_test.txt', 'text', 'acorn_atom'],

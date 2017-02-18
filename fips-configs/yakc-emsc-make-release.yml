@@ -11,5 +11,5 @@ defines:
         _main,_emsc_pass_data,_emsc_put_msg,
         _yakc_boot,_yakc_toggle_ui,_yakc_toggle_keyboard,
         _yakc_toggle_joystick,_yakc_power,_yakc_reset,
-        _yakc_get_system
+        _yakc_get_system,_yakc_quickload,_yakc_toggle_crt
     ]

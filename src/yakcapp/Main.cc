@@ -376,7 +376,7 @@ YakcApp::initModules() {
 extern "C" {
 
 void yakc_boot(const char* sys_str, const char* os_str) {
-    YakcApp* app = YakcApp::self;
+    auto* app = YakcApp::self;
     if (app) {
         enum system sys = system_from_string(sys_str);
         os_rom os = os_from_string(os_str);
@@ -387,24 +387,40 @@ void yakc_boot(const char* sys_str, const char* os_str) {
     }
 }
 
-void yakc_toggle_ui() {
-    if (YakcApp::self) {
-        YakcApp::self->ui.Toggle();
+int yakc_toggle_ui() {
+    auto* app = YakcApp::self;
+    if (app) {
+        app->ui.Toggle();
+        return app->ui.uiEnabled ? 1:0;
     }
+    return 0;
 }
 
-void yakc_toggle_keyboard() {
+int yakc_toggle_keyboard() {
     auto* app = YakcApp::self;
     if (app) {
         app->ui.ToggleKeyboard(app->emu);
+        return app->ui.keyboardWindow ? 1:0;
     }
+    return 0;
 }
 
-void yakc_toggle_joystick() {
+int yakc_toggle_joystick() {
     auto* app = YakcApp::self;
     if (app) {
         app->emu.enable_joystick(!app->emu.is_joystick_enabled());
+        return app->emu.is_joystick_enabled() ? 1:0;
     }
+    return 0;
+}
+
+int yakc_toggle_crt() {
+    auto* app = YakcApp::self;
+    if (app) {
+        app->ui.Settings.crtEffect = !app->ui.Settings.crtEffect;
+        return app->ui.Settings.crtEffect ? 1:0;
+    }
+    return 0;
 }
 
 void yakc_power() {
@@ -427,6 +443,37 @@ const char* yakc_get_system() {
     }
     else {
         return "";
+    }
+}
+
+void yakc_quickload(const char* name, const char* filename, const char* filetype_str, const char* sys_str) {
+    Log::Info("yakc_quickload(%s, %s, %s)\n", filename, filetype_str, sys_str);
+    if (YakcApp::self) {
+        auto* app = YakcApp::self;
+        enum system sys = system_from_string(sys_str);
+        filetype type = filetype_from_string(filetype_str);
+        FileLoader::Item item(name, filename, type, sys, false);
+        if (int(item.Compat) & int(app->emu.model)) {
+            if (filetype_quickloadable(item.Type)) {
+                app->ui.FileLoader.LoadAndStart(item);
+            }
+            else {
+                // load through tape deck
+                app->ui.FileLoader.LoadTape(item);
+
+                // send the right load/run BASIC command to the emulator
+                String cmd;
+                if (app->emu.is_system(system::any_cpc)) {
+                    cmd = "run\"\n\n";
+                }
+                else if (app->emu.is_system(system::acorn_atom)) {
+                    cmd = "*LOAD\n\n";
+                }
+                Buffer buf;
+                buf.Add((const uint8_t*)cmd.AsCStr(), cmd.Length()+1);
+                app->keyboard.StartPlayback(std::move(buf));
+            }
+        }
     }
 }
 

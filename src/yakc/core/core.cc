@@ -57,6 +57,12 @@ system_from_string(const char* str) {
     if (strcmp(str, "kccompact")==0) return system::kccompact;
     if (strcmp(str, "bbcmicro_b")==0) return system::bbcmicro_b;
     if (strcmp(str, "acorn_atom")==0) return system::acorn_atom;
+    if (strcmp(str, "any_kc85")==0) return system::any_kc85;
+    if (strcmp(str, "any_z1013")==0) return system::any_z1013;
+    if (strcmp(str, "any_z9001")==0) return system::any_z9001;
+    if (strcmp(str, "any_zx")==0) return system::any_zx;
+    if (strcmp(str, "any_cpc")==0) return system::any_cpc;
+    if (strcmp(str, "any")==0) return system::any;
     return system::none;
 }
 

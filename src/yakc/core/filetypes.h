@@ -23,6 +23,21 @@ enum class filetype {
     none,
 };
 
+/// get filetype enum from string
+inline filetype filetype_from_string(const char* str) {
+    if (strcmp(str, "raw")==0) return filetype::raw;
+    if (strcmp(str, "kcc")==0) return filetype::kcc;
+    if (strcmp(str, "kc_tap")==0) return filetype::kc_tap;
+    if (strcmp(str, "kc_z80")==0) return filetype::kc_z80;
+    if (strcmp(str, "zx_tap")==0) return filetype::zx_tap;
+    if (strcmp(str, "zx_z80")==0) return filetype::zx_z80;
+    if (strcmp(str, "cpc_sna")==0) return filetype::cpc_sna;
+    if (strcmp(str, "cpc_tap")==0) return filetype::cpc_tap;
+    if (strcmp(str, "atom_tap")==0) return filetype::atom_tap;
+    if (strcmp(str, "text")==0) return filetype::text;
+    return filetype::none;
+}
+
 /// return true for quickloadable filetypes
 inline bool filetype_quickloadable(filetype t) {
     switch (t) {
