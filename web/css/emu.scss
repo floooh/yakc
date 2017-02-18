@@ -1,0 +1,41 @@
+---
+---
+@charset "utf-8";
+
+$text-color: #000000;
+$base-font-family: Helvetica, Arial, sans-serif;
+$base-font-size:   16px;
+$small-font-size:  $base-font-size * 0.875;
+$base-line-height: 1.5;
+$font-weight: 400;
+
+$spacing-unit:    30px;
+$background-color:          #111111;
+
+$grey-color:       #828282;
+$grey-color-light: lighten($grey-color, 40%);
+$grey-color-dark:  darken($grey-color, 25%);
+
+$quote-text-color:  #666666;
+$code-background-color: #eeeeee;
+
+$nav-width:         200px;
+
+$ui-background-color: #1E88E5;
+$ui-hover-color: #1565C0;
+$ui-text-color: #EEEEEE;
+$ui-dark-text-color: #000000;
+
+$mpm-color: #1976D2;
+$robotron-dresden-color: #3F51B5;
+$robotron-riesa-color: #EF6C00;
+$sinclair-color: #0097A7;
+$amstrad-color: #E91E63;
+$acorn-color: #388E3C; 
+
+@import
+    "emu/base",
+    "emu/game",
+    "emu/navbar",
+    "emu/ui";
+    

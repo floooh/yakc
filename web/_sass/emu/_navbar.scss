@@ -15,7 +15,7 @@ $navbar_width: 140px;
     width: 35px;
     height: 5px;
     border-radius: 2px;
-    background-color: $ui-color;
+    background-color: $ui-text-color;
     margin: 6px 0;
 }
 
@@ -64,13 +64,13 @@ $navbar_width: 140px;
     font-family: "Arial", Gadget, sans-serif;
     font-size: 14px;    
     display: block;
-    color: $ui-color;
+    color: $ui-text-color;
     text-align: left;
     text-decoration: none;
     cursor: pointer;
 }
 .main-nav-link:hover, .main-nav-link:active {
-    color: $ui-background-color;
-    background-color: $ui-color;
+    color: $ui-text-color;
+    background-color: $ui-hover-color;
 }
 
