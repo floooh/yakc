@@ -1,5 +1,5 @@
 /** helpers */
-function $(id) {
+function id(id) {
     return document.getElementById(id);
 }
 
@@ -53,7 +53,7 @@ var Module = {
         console.error(text);
     },
     canvas: (function() {
-        var canvas = $('canvas');
+        var canvas = id('canvas');
         canvas.addEventListener("webglcontextlost", function(e) { alert('FIXME: WebGL context lost, please reload the page'); e.preventDefault(); }, false);
         return canvas;
     })(),
@@ -79,8 +79,8 @@ function callAsEventHandler(func_name) {
 // drag-n-drop functions
 function initDragAndDrop() {
     // add a drag'n'drop handler to the WebGL canvas
-    $('canvas').addEventListener('dragover', onDragOver, false);
-    $('canvas').addEventListener('drop', onDrop, false);
+    id('canvas').addEventListener('dragover', onDragOver, false);
+    id('canvas').addEventListener('drop', onDrop, false);
 }
 
 function onDragOver(e) {
@@ -131,14 +131,98 @@ function onDrop(dropEvent) {
 
 // toggle the nav bar
 function nav_toggle() {
-    $('nav').classList.toggle('toggle');
+    id('nav').classList.toggle('toggle');
 }
 
 // boot into system UI functions
 function toggle_systems_panel() {
-    $('systems_panel').classList.toggle('hidden');
+    id('systems_panel').classList.toggle('hidden');
 }
 function boot_system(self, sys, os) {
-    $('systems_panel').classList.add('hidden');
+    id('systems_panel').classList.add('hidden');
     yakc_boot(sys, os);
 }
+
+// the software browser classList
+var software = [
+    // name, filename, filetype, system
+    [ 'Pengo', 'pengo.kcc', 'kcc', 'kc85_3'],
+    [ 'Pengo', 'pengo4.kcc', 'kcc', 'kc85_4'],
+    [ 'Cave', 'cave.kcc', 'kcc', 'kc85_3'],
+    [ 'House', 'house.kcc', 'kcc', 'kc85_3'],
+    [ 'House', 'house4.tap', 'kc_tap', 'kc85_4'],
+    [ 'Jungle', 'jungle.kcc', 'kcc', 'kc85_3'],
+    [ 'Jungle', 'jungle4.tap', 'kc_tap', 'kc85_4'],
+    [ 'Pacman', 'pacman.kcc', 'kcc', 'kc85_3'],
+    [ 'Breakout', 'breakout.kcc', 'kcc', 'kc85_3'],
+    [ 'Mad Breakin', 'breakin.853', 'kcc', 'kc85_3'],
+    [ 'Boulderdash', 'boulder3.tap', 'kc_tap', 'kc85_3'],
+    [ 'Boulderdash', 'boulder4.tap', 'kc_tap', 'kc85_4'],
+    [ 'Digger', 'digger3.tap', 'kc_tap', 'kc85_3'],
+    [ 'Digger', 'digger4.tap', 'kc_tap', 'kc85_4'],
+    [ 'Tetris', 'tetris.kcc', 'kcc', 'kc85_3'],
+    [ 'Ladder', 'ladder-3.kcc', 'kcc', 'kc85_3'],
+    [ 'Enterprise', 'enterpri.tap', 'kc_tap', 'kc85_3'],
+    [ 'Chess', 'chess.kcc', 'kcc', 'kc85_3'],
+    [ 'Chess', 'chess.kcc', 'kcc', 'any_kc85'],
+    [ 'Testbild', 'testbild.kcc', 'kcc', 'kc85_3'],
+    [ 'Demo1', 'demo1.kcc', 'kcc', 'kc85_4'],
+    [ 'Demo2', 'demo2.kcc', 'kcc', 'kc85_4'],
+    [ 'Demo3', 'demo3.kcc', 'kcc', 'kc85_4'],
+    [ 'Tiny-Basic 3.01', 'tinybasic-3.01.z80', 'kc_z80', 'z1013_01'],
+    [ 'KC-Basic', 'kc_basic.z80', 'kc_z80', 'any_z1013'],
+    [ 'Z1013 Forth', 'z1013_forth.z80', 'kc_z80', 'any_z1013'],
+    [ 'Boulderdash', 'boulderdash_1_0.z80', 'kc_z80', 'z1013_16'],
+    [ 'Boulderdash', 'boulderdash_1_0.z80', 'kc_z80', 'z1013_64'],
+    [ 'Demolation', 'demolation.z80', 'kc_z80', 'any_z1013'],
+    [ 'Cosmic Ball', 'cosmic_ball.z80', 'kc_z80', 'z1013_01'],
+    [ 'Galactica', 'galactica.z80', 'kc_z80', 'any_z1013'],
+    [ 'Mazogs', 'mazog_deutsch.z80', 'kc_z80', 'any_z1013'],
+    [ 'Monitor ZM30', 'zm30.kcc', 'kcc', 'any_z9001'],
+    [ 'Forth F83', 'F83_COM.TAP', 'kc_tap', 'any_z9001'],
+    [ 'Arkanoid', 'arkanoid.sna', 'cpc_sna', 'any_cpc'],
+    [ "Ghosts'n'Goblins", 'ghosts_n_goblins.sna', 'cpc_sna', 'any_cpc'],
+    [ 'Gryzor', 'gryzor.sna', 'cpc_sna', 'cpc6128'],
+    [ 'Dragon Ninja', 'dragon_ninja.sna', 'cpc_sna', 'any_cpc'],
+    [ 'Head over Heels', 'head_over_heels.sna', 'cpc_sna', 'any_cpc'],
+    [ 'Boulderdash', 'boulder_dash.sna', 'cpc_sna', 'any_cpc'],
+    [ 'Bomb Jack', 'bomb_jack.sna', 'cpc_sna', 'any_cpc'],
+    [ 'Chase HQ', 'chase_hq.sna', 'cpc_sna', 'any_cpc'],
+    [ 'Cybernoid', 'cybernoid.sna', 'cpc_sna', 'any_cpc'],
+    [ 'Fruity Frank', 'fruity_frank.sna', 'cpc_sna', 'kccompact'],
+    [ 'Fruity Frank', 'fruity_frank.sna', 'cpc_sna', 'cpc6128'],
+    [ 'Ikari Warriors', 'ikari_warriors.sna', 'cpc_sna', 'any_cpc'],
+    [ '1943', "1943.sna", 'cpc_sna', 'any_cpc'],
+    [ '1942', '1942.tap', 'cpc_tap', 'any_cpc'],
+    [ "Ghosts'n'Goblins", 'ghostsng.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Tir Na Nog', 'tirnanog.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Back to Reality', 'backtore.tap', 'cpc_tap', 'any_cpc'],
+    [ 'ASSMON', 'assmon.tap', 'cpc_tap', 'any_cpc'],
+    [ 'KC Pascal', 'kcpascal.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Bombjack 2', 'bombjac1.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Beverly Hills Cop', 'beverlyh.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Biff', 'biff.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Bubbler', 'bubbler.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Boulderdash 4', 'boulder1.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Combat Zone', 'combatzo.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Commandos', 'commando.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Curse of Sherwood', 'curseofs.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Kingdom of Speldom', 'kingdomo.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Haunted Hedges', 'hauntedh.tap', 'cpc_tap', 'any_cpc'],
+    [ '2088', '2088.tap', 'cpc_tap', 'any_cpc'],
+    [ 'Exolon', 'exolon.z80', 'zx_z80', 'zxspectrum48'],
+    [ 'Cyclone', 'cyclone.z80', 'zx_z80', 'zxspectrum48'],
+    [ 'Boulderdash', 'boulderdash_zx.z80', 'zx_z80', 'zxspectrum48'],
+    [ 'Bomb Jack', 'bombjack_zx.z80', 'zx_z80', 'zxspectrum48'],
+    [ 'Hello World!', 'atom_hello.txt', 'text', 'acorn_atom'],
+    [ 'Text Mode Test', 'atom_alnum_test.txt', 'text', 'acorn_atom'],
+    [ 'Graphics Mode Test', 'atom_graphics_test.txt', 'text', 'acorn_atom'],
+    [ 'Atomic Memory Checker', 'atom_memcheck.txt', 'text', 'acorn_atom'],
+    [ 'Keyboard Joystick Test', 'atom_kbdjoytest.txt', 'text', 'acorn_atom'],
+    [ 'AtoMMC Joystick Test', 'atom_mmcjoytest.txt', 'text', 'acorn_atom'],
+    [ 'Jet Set Willy', 'JSW.TAP', 'atom_tap', 'acorn_atom'],
+    [ 'Atomic Chuckie Egg', 'CCHUCK.TAP', 'atom_tap', 'acorn_atom'],
+    [ 'Hard Hat Harry', 'hardhatharry.tap', 'atom_tap', 'acorn_atom'],
+    [ 'Jet Set Miner', 'cjetsetminer.tap', 'atom_tap', 'acorn_atom'],
+    [ 'Dormann 6502 Test', 'dormann6502.tap', 'atom_tap', 'acorn_atom']
+];
