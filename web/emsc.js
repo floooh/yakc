@@ -89,24 +89,46 @@ function callAsEventHandler(func_name) {
 // drag-n-drop functions
 function initDragAndDrop() {
     // add a drag'n'drop handler to the WebGL canvas
-    id('canvas').addEventListener('dragover', onDragOver, false);
-    id('canvas').addEventListener('drop', onDrop, false);
+    id('load_panel_container').addEventListener('dragenter', load_dragenter, false);
+    id('load_panel_container').addEventListener('dragleave', load_dragleave, false);
+    id('load_panel_container').addEventListener('dragover', load_dragover, false);
+    id('load_panel_container').addEventListener('drop', load_drop, false);
 }
 
-function onDragOver(e) {
+function load_dragenter(e) {
+    e.stopPropagation();
     e.preventDefault();
 }
 
-function onDrop(dropEvent) {
-    dropEvent.preventDefault();
-    var files = dropEvent.dataTransfer.files;
+function load_dragleave(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    id('load_panel_container').classList.remove('highlight');
+}
+
+function load_dragover(e) {
+    id('load_panel_container').classList.add('highlight');
+    e.stopPropagation();
+    e.preventDefault();
+}
+
+function load_drop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    id('load_panel_container').classList.remove('highlight');
+    toggle_load_panel();
+    load_file(e.dataTransfer.files);
+}
+
+// load a file from the filepicker 
+function load_file(files) {
     if (files.length > 0) {
-        var file = files[0]
-        console.log('--- dropped');
+        var file = files[0];
+        console.log('--- load file:');
         console.log('  name: ' + file.name);
         console.log('  type: ' + file.type);
         console.log('  size: ' + file.size);
-
+        
         // load the file content (ignore big files)
         if (file.size < 256000) {
             var reader = new FileReader();
@@ -115,15 +137,14 @@ function onDrop(dropEvent) {
                 var content = loadEvent.target.result;
                 if (content) {
                     console.log('content length: ' + content.byteLength);
-                    var dataView = new DataView(content)
-                    for (i = 0; i < 128; i++) {
-                        console.log(dataView.getUint8(i).toString(16) + ' ');
-                    }
                     var uint8Array = new Uint8Array(content);
-                    Module.ccall('emsc_pass_data',  // C function name
-                        null,       // return type (void)
+                    var res = Module.ccall('yakc_loadfile',  // C function name
+                        'int',
                         ['string', 'array', 'number'],  // name, data, size
                         [file.name, uint8Array, uint8Array.length]);
+                    if (res == 0) {
+                        console.warn('yakc_loadfile() failed!');
+                    } 
                 }
                 else {
                     console.warn('load result empty!');
@@ -134,14 +155,7 @@ function onDrop(dropEvent) {
         else {
             console.warn('ignoring dropped file because it is too big')
         }
-        
     }
-    console.log('onDrop called!')
-}
-
-// load a file from the filepicker 
-function load_file(files) {
-    console.log('load_file called');
 }
 
 // toggle the nav bar
@@ -167,6 +181,7 @@ function toggle_load_panel() {
     id('load_panel').classList.toggle('hidden');
     id('quickload_panel').classList.add('hidden');
     id('systems_panel').classList.add('hidden');
+    id('load_panel_container').classList.remove('highlight');
 }
 
 function boot_system(self, sys, os) {

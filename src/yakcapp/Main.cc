@@ -477,6 +477,49 @@ void yakc_quickload(const char* name, const char* filename, const char* filetype
     }
 }
 
+int yakc_loadfile(const char* filename, const uint8_t* data, int size) {
+    Log::Info("yakc_loadfile(%s, %p, %d)\n", filename, data, size);
+    if (YakcApp::self) {
+        auto* app = YakcApp::self;
+        FileLoader::Item item(filename, filename, filetype::none, system::any);
+        FileLoader* loader = FileLoader::pointer;
+        loader->FileData.Clear();
+        loader->FileData.Add(data, size);
+        loader->Info = loader->parseHeader(loader->FileData, item);
+        loader->State = FileLoader::Ready;
+        if (int(loader->Info.RequiredSystem) & int(app->emu.model)) {
+            if (filetype_quickloadable(loader->Info.Type)) {
+                loader->quickload(&app->emu, loader->Info, loader->FileData, true);
+                return 1;
+            }
+            else if (filetype::none != loader->Info.Type){
+                // load through tape deck
+                app->emu.tapedeck.insert_tape(filename, loader->Info.Type, data, size);
+
+                // send the right load/run BASIC command to the emulator
+                String cmd;
+                if (app->emu.is_system(system::any_cpc)) {
+                    cmd = "run\"\n\n";
+                }
+                else if (app->emu.is_system(system::acorn_atom)) {
+                    cmd = "*LOAD\n\n";
+                }
+                Buffer buf;
+                buf.Add((const uint8_t*)cmd.AsCStr(), cmd.Length()+1);
+                app->keyboard.StartPlayback(std::move(buf));
+                return 1;
+            }
+            else {
+                Log::Warn("filetype not accepted\n");
+            }
+        }
+        else {
+            Log::Warn("filetype not compatible with current system\n");
+        }
+    }
+    return 0;
+}
+
 } // extern "C"
 
 

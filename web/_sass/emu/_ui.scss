@@ -64,6 +64,10 @@ $hover-darken: 10%;
     text-align: center;
 }
 
+.panel-text-area.highlight {
+    background-color: lighten($ui-background-color, 20%);
+}
+
 .panel-list {
     margin: 5px;
 }

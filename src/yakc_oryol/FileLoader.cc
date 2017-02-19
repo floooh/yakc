@@ -317,26 +317,5 @@ FileLoader::quickload(yakc* emu, const FileInfo& info, const Buffer& data, bool 
     FileLoader::pointer->State = newState;
 }
 
-//------------------------------------------------------------------------------
-//  emscripten-specific file loader function (can be hooked up to
-//  a HTML drag'n'drop or file-dialog event handler
-//
-extern "C" {
-
-void emsc_pass_data(const char* name, const uint8_t* data, int size) {
-    Log::Info("External data received: %s, %p, %d\n", name, data, size);
-    if (FileLoader::pointer && data && (size > 0)) {
-        FileLoader::Item item(name, name, filetype::none, system::any);
-        FileLoader* loader = FileLoader::pointer;
-        loader->FileData.Clear();
-        loader->FileData.Add(data, size);
-        loader->Info = loader->parseHeader(loader->FileData, item);
-        loader->State = FileLoader::Ready;
-        loader->ExtFileReady = true;
-    }
-}
-
-} // extern "C"
-
 } // namespace YAKC
 
