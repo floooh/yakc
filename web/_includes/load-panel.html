@@ -1,0 +1,21 @@
+<input type='file' id='filepicker' style='display:none' onchange='load_file(this.files)'></input>
+<div class="panel hidden" id="load_panel">
+    <div class="panel-content panel-text-area" id="load_panel_container">
+        Click 'Load' button or drop file<br>
+        <div style="text-align:left;padding-top:10px;padding-left:30px">
+            <b>Accepted file types:</b><br>
+            <ul>
+                <li><b>KC85, KC87:</b> TXT, KCC, TAP, Z80</li>
+                <li><b>Z9001, Z1013:</b> TXT, KCC, TAP, Z80</li>
+                <li><b>ZX Spectrum:</b> TXT, TAP, Z80</li>
+                <li><b>Amstrad CPC:</b> TXT, SNA, TAP</li>
+                <li><b>Acorn Atom:</b> TXT, TAP</li>
+            </ul>
+        </div>
+        <div class="panel-button-row">
+            <div class="panel-button" onclick="toggle_load_panel();ui_open_filepicker();">Load...</div>
+            <div class="panel-button" onclick="toggle_load_panel();">Cancel</div>
+        </div>
+    </div>
+</div>
+

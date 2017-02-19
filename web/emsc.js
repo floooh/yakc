@@ -139,6 +139,11 @@ function onDrop(dropEvent) {
     console.log('onDrop called!')
 }
 
+// load a file from the filepicker 
+function load_file(files) {
+    console.log('load_file called');
+}
+
 // toggle the nav bar
 function nav_toggle() {
     id('nav').classList.toggle('toggle');
@@ -148,12 +153,20 @@ function nav_toggle() {
 function toggle_systems_panel() {
     id('systems_panel').classList.toggle('hidden');
     id('quickload_panel').classList.add('hidden')
+    id('load_panel').classList.add('hidden');
 }
 function toggle_quickload_panel() {
     id('quickload_panel').classList.toggle('hidden');
-    id('systems_panel').classList.add('hidden');    
+    id('systems_panel').classList.add('hidden');
+    id('load_panel').classList.add('hidden');
     clear_quickload_panel();
     populate_quickload_panel();
+}
+
+function toggle_load_panel() {
+    id('load_panel').classList.toggle('hidden');
+    id('quickload_panel').classList.add('hidden');
+    id('systems_panel').classList.add('hidden');
 }
 
 function boot_system(self, sys, os) {
@@ -276,7 +289,9 @@ function ui_toggle_crt() {
         id('crt_btn').classList.remove('enabled');
     }
 }
-
+function ui_open_filepicker() {
+    id('filepicker').click();
+}
 
 // the software browser classList
 var software = [
