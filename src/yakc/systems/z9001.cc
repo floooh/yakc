@@ -255,7 +255,7 @@ z9001::step_debug() {
     }
     while ((old_pc == cpu.PC) && !cpu.INV);    
     this->decode_video();
-    return all_ticks;
+    return uint32_t(all_ticks);
 }
 
 //------------------------------------------------------------------------------

@@ -203,7 +203,7 @@ mos6502::brk() {
     ADDR = 0x0100 | S--; DATA = PC>>8;
     write();
     //--
-    ADDR = 0x0100 | S--; DATA = PC;
+    ADDR = 0x0100 | S--; DATA = PC & 0xFF;
     write();
     //--
     ADDR = 0x0100 | S--; DATA = P | BF;
@@ -484,7 +484,7 @@ mos6502::jsr() {
     write();
     // write PC low byte to stack
     ADDR = 0x0100 | S--;
-    DATA = PC;
+    DATA = PC & 0xFF;
     write();
     // load the target address high-byte
     ADDR = PC;
@@ -594,7 +594,7 @@ mos6502::do_adc(uint8_t val) {
         if (sum & 0xFF00) {
             P |= CF;
         }
-        A = sum;
+        A = sum & 0xFF;
     }
 }
 
@@ -647,7 +647,7 @@ mos6502::do_sbc(uint8_t val) {
         if (!(diff & 0xFF00)) {
             P |= CF;
         }
-        A = diff;
+        A = diff & 0xFF;
     }
 }
 

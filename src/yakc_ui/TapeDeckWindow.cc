@@ -52,7 +52,7 @@ TapeDeckWindow::Draw(yakc& emu) {
         draw_list->AddCircle(r_mid, 16, black, 36);
         draw_list->AddLine(ImVec2(ln_x0, ln_y0), ImVec2(ln_x1, ln_y0), black, 1);
         draw_list->AddLine(ImVec2(ln_x0, ln_y1), ImVec2(ln_x1, ln_y1), black, 1);
-        float da = 2*3.141526 / 6;
+        float da = 2*3.141526f / 6;
         float a = angle;
         float rd0 = 15.5f, rd1 = 10.0f;
         for (int i=0; i < 6; i++, a+=da) {

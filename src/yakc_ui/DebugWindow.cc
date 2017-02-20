@@ -226,7 +226,7 @@ DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
         }
 
         // print disassembled instruction
-        int offset = line_start_x + cell_width * 4 + glyph_width * 2;
+        float offset = line_start_x + cell_width * 4 + glyph_width * 2;
         ImGui::SameLine(offset);
         ImGui::Text("%s", disasm.Result());
         if (op_cycles > 0) {

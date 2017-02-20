@@ -81,8 +81,8 @@ public:
     bool t2_active = false; // timer2 is active
 
     /// auxilary control register bits
-    bool acr_latch_a() const { return acr & 0x01; }
-    bool acr_latch_b() const { return acr & 0x02; }
+    bool acr_latch_a() const { return 0 != (acr & 0x01); }
+    bool acr_latch_b() const { return 0 != (acr & 0x02); }
     bool acr_sr_disabled() const    { return ((acr>>2) & 7) == 0; }
     bool acr_sr_in_t2() const       { return ((acr>>2) & 7) == 1; }
     bool acr_sr_in_02() const       { return ((acr>>2) & 7) == 2; }

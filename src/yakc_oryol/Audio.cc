@@ -33,6 +33,7 @@ void
 Audio::Discard() {
     soloud_open_count--;
     if (soloud_open_count == 0) {
+        soloud->stopAll();
         soloud->deinit();
         Memory::Delete(soloud);
         soloud = nullptr;

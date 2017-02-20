@@ -234,7 +234,7 @@ kc85::step_debug() {
         all_ticks += ticks;
     }
     while ((old_pc == cpu.PC) && !cpu.INV);    
-    return all_ticks;
+    return uint32_t(all_ticks);
 }
 
 //------------------------------------------------------------------------------

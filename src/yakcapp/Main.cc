@@ -378,7 +378,7 @@ extern "C" {
 void yakc_boot(const char* sys_str, const char* os_str) {
     auto* app = YakcApp::self;
     if (app) {
-        enum system sys = system_from_string(sys_str);
+        enum class system sys = system_from_string(sys_str);
         os_rom os = os_from_string(os_str);
         if (system::none != sys) {
             app->emu.poweroff();
@@ -450,7 +450,7 @@ void yakc_quickload(const char* name, const char* filename, const char* filetype
     Log::Info("yakc_quickload(%s, %s, %s)\n", filename, filetype_str, sys_str);
     if (YakcApp::self) {
         auto* app = YakcApp::self;
-        enum system sys = system_from_string(sys_str);
+        enum class system sys = system_from_string(sys_str);
         filetype type = filetype_from_string(filetype_str);
         FileLoader::Item item(name, filename, type, sys, false);
         if (int(item.Compat) & int(app->emu.model)) {

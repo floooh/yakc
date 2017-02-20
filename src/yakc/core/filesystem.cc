@@ -1,6 +1,9 @@
 //------------------------------------------------------------------------------
 //  filesystem.cc
 //------------------------------------------------------------------------------
+#if _MSC_VER && !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include "filesystem.h"
 
 namespace YAKC {
@@ -35,7 +38,7 @@ filesystem::find(const char* name) {
 bool
 filesystem::exists(const char* name) {
     YAKC_ASSERT(name);
-    return (bool) find(name);
+    return 0 != find(name);
 }
 
 //------------------------------------------------------------------------------

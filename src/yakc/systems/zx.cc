@@ -282,7 +282,7 @@ zx::step_debug() {
         all_ticks += ticks;
     }
     while ((old_pc == cpu.PC) && !cpu.INV);    
-    return all_ticks;
+    return uint32_t(all_ticks);
 }
 
 //------------------------------------------------------------------------------
@@ -700,7 +700,7 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         cpu.SP = (hdr.SP_h<<8 | hdr.SP_l) & 0xFFFF;
         cpu.I = hdr.I;
         cpu.R = (hdr.R & 0x7F) | ((hdr.flags0 & 1)<<7);
-        cpu.IFF2 = hdr.IFF2;
+        cpu.IFF2 = hdr.IFF2 != 0;
         cpu.int_enable = hdr.EI != 0;
         if (hdr.flags1 != 0xFF) {
             cpu.IM = (hdr.flags1 & 3);

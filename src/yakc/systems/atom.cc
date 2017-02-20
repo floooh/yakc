@@ -349,9 +349,9 @@ atom::read_vidmem(uint16_t addr) {
     //  bit 6 -> A/S and INT/EXT pin, A/S actives semigraphics mode
     //           and INT/EXT selects the 2x3 semigraphics pattern
     //           (so 4x4 semigraphics isn't possible)
-    self->vdg->inv(chr & (1<<7));
-    self->vdg->as(chr & (1<<6));
-    self->vdg->int_ext(chr & (1<<6));
+    self->vdg->inv(0 != (chr & (1<<7)));
+    self->vdg->as(0 != (chr & (1<<6)));
+    self->vdg->int_ext(0 != (chr & (1<<6)));
     return chr;
 }
 
@@ -401,10 +401,10 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
             //  8:      MC6847 GM2
             case i8255::PORT_A:
                 scan_kbd_col = val & 0x0F;
-                vdg->ag(val & (1<<4));
-                vdg->gm0(val & (1<<5));
-                vdg->gm1(val & (1<<6));
-                vdg->gm2(val & (1<<7));
+                vdg->ag(0 != (val & (1<<4)));
+                vdg->gm0(0 != (val & (1<<5)));
+                vdg->gm1(0 != (val & (1<<6)));
+                vdg->gm2(0 != (val & (1<<7)));
                 break;
 
             // PPI port C output:
@@ -426,7 +426,7 @@ atom::pio_out(int pio_id, int port_id, uint8_t val) {
                 out_cass0 = 0 == (val & 1);
                 out_cass1 = 0 == (val & 2);
                 out_beep = 0 == (val & 4);
-                vdg->css(val & (1<<3));
+                vdg->css(0 != (val & (1<<3)));
                 break;
         }
     }
