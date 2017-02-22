@@ -1,16 +1,3 @@
-// style definitions for emscripten canvas
-
-.game-border {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    border: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0px;
-    display: block;
-}
-/* the emscripten canvas must not have any border or padding, or mouse coords will be wrong */
 .game {
     position: absolute;
     top: 0px;

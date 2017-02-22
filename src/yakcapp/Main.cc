@@ -76,7 +76,7 @@ YakcApp::OnInit() {
     gfxSetup.SetPoolSize(GfxResourceType::Pipeline, 8);
     gfxSetup.SetPoolSize(GfxResourceType::Shader, 8);
     gfxSetup.HtmlTrackElementSize = true;
-    gfxSetup.HtmlElement = "game-border";
+    gfxSetup.HtmlElement = "canvas";
     Gfx::Setup(gfxSetup);
     Input::Setup();
 
