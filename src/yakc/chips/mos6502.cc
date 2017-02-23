@@ -72,11 +72,14 @@ mos6502::init(system_bus* bus_) {
     bus = bus_;
     bcd_enabled = true;
     A = 0; X = 0; Y = 0; S = 0; P = XF; PC = 0;
-    OP = 0;
+    IR = 0;
     RW = true;
     Cycle = 0;
     AddrMode = A____;
     MemAccess = M___;
+    IRQ = false;
+    NMI = false;
+    irq_taken = false;
 }
 
 //------------------------------------------------------------------------------
@@ -89,6 +92,9 @@ mos6502::reset() {
     Cycle = 0;
     AddrMode = A____;
     MemAccess = M___;
+    IRQ = false;
+    NMI = false;
+    irq_taken = false;
 }
 
 //------------------------------------------------------------------------------
@@ -96,6 +102,11 @@ void
 mos6502::addr() {
     // execute the various addressing mode steps, result
     // is the address on the address bus (ADDR)
+    uint8_t cc  = IR & 0x03;
+    uint8_t bbb = (IR >> 2) & 0x07;
+    uint8_t aaa = (IR >> 5) & 0x07;
+    AddrMode  = ops[cc][bbb][aaa].addr;
+    MemAccess = ops[cc][bbb][aaa].mem;    
     switch (AddrMode) {
         //-- no addressing, this still puts the PC on the ADDR bus
         //-- without incrementing the PC, so the next instruction
@@ -247,9 +258,9 @@ mos6502::addr() {
 //------------------------------------------------------------------------------
 void
 mos6502::exec() {
-    uint8_t cc  = OP & 0x03;
-    uint8_t aaa = (OP >> 5) & 0x07;
-    uint8_t bbb = (OP >> 2) & 0x07;
+    uint8_t cc  = IR & 0x03;
+    uint8_t aaa = (IR >> 5) & 0x07;
+    uint8_t bbb = (IR >> 2) & 0x07;
     switch (cc) {
         case 0:
             switch (aaa) {

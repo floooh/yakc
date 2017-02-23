@@ -58,14 +58,17 @@ public:
 
     // registers
     uint8_t A,X,Y,S,P;
+    uint8_t IR;
     uint16_t PC;
-    uint8_t OP;
 
     // pins
     bool RW;            // read: true, write: false
     uint16_t ADDR;      // current address bus value
     uint8_t DATA;       // current data bus value
     uint16_t tmp16;
+    bool IRQ = false;
+    bool NMI = false;
+    bool irq_taken = false;
 
     int Cycle;              // current instruction cycle
     uint8_t AddrMode;       // currently active addressing mode
@@ -93,12 +96,10 @@ public:
     void reset();
     /// called when an invalid opcode has been hit
     uint32_t invalid_opcode();
-
+    /// request an NMI
+    void nmi();
     /// trigger interrupt request line on/off
     void irq(bool b);
-    /// handle an interrupt request
-    int handle_irq();
-
     /// execute next instruction, return cycles
     uint32_t step();
 
@@ -106,7 +107,7 @@ public:
     void read();
     /// write byte to mem, incr cycle, tick bus
     void write();
-    /// fetch and decode the next instruction
+    /// fetch next instruction
     void fetch();
     /// determine address and put on address bus
     void addr();
@@ -197,8 +198,23 @@ public:
 
 //------------------------------------------------------------------------------
 inline void
+mos6502::nmi() {
+    NMI = true;
+}
+
+//------------------------------------------------------------------------------
+inline void
+mos6502::irq(bool b) {
+    IRQ = b;
+}
+
+//------------------------------------------------------------------------------
+inline void
 mos6502::brk() {
     read();
+    if (!irq_taken) {
+        PC++;
+    }
     //--
     ADDR = 0x0100 | S--; DATA = PC>>8;
     write();
@@ -206,17 +222,28 @@ mos6502::brk() {
     ADDR = 0x0100 | S--; DATA = PC & 0xFF;
     write();
     //--
-    ADDR = 0x0100 | S--; DATA = P | BF;
+    ADDR = 0x0100 | S--; DATA = irq_taken ? (P&~BF):(P|BF);
     write();
     //--
-    ADDR = 0xFFFE;
-    read();
-    //--
-    tmp16 = DATA;
-    ADDR = 0xFFFF;
-    read();
-    PC = (DATA<<8) | (tmp16&0x00FF);
-    P = (P | IF) & ~DF;
+    if (NMI) {
+        ADDR = 0xFFFA;
+        read();
+        tmp16 = DATA;
+        ADDR = 0xFFFB;
+        read();
+        NMI = false;
+        PC = (DATA<<8)|(tmp16&0x00FF);
+    }
+    else {
+        ADDR = 0xFFFE;
+        read();
+        tmp16 = DATA;
+        ADDR = 0xFFFF;
+        read();
+        PC = (DATA<<8) | (tmp16&0x00FF);
+    }
+    irq_taken = false;
+    P = (P | IF);   // decimal flag only deleted on later chips & ~DF;
 }
 
 //------------------------------------------------------------------------------
@@ -248,14 +275,16 @@ mos6502::write() {
 //------------------------------------------------------------------------------
 inline void
 mos6502::fetch() {
-    ADDR = PC++;
+    ADDR = PC;
     read();
-    OP = DATA;
-    uint8_t cc  = OP & 0x03;
-    uint8_t bbb = (OP >> 2) & 0x07;
-    uint8_t aaa = (OP >> 5) & 0x07;
-    AddrMode  = ops[cc][bbb][aaa].addr;
-    MemAccess = ops[cc][bbb][aaa].mem;
+    IR = DATA;
+    if (NMI || (IRQ && !(P & IF))) {
+        irq_taken = true;
+        IR = 0x00; // BRK
+    }
+    else {
+        PC++;
+    }
 }
 
 //------------------------------------------------------------------------------
