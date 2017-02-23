@@ -378,6 +378,8 @@ var software = [
     [ 'Cyclone', 'cyclone.z80', 'zx_z80', 'zxspectrum48k'],
     [ 'Boulderdash', 'boulderdash_zx.z80', 'zx_z80', 'zxspectrum48k'],
     [ 'Bomb Jack', 'bombjack_zx.z80', 'zx_z80', 'zxspectrum48k'],
+    [ 'Arkanoid (broken)', 'arkanoid_zx128k.z80', 'zx_z80', 'zxspectrum128k'],
+    [ 'Silkworm', 'silkworm_zx128k.z80', 'zx_zx80', 'zxspectrum128k'],
     [ 'Hello World!', 'atom_hello.txt', 'text', 'acorn_atom'],
     [ 'Text Mode Test', 'atom_alnum_test.txt', 'text', 'acorn_atom'],
     [ 'Graphics Mode Test', 'atom_graphics_test.txt', 'text', 'acorn_atom'],
