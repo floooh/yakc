@@ -36,31 +36,38 @@ sound::step(int cpu_cycles) {
     while(sample_counter.step()) {
         float* dst = &(this->buf[this->write_buffer][0]);
         dst[this->write_pos] = 0.0f;
-        this->write_pos = (this->write_pos + 1) & (buf_size-1);
+        this->write_pos = (this->write_pos + 1) & (chunk_size-1);
         if (0 == this->write_pos) {
-            this->write_buffer = (this->write_buffer + 1) & (num_buffers-1);
+            this->write_buffer = (this->write_buffer + 1) & (num_chunks-1);
         }
     }
 }
 
 //------------------------------------------------------------------------------
 void
-sound::fill_samples(float* buffer, int num_samples) {
-    YAKC_ASSERT((num_samples % buf_size) == 0);
-    YAKC_ASSERT((num_samples >= buf_size));
+sound::fill_samples(float* buffer, int num_samples, bool mix) {
+    YAKC_ASSERT((num_samples % chunk_size) == 0);
+    YAKC_ASSERT((num_samples >= chunk_size));
     float* dst_ptr = buffer;
-    for (int i = 0; i < (num_samples / buf_size); i++) {
+    for (int chunk_index = 0; chunk_index < (num_samples / chunk_size); chunk_index++) {
         if (this->read_buffer == this->write_buffer) {
             // CPU was falling behind, add a block of silence
-            clear(dst_ptr, buf_size * sizeof(float));
+            clear(dst_ptr, chunk_size * sizeof(float));
+        }
+        else if (mix) {
+            float* src_ptr = &(this->buf[this->read_buffer][0]);
+            for (int i = 0; i < chunk_size; i++) {
+                dst_ptr[i] += src_ptr[i];
+            }
+            this->read_buffer = (this->read_buffer + 1) & (num_chunks-1);
         }
         else {
             // copy valid sound data
             float* src_ptr = &(this->buf[this->read_buffer][0]);
-            memcpy(dst_ptr, src_ptr, buf_size * sizeof(float));
-            this->read_buffer = (this->read_buffer + 1) & (num_buffers-1);
+            memcpy(dst_ptr, src_ptr, chunk_size * sizeof(float));
+            this->read_buffer = (this->read_buffer + 1) & (num_chunks-1);
         }
-        dst_ptr += buf_size;
+        dst_ptr += chunk_size;
     }
 }
 

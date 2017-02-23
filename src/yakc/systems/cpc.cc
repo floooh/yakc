@@ -149,7 +149,6 @@ cpc::poweron(system m) {
     }
     this->ga_config = 0;
     this->ram_config = 0;
-    this->psg_selected = 0;
     this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
@@ -188,7 +187,6 @@ cpc::reset() {
     this->board->i8255.reset();
     this->ga_config = 0;
     this->ram_config = 0;
-    this->psg_selected = 0;
     this->scan_kbd_line = 0;
     this->next_key_mask = key_mask();
     this->next_joy_mask = key_mask();
@@ -374,11 +372,11 @@ cpc::pio_out(int /*pio_id*/, int port_id, uint8_t val) {
         switch (func) {
             case 0xC0:
                 // select PSG register from PIO Port A
-                this->psg_selected = this->board->i8255.output[i8255::PORT_A];
+                this->board->ay8910.select(this->board->i8255.output[i8255::PORT_A]);
                 break;
             case 0x80:
                 // write to selected PSG register
-                this->board->ay8910.write(this->psg_selected, this->board->i8255.output[i8255::PORT_A]);
+                this->board->ay8910.write(this->board->i8255.output[i8255::PORT_A]);
                 break;
         }
         // FIXME: cassette write data
@@ -404,7 +402,7 @@ uint8_t
 cpc::pio_in(int /*pio_id*/, int port_id) {
     if (i8255::PORT_A == port_id) {
         // catch keyboard data which is normally in PSG PORT A
-        if (this->psg_selected == ay8910::IO_PORT_A) {
+        if (this->board->ay8910.selected() == ay8910::IO_PORT_A) {
             if (this->scan_kbd_line < 10) {
                 return ~(this->cur_key_mask.col[this->scan_kbd_line]);
             }
@@ -414,7 +412,7 @@ cpc::pio_in(int /*pio_id*/, int port_id) {
         }
         else {
             // read PSG register
-            return this->board->ay8910.read(this->psg_selected);
+            return this->board->ay8910.read();
         }
     }
     else if (i8255::PORT_B == port_id) {
@@ -636,7 +634,7 @@ cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     ppi.output[i8255::PORT_A] = hdr.ppi_a;
     ppi.output[i8255::PORT_B] = hdr.ppi_b;
     ppi.output[i8255::PORT_C] = hdr.ppi_c;
-    this->psg_selected = hdr.psg_selected;
+    this->board->ay8910.select(hdr.psg_selected);
     for (int i = 0; i < 16; i++) {
         this->board->ay8910.regs[i] = hdr.psg_regs[i];
     }

@@ -85,7 +85,6 @@ public:
 
     cpc_video video;
 
-    uint8_t psg_selected = 0;     // selected AY8910 register
     uint8_t ga_config = 0x00;     // out to port 0x7Fxx func 0x80
     uint8_t ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
     struct key_mask {

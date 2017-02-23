@@ -83,6 +83,8 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Cyclone", "cyclone.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Boulderdash", "boulderdash_zx.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Bomb Jack", "bombjack_zx.z80", filetype::zx_z80, system::zxspectrum48k, true);
+    this->Items.Add("Arkanoid (not working)", "arkanoid_zx128k.z80", filetype::zx_z80, system::zxspectrum128k, true);
+    this->Items.Add("Silkworm", "silkworm_zx128k.z80", filetype::zx_z80, system::zxspectrum128k, true);
     this->Items.Add("Hello World!", "atom_hello.txt", filetype::text, system::acorn_atom, true);
     this->Items.Add("Text Mode Test", "atom_alnum_test.txt", filetype::text, system::acorn_atom, true);
     this->Items.Add("Graphics Mode Test", "atom_graphics_test.txt", filetype::text, system::acorn_atom, true);

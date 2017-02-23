@@ -42,7 +42,8 @@ public:
     static const int num_ram_banks = 8;
     static const int ram_bank_size = 0x4000;
     uint8_t ram[num_ram_banks][ram_bank_size];
-    uint8_t random[ram_bank_size]; // a 16-kbyte bank filled with random numbers
+    uint8_t random[ram_bank_size];  // a 16-kbyte bank filled with random numbers
+    uint8_t junk[ram_bank_size];    // a 16-kbyte page for junk writes
     uint32_t rgba8_buffer[global_max_fb_width*global_max_fb_height]; // RGBA8 linear pixel buffer
 };
 

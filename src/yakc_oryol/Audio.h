@@ -26,7 +26,7 @@ public:
     /// reset filter settings to default
     void ResetFilterSettings();
 
-    float LowPassFreq = 4000.0f;
+    float LowPassFreq = 3200.0f;
     float LowPassResonance = 2.0f;
 
     static SoLoud::Soloud* soloud;

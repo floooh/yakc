@@ -3,7 +3,6 @@
 //
 //  TODO
 //  - wait states when CPU accesses 'contended memory' and IO ports
-//  - AY-3-8910 audio
 //  - reads from port 0xFF must return 'current VRAM byte':
 //      - reset a T-state counter at start of each PAL-line
 //      - on CPU instruction, increment PAL-line T-state counter
@@ -202,19 +201,25 @@ zx::poweron(system m) {
     this->init_memory_map();
 
     // initialize the system clock and PAL-line timer
+    int cpu_khz;
     if (system::zxspectrum48k == m) {
         // Spectrum48K is exactly 3.5 MHz
-        this->board->clck.init(3500);
+        cpu_khz = 3500;
+        this->board->clck.init(cpu_khz);
         this->board->clck.config_timer_cycles(0, 224);
     }
     else {
         // 128K is slightly faster
-        this->board->clck.init(3547);
+        cpu_khz = 3547;
+        this->board->clck.init(cpu_khz);
         this->board->clck.config_timer_cycles(0, 228);
     }
 
     // initialize sound generator
-    this->board->beeper.init(this->board->clck.base_freq_khz, SOUND_SAMPLE_RATE);
+    this->board->beeper.init(cpu_khz, SOUND_SAMPLE_RATE);
+    if (system::zxspectrum128k == this->cur_model) {
+        this->board->ay8910.init(cpu_khz, cpu_khz/2, SOUND_SAMPLE_RATE);
+    }
 
     // cpu start state
     this->board->z80.init();
@@ -233,6 +238,9 @@ zx::poweroff() {
 void
 zx::reset() {
     this->board->beeper.reset();
+    if (system::zxspectrum128k == this->cur_model) {
+        this->board->ay8910.reset();
+    }
     this->memory_paging_disabled = false;
     this->joy_mask = 0;
     this->next_kbd_mask = 0;
@@ -252,15 +260,30 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
     auto& cpu = this->board->z80;
     auto& dbg = this->board->dbg;
     uint64_t cur_tick = start_tick;
-    while (cur_tick < end_tick) {
-        uint32_t ticks = cpu.step(this);
-        ticks += cpu.handle_irq(this);
-        this->board->clck.step(this, ticks);
-        this->board->beeper.step(ticks);
-        if (dbg.step(cpu.PC, ticks)) {
-            return end_tick;
+    if (system::zxspectrum48k == this->cur_model) {
+        while (cur_tick < end_tick) {
+            uint32_t ticks = cpu.step(this);
+            ticks += cpu.handle_irq(this);
+            this->board->clck.step(this, ticks);
+            this->board->beeper.step(ticks);
+            if (dbg.step(cpu.PC, ticks)) {
+                return end_tick;
+            }
+            cur_tick += ticks;
         }
-        cur_tick += ticks;
+    }
+    else {
+        while (cur_tick < end_tick) {
+            uint32_t ticks = cpu.step(this);
+            ticks += cpu.handle_irq(this);
+            this->board->clck.step(this, ticks);
+            this->board->beeper.step(ticks);
+            this->board->ay8910.step(ticks);
+            if (dbg.step(cpu.PC, ticks)) {
+                return end_tick;
+            }
+            cur_tick += ticks;
+        }
     }
     return cur_tick;
 }
@@ -278,6 +301,9 @@ zx::step_debug() {
         ticks += cpu.handle_irq(this);
         this->board->clck.step(this, ticks);
         this->board->beeper.step(ticks);
+        if (system::zxspectrum128k == this->cur_model) {
+            this->board->ay8910.step(ticks);
+        }
         dbg.step(cpu.PC, ticks);
         all_ticks += ticks;
     }
@@ -334,10 +360,10 @@ zx::cpu_out(uword port, ubyte val) {
             return;
         }
         else if (0xFFFD == port) {
-            // FIXME: select audio register
+            this->board->ay8910.select(val);
         }
         else if (0xBFFD == port) {
-            // FIXME: write to selected audio register
+            this->board->ay8910.write(val);
         }
     }
 
@@ -403,6 +429,9 @@ zx::cpu_in(uword port) {
             val |= 1<<4;
         }
         return val;
+    }
+    else if (port == 0xFFFD) {
+        return this->board->ay8910.read();
     }
     return 0xFF;
 }
@@ -550,6 +579,10 @@ zx::decode_video_line(uint16_t y) {
 void
 zx::decode_audio(float* buffer, int num_samples) {
     this->board->beeper.fill_samples(buffer, num_samples);
+    // if 128k, mix-in AY-8910 data
+    if (system::zxspectrum128k == this->cur_model) {
+        this->board->ay8910.fill_samples(buffer, num_samples, true);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -567,8 +600,8 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     if (!fp) {
         return false;
     }
-    zxz80_header hdr;
-    zxz80ext_header ext_hdr;
+    zxz80_header hdr = { };
+    zxz80ext_header ext_hdr = { };
     bool hdr_valid = false;
     bool ext_hdr_valid = false;
     if (filetype::zx_z80 == type) {
@@ -579,7 +612,14 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         uint16_t pc = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
         const bool is_version1 = 0 != pc;
         if (!is_version1) {
-            if (fs->read(fp, &ext_hdr, sizeof(ext_hdr)) != sizeof(ext_hdr)) {
+            // read length of ext_hdr
+            if (fs->read(fp, &ext_hdr, 2) != 2) {
+                goto error;
+            }
+            // read remaining ext-hdr bytes
+            int ext_hdr_len = (ext_hdr.len_h<<8)|ext_hdr.len_l;
+            YAKC_ASSERT(ext_hdr_len <= int(sizeof(ext_hdr)));
+            if (fs->read(fp, &(ext_hdr.PC_l), ext_hdr_len) != ext_hdr_len) {
                 goto error;
             }
             ext_hdr_valid = true;
@@ -617,61 +657,68 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
                     if ((system::zxspectrum48k == this->cur_model) && (page_index == 5)) {
                         page_index = 0;
                     }
+                    if ((page_index < 0) || (page_index > 7)) {
+                        page_index = -1;
+                    }
                 }
                 else {
                     goto error;
                 }
             }
-            uint8_t* dst_ptr = this->board->ram[page_index];
+            uint8_t* dst_ptr;
+            if (-1 == page_index) {
+                dst_ptr = this->board->junk;
+            }
+            else {
+                dst_ptr = this->board->ram[page_index];
+            }
             const uint8_t* dst_end_ptr = dst_ptr + dst_len;
-            if ((page_index >= 0) && (page_index < 8)) {
-                if (0xFFFF == src_len) {
-                    // FIXME: uncompressed not supported yet
-                    goto error;
-                }
-                else {
-                    // compressed
-                    int src_pos = 0;
-                    bool v1_done = false;
-                    uint8_t val[4];
-                    while ((src_pos < src_len) && !v1_done) {
-                        val[0] = fs->peek_u8(fp, src_pos);
-                        val[1] = fs->peek_u8(fp, src_pos+1);
-                        val[2] = fs->peek_u8(fp, src_pos+2);
-                        val[3] = fs->peek_u8(fp, src_pos+3);
-                        // check for version 1 end marker
-                        if (v1_compr && (0==val[0]) && (0xED==val[1]) && (0xED==val[2]) && (0==val[3])) {
-                            v1_done = true;
+            if (0xFFFF == src_len) {
+                // FIXME: uncompressed not supported yet
+                goto error;
+            }
+            else {
+                // compressed
+                int src_pos = 0;
+                bool v1_done = false;
+                uint8_t val[4];
+                while ((src_pos < src_len) && !v1_done) {
+                    val[0] = fs->peek_u8(fp, src_pos);
+                    val[1] = fs->peek_u8(fp, src_pos+1);
+                    val[2] = fs->peek_u8(fp, src_pos+2);
+                    val[3] = fs->peek_u8(fp, src_pos+3);
+                    // check for version 1 end marker
+                    if (v1_compr && (0==val[0]) && (0xED==val[1]) && (0xED==val[2]) && (0==val[3])) {
+                        v1_done = true;
+                        src_pos += 4;
+                    }
+                    else if (0xED == val[0]) {
+                        if (0xED == val[1]) {
+                            uint8_t count = val[2];
+                            YAKC_ASSERT(0 != count);
+                            uint8_t data = val[3];
                             src_pos += 4;
-                        }
-                        else if (0xED == val[0]) {
-                            if (0xED == val[1]) {
-                                uint8_t count = val[2];
-                                YAKC_ASSERT(0 != count);
-                                uint8_t data = val[3];
-                                src_pos += 4;
-                                for (int i = 0; i < count; i++) {
-                                    YAKC_ASSERT(dst_ptr < dst_end_ptr);
-                                    *dst_ptr++ = data;
-                                }
-                            }
-                            else {
-                                // single ED
+                            for (int i = 0; i < count; i++) {
                                 YAKC_ASSERT(dst_ptr < dst_end_ptr);
-                                *dst_ptr++ = val[0];
-                                src_pos++;
+                                *dst_ptr++ = data;
                             }
                         }
                         else {
-                            // any value
+                            // single ED
                             YAKC_ASSERT(dst_ptr < dst_end_ptr);
                             *dst_ptr++ = val[0];
                             src_pos++;
                         }
                     }
-                    YAKC_ASSERT(dst_ptr == dst_end_ptr);
-                    YAKC_ASSERT(src_pos == src_len);
+                    else {
+                        // any value
+                        YAKC_ASSERT(dst_ptr < dst_end_ptr);
+                        *dst_ptr++ = val[0];
+                        src_pos++;
+                    }
                 }
+                YAKC_ASSERT(dst_ptr == dst_end_ptr);
+                YAKC_ASSERT(src_pos == src_len);
             }
             if (0xFFFF == src_len) {
                 fs->skip(fp, 0x4000);
@@ -710,6 +757,9 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         }
         if (ext_hdr_valid) {
             cpu.PC = (ext_hdr.PC_h<<8 | ext_hdr.PC_l) & 0xFFFF;
+            for (int i = 0; i < 16; i++) {
+                this->board->ay8910.regs[i] = ext_hdr.audio[i];
+            }
             cpu.out(this, 0xFFFD, ext_hdr.out_fffd);
             cpu.out(this, 0x7FFD, ext_hdr.out_7ffd);
         }

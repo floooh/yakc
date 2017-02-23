@@ -44,9 +44,9 @@ beeper::step(int cpu_cycles) {
             float* dst = &(this->buf[this->write_buffer][0]);
             dst[this->write_pos] = this->value / float(super_sample);
             this->value = 0.0f;
-            this->write_pos = (this->write_pos + 1) & (buf_size-1);
+            this->write_pos = (this->write_pos + 1) & (chunk_size-1);
             if (0 == this->write_pos) {
-                this->write_buffer = (this->write_buffer + 1) & (num_buffers-1);
+                this->write_buffer = (this->write_buffer + 1) & (num_chunks-1);
             }
         }
     }

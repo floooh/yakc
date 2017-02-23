@@ -59,6 +59,7 @@ ay8910::init(int cpu_khz, int ay_khz, int sound_hz) {
 //------------------------------------------------------------------------------
 void
 ay8910::reset() {
+    this->sel = 0;
     for (int i = 0; i < NUM_REGS; i++) {
         this->regs[i] = 0;
     }
@@ -170,18 +171,18 @@ ay8910::step(int cpu_cycles) {
         }
         float* dst = &(this->buf[this->write_buffer][0]);
         dst[this->write_pos] = s * 0.33f;
-        this->write_pos = (this->write_pos + 1) & (buf_size-1);
+        this->write_pos = (this->write_pos + 1) & (chunk_size-1);
         if (0 == this->write_pos) {
-            this->write_buffer = (this->write_buffer + 1) & (num_buffers-1);
+            this->write_buffer = (this->write_buffer + 1) & (num_chunks-1);
         }
     }
 }
 
 //------------------------------------------------------------------------------
 void
-ay8910::write(uint8_t reg, uint8_t val) {
-    if (reg < NUM_REGS) {
-        this->regs[reg] = val & ay8910_masks[reg];
+ay8910::write(uint8_t val) {
+    if (this->sel < NUM_REGS) {
+        this->regs[this->sel] = val & ay8910_masks[this->sel];
 
         // update computed values
         for (int i = 0; i < num_channels; i++) {
@@ -192,7 +193,7 @@ ay8910::write(uint8_t reg, uint8_t val) {
         }
         this->noise_period = this->regs[NOISE_PERIOD];
         this->env_period = 16 * (((this->regs[ENV_PERIOD_COARSE]<<8) | this->regs[ENV_PERIOD_FINE]) & 0xFFFF);
-        if (reg == ENV_SHAPE_CYCLE) {
+        if (ENV_SHAPE_CYCLE == this->sel) {
             // Bit 0  Hold        (1=stop envelope past first cycle)
             // Bit 1  Alternate   (1=reverse direction at end of each cycle)
             // Bit 2  Attack      (1=initial direction increase)
@@ -206,9 +207,9 @@ ay8910::write(uint8_t reg, uint8_t val) {
 
 //------------------------------------------------------------------------------
 uint8_t
-ay8910::read(uint8_t reg) const {
-    if (reg < NUM_REGS) {
-        return this->regs[reg];
+ay8910::read() const {
+    if (this->sel < NUM_REGS) {
+        return this->regs[this->sel];
     }
     else {
         return 0;

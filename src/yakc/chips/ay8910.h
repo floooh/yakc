@@ -17,10 +17,14 @@ public:
     /// step the sound generator, call after each CPU instruction
     void step(int cpu_cycles);
 
+    /// select read/write register
+    void select(uint8_t reg);
+    /// get the selected register
+    uint8_t selected() const;
     /// write to selected register
-    void write(uint8_t reg, uint8_t val);
+    void write(uint8_t val);
     /// read from selected register
-    uint8_t read(uint8_t reg) const;
+    uint8_t read() const;
 
     enum reg {
         TONE_PERIOD_A_FINE = 0,
@@ -44,6 +48,7 @@ public:
     };
     static_assert(NUM_REGS == 16, "AY8910 num regs!");
 
+    uint8_t sel = 0;
     uint8_t regs[NUM_REGS] = { };
     counter tone_update;
 
@@ -65,5 +70,17 @@ public:
     uint32_t env_volume = 0;
     int env_volume_add = 0;
 };
+
+//------------------------------------------------------------------------------
+inline void
+ay8910::select(uint8_t reg) {
+    sel = reg;
+}
+
+//------------------------------------------------------------------------------
+inline uint8_t
+ay8910::selected() const {
+    return sel;
+}
 
 } // namespace YAKC
