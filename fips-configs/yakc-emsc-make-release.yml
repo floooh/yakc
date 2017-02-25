@@ -7,10 +7,3 @@ cmake-toolchain: emscripten.toolchain.cmake
 defines:
     FIPS_NO_ASSERTS_IN_RELEASE: ON
     FIPS_EMSCRIPTEN_MEM_INIT_METHOD: 0
-    FIPS_EMSCRIPTEN_EXPORTED_FUNCTIONS: [
-        _main,
-        _yakc_boot,_yakc_toggle_ui,_yakc_toggle_keyboard,
-        _yakc_toggle_joystick,_yakc_power,_yakc_reset,
-        _yakc_get_system,_yakc_quickload,_yakc_toggle_crt,
-        _yakc_loadfile
-    ]

@@ -18,6 +18,9 @@
 #include "yakc_ui/UI.h"
 #endif
 #include "yakc/roms/rom_dumps.h"
+#if ORYOL_EMSCRIPTEN
+#include <emscripten/emscripten.h>
+#endif
 
 using namespace Oryol;
 using namespace YAKC;
@@ -373,9 +376,10 @@ YakcApp::initModules() {
 //------------------------------------------------------------------------------
 //  Javascript interface functions
 //
+#if ORYOL_EMSCRIPTEN
 extern "C" {
 
-void yakc_boot(const char* sys_str, const char* os_str) {
+EMSCRIPTEN_KEEPALIVE void yakc_boot(const char* sys_str, const char* os_str) {
     auto* app = YakcApp::self;
     if (app) {
         auto sys = system_from_string(sys_str);
@@ -387,7 +391,7 @@ void yakc_boot(const char* sys_str, const char* os_str) {
     }
 }
 
-int yakc_toggle_ui() {
+EMSCRIPTEN_KEEPALIVE int yakc_toggle_ui() {
     auto* app = YakcApp::self;
     if (app) {
         app->ui.Toggle();
@@ -396,7 +400,7 @@ int yakc_toggle_ui() {
     return 0;
 }
 
-int yakc_toggle_keyboard() {
+EMSCRIPTEN_KEEPALIVE int yakc_toggle_keyboard() {
     auto* app = YakcApp::self;
     if (app) {
         app->ui.ToggleKeyboard(app->emu);
@@ -405,7 +409,7 @@ int yakc_toggle_keyboard() {
     return 0;
 }
 
-int yakc_toggle_joystick() {
+EMSCRIPTEN_KEEPALIVE int yakc_toggle_joystick() {
     auto* app = YakcApp::self;
     if (app) {
         app->emu.enable_joystick(!app->emu.is_joystick_enabled());
@@ -414,7 +418,7 @@ int yakc_toggle_joystick() {
     return 0;
 }
 
-int yakc_toggle_crt() {
+EMSCRIPTEN_KEEPALIVE int yakc_toggle_crt() {
     auto* app = YakcApp::self;
     if (app) {
         app->ui.Settings.crtEffect = !app->ui.Settings.crtEffect;
@@ -423,7 +427,7 @@ int yakc_toggle_crt() {
     return 0;
 }
 
-void yakc_power() {
+EMSCRIPTEN_KEEPALIVE void yakc_power() {
     auto* app = YakcApp::self;
     if (app) {
         app->emu.poweroff();
@@ -431,13 +435,13 @@ void yakc_power() {
     }
 }
 
-void yakc_reset() {
+EMSCRIPTEN_KEEPALIVE void yakc_reset() {
     if (YakcApp::self) {
         YakcApp::self->emu.reset();
     }
 }
 
-const char* yakc_get_system() {
+EMSCRIPTEN_KEEPALIVE const char* yakc_get_system() {
     if (YakcApp::self) {
         return string_from_system(YakcApp::self->emu.model);
     }
@@ -446,7 +450,7 @@ const char* yakc_get_system() {
     }
 }
 
-void yakc_quickload(const char* name, const char* filename, const char* filetype_str, const char* sys_str) {
+EMSCRIPTEN_KEEPALIVE void yakc_quickload(const char* name, const char* filename, const char* filetype_str, const char* sys_str) {
     Log::Info("yakc_quickload(%s, %s, %s)\n", filename, filetype_str, sys_str);
     if (YakcApp::self) {
         auto* app = YakcApp::self;
@@ -477,7 +481,7 @@ void yakc_quickload(const char* name, const char* filename, const char* filetype
     }
 }
 
-int yakc_loadfile(const char* filename, const uint8_t* data, int size) {
+EMSCRIPTEN_KEEPALIVE int yakc_loadfile(const char* filename, const uint8_t* data, int size) {
     Log::Info("yakc_loadfile(%s, %p, %d)\n", filename, data, size);
     if (YakcApp::self) {
         auto* app = YakcApp::self;
@@ -521,5 +525,5 @@ int yakc_loadfile(const char* filename, const uint8_t* data, int size) {
 }
 
 } // extern "C"
-
+#endif
 
