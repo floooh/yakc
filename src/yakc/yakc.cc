@@ -299,10 +299,11 @@ yakc::step_debug() {
 
 //------------------------------------------------------------------------------
 void
-yakc::put_input(uint8_t ascii, uint8_t joy0_mask) {
+yakc::put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask) {
     if (!this->joystick_enabled) {
-        joy0_mask = 0;
+        joy0_kbd_mask = 0;
     }
+    const uint8_t joy0_mask = joy0_kbd_mask|joy0_pad_mask;
     if (this->kc85.on) {
         this->kc85.put_key(ascii);
     }

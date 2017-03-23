@@ -150,22 +150,22 @@ Keyboard::Setup(yakc& emu_) {
             }
             // joystick
             if (e.KeyCode == Key::Left) {
-                this->cur_joystick |= joystick::left;
+                this->cur_kbd_joy |= joystick::left;
             }
             else if (e.KeyCode == Key::Right) {
-                this->cur_joystick |= joystick::right;
+                this->cur_kbd_joy |= joystick::right;
             }
             else if (e.KeyCode == Key::Up) {
-                this->cur_joystick |= joystick::up;
+                this->cur_kbd_joy |= joystick::up;
             }
             else if (e.KeyCode == Key::Down) {
-                this->cur_joystick |= joystick::down;
+                this->cur_kbd_joy |= joystick::down;
             }
             else if (e.KeyCode == Key::Space) {
-                this->cur_joystick |= joystick::btn0;
+                this->cur_kbd_joy |= joystick::btn0;
             }
             else if (e.KeyCode == Key::LeftControl) {
-                this->cur_joystick |= joystick::btn1;
+                this->cur_kbd_joy |= joystick::btn1;
             }
         }
         else if (e.Type == InputEvent::KeyUp) {
@@ -176,24 +176,24 @@ Keyboard::Setup(yakc& emu_) {
                     this->cur_char = 0;
                 }
             }
-            // joystick
+            // keyboard joystick emulation
             if (e.KeyCode == Key::Left) {
-                this->cur_joystick &= ~joystick::left;
+                this->cur_kbd_joy &= ~joystick::left;
             }
             else if (e.KeyCode == Key::Right) {
-                this->cur_joystick &= ~joystick::right;
+                this->cur_kbd_joy &= ~joystick::right;
             }
             else if (e.KeyCode == Key::Up) {
-                this->cur_joystick &= ~joystick::up;
+                this->cur_kbd_joy &= ~joystick::up;
             }
             else if (e.KeyCode == Key::Down) {
-                this->cur_joystick &= ~joystick::down;
+                this->cur_kbd_joy &= ~joystick::down;
             }
             else if (e.KeyCode == Key::Space) {
-                this->cur_joystick &= ~joystick::btn0;
+                this->cur_kbd_joy &= ~joystick::btn0;
             }
             else if (e.KeyCode == Key::LeftControl) {
-                this->cur_joystick &= ~joystick::btn1;
+                this->cur_kbd_joy &= ~joystick::btn1;
             }
         }
     });
@@ -210,12 +210,51 @@ Keyboard::Discard() {
 void
 Keyboard::HandleInput() {
     o_assert_dbg(this->emu);
+    this->cur_pad_joy = 0;
     if (this->hasInputFocus) {
+        // gamepad input (FIXME: add support for 2nd joystick!)
+        if (Input::GamepadAttached(0)) {
+            if (Input::GamepadButtonPressed(0, GamepadButton::A)) {
+                this->cur_pad_joy |= joystick::btn0;
+            }
+            if (Input::GamepadButtonPressed(0, GamepadButton::B)) {
+                this->cur_pad_joy |= joystick::btn1;
+            }
+            if (Input::GamepadButtonPressed(0, GamepadButton::DPadLeft)) {
+                this->cur_pad_joy |= joystick::left;
+            }
+            if (Input::GamepadButtonPressed(0, GamepadButton::DPadRight)) {
+                this->cur_pad_joy |= joystick::right;
+            }
+            if (Input::GamepadButtonPressed(0, GamepadButton::DPadUp)) {
+                this->cur_pad_joy |= joystick::up;
+            }
+            if (Input::GamepadButtonPressed(0, GamepadButton::DPadDown)) {
+                this->cur_pad_joy |= joystick::down;
+            }
+            const float deadZone = 0.3f;
+            float x = Input::GamepadAxisValue(0, GamepadAxis::LeftStickHori) +
+                      Input::GamepadAxisValue(0, GamepadAxis::RightStickHori);
+            float y = Input::GamepadAxisValue(0, GamepadAxis::LeftStickVert) +
+                      Input::GamepadAxisValue(0, GamepadAxis::RightStickVert);
+            if (x < -deadZone) {
+                this->cur_pad_joy |= joystick::left;
+            }
+            else if (x > deadZone) {
+                this->cur_pad_joy |= joystick::right;
+            }
+            if (y < -deadZone) {
+                this->cur_pad_joy |= joystick::up;
+            }
+            else if (y > deadZone) {
+                this->cur_pad_joy |= joystick::down;
+            }
+        }
         if (!this->playbackBuffer.Empty()) {
             this->handleTextPlayback();
         }
         else {
-            this->emu->put_input(this->cur_char, this->cur_joystick);
+            this->emu->put_input(this->cur_char, this->cur_kbd_joy, this->cur_pad_joy);
         }
     }
     else {

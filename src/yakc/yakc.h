@@ -39,7 +39,7 @@ public:
     uint32_t step_debug();
 
     /// put key and joystick input
-    void put_input(uint8_t ascii, uint8_t joy0_mask);
+    void put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask=0);
     /// enable/disable joystick
     void enable_joystick(bool b);
     /// return true if joystick is enabled
