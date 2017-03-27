@@ -178,8 +178,6 @@ UI::EnableLightTheme() {
 //------------------------------------------------------------------------------
 void
 UI::OnFrame(yakc& emu) {
-    o_trace_scoped(yakc_ui);
-
     StringBuilder strBuilder;
     IMUI::NewFrame(Clock::LapTime(this->curTime));
 

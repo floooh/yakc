@@ -74,10 +74,10 @@ YakcApp::OnInit() {
     const int width = 2*frameSizeX + 2*320;
     const int height = 2*frameSizeY + 2*256;
     auto gfxSetup = GfxSetup::Window(width, height, "YAKC Emulator");
-    gfxSetup.SetPoolSize(GfxResourceType::Mesh, 8);
-    gfxSetup.SetPoolSize(GfxResourceType::Texture, 8);
-    gfxSetup.SetPoolSize(GfxResourceType::Pipeline, 8);
-    gfxSetup.SetPoolSize(GfxResourceType::Shader, 8);
+    gfxSetup.ResourcePoolSize[GfxResourceType::Mesh] = 8;
+    gfxSetup.ResourcePoolSize[GfxResourceType::Texture] = 8;
+    gfxSetup.ResourcePoolSize[GfxResourceType::Pipeline] = 8;
+    gfxSetup.ResourcePoolSize[GfxResourceType::Shader] = 8;
     gfxSetup.HtmlTrackElementSize = true;
     gfxSetup.HtmlElement = "canvas";
     Gfx::Setup(gfxSetup);
@@ -146,15 +146,13 @@ YakcApp::OnRunning() {
     glm::vec4 clear;
     this->emu.border_color(clear.x, clear.y, clear.z);
     clear.w = 1.0f;
-    Gfx::ApplyDefaultRenderTarget(ClearState::ClearColor(clear));
+    Gfx::BeginPass(PassAction::Clear(clear));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     uint64_t processed_audio_cycles = this->audio.GetProcessedCycles();
     TimePoint emu_start_time = Clock::Now();
     #if YAKC_UI
-        o_trace_begin(yakc_kc);
         // keep CPU synchronized to a small time window ahead of audio playback
         this->emu.step(micro_secs, processed_audio_cycles);
-        o_trace_end();
         this->draw.UpdateParams(
             this->ui.Settings.crtEffect,
             this->ui.Settings.colorTV,
@@ -176,6 +174,7 @@ YakcApp::OnRunning() {
     #if YAKC_UI
     this->ui.OnFrame(this->emu);
     #endif
+    Gfx::EndPass();
     Gfx::CommitFrame();
     return Gfx::QuitRequested() ? AppState::Cleanup : AppState::Running;
 }
