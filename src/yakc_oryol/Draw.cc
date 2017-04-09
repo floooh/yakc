@@ -54,7 +54,6 @@ Draw::UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& warp) {
 //------------------------------------------------------------------------------
 void
 Draw::Render(const void* pixels, int width, int height) {
-    o_trace_scoped(yakc_draw);
 
     // create new texture is size mismatch
     this->validateTexture(width, height);
@@ -125,7 +124,7 @@ Draw::validateTexture(int width, int height) {
 
         // only create a new texture if width and height > 0
         if ((width > 0) && (height > 0)) {
-            auto texSetup = TextureSetup::Empty(width, height, 1, TextureType::Texture2D, PixelFormat::RGBA8, Usage::Stream);
+            auto texSetup = TextureSetup::Empty2D(width, height, 1, PixelFormat::RGBA8, Usage::Stream);
             texSetup.Sampler.MinFilter = TextureFilterMode::Linear;
             texSetup.Sampler.MagFilter = TextureFilterMode::Linear  ;
             texSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
