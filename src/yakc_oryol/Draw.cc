@@ -132,7 +132,6 @@ Draw::validateTexture(int width, int height) {
             Gfx::PushResourceLabel('YAKC');
             this->texture = Gfx::CreateResource(texSetup);
             Gfx::PopResourceLabel();
-
         }
     }
 }
