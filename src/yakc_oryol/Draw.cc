@@ -47,7 +47,7 @@ Draw::Discard() {
 void
 Draw::UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& warp) {
     this->crtEffectEnabled = enableCrtEffect;
-    this->crtColorEnabled = colorTV;
+    this->crtColorEnabled = colorTV ? 1.0f : 0.0f;
     this->crtWarp = warp;
 }
 

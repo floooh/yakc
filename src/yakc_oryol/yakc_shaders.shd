@@ -161,7 +161,7 @@ void main() {
 // this renders with expensive CRT effect
 @code_block FS_UNIFORMS
 uniform fsParams {
-    int colorTV;
+    float colorTV;
     vec2 crtWarp;
 };
 uniform sampler2D irm;
@@ -175,12 +175,10 @@ in vec2 uv;
 out vec4 fragColor;
 
 void main() {
-    vec4 color = tl_crt(irm, gl_FragCoord, uv, crtWarp);
-    if (colorTV == 0) {
-        float lum = dot(color.xyz, vec3(0.3, 0.59, 0.11));
-        color.xyz = vec3(lum, lum, lum);
-    }
-    fragColor = color;
+    vec3 color = tl_crt(irm, gl_FragCoord, uv, crtWarp).xyz;
+    float lum = dot(color, vec3(0.3, 0.59, 0.11));
+    vec3 bw = vec3(lum, lum, lum);
+    fragColor = vec4(mix(bw, color, colorTV), 1.0);
 }
 @end
 
@@ -192,12 +190,10 @@ in vec2 uv;
 out vec4 fragColor;
 
 void main() {
-    vec4 color = texture(irm, uv);
-    if (colorTV == 0) {
-        float lum = dot(color.xyz, vec3(0.3, 0.59, 0.11));
-        color.xyz = vec3(lum, lum, lum);
-    }
-    fragColor = color;
+    vec3 color = texture(irm, uv).xyz;
+    float lum = dot(color, vec3(0.3, 0.59, 0.11));
+    vec3 bw = vec3(lum, lum, lum);
+    fragColor = vec4(mix(bw, color, colorTV), 1.0);
 }
 @end
 
