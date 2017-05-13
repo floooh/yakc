@@ -6,7 +6,7 @@
 //  Timothy Lottes CRT effect shader:
 //  https://www.shadertoy.com/view/XsjSzR#
 
-@code_block TL_CRT
+@block TL_CRT
 //
 //
 // PUBLIC DOMAIN CRT STYLED SCAN-LINE SHADER
@@ -159,7 +159,7 @@ void main() {
 @end
 
 // this renders with expensive CRT effect
-@code_block FS_UNIFORMS
+@block FS_UNIFORMS
 uniform fsParams {
     float colorTV;
     vec2 crtWarp;
@@ -168,8 +168,8 @@ uniform sampler2D irm;
 @end
 
 @fs yakc_crtFS
-@use_code_block TL_CRT
-@use_code_block FS_UNIFORMS
+@include TL_CRT
+@include FS_UNIFORMS
 
 in vec2 uv;
 out vec4 fragColor;
@@ -184,7 +184,7 @@ void main() {
 
 // this renders without the expensive CRT effect
 @fs yakc_nocrtFS
-@use_code_block FS_UNIFORMS
+@include FS_UNIFORMS
 
 in vec2 uv;
 out vec4 fragColor;
