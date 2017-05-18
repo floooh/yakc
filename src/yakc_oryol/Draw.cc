@@ -67,14 +67,14 @@ Draw::Render(const void* pixels, int width, int height) {
     Gfx::UpdateTexture(this->texture, pixels, this->texUpdateAttrs);
     this->applyViewport(width, height);
     if (this->crtEffectEnabled) {
-        Oryol::CRTShader::fsParams fsParams;
+        CRTShader::fsParams fsParams;
         fsParams.colorTV = this->crtColorEnabled;
         fsParams.crtWarp = this->crtWarp;
         Gfx::ApplyDrawState(this->crtDrawState);
         Gfx::ApplyUniformBlock(fsParams);
     }
     else {
-        Oryol::NoCRTShader::fsParams fsParams;
+        NoCRTShader::fsParams fsParams;
         fsParams.colorTV = this->crtColorEnabled;
         fsParams.crtWarp = this->crtWarp;
         Gfx::ApplyDrawState(this->nocrtDrawState);
