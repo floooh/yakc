@@ -2,6 +2,7 @@
 //  Keyboard.cc
 //------------------------------------------------------------------------------
 #include "Keyboard.h"
+#include <cctype>
 
 namespace YAKC {
 
@@ -126,11 +127,11 @@ Keyboard::Setup(yakc& emu_) {
                 uint8_t ascii = (uint8_t) e.WCharCode;
                 // invert case (not on ZX or CPC machines)
                 if (!(this->emu->is_system(system::any_zx)||this->emu->is_system(system::any_cpc))) {
-                    if (islower(ascii)) {
-                        ascii = toupper(ascii);
+                    if (std::islower(ascii)) {
+                        ascii = std::toupper(ascii);
                     }
-                    else if (isupper(ascii)) {
-                        ascii = tolower(ascii);
+                    else if (std::isupper(ascii)) {
+                        ascii = std::tolower(ascii);
                     }
                 }
                 this->cur_char = ascii;
