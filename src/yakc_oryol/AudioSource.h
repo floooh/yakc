@@ -5,7 +5,6 @@
     @brief implements a custom SoLoud audio source for sound generation
 */
 #include "soloud.h"
-#include "Core/Threading/RWLock.h"
 #include "yakc/yakc.h"
 
 namespace YAKC {

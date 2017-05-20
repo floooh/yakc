@@ -2,7 +2,7 @@
 //  MemoryWindow.cc
 //------------------------------------------------------------------------------
 #include "MemoryWindow.h"
-#include "Input/Core/Key.h"
+#include "Input/Input.h"
 
 using namespace Oryol;
 
