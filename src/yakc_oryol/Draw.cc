@@ -47,7 +47,7 @@ Draw::Discard() {
 void
 Draw::UpdateParams(bool enableCrtEffect, bool colorTV, const glm::vec2& warp) {
     this->crtEffectEnabled = enableCrtEffect;
-    this->crtColorEnabled = colorTV;
+    this->crtColorEnabled = colorTV ? 1.0f : 0.0f;
     this->crtWarp = warp;
 }
 
@@ -61,22 +61,22 @@ Draw::Render(const void* pixels, int width, int height) {
         // width or height 0 (can happen if emulator is switched off)
         return;
     }
-    this->crtDrawState.FSTexture[YAKCTextures::IRM] = this->texture;
-    this->nocrtDrawState.FSTexture[YAKCTextures::IRM] = this->texture;
+    this->crtDrawState.FSTexture[CRTShader::irm] = this->texture;
+    this->nocrtDrawState.FSTexture[NoCRTShader::irm] = this->texture;
     this->texUpdateAttrs.Sizes[0][0] = width*height*4;
     Gfx::UpdateTexture(this->texture, pixels, this->texUpdateAttrs);
     this->applyViewport(width, height);
     if (this->crtEffectEnabled) {
-        Oryol::CRTShader::YAKCFSParams fsParams;
-        fsParams.ColorTV = this->crtColorEnabled;
-        fsParams.CRTWarp = this->crtWarp;
+        CRTShader::fsParams fsParams;
+        fsParams.colorTV = this->crtColorEnabled;
+        fsParams.crtWarp = this->crtWarp;
         Gfx::ApplyDrawState(this->crtDrawState);
         Gfx::ApplyUniformBlock(fsParams);
     }
     else {
-        Oryol::NoCRTShader::YAKCFSParams fsParams;
-        fsParams.ColorTV = this->crtColorEnabled;
-        fsParams.CRTWarp = this->crtWarp;
+        NoCRTShader::fsParams fsParams;
+        fsParams.colorTV = this->crtColorEnabled;
+        fsParams.crtWarp = this->crtWarp;
         Gfx::ApplyDrawState(this->nocrtDrawState);
         Gfx::ApplyUniformBlock(fsParams);
     }
