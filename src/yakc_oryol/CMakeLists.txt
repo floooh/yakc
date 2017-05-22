@@ -8,5 +8,5 @@ fips_begin_lib(yakc_oryol)
         SnapshotStorage.h SnapshotStorage.cc
     )
     oryol_shader(yakc_shaders.shd)
-    fips_deps(Gfx HTTP Input Assets soloud yakc)
+    fips_deps(Gfx HttpFS Input Assets soloud yakc)
 fips_end_lib()

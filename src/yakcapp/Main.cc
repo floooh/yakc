@@ -9,7 +9,7 @@
 #include "Gfx/Gfx.h"
 #include "Input/Input.h"
 #include "IO/IO.h"
-#include "HTTP/HTTPFileSystem.h"
+#include "HttpFS/HTTPFileSystem.h"
 #include "yakc/yakc.h"
 #include "yakc_oryol/Draw.h"
 #include "yakc_oryol/Audio.h"
