@@ -200,7 +200,7 @@ function match_system(sys, pattern) {
         return ['z9001', 'kc87'].indexOf(sys) != -1;
     }
     else if (pattern == 'any_zx') {
-        return ['zxspectrum48k', 'zxspectrum128k']
+        return ['zxspectrum48k', 'zxspectrum128k'].indexOf(sys) != -1;
     }
     else if (pattern == 'any_cpc') {
         return ['cpc464', 'cpc6128', 'kccompact'].indexOf(sys) != -1;
