@@ -33,7 +33,7 @@ public:
     static int soloud_open_count;
     yakc* emu = nullptr;
     SoLoud::BiquadResonantFilter filter;
-    AudioSource audioSource;
+    AudioSource* audioSource = nullptr;
     int audioHandle = 0;
 };
 

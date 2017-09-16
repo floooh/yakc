@@ -21,11 +21,12 @@ Audio::Setup(yakc* emu_) {
     }
     soloud_open_count++;
     this->filter.setParams(SoLoud::BiquadResonantFilter::LOWPASS, 44100, this->LowPassFreq, this->LowPassResonance);
-    this->audioSource.emu = emu_;
-    this->audioSource.setSingleInstance(true);
-    this->audioSource.setFilter(0, &this->filter);
-    this->audioSource.cpu_clock_speed = this->emu->board.clck.base_freq_khz * 1000;
-    this->audioHandle = soloud->play(this->audioSource, 1.0f);
+    this->audioSource = Memory::New<AudioSource>();
+    this->audioSource->emu = emu_;
+    this->audioSource->setSingleInstance(true);
+    this->audioSource->setFilter(0, &this->filter);
+    this->audioSource->cpu_clock_speed = this->emu->board.clck.base_freq_khz * 1000;
+    this->audioHandle = soloud->play(*this->audioSource, 1.0f);
 }
 
 //------------------------------------------------------------------------------
@@ -34,6 +35,8 @@ Audio::Discard() {
     soloud_open_count--;
     if (soloud_open_count == 0) {
         soloud->stopAll();
+        Memory::Delete(this->audioSource);
+        this->audioSource = nullptr;
         soloud->deinit();
         Memory::Delete(soloud);
         soloud = nullptr;
@@ -43,13 +46,13 @@ Audio::Discard() {
 //------------------------------------------------------------------------------
 void
 Audio::Update() {
-    this->audioSource.cpu_clock_speed = this->emu->board.clck.base_freq_khz * 1000;
+    this->audioSource->cpu_clock_speed = this->emu->board.clck.base_freq_khz * 1000;
 }
 
 //------------------------------------------------------------------------------
 uint64_t
 Audio::GetProcessedCycles() const {
-    return this->audioSource.sample_cycle_count;
+    return this->audioSource->sample_cycle_count;
 }
 
 //------------------------------------------------------------------------------
