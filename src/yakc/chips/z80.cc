@@ -38,7 +38,7 @@ z80::init_tables() {
         if (val & (1<<5)) p++;
         if (val & (1<<6)) p++;
         if (val & (1<<7)) p++;
-        ubyte f = val?(val&SF):ZF;
+        uint8_t f = val?(val&SF):ZF;
         f |= (val & (YF|XF));   // undocumented flag bits 3 and 5
         f |= p & 1 ? 0 : PF;
         this->szp[val] = f;
@@ -68,7 +68,7 @@ z80::reset() {
 
 //------------------------------------------------------------------------------
 uint32_t
-z80::invalid_opcode(uword opsize) {
+z80::invalid_opcode(uint16_t opsize) {
     if (this->break_on_invalid_opcode) {
         INV = true;
         PC -= opsize;     // stay stuck on invalid opcode
@@ -78,9 +78,9 @@ z80::invalid_opcode(uword opsize) {
 
 //------------------------------------------------------------------------------
 bool
-z80::test_flags(ubyte expected) const {
+z80::test_flags(uint8_t expected) const {
     // mask out undocumented flags
-    ubyte undoc = ~(YF|XF);
+    uint8_t undoc = ~(YF|XF);
     return (F & undoc) == expected;
 }
 
@@ -93,10 +93,10 @@ z80::halt() {
 
 //------------------------------------------------------------------------------
 void
-z80::rst(ubyte vec) {
+z80::rst(uint8_t vec) {
     SP -= 2;
     mem.w16(SP, PC);
-    WZ = PC = (uword) vec;
+    WZ = PC = (uint16_t) vec;
 }
 
 //------------------------------------------------------------------------------
@@ -146,14 +146,14 @@ z80::handle_irq(system_bus* bus) {
                 // and thus uses whatever is on the data bus when the interrupt
                 // happens, we simplify this here that the interrupt vector
                 // is always assumed to be 0
-                ubyte vec = 0x00;
+                uint8_t vec = 0x00;
                 if (this->irq_device) {
                     vec = this->irq_device->interrupt_acknowledged();
                 }
                 if (bus) {
                     bus->iack();
                 }
-                uword addr = (this->I<<8)|(vec&0xFE);
+                uint16_t addr = (this->I<<8)|(vec&0xFE);
                 this->SP -= 2;
                 this->mem.w16(this->SP, this->PC);
                 this->PC = this->mem.r16(addr);
@@ -194,8 +194,8 @@ z80::di() {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-z80::in(system_bus* bus, uword port) {
+uint8_t
+z80::in(system_bus* bus, uint16_t port) {
     if (bus) {
         return bus->cpu_in(port);
     }
@@ -206,16 +206,16 @@ z80::in(system_bus* bus, uword port) {
 
 //------------------------------------------------------------------------------
 void
-z80::out(system_bus* bus, uword port, ubyte val) {
+z80::out(system_bus* bus, uint16_t port, uint8_t val) {
     if (bus) {
         bus->cpu_out(port, val);
     }
 }
 
 //------------------------------------------------------------------------------
-ubyte
-z80::sziff2(ubyte val, bool iff2) {
-    ubyte f = YAKC_SZ(val);
+uint8_t
+z80::sziff2(uint8_t val, bool iff2) {
+    uint8_t f = YAKC_SZ(val);
     f |= (val & (YF|XF));
     if (iff2) f |= PF;
     return f;
@@ -224,10 +224,10 @@ z80::sziff2(ubyte val, bool iff2) {
 //------------------------------------------------------------------------------
 void
 z80::ldi() {
-    ubyte val = mem.r8(HL);
+    uint8_t val = mem.r8(HL);
     mem.w8(DE, val);
     val += A;
-    ubyte f = F & (SF|ZF|CF);
+    uint8_t f = F & (SF|ZF|CF);
     if (val & 0x02) f |= YF;
     if (val & 0x08) f |= XF;
     HL++;
@@ -256,10 +256,10 @@ z80::ldir() {
 //------------------------------------------------------------------------------
 void
 z80::ldd() {
-    ubyte val = mem.r8(HL);
+    uint8_t val = mem.r8(HL);
     mem.w8(DE, val);
     val += A;
-    ubyte f = F & (SF|ZF|CF);
+    uint8_t f = F & (SF|ZF|CF);
     if (val & 0x02) f |= YF;
     if (val & 0x08) f |= XF;
     HL--;
@@ -289,7 +289,7 @@ z80::lddr() {
 void
 z80::cpi() {
     int r = int(A) - int(mem.r8(HL));
-    ubyte f = NF | (F & CF) | YAKC_SZ(r);
+    uint8_t f = NF | (F & CF) | YAKC_SZ(r);
     if ((r & 0xF) > (A & 0xF)) {
         f |= HF;
         r--;
@@ -323,7 +323,7 @@ z80::cpir() {
 void
 z80::cpd() {
     int r = int(A) - int(mem.r8(HL));
-    ubyte f = NF | (F & CF) | YAKC_SZ(r);
+    uint8_t f = NF | (F & CF) | YAKC_SZ(r);
     if ((r & 0xF) > (A & 0xF)) {
         f |= HF;
         r--;
@@ -354,23 +354,23 @@ z80::cpdr() {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-z80::ini_ind_flags(ubyte io_val, int c_add) {
+uint8_t
+z80::ini_ind_flags(uint8_t io_val, int c_add) {
     // NOTE: most INI flag settings are undocumented in the official
     // docs, so this is taken from MAME, there's also more
     // information here: http://www.z80.info/z80undoc3.txt
-    ubyte f = B ? B & SF : ZF;
+    uint8_t f = B ? B & SF : ZF;
     if (io_val & SF) f |= NF;
     uint32_t t = (uint32_t)((C+c_add)&0xFF) + (uint32_t)io_val;
     if (t & 0x100) f |= HF|CF;
-    f |= szp[ubyte(t & 0x07)^B] & PF;
+    f |= szp[uint8_t(t & 0x07)^B] & PF;
     return f;
 }
 
 //------------------------------------------------------------------------------
 void
 z80::ini(system_bus* bus) {
-    ubyte io_val = in(bus, BC);
+    uint8_t io_val = in(bus, BC);
     WZ = BC + 1;
     B--;
     mem.w8(HL++, io_val);
@@ -393,7 +393,7 @@ z80::inir(system_bus* bus) {
 //------------------------------------------------------------------------------
 void
 z80::ind(system_bus* bus) {
-    ubyte io_val = in(bus, BC);
+    uint8_t io_val = in(bus, BC);
     WZ = BC - 1;
     B--;
     mem.w8(HL--, io_val);
@@ -414,23 +414,23 @@ z80::indr(system_bus* bus) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-z80::outi_outd_flags(ubyte io_val) {
+uint8_t
+z80::outi_outd_flags(uint8_t io_val) {
     // NOTE: most OUTI flag settings are undocumented in the official
     // docs, so this is taken from MAME, there's also more
     // information here: http://www.z80.info/z80undoc3.txt
-    ubyte f = B ? B & SF : ZF;
+    uint8_t f = B ? B & SF : ZF;
     if (io_val & SF) f |= NF;
     uint32_t t = (uint32_t)L + (uint32_t)io_val;
     if (t & 0x100) f |= HF|CF;
-    f |= szp[ubyte(t & 0x07)^B] & PF;
+    f |= szp[uint8_t(t & 0x07)^B] & PF;
     return f;
 }
 
 //------------------------------------------------------------------------------
 void
 z80::outi(system_bus* bus) {
-    ubyte io_val = mem.r8(HL++);
+    uint8_t io_val = mem.r8(HL++);
     B--;
     WZ = BC + 1;
     out(bus, BC, io_val);
@@ -453,7 +453,7 @@ z80::otir(system_bus* bus) {
 //------------------------------------------------------------------------------
 void
 z80::outd(system_bus* bus) {
-    ubyte io_val = mem.r8(HL--);
+    uint8_t io_val = mem.r8(HL--);
     B--;
     WZ = BC - 1;
     out(bus, BC, io_val);
@@ -477,7 +477,7 @@ z80::otdr(system_bus* bus) {
 void
 z80::daa() {
     // from MAME and http://www.z80.info/zip/z80-documented.pdf
-    ubyte val = A;
+    uint8_t val = A;
     if (F & NF) {
         if (((A & 0xF) > 0x9) || (F & HF)) {
             val -= 0x06;
@@ -505,8 +505,8 @@ z80::daa() {
 void
 z80::rld() {
     WZ = HL;
-    ubyte x = mem.r8(WZ++);
-    ubyte tmp = A & 0xF;              // store A low nibble
+    uint8_t x = mem.r8(WZ++);
+    uint8_t tmp = A & 0xF;              // store A low nibble
     A = (A & 0xF0) | (x>>4);    // move (HL) high nibble into A low nibble
     x = (x<<4) | tmp;   // move (HL) low to high nibble, move A low nibble to (HL) low nibble
     mem.w8(HL, x);
@@ -517,8 +517,8 @@ z80::rld() {
 void
 z80::rrd() {
     WZ = HL;
-    ubyte x = mem.r8(WZ++);
-    ubyte tmp = A & 0xF;                  // store A low nibble
+    uint8_t x = mem.r8(WZ++);
+    uint8_t tmp = A & 0xF;                  // store A low nibble
     A = (A & 0xF0) | (x & 0x0F);    // move (HL) low nibble to A low nibble
     x = (x >> 4) | (tmp << 4);  // move A low nibble to (HL) high nibble, and (HL) high nibble to (HL) low nibble
     mem.w8(HL, x);

@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
-Version = 3 
+Version = 4 
 
 # tab-width for generated code
 TabWidth = 2
@@ -81,10 +81,10 @@ def iHLcmt(ext) :
 def iHLsrc(ext) :
     if (ext) :
         # IX+d or IY+d
-        return 'uword a=WZ={}+mem.rs8(PC++)'.format(r[6])
+        return 'uint16_t a=WZ={}+mem.rs8(PC++)'.format(r[6])
     else :
         # HL
-        return 'uword a={}'.format(r[6])
+        return 'uint16_t a={}'.format(r[6])
 
 #-------------------------------------------------------------------------------
 # Return code to setup an variable 'a' with the address of HL or (IX+d), (IY+d).
@@ -93,10 +93,10 @@ def iHLsrc(ext) :
 def iHLdsrc(ext) :
     if (ext) :
         # IX+d or IY+d
-        return 'uword a=WZ={}+d;'.format(r[6])
+        return 'uint16_t a=WZ={}+d;'.format(r[6])
     else :
         # HL
-        return 'uword a={}'.format(r[6])
+        return 'uint16_t a={}'.format(r[6])
 
 #-------------------------------------------------------------------------------
 # Encode a main instruction, or an DD or FD prefix instruction.
@@ -274,7 +274,7 @@ def enc_op(op, cyc, ext) :
                 [ 'IN A,(n)', 'A=in(bus, (A<<8)|mem.r8(PC++)); return {};'.format(11+cyc) ],
                 [ 
                     'EX (SP),{}'.format(rp[2]), 
-                    '{{uword swp=mem.r16(SP); mem.w16(SP,{}); {}=WZ=swp;}} return {};'.format(rp[2], rp[2], 19+cyc)
+                    '{{uint16_t swp=mem.r16(SP); mem.w16(SP,{}); {}=WZ=swp;}} return {};'.format(rp[2], rp[2], 19+cyc)
                 ],
                 [ 'EX DE,HL', 'swap16(DE,HL); return {};'.format(4+cyc) ],
                 [ 'DI', 'di(); return {};'.format(4+cyc) ],

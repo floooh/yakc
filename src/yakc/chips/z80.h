@@ -26,50 +26,50 @@ public:
     };
 
     union {
-        struct { ubyte C, B; };
-        uword BC;
+        struct { uint8_t C, B; };
+        uint16_t BC;
     };
     union {
-        struct { ubyte E, D; };
-        uword DE;
+        struct { uint8_t E, D; };
+        uint16_t DE;
     };
     union {
-        struct { ubyte L, H; };
-        uword HL;
+        struct { uint8_t L, H; };
+        uint16_t HL;
     };
     union {
-        struct { ubyte F, A; };
-        uword AF;
+        struct { uint8_t F, A; };
+        uint16_t AF;
     };
     union {
-        struct { ubyte IXL, IXH; };
-        uword IX;
+        struct { uint8_t IXL, IXH; };
+        uint16_t IX;
     };
     union {
-        struct { ubyte IYL, IYH; };
-        uword IY;
+        struct { uint8_t IYL, IYH; };
+        uint16_t IY;
     };
     union {
-        struct { ubyte Z, W; };
-        uword WZ;
+        struct { uint8_t Z, W; };
+        uint16_t WZ;
     };
-    uword BC_;
-    uword DE_;
-    uword HL_;
-    uword AF_;
-    uword WZ_;
-    uword SP;
-    uword PC;
-    ubyte I;
-    ubyte R;
-    ubyte IM;
+    uint16_t BC_;
+    uint16_t DE_;
+    uint16_t HL_;
+    uint16_t AF_;
+    uint16_t WZ_;
+    uint16_t SP;
+    uint16_t PC;
+    uint8_t I;
+    uint8_t R;
+    uint8_t IM;
 
     bool HALT;
     bool IFF1, IFF2;
     bool INV;   // invalid instruction hit
 
     /// flag lookup table for SZP flag combinations
-    ubyte szp[256];
+    uint8_t szp[256];
 
     /// memory map
     memory mem;
@@ -95,11 +95,11 @@ public:
     /// perform a reset (RESET pin triggered)
     void reset();
     /// helper to test expected flag bitmask (FIXME: move to z80dbg?)
-    bool test_flags(ubyte expected) const;
+    bool test_flags(uint8_t expected) const;
     /// called when invalid opcode has been hit
-    uint32_t invalid_opcode(uword opsize);
+    uint32_t invalid_opcode(uint16_t opsize);
     /// helper method to swap 2 16-bit registers
-    static void swap16(uword& r0, uword& r1);
+    static void swap16(uint16_t& r0, uint16_t& r1);
 
     /// trigger interrupt request line on or off
     void irq(bool b);
@@ -113,45 +113,45 @@ public:
     void di();
 
     /// call in-handler, return result
-    ubyte in(system_bus* bus, uword port);
+    uint8_t in(system_bus* bus, uint16_t port);
     /// call out-handler
-    void out(system_bus* bus, uword port, ubyte val);
+    void out(system_bus* bus, uint16_t port, uint8_t val);
 
     /// get flags for the LD A,I and LD A,R instructions
-    static ubyte sziff2(ubyte val, bool iff2);
+    static uint8_t sziff2(uint8_t val, bool iff2);
 
     /// halt instruction
     void halt();
     /// rst instruction (vec is 0x00, 0x08, 0x10, ...)
-    void rst(ubyte vec);
+    void rst(uint8_t vec);
     /// perform an 8-bit add and update flags
-    void add8(ubyte add);
+    void add8(uint8_t add);
     /// perform an 8-bit adc and update flags
-    void adc8(ubyte add);
+    void adc8(uint8_t add);
     /// perform an 8-bit sub and update flags
-    void sub8(ubyte sub);
+    void sub8(uint8_t sub);
     /// perform an 8-bit sbc and update flags
-    void sbc8(ubyte sub);
+    void sbc8(uint8_t sub);
     /// perform 8-bit compare (identical with sub8 but throw result away)
-    void cp8(ubyte sub);
+    void cp8(uint8_t sub);
     /// perform a neg and update flags
     void neg8();
     /// perform an 8-bit and and update flags
-    void and8(ubyte val);
+    void and8(uint8_t val);
     /// perform an 8-bit or and update flags
-    void or8(ubyte val);
+    void or8(uint8_t val);
     /// perform an 8-bit xor and update flags
-    void xor8(ubyte val);
+    void xor8(uint8_t val);
     /// perform an 8-bit inc and set flags
-    ubyte inc8(ubyte val);
+    uint8_t inc8(uint8_t val);
     /// perform an 8-bit dec and set flags
-    ubyte dec8(ubyte val);
+    uint8_t dec8(uint8_t val);
     /// perform an 16-bit add, update flags and return result
-    uword add16(uword acc, uword val);
+    uint16_t add16(uint16_t acc, uint16_t val);
     /// perform an 16-bit adc, update flags and return result
-    uword adc16(uword acc, uword val);
+    uint16_t adc16(uint16_t acc, uint16_t val);
     /// perform an 16-bit sbc, update flags and return result
-    uword sbc16(uword acc, uword val);
+    uint16_t sbc16(uint16_t acc, uint16_t val);
     /// implement the LDI instruction
     void ldi();
     /// implement the LDIR instruction, return number of T-states
@@ -169,7 +169,7 @@ public:
     /// implement the CPDR instruction, return number of T-states
     int cpdr();
     /// return flags for ini/ind instruction
-    ubyte ini_ind_flags(ubyte io_val, int c_add);
+    uint8_t ini_ind_flags(uint8_t io_val, int c_add);
     /// implement the INI instruction
     void ini(system_bus* bus);
     /// implement the INIR instruction, return number of T-states
@@ -179,7 +179,7 @@ public:
     /// implement the INDR instruction, return number of T-states
     int indr(system_bus* bus);
     /// return flags for outi/outd instruction
-    ubyte outi_outd_flags(ubyte io_val);
+    uint8_t outi_outd_flags(uint8_t io_val);
     /// implement the OUTI instruction
     void outi(system_bus* bus);
     /// implement the OTIR instructor, return number of T-states
@@ -191,40 +191,40 @@ public:
     /// implement the DAA instruction
     void daa();
     /// rotate left, copy sign bit into CF
-    ubyte rlc8(ubyte val);
+    uint8_t rlc8(uint8_t val);
     /// rotate A left, copy sign bit into CF
     void rlca8();
     /// rotate right, copy bit 0 into CF
-    ubyte rrc8(ubyte val);
+    uint8_t rrc8(uint8_t val);
     /// rotate A right, copy bit 0 into CF
     void rrca8();
     /// rotate left through carry bit
-    ubyte rl8(ubyte val);
+    uint8_t rl8(uint8_t val);
     /// rotate A left through carry bit
     void rla8();
     /// rotate right through carry bit
-    ubyte rr8(ubyte val);
+    uint8_t rr8(uint8_t val);
     /// rotate A right through carry bit
     void rra8();
     /// shift left into carry bit and update flags
-    ubyte sla8(ubyte val);
+    uint8_t sla8(uint8_t val);
     /// undocumented: shift left into carry bit, update flags
-    ubyte sll8(ubyte val);
+    uint8_t sll8(uint8_t val);
     /// shift right into carry bit, preserve sign, update flags
-    ubyte sra8(ubyte val);
+    uint8_t sra8(uint8_t val);
     /// shift right into carry bit, update flags
-    ubyte srl8(ubyte val);
+    uint8_t srl8(uint8_t val);
     /// implements the RLD instruction
     void rld();
     /// implements the RRD instruction
     void rrd();
     /// implements the BIT test instruction, updates flags
-    void bit(ubyte val, ubyte mask);
+    void bit(uint8_t val, uint8_t mask);
     /// same as BIT, but take undocumented YF|XF flags from undocumented WZ register
-    void ibit(ubyte val, ubyte mask);
+    void ibit(uint8_t val, uint8_t mask);
 
     /// fetch an opcode byte and increment R register
-    ubyte fetch_op();
+    uint8_t fetch_op();
     /// execute a single instruction, return number of cycles
     uint32_t step(system_bus* bus);
     /// top-level opcode decoder (generated)
@@ -236,8 +236,8 @@ public:
 
 //------------------------------------------------------------------------------
 inline void
-z80::swap16(uword& r0, uword& r1) {
-    uword tmp = r0;
+z80::swap16(uint16_t& r0, uint16_t& r1) {
+    uint16_t tmp = r0;
     r0 = r1;
     r1 = tmp;
 }
@@ -245,33 +245,33 @@ z80::swap16(uword& r0, uword& r1) {
 //------------------------------------------------------------------------------
 #define YAKC_ADD_FLAGS(acc,val,res) (YAKC_SZYXCH(acc,val,res)|((((val^acc^0x80)&(val^res))>>5)&VF))
 inline void
-z80::add8(ubyte add) {
+z80::add8(uint8_t add) {
     int r = A + add;
     F = YAKC_ADD_FLAGS(A,add,r);
-    A = ubyte(r);
+    A = uint8_t(r);
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80::adc8(ubyte add) {
+z80::adc8(uint8_t add) {
     int r = A + add + (F&CF);
     F = YAKC_ADD_FLAGS(A,add,r);
-    A = ubyte(r);
+    A = uint8_t(r);
 }
 
 //------------------------------------------------------------------------------
 #define YAKC_SUB_FLAGS(acc,val,res) (NF|YAKC_SZYXCH(acc,val,res)|((((val^acc)&(res^acc))>>5)&VF))
 inline void
-z80::sub8(ubyte sub) {
+z80::sub8(uint8_t sub) {
     int r = int(A) - int(sub);
     F = YAKC_SUB_FLAGS(A,sub,r);
-    A = ubyte(r);
+    A = uint8_t(r);
 }
 
 //------------------------------------------------------------------------------
 #define YAKC_CP_FLAGS(acc,val,res) (NF|(YAKC_SZ(res)|(val&(YF|XF))|((res>>8)&CF)|((acc^val^res)&HF))|((((val^acc)&(res^acc))>>5)&VF))
 inline void
-z80::cp8(ubyte sub) {
+z80::cp8(uint8_t sub) {
     // NOTE: XF|YF are set from sub, not from result!
     int r = int(A) - int(sub);
     F = YAKC_CP_FLAGS(A,sub,r);
@@ -287,57 +287,57 @@ z80::neg8() {
 
 //------------------------------------------------------------------------------
 inline void
-z80::sbc8(ubyte sub) {
+z80::sbc8(uint8_t sub) {
     int r = int(A) - int(sub) - (F&CF);
     F = YAKC_SUB_FLAGS(A,sub,r);
-    A = ubyte(r);
+    A = uint8_t(r);
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80::and8(ubyte val) {
+z80::and8(uint8_t val) {
     A &= val;
     F = szp[A]|HF;
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80::or8(ubyte val) {
+z80::or8(uint8_t val) {
     A |= val;
     F = szp[A];
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80::xor8(ubyte val) {
+z80::xor8(uint8_t val) {
     A ^= val;
     F = szp[A];
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::inc8(ubyte val) {
-    ubyte r = val + 1;
-    ubyte f = YAKC_SZ(r)|(r&(XF|YF))|((r^val)&HF);
+inline uint8_t
+z80::inc8(uint8_t val) {
+    uint8_t r = val + 1;
+    uint8_t f = YAKC_SZ(r)|(r&(XF|YF))|((r^val)&HF);
     if (r == 0x80) f |= VF;
     F = f | (F&CF);
     return r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::dec8(ubyte val) {
-    ubyte r = val - 1;
-    ubyte f = NF|YAKC_SZ(r)|(r&(XF|YF))|((r^val)&HF);
+inline uint8_t
+z80::dec8(uint8_t val) {
+    uint8_t r = val - 1;
+    uint8_t f = NF|YAKC_SZ(r)|(r&(XF|YF))|((r^val)&HF);
     if (r == 0x7F) f |= VF;
     F = f | (F & CF);
     return r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::rlc8(ubyte val) {
-    ubyte r = val<<1|val>>7;
+inline uint8_t
+z80::rlc8(uint8_t val) {
+    uint8_t r = val<<1|val>>7;
     F = szp[r] | (val>>7 & CF);
     return r;
 }
@@ -345,15 +345,15 @@ z80::rlc8(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 z80::rlca8() {
-    ubyte r = A<<1|A>>7;
+    uint8_t r = A<<1|A>>7;
     F = (A>>7 & CF) | (F & (SF|ZF|PF)) | (r&(XF|YF));
     A = r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::rrc8(ubyte val) {
-    ubyte r = val>>1|val<<7;
+inline uint8_t
+z80::rrc8(uint8_t val) {
+    uint8_t r = val>>1|val<<7;
     F = szp[r] | (val & CF);
     return r;
 }
@@ -361,15 +361,15 @@ z80::rrc8(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 z80::rrca8() {
-    ubyte r = A>>1|A<<7;
+    uint8_t r = A>>1|A<<7;
     F = (A & CF) | (F & (SF|ZF|PF)) | (r&(YF|XF));
     A = r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::rl8(ubyte val) {
-    ubyte r = val<<1 | (F & CF);
+inline uint8_t
+z80::rl8(uint8_t val) {
+    uint8_t r = val<<1 | (F & CF);
     F = (val>>7 & CF) | szp[r];
     return r;
 }
@@ -377,15 +377,15 @@ z80::rl8(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 z80::rla8() {
-    ubyte r = A<<1 | (F & CF);
+    uint8_t r = A<<1 | (F & CF);
     F = (A>>7 & CF) | (F & (SF|ZF|PF)) | (r&(YF|XF));
     A = r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::rr8(ubyte val) {
-    ubyte r = val>>1 | ((F & CF)<<7);
+inline uint8_t
+z80::rr8(uint8_t val) {
+    uint8_t r = val>>1 | ((F & CF)<<7);
     F = (val & CF) | szp[r];
     return r;
 }
@@ -393,80 +393,80 @@ z80::rr8(ubyte val) {
 //------------------------------------------------------------------------------
 inline void
 z80::rra8() {
-    ubyte r = A>>1 | ((F & CF)<<7);
+    uint8_t r = A>>1 | ((F & CF)<<7);
     F = (A & CF) | (F & (SF|ZF|PF)) | (r&(YF|XF));
     A = r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::sla8(ubyte val) {
-    ubyte r = val<<1;
+inline uint8_t
+z80::sla8(uint8_t val) {
+    uint8_t r = val<<1;
     F = (val>>7 & CF) | szp[r];
     return r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::sll8(ubyte val) {
+inline uint8_t
+z80::sll8(uint8_t val) {
     // undocument! sll8 is identical with sla8 but inserts a 1 into the LSB
-    ubyte r = (val<<1) | 1;
+    uint8_t r = (val<<1) | 1;
     F = (val>>7 & CF) | szp[r];
     return r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::sra8(ubyte val) {
-    ubyte r = (val>>1) | (val & 0x80);
+inline uint8_t
+z80::sra8(uint8_t val) {
+    uint8_t r = (val>>1) | (val & 0x80);
     F = (val & CF) | szp[r];
     return r;
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
-z80::srl8(ubyte val) {
-    ubyte r = val>>1;
+inline uint8_t
+z80::srl8(uint8_t val) {
+    uint8_t r = val>>1;
     F = (val & CF) | szp[r];
     return r;
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80::bit(ubyte val, ubyte mask) {
-    ubyte r = val & mask;
-    ubyte f = HF | (r ? (r & SF) : (ZF|PF));
+z80::bit(uint8_t val, uint8_t mask) {
+    uint8_t r = val & mask;
+    uint8_t f = HF | (r ? (r & SF) : (ZF|PF));
     f |= (val & (YF|XF));
     F = f | (F & CF);
 }
 
 //------------------------------------------------------------------------------
 inline void
-z80::ibit(ubyte val, ubyte mask) {
+z80::ibit(uint8_t val, uint8_t mask) {
     // this is the version for the BIT instruction for (HL), (IX+d), (IY+d),
     // these set the undocumented YF and XF flags from high byte of HL+1
     // or IX/IY+d
-    ubyte r = val & mask;
-    ubyte f = HF | (r ? (r & SF) : (ZF|PF));
+    uint8_t r = val & mask;
+    uint8_t f = HF | (r ? (r & SF) : (ZF|PF));
     f |= (W & (YF|XF));
     F = f | (F & CF);
 }
 
 //------------------------------------------------------------------------------
-inline uword
-z80::add16(uword acc, uword val) {
+inline uint16_t
+z80::add16(uint16_t acc, uint16_t val) {
     WZ = acc+1;
     uint32_t res = acc + val;
     // flag computation taken from MAME
     F = (F & (SF|ZF|VF)) |
         (((acc^res^val)>>8)&HF)|
         ((res>>16) & CF) | ((res >> 8) & (YF|XF));
-    return (uword)res;
+    return (uint16_t)res;
 }
 
 //------------------------------------------------------------------------------
-inline uword
-z80::adc16(uword acc, uword val) {
+inline uint16_t
+z80::adc16(uint16_t acc, uint16_t val) {
     WZ = acc+1;
     uint32_t res = acc + val + (F & CF);
     // flag computation taken from MAME
@@ -479,8 +479,8 @@ z80::adc16(uword acc, uword val) {
 }
 
 //------------------------------------------------------------------------------
-inline uword
-z80::sbc16(uword acc, uword val) {
+inline uint16_t
+z80::sbc16(uint16_t acc, uint16_t val) {
     WZ = acc+1;
     uint32_t res = acc - val - (F & CF);
     // flag computation taken from MAME
@@ -493,7 +493,7 @@ z80::sbc16(uword acc, uword val) {
 }
 
 //------------------------------------------------------------------------------
-inline ubyte
+inline uint8_t
 z80::fetch_op() {
     R = (R&0x80) | ((R+1)&0x7F);
     return mem.r8(PC++);
