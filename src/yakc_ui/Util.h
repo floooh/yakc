@@ -18,7 +18,7 @@ public:
     static char NibbleToStr(uint8_t n);
     /// convert a byte to a hex string
     static void UByteToStr(uint8_t b, char* buf, int buf_size);
-    /// convert an uword to a hex string
+    /// convert an uint16_t to a hex string
     static void UWordToStr(uint16_t w, char* buf, int bufSize);
     /// parse 4 hex characters into an uint16_t, return old value if failed
     static uint16_t ParseUWord(const char* str, uint16_t oldVal);

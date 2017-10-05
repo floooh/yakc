@@ -26,11 +26,8 @@ namespace YAKC {
 
 struct MemoryEditor
 {
-    typedef unsigned char ubyte;
-    typedef unsigned short uword;
-
-    typedef ubyte (*cb_read)(void* userdata, uword addr);
-    typedef void (*cb_write)(void* userdata, uword addr, ubyte value);
+    typedef uint8_t (*cb_read)(void* userdata, uint16_t addr);
+    typedef void (*cb_write)(void* userdata, uint16_t addr, uint8_t value);
 
     bool    Open;
     bool    AllowEdits;
@@ -40,8 +37,8 @@ struct MemoryEditor
     char    DataInput[32];
     char    MemAddrInput[32];
     char    MemSizeInput[32];
-    uword   MemAddr;
-    uword   MemSize;
+    uint16_t   MemAddr;
+    uint16_t   MemSize;
 
     MemoryEditor()
     {
@@ -214,7 +211,7 @@ struct MemoryEditor
                 int new_addr = MemAddr;
                 if (sscanf(MemAddrInput, "%X", &new_addr) == 1)
                 {
-                    MemAddr = (uword) new_addr;
+                    MemAddr = (uint16_t) new_addr;
                     sprintf(MemAddrInput, "%04X", MemAddr);
                 }
             }
@@ -224,7 +221,7 @@ struct MemoryEditor
                 int new_size = MemSize;
                 if (sscanf(MemSizeInput, "%X", &new_size) == 1)
                 {
-                    MemSize = (uword) new_size;
+                    MemSize = (uint16_t) new_size;
                     sprintf(MemSizeInput, "%04X", MemSize);
                 }
             }

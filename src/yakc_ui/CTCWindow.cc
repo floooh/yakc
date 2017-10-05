@@ -17,7 +17,7 @@ CTCWindow::Setup(yakc& emu) {
 
 //------------------------------------------------------------------------------
 static void
-drawModeBit(const yakc& emu, int chn_index, ubyte mask, const char* name, const char* on_str, const char* off_str) {
+drawModeBit(const yakc& emu, int chn_index, uint8_t mask, const char* name, const char* on_str, const char* off_str) {
     ImGui::Text("  %s:", name); ImGui::SameLine(128);
     if (emu.board.z80ctc.channels[chn_index].mode & mask) {
         ImGui::Text("%s", on_str);

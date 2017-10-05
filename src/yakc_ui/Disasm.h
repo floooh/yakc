@@ -13,13 +13,13 @@ public:
     /// constructor
     Disasm();
     /// disassemble instruction at addr, return new addr
-    uword Disassemble(const yakc& emu, uword addr);
+    uint16_t Disassemble(const yakc& emu, uint16_t addr);
     /// get disassembled string
     const char* Result() const;
 
 private:
     /// fetch next opcode byte for z80dasm
-    static ubyte fetch(uword base, int offset, void* userdata);
+    static uint8_t fetch(uint16_t base, int offset, void* userdata);
 
     const yakc* emu;
     char buffer[64];

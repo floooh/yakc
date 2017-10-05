@@ -91,8 +91,8 @@ TEST(z80pio_control) {
     pio.write_control(z80pio::A, (1<<7)|(1<<4)|7);
     pio.write_control(z80pio::A, 0x55);
     pio.write_control(z80pio::B, (1<<7)|(1<<6)|(1<<5)|7);
-    ubyte val_a = pio.read_control();
-    ubyte val_b = pio.read_control();
+    uint8_t val_a = pio.read_control();
+    uint8_t val_b = pio.read_control();
     CHECK(val_a == val_b);
     CHECK(val_a == ((1<<7)|(1<<3)|(1<<2)|(1<<1)));
 
@@ -112,12 +112,12 @@ TEST(z80pio_control) {
 //------------------------------------------------------------------------------
 class pioTestBus : public system_bus {
 public:
-    ubyte out_value_a = 0;
-    ubyte in_value_a = 0;
-    ubyte out_value_b = 0;
-    ubyte in_value_b = 0;
+    uint8_t out_value_a = 0;
+    uint8_t in_value_a = 0;
+    uint8_t out_value_b = 0;
+    uint8_t in_value_b = 0;
 
-    virtual ubyte pio_in(int pio_id, int port_id) override {
+    virtual uint8_t pio_in(int pio_id, int port_id) override {
         if (z80pio::A == port_id) {
             return this->in_value_a;
         }
@@ -125,7 +125,7 @@ public:
             return this->in_value_b;
         }
     }
-    virtual void pio_out(int pio_id, int port_id, ubyte val) override {
+    virtual void pio_out(int pio_id, int port_id, uint8_t val) override {
         if (z80pio::A == port_id) {
             this->out_value_a = val;
         }
@@ -160,7 +160,7 @@ TEST(z80pio_output_input) {
     // but simply return the value of the output register
     bus.out_value_a = 0;
     bus.in_value_a = 0x23;
-    ubyte read_val = pio.read_data(&bus, z80pio::A);
+    uint8_t read_val = pio.read_data(&bus, z80pio::A);
     CHECK(0x54 == read_val);
     CHECK(0 == bus.out_value_a);
     CHECK(0x23 == bus.in_value_a);

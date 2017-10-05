@@ -17,8 +17,8 @@ static uint8_t mem_cb(bool write, uint16_t addr, uint8_t inval) {
     return 0x00;
 }
 
-static ubyte ram[0x0800];
-static ubyte sram[0x2000];
+static uint8_t ram[0x0800];
+static uint8_t sram[0x2000];
 
 class nes_bus : public system_bus {
 public:

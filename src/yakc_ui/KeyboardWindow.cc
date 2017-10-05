@@ -10,11 +10,11 @@ namespace YAKC {
 
 struct key {
     key() : pos(0.0f), name(nullptr), code(0), shift_code(0) { };
-    key(float p, const char* n, ubyte c, ubyte sc) : pos(p), name(n), code(c), shift_code(sc) { };
+    key(float p, const char* n, uint8_t c, uint8_t sc) : pos(p), name(n), code(c), shift_code(sc) { };
     float pos;
     const char* name;
-    ubyte code;
-    ubyte shift_code;
+    uint8_t code;
+    uint8_t shift_code;
 };
 
 // the 5 'main section' rows of keys:

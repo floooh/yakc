@@ -16,7 +16,7 @@ public:
     /// draw method
     virtual bool Draw(yakc& emu) override;
     /// draw a single module slot
-    void drawModuleSlot(kc85& kc, ubyte slot_addr);
+    void drawModuleSlot(kc85& kc, uint8_t slot_addr);
 };
 
 } // namespace YAKC

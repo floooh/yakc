@@ -32,7 +32,7 @@ KC85IOWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(240, 384), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
         if (ImGui::CollapsingHeader("PIO A (0x88)", "#kc85_io_a", true, true)) {
-            const ubyte a = emu.board.z80pio.port[z80pio::A].output;
+            const uint8_t a = emu.board.z80pio.port[z80pio::A].output;
             onOffLine("Bit 0: CAOS ROM E", 0 != (a&kc85::PIO_A_CAOS_ROM));
             onOffLine("Bit 1: RAM", 0 != (a&kc85::PIO_A_RAM));
             onOffLine("Bit 2: IRM", 0 != (a&kc85::PIO_A_IRM));
@@ -43,7 +43,7 @@ KC85IOWindow::Draw(yakc& emu) {
             onOffLine("Bit 7: BASIC ROM", 0 != (a&kc85::PIO_A_BASIC_ROM));
         }
         if (ImGui::CollapsingHeader("PIO B (0x89)", "#kc85_io_b", true, true)) {
-            const ubyte b = emu.board.z80pio.port[z80pio::B].output;
+            const uint8_t b = emu.board.z80pio.port[z80pio::B].output;
             ImGui::Text("Bit 0..5: Volume"); ImGui::SameLine(float(offset)); ImGui::Text("%02X", b & kc85::PIO_B_VOLUME_MASK);
             if (emu.is_system(system::kc85_4)) {
                 onOffLine("Bit 5: RAM8", 0 != (b&kc85::PIO_B_RAM8));
@@ -57,7 +57,7 @@ KC85IOWindow::Draw(yakc& emu) {
         }
         if (emu.is_system(system::kc85_4)) {
             if (ImGui::CollapsingHeader("Port 0x84", "#kc85_io_84", true, true)) {
-                const ubyte v = emu.kc85.io84;
+                const uint8_t v = emu.kc85.io84;
                 onOffLine("Bit 0: view image 0/1", 0 != (v&kc85::IO84_SEL_VIEW_IMG));
                 onOffLine("Bit 1: access pixel/color", 0 != (v&kc85::IO84_SEL_CPU_COLOR));
                 onOffLine("Bit 2: access image 0/1", 0 != (v&kc85::IO84_SEL_CPU_IMG));
@@ -68,7 +68,7 @@ KC85IOWindow::Draw(yakc& emu) {
                 onOffLine("Bit 7: unused", 0 != (v&(1<<7)));
             }
             if (ImGui::CollapsingHeader("Port 0x86", "#kc85_io_86", true, true)) {
-                const ubyte v = emu.kc85.io86;
+                const uint8_t v = emu.kc85.io86;
                 onOffLine("Bit 0: RAM4", 0 != (v&kc85::IO86_RAM4));
                 onOffLine("Bit 1: RAM4 R/O", 0 != (v&kc85::IO86_RAM4_RO));
                 onOffLine("Bit 2: unused", 0 != (v&(1<<2)));

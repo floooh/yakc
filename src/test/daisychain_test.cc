@@ -8,7 +8,7 @@
 
 using namespace YAKC;
 
-static ubyte ram[0x4000];
+static uint8_t ram[0x4000];
 
 class daisyChainTestBus : public system_bus {
 public:
@@ -31,7 +31,7 @@ TEST(daisychain) {
     bus.cpu.IM = 0x02;
     bus.cpu.I = 0x01;
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0xFB,               // EI
         0x31, 0x00, 0x01,   // LD SP,0x0100
         0x00, 0x00, 0x00,   // 3x NOP

@@ -16,7 +16,7 @@ ModuleWindow::Setup(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-ModuleWindow::drawModuleSlot(kc85& kc, ubyte slot_addr) {
+ModuleWindow::drawModuleSlot(kc85& kc, uint8_t slot_addr) {
     ImGui::PushID(slot_addr);
     ImGui::AlignFirstTextHeightToWidgets();
     ImGui::Text("SLOT %02X:", slot_addr); ImGui::SameLine();

@@ -7,7 +7,7 @@
 
 using namespace YAKC;
 
-static ubyte ram0[0x10000];
+static uint8_t ram0[0x10000];
 typedef mos6502 f;
 mos6502 cpu;
 system_bus bus;

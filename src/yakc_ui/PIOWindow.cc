@@ -28,13 +28,13 @@ PIOWindow::Setup(yakc& emu) {
 
 //------------------------------------------------------------------------------
 static void
-status(const char* name, ubyte val) {
+status(const char* name, uint8_t val) {
     ImGui::Text("%s", name); ImGui::SameLine(float(offset)); ImGui::Text("%02X", val);
 }
 
 //------------------------------------------------------------------------------
 static const char*
-modeAsString(ubyte m) {
+modeAsString(uint8_t m) {
     switch (m) {
         case 0: return "output";
         case 1: return "input";

@@ -18,7 +18,7 @@ make these work.
 using namespace YAKC;
 using namespace Oryol;
 
-static ubyte ram[0x10000];
+static uint8_t ram[0x10000];
 
 static const int output_size = 1<<16;
 static int out_pos = 0;
@@ -40,8 +40,8 @@ static bool cpm_bdos(z80& cpu) {
     }
     else if (9 == cpu.C) {
         // output a string
-        ubyte c;
-        uword addr = cpu.DE;
+        uint8_t c;
+        uint16_t addr = cpu.DE;
         while ((c = cpu.mem.r8(addr++)) != '$') {
             put_char(c);
         }

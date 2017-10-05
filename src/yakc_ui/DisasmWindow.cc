@@ -31,7 +31,7 @@ DisasmWindow::Draw(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-DisasmWindow::drawMainContent(const yakc& emu, uword start_addr, int num_lines) {
+DisasmWindow::drawMainContent(const yakc& emu, uint16_t start_addr, int num_lines) {
     // this is a modified version of ImGuiMemoryEditor.h
     ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));
 
@@ -45,14 +45,14 @@ DisasmWindow::drawMainContent(const yakc& emu, uword start_addr, int num_lines) 
 
     // skip hidden line
     Disasm disasm;
-    uword cur_addr = start_addr;
+    uint16_t cur_addr = start_addr;
     for (int line_i = 0; (line_i < clipper.DisplayStart) && (line_i < num_lines); line_i++) {
         cur_addr += disasm.Disassemble(emu, cur_addr);
     }
 
     // display only visible items
     for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
-        const uword num_bytes = disasm.Disassemble(emu, cur_addr);
+        const uint16_t num_bytes = disasm.Disassemble(emu, cur_addr);
 
         // draw the address
         ImGui::Text("%04X: ", cur_addr);

@@ -31,7 +31,7 @@ public:
     /// draw background grid
     void drawGrid(bool is_kc85_4);
     /// draw a 'memory rectangle'
-    void drawRect(int layer, uword addr, unsigned int len, const char* tooltip, type t);
+    void drawRect(int layer, uint16_t addr, unsigned int len, const char* tooltip, type t);
     /// get name for a memory layer and page
     pageInfo getPageInfo(kc85& kc, int layer_index, int page_index) const;
 };

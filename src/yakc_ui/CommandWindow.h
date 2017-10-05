@@ -18,13 +18,13 @@ public:
     virtual bool Draw(yakc& emu) override;
 
     /// populate commands array
-    void scan(const yakc& emu, ubyte prologByte);
+    void scan(const yakc& emu, uint8_t prologByte);
 
     uint8_t prologByte = 0x7F;
     struct Cmd {
-        Cmd(const Oryol::String& n, uword a) : name(n), addr(a) {};
+        Cmd(const Oryol::String& n, uint16_t a) : name(n), addr(a) {};
         Oryol::String name;
-        uword addr;
+        uint16_t addr;
     };
     Oryol::Array<Cmd> commands;
 };

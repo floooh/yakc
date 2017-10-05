@@ -12,11 +12,6 @@ namespace YAKC {
 
 static const int SOUND_SAMPLE_RATE = 44100;
 
-typedef uint8_t ubyte;
-typedef int8_t byte;
-typedef uint16_t uword;
-typedef int16_t word;
-
 struct ext_funcs {
     void (*assertmsg_func)(const char* cond, const char* msg, const char* file, int line, const char* func) = nullptr;
     void* (*malloc_func)(size_t) = nullptr;

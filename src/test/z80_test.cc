@@ -7,17 +7,17 @@
 
 using namespace YAKC;
 
-static ubyte ram0[0x4000];
+static uint8_t ram0[0x4000];
 
 class cpuTestBus : public system_bus {
 public:
-    uword out_port = 0;
-    ubyte out_byte = 0xFF;
-    void cpu_out(uword port, ubyte val) {
+    uint16_t out_port = 0;
+    uint8_t out_byte = 0xFF;
+    void cpu_out(uint16_t port, uint8_t val) {
         this->out_port = port;
         this->out_byte  = val;
     }
-    ubyte cpu_in(uword port) {
+    uint8_t cpu_in(uint16_t port) {
         return (port & 0xFF) * 2;
     }
 };
@@ -40,7 +40,7 @@ TEST(LD_A_RI) {
     cpu.R = 0x34;
     cpu.I = 0x1;
     cpu.F = z80::CF;
-    ubyte prog[] {
+    uint8_t prog[] {
         0xED, 0x57,         // LD A,I
         0x97,               // SUB A
         0xED, 0x5F,         // LD A,R
@@ -56,7 +56,7 @@ TEST(LD_A_RI) {
 // LD r,n
 TEST(LD_r_sn) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x12,     // LD A,0x12
         0x47,           // LD B,A
         0x4F,           // LD C,A
@@ -182,7 +182,7 @@ TEST(LD_r_sn) {
 // LD r,(HL)
 TEST(LD_r_iHL) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,   // LD HL,0x1000
         0x3E, 0x33,         // LD A,0x33
         0x77,               // LD (HL),A
@@ -217,12 +217,12 @@ TEST(LD_r_iHL) {
 // LD r,([IX|IY] + d)
 TEST(LD_r_IXY_d) {
     z80 cpu = init_z80();
-    ubyte data[] = {
+    uint8_t data[] = {
         1, 2, 3, 4, 5, 6, 7, 8
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0xDD, 0x21, 0x03, 0x10,     // LD IX,0x1003
         0xDD, 0x7E, 0x00,           // LD A,(IX+0)
         0xDD, 0x46, 0x01,           // LD B,(IX+1)
@@ -264,7 +264,7 @@ TEST(LD_r_IXY_d) {
 // LD (HL),r
 TEST(LD_iHL_r) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,   // LD HL,0x1000
         0x3E, 0x12,         // LD A,0x12
         0x77,               // LD (HL),A
@@ -299,7 +299,7 @@ TEST(LD_iHL_r) {
 // LD (IX|IY + d),r
 TEST(rIXY_d_r) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0xDD, 0x21, 0x03, 0x10,     // LD IX,0x1003
         0x3E, 0x12,                 // LD A,0x12
         0xDD, 0x77, 0x00,           // LD (IX+0),A
@@ -368,7 +368,7 @@ TEST(rIXY_d_r) {
 // LD (HL),n
 TEST(LD_iHL_n) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x20,   // LD HL,0x2000
         0x36, 0x33,         // LD (HL),0x33
         0x21, 0x00, 0x10,   // LD HL,0x1000
@@ -385,7 +385,7 @@ TEST(LD_iHL_n) {
 // LD ([IX|IY] + d),n
 TEST(LD_iIXY_d_n) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0xDD, 0x21, 0x00, 0x20,     // LD IX,0x2000
         0xDD, 0x36, 0x02, 0x33,     // LD (IX+2),0x33
         0xDD, 0x36, 0xFE, 0x11,     // LD (IX-2),0x11
@@ -408,12 +408,12 @@ TEST(LD_iIXY_d_n) {
 // LD A,(nn)
 TEST(LD_A_iBCDEnn) {
     z80 cpu = init_z80();
-    ubyte data[] = {
+    uint8_t data[] = {
         0x11, 0x22, 0x33
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x01, 0x00, 0x10,   // LD BC,0x1000
         0x11, 0x01, 0x10,   // LD DE,0x1001
         0x0A,               // LD A,(BC)
@@ -434,7 +434,7 @@ TEST(LD_A_iBCDEnn) {
 // LD (nn),A
 TEST(LD_iBCDEnn_A) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x01, 0x00, 0x10,   // LD BC,0x1000
         0x11, 0x01, 0x10,   // LD DE,0x1001
         0x3E, 0x77,         // LD A,0x77
@@ -456,7 +456,7 @@ TEST(LD_iBCDEnn_A) {
 // LD R,A
 TEST(LD_IR_A) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x45,     // LD A,0x45
         0xED, 0x47,     // LD I,A
         0xED, 0x4F,     // LD R,A
@@ -473,7 +473,7 @@ TEST(LD_IR_A) {
 // LD IY,nn
 TEST(LD_ddIXY_nn) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x01, 0x34, 0x12,       // LD BC,0x1234
         0x11, 0x78, 0x56,       // LD DE,0x5678
         0x21, 0xBC, 0x9A,       // LD HL,0x9ABC
@@ -497,12 +497,12 @@ TEST(LD_ddIXY_nn) {
 // LD IY,(nn)
 TEST(LD_HLddIXY_inn) {
     z80 cpu = init_z80();
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x2A, 0x00, 0x10,           // LD HL,(0x1000)
         0xED, 0x4B, 0x01, 0x10,     // LD BC,(0x1001)
         0xED, 0x5B, 0x02, 0x10,     // LD DE,(0x1002)
@@ -528,7 +528,7 @@ TEST(LD_HLddIXY_inn) {
 // LD (nn),IY
 TEST(LD_inn_HLDDIXY) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x01, 0x02,           // LD HL,0x0201
         0x22, 0x00, 0x10,           // LD (0x1000),HL
         0x01, 0x34, 0x12,           // LD BC,0x1234
@@ -567,7 +567,7 @@ TEST(LD_inn_HLDDIXY) {
 // LD SP,IY
 TEST(LD_SP_HLIXY) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x34, 0x12,           // LD HL,0x1234
         0xDD, 0x21, 0x78, 0x56,     // LD IX,0x5678
         0xFD, 0x21, 0xBC, 0x9A,     // LD IY,0x9ABC
@@ -593,7 +593,7 @@ TEST(LD_SP_HLIXY) {
 // POP IY
 TEST(PUSH_POP_qqIXY) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x01, 0x34, 0x12,       // LD BC,0x1234
         0x11, 0x78, 0x56,       // LD DE,0x5678
         0x21, 0xBC, 0x9A,       // LD HL,0x9ABC
@@ -645,7 +645,7 @@ TEST(PUSH_POP_qqIXY) {
 // EX (SP),IY
 TEST(EX) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x34, 0x12,       // LD HL,0x1234
         0x11, 0x78, 0x56,       // LD DE,0x5678
         0xEB,                   // EX DE,HL
@@ -701,7 +701,7 @@ TEST(EX) {
 // ADD A,n
 TEST(ADD_A_r) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x0F,     // LD A,0x0F
         0x87,           // ADD A,A
         0x06, 0xE0,     // LD B,0xE0
@@ -745,10 +745,10 @@ TEST(ADD_A_r) {
 // ADD A,(IY+d)
 TEST(ADD_a_iHLIXY_d) {
     z80 cpu = init_z80();
-    ubyte data[] = { 0x41, 0x61, 0x81 };
+    uint8_t data[] = { 0x41, 0x61, 0x81 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10, // LD IX,0x1000
         0xFD, 0x21, 0x03, 0x10, // LD IY,0x1003
@@ -772,7 +772,7 @@ TEST(ADD_a_iHLIXY_d) {
 // ADC A,n
 TEST(ADC_a_r) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x00,         // LD A,0x00
         0x06, 0x41,         // LD B,0x41
         0x0E, 0x61,         // LD C,0x61
@@ -813,10 +813,10 @@ TEST(ADC_a_r) {
 // ADC A,(IY+d)
 TEST(ADC_a_iHLIXY_d) {
     z80 cpu = init_z80();
-    ubyte data[] = { 0x41, 0x61, 0x81, 0x2 };
+    uint8_t data[] = { 0x41, 0x61, 0x81, 0x2 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10, // LD IX,0x1000
         0xFD, 0x21, 0x03, 0x10, // LD IY,0x1003
@@ -842,7 +842,7 @@ TEST(ADC_a_iHLIXY_d) {
 // SUB A,n
 TEST(SUB_A_r) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x04,     // LD A,0x04
         0x06, 0x01,     // LD B,0x01
         0x0E, 0xF8,     // LD C,0xF8
@@ -884,7 +884,7 @@ TEST(SUB_A_r) {
 // CP A,n
 TEST(CP_A_r) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x04,     // LD A,0x04
         0x06, 0x05,     // LD B,0x05
         0x0E, 0x03,     // LD C,0x03
@@ -925,10 +925,10 @@ TEST(CP_A_r) {
 // SUB A,(IY+d)
 TEST(SUB_a_iHLIXY_d) {
     z80 cpu = init_z80();
-    ubyte data[] = { 0x41, 0x61, 0x81 };
+    uint8_t data[] = { 0x41, 0x61, 0x81 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10, // LD IX,0x1000
         0xFD, 0x21, 0x03, 0x10, // LD IY,0x1003
@@ -953,10 +953,10 @@ TEST(SUB_a_iHLIXY_d) {
 // SUB A,(IY+d)
 TEST(CP_a_iHLIXY_d) {
     z80 cpu = init_z80();
-    ubyte data[] = { 0x41, 0x61, 0x22 };
+    uint8_t data[] = { 0x41, 0x61, 0x22 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10, // LD IX,0x1000
         0xFD, 0x21, 0x03, 0x10, // LD IY,0x1003
@@ -980,7 +980,7 @@ TEST(CP_a_iHLIXY_d) {
 // SBC A,n
 TEST(SBC_A_r) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x04,     // LD A,0x04
         0x06, 0x01,     // LD B,0x01
         0x0E, 0xF8,     // LD C,0xF8
@@ -1021,10 +1021,10 @@ TEST(SBC_A_r) {
 TEST(SBC_a_iHLIXY_d) {
     z80 cpu = init_z80();
 
-    ubyte data[] = { 0x41, 0x61, 0x81 };
+    uint8_t data[] = { 0x41, 0x61, 0x81 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10, // LD IX,0x1000
         0xFD, 0x21, 0x03, 0x10, // LD IY,0x1003
@@ -1049,7 +1049,7 @@ TEST(SBC_a_iHLIXY_d) {
 TEST(OR_r) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x97,           // SUB A
         0x06, 0x01,     // LD B,0x01
         0x0E, 0x02,     // LD C,0x02
@@ -1089,7 +1089,7 @@ TEST(OR_r) {
 TEST(XOR_r) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x97,           // SUB A
         0x06, 0x01,     // LD B,0x01
         0x0E, 0x03,     // LD C,0x03
@@ -1133,9 +1133,9 @@ TEST(XOR_r) {
 TEST(OR_XOR_iHLIXY_d) {
     z80 cpu = init_z80();
 
-    ubyte data[] = { 0x41, 0x62, 0x84 };
+    uint8_t data[] = { 0x41, 0x62, 0x84 };
     cpu.mem.write(0x1000, data, sizeof(data));
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,           // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1000
         0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
@@ -1163,7 +1163,7 @@ TEST(OR_XOR_iHLIXY_d) {
 TEST(AND_rn) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0xFF,             // LD A,0xFF
         0x06, 0x01,             // LD B,0x01
         0x0E, 0x03,             // LD C,0x02
@@ -1216,9 +1216,9 @@ TEST(AND_rn) {
 TEST(AND_iHLIXY_d) {
     z80 cpu = init_z80();
 
-    ubyte data[] = { 0xFE, 0xAA, 0x99 };
+    uint8_t data[] = { 0xFE, 0xAA, 0x99 };
     cpu.mem.write(0x1000, data, sizeof(data));
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,           // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1000
         0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
@@ -1241,7 +1241,7 @@ TEST(AND_iHLIXY_d) {
 TEST(INC_DEC_r) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3e, 0x00,         // LD A,0x00
         0x06, 0xFF,         // LD B,0xFF
         0x0e, 0x0F,         // LD C,0x0F
@@ -1297,12 +1297,12 @@ TEST(INC_DEC_r) {
 TEST(INC_DEC_iHLIXIY_d) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x00, 0x3F, 0x7F
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,           // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1000
         0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
@@ -1336,7 +1336,7 @@ TEST(INC_DEC_iHLIXIY_d) {
 TEST(INC_DEC_ss_IX_IY) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x01, 0x00, 0x00,       // LD BC,0x0000
         0x11, 0xFF, 0xFF,       // LD DE,0xffff
         0x21, 0xFF, 0x00,       // LD HL,0x00ff
@@ -1379,7 +1379,7 @@ TEST(INC_DEC_ss_IX_IY) {
 TEST(RLCA_RLA_RRCA_RRA) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0xA0,     // LD A,0xA0
         0x07,           // RLCA
         0x07,           // RLCA
@@ -1406,7 +1406,7 @@ TEST(RLCA_RLA_RRCA_RRA) {
 
 TEST(RLC_RL_RRC_RR_r) {
     z80 cpu = init_z80();
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x01,     // LD A,0x01
         0x06, 0xFF,     // LD B,0xFF
         0x0E, 0x03,     // LD C,0x03
@@ -1484,10 +1484,10 @@ TEST(RLC_RL_RRC_RR_r) {
 TEST(RRC_RLC_RR_RL_iHLIX_d) {
     z80 cpu = init_z80();
 
-    ubyte data[] = { 0x01, 0xFF, 0x11 };
+    uint8_t data[] = { 0x01, 0xFF, 0x11 };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,           // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1001
         0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
@@ -1551,7 +1551,7 @@ TEST(RRC_RLC_RR_RL_iHLIX_d) {
 TEST(SLA_r) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x01,         // LD A,0x01
         0x06, 0x80,         // LD B,0x80
         0x0E, 0xAA,         // LD C,0xAA
@@ -1585,7 +1585,7 @@ TEST(SLA_r) {
 TEST(SRA_r) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x01,         // LD A,0x01
         0x06, 0x80,         // LD B,0x80
         0x0E, 0xAA,         // LD C,0xAA
@@ -1619,7 +1619,7 @@ TEST(SRA_r) {
 TEST(SRL_r) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x01,         // LD A,0x01
         0x06, 0x80,         // LD B,0x80
         0x0E, 0xAA,         // LD C,0xAA
@@ -1653,9 +1653,9 @@ TEST(SRL_r) {
 TEST(SLA_iHLIXY_d) {
     z80 cpu = init_z80();
 
-    ubyte data[] = { 0x01, 0x80, 0xAA };
+    uint8_t data[] = { 0x01, 0x80, 0xAA };
     cpu.mem.write(0x1000, data, sizeof(data));
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,           // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1001
         0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
@@ -1683,9 +1683,9 @@ TEST(SLA_iHLIXY_d) {
 TEST(SRA_iHLIXY_d) {
     z80 cpu = init_z80();
 
-    ubyte data[] = { 0x01, 0x80, 0xAA };
+    uint8_t data[] = { 0x01, 0x80, 0xAA };
     cpu.mem.write(0x1000, data, sizeof(data));
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,           // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1001
         0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
@@ -1713,9 +1713,9 @@ TEST(SRA_iHLIXY_d) {
 TEST(SRL_iHLIXY_d) {
     z80 cpu = init_z80();
 
-    ubyte data[] = { 0x01, 0x80, 0xAA };
+    uint8_t data[] = { 0x01, 0x80, 0xAA };
     cpu.mem.write(0x1000, data, sizeof(data));
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,           // LD HL,0x1000
         0xDD, 0x21, 0x00, 0x10,     // LD IX,0x1001
         0xFD, 0x21, 0x03, 0x10,     // LD IY,0x1003
@@ -1743,7 +1743,7 @@ TEST(SRL_iHLIXY_d) {
 TEST(RLD_RRD) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x12,         // LD A,0x12
         0x21, 0x00, 0x10,   // LD HL,0x1000
         0x36, 0x34,         // LD (HL),0x34
@@ -1785,7 +1785,7 @@ TEST(RLD_RRD) {
 TEST(HALT) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x76,           // HALT
     };
     cpu.mem.write(0x0000, prog, sizeof(prog));
@@ -1798,12 +1798,12 @@ TEST(HALT) {
 TEST(LDI) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03,
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0x11, 0x00, 0x20,       // LD DE,0x2000
         0x01, 0x03, 0x00,       // LD BC,0x0003
@@ -1840,12 +1840,12 @@ TEST(LDI) {
 TEST(LDIR) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03,
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0x11, 0x00, 0x20,       // LD DE,0x2000
         0x01, 0x03, 0x00,       // LD BC,0x0003
@@ -1882,12 +1882,12 @@ TEST(LDIR) {
 TEST(LDD) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03,
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x02, 0x10,       // LD HL,0x1002
         0x11, 0x02, 0x20,       // LD DE,0x2002
         0x01, 0x03, 0x00,       // LD BC,0x0003
@@ -1924,12 +1924,12 @@ TEST(LDD) {
 TEST(LDDR) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03,
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x02, 0x10,       // LD HL,0x1002
         0x11, 0x02, 0x20,       // LD DE,0x2002
         0x01, 0x03, 0x00,       // LD BC,0x0003
@@ -1966,12 +1966,12 @@ TEST(LDDR) {
 TEST(CPI) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03, 0x04
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // ld hl,0x1000
         0x01, 0x04, 0x00,       // ld bc,0x0004
         0x3e, 0x03,             // ld a,0x03
@@ -2008,12 +2008,12 @@ TEST(CPI) {
 TEST(CPIR) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03, 0x04
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // ld hl,0x1000
         0x01, 0x04, 0x00,       // ld bc,0x0004
         0x3e, 0x03,             // ld a,0x03
@@ -2048,12 +2048,12 @@ TEST(CPIR) {
 TEST(CPD) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03, 0x04
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x03, 0x10,       // ld hl,0x1004
         0x01, 0x04, 0x00,       // ld bc,0x0004
         0x3e, 0x02,             // ld a,0x03
@@ -2090,12 +2090,12 @@ TEST(CPD) {
 TEST(CPDR) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03, 0x04
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x03, 0x10,       // ld hl,0x1004
         0x01, 0x04, 0x00,       // ld bc,0x0004
         0x3e, 0x02,             // ld a,0x03
@@ -2130,7 +2130,7 @@ TEST(CPDR) {
 TEST(DAA) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3e, 0x15,         // ld a,0x15
         0x06, 0x27,         // ld b,0x27
         0x80,               // add a,b
@@ -2163,7 +2163,7 @@ TEST(DAA) {
 TEST(CPL) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x97,               // SUB A
         0x2F,               // CPL
         0x2F,               // CPL
@@ -2184,7 +2184,7 @@ TEST(CPL) {
 TEST(NEG) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x01,         // LD A,0x01
         0xED, 0x44,         // NEG
         0xC6, 0x01,         // ADD A,0x01
@@ -2209,7 +2209,7 @@ TEST(NEG) {
 TEST(CCF_SCF) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x97,           // SUB A
         0x37,           // SCF
         0x3F,           // CCF
@@ -2230,7 +2230,7 @@ TEST(CCF_SCF) {
 TEST(DI_EI_IM) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0xF3,           // DI
         0xFB,           // EI
         0x00,           // NOP
@@ -2259,7 +2259,7 @@ TEST(DI_EI_IM) {
 TEST(JP_cc_nn) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x97,               //          SUB A
         0xC2, 0x0C, 0x02,   //          JP NZ,label0
         0xCA, 0x0C, 0x02,   //          JP Z,label0
@@ -2302,7 +2302,7 @@ TEST(JP_cc_nn) {
 TEST(JP_JR) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x16, 0x02,           //      LD HL,l3
         0xDD, 0x21, 0x19, 0x02,     //      LD IX,l4
         0xFD, 0x21, 0x21, 0x02,     //      LD IY,l5
@@ -2336,7 +2336,7 @@ TEST(JP_JR) {
 TEST(JR_cc_e) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x97,           //      SUB A
         0x20, 0x03,     //      JR NZ,l0
         0x28, 0x01,     //      JR Z,l0
@@ -2368,7 +2368,7 @@ TEST(JR_cc_e) {
 TEST(DJNZ) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x06, 0x03,         //      LD B,0x03
         0x97,               //      SUB A
         0x3C,               // l0:  INC A
@@ -2391,7 +2391,7 @@ TEST(DJNZ) {
 TEST(CALL_RET) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0xCD, 0x0A, 0x02,       //      CALL l0
         0xCD, 0x0A, 0x02,       //      CALL l0
         0xC9,                   // l0:  RET
@@ -2422,7 +2422,7 @@ TEST(CALL_RET) {
 TEST(CALL_RET_cc) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x97,               //      SUB A
         0xC4, 0x29, 0x02,   //      CALL NZ,l0
         0xCC, 0x29, 0x02,   //      CALL Z,l0
@@ -2482,7 +2482,7 @@ TEST(CALL_RET_cc) {
 TEST(IN) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x01,         // LD A,0x01
         0xDB, 0x03,         // IN A,(0x03)
         0xDB, 0x04,         // IN A,(0x04)
@@ -2522,7 +2522,7 @@ TEST(IN) {
 TEST(INIR_INDR) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0x01, 0x02, 0x03,       // LD BC,0x0302
         0xED, 0xB2,             // INIR
@@ -2571,7 +2571,7 @@ TEST(INIR_INDR) {
 TEST(OUT) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x3E, 0x01,         // LD A,0x01
         0xD3, 0x01,         // OUT (0x01),A
         0xD3, 0x02,         // OUT (0x02),A
@@ -2606,12 +2606,12 @@ TEST(OUT) {
 TEST(OTIR_OTDR) {
     z80 cpu = init_z80();
 
-    ubyte data[] = {
+    uint8_t data[] = {
         0x01, 0x02, 0x03, 0x04
     };
     cpu.mem.write(0x1000, data, sizeof(data));
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0x00, 0x10,       // LD HL,0x1000
         0x01, 0x02, 0x03,       // LD BC,0x0302
         0xED, 0xB3,             // OTIR
@@ -2659,7 +2659,7 @@ TEST(OTIR_OTDR) {
 TEST(ADD_ADC_SBC_16) {
     z80 cpu = init_z80();
 
-    ubyte prog[] = {
+    uint8_t prog[] = {
         0x21, 0xFC, 0x00,       // LD HL,0x00FC
         0x01, 0x08, 0x00,       // LD BC,0x0008
         0x11, 0xFF, 0xFF,       // LD DE,0xFFFF
@@ -2726,7 +2726,7 @@ TEST(cpu) {
     CHECK(2 == cpu.PC);
 
     /// LD BC,0x1234
-    const ubyte f = cpu.F;
+    const uint8_t f = cpu.F;
     ram0[2] = 0x01; ram0[3] = 0x34; ram0[4] = 0x12;
     CHECK(10 == cpu.step(&bus));
     CHECK(5 == cpu.PC);

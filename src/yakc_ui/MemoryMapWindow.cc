@@ -55,7 +55,7 @@ MemoryMapWindow::drawGrid(bool is_kc85_4) {
 
 //------------------------------------------------------------------------------
 void
-MemoryMapWindow::drawRect(int layer, uword addr, unsigned int len, const char* tooltip, type t) {
+MemoryMapWindow::drawRect(int layer, uint16_t addr, unsigned int len, const char* tooltip, type t) {
     static const ImVec4 grey(0.25f, 0.25f, 0.25f, 1.0f);
     static const ImVec4 light_green(0.0f, 1.0f, 0.0f, 1.0f);
     static const ImVec4 dark_green(0.0f, 0.5f, 0.0f, 1.0f);
@@ -108,8 +108,8 @@ MemoryMapWindow::Draw(yakc& emu) {
 
         // FIXME: need to handle KC85 PIO port backing
         // as 'peripheral device' with callbacks!
-        const ubyte pio_a = emu.board.z80pio.read_data(nullptr, z80pio::A);
-        const ubyte pio_b = emu.board.z80pio.read_data(nullptr, z80pio::B);
+        const uint8_t pio_a = emu.board.z80pio.read_data(nullptr, z80pio::A);
+        const uint8_t pio_b = emu.board.z80pio.read_data(nullptr, z80pio::B);
 
         // built-in memory at 0x0000
         this->drawRect(0, 0x0000, 0x4000, "RAM 0", (pio_a & kc85::PIO_A_RAM) ? type::mapped : type::off) ;
@@ -123,7 +123,7 @@ MemoryMapWindow::Draw(yakc& emu) {
         if (pio_a & kc85::PIO_A_IRM) {
             if (is_kc85_4) {
                 for (int layer = 0; layer < 4; layer++) {
-                    const uword len = (0 == layer) ? 0x4000 : 0x2800;
+                    const uint16_t len = (0 == layer) ? 0x4000 : 0x2800;
                     const int irm_index = (emu.kc85.io84 & 6)>>1;
                     strBuilder.Format(32, "IRM %d", layer);
                     if (layer == irm_index) {
@@ -189,7 +189,7 @@ MemoryMapWindow::Draw(yakc& emu) {
         // modules
         for (int mem_layer = 1; mem_layer < 3; mem_layer++) {
             const memory& mem = emu.board.z80.mem;
-            const ubyte slot_addr = mem_layer == 1 ? 0x08 : 0x0C;
+            const uint8_t slot_addr = mem_layer == 1 ? 0x08 : 0x0C;
             if (emu.kc85.exp.slot_occupied(slot_addr)) {
                 const int draw_layer = (is_kc85_4 ? 5 : 0) + mem_layer;
                 const auto& slot = emu.kc85.exp.slot_by_addr(slot_addr);

@@ -19,14 +19,14 @@ public:
     struct Item {
         Item(const char* n, const char* fn, filetype t, system compat, bool enableJoystick=false) :
             Name(n), Filename(fn), Type(t), Compat(compat), OptStartAddr(0), OptExecAddr(0), EnableJoystick(true) {};
-        Item(const char* n, const char* fn, filetype t, system compat, uword startAddr, uword execAddr) :
+        Item(const char* n, const char* fn, filetype t, system compat, uint16_t startAddr, uint16_t execAddr) :
             Name(n), Filename(fn), Type(t), Compat(compat), OptStartAddr(startAddr), OptExecAddr(execAddr) {};
         Oryol::String Name;
         Oryol::String Filename;
         filetype Type;
         system Compat;
-        uword OptStartAddr;
-        uword OptExecAddr;
+        uint16_t OptStartAddr;
+        uint16_t OptExecAddr;
         bool EnableJoystick;
     };
     /// available items

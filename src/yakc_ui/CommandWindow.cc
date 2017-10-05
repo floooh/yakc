@@ -52,17 +52,17 @@ CommandWindow::Draw(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-CommandWindow::scan(const yakc& emu, ubyte prologByte) {
+CommandWindow::scan(const yakc& emu, uint8_t prologByte) {
     StringBuilder strBuilder;
 
     this->commands.Clear();
-    ubyte prevByte = emu.board.z80.mem.r8(0x0000);
+    uint8_t prevByte = emu.board.z80.mem.r8(0x0000);
     for (unsigned int addr = 0x0001; addr < 0x10000; addr++) {
-        const ubyte curByte = emu.board.z80.mem.r8(addr);
+        const uint8_t curByte = emu.board.z80.mem.r8(addr);
         if ((curByte == prologByte) && (prevByte == prologByte)) {
             // found a header, scan for 00 or 01 byte
             addr++;
-            ubyte c;
+            uint8_t c;
             while (isalnum(c = emu.board.z80.mem.r8(addr++))) {
                 strBuilder.Append(c);
             }

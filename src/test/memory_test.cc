@@ -18,9 +18,9 @@ TEST(memory) {
 
     // 2 ram banks and one rom bank
     const int size = 0x4000;
-    ubyte ram0[size];
-    ubyte ram1[size];
-    ubyte rom[size];
+    uint8_t ram0[size];
+    uint8_t ram1[size];
+    uint8_t rom[size];
     memset(ram0, 1, sizeof(ram0));
     memset(ram1, 2, sizeof(ram1));
     memset(rom, 3, sizeof(rom));
@@ -92,7 +92,7 @@ TEST(memory) {
     CHECK(mem.r8(0xFFFF) == 3);
 
     // write a range of bytes
-    ubyte bytes[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    uint8_t bytes[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
     mem.write(0, bytes, sizeof(bytes));
     CHECK(mem.r8(0x0000) == 1);
     CHECK(mem.r8(0x0001) == 2);

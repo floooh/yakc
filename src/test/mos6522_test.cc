@@ -10,11 +10,11 @@ using namespace YAKC;
 class mos6522_test_bus : public system_bus {
 public:
     /// PIO input callback
-    virtual ubyte pio_in(int pio_id, int port_id) {
+    virtual uint8_t pio_in(int pio_id, int port_id) {
         return in_val[port_id];
     };
     /// PIO output callback
-    virtual void pio_out(int pio_id, int port_id, ubyte val) {
+    virtual void pio_out(int pio_id, int port_id, uint8_t val) {
         out_val[port_id] = val;
     };
 

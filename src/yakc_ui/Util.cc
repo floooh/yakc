@@ -66,10 +66,10 @@ Util::UWordToStr(uint16_t w, char* buf, int bufSize) {
 
 //------------------------------------------------------------------------------
 uint16_t
-Util::ParseUWord(const char* str, uword oldVal) {
+Util::ParseUWord(const char* str, uint16_t oldVal) {
     int res = 0;
     if (sscanf(str, "%X", &res) == 1) {
-        return (uword) res;
+        return (uint16_t) res;
     }
     else {
         return oldVal;
