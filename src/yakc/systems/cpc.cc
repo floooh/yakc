@@ -17,7 +17,7 @@
 namespace YAKC {
 
 /* these cycle counts have been taken from the MAME Amstrad driver! */
-static const uint32_t cc_op[256] = {
+static uint32_t cc_op[256] = {
     4, 12,  8,  8,  4,  4,  8,  4,  4, 12,  8,  8,  4,  4,  8,  4,
     12, 12,  8,  8,  4,  4,  8,  4, 12, 12,  8,  8,  4,  4,  8,  4,
     8, 12, 20,  8,  4,  4,  8,  4,  8, 12, 20,  8,  4,  4,  8,  4,
@@ -36,7 +36,7 @@ static const uint32_t cc_op[256] = {
     8, 12, 12,  4, 12, 16,  8, 16,  8,  8, 12,  4, 12,  4,  8, 16
 };
 
-static const uint32_t cc_cb[256] = {
+static uint32_t cc_cb[256] = {
     4,  4,  4,  4,  4,  4, 12,  4,  4,  4,  4,  4,  4,  4, 12,  4,
     4,  4,  4,  4,  4,  4, 12,  4,  4,  4,  4,  4,  4,  4, 12,  4,
     4,  4,  4,  4,  4,  4, 12,  4,  4,  4,  4,  4,  4,  4, 12,  4,
@@ -55,7 +55,7 @@ static const uint32_t cc_cb[256] = {
     4,  4,  4,  4,  4,  4, 12,  4,  4,  4,  4,  4,  4,  4, 12,  4
 };
 
-static const uint32_t cc_ed[256] = {
+static uint32_t cc_ed[256] = {
     4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
     4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
     4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
@@ -74,7 +74,7 @@ static const uint32_t cc_ed[256] = {
     4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4
 };
 
-static const uint32_t cc_xy[256] = {
+static uint32_t cc_xy[256] = {
     4, 12,  8,  8,  4,  4,  8,  4,  4, 12,  8,  8,  4,  4,  8,  4,
     12, 12,  8,  8,  4,  4,  8,  4, 12, 12,  8,  8,  4,  4,  8,  4,
     8, 12, 20,  8,  4,  4,  8,  4,  8, 12, 20,  8,  4,  4,  8,  4,
@@ -93,7 +93,7 @@ static const uint32_t cc_xy[256] = {
     8, 12, 12,  4, 12, 16,  8, 16,  8,  8, 12,  4, 12,  4,  8, 16
 };
 
-static const uint32_t cc_xycb[256] = {
+static uint32_t cc_xycb[256] = {
     20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
     20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
     20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
@@ -112,7 +112,7 @@ static const uint32_t cc_xycb[256] = {
     20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
 };
 
-static const uint32_t cc_ex[256] = {
+static uint32_t cc_ex[256] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     4,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     4,  0,  0,  0,  0,  0,  0,  0,  4,  0,  0,  0,  0,  0,  0,  0,
@@ -207,6 +207,13 @@ cpc::init(breadboard* b, rom_images* r, tapedeck* t) {
     this->roms = r;
     this->tape = t;
     this->init_keymap();
+    for (int i = 0; i < 256; i++) {
+        // HACK
+        cc_cb[i] += 4;
+        cc_xy[i] += 4;
+        cc_xycb[i] += 4;
+        cc_ed[i] += 4;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -326,7 +333,9 @@ cpc::step(uint64_t start_tick, uint64_t end_tick) {
     uint64_t cur_tick = start_tick;
     while (cur_tick < end_tick) {
         uint32_t ticks = cpu.handle_irq(this);
-        ticks += cpu.step(this);
+        if (0 == ticks) {
+            ticks = cpu.step(this);
+        }
         this->video.step(this, ticks);
         this->board->ay8910.step(ticks);
         if (dbg.step(cpu.PC, ticks)) {
@@ -351,7 +360,9 @@ cpc::step_debug() {
     do {
         old_pc = cpu.PC;
         uint32_t ticks = cpu.handle_irq(this);
-        ticks += cpu.step(this);
+        if (0 == ticks) {
+            ticks = cpu.step(this);
+        }
         this->video.step(this, ticks);
         this->board->ay8910.step(ticks);
         dbg.step(cpu.PC, ticks);

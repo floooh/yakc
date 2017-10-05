@@ -262,8 +262,10 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
     uint64_t cur_tick = start_tick;
     if (system::zxspectrum48k == this->cur_model) {
         while (cur_tick < end_tick) {
-            uint32_t ticks = cpu.step(this);
-            ticks += cpu.handle_irq(this);
+            uint32_t ticks = cpu.handle_irq(this);
+            if (0 == ticks) {
+                ticks = cpu.step(this);
+            }
             this->board->clck.step(this, ticks);
             this->board->beeper.step(ticks);
             if (dbg.step(cpu.PC, ticks)) {
@@ -274,8 +276,10 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
     }
     else {
         while (cur_tick < end_tick) {
-            uint32_t ticks = cpu.step(this);
-            ticks += cpu.handle_irq(this);
+            uint32_t ticks = cpu.handle_irq(this);
+            if (0 == ticks) {
+                ticks = cpu.step(this);
+            }
             this->board->clck.step(this, ticks);
             this->board->beeper.step(ticks);
             this->board->ay8910.step(ticks);
@@ -297,8 +301,10 @@ zx::step_debug() {
     uint16_t old_pc;
     do {
         old_pc = cpu.PC;
-        uint32_t ticks = cpu.step(this);
-        ticks += cpu.handle_irq(this);
+        uint32_t ticks = cpu.handle_irq(this);
+        if (0 == ticks) {
+            ticks = cpu.step(this);
+        }
         this->board->clck.step(this, ticks);
         this->board->beeper.step(ticks);
         if (system::zxspectrum128k == this->cur_model) {

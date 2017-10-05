@@ -222,8 +222,10 @@ z9001::step(uint64_t start_tick, uint64_t end_tick) {
     this->handle_key();
     this->cur_tick = start_tick;
     while (this->cur_tick < end_tick) {
-        uint32_t ticks = cpu.step(this);
-        ticks += cpu.handle_irq(this);
+        uint32_t ticks = cpu.handle_irq(this);
+        if (0 == ticks) {
+            ticks = cpu.step(this);
+        }
         this->board->clck.step(this, ticks);
         this->board->z80ctc.step(this, ticks);
         this->board->speaker.step(ticks);
@@ -245,8 +247,10 @@ z9001::step_debug() {
     uint16_t old_pc;
     do {
         old_pc = cpu.PC;
-        uint32_t ticks = cpu.step(this);
-        ticks += cpu.handle_irq(this);
+        uint32_t ticks = cpu.handle_irq(this);
+        if (0 == ticks) {
+            ticks = cpu.step(this);
+        }
         this->board->clck.step(this, ticks);
         this->board->z80ctc.step(this, ticks);
         this->board->speaker.step(ticks);
