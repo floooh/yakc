@@ -82,6 +82,13 @@ public:
     bool int_enable;
     /// break on invalid opcode?
     bool break_on_invalid_opcode;
+    /// cycle-count tables (each with 256 entries)
+    const uint32_t* cc_op;
+    const uint32_t* cc_cb;
+    const uint32_t* cc_ed;
+    const uint32_t* cc_xy;
+    const uint32_t* cc_xycb;
+    const uint32_t* cc_ex;    // extra cycles conditional jumps and rst
 
     /// constructor
     z80();
