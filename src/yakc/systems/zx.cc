@@ -60,7 +60,7 @@ key_bit(int column, int line) {
 
 //------------------------------------------------------------------------------
 void
-zx::init_key_mask(ubyte ascii, int column, int line, int shift) {
+zx::init_key_mask(uint8_t ascii, int column, int line, int shift) {
     // initialize an entry in the keyboard mapping table which
     // maps ASCII codes to keyboard matrix bit mask
     YAKC_ASSERT((column >= 0) && (column < 8));
@@ -120,7 +120,7 @@ zx::init_keymap() {
     for (int shift = 0; shift < 3; shift++) {
         for (int column = 0; column < 8; column++) {
             for (int line = 0; line < 5; line++) {
-                const ubyte c = kbd[shift*40 + column*5 + line];
+                const uint8_t c = kbd[shift*40 + column*5 + line];
                 if (c != 0x20) {
                     this->init_key_mask(c, column, line, shift);
                 }
@@ -313,7 +313,7 @@ zx::step_debug() {
 
 //------------------------------------------------------------------------------
 void
-zx::cpu_out(uword port, ubyte val) {
+zx::cpu_out(uint16_t port, uint8_t val) {
     // handle Z80 OUT instruction
     if ((port & 1) == 0) {
         // "every even IO port addresses the ULA but to avoid
@@ -371,7 +371,7 @@ zx::cpu_out(uword port, ubyte val) {
 
 //------------------------------------------------------------------------------
 void
-zx::put_input(ubyte ascii, ubyte joy_mask) {
+zx::put_input(uint8_t ascii, uint8_t joy_mask) {
     // register a new key press with the emulator,
     // ascii=0 means no key pressed
     this->next_kbd_mask = this->key_map[ascii];
@@ -379,29 +379,29 @@ zx::put_input(ubyte ascii, ubyte joy_mask) {
 }
 
 //------------------------------------------------------------------------------
-static ubyte
+static uint8_t
 extract_kbd_line_bits(uint64_t mask, int column) {
     // extract keyboard matrix line bits by column
-    return (ubyte) ((mask>>(column*5)) & 0x1F);
+    return (uint8_t) ((mask>>(column*5)) & 0x1F);
 }
 
 //------------------------------------------------------------------------------
-ubyte
-zx::cpu_in(uword port) {
+uint8_t
+zx::cpu_in(uint16_t port) {
     // handle Z80 IN instruction
     //
     // FIXME: reading from port xxFF should return 'current VRAM data'
 
     // keyboard
     if ((port & 0xFF) == 0xFE) {
-        ubyte val = 0;
+        uint8_t val = 0;
         // MIC/EAR flags -> bit 6
         if (this->last_fe_out & (1<<3|1<<4)) {
             val |= (1<<6);
         }
 
         // keyboard matrix bits
-        ubyte kbd_bits = 0;
+        uint8_t kbd_bits = 0;
         for (int i = 0; i < 8; i++) {
             if ((port & (0x0100 << i)) == 0) {
                 kbd_bits |= extract_kbd_line_bits(this->cur_kbd_mask, i);
@@ -412,7 +412,7 @@ zx::cpu_in(uword port) {
     }
     else if ((port & 0xFF) == 0x1F) {
         // Kempston Joystick
-        ubyte val = 0;
+        uint8_t val = 0;
         if (this->joy_mask & joystick::left) {
             val |= 1<<1;
         }

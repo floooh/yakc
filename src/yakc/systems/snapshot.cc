@@ -47,8 +47,8 @@ snapshot::apply_snapshot(const state_t& state, yakc& emu) {
 //------------------------------------------------------------------------------
 void
 snapshot::write_emu_state(const yakc& emu, state_t& state) {
-    state.emu.model = (uword)emu.model;
-    state.emu.os = (uword)emu.os;
+    state.emu.model = (uint16_t)emu.model;
+    state.emu.os = (uint16_t)emu.os;
 }
 
 //------------------------------------------------------------------------------
@@ -85,8 +85,8 @@ void
 snapshot::write_kc_state(const yakc& emu, state_t& state) {
     const kc85& kc = emu.kc85;
     state.kc.on = kc.on;
-    state.kc.model = (uword) kc.cur_model;
-    state.kc.caos  = (ubyte) kc.cur_caos;
+    state.kc.model = (uint16_t) kc.cur_model;
+    state.kc.caos  = (uint8_t) kc.cur_caos;
     state.kc.io84 = kc.io84;
     state.kc.io86 = kc.io86;
     state.kc.pio_a = kc.pio_a;
@@ -143,8 +143,8 @@ snapshot::apply_kc_state(const state_t& state, yakc& emu) {
 void
 snapshot::write_z1013_state(const yakc& emu, state_t& state) {
     state.z1013.on = emu.z1013.on;
-    state.z1013.model = (uword) emu.z1013.cur_model;
-    state.z1013.os = (ubyte) emu.z1013.cur_os;
+    state.z1013.model = (uint16_t) emu.z1013.cur_model;
+    state.z1013.os = (uint8_t) emu.z1013.cur_os;
     state.z1013.kbd_column_nr_requested = emu.z1013.kbd_column_nr_requested;
     state.z1013.kbd_8x8_requested = emu.z1013.kbd_8x8_requested;
     state.z1013.next_kbd_column_bits = emu.z1013.next_kbd_column_bits;
@@ -167,8 +167,8 @@ snapshot::apply_z1013_state(const state_t& state, yakc& emu) {
 void
 snapshot::write_z9001_state(const yakc& emu, state_t& state) {
     state.z9001.on = 0 != emu.z9001.on;
-    state.z9001.model = (uword) emu.z9001.cur_model;
-    state.z9001.os = (ubyte) emu.z9001.cur_os;
+    state.z9001.model = (uint16_t) emu.z9001.cur_model;
+    state.z9001.os = (uint8_t) emu.z9001.cur_os;
     state.z9001.ctc0_mode = emu.z9001.ctc0_mode;
     state.z9001.kbd_column_mask = emu.z9001.kbd_column_mask;
     state.z9001.kbd_line_mask = emu.z9001.kbd_line_mask;

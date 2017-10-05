@@ -167,7 +167,7 @@ z1013::step_debug() {
 
 //------------------------------------------------------------------------------
 void
-z1013::cpu_out(uword port, ubyte val) {
+z1013::cpu_out(uint16_t port, uint8_t val) {
     switch (port & 0xFF) {
         case 0x00:
             // PIO A, data
@@ -198,8 +198,8 @@ z1013::cpu_out(uword port, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-z1013::cpu_in(uword port) {
+uint8_t
+z1013::cpu_in(uint16_t port) {
     switch (port & 0xFF) {
         case 0x00:
             return this->board->z80pio.read_data(this, z80pio::A);
@@ -216,7 +216,7 @@ z1013::cpu_in(uword port) {
 
 //------------------------------------------------------------------------------
 void
-z1013::pio_out(int pio_id, int port_id, ubyte val) {
+z1013::pio_out(int pio_id, int port_id, uint8_t val) {
     if (z80pio::B == port_id) {
         // for z1013a2, bit 4 is for monitor A.2 with 8x8 keyboard
         this->kbd_8x8_requested = 0 != (val & (1<<4));
@@ -225,7 +225,7 @@ z1013::pio_out(int pio_id, int port_id, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 z1013::pio_in(int pio_id, int port_id) {
     if (z80pio::A == port_id) {
         // nothing to return here, PIO-A is for user devices
@@ -234,14 +234,14 @@ z1013::pio_in(int pio_id, int port_id) {
     else {
         // FIXME: handle bit 7 for cassette input
         // read keyboard matrix state into lower 4 bits
-        ubyte val = 0;
+        uint8_t val = 0;
         if (system::z1013_01 == this->cur_model) {
-            ubyte col = this->kbd_column_nr_requested & 7;
+            uint8_t col = this->kbd_column_nr_requested & 7;
             val = 0xF & ~((this->kbd_column_bits >> (col*4)) & 0xF);
         }
         else {
-            ubyte col = (this->kbd_column_nr_requested & 7);
-            val = ubyte(this->kbd_column_bits >> (col*8));
+            uint8_t col = (this->kbd_column_nr_requested & 7);
+            val = uint8_t(this->kbd_column_bits >> (col*8));
             if (this->kbd_8x8_requested) {
                 val >>= 4;
             }
@@ -260,7 +260,7 @@ z1013::irq(bool b) {
 
 //------------------------------------------------------------------------------
 void
-z1013::put_key(ubyte ascii) {
+z1013::put_key(uint8_t ascii) {
     if (ascii) {
         this->next_kbd_column_bits = this->key_map[ascii & (max_num_keys-1)];
     }
@@ -277,7 +277,7 @@ z1013::kbd_bit(int col, int line, int num_lines) {
 
 //------------------------------------------------------------------------------
 void
-z1013::init_key(ubyte ascii, int col, int line, int shift, int num_lines) {
+z1013::init_key(uint8_t ascii, int col, int line, int shift, int num_lines) {
     YAKC_ASSERT((ascii < 128) && (col>=0) && (col<8) && (line>=0) && (line<num_lines) && (shift>=0) && (shift<5));
     uint64_t mask = kbd_bit(col, line, num_lines);
     if (shift != 0) {
@@ -327,7 +327,7 @@ z1013::init_keymap_8x4() {
     for (int shift = 0; shift < 5; shift++) {
         for (int line = 0; line < 4; line++) {
             for (int col = 0; col < 8; col++) {
-                ubyte c = layers_8x4[shift*32 + line*8 + col];
+                uint8_t c = layers_8x4[shift*32 + line*8 + col];
                 if (c != 0x20) {
                     this->init_key(c, col, line, shift, 4);
                 }
@@ -373,7 +373,7 @@ z1013::init_keymap_8x8() {
     for (int shift = 0; shift < 2; shift++) {
         for (int line = 0; line < 8; line++) {
             for (int col = 0; col < 8; col++) {
-                ubyte c = layers_8x8[shift*64 + line*8 + col];
+                uint8_t c = layers_8x8[shift*64 + line*8 + col];
                 if (c != 0x20) {
                     this->init_key(c, col, line, shift, 8);
                 }
@@ -395,13 +395,13 @@ z1013::init_keymap_8x8() {
 void
 z1013::decode_video() {
     uint32_t* dst = rgba8_buffer;
-    const ubyte* src = this->board->ram[vidmem_page];
-    const ubyte* font = this->roms->ptr(rom_images::z1013_font);
+    const uint8_t* src = this->board->ram[vidmem_page];
+    const uint8_t* font = this->roms->ptr(rom_images::z1013_font);
     for (int y = 0; y < 32; y++) {
         for (int py = 0; py < 8; py++) {
             for (int x = 0; x < 32; x++) {
-                ubyte chr = src[(y<<5) + x];
-                ubyte bits = font[(chr<<3)|py];
+                uint8_t chr = src[(y<<5) + x];
+                uint8_t bits = font[(chr<<3)|py];
                 for (int px = 7; px >=0; px--) {
                     *dst++ = bits & (1<<px) ? 0xFFFFFFFF : 0xFF000000;
                 }

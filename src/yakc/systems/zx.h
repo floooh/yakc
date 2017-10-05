@@ -28,7 +28,7 @@ public:
     /// initialize the keyboard matrix mapping table
     void init_keymap();
     /// initialize a single entry in the key-map table
-    void init_key_mask(ubyte ascii, int column, int line, int shift);
+    void init_key_mask(uint8_t ascii, int column, int line, int shift);
     /// power-on the device
     void poweron(system m);
     /// power-off the device
@@ -40,7 +40,7 @@ public:
     /// called after snapshot restore
     void on_context_switched();
     /// put a key and joystick input (Kempston)
-    void put_input(ubyte ascii, ubyte joy0_mask);
+    void put_input(uint8_t ascii, uint8_t joy0_mask);
 
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
@@ -57,9 +57,9 @@ public:
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);    
 
     /// the z80 out callback
-    virtual void cpu_out(uword port, ubyte val) override;
+    virtual void cpu_out(uint16_t port, uint8_t val) override;
     /// the z80 in callback
-    virtual ubyte cpu_in(uword port) override;
+    virtual uint8_t cpu_in(uint16_t port) override;
     /// interrupt request callback
     virtual void irq(bool b) override;
     /// clock timer-trigger callback
@@ -83,7 +83,7 @@ public:
     static const int display_height = 256;
     uint32_t* rgba8_buffer = nullptr;
     
-    ubyte joy_mask = 0;                 // joystick mask
+    uint8_t joy_mask = 0;                 // joystick mask
     uint64_t next_kbd_mask = 0;
     uint64_t cur_kbd_mask = 0;
     uint64_t key_map[256];              // 8x5 keyboard matrix bits by key code

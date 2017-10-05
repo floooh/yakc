@@ -36,7 +36,7 @@ kc85_exp::module_name(module_type type) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 kc85_exp::module_id(module_type type) {
     switch (type) {
         case none:              return 0xFF;
@@ -63,7 +63,7 @@ kc85_exp::register_none_module(const char* name, const char* desc) {
 
 //------------------------------------------------------------------------------
 void
-kc85_exp::register_ram_module(module_type type, ubyte addr_mask, unsigned int size, const char* desc) {
+kc85_exp::register_ram_module(module_type type, uint8_t addr_mask, unsigned int size, const char* desc) {
     YAKC_ASSERT(!this->is_module_registered(type));
     YAKC_ASSERT(size > 0 && desc);
     module& mod = this->registry[type];
@@ -81,7 +81,7 @@ kc85_exp::register_ram_module(module_type type, ubyte addr_mask, unsigned int si
 
 //------------------------------------------------------------------------------
 void
-kc85_exp::register_rom_module(module_type type, ubyte addr_mask, const ubyte* ptr, unsigned int size, const char* desc) {
+kc85_exp::register_rom_module(module_type type, uint8_t addr_mask, const uint8_t* ptr, unsigned int size, const char* desc) {
     YAKC_ASSERT(!this->is_module_registered(type));
     YAKC_ASSERT(ptr && size > 0 && desc);
     module& mod = this->registry[type];
@@ -90,7 +90,7 @@ kc85_exp::register_rom_module(module_type type, ubyte addr_mask, const ubyte* pt
     mod.id         = module_id(type);
     mod.name       = module_name(type);
     mod.desc       = desc;
-    mod.mem_ptr    = (ubyte*) ptr;
+    mod.mem_ptr    = (uint8_t*) ptr;
     mod.mem_size   = size;
     mod.writable   = false;
     mod.mem_owned  = false;
@@ -113,7 +113,7 @@ kc85_exp::module_template(module_type type) const {
 
 //------------------------------------------------------------------------------
 bool
-kc85_exp::slot_exists(ubyte slot_addr) const {
+kc85_exp::slot_exists(uint8_t slot_addr) const {
     for (int i = 0; i < num_slots; i++) {
         if (this->slots[i].slot_addr == slot_addr) {
             return true;
@@ -124,7 +124,7 @@ kc85_exp::slot_exists(ubyte slot_addr) const {
 
 //------------------------------------------------------------------------------
 kc85_exp::module_slot&
-kc85_exp::slot_by_addr(ubyte slot_addr) {
+kc85_exp::slot_by_addr(uint8_t slot_addr) {
     for (auto& slot : this->slots) {
         if (slot.slot_addr == slot_addr) {
             return slot;
@@ -136,13 +136,13 @@ kc85_exp::slot_by_addr(ubyte slot_addr) {
 
 //------------------------------------------------------------------------------
 const kc85_exp::module_slot&
-kc85_exp::slot_by_addr(ubyte slot_addr) const {
+kc85_exp::slot_by_addr(uint8_t slot_addr) const {
     return const_cast<kc85_exp*>(this)->slot_by_addr(slot_addr);
 }
 
 //------------------------------------------------------------------------------
 bool
-kc85_exp::module_in_slot_owns_pointer(ubyte slot_addr, const ubyte* ptr) const {
+kc85_exp::module_in_slot_owns_pointer(uint8_t slot_addr, const uint8_t* ptr) const {
     const auto& slot = this->slot_by_addr(slot_addr);
     return (slot.mod.mem_ptr != 0) &&
         (ptr >= slot.mod.mem_ptr) &&
@@ -151,7 +151,7 @@ kc85_exp::module_in_slot_owns_pointer(ubyte slot_addr, const ubyte* ptr) const {
 
 //------------------------------------------------------------------------------
 int
-kc85_exp::memory_layer_by_slot_addr(ubyte slot_addr) const {
+kc85_exp::memory_layer_by_slot_addr(uint8_t slot_addr) const {
     for (int i = 0; i < num_slots; i++) {
         if (this->slots[i].slot_addr == slot_addr) {
             return i + 1;
@@ -163,13 +163,13 @@ kc85_exp::memory_layer_by_slot_addr(ubyte slot_addr) const {
 
 //------------------------------------------------------------------------------
 bool
-kc85_exp::slot_occupied(ubyte slot_addr) const {
+kc85_exp::slot_occupied(uint8_t slot_addr) const {
     return this->slot_by_addr(slot_addr).mod.id != 0xFF;
 }
 
 //------------------------------------------------------------------------------
 void
-kc85_exp::insert_module(ubyte slot_addr, module_type type) {
+kc85_exp::insert_module(uint8_t slot_addr, module_type type) {
     YAKC_ASSERT(this->is_module_registered(type));
     YAKC_ASSERT(!this->slot_occupied(slot_addr));
 
@@ -177,14 +177,14 @@ kc85_exp::insert_module(ubyte slot_addr, module_type type) {
     slot.mod = this->registry[type];
     if (slot.mod.mem_owned && slot.mod.mem_size > 0) {
         YAKC_ASSERT(nullptr == slot.mod.mem_ptr);
-        slot.mod.mem_ptr = (ubyte*) YAKC_MALLOC(slot.mod.mem_size);
+        slot.mod.mem_ptr = (uint8_t*) YAKC_MALLOC(slot.mod.mem_size);
         clear(slot.mod.mem_ptr, slot.mod.mem_size);
     }
 }
 
 //------------------------------------------------------------------------------
 void
-kc85_exp::remove_module(ubyte slot_addr, memory& mem) {
+kc85_exp::remove_module(uint8_t slot_addr, memory& mem) {
     YAKC_ASSERT(this->slot_occupied(slot_addr));
     mem.unmap_layer(this->memory_layer_by_slot_addr(slot_addr));
     auto& slot = this->slot_by_addr(slot_addr);
@@ -198,15 +198,15 @@ kc85_exp::remove_module(ubyte slot_addr, memory& mem) {
 
 //------------------------------------------------------------------------------
 void
-kc85_exp::update_control_byte(ubyte slot_addr, ubyte ctrl_byte) {
+kc85_exp::update_control_byte(uint8_t slot_addr, uint8_t ctrl_byte) {
     if (this->slot_exists(slot_addr)) {
         this->slot_by_addr(slot_addr).control_byte = ctrl_byte;
     }
 }
 
 //------------------------------------------------------------------------------
-ubyte
-kc85_exp::module_type_in_slot(ubyte slot_addr) const {
+uint8_t
+kc85_exp::module_type_in_slot(uint8_t slot_addr) const {
     if (this->slot_exists(slot_addr)) {
         return this->slot_by_addr(slot_addr).mod.id;
     }

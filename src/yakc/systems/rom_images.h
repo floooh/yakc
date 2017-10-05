@@ -52,11 +52,11 @@ public:
     };
 
     /// add a ROM blob
-    void add(rom type, const ubyte* ptr, int size);
+    void add(rom type, const uint8_t* ptr, int size);
     /// test if a ROM blob had been added
     bool has(rom type) const;
     /// get the pointer to a rom blob
-    ubyte* ptr(rom type);
+    uint8_t* ptr(rom type);
     /// get the size of a rom blob
     int size(rom type) const;
 
@@ -69,7 +69,7 @@ private:
 
     static const int buf_size = 1024 * 1024;
     int cur_pos = 0;
-    ubyte buffer[buf_size];
+    uint8_t buffer[buf_size];
 };
 
 } // namespace YAKC

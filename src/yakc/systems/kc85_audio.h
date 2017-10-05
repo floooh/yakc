@@ -35,8 +35,8 @@ public:
     uint64_t cycle_count = 0;       // current absolute CPU cycle count
     static const int num_channels = 2;
     struct channel_state {
-        ubyte ctc_mode = z80ctc::RESET;
-        ubyte ctc_constant = 0;
+        uint8_t ctc_mode = z80ctc::RESET;
+        uint8_t ctc_constant = 0;
     } channels[num_channels];
 };
 

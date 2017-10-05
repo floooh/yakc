@@ -57,24 +57,24 @@ public:
     uint32_t step_debug();
 
     /// the z80 out callback
-    virtual void cpu_out(uword port, ubyte val) override;
+    virtual void cpu_out(uint16_t port, uint8_t val) override;
     /// the z80 in callback
-    virtual ubyte cpu_in(uword port) override;
+    virtual uint8_t cpu_in(uint16_t port) override;
     /// CTC write callback (used for audio)
     virtual void ctc_write(int ctc_id, int chn_id) override;
     /// CTC ZCTO callback (used to trigger CTC channel 3)
     virtual void ctc_zcto(int ctc_id, int chn_id) override;
     /// PIO output callback
-    virtual void pio_out(int pio_id, int port_id, ubyte val) override;
+    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
     /// PIO input callback
-    virtual ubyte pio_in(int pio_id, int port_id) override;
+    virtual uint8_t pio_in(int pio_id, int port_id) override;
     /// request a CPU interrupt
     virtual void irq(bool b) override;
     /// clock timer triggered
     virtual void timer(int timer_id) override;
 
     /// put a key as ASCII code
-    void put_key(ubyte ascii);
+    void put_key(uint8_t ascii);
     /// handle key input (called from onframe())
     void handle_key();
 
@@ -112,8 +112,8 @@ public:
     static_assert(display_height <= global_max_fb_height, "z9001 fb size");
     uint32_t* rgba8_buffer = nullptr;
 
-    ubyte ctc0_mode = z80ctc::RESET;    // CTC0 state for audio output
-    ubyte ctc0_constant = 0;
+    uint8_t ctc0_mode = z80ctc::RESET;    // CTC0 state for audio output
+    uint8_t ctc0_constant = 0;
 };
 
 } // namespace YAKC

@@ -64,7 +64,7 @@ kc85_video::ctc_blink() {
 
 //------------------------------------------------------------------------------
 void
-kc85_video::kc85_4_irm_control(ubyte val) {
+kc85_video::kc85_4_irm_control(uint8_t val) {
     this->irm_control = val;
 }
 
@@ -85,15 +85,15 @@ kc85_video::scanline() {
 
 //------------------------------------------------------------------------------
 void
-kc85_video::decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_bg) const {
+kc85_video::decode8(unsigned int* ptr, uint8_t pixels, uint8_t colors, bool blink_bg) const {
     // select foreground- and background color:
     //  bit 7: blinking
     //  bits 6..3: foreground color
     //  bits 2..0: background color
     //
     // index 0 is background color, index 1 is foreground color
-    const ubyte bg_index = colors & 0x7;
-    const ubyte fg_index = (colors>>3)&0xF;
+    const uint8_t bg_index = colors & 0x7;
+    const uint8_t fg_index = (colors>>3)&0xF;
     const unsigned int bg = bg_palette[bg_index];
     const unsigned int fg = (blink_bg && (colors & 0x80)) ? bg : fg_palette[fg_index];
     ptr[0] = pixels & 0x80 ? fg : bg;
@@ -114,19 +114,19 @@ kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
     if (system::kc85_4 == this->model) {
         // KC85/4
         int irm_index = (this->irm_control & 1) * 2;
-        const ubyte* pixel_data = this->board->ram[irm0_page + irm_index];
-        const ubyte* color_data = this->board->ram[irm0_page + irm_index + 1];
+        const uint8_t* pixel_data = this->board->ram[irm0_page + irm_index];
+        const uint8_t* color_data = this->board->ram[irm0_page + irm_index + 1];
         for (int x = 0; x < width; x++) {
             int offset = y | (x<<8);
-            ubyte src_pixels = pixel_data[offset];
-            ubyte src_colors = color_data[offset];
+            uint8_t src_pixels = pixel_data[offset];
+            uint8_t src_colors = color_data[offset];
             this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
         }
     }
     else {
         // KC85/3
-        const ubyte* pixel_data = this->board->ram[irm0_page];
-        const ubyte* color_data = this->board->ram[irm0_page] + 0x2800;
+        const uint8_t* pixel_data = this->board->ram[irm0_page];
+        const uint8_t* color_data = this->board->ram[irm0_page] + 0x2800;
         const int left_pixel_offset  = (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>4)&0xF)<<9);
         const int left_color_offset  = (((y>>2)&0x3f)<<5);
         const int right_pixel_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>6)&0x3)<<9);
@@ -143,8 +143,8 @@ kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
                 pixel_offset = 0x2000 + ((x&0x7) | right_pixel_offset);
                 color_offset = 0x0800 + ((x&0x7) | right_color_offset);
             }
-            ubyte src_pixels = pixel_data[pixel_offset];
-            ubyte src_colors = color_data[color_offset];
+            uint8_t src_pixels = pixel_data[pixel_offset];
+            uint8_t src_colors = color_data[color_offset];
             this->decode8(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
         }
     }

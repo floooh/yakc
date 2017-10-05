@@ -7,7 +7,7 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-rom_images::add(rom type, const ubyte* ptr, int size) {
+rom_images::add(rom type, const uint8_t* ptr, int size) {
     YAKC_ASSERT((type >= 0) && (type < num_roms));
     YAKC_ASSERT(!this->has(type));
     YAKC_ASSERT((cur_pos + size) <= buf_size);
@@ -26,7 +26,7 @@ rom_images::has(rom type) const {
 }
 
 //------------------------------------------------------------------------------
-ubyte*
+uint8_t*
 rom_images::ptr(rom type) {
     YAKC_ASSERT(this->has(type));
     return &this->buffer[this->roms[type].pos];

@@ -239,7 +239,7 @@ kc85::step_debug() {
 
 //------------------------------------------------------------------------------
 void
-kc85::put_key(ubyte ascii) {
+kc85::put_key(uint8_t ascii) {
     this->key_code = ascii;
 }
 
@@ -261,14 +261,14 @@ kc85::handle_keyboard_input() {
     }
 
     // status bits
-    static const ubyte timeout = (1<<3);
-    static const ubyte keyready = (1<<0);
-    static const ubyte repeat = (1<<4);
-    static const ubyte short_repeat_count = 8;
-    static const ubyte long_repeat_count = 60;
+    static const uint8_t timeout = (1<<3);
+    static const uint8_t keyready = (1<<0);
+    static const uint8_t repeat = (1<<4);
+    static const uint8_t short_repeat_count = 8;
+    static const uint8_t long_repeat_count = 60;
 
     auto& mem = this->board->z80.mem;
-    const uword ix = this->board->z80.IX;
+    const uint16_t ix = this->board->z80.IX;
     if (0 == this->key_code) {
         // if keycode is 0, this basically means the CTC3 timeout was hit
         mem.w8(ix+0x8, mem.r8(ix+0x8)|timeout); // set the CTC3 timeout bit
@@ -316,7 +316,7 @@ kc85::handle_keyboard_input() {
 
 //------------------------------------------------------------------------------
 void
-kc85::cpu_out(uword port, ubyte val) {
+kc85::cpu_out(uint16_t port, uint8_t val) {
     switch (port & 0xFF) {
         case 0x80:
             if (this->exp.slot_exists(port>>8)) {
@@ -367,8 +367,8 @@ kc85::cpu_out(uword port, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-kc85::cpu_in(uword port) {
+uint8_t
+kc85::cpu_in(uint16_t port) {
     // NOTE: on KC85/4, the hardware doesn't provide a way to read-back
     // the additional IO ports at 0x84 and 0x86 (see KC85/4 service manual)
     switch (port & 0xFF) {
@@ -411,14 +411,14 @@ kc85::ctc_zcto(int ctc_id, int chn_id) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 kc85::pio_in(int pio_id, int port_id) {
     return z80pio::A == port_id ? this->pio_a : this->pio_b;
 }
 
 //------------------------------------------------------------------------------
 void
-kc85::pio_out(int pio_id, int port_id, ubyte val) {
+kc85::pio_out(int pio_id, int port_id, uint8_t val) {
     if (z80pio::A == port_id) {
         this->pio_a = val;
         this->update_bank_switching();
@@ -496,14 +496,14 @@ kc85::update_bank_switching() {
         }
         // 16 KByte RAM at 0x8000 (2 banks)
         if (pio_b & PIO_B_RAM8) {
-            ubyte* ram8_ptr = (this->io84 & IO84_SEL_RAM8) ? this->board->ram[3] : this->board->ram[2];
+            uint8_t* ram8_ptr = (this->io84 & IO84_SEL_RAM8) ? this->board->ram[3] : this->board->ram[2];
             cpu.mem.map(0, 0x8000, 0x4000, ram8_ptr, true); // pio_b & PIO_B_RAM8_RO);
         }
         // IRM is 4 banks, 2 for pixels, 2 for color,
         // the area A800 to BFFF is always mapped to IRM0!
         if (pio_a & PIO_A_IRM) {
             int irm_index = (this->io84 & 6)>>1;
-            ubyte* irm_ptr = this->board->ram[kc85_video::irm0_page + irm_index];
+            uint8_t* irm_ptr = this->board->ram[kc85_video::irm0_page + irm_index];
             // on the KC85, an access to IRM banks other than the
             // first is only possible for the first 10 KByte until
             // A800, memory access to the remaining 6 KBytes

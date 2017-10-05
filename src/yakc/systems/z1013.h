@@ -73,20 +73,20 @@ public:
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
     /// put a key as ASCII code
-    void put_key(ubyte ascii);
+    void put_key(uint8_t ascii);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// perform a single debug-step
     uint32_t step_debug();
 
     /// the z80 out callback
-    virtual void cpu_out(uword port, ubyte val) override;
+    virtual void cpu_out(uint16_t port, uint8_t val) override;
     /// the z80 in callback
-    virtual ubyte cpu_in(uword port) override;
+    virtual uint8_t cpu_in(uint16_t port) override;
     /// PIO out callback
-    virtual void pio_out(int pio_id, int port_id, ubyte val) override;
+    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
     /// PIO in callback
-    virtual ubyte pio_in(int pio_id, int port_id) override;
+    virtual uint8_t pio_in(int pio_id, int port_id) override;
     /// interrupt request callback
     virtual void irq(bool b) override;
 
@@ -95,7 +95,7 @@ public:
     /// initialize the key translation table for the 8x8 keyboard (z1013.16/64)
     void init_keymap_8x8();
     /// add a single key to the key map with the keyboard matrix column/line and shift key (0..4)
-    void init_key(ubyte ascii, int col, int line, int shift, int num_lines);
+    void init_key(uint8_t ascii, int col, int line, int shift, int num_lines);
     /// get keyboard matrix bit mask by column and line
     uint64_t kbd_bit(int col, int line, int num_lines);
 
@@ -106,7 +106,7 @@ public:
     system cur_model = system::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;
     bool on = false;
-    ubyte kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
+    uint8_t kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
     bool kbd_8x8_requested = false;         // bit 4 in PIO-B written
     uint64_t next_kbd_column_bits = 0;
     uint64_t kbd_column_bits = 0;

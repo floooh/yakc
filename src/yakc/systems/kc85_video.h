@@ -22,10 +22,10 @@ public:
     /// PAL-scanline callback, scan-converts one video memory line
     void scanline();
     /// update the KC85/4 IRM control byte (written to port 84)
-    void kc85_4_irm_control(ubyte val);
+    void kc85_4_irm_control(uint8_t val);
 
     /// decode 8 pixels
-    void decode8(unsigned int* ptr, ubyte pixels, ubyte colors, bool blink_off) const;
+    void decode8(unsigned int* ptr, uint8_t pixels, uint8_t colors, bool blink_off) const;
     /// decode the next line
     void decode_one_line(unsigned int* ptr, int y, bool blink_bg);
 
@@ -39,10 +39,10 @@ public:
     static const int irm0_page = 4;
     breadboard* board = nullptr;
     system model = system::kc85_3;
-    ubyte irm_control = 0;
+    uint8_t irm_control = 0;
     bool pio_blink_flag = true;
     bool ctc_blink_flag = true;
-    uword cur_scanline = 0;
+    uint16_t cur_scanline = 0;
 };
 
 } // namespace YAKC

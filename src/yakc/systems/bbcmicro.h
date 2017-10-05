@@ -39,7 +39,7 @@ public:
     const void* framebuffer(int& out_width, int& out_height);
 
     /// put a key as ASCII code
-    void put_key(ubyte ascii);
+    void put_key(uint8_t ascii);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// perform a single debug-step

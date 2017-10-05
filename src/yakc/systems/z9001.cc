@@ -53,7 +53,7 @@ z9001::init(breadboard* b, rom_images* r) {
     for (int shift=0; shift<2; shift++) { // shift layer
         for (int line=0; line<8; line++) {
             for (int col=0; col<8; col++) {
-                ubyte c = kbd_matrix[shift*64 + line*8 + col];
+                uint8_t c = kbd_matrix[shift*64 + line*8 + col];
                 if (c != 0x20) {
                     uint64_t mask = kbd_bits(col, line);
                     if (shift) {
@@ -260,7 +260,7 @@ z9001::step_debug() {
 
 //------------------------------------------------------------------------------
 void
-z9001::cpu_out(uword port, ubyte val) {
+z9001::cpu_out(uint16_t port, uint8_t val) {
     // NOTE: there are 2 port numbers each for all CTC and PIO ports!
     z80pio& pio1 = this->board->z80pio;
     z80pio& pio2 = this->board->z80pio2;
@@ -320,8 +320,8 @@ z9001::cpu_out(uword port, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
-z9001::cpu_in(uword port) {
+uint8_t
+z9001::cpu_in(uint16_t port) {
     z80pio& pio1 = this->board->z80pio;
     z80pio& pio2 = this->board->z80pio2;
     z80ctc& ctc = this->board->z80ctc;
@@ -367,7 +367,7 @@ z9001::cpu_in(uword port) {
 
 //------------------------------------------------------------------------------
 void
-z9001::pio_out(int pio_id, int port_id, ubyte val) {
+z9001::pio_out(int pio_id, int port_id, uint8_t val) {
     if (0 == pio_id) {
         if (z80pio::A == port_id) {
             // PIO1-A bits:
@@ -393,7 +393,7 @@ z9001::pio_out(int pio_id, int port_id, ubyte val) {
 }
 
 //------------------------------------------------------------------------------
-ubyte
+uint8_t
 z9001::pio_in(int pio_id, int port_id) {
     if (0 == pio_id) {
         return 0;
@@ -401,9 +401,9 @@ z9001::pio_in(int pio_id, int port_id) {
     else {
         if (z80pio::A == port_id) {
             // return column bits for requested line bits of currently pressed key
-            ubyte column_bits = 0;
+            uint8_t column_bits = 0;
             for (int col=0; col<8; col++) {
-                const ubyte line_bits = (this->key_mask>>(col*8)) & 0xFF;
+                const uint8_t line_bits = (this->key_mask>>(col*8)) & 0xFF;
                 if (line_bits & this->kbd_line_mask) {
                     column_bits |= (1<<col);
                 }
@@ -412,7 +412,7 @@ z9001::pio_in(int pio_id, int port_id) {
         }
         else {
             // return line bits for requested column bits of currently pressed key
-            ubyte line_bits = 0;
+            uint8_t line_bits = 0;
             for (int col=0; col<8; col++) {
                 if ((1<<col) & this->kbd_column_mask) {
                     line_bits |= (this->key_mask>>(col*8)) & 0xFF;
@@ -481,7 +481,7 @@ z9001::timer(int timer_id) {
 
 //------------------------------------------------------------------------------
 void
-z9001::put_key(ubyte ascii) {
+z9001::put_key(uint8_t ascii) {
     // replace BREAK with STOP
     if (ascii == 0x13) {
         ascii = 0x3;
@@ -500,7 +500,7 @@ z9001::handle_key() {
         // PIO2-A is connected to keyboard matrix columns, PIO2-B to lines
         // send the line bits (active-low) to PIOB, this will trigger
         // an interrupt which initiates the keyboard input procedure
-        ubyte line_bits = 0;
+        uint8_t line_bits = 0;
         for (int col=0; col<8; col++) {
             if ((1<<col) & this->kbd_column_mask) {
                 line_bits |= (this->key_mask>>(col*8)) & 0xFF;
@@ -530,9 +530,9 @@ z9001::decode_video() {
 
     // FIXME: there's also a 40x20 display mode
     uint32_t* dst = this->rgba8_buffer;
-    const ubyte* vidmem = this->board->ram[video_ram_page];
-    const ubyte* colmem = this->board->ram[color_ram_page];
-    ubyte* font;
+    const uint8_t* vidmem = this->board->ram[video_ram_page];
+    const uint8_t* colmem = this->board->ram[color_ram_page];
+    uint8_t* font;
     if (system::kc87 == this->cur_model) {
         font = this->roms->ptr(rom_images::kc87_font_2);
     }
@@ -545,9 +545,9 @@ z9001::decode_video() {
         for (int y = 0; y < 24; y++) {
             for (int py = 0; py < 8; py++) {
                 for (int x = 0; x < 40; x++) {
-                    ubyte chr = vidmem[off+x];
-                    ubyte pixels = font[(chr<<3)|py];
-                    ubyte color = colmem[off+x];
+                    uint8_t chr = vidmem[off+x];
+                    uint8_t pixels = font[(chr<<3)|py];
+                    uint8_t color = colmem[off+x];
                     if ((color & 0x80) && this->blink_flipflop) {
                         // blinking: swap bg and fg
                         fg = palette[color&7];
@@ -569,8 +569,8 @@ z9001::decode_video() {
         for (int y = 0; y < 24; y++) {
             for (int py = 0; py < 8; py++) {
                 for (int x = 0; x < 40; x++) {
-                    ubyte chr = vidmem[off+x];
-                    ubyte pixels = font[(chr<<3)|py];
+                    uint8_t chr = vidmem[off+x];
+                    uint8_t pixels = font[(chr<<3)|py];
                     for (int px = 7; px >=0; px--) {
                         *dst++ = pixels & (1<<px) ? 0xFFFFFFFF : 0xFF000000;
                     }

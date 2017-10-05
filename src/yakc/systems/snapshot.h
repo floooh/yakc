@@ -18,8 +18,8 @@ public:
 
         // general emulator state
         struct emu_t {
-            uword model;
-            uword os;
+            uint16_t model;
+            uint16_t os;
         } emu;
         static_assert((sizeof(emu_t)&3)==0, "emu_t odd size!");
 
@@ -36,39 +36,39 @@ public:
 
         // KC85 system state
         struct kc_t {
-            uword model;
-            ubyte on;
-            ubyte caos;
-            ubyte io84;
-            ubyte io86;
-            ubyte pio_a;
-            ubyte pio_b;
-            uword cur_scanline;
-            ubyte irm_control;
-            ubyte pio_blink_flag;
-            ubyte ctc_blink_flag;
-            ubyte pad[3];
+            uint16_t model;
+            uint8_t on;
+            uint8_t caos;
+            uint8_t io84;
+            uint8_t io86;
+            uint8_t pio_a;
+            uint8_t pio_b;
+            uint16_t cur_scanline;
+            uint8_t irm_control;
+            uint8_t pio_blink_flag;
+            uint8_t ctc_blink_flag;
+            uint8_t pad[3];
             struct channel_t {
-                ubyte ctc_mode;
-                ubyte ctc_constant;
+                uint8_t ctc_mode;
+                uint8_t ctc_constant;
             } chn[2];
             struct slot_t {
-                ubyte slot_addr;        // 0x08 or 0x0C
-                ubyte module_type;      // kc85_exp::module_type
-                ubyte control_byte;
-                ubyte padding;
+                uint8_t slot_addr;        // 0x08 or 0x0C
+                uint8_t module_type;      // kc85_exp::module_type
+                uint8_t control_byte;
+                uint8_t padding;
             } slots[2];
         } kc;
         static_assert((sizeof(kc_t)&3)==0, "kc_t odd size!");
 
         // Z1013 system state
         struct z1013_t {
-            uword model;
-            ubyte on;
-            ubyte os;
-            ubyte kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
-            ubyte kbd_8x8_requested = false;         // bit 4 in PIO-B written
-            ubyte pad[2];
+            uint16_t model;
+            uint8_t on;
+            uint8_t os;
+            uint8_t kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
+            uint8_t kbd_8x8_requested = false;         // bit 4 in PIO-B written
+            uint8_t pad[2];
             uint64_t next_kbd_column_bits = 0;
             uint64_t kbd_column_bits = 0;
         } z1013;
@@ -76,53 +76,53 @@ public:
 
         // Z9001 system state
         struct z9001_t {
-            uword model;
-            ubyte on;
-            ubyte os;
-            ubyte ctc0_mode;
-            ubyte kbd_column_mask;
-            ubyte kbd_line_mask;
-            ubyte blink_flipflop;
-            ubyte brd_color;
-            ubyte pad[3];
+            uint16_t model;
+            uint8_t on;
+            uint8_t os;
+            uint8_t ctc0_mode;
+            uint8_t kbd_column_mask;
+            uint8_t kbd_line_mask;
+            uint8_t blink_flipflop;
+            uint8_t brd_color;
+            uint8_t pad[3];
             uint32_t blink_counter;
-            ubyte ctc0_constant;
-            ubyte pad1[3];
+            uint8_t ctc0_constant;
+            uint8_t pad1[3];
             uint64_t key_mask;
         } z9001;
         static_assert((sizeof(z9001_t)&3)==0, "z9001_t odd size!");
 
         // cpu state
         struct cpu_t {
-            uword AF, BC, DE, HL, IX, IY, WZ;
-            uword AF_, BC_, DE_, HL_, WZ_;
-            uword SP, PC;
-            ubyte I, R, IM;
-            ubyte HALT, IFF1, IFF2;
+            uint16_t AF, BC, DE, HL, IX, IY, WZ;
+            uint16_t AF_, BC_, DE_, HL_, WZ_;
+            uint16_t SP, PC;
+            uint8_t I, R, IM;
+            uint8_t HALT, IFF1, IFF2;
 
-            ubyte INV;
-            ubyte int_active;
-            ubyte int_enable;
-            ubyte padding[3];
+            uint8_t INV;
+            uint8_t int_active;
+            uint8_t int_enable;
+            uint8_t padding[3];
         } cpu;
         static_assert((sizeof(cpu_t)&3)==0, "cpu_t odd size!");
 
         // interrupt controller data
         struct intctrl_t {
-            ubyte enabled;
-            ubyte requested;
-            ubyte request_data;
-            ubyte pending;
+            uint8_t enabled;
+            uint8_t requested;
+            uint8_t request_data;
+            uint8_t pending;
         };
 
         // ctc state
         struct ctc_t {
             struct chn_t {
                 int down_counter;
-                ubyte mode;
-                ubyte constant;
-                ubyte waiting_for_trigger;
-                ubyte interrupt_vector;
+                uint8_t mode;
+                uint8_t constant;
+                uint8_t waiting_for_trigger;
+                uint8_t interrupt_vector;
                 intctrl_t intctrl;
             } chn[4];
         } ctc;
@@ -131,7 +131,7 @@ public:
         // pio state
         struct pio_t {
             z80pio::port_t port[z80pio::num_ports];
-            ubyte pad[2];
+            uint8_t pad[2];
             intctrl_t intctrl;
         };
         static_assert((sizeof(pio_t)&3)==0, "pio_t odd size!");
@@ -139,11 +139,11 @@ public:
         pio_t pio2;
 
         // system RAM banks
-        ubyte ram[8][0x4000];
+        uint8_t ram[8][0x4000];
         // optional slot 0x08 RAM banks
-        ubyte ram8[4][0x4000];
+        uint8_t ram8[4][0x4000];
         // optional slot 0x0C RAM banks
-        ubyte ramC[4][0x4000];
+        uint8_t ramC[4][0x4000];
     };
     static_assert((sizeof(state_t)&3)==0, "state odd size!");
     #pragma pack(pop)

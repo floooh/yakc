@@ -52,10 +52,10 @@ public:
     kc85_video video;
     kc85_audio audio;
     kc85_exp exp;
-    ubyte pio_a = 0;        // backing for PIO-A data
-    ubyte pio_b = 0;        // backing for PIO-B data
-    ubyte io84 = 0;         // special KC85/4 io register
-    ubyte io86 = 0;         // special KC85/4 io register
+    uint8_t pio_a = 0;        // backing for PIO-A data
+    uint8_t pio_b = 0;        // backing for PIO-B data
+    uint8_t io84 = 0;         // special KC85/4 io register
+    uint8_t io86 = 0;         // special KC85/4 io register
 
     /// one-time init
     void init(breadboard* board, rom_images* roms);
@@ -83,24 +83,24 @@ public:
     uint32_t step_debug();
     
     /// put a key as ASCII code
-    void put_key(ubyte ascii);
+    void put_key(uint8_t ascii);
     /// handle keyboard input
     void handle_keyboard_input();
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
     /// the z80 out callback
-    virtual void cpu_out(uword port, ubyte val) override;
+    virtual void cpu_out(uint16_t port, uint8_t val) override;
     /// the z80 in callback
-    virtual ubyte cpu_in(uword port) override;
+    virtual uint8_t cpu_in(uint16_t port) override;
     /// CTC write callback
     virtual void ctc_write(int ctc_id, int chn_id) override;
     /// CTC zcto callback
     virtual void ctc_zcto(int ctc_id, int chn_id) override;
     /// Z80 PIO input callback
-    virtual ubyte pio_in(int pio_id, int port_id) override;
+    virtual uint8_t pio_in(int pio_id, int port_id) override;
     /// Z80 PIO output callback
-    virtual void pio_out(int pio_id, int port_id, ubyte val) override;
+    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
     /// interrupt request callback
     virtual void irq(bool b) override;
     /// clock timer-trigger callback
@@ -114,12 +114,12 @@ public:
     system cur_model = system::kc85_3;
     os_rom cur_caos = os_rom::caos_3_1;
     bool on = false;
-    ubyte key_code = 0;
-    ubyte* caos_c_ptr = nullptr;
+    uint8_t key_code = 0;
+    uint8_t* caos_c_ptr = nullptr;
     int caos_c_size = 0;
-    ubyte* caos_e_ptr = nullptr;
+    uint8_t* caos_e_ptr = nullptr;
     int caos_e_size = 0;
-    ubyte* basic_ptr = nullptr;
+    uint8_t* basic_ptr = nullptr;
     int basic_size = 0;
 };
 
