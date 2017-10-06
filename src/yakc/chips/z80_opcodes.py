@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
-Version = 6 
+Version = 7
 
 # tab-width for generated code
 TabWidth = 2
@@ -361,7 +361,7 @@ def enc_ed_op(op) :
                 [
                     [ 'OUTI',   'outi(bus); {};'.format(cyc(cc,op)) ],
                     [ 'OUTD',   'outd(bus); {};'.format(cyc(cc,op)) ],
-                    [ 'OTID',   'return otir(bus);' ],
+                    [ 'OTIR',   'return otir(bus);' ],
                     [ 'OTDR',   'return otdr(bus);' ]
                 ]
             ]

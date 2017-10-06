@@ -1,4 +1,4 @@
-// #version:6#
+// #version:7#
 // machine generated, do not edit!
 #include "z80.h"
 namespace YAKC {
@@ -1090,7 +1090,7 @@ uint32_t z80::do_op(system_bus* bus) {
         case 0xb0: return ldir(); // LDIR
         case 0xb1: return cpir(); // CPIR
         case 0xb2: return inir(bus); // INIR
-        case 0xb3: return otir(bus); // OTID
+        case 0xb3: return otir(bus); // OTIR
         case 0xb8: return lddr(); // LDDR
         case 0xb9: return cpdr(); // CPDR
         case 0xba: return indr(bus); // INDR

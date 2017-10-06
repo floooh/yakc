@@ -27,6 +27,7 @@ fips_begin_module(yakc)
         ay8910.h ay8910.cc
     )
     fips_generate(FROM z80_opcodes.py SOURCE z80_opcodes.cc)
+    fips_generate(FROM z80_cycles.py SOURCE z80_cycles.cc)
     fips_dir(peripherals)
     fips_files(
         crt.h crt.cc
