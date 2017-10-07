@@ -83,12 +83,14 @@ public:
     /// break on invalid opcode?
     bool break_on_invalid_opcode;
     /// cycle-count tables (each with 256 entries)
-    const uint32_t* cc_op;
-    const uint32_t* cc_cb;
-    const uint32_t* cc_ed;
-    const uint32_t* cc_xy;
-    const uint32_t* cc_xycb;
-    const uint32_t* cc_ex;    // extra cycles conditional jumps and rst
+    const uint8_t* cc_op;
+    const uint8_t* cc_cb;
+    const uint8_t* cc_ed;
+    const uint8_t* cc_dd;
+    const uint8_t* cc_fd;
+    const uint8_t* cc_ddcb;
+    const uint8_t* cc_fdcb;
+    const uint8_t* cc_ex;    // extra cycles conditional jumps and rst
 
     /// constructor
     z80();

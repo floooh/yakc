@@ -14,7 +14,7 @@
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
-Version = 10
+Version = 20
 
 # tab-width for generated code
 TabWidth = 2
@@ -305,7 +305,7 @@ def enc(val, ext, in_op) :
                 # LD (HL),n; LD (IX+d),n; LD (IY+d),n
                 op.cm('LD {},n'.format(iHLcmt(ext)))
                 if ext:
-                    op.ocf(4); op.od(3); op.io(5); op.od(3); op.mw(5)
+                    op.ocf(4); op.od(3); op.io(5); op.mw(3)
                 else:
                     op.ocf(4); op.od(3); op.mw(3)
             else:
@@ -358,7 +358,7 @@ def enc(val, ext, in_op) :
                 elif p == 3:
                     # LD SP,HL; LD SP,IX; LD SP,IY
                     op.cm('LD SP,{}'.format(rp[2]))
-                    op.ocf(4)
+                    op.ocf(6)
         elif z == 2:
             # JP cc,nn
             op.cm('JP {},nn'.format(cond_cmt[y]))
@@ -387,7 +387,7 @@ def enc(val, ext, in_op) :
             elif y == 6:
                 op.cm('DI')
                 op.ocf(4)
-            elif y == 6:
+            elif y == 7:
                 op.cm('EI')
                 op.ocf(4)
         elif z == 4:
@@ -599,7 +599,7 @@ def enc_cb(val, ext, in_op) :
                 # undoc: ROT (IX+d),r; ROT (IY+d),r
                 op.cm('{} {},{}'.format(rot_cmt[y],iHLcmt(ext),r2[z]))
             if ext:
-                op.ocf(4); op.od(3); op.io(5); op.mr(4); op.mw(3)
+                op.od(3); op.io(5); op.mr(4); op.mw(3)
             else:
                 op.ocf(4); op.mr(4); op.mw(3)
         else:
@@ -612,7 +612,7 @@ def enc_cb(val, ext, in_op) :
             # BIT n,(HL); BIT n,(IX+d); BIT n,(IY+d)
             op.cm('BIT {},{}'.format(y,iHLcmt(ext)))
             if ext:
-                op.ocf(4); op.od(3); op.io(5); op.mr(4)
+                op.od(3); op.io(5); op.mr(4)
             else:
                 op.ocf(4); op.mr(4)
         else:
@@ -629,7 +629,7 @@ def enc_cb(val, ext, in_op) :
                 # undoc: RES n,(HL|IX+d|IY+d),r
                 op.cm('RES {},{},{}'.format(y,iHLcmt(ext),r2[z]))
             if ext:
-                op.ocf(4); op.od(3); op.io(5); op.mr(4); op.mw(3)
+                op.od(3); op.io(5); op.mr(4); op.mw(3)
             else:
                 op.ocf(4); op.mr(4); op.mw(3)
         else:
@@ -646,7 +646,7 @@ def enc_cb(val, ext, in_op) :
                 # undoc: SET n,(HL|IX+d|IY+d),r
                 op.cm('SET {},{},{}'.format(y,iHLcmt(ext),r2[z]))
             if ext:
-                op.ocf(4); op.od(3); op.io(5); op.mr(4); op.mw(3)
+                op.od(3); op.io(5); op.mr(4); op.mw(3)
             else:
                 op.ocf(4); op.mr(4); op.mw(3)
         else:
@@ -673,21 +673,6 @@ def unpatch_reg_tables() :
 # output a src line
 def l(s) :
     Out.write(s+'\n')
-
-#-------------------------------------------------------------------------------
-# write source header
-#
-def write_header() :
-    l('// #version:{}#'.format(Version))
-    l('// machine generated, do not edit!')
-    l('#include "z80.h"')
-    l('namespace YAKC {')
-
-#-------------------------------------------------------------------------------
-# write source footer
-#
-def write_footer() :
-    l('} // namespace YAKC');
 
 #-------------------------------------------------------------------------------
 # add an op_info item to a cycle-table (and extra-cycles-table)
@@ -727,7 +712,7 @@ def write_ex_table(name, table):
 # main encoder function, this populates all the opcode tables and
 # generates the C++ source code into the file f
 #
-def do_it(f) :
+def gen_source(f):
 
     global Out
     Out = f
@@ -782,7 +767,12 @@ def do_it(f) :
     op.io_ex(2)
     cc_ex[0xFF] = op
 
-    write_header()
+
+    l('// #version:{}#'.format(Version))
+    l('// machine generated, do not edit!')
+    l('#include "z80_cycles.h"')
+    l('#include "z80.h"')
+    l('namespace YAKC {')
     write_table('z80_cc_op', cc_op)
     write_table('z80_cc_cb', cc_cb)
     write_table('z80_cc_ed', cc_ed)
@@ -791,13 +781,36 @@ def do_it(f) :
     write_table('z80_cc_ddcb', cc_ddcb)
     write_table('z80_cc_fdcb', cc_fdcb)
     write_ex_table('z80_cc_ex', cc_ex)
-    write_footer()
+    l('} // namespace YAKC');
+
+#-------------------------------------------------------------------------------
+# genenerate header
+#
+def gen_header(f):
+    global Out
+    Out = f
+    l('#pragma once')
+    l('// #version:{}#'.format(Version))
+    l('// machine generated, do not edit!')
+    l('#include <stdint.h>')
+    l('namespace YAKC {')
+    l('extern const uint8_t z80_cc_op[256];')
+    l('extern const uint8_t z80_cc_cb[256];')
+    l('extern const uint8_t z80_cc_ed[256];')
+    l('extern const uint8_t z80_cc_dd[256];')
+    l('extern const uint8_t z80_cc_fd[256];')
+    l('extern const uint8_t z80_cc_ddcb[256];')
+    l('extern const uint8_t z80_cc_fdcb[256];')
+    l('extern const uint8_t z80_cc_ex[256];')
+    l('} // namespace YAKC')
 
 #-------------------------------------------------------------------------------
 # fips code generator entry 
 #
 def generate(input, out_src, out_hdr) :
-    if genutil.isDirty(Version, [input], [out_src]) :
+    if genutil.isDirty(Version, [input], [out_src, out_hdr]) :
         with open(out_src, 'w') as f:
-            do_it(f)
+            gen_source(f)
+        with open(out_hdr, 'w') as f:
+            gen_header(f)
 

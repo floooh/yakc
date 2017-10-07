@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
-Version = 7
+Version = 8
 
 # tab-width for generated code
 TabWidth = 2
@@ -596,15 +596,17 @@ def do_it(f) :
         if i == 0xDD or i == 0xFD:
             indent = write_begin_group(indent, i)
             patch_reg_tables('IX' if i==0xDD else 'IY')
+            cc_ix_table = 'cc_dd' if i==0xDD else 'cc_fd'
+            cc_ixcb_table = 'cc_ddcb' if i==0xDD else 'cc_fdcb'
             for ii in range(0, 256) :
                 if ii == 0xCB:
                     # DD/FD CB prefix
                     indent = write_begin_group(indent, ii, True)
                     for iii in range(0, 256) :
-                        write_op(indent, enc_cb_op(iii, True, 'cc_xycb'))
+                        write_op(indent, enc_cb_op(iii, True, cc_ixcb_table))
                     indent = write_end_group(indent, 4, True, True)
                 else:
-                    write_op(indent, enc_op(ii, True, 'cc_xy'))
+                    write_op(indent, enc_op(ii, True, cc_ix_table))
             unpatch_reg_tables()
             indent = write_end_group(indent, 2, True)
         # ED prefix instructions
