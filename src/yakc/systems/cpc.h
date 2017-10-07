@@ -60,6 +60,8 @@ public:
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
     /// load an SNA snapshot file
     bool load_sna(filesystem* fs, const char* name, filetype type, bool start);
+    /// load a AMSDOS header bin file
+    bool load_bin(filesystem* fs, const char* name, filetype type, bool start);
     /// the trapped casread function for TAP files
     void casread();
 

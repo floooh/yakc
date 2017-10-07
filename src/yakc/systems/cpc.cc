@@ -648,9 +648,43 @@ cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
 
 //------------------------------------------------------------------------------
 bool
+cpc::load_bin(filesystem* fs, const char* name, filetype type, bool start) {
+    auto fp = fs->open(name, filesystem::mode::read);
+    if (!fp) {
+        return false;
+    }
+    cpcbin_header hdr;
+    bool hdr_valid = false;
+    if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
+        hdr_valid = true;
+    }
+    if (hdr_valid) {
+        const uint16_t load_addr = (hdr.load_addr_h<<8)|hdr.load_addr_l;
+        const uint16_t start_addr = (hdr.start_addr_h<<8)|hdr.start_addr_l;
+        const uint16_t len = (hdr.length_h<<8)|hdr.length_l;
+        auto& cpu = this->board->z80;
+        uint8_t val;
+        for (uint16_t i=0; i < len; i++) {
+            fs->read(fp, &val, sizeof(val));
+            cpu.mem.w8(load_addr + i, val);
+        }
+        cpu.PC = start_addr;
+        cpu.IFF1 = cpu.IFF2 = true;
+        cpu.HALT = false;
+    }
+    fs->close(fp);
+    fs->rm(name);
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool
 cpc::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     if (filetype::cpc_sna == type) {
         return this->load_sna(fs, name, type, start);
+    }
+    else if (filetype::cpc_bin == type) {
+        return this->load_bin(fs, name, type, start);
     }
     else {
         return false;

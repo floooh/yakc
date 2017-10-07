@@ -16,6 +16,7 @@ enum class filetype {
     zx_z80,
     cpc_sna,
     cpc_tap,
+    cpc_bin,    // raw bin file with 128 byte AMSDOS header (http://www.cpcwiki.eu/index.php/AMSDOS_Header)
     atom_tap,
     text,
 
@@ -33,6 +34,7 @@ inline filetype filetype_from_string(const char* str) {
     if (strcmp(str, "zx_z80")==0) return filetype::zx_z80;
     if (strcmp(str, "cpc_sna")==0) return filetype::cpc_sna;
     if (strcmp(str, "cpc_tap")==0) return filetype::cpc_tap;
+    if (strcmp(str, "cpc_bin")==0) return filetype::cpc_bin;
     if (strcmp(str, "atom_tap")==0) return filetype::atom_tap;
     if (strcmp(str, "text")==0) return filetype::text;
     return filetype::none;
@@ -189,6 +191,27 @@ struct cpctap_header {
     uint8_t entry_addr_h;
 };
 static_assert(sizeof(cpctap_header) == 28 + 3, "CPC TAP header size");
+
+// CPC AMSDOS header (for bin files)
+// http://www.cpcwiki.eu/index.php/AMSDOS_Header
+struct cpcbin_header {
+    uint8_t user_number;
+    uint8_t file_name[8];
+    uint8_t file_ext[3];
+    uint8_t pad_0[6];
+    uint8_t type;
+    uint8_t pad_1[2];
+    uint8_t load_addr_l;
+    uint8_t load_addr_h;
+    uint8_t pad_2;
+    uint8_t length_l;
+    uint8_t length_h;
+    uint8_t start_addr_l;
+    uint8_t start_addr_h;
+    uint8_t pad_4[4];
+    uint8_t pad_5[0x60];
+};
+static_assert(sizeof(cpcbin_header) == 128, "CPC BIN header size");
 
 // Atom TAP / ATM header (https://github.com/hoglet67/Atomulator/blob/master/docs/atommmc2.txt )
 struct atomtap_header {
