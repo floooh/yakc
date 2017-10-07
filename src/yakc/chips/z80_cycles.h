@@ -1,5 +1,5 @@
 #pragma once
-// #version:20#
+// #version:26#
 // machine generated, do not edit!
 #include <stdint.h>
 namespace YAKC {
@@ -11,4 +11,12 @@ extern const uint8_t z80_cc_fd[256];
 extern const uint8_t z80_cc_ddcb[256];
 extern const uint8_t z80_cc_fdcb[256];
 extern const uint8_t z80_cc_ex[256];
+extern const uint8_t cpc_cc_op[256];
+extern const uint8_t cpc_cc_cb[256];
+extern const uint8_t cpc_cc_ed[256];
+extern const uint8_t cpc_cc_dd[256];
+extern const uint8_t cpc_cc_fd[256];
+extern const uint8_t cpc_cc_ddcb[256];
+extern const uint8_t cpc_cc_fdcb[256];
+extern const uint8_t cpc_cc_ex[256];
 } // namespace YAKC

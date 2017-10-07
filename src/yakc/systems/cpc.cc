@@ -13,6 +13,7 @@
 //------------------------------------------------------------------------------
 #include "cpc.h"
 #include "yakc/core/filetypes.h"
+#include "yakc/chips/z80_cycles.h"
 
 namespace YAKC {
 
@@ -168,15 +169,14 @@ cpc::poweron(system m) {
 
     // CPU start state with special CPC instruction timings
     this->board->z80.init();
-    /*
-    this->board->z80.cc_op = cc_op;
-    this->board->z80.cc_cb = cc_cb;
-    this->board->z80.cc_ed = cc_ed;
-    this->board->z80.cc_xy = cc_xy;
-    this->board->z80.cc_xycb = cc_xycb;
-    this->board->z80.cc_ex = cc_ex;
-    */
-
+    this->board->z80.cc_op = cpc_cc_op;
+    this->board->z80.cc_cb = cpc_cc_cb;
+    this->board->z80.cc_ed = cpc_cc_ed;
+    this->board->z80.cc_dd = cpc_cc_dd;
+    this->board->z80.cc_fd = cpc_cc_fd;
+    this->board->z80.cc_ddcb = cpc_cc_ddcb;
+    this->board->z80.cc_fdcb = cpc_cc_fdcb;
+    this->board->z80.cc_ex = cpc_cc_ex;
     this->board->z80.PC = 0x0000;
 }
 

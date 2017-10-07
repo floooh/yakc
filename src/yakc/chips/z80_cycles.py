@@ -14,13 +14,16 @@
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
-Version = 20
+Version = 26
 
 # tab-width for generated code
 TabWidth = 2
 
 # the target file handle
 Out = None
+
+# False if default Z80 timing, True if stretched CPC timing
+CPCMode = False
 
 # 8-bit register table, the 'HL' entry is for instructions that use
 # (HL), (IX+d) and (IY+d), and will be patched to 'IX' or 'IY' for
@@ -71,6 +74,12 @@ def iHLcmt(ext) :
         return '({})'.format(r[6])
 
 #-------------------------------------------------------------------------------
+# round-up a cycle count to multiple of 4, for Amstrad CPC timings
+#
+def cpc_stretch(num):
+    return (num+3)&(~3)
+
+#-------------------------------------------------------------------------------
 class op_info:
     def __init__(self, op):
         if op:
@@ -90,15 +99,23 @@ class op_info:
         self.info += '{}_ex({}) '.format(type, num)
     def ocf(self, num):
         # opcode fetch
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('OCF', num)
     def od(self, num):
         # opcode data read (single byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('OD', num)
     def odl(self, num):
         # opcode data read (low byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('ODL', num)
     def odh(self, num):
         # opcode data read (high byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('ODH', num)
     def io(self, num):
         # general CPU operation
@@ -108,51 +125,83 @@ class op_info:
         self.mc_ex('IO', num)
     def mr(self, num):
         # memory read (single byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('MR', num)
     def mrh(self, num):
         # memory read (high byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('MRH', num)
     def mrl(self, num):
         # memory read (low byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('MRL', num)
     def mw(self, num):
         # memory write (single byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('MW', num)
     def mwh(self, num):
         # memory write (high byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('MWH', num)
     def mwl(self, num):
         # memory write (low byte)
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('MWL', num)
     def pr(self, num):
         # port read
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('PR', num)
     def pw(self, num):
         # port write
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('PW', num)
     def srh(self, num):
         # stack read of high byte
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('SRH', num)
     def srh_ex(self, num):
         # stack read of high byte, conditional
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc_ex('SRH', num)
     def srl(self, num):
         # stack read of low byte
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('SRL', num)
     def srl_ex(self, num):
         # stack read of low byte, conditional
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc_ex('SRL', num)
     def swh(self, num):
         # stack write of high byte
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('SWH', num)
     def swh_ex(self, num):
         # stack write of high byte, conditional
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc_ex('SWH', num)
     def swl(self, num):
         # stack write of low byte
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('SWL', num)
     def swl_ex(self, num):
         # stack write of low byte, conditional
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc_ex('SWL', num)
     def cm(self, s):
         # command mnemonics
@@ -710,12 +759,9 @@ def write_ex_table(name, table):
 
 #-------------------------------------------------------------------------------
 # main encoder function, this populates all the opcode tables and
-# generates the C++ source code into the file f
+# generates the C++ source code into the the output file
 #
-def gen_source(f):
-
-    global Out
-    Out = f
+def write_tables(table_name_prefix):
 
     # cycle info tables
     cc_op = [None]*256
@@ -764,24 +810,36 @@ def gen_source(f):
     #   cc_ex[0xFF]: interrupt latency (2 cycles)
     op = op_info(None)
     op.cm('INTERRUPT LATENCY')
-    op.io_ex(2)
+    op.excount = 2
     cc_ex[0xFF] = op
 
+    write_table('{}_cc_op'.format(table_name_prefix), cc_op)
+    write_table('{}_cc_cb'.format(table_name_prefix), cc_cb)
+    write_table('{}_cc_ed'.format(table_name_prefix), cc_ed)
+    write_table('{}_cc_dd'.format(table_name_prefix), cc_dd)
+    write_table('{}_cc_fd'.format(table_name_prefix), cc_fd)
+    write_table('{}_cc_ddcb'.format(table_name_prefix), cc_ddcb)
+    write_table('{}_cc_fdcb'.format(table_name_prefix), cc_fdcb)
+    write_ex_table('{}_cc_ex'.format(table_name_prefix), cc_ex)
 
+#-------------------------------------------------------------------------------
+# main encoder function, this populates all the opcode tables and
+# generates the C++ source code into the file f
+#
+def gen_source(f):
+    global Out
+    global CPCMode
+    Out = f
     l('// #version:{}#'.format(Version))
     l('// machine generated, do not edit!')
     l('#include "z80_cycles.h"')
     l('#include "z80.h"')
     l('namespace YAKC {')
-    write_table('z80_cc_op', cc_op)
-    write_table('z80_cc_cb', cc_cb)
-    write_table('z80_cc_ed', cc_ed)
-    write_table('z80_cc_dd', cc_dd)
-    write_table('z80_cc_fd', cc_fd)
-    write_table('z80_cc_ddcb', cc_ddcb)
-    write_table('z80_cc_fdcb', cc_fdcb)
-    write_ex_table('z80_cc_ex', cc_ex)
-    l('} // namespace YAKC');
+    CPCMode = False
+    write_tables('z80')
+    CPCMode = True
+    write_tables('cpc')
+    l('} // namespace YAKC')
 
 #-------------------------------------------------------------------------------
 # genenerate header
@@ -802,6 +860,14 @@ def gen_header(f):
     l('extern const uint8_t z80_cc_ddcb[256];')
     l('extern const uint8_t z80_cc_fdcb[256];')
     l('extern const uint8_t z80_cc_ex[256];')
+    l('extern const uint8_t cpc_cc_op[256];')
+    l('extern const uint8_t cpc_cc_cb[256];')
+    l('extern const uint8_t cpc_cc_ed[256];')
+    l('extern const uint8_t cpc_cc_dd[256];')
+    l('extern const uint8_t cpc_cc_fd[256];')
+    l('extern const uint8_t cpc_cc_ddcb[256];')
+    l('extern const uint8_t cpc_cc_fdcb[256];')
+    l('extern const uint8_t cpc_cc_ex[256];')
     l('} // namespace YAKC')
 
 #-------------------------------------------------------------------------------
