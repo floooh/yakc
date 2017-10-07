@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 //  z80_test.cc
+// FIXME: BIT,RES,SET!
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
 #include "yakc/chips/z80.h"
@@ -34,6 +35,7 @@ static z80 init_z80() {
 // LD A,R
 // LD A,I
 TEST(LD_A_RI) {
+    puts(">> LD A,I; LD A,R");
     z80 cpu = init_z80();
     cpu.IFF1 = true;
     cpu.IFF2 = true;
@@ -55,6 +57,7 @@ TEST(LD_A_RI) {
 // LD r,s
 // LD r,n
 TEST(LD_r_sn) {
+    puts(">> LD r,n; LD r,r");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x3E, 0x12,     // LD A,0x12
@@ -181,6 +184,7 @@ TEST(LD_r_sn) {
 
 // LD r,(HL)
 TEST(LD_r_iHL) {
+    puts(">> LD r,(HL)");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x21, 0x00, 0x10,   // LD HL,0x1000
@@ -216,6 +220,7 @@ TEST(LD_r_iHL) {
 
 // LD r,([IX|IY] + d)
 TEST(LD_r_IXY_d) {
+    puts(">> LD r,(IX+d); LD r,(IY+d)");
     z80 cpu = init_z80();
     uint8_t data[] = {
         1, 2, 3, 4, 5, 6, 7, 8
@@ -263,6 +268,7 @@ TEST(LD_r_IXY_d) {
 
 // LD (HL),r
 TEST(LD_iHL_r) {
+    puts(">> LD (HL),r");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x21, 0x00, 0x10,   // LD HL,0x1000
@@ -298,6 +304,7 @@ TEST(LD_iHL_r) {
 
 // LD (IX|IY + d),r
 TEST(rIXY_d_r) {
+    puts(">> LD (IX+d),r; LD (IY+d),r");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0xDD, 0x21, 0x03, 0x10,     // LD IX,0x1003
@@ -367,6 +374,7 @@ TEST(rIXY_d_r) {
 
 // LD (HL),n
 TEST(LD_iHL_n) {
+    puts(">> LD (HL),n");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x21, 0x00, 0x20,   // LD HL,0x2000
@@ -384,6 +392,7 @@ TEST(LD_iHL_n) {
 
 // LD ([IX|IY] + d),n
 TEST(LD_iIXY_d_n) {
+    puts(">> LD (IX+d),n; LD (IY+d),n");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0xDD, 0x21, 0x00, 0x20,     // LD IX,0x2000
@@ -407,6 +416,7 @@ TEST(LD_iIXY_d_n) {
 // LD A,(DE)
 // LD A,(nn)
 TEST(LD_A_iBCDEnn) {
+    puts(">> LD A,(BC); LD A,(DE); LD A,(nn)");
     z80 cpu = init_z80();
     uint8_t data[] = {
         0x11, 0x22, 0x33
@@ -433,6 +443,7 @@ TEST(LD_A_iBCDEnn) {
 // LD (DE),A
 // LD (nn),A
 TEST(LD_iBCDEnn_A) {
+    puts(">> LD (BC),A; LD (DE),A; LD (nn),A");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x01, 0x00, 0x10,   // LD BC,0x1000
@@ -455,6 +466,7 @@ TEST(LD_iBCDEnn_A) {
 // LD I,A
 // LD R,A
 TEST(LD_IR_A) {
+    puts(">> LD I,A; LD R,A");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x3E, 0x45,     // LD A,0x45
@@ -472,6 +484,7 @@ TEST(LD_IR_A) {
 // LD IX,nn
 // LD IY,nn
 TEST(LD_ddIXY_nn) {
+    puts(">> LD dd,nn; LD IX,nn; LD IY,nn");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x01, 0x34, 0x12,       // LD BC,0x1234
@@ -496,6 +509,7 @@ TEST(LD_ddIXY_nn) {
 // LD IX,(nn)
 // LD IY,(nn)
 TEST(LD_HLddIXY_inn) {
+    puts(">> LD HL,(nn); LD dd,(dd); LD IX,(nn); LD IY,(nn)");
     z80 cpu = init_z80();
     uint8_t data[] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
@@ -527,6 +541,7 @@ TEST(LD_HLddIXY_inn) {
 // LD (nn),IX
 // LD (nn),IY
 TEST(LD_inn_HLDDIXY) {
+    puts(">> LD (nn),HL; LD (nn),dd; LD (nn),IX; LD (nn),IY");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x21, 0x01, 0x02,           // LD HL,0x0201
@@ -566,6 +581,7 @@ TEST(LD_inn_HLDDIXY) {
 // LD SP,IX
 // LD SP,IY
 TEST(LD_SP_HLIXY) {
+    puts(">> LD SP,HL; LD SP,IX; LD SP,IY");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x21, 0x34, 0x12,           // LD HL,0x1234
@@ -592,6 +608,7 @@ TEST(LD_SP_HLIXY) {
 // POP IX
 // POP IY
 TEST(PUSH_POP_qqIXY) {
+    puts(">> PUSH qq; PUSH IX; PUSH IY; POP qq; POP IX; POP IY");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x01, 0x34, 0x12,       // LD BC,0x1234
@@ -644,6 +661,7 @@ TEST(PUSH_POP_qqIXY) {
 // EX (SP),IX
 // EX (SP),IY
 TEST(EX) {
+    puts(">> EX DE,HL; EX AF,AF'; EXX; EX (SP),HL; EX (SP),IX; EX (SP,IY)");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x21, 0x34, 0x12,       // LD HL,0x1234
@@ -700,6 +718,7 @@ TEST(EX) {
 // ADD A,r
 // ADD A,n
 TEST(ADD_A_r) {
+    puts(">> ADD A,r; ADD A,n");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x3E, 0x0F,     // LD A,0x0F
@@ -744,6 +763,7 @@ TEST(ADD_A_r) {
 // ADD A,(IX+d)
 // ADD A,(IY+d)
 TEST(ADD_a_iHLIXY_d) {
+    puts(">> ADD A,(HL); ADD A,(IX+d); ADD A,(IY+d)");
     z80 cpu = init_z80();
     uint8_t data[] = { 0x41, 0x61, 0x81 };
     cpu.mem.write(0x1000, data, sizeof(data));
@@ -771,6 +791,7 @@ TEST(ADD_a_iHLIXY_d) {
 // ADC A,r
 // ADC A,n
 TEST(ADC_a_r) {
+    puts(">> ADC A,r; ADX A,n");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x3E, 0x00,         // LD A,0x00
@@ -812,6 +833,7 @@ TEST(ADC_a_r) {
 // ADC A,(IX+d)
 // ADC A,(IY+d)
 TEST(ADC_a_iHLIXY_d) {
+    puts(">> ADC A,(HL); ADC A,(IX+d); ADC A,(IY+d)");
     z80 cpu = init_z80();
     uint8_t data[] = { 0x41, 0x61, 0x81, 0x2 };
     cpu.mem.write(0x1000, data, sizeof(data));
@@ -841,6 +863,7 @@ TEST(ADC_a_iHLIXY_d) {
 // SUB A,r
 // SUB A,n
 TEST(SUB_A_r) {
+    puts(">> SUB A,r; SUB A,n");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x3E, 0x04,     // LD A,0x04
@@ -883,6 +906,7 @@ TEST(SUB_A_r) {
 // CP A,r
 // CP A,n
 TEST(CP_A_r) {
+    puts(">> CP A,r; CP A,n");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x3E, 0x04,     // LD A,0x04
@@ -924,6 +948,7 @@ TEST(CP_A_r) {
 // SUB A,(IX+d)
 // SUB A,(IY+d)
 TEST(SUB_a_iHLIXY_d) {
+    puts(">> SUB A,(HL); SUB A,(IX+d); SUB A,(IY+d)");
     z80 cpu = init_z80();
     uint8_t data[] = { 0x41, 0x61, 0x81 };
     cpu.mem.write(0x1000, data, sizeof(data));
@@ -952,6 +977,7 @@ TEST(SUB_a_iHLIXY_d) {
 // SUB A,(IX+d)
 // SUB A,(IY+d)
 TEST(CP_a_iHLIXY_d) {
+    puts(">> SUB A,(HL); SUB A,(IX+d); SUB A,(IY+d)");
     z80 cpu = init_z80();
     uint8_t data[] = { 0x41, 0x61, 0x22 };
     cpu.mem.write(0x1000, data, sizeof(data));
@@ -979,6 +1005,7 @@ TEST(CP_a_iHLIXY_d) {
 // SBC A,r
 // SBC A,n
 TEST(SBC_A_r) {
+    puts(">> SBC A,r; SBC A,n");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x3E, 0x04,     // LD A,0x04
@@ -1019,6 +1046,7 @@ TEST(SBC_A_r) {
 // SBC A,(IX+d)
 // SBC A,(IY+d)
 TEST(SBC_a_iHLIXY_d) {
+    puts(">> SBC A,(HL); SBC A,(IX+d); SBC A,(IY+d)");
     z80 cpu = init_z80();
 
     uint8_t data[] = { 0x41, 0x61, 0x81 };
@@ -1047,6 +1075,7 @@ TEST(SBC_a_iHLIXY_d) {
 // OR r
 // OR n
 TEST(OR_r) {
+    puts(">> OR r; OR n");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1087,6 +1116,7 @@ TEST(OR_r) {
 // XOR r
 // XOR n
 TEST(XOR_r) {
+    puts(">> XOR r; XOR n");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1131,6 +1161,7 @@ TEST(XOR_r) {
 // XOR (IX+d)
 // XOR (IY+d)
 TEST(OR_XOR_iHLIXY_d) {
+    puts(">> OR (HL); OR (IX+d); OR (IY+d); XOR (HL); XOR (IX+d); XOR (IY+d)");
     z80 cpu = init_z80();
 
     uint8_t data[] = { 0x41, 0x62, 0x84 };
@@ -1161,6 +1192,7 @@ TEST(OR_XOR_iHLIXY_d) {
 // AND r
 // AND n
 TEST(AND_rn) {
+    puts(">> AND r; AND n");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1214,6 +1246,7 @@ TEST(AND_rn) {
 // AND (IX+d)
 // AND (IY+d)
 TEST(AND_iHLIXY_d) {
+    puts(">> AND (HL); AND (IX+d); AND (IY+d)");
     z80 cpu = init_z80();
 
     uint8_t data[] = { 0xFE, 0xAA, 0x99 };
@@ -1239,6 +1272,7 @@ TEST(AND_iHLIXY_d) {
 // INC r
 // DEC r
 TEST(INC_DEC_r) {
+    puts(">> INC r; DEC r");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1295,6 +1329,7 @@ TEST(INC_DEC_r) {
 // DEC (IX+d)
 // DEC (IY+d)
 TEST(INC_DEC_iHLIXIY_d) {
+    puts(">> INC (HL); INC (IX+d); INC (IY+d); DEC (HL); DEC (IX+d); DEC (IY+d)");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -1334,6 +1369,7 @@ TEST(INC_DEC_iHLIXIY_d) {
 // INC IY
 // DEC IY
 TEST(INC_DEC_ss_IX_IY) {
+    puts(">> INC ss; DEC ss; INC IX; DEC IX; INC IY; DEC IY");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1377,6 +1413,7 @@ TEST(INC_DEC_ss_IX_IY) {
 }
 
 TEST(RLCA_RLA_RRCA_RRA) {
+    puts(">> RLCA; RLA; RRCA; RRA");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1405,6 +1442,7 @@ TEST(RLCA_RLA_RRCA_RRA) {
 }
 
 TEST(RLC_RL_RRC_RR_r) {
+    puts(">> RLC r; RL r; RRC r; RR r");
     z80 cpu = init_z80();
     uint8_t prog[] = {
         0x3E, 0x01,     // LD A,0x01
@@ -1482,6 +1520,7 @@ TEST(RLC_RL_RRC_RR_r) {
 }
 
 TEST(RRC_RLC_RR_RL_iHLIX_d) {
+    puts(">> RRC (HL); RLC (HL); RR (HL); RL (HL); ...(IX+d); ...(IY+d)");
     z80 cpu = init_z80();
 
     uint8_t data[] = { 0x01, 0xFF, 0x11 };
@@ -1549,6 +1588,7 @@ TEST(RRC_RLC_RR_RL_iHLIX_d) {
 }
 
 TEST(SLA_r) {
+    puts(">> SLA r");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1583,6 +1623,7 @@ TEST(SLA_r) {
 }
 
 TEST(SRA_r) {
+    puts(">> SRA r");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1617,6 +1658,7 @@ TEST(SRA_r) {
 }
 
 TEST(SRL_r) {
+    puts(">> SRL r");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1651,6 +1693,7 @@ TEST(SRL_r) {
 }
 
 TEST(SLA_iHLIXY_d) {
+    puts(">> SLA (HL); SLA (IX+d); SLA (IY+d)");
     z80 cpu = init_z80();
 
     uint8_t data[] = { 0x01, 0x80, 0xAA };
@@ -1681,6 +1724,7 @@ TEST(SLA_iHLIXY_d) {
 }
 
 TEST(SRA_iHLIXY_d) {
+    puts(">> SRA (HL); SRA (IX+d); SRA (IY+d)");
     z80 cpu = init_z80();
 
     uint8_t data[] = { 0x01, 0x80, 0xAA };
@@ -1711,6 +1755,7 @@ TEST(SRA_iHLIXY_d) {
 }
 
 TEST(SRL_iHLIXY_d) {
+    puts(">> SRL (HL); SRL (IX+d); SRL (IY+d)");
     z80 cpu = init_z80();
 
     uint8_t data[] = { 0x01, 0x80, 0xAA };
@@ -1741,6 +1786,7 @@ TEST(SRL_iHLIXY_d) {
 }
 
 TEST(RLD_RRD) {
+    puts(">> RLD; RRD");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1783,6 +1829,7 @@ TEST(RLD_RRD) {
 }
 
 TEST(HALT) {
+    puts(">> HALT");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -1796,6 +1843,7 @@ TEST(HALT) {
 }
 
 TEST(LDI) {
+    puts(">> LDI");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -1838,6 +1886,7 @@ TEST(LDI) {
 }
 
 TEST(LDIR) {
+    puts(">> LDIR");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -1880,6 +1929,7 @@ TEST(LDIR) {
 }
 
 TEST(LDD) {
+    puts(">> LDD");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -1922,6 +1972,7 @@ TEST(LDD) {
 }
 
 TEST(LDDR) {
+    puts(">> LDDR");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -1964,6 +2015,7 @@ TEST(LDDR) {
 }
 
 TEST(CPI) {
+    puts(">> CPI");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -2006,6 +2058,7 @@ TEST(CPI) {
 }
 
 TEST(CPIR) {
+    puts(">> CPIR");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -2046,6 +2099,7 @@ TEST(CPIR) {
 }
 
 TEST(CPD) {
+    puts(">> CPD");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -2088,6 +2142,7 @@ TEST(CPD) {
 }
 
 TEST(CPDR) {
+    puts(">> CPDR");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -2128,6 +2183,7 @@ TEST(CPDR) {
 }
 
 TEST(DAA) {
+    puts(">> DDA");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2161,6 +2217,7 @@ TEST(DAA) {
 }
 
 TEST(CPL) {
+    puts(">> CPL");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2182,6 +2239,7 @@ TEST(CPL) {
 }
 
 TEST(NEG) {
+    puts(">> NEG");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2207,6 +2265,7 @@ TEST(NEG) {
 }
 
 TEST(CCF_SCF) {
+    puts(">> CCF; SCF");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2228,6 +2287,7 @@ TEST(CCF_SCF) {
 }
 
 TEST(DI_EI_IM) {
+    puts(">> DI; EI; IM 0..2");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2257,6 +2317,7 @@ TEST(DI_EI_IM) {
 }
 
 TEST(JP_cc_nn) {
+    puts(">> JP cc,nn");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2300,6 +2361,7 @@ TEST(JP_cc_nn) {
 }
 
 TEST(JP_JR) {
+    puts(">> JP nn; JR n; JP (HL); JP (IX); JP (IY)");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2334,6 +2396,7 @@ TEST(JP_JR) {
 }
 
 TEST(JR_cc_e) {
+    puts(">> JR cc,n");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2366,6 +2429,7 @@ TEST(JR_cc_e) {
 }
 
 TEST(DJNZ) {
+    puts(">> DJNZ");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2389,6 +2453,7 @@ TEST(DJNZ) {
 }
 
 TEST(CALL_RET) {
+    puts(">> CALL nn; RET");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2420,6 +2485,7 @@ TEST(CALL_RET) {
 }
 
 TEST(CALL_RET_cc) {
+    puts(">> CALL cc,nn; RET cc");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2480,6 +2546,7 @@ TEST(CALL_RET_cc) {
 }
 
 TEST(IN) {
+    puts(">> IN A,n; IN A,(n); IN A,(C)");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2520,6 +2587,7 @@ TEST(IN) {
 }
 
 TEST(INIR_INDR) {
+    puts(">> INIR; INDR");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2527,7 +2595,7 @@ TEST(INIR_INDR) {
         0x01, 0x02, 0x03,       // LD BC,0x0302
         0xED, 0xB2,             // INIR
         0x01, 0x03, 0x03,       // LD BC,0x0303
-        0xED, 0xBA
+        0xED, 0xBA              // INDR
     };
     cpu.mem.write(0x0000, prog, sizeof(prog));
 
@@ -2569,6 +2637,7 @@ TEST(INIR_INDR) {
 }
 
 TEST(OUT) {
+    puts(">> OUT (n),A; OUT (C),r");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2604,6 +2673,7 @@ TEST(OUT) {
 }
 
 TEST(OTIR_OTDR) {
+    puts(">> OTIR; OTDR");
     z80 cpu = init_z80();
 
     uint8_t data[] = {
@@ -2657,6 +2727,7 @@ TEST(OTIR_OTDR) {
 }
 
 TEST(ADD_ADC_SBC_16) {
+    puts(">> ADD HL,rr; ADC HL,rr; SBC HL,rr; ADD IX,rr; ADD IY,rr");
     z80 cpu = init_z80();
 
     uint8_t prog[] = {
@@ -2668,7 +2739,7 @@ TEST(ADD_ADC_SBC_16) {
         0xED, 0x4A,             // ADC HL,BC
         0x29,                   // ADD HL,HL
         0x19,                   // ADD HL,DE
-        0xED, 0x42,             // SBD HL,BC
+        0xED, 0x42,             // SBC HL,BC
         0xDD, 0x21, 0xFC, 0x00, // LD IX,0x00FC
         0x31, 0x00, 0x10,       // LD SP,0x1000
         0xDD, 0x09,             // ADD IX, BC
