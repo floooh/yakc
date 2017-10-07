@@ -14,7 +14,7 @@
 #-------------------------------------------------------------------------------
 
 # fips code generator version stamp
-Version = 26
+Version = 28
 
 # tab-width for generated code
 TabWidth = 2
@@ -98,9 +98,7 @@ class op_info:
         self.excount += num
         self.info += '{}_ex({}) '.format(type, num)
     def ocf(self, num):
-        # opcode fetch
-        if CPCMode:
-            num = cpc_stretch(num)
+        # opcode fetch (not stretched on CPC)
         self.mc('OCF', num)
     def od(self, num):
         # opcode data read (single byte)
@@ -119,9 +117,13 @@ class op_info:
         self.mc('ODH', num)
     def io(self, num):
         # general CPU operation
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc('IO', num)
     def io_ex(self, num):
         # general CPU operation, conditional
+        if CPCMode:
+            num = cpc_stretch(num)
         self.mc_ex('IO', num)
     def mr(self, num):
         # memory read (single byte)
@@ -203,6 +205,9 @@ class op_info:
         if CPCMode:
             num = cpc_stretch(num)
         self.mc_ex('SWL', num)
+    def cpc(self, num):
+        if CPCMode:
+            self.count += num
     def cm(self, s):
         # command mnemonics
         self.cmd = s
@@ -566,10 +571,10 @@ def enc_ed(val, in_op) :
             if y == 6:
                 # undocumented special case 'OUT (C),F', always output 0
                 op.cm('OUT (C)')
-                op.ocf(4); op.pw(4)
+                op.ocf(4); op.pw(4); op.cpc(4)
             else:
                 op.cm('OUT (C),{}'.format(r[y]))
-                op.ocf(4); op.pw(4)
+                op.ocf(4); op.pw(4); op.cpc(4)
         elif z == 2:
             # SBC/ADC HL,rr
             cmt = 'SBC' if q == 0 else 'ADC'

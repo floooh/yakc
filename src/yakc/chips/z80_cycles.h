@@ -1,5 +1,5 @@
 #pragma once
-// #version:26#
+// #version:28#
 // machine generated, do not edit!
 #include <stdint.h>
 namespace YAKC {
