@@ -9,13 +9,15 @@
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
 #include "yakc/peripherals/tapedeck.h"
-#include "yakc/systems/kc85.h"
 #include "yakc/systems/z1013.h"
+/*
+#include "yakc/systems/kc85.h"
 #include "yakc/systems/z9001.h"
 #include "yakc/systems/zx.h"
 #include "yakc/systems/cpc.h"
 #include "yakc/systems/atom.h"
 #include "yakc/systems/bbcmicro.h"
+*/
 
 namespace YAKC {
 
@@ -53,8 +55,6 @@ public:
     /// get pointer to emulator framebuffer, its width, and height
     const void* framebuffer(int& out_width, int& out_height);
 
-    /// clear the current interrupt daisychain
-    void clear_daisychain();
     /// do a partial init after applying a snapshot
     void on_context_switched();
 
@@ -68,20 +68,20 @@ public:
     cpu_model cpu_type() const;
     /// get human-readable info about current system
     const char* system_info() const;
-    /// get current border color
-    void border_color(float& out_red, float& out_green, float& out_blue);
     /// get the currently active system_bus
     system_bus* get_bus();
 
     system model = system::none;
     os_rom os = os_rom::none;
-    class kc85 kc85;
     class z1013 z1013;
+/*
+    class kc85 kc85;
     class z9001 z9001;
     class zx zx;
     class cpc cpc;
     class atom atom;
     class bbcmicro bbcmicro;
+*/
     breadboard board;
     class rom_images roms;
     class filesystem filesystem;

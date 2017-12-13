@@ -14,13 +14,15 @@ yakc::init(const ext_funcs& sys_funcs) {
     this->cpu_behind = false;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
+    this->z1013.init(&this->roms);
+/*
     this->kc85.init(&this->board, &this->roms);
-    this->z1013.init(&this->board, &this->roms);
     this->z9001.init(&this->board, &this->roms);
     this->zx.init(&this->board, &this->roms);
     this->cpc.init(&this->board, &this->roms, &this->tapedeck);
     this->atom.init(&this->board, &this->roms, &this->tapedeck);
     this->bbcmicro.init(&this->board, &this->roms);
+*/
 }
 
 //------------------------------------------------------------------------------
@@ -32,11 +34,12 @@ yakc::add_rom(rom_images::rom type, const uint8_t* ptr, int size) {
 //------------------------------------------------------------------------------
 bool
 yakc::check_roms(system m, os_rom os) {
-    if (is_system(m, system::any_kc85)) {
-        return kc85::check_roms(this->roms, m, os);
-    }
-    else if (is_system(m, system::any_z1013)) {
+    if (is_system(m, system::any_z1013)) {
         return z1013::check_roms(this->roms, m, os);
+    }
+    /*
+    else if (is_system(m, system::any_kc85)) {
+        return kc85::check_roms(this->roms, m, os);
     }
     else if (is_system(m, system::any_z9001)) {
         return z9001::check_roms(this->roms, m, os);
@@ -53,6 +56,7 @@ yakc::check_roms(system m, os_rom os) {
     else if (is_system(m, system::bbcmicro_b)) {
         return bbcmicro::check_roms(this->roms, m, os);
     }
+    */
     else {
         return false;
     }
@@ -61,17 +65,16 @@ yakc::check_roms(system m, os_rom os) {
 //------------------------------------------------------------------------------
 void
 yakc::poweron(system m, os_rom rom) {
-    YAKC_ASSERT(!this->kc85.on && !this->z1013.on);
-    this->clear_daisychain();
     this->model = m;
     this->os = rom;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
-    if (this->is_system(system::any_kc85)) {
-        this->kc85.poweron(m, rom);
-    }
-    else if (this->is_system(system::any_z1013)) {
+    if (this->is_system(system::any_z1013)) {
         this->z1013.poweron(m);
+    }
+    /*
+    else if (this->is_system(system::any_kc85)) {
+        this->kc85.poweron(m, rom);
     }
     else if (this->is_system(system::any_z9001)) {
         this->z9001.poweron(m, rom);
@@ -88,16 +91,18 @@ yakc::poweron(system m, os_rom rom) {
     else if (this->is_system(system::bbcmicro_b)) {
         this->bbcmicro.poweron(m);
     }
+    */
 }
 
 //------------------------------------------------------------------------------
 void
 yakc::poweroff() {
-    if (this->kc85.on) {
-        this->kc85.poweroff();
-    }
     if (this->z1013.on) {
         this->z1013.poweroff();
+    }
+    /*
+    if (this->kc85.on) {
+        this->kc85.poweroff();
     }
     if (this->z9001.on) {
         this->z9001.poweroff();
@@ -114,25 +119,30 @@ yakc::poweroff() {
     if (this->bbcmicro.on) {
         this->bbcmicro.poweroff();
     }
+    */
 }
 
 //------------------------------------------------------------------------------
 bool
 yakc::switchedon() const {
+return this->z1013.on;
+/*
     return this->kc85.on || this->z1013.on || this->z9001.on ||
            this->zx.on || this->cpc.on || this->bbcmicro.on ||
            this->atom.on;
+*/
 }
 
 //------------------------------------------------------------------------------
 void
 yakc::reset() {
     this->overflow_cycles = 0;
-    if (this->kc85.on) {
-        this->kc85.reset();
-    }
     if (this->z1013.on) {
         this->z1013.reset();
+    }
+    /*
+    if (this->kc85.on) {
+        this->kc85.reset();
     }
     if (this->z9001.on) {
         this->z9001.reset();
@@ -149,26 +159,18 @@ yakc::reset() {
     if (this->bbcmicro.on) {
         this->bbcmicro.reset();
     }
-}
-
-//------------------------------------------------------------------------------
-void
-yakc::clear_daisychain() {
-    this->board.z80.connect_irq_device(nullptr);
-    this->board.z80ctc.init_daisychain(nullptr);
-    this->board.z80pio.int_ctrl.connect_irq_device(nullptr);
-    this->board.z80pio2.int_ctrl.connect_irq_device(nullptr);
+    */
 }
 
 //------------------------------------------------------------------------------
 void
 yakc::on_context_switched() {
-    this->clear_daisychain();
-    if (this->is_system(system::any_kc85)) {
-        this->kc85.on_context_switched();
-    }
-    else if (this->is_system(system::any_z1013)) {
+    if (this->is_system(system::any_z1013)) {
         this->z1013.on_context_switched();
+    }
+    /*
+    else if (this->is_system(system::any_kc85)) {
+        this->kc85.on_context_switched();
     }
     else if (this->is_system(system::any_z9001)) {
         this->z9001.on_context_switched();
@@ -185,6 +187,7 @@ yakc::on_context_switched() {
     else if (this->is_system(system::bbcmicro_b)) {
         this->bbcmicro.on_context_switched();
     }
+    */
 }
 
 //------------------------------------------------------------------------------
@@ -238,11 +241,12 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
         this->cpu_behind = true;
     }
     if (!this->board.dbg.active) {
-        if (this->kc85.on) {
-            this->abs_cycle_count = this->kc85.step(this->abs_cycle_count, abs_end_cycles);
-        }
-        else if (this->z1013.on) {
+        if (this->z1013.on) {
             this->abs_cycle_count = this->z1013.step(this->abs_cycle_count, abs_end_cycles);
+        }
+        /*
+        else if (this->kc85.on) {
+            this->abs_cycle_count = this->kc85.step(this->abs_cycle_count, abs_end_cycles);
         }
         else if (this->z9001.on) {
             this->abs_cycle_count = this->z9001.step(this->abs_cycle_count, abs_end_cycles);
@@ -259,6 +263,7 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
         else if (this->bbcmicro.on) {
             this->abs_cycle_count = this->bbcmicro.step(this->abs_cycle_count, abs_end_cycles);
         }
+        */
         YAKC_ASSERT(this->abs_cycle_count >= abs_end_cycles);
         this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
     }
@@ -271,11 +276,12 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
 //------------------------------------------------------------------------------
 uint32_t
 yakc::step_debug() {
-    if (this->kc85.on) {
-        return this->kc85.step_debug();
-    }
-    else if (this->z1013.on) {
+    if (this->z1013.on) {
         return this->z1013.step_debug();
+    }
+    /*
+    else if (this->kc85.on) {
+        return this->kc85.step_debug();
     }
     else if (this->z9001.on) {
         return this->z9001.step_debug();
@@ -292,6 +298,7 @@ yakc::step_debug() {
     else if (this->bbcmicro.on) {
         return this->bbcmicro.step_debug();
     }
+    */
     else {
         return 0;
     }
@@ -303,12 +310,13 @@ yakc::put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask) {
     if (!this->joystick_enabled) {
         joy0_kbd_mask = 0;
     }
-    const uint8_t joy0_mask = joy0_kbd_mask|joy0_pad_mask;
-    if (this->kc85.on) {
-        this->kc85.put_key(ascii);
-    }
+    //const uint8_t joy0_mask = joy0_kbd_mask|joy0_pad_mask;
     if (this->z1013.on) {
         this->z1013.put_key(ascii);
+    }
+    /*
+    if (this->kc85.on) {
+        this->kc85.put_key(ascii);
     }
     if (this->z9001.on) {
         this->z9001.put_key(ascii);
@@ -322,6 +330,7 @@ yakc::put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask) {
     if (this->cpc.on) {
         this->cpc.put_input(ascii, joy0_mask);
     }
+    */
 }
 
 //------------------------------------------------------------------------------
@@ -339,11 +348,12 @@ yakc::is_joystick_enabled() const {
 //------------------------------------------------------------------------------
 const char*
 yakc::system_info() const {
-    if (this->kc85.on) {
-        return this->kc85.system_info();
-    }
-    else if (this->z1013.on) {
+    if (this->z1013.on) {
         return this->z1013.system_info();
+    }
+    /*
+    else if (this->kc85.on) {
+        return this->kc85.system_info();
     }
     else if (this->z9001.on) {
         return this->z9001.system_info();
@@ -360,6 +370,7 @@ yakc::system_info() const {
     else if (this->bbcmicro.on) {
         return this->bbcmicro.system_info();
     }
+    */
     else {
         return "no info available";
     }
@@ -368,11 +379,12 @@ yakc::system_info() const {
 //------------------------------------------------------------------------------
 system_bus*
 yakc::get_bus() {
-    if (this->is_system(system::any_kc85)) {
-        return &this->kc85;
-    }
-    else if (this->is_system(system::any_z1013)) {
+    if (this->is_system(system::any_z1013)) {
         return &this->z1013;
+    }
+    /*
+    else if (this->is_system(system::any_kc85)) {
+        return &this->kc85;
     }
     else if (this->is_system(system::any_z9001)) {
         return &this->z9001;
@@ -389,6 +401,7 @@ yakc::get_bus() {
     else if (this->is_system(system::bbcmicro_b)) {
         return &this->bbcmicro;
     }
+    */
     else {
         return nullptr;
     }
@@ -396,19 +409,9 @@ yakc::get_bus() {
 
 //------------------------------------------------------------------------------
 void
-yakc::border_color(float& out_red, float& out_green, float& out_blue) {
-    if (this->z9001.on) {
-        this->z9001.border_color(out_red, out_green, out_blue);
-    }
-    else {
-        out_red = out_green = out_blue = 0.0f;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
 yakc::fill_sound_samples(float* buffer, int num_samples) {
     if (!this->board.dbg.active) {
+    /*
         if (this->kc85.on) {
             return this->kc85.decode_audio(buffer, num_samples);
         }
@@ -424,6 +427,7 @@ yakc::fill_sound_samples(float* buffer, int num_samples) {
         else if (this->atom.on) {
             return this->atom.decode_audio(buffer, num_samples);
         }
+    */
     }
     // fallthrough: all systems off, or debugging active: return silence
     clear(buffer, num_samples * sizeof(float));
@@ -432,14 +436,15 @@ yakc::fill_sound_samples(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 yakc::framebuffer(int& out_width, int& out_height) {
-    if (this->kc85.on) {
+    if (this->z1013.on) {
+        return this->z1013.framebuffer(out_width, out_height);
+    }
+    /*
+    else if (this->kc85.on) {
         return this->kc85.framebuffer(out_width, out_height);
     }
     else if (this->z9001.on) {
         return this->z9001.framebuffer(out_width, out_height);
-    }
-    else if (this->z1013.on) {
-        return this->z1013.framebuffer(out_width, out_height);
     }
     else if (this->zx.on) {
         return this->zx.framebuffer(out_width, out_height);
@@ -453,6 +458,7 @@ yakc::framebuffer(int& out_width, int& out_height) {
     else if (this->bbcmicro.on) {
         return this->bbcmicro.framebuffer(out_width, out_height);
     }
+    */
     else {
         out_width = 0;
         out_height = 0;
@@ -463,14 +469,15 @@ yakc::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 bool
 yakc::quickload(const char* name, filetype type, bool start) {
-    if (this->kc85.on) {
+    if (this->z1013.on) {
+        return this->z1013.quickload(&this->filesystem, name, type, start);
+    }
+    /*
+    else if (this->kc85.on) {
         return this->kc85.quickload(&this->filesystem, name, type, start);
     }
     else if (this->z9001.on) {
         return this->z9001.quickload(&this->filesystem, name, type, start);
-    }
-    else if (this->z1013.on) {
-        return this->z1013.quickload(&this->filesystem, name, type, start);
     }
     else if (this->zx.on) {
         return this->zx.quickload(&this->filesystem, name, type, start);
@@ -478,6 +485,7 @@ yakc::quickload(const char* name, filetype type, bool start) {
     else if (this->cpc.on) {
         return this->cpc.quickload(&this->filesystem, name, type, start);
     }
+    */
     else {
         return false;
     }

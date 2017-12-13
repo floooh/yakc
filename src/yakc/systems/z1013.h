@@ -43,13 +43,16 @@ namespace YAKC {
 
 class z1013 : public system_bus {
 public:
-    /// the main board
-    breadboard* board = nullptr;
+    static z1013* ptr;
     /// rom image store
     rom_images* roms = nullptr;
 
+    /// constructor
+    z1013();
+    /// destructor
+    ~z1013();
     /// one-time setup
-    void init(breadboard* board, rom_images* roms);
+    void init(rom_images* roms);
     /// check if required roms are loaded
     static bool check_roms(const rom_images& roms, system model, os_rom os);
     /// initialize memory mapping (called from poweron or snapshot restore)
@@ -71,6 +74,13 @@ public:
     const void* framebuffer(int& out_width, int& out_height);
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
+
+    /// the Z80 CPU tick callback
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    /// the Z80 PIO in callback
+    static uint8_t pio_in(int port_id);
+    /// the Z80 PIO out callback
+    static void pio_out(int port_id, uint8_t data);
 
     /// put a key as ASCII code
     void put_key(uint8_t ascii);
@@ -106,12 +116,8 @@ public:
     system cur_model = system::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;
     bool on = false;
-    uint8_t kbd_column_nr_requested = 0;      // requested keyboard matrix column number (0..7)
-    bool kbd_8x8_requested = false;         // bit 4 in PIO-B written
-    uint64_t next_kbd_column_bits = 0;
-    uint64_t kbd_column_bits = 0;
-    static const int max_num_keys = 128;
-    uint64_t key_map[max_num_keys] = { };   // map ASCII code to keyboard matrix bits
+    uint8_t kbd_column_nr_requested = 0;        // requested keyboard matrix column number (0..7)
+    bool kbd_8x8_requested = false;             // bit 4 in PIO-B written
 
     static const int display_width = 256;
     static const int display_height = 256;

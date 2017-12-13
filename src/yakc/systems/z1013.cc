@@ -6,12 +6,25 @@
 
 namespace YAKC {
 
+z1013* z1013::ptr = nullptr;
+
+//------------------------------------------------------------------------------
+z1013::z1013() {
+    YAKC_ASSERT(!ptr);
+    ptr = this;
+}
+
+//------------------------------------------------------------------------------
+z1013::~z1013() {
+    YAKC_ASSERT(ptr);
+    ptr = nullptr;
+}
+
 //------------------------------------------------------------------------------
 void
-z1013::init(breadboard* b, rom_images* r) {
-    this->board = b;
+z1013::init(rom_images* r) {
     this->roms = r;
-    this->rgba8_buffer = this->board->rgba8_buffer;
+    this->rgba8_buffer = board.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------
@@ -28,24 +41,24 @@ z1013::check_roms(const rom_images& roms, system model, os_rom os) {
 //------------------------------------------------------------------------------
 void
 z1013::init_memory_mapping() {
-    z80& cpu = this->board->z80;
-    cpu.mem.unmap_all();
+    memory* m = &board.mem;
+    mem_unmap_all(m);
     if (system::z1013_64 == this->cur_model) {
         // 64 kByte RAM
-        cpu.mem.map(1, 0x0000, 0x10000, this->board->ram[0], true);
+        mem_map_ram(m, 1, 0x0000, 0x10000, board.ram[0]);
     }
     else {
         // 16 kByte RAM
-        cpu.mem.map(1, 0x0000, 0x4000, this->board->ram[0], true);
+        mem_map_ram(m, 1, 0x0000, 0x4000, board.ram[0]);
     }
     // 1 kByte video memory
-    cpu.mem.map(0, 0xEC00, 0x0400, this->board->ram[vidmem_page], true);
+    mem_map_ram(m, 0, 0xEC00, 0x0400, board.ram[vidmem_page]);
     // 2 kByte system rom
     if (os_rom::z1013_mon202 == this->cur_os) {
-        cpu.mem.map(0, 0xF000, this->roms->size(rom_images::z1013_mon202), this->roms->ptr(rom_images::z1013_mon202), false);
+        mem_map_rom(m, 0, 0xF000, this->roms->size(rom_images::z1013_mon202), this->roms->ptr(rom_images::z1013_mon202));
     }
     else {
-        cpu.mem.map(0, 0xF000, this->roms->size(rom_images::z1013_mon_a2), this->roms->ptr(rom_images::z1013_mon_a2), false);
+        mem_map_rom(m, 0, 0xF000, this->roms->size(rom_images::z1013_mon_a2), this->roms->ptr(rom_images::z1013_mon_a2));
     }
 }
 
@@ -70,7 +83,6 @@ z1013::on_context_switched() {
 //------------------------------------------------------------------------------
 void
 z1013::poweron(system m) {
-    YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(system::any_z1013) & int(m));
     YAKC_ASSERT(!this->on);
 
@@ -81,74 +93,61 @@ z1013::poweron(system m) {
     else {
         this->cur_os = os_rom::z1013_mon_a2;
     }
+    board.init_kbd(2);
     this->init_keymaps();
     this->on = true;
     this->kbd_column_nr_requested = 0;
     this->kbd_8x8_requested = false;
-    this->next_kbd_column_bits = 0;
-    this->kbd_column_bits = 0;
 
     // map memory
-    clear(this->board->ram, sizeof(this->board->ram));
+    clear(board.ram, sizeof(board.ram));
+    mem_init(&board.mem);
     this->init_memory_mapping();
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
-    this->board->clck.init((m == system::z1013_01) ? 1000 : 2000);
+    board.clck.init((m == system::z1013_01) ? 1000 : 2000);
 
     // initialize hardware components
-    this->board->z80.init();
-    this->board->z80pio.init(0);
+    board.init_z80(cpu_tick);
+    board.init_pio(0, pio_in, pio_out);
 
     // execution on power-on starts at 0xF000
-    this->board->z80.PC = 0xF000;
+    board.z80.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
 void
 z1013::poweroff() {
     YAKC_ASSERT(this->on);
-    this->board->z80.mem.unmap_all();
+    mem_unmap_all(&board.mem);
     this->on = false;
 }
 
 //------------------------------------------------------------------------------
 void
 z1013::reset() {
-    this->board->z80pio.reset();
-    this->board->z80.reset();
+    z80pio_reset(&board.z80pio);
+    z80_reset(&board.z80);
     this->kbd_column_nr_requested = 0;
-    this->next_kbd_column_bits = 0;
-    this->kbd_column_bits = 0;
-
     // execution after reset starts at 0x0000(??? -> doesn't work)
-    this->board->z80.PC = 0xF000;
+    board.z80.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
 uint64_t
 z1013::step(uint64_t start_tick, uint64_t end_tick) {
-    auto& cpu = this->board->z80;
-    auto& dbg = this->board->dbg;
-    auto& clk = this->board->clck;
-    uint64_t cur_tick = start_tick;
-    while (cur_tick < end_tick) {
-        uint32_t ticks = cpu.handle_irq(this);
-        if (0 == ticks) {
-            ticks = cpu.step(this);
-        }
-        clk.step(this, ticks);
-        if (dbg.step(cpu.PC, ticks)) {
-            return end_tick;
-        }
-        cur_tick += ticks;
-    }
+    uint32_t num_ticks = end_tick - start_tick;
+    uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
+    kbd_update(&board.kbd);
     this->decode_video();
-    return cur_tick;
+    return start_tick + ticks_executed;
 }
 
 //------------------------------------------------------------------------------
 uint32_t
 z1013::step_debug() {
+return 0;
+/* FIME
     auto& cpu = this->board->z80;
     auto& dbg = this->board->dbg;
     auto& clk = this->board->clck;
@@ -167,6 +166,7 @@ z1013::step_debug() {
     while ((old_pc == cpu.PC) && !cpu.INV);    
     this->decode_video();
     return uint32_t(all_ticks);
+*/
 }
 
 //------------------------------------------------------------------------------
