@@ -40,7 +40,7 @@ extern void fill_random(void* ptr, int num_bytes);
 // on Visual Studio, replace __PRETTY_FUNCTION__ with __FUNCSIG__
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
-#define YAKC_ASSERT(cond) do { if(!(cond)) { func.assertmsg_func(#cond,nullptr,__FILE__,__LINE__,__PRETTY_FUNCTION__); abort(); } } while(0)
+#define YAKC_ASSERT(cond) do { if(!(cond)) { YAKC::func.assertmsg_func(#cond,nullptr,__FILE__,__LINE__,__PRETTY_FUNCTION__); abort(); } } while(0)
 #endif
 
 enum class system {

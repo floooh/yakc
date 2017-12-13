@@ -77,10 +77,10 @@ public:
 
     /// the Z80 CPU tick callback
     static uint64_t cpu_tick(int num_ticks, uint64_t pins);
-    /// the Z80 PIO in callback
-    static uint8_t pio_in(int port_id);
     /// the Z80 PIO out callback
     static void pio_out(int port_id, uint8_t data);
+    /// the Z80 PIO in callback
+    static uint8_t pio_in(int port_id);
 
     /// put a key as ASCII code
     void put_key(uint8_t ascii);
@@ -89,26 +89,10 @@ public:
     /// perform a single debug-step
     uint32_t step_debug();
 
-    /// the z80 out callback
-    virtual void cpu_out(uint16_t port, uint8_t val) override;
-    /// the z80 in callback
-    virtual uint8_t cpu_in(uint16_t port) override;
-    /// PIO out callback
-    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
-    /// PIO in callback
-    virtual uint8_t pio_in(int pio_id, int port_id) override;
-    /// interrupt request callback
-    virtual void irq(bool b) override;
-
     /// initialize the key translation table for the basic 8x4 keyboard (z1013.01)
     void init_keymap_8x4();
     /// initialize the key translation table for the 8x8 keyboard (z1013.16/64)
     void init_keymap_8x8();
-    /// add a single key to the key map with the keyboard matrix column/line and shift key (0..4)
-    void init_key(uint8_t ascii, int col, int line, int shift, int num_lines);
-    /// get keyboard matrix bit mask by column and line
-    uint64_t kbd_bit(int col, int line, int num_lines);
-
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
 
@@ -116,8 +100,8 @@ public:
     system cur_model = system::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;
     bool on = false;
-    uint8_t kbd_column_nr_requested = 0;        // requested keyboard matrix column number (0..7)
-    bool kbd_8x8_requested = false;             // bit 4 in PIO-B written
+    uint8_t kbd_request_column = 0;             // requested keyboard matrix column number (0..7)
+    bool kbd_request_line_hilo = false;         // bit 4 in PIO-B written
 
     static const int display_width = 256;
     static const int display_height = 256;
