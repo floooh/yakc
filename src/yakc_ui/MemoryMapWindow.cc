@@ -102,7 +102,7 @@ MemoryMapWindow::Draw(yakc& emu) {
     const float window_height = is_kc85_4 ? 220.0f : 120.0f;
     ImGui::SetNextWindowSize(ImVec2(512.0f, window_height), ImGuiSetCond_Always);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
-
+/*
         // draw the background grid
         this->drawGrid(is_kc85_4);
 
@@ -210,6 +210,7 @@ MemoryMapWindow::Draw(yakc& emu) {
                 }
             }
         }
+*/
     }
     ImGui::End();
     return this->Visible;

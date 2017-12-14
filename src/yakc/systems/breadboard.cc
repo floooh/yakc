@@ -6,3 +6,6 @@
 #define CHIPS_ASSERT YAKC_ASSERT
 #include "breadboard.h"
 
+namespace YAKC {
+breadboard board;
+}

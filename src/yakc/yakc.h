@@ -5,7 +5,6 @@
     @brief main emulator class
 */
 #include "yakc/core/core.h"
-#include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
 #include "yakc/peripherals/tapedeck.h"
@@ -68,8 +67,6 @@ public:
     cpu_model cpu_type() const;
     /// get human-readable info about current system
     const char* system_info() const;
-    /// get the currently active system_bus
-    system_bus* get_bus();
 
     system model = system::none;
     os_rom os = os_rom::none;
@@ -82,8 +79,6 @@ public:
     class atom atom;
     class bbcmicro bbcmicro;
 */
-    breadboard board;
-    class rom_images roms;
     class filesystem filesystem;
     class tapedeck tapedeck;
 

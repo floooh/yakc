@@ -29,9 +29,10 @@ on_off(const char* text, bool on) {
 //------------------------------------------------------------------------------
 bool
 MC6847Window::Draw(yakc& emu) {
-    const mc6847& mc = emu.board.mc6847;
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    /*
+        const mc6847& mc = emu.board.mc6847;
         on_off("HSYNC:", mc.test(mc6847::HSYNC));
         on_off("FSYNC:", mc.test(mc6847::FSYNC));
         on_off("A/G:", mc.test(mc6847::A_G));
@@ -44,6 +45,7 @@ MC6847Window::Draw(yakc& emu) {
         on_off("GM2:", mc.test(mc6847::GM2));
         ImGui::Text("Hori Count: %d\n", mc.h_count/mc6847::prec);
         ImGui::Text("Line Count: %d\n", mc.l_count);
+    */
     }
     ImGui::End();
     return this->Visible;

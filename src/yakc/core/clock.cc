@@ -19,6 +19,7 @@ clock::init(int khz) {
 //------------------------------------------------------------------------------
 int64_t
 clock::cycles(int micro_seconds) const {
+    YAKC_ASSERT(this->base_freq_khz > 0);
     return (int64_t(this->base_freq_khz) * micro_seconds) / 1000;
 }
 

@@ -5,7 +5,7 @@
     @brief MOS Technologies 6502 CPU emulation
 */
 #include "yakc/core/core.h"
-#include "yakc/core/memory.h"
+//#include "yakc/core/memory.h"
 #include "yakc/core/system_bus.h"
 
 namespace YAKC {

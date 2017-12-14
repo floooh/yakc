@@ -26,11 +26,11 @@ CommandWindow::Draw(yakc& emu) {
         Util::InputHex8("Prolog Byte", this->prologByte);
         ImGui::SameLine();
         if (ImGui::Button("Scan...")) {
-            this->scan(emu, this->prologByte);
+            this->scan(this->prologByte);
         }
         for (int i = 0; i < this->commands.Size(); i++) {
             const Cmd& cmd = this->commands[i];
-            if (emu.board.dbg.is_breakpoint(cmd.addr)) {
+            if (board.dbg.is_breakpoint(cmd.addr)) {
                 ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
             }
             else {
@@ -38,7 +38,7 @@ CommandWindow::Draw(yakc& emu) {
             }
             ImGui::PushID(i);
             if (ImGui::Button(" B ")) {
-                emu.board.dbg.toggle_breakpoint(cmd.addr);
+                board.dbg.toggle_breakpoint(cmd.addr);
             }
             ImGui::PopID();
             ImGui::SameLine();
@@ -52,18 +52,18 @@ CommandWindow::Draw(yakc& emu) {
 
 //------------------------------------------------------------------------------
 void
-CommandWindow::scan(const yakc& emu, uint8_t prologByte) {
+CommandWindow::scan(uint8_t prologByte) {
     StringBuilder strBuilder;
 
     this->commands.Clear();
-    uint8_t prevByte = emu.board.z80.mem.r8(0x0000);
+    uint8_t prevByte = mem_rd(&board.mem, 0x0000);
     for (unsigned int addr = 0x0001; addr < 0x10000; addr++) {
-        const uint8_t curByte = emu.board.z80.mem.r8(addr);
+        const uint8_t curByte = mem_rd(&board.mem, addr);
         if ((curByte == prologByte) && (prevByte == prologByte)) {
             // found a header, scan for 00 or 01 byte
             addr++;
             uint8_t c;
-            while (isalnum(c = emu.board.z80.mem.r8(addr++))) {
+            while (isalnum(c = mem_rd(&board.mem, addr++))) {
                 strBuilder.Append(c);
             }
             // if it was a valid command, add it to commands array

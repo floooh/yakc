@@ -33,7 +33,6 @@
     'key_map'. The full bit mask is necessary because an ASCII code
     can require more than one key to be set (e.g. shift keys).
 */
-#include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
@@ -41,20 +40,18 @@
 
 namespace YAKC {
 
-class z1013 : public system_bus {
+class z1013 {
 public:
     static z1013* ptr;
-    /// rom image store
-    rom_images* roms = nullptr;
 
     /// constructor
     z1013();
     /// destructor
     ~z1013();
     /// one-time setup
-    void init(rom_images* roms);
+    void init();
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, system model, os_rom os);
+    static bool check_roms(system model, os_rom os);
     /// initialize memory mapping (called from poweron or snapshot restore)
     void init_memory_mapping();
     /// initialize keymap tables (called from poweron or snapshot restore)

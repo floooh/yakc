@@ -18,9 +18,10 @@ AY8910Window::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 bool
 AY8910Window::Draw(yakc& emu) {
-    const ay8910& snd = emu.board.ay8910;
     ImGui::SetNextWindowSize(ImVec2(200, 240), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    /*
+        const ay8910& snd = emu.board.ay8910;
         ImGui::Text("Period A:     0x%04X", (snd.regs[ay8910::TONE_PERIOD_A_COARSE]<<8)|snd.regs[ay8910::TONE_PERIOD_A_FINE]);
         ImGui::Text("Period B:     0x%04X", (snd.regs[ay8910::TONE_PERIOD_B_COARSE]<<8)|snd.regs[ay8910::TONE_PERIOD_B_FINE]);
         ImGui::Text("Period C:     0x%04X", (snd.regs[ay8910::TONE_PERIOD_C_COARSE]<<8)|snd.regs[ay8910::TONE_PERIOD_C_FINE]);
@@ -33,6 +34,7 @@ AY8910Window::Draw(yakc& emu) {
         ImGui::Text("Env Cycle:    0x%02X", snd.regs[ay8910::ENV_SHAPE_CYCLE]);
         ImGui::Text("IO Port A:    0x%02X", snd.regs[ay8910::IO_PORT_A]);
         ImGui::Text("IO Port B:    0x%02X", snd.regs[ay8910::IO_PORT_B]);
+    */
     }
     ImGui::End();
     return this->Visible;

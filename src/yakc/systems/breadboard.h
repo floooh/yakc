@@ -41,8 +41,8 @@ struct breadboard {
     */
     class beeper beeper;
     class speaker speaker;
-    keyboard_matrix kbd;
-    cpudbg dbg;
+    ::keyboard_matrix kbd;
+    class cpudbg dbg;
     class crt crt;          // this is not a chip, but a cathode-ray-tube emulation
     static const int num_ram_banks = 8;
     static const int ram_bank_size = 0x4000;

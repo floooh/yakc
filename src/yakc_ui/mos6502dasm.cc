@@ -2,9 +2,10 @@
 //  mos6502dasm.cc
 //------------------------------------------------------------------------------
 #include "mos6502dasm.h"
-#include "yakc/chips/mos6502.h"
+//#include "yakc/chips/mos6502.h"
 #include <stdio.h>
 
+/*
 using namespace YAKC;
 using namespace mos6502_enums;
 
@@ -253,7 +254,8 @@ int mos6502disasm(fetch_func fetch, unsigned short pc, char* buffer, void* userd
     *dst = 0;
     return pos;
 }
-
 } // namespace mos6502dasm
+*/
+
 
 

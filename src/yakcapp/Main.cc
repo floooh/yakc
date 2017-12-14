@@ -99,7 +99,8 @@ YakcApp::OnInit() {
     this->initRoms();
 
     // switch the emulator on
-    this->emu.poweron(YAKC::system::kc85_3, os_rom::caos_3_1);
+//    this->emu.poweron(YAKC::system::kc85_3, os_rom::caos_3_1);
+this->emu.poweron(YAKC::system::z1013_64, os_rom::z1013_mon_a2);
 
     #if YAKC_UI
     this->ui.Setup(this->emu, &this->audio);
@@ -107,10 +108,12 @@ YakcApp::OnInit() {
 
     // on KC85/3 put a 16kByte module into slot 8 by default, CAOS will initialize
     // this automatically on startup
+    /*
     this->initModules();
     if (this->emu.kc85.on) {
         this->emu.kc85.exp.insert_module(0x08, kc85_exp::m022_16kbyte);
     }
+    */
 
     this->lapTimePoint = Clock::Now();
 
@@ -143,10 +146,7 @@ YakcApp::OnRunning() {
     this->keyboard.HandleInput();
     #endif
 
-    glm::vec4 clear;
-    this->emu.border_color(clear.x, clear.y, clear.z);
-    clear.w = 1.0f;
-    Gfx::BeginPass(PassAction::Clear(clear));
+    Gfx::BeginPass(PassAction::Clear(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     uint64_t processed_audio_cycles = this->audio.GetProcessedCycles();
     TimePoint emu_start_time = Clock::Now();
@@ -201,6 +201,9 @@ YakcApp::initRoms() {
     // only KC85/3 roms are 'built-in' to reeduce executable size
     this->emu.add_rom(rom_images::caos31, dump_caos31, sizeof(dump_caos31));
     this->emu.add_rom(rom_images::kc85_basic_rom, dump_basic_c0, sizeof(dump_basic_c0));
+this->emu.add_rom(rom_images::z1013_mon_a2, dump_z1013_mon_a2, sizeof(dump_z1013_mon_a2));
+this->emu.add_rom(rom_images::z1013_mon202, dump_z1013_mon202, sizeof(dump_z1013_mon202));
+this->emu.add_rom(rom_images::z1013_font, dump_z1013_font, sizeof(dump_z1013_font));
 
     // async-load optional ROMs
     IO::Load("rom:hc900.852", [this](IO::LoadResult ioRes) {
@@ -218,6 +221,7 @@ YakcApp::initRoms() {
     IO::Load("rom:caos42e.854", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::caos42e, ioRes.Data.Data(), ioRes.Data.Size());
     });
+/*
     IO::Load("rom:z1013_mon202.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::z1013_mon202, ioRes.Data.Data(), ioRes.Data.Size());
     });
@@ -227,6 +231,7 @@ YakcApp::initRoms() {
     IO::Load("rom:z1013_font.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::z1013_font, ioRes.Data.Data(), ioRes.Data.Size());
     });
+*/
     IO::Load("rom:z9001_os12_1.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::z9001_os12_1, ioRes.Data.Data(), ioRes.Data.Size());
     });
@@ -295,6 +300,7 @@ YakcApp::initRoms() {
 //------------------------------------------------------------------------------
 void
 YakcApp::initModules() {
+/*
     kc85& kc = this->emu.kc85;
     kc.exp.register_none_module("NO MODULE", "Click to insert module!");
     if (!kc.exp.slot_occupied(0x08)) {
@@ -370,6 +376,7 @@ YakcApp::initModules() {
             "SWITCH [SLOT] C1\n\n"
             "...where [SLOT] is 08 or 0C");
     });
+*/
 }
 
 //------------------------------------------------------------------------------

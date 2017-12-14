@@ -8,6 +8,7 @@ fips_begin_module(yakc)
         clock.h clock.cc
         sound.h sound.cc
         filesystem.h filesystem.cc
+        system_bus.h system_bus.cc
         filetypes.h
     )
     fips_dir(chips)

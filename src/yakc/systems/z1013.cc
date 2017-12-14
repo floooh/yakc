@@ -22,14 +22,13 @@ z1013::~z1013() {
 
 //------------------------------------------------------------------------------
 void
-z1013::init(rom_images* r) {
-    this->roms = r;
+z1013::init() {
     this->rgba8_buffer = board.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------
 bool
-z1013::check_roms(const rom_images& roms, system model, os_rom os) {
+z1013::check_roms(system model, os_rom os) {
     if (system::z1013_01 == model) {
         return roms.has(rom_images::z1013_mon202) && roms.has(rom_images::z1013_font);
     }
@@ -55,10 +54,10 @@ z1013::init_memory_mapping() {
     mem_map_ram(m, 0, 0xEC00, 0x0400, board.ram[vidmem_page]);
     // 2 kByte system rom
     if (os_rom::z1013_mon202 == this->cur_os) {
-        mem_map_rom(m, 0, 0xF000, this->roms->size(rom_images::z1013_mon202), this->roms->ptr(rom_images::z1013_mon202));
+        mem_map_rom(m, 0, 0xF000, roms.size(rom_images::z1013_mon202), roms.ptr(rom_images::z1013_mon202));
     }
     else {
-        mem_map_rom(m, 0, 0xF000, this->roms->size(rom_images::z1013_mon_a2), this->roms->ptr(rom_images::z1013_mon_a2));
+        mem_map_rom(m, 0, 0xF000, roms.size(rom_images::z1013_mon_a2), roms.ptr(rom_images::z1013_mon_a2));
     }
 }
 
@@ -136,6 +135,7 @@ z1013::reset() {
 //------------------------------------------------------------------------------
 uint64_t
 z1013::step(uint64_t start_tick, uint64_t end_tick) {
+    YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = end_tick - start_tick;
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
     kbd_update(&board.kbd);
@@ -289,103 +289,77 @@ z1013::put_key(uint8_t ascii) {
 //------------------------------------------------------------------------------
 void
 z1013::init_keymap_8x4() {
-/*
     // keyboard layers for the 4x4 keyboard (no shift key, plus the 4 shift keys)
     // use space as special placeholder
     const char* layers_8x4 =
-        "@ABCDEFG"
-        "HIJKLMNO"
-        "PQRSTUVW"
-        "        "
+        "@ABCDEFG"  "HIJKLMNO"  "PQRSTUVW"  "        "
         // Shift 1:
-        "XYZ[\\]^-"
-        "01234567"
-        "89:;<=>?"
-        "        "
+        "XYZ[\\]^-" "01234567"  "89:;<=>?"  "        "
         // Shift 2:
-        "   {|}~ "
-        " !\"#$%&'"
-        "()*+,-./"
-        "        "
+        "   {|}~ "  " !\"#$%&'" "()*+,-./"  "        "
         // Shift 3:
-        " abcdefg"
-        "hijklmno"
-        "pqrstuvw"
-        "        "
+        " abcdefg"  "hijklmno"  "pqrstuvw"  "        "
         // Shift 4:
-        "xyz     "
-        "        "
-        "        "
-        "        ";
+        "xyz     "  "        "  "        "  "        ";
 
-    for (int shift = 0; shift < 5; shift++) {
+    // 4 shift keys are on column 0/1/2/3, line 3
+    kbd_register_modifier(&board.kbd, 0, 0, 3);
+    kbd_register_modifier(&board.kbd, 1, 0, 3);
+    kbd_register_modifier(&board.kbd, 2, 0, 3);
+    kbd_register_modifier(&board.kbd, 3, 0, 3);
+    for (int layer = 0; layer < 5; layer++) {
         for (int line = 0; line < 4; line++) {
             for (int col = 0; col < 8; col++) {
-                uint8_t c = layers_8x4[shift*32 + line*8 + col];
+                uint8_t c = layers_8x4[layer*32 + line*8 + col];
                 if (c != 0x20) {
-                    this->init_key(c, col, line, shift, 4);
+                    kbd_register_key(&board.kbd, c, col, line, (layer>0) ? (1<<(layer-1)) : 0);
                 }
             }
         }
     }
 
     // special keys
-    this->init_key(' ', 5, 3, 0, 4);   // Space
-    this->init_key(0x08, 4, 3, 0, 4);  // Cursor Left
-    this->init_key(0x09, 6, 3, 0, 4);  // Cursor Right
-    this->init_key(0x0D, 7, 3, 0, 4);  // Enter
-    this->init_key(0x03, 3, 1, 4, 4);  // Break/Escape
-*/
+    kbd_register_key(&board.kbd, ' ', 5, 3, 0);   // Space
+    kbd_register_key(&board.kbd, 0x08, 4, 3, 0);  // Cursor Left
+    kbd_register_key(&board.kbd, 0x09, 6, 3, 0);  // Cursor Right
+    kbd_register_key(&board.kbd, 0x0D, 7, 3, 0);  // Enter
+    kbd_register_key(&board.kbd, 0x03, 3, 1, 4);  // Break/Escape
 }
 
 //------------------------------------------------------------------------------
 void
 z1013::init_keymap_8x8() {
-/*
     // see: http://www.z1013.de/images/21.gif
-    memset(this->key_map, 0, sizeof(this->key_map));
-
-    // keyboard layers for the 8x8 keyboard
-    const char* layers_8x8 =
-        "13579-  "
-        "QETUO@  "
-        "ADGJL*  "
-        "YCBM.^  "
-        "24680[  "
-        "WRZIP]  "
-        "SFHK+\\  "
-        "XVN,/_  "
-
-        // shift layer
-        "!#%')=  "
-        "qetuo`  "
-        "adgjl:  "
-        "ycbm>~  "
-        "\"$&( {  "
-        "wrzip}  "
-        "sfhk;|  "
-        "xvn<?   ";
-
-    for (int shift = 0; shift < 2; shift++) {
+    /* shift key is column 7, line 6 */
+    const int shift = 0, shift_mask = (1<<shift);
+    kbd_register_modifier(&board.kbd, shift, 7, 6);
+    /* ctrl key is column 6, line 5 */
+    const int ctrl = 1, ctrl_mask = (1<<ctrl);
+    kbd_register_modifier(&board.kbd, ctrl, 6, 5);
+    /* alpha-numeric keys */
+    const char* keymap =
+        /* unshifted keys */
+        "13579-  QETUO@  ADGJL*  YCBM.^  24680[  WRZIP]  SFHK+\\  XVN,/_  "
+        /* shift layer */
+        "!#%')=  qetuo`  adgjl:  ycbm>~  \"$&( {  wrzip}  sfhk;|  xvn<?   ";
+    for (int layer = 0; layer < 2; layer++) {
         for (int line = 0; line < 8; line++) {
             for (int col = 0; col < 8; col++) {
-                uint8_t c = layers_8x8[shift*64 + line*8 + col];
+                int c = keymap[layer*64 + line*8 + col];
                 if (c != 0x20) {
-                    this->init_key(c, col, line, shift, 8);
+                    kbd_register_key(&board.kbd, c, col, line, layer?shift_mask:0);
                 }
             }
         }
     }
-
-    // special keys
-    this->init_key(' ', 6, 4, 0, 8);    // Space
-    this->init_key(0x08, 6, 2, 0, 8);   // Cursor Left
-    this->init_key(0x09, 6, 3, 0, 8);   // Cursor Right
-    this->init_key(0x0A, 6, 7, 0, 8);   // Cursor Down
-    this->init_key(0x0B, 6, 6, 0, 8);   // Cursor Up
-    this->init_key(0x0D, 6, 1, 0, 8);   // Enter
-    this->key_map[0x03] = kbd_bit(6, 5, 8) | kbd_bit(1, 3, 8); // Ctrl+C (== STOP/BREAK)
-*/
+    /* special keys */
+    kbd_register_key(&board.kbd, ' ',  6, 4, 0);  /* space */
+    kbd_register_key(&board.kbd, 0x08, 6, 2, 0);  /* cursor left */
+    kbd_register_key(&board.kbd, 0x09, 6, 3, 0);  /* cursor right */
+    kbd_register_key(&board.kbd, 0x0A, 6, 7, 0);  /* cursor down */
+    kbd_register_key(&board.kbd, 0x0B, 6, 6, 0);  /* cursor up */
+    kbd_register_key(&board.kbd, 0x0D, 6, 1, 0);  /* enter */
+    kbd_register_key(&board.kbd, 0x03, 1, 3, ctrl_mask); /* map Esc to Ctrl+C (STOP/BREAK) */
 }
 
 //------------------------------------------------------------------------------
@@ -393,7 +367,7 @@ void
 z1013::decode_video() {
     uint32_t* dst = rgba8_buffer;
     const uint8_t* src = board.ram[vidmem_page];
-    const uint8_t* font = this->roms->ptr(rom_images::z1013_font);
+    const uint8_t* font = roms.ptr(rom_images::z1013_font);
     for (int y = 0; y < 32; y++) {
         for (int py = 0; py < 8; py++) {
             for (int x = 0; x < 32; x++) {

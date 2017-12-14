@@ -71,5 +71,6 @@ private:
     int cur_pos = 0;
     uint8_t buffer[buf_size];
 };
+extern rom_images roms;
 
 } // namespace YAKC

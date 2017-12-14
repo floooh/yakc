@@ -408,10 +408,10 @@ UI::OnFrame(yakc& emu) {
                 }
                 // the Z9001 has 2 PIOs
                 if (ImGui::MenuItem("Z80 PIO 1")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.z80pio));
+                    this->OpenWindow(emu, PIOWindow::Create("PIO 1", &board.z80pio));
                 }
                 if (ImGui::MenuItem("Z80 PIO 2")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.z80pio2));
+                    this->OpenWindow(emu, PIOWindow::Create("PIO 2", &board.z80pio2));
                 }
                 if (ImGui::MenuItem("Z80 CTC")) {
                     this->OpenWindow(emu, CTCWindow::Create());
@@ -452,9 +452,11 @@ UI::OnFrame(yakc& emu) {
                     }
                 }
                 if (emu.is_system(system::any_cpc)) {
+                    /*
                     if (ImGui::MenuItem("CPC CRTC Visualization", nullptr, emu.cpc.video.debug_video)) {
                         emu.cpc.video.debug_video = !emu.cpc.video.debug_video;
                     }
+                    */
                 }
                 if (!(emu.is_system(system::any_zx) || emu.is_system(system::any_cpc))) {
                     if (ImGui::BeginMenu("Take Snapshot")) {

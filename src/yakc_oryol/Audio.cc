@@ -25,7 +25,7 @@ Audio::Setup(yakc* emu_) {
     this->audioSource->emu = emu_;
     this->audioSource->setSingleInstance(true);
     this->audioSource->setFilter(0, &this->filter);
-    this->audioSource->cpu_clock_speed = this->emu->board.clck.base_freq_khz * 1000;
+    this->audioSource->cpu_clock_speed = board.clck.base_freq_khz * 1000;
     this->audioHandle = soloud->play(*this->audioSource, 1.0f);
 }
 
@@ -46,7 +46,7 @@ Audio::Discard() {
 //------------------------------------------------------------------------------
 void
 Audio::Update() {
-    this->audioSource->cpu_clock_speed = this->emu->board.clck.base_freq_khz * 1000;
+    this->audioSource->cpu_clock_speed = board.clck.base_freq_khz * 1000;
 }
 
 //------------------------------------------------------------------------------

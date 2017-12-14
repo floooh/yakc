@@ -2,6 +2,7 @@
 //  yakc.cc
 //------------------------------------------------------------------------------
 #include "yakc.h"
+#include <stdio.h>
 
 namespace YAKC {
 
@@ -9,12 +10,12 @@ namespace YAKC {
 void
 yakc::init(const ext_funcs& sys_funcs) {
     func = sys_funcs;
-    fill_random(this->board.random, sizeof(this->board.random));
+    fill_random(board.random, sizeof(board.random));
     this->cpu_ahead = false;
     this->cpu_behind = false;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
-    this->z1013.init(&this->roms);
+    this->z1013.init();
 /*
     this->kc85.init(&this->board, &this->roms);
     this->z9001.init(&this->board, &this->roms);
@@ -28,33 +29,33 @@ yakc::init(const ext_funcs& sys_funcs) {
 //------------------------------------------------------------------------------
 void
 yakc::add_rom(rom_images::rom type, const uint8_t* ptr, int size) {
-    this->roms.add(type, ptr, size);
+    roms.add(type, ptr, size);
 }
 
 //------------------------------------------------------------------------------
 bool
 yakc::check_roms(system m, os_rom os) {
     if (is_system(m, system::any_z1013)) {
-        return z1013::check_roms(this->roms, m, os);
+        return z1013::check_roms(m, os);
     }
     /*
     else if (is_system(m, system::any_kc85)) {
-        return kc85::check_roms(this->roms, m, os);
+        return kc85::check_roms(m, os);
     }
     else if (is_system(m, system::any_z9001)) {
-        return z9001::check_roms(this->roms, m, os);
+        return z9001::check_roms(m, os);
     }
     else if (is_system(m, system::any_zx)) {
-        return zx::check_roms(this->roms, m, os);
+        return zx::check_roms(m, os);
     }
     else if (is_system(m, system::any_cpc)) {
-        return cpc::check_roms(this->roms, m, os);
+        return cpc::check_roms(m, os);
     }
     else if (is_system(m, system::acorn_atom)) {
-        return atom::check_roms(this->roms, m, os);
+        return atom::check_roms(m, os);
     }
     else if (is_system(m, system::bbcmicro_b)) {
-        return bbcmicro::check_roms(this->roms, m, os);
+        return bbcmicro::check_roms(m, os);
     }
     */
     else {
@@ -219,8 +220,8 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
     uint64_t min_cycle_count = 0;
     uint64_t max_cycle_count = 0;
     if (audio_cycle_count > 0) {
-        const uint64_t cpu_min_ahead_cycles = (this->board.clck.base_freq_khz*1000)/100;
-        const uint64_t cpu_max_ahead_cycles = (this->board.clck.base_freq_khz*1000)/25;
+        const uint64_t cpu_min_ahead_cycles = (board.clck.base_freq_khz*1000)/100;
+        const uint64_t cpu_max_ahead_cycles = (board.clck.base_freq_khz*1000)/25;
         min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
         max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
     }
@@ -230,7 +231,10 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
     if (this->abs_cycle_count == 0) {
         this->abs_cycle_count = min_cycle_count;
     }
-    const int64_t num_cycles = this->board.clck.cycles(micro_secs) - this->overflow_cycles;
+    int64_t num_cycles = board.clck.cycles(micro_secs) - this->overflow_cycles;
+    if (num_cycles < 0) {
+        num_cycles = 0;
+    }
     uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
     if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
         abs_end_cycles = max_cycle_count;
@@ -240,7 +244,10 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
         abs_end_cycles = min_cycle_count;
         this->cpu_behind = true;
     }
-    if (!this->board.dbg.active) {
+    if (this->abs_cycle_count > abs_end_cycles) {
+        this->abs_cycle_count = abs_end_cycles;
+    }
+    if (!board.dbg.active) {
         if (this->z1013.on) {
             this->abs_cycle_count = this->z1013.step(this->abs_cycle_count, abs_end_cycles);
         }
@@ -377,40 +384,9 @@ yakc::system_info() const {
 }
 
 //------------------------------------------------------------------------------
-system_bus*
-yakc::get_bus() {
-    if (this->is_system(system::any_z1013)) {
-        return &this->z1013;
-    }
-    /*
-    else if (this->is_system(system::any_kc85)) {
-        return &this->kc85;
-    }
-    else if (this->is_system(system::any_z9001)) {
-        return &this->z9001;
-    }
-    else if (this->is_system(system::any_zx)) {
-        return &this->zx;
-    }
-    else if (this->is_system(system::any_cpc)) {
-        return &this->cpc;
-    }
-    else if (this->is_system(system::acorn_atom)) {
-        return &this->atom;
-    }
-    else if (this->is_system(system::bbcmicro_b)) {
-        return &this->bbcmicro;
-    }
-    */
-    else {
-        return nullptr;
-    }
-}
-
-//------------------------------------------------------------------------------
 void
 yakc::fill_sound_samples(float* buffer, int num_samples) {
-    if (!this->board.dbg.active) {
+    if (!board.dbg.active) {
     /*
         if (this->kc85.on) {
             return this->kc85.decode_audio(buffer, num_samples);

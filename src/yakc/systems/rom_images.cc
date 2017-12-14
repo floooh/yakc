@@ -4,6 +4,7 @@
 #include "rom_images.h"
 
 namespace YAKC {
+rom_images roms;
 
 //------------------------------------------------------------------------------
 void

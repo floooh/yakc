@@ -5,7 +5,7 @@
     @brief simple class to store machine state snapshots
 */
 #include "yakc/yakc.h"
-#include "yakc/systems/snapshot.h"
+//#include "yakc/systems/snapshot.h"
 
 namespace YAKC {
 
@@ -25,7 +25,7 @@ public:
     /// apply a snapshot
     void ApplySnapshot(int slotIndex, yakc& emu);
 
-    snapshot::state_t snapshots[MaxNumSnapshots];
+//    snapshot::state_t snapshots[MaxNumSnapshots];
 };
 
 } // namespace YAKC

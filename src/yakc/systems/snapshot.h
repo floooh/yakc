@@ -92,51 +92,11 @@ public:
         } z9001;
         static_assert((sizeof(z9001_t)&3)==0, "z9001_t odd size!");
 
-        // cpu state
-        struct cpu_t {
-            uint16_t AF, BC, DE, HL, IX, IY, WZ;
-            uint16_t AF_, BC_, DE_, HL_, WZ_;
-            uint16_t SP, PC;
-            uint8_t I, R, IM;
-            uint8_t HALT, IFF1, IFF2;
-
-            uint8_t INV;
-            uint8_t int_active;
-            uint8_t int_enable;
-            uint8_t padding[3];
-        } cpu;
-        static_assert((sizeof(cpu_t)&3)==0, "cpu_t odd size!");
-
-        // interrupt controller data
-        struct intctrl_t {
-            uint8_t enabled;
-            uint8_t requested;
-            uint8_t request_data;
-            uint8_t pending;
-        };
-
-        // ctc state
-        struct ctc_t {
-            struct chn_t {
-                int down_counter;
-                uint8_t mode;
-                uint8_t constant;
-                uint8_t waiting_for_trigger;
-                uint8_t interrupt_vector;
-                intctrl_t intctrl;
-            } chn[4];
-        } ctc;
-        static_assert((sizeof(ctc_t)&3)==0, "ctc_t odd size!");
-
-        // pio state
-        struct pio_t {
-            z80pio::port_t port[z80pio::num_ports];
-            uint8_t pad[2];
-            intctrl_t intctrl;
-        };
-        static_assert((sizeof(pio_t)&3)==0, "pio_t odd size!");
-        pio_t pio1;
-        pio_t pio2;
+        // z80 chip family states
+        z80 cpu;
+        z80ctc ctc;
+        z80pio pio1;
+        z80pio pio2;
 
         // system RAM banks
         uint8_t ram[8][0x4000];
@@ -179,10 +139,6 @@ public:
     static void write_cpu_state(const yakc& emu, state_t& state);
     /// apply cpu state
     static void apply_cpu_state(const state_t& state, yakc& emu);
-    /// write interrupt controller state
-    static void write_intctrl_state(const z80int& src, state_t::intctrl_t& dst);
-    /// apply interrupt controller state
-    static void apply_intctrl_state(const state_t::intctrl_t& src, z80int& dst);
     /// write the ctc state
     static void write_ctc_state(const yakc& emu, state_t& state);
     /// apply ctc state
