@@ -72,7 +72,7 @@ z1013_t::poweron(system m) {
     else {
         this->cur_os = os_rom::z1013_mon_a2;
     }
-    board.init_kbd(2);
+    kbd_init(&board.kbd, 2);
     this->init_keymaps();
     this->on = true;
     this->kbd_request_column = 0;
@@ -87,8 +87,8 @@ z1013_t::poweron(system m) {
     board.freq_khz = (m == system::z1013_01) ? 1000 : 2000;
 
     // initialize hardware components
-    board.init_z80(cpu_tick);
-    board.init_pio(0, pio_in, pio_out);
+    z80_init(&board.z80, cpu_tick);
+    z80pio_init(&board.z80pio, pio_in, pio_out);
 
     // execution on power-on starts at 0xF000
     board.z80.PC = 0xF000;

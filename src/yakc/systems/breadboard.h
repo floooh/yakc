@@ -50,28 +50,6 @@ struct breadboard {
     static uint8_t random[ram_bank_size];  // a 16-kbyte bank filled with random numbers
     static uint8_t junk[ram_bank_size];    // a 16-kbyte page for junk writes
     static uint32_t rgba8_buffer[global_max_fb_width*global_max_fb_height]; // RGBA8 linear pixel buffer
-
-    void init_kbd(int sticky_count) {
-        kbd_desc_t desc = { };
-        desc.sticky_count = sticky_count;
-        kbd_init(&this->kbd, &desc);
-    }
-    void init_z80(z80_tick_t tick_func) {
-        z80_desc_t desc = { };
-        desc.tick_cb = tick_func;
-        z80_init(&this->z80, &desc);
-    }
-    void init_pio(int pio_id, z80pio_in_t pio_in, z80pio_out_t pio_out) {
-        z80pio_desc_t desc = { };
-        desc.in_cb = pio_in;
-        desc.out_cb = pio_out;
-        if (0 == pio_id) {
-            z80pio_init(&this->z80pio, &desc);
-        }
-        else {
-            z80pio_init(&this->z80pio2, &desc);
-        }
-    }
 };
 extern breadboard board;
 
