@@ -5,7 +5,6 @@ fips_begin_lib(yakc_oryol)
         AudioSource.h AudioSource.cc
         Keyboard.h Keyboard.cc
         FileLoader.h FileLoader.cc
-        SnapshotStorage.h SnapshotStorage.cc
     )
     oryol_shader(yakc_shaders.shd)
     fips_deps(Gfx HttpFS Input Assets soloud yakc)

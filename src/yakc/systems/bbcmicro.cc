@@ -29,12 +29,6 @@ bbcmicro::check_roms(const rom_images& roms, system model, os_rom os) {
 
 //------------------------------------------------------------------------------
 void
-bbcmicro::on_context_switched() {
-    // FIXME
-}
-
-//------------------------------------------------------------------------------
-void
 bbcmicro::init_memory_map() {
     auto& cpu = this->board->mos6502;
     cpu.mem.unmap_all();

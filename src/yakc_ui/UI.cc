@@ -458,30 +458,6 @@ UI::OnFrame(yakc& emu) {
                     }
                     */
                 }
-                if (!(emu.is_system(system::any_zx) || emu.is_system(system::any_cpc))) {
-                    if (ImGui::BeginMenu("Take Snapshot")) {
-                        for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                            strBuilder.Format(32, "Snapshot %d", i);
-                            if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                this->snapshotStorage.TakeSnapshot(emu, i);
-                            }
-                        }
-                        ImGui::EndMenu();
-                    }
-                    if (this->snapshotStorage.HasSnapshots()) {
-                        if (ImGui::BeginMenu("Apply Snapshot")) {
-                            for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                                if (this->snapshotStorage.HasSnapshot(i)) {
-                                    strBuilder.Format(32, "Snapshot %d", i);
-                                    if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                        this->snapshotStorage.ApplySnapshot(i, emu);
-                                    }
-                                }
-                            }
-                            ImGui::EndMenu();
-                        }
-                    }
-                }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Settings")) {

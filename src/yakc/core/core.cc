@@ -116,5 +116,4 @@ os_from_string(const char* str) {
 
 extern os_rom os_from_string(const char* str);
 
-
 } // namespace YAKC

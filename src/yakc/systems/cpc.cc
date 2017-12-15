@@ -126,12 +126,6 @@ cpc::init_memory_map() {
 
 //------------------------------------------------------------------------------
 void
-cpc::on_context_switched() {
-    // FIXME!
-}
-
-//------------------------------------------------------------------------------
-void
 cpc::poweron(system m) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(system::any_cpc) & int(m));

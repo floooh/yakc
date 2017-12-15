@@ -168,12 +168,6 @@ zx::init_memory_map() {
 
 //------------------------------------------------------------------------------
 void
-zx::on_context_switched() {
-    // FIXME!
-}
-
-//------------------------------------------------------------------------------
-void
 zx::poweron(system m) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(system::any_zx) & int(m));

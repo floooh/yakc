@@ -164,34 +164,6 @@ yakc::reset() {
 }
 
 //------------------------------------------------------------------------------
-void
-yakc::on_context_switched() {
-    if (this->is_system(system::any_z1013)) {
-        z1013.on_context_switched();
-    }
-    /*
-    else if (this->is_system(system::any_kc85)) {
-        this->kc85.on_context_switched();
-    }
-    else if (this->is_system(system::any_z9001)) {
-        this->z9001.on_context_switched();
-    }
-    else if (this->is_system(system::any_zx)) {
-        this->zx.on_context_switched();
-    }
-    else if (this->is_system(system::any_cpc)) {
-        this->cpc.on_context_switched();
-    }
-    else if (this->is_system(system::acorn_atom)) {
-        this->atom.on_context_switched();
-    }
-    else if (this->is_system(system::bbcmicro_b)) {
-        this->bbcmicro.on_context_switched();
-    }
-    */
-}
-
-//------------------------------------------------------------------------------
 bool
 yakc::is_system(system mask) const {
     return 0 != (int(this->model) & int(mask));

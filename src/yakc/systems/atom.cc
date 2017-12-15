@@ -127,12 +127,6 @@ atom::check_roms(const rom_images& roms, system model, os_rom os) {
 
 //------------------------------------------------------------------------------
 void
-atom::on_context_switched() {
-    // FIXME
-}
-
-//------------------------------------------------------------------------------
-void
 atom::poweron() {
     YAKC_ASSERT(board && roms);
     YAKC_ASSERT(!on);

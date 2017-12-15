@@ -61,13 +61,6 @@ z1013_t::init_keymaps() {
 
 //------------------------------------------------------------------------------
 void
-z1013_t::on_context_switched() {
-    this->init_keymaps();
-    this->init_memory_mapping();
-}
-
-//------------------------------------------------------------------------------
-void
 z1013_t::poweron(system m) {
     YAKC_ASSERT(int(system::any_z1013) & int(m));
     YAKC_ASSERT(!this->on);

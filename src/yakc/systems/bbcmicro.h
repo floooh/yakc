@@ -22,7 +22,7 @@ public:
     void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
     static bool check_roms(const rom_images& roms, system model, os_rom os);
-    /// initialize memory mapping (called from poweron or snapshot restore)
+    /// initialize memory mapping (called from poweron)
     void init_memory_map();
     
     /// power-on the device
@@ -33,8 +33,6 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    /// called after snapshot restore
-    void on_context_switched();
     /// get framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
 

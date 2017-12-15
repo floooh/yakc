@@ -46,10 +46,6 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    /// called after snapshot restore
-    void on_context_switched();
-    /// get current border color
-    void border_color(float& out_red, float& out_green, float& out_blue);
 
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);

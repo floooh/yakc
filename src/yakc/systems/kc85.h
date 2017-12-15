@@ -70,8 +70,6 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    /// called after snapshot restore
-    void on_context_switched();
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
     /// get pointer to framebuffer, width and height

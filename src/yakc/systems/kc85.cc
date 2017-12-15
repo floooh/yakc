@@ -45,16 +45,6 @@ kc85::check_roms(const rom_images& roms, system model, os_rom os) {
 
 //------------------------------------------------------------------------------
 void
-kc85::on_context_switched() {
-    YAKC_ASSERT(this->board);
-    this->update_rom_pointers();
-    this->update_bank_switching();
-    this->board->z80.connect_irq_device(&this->board->z80ctc.channels[0].int_ctrl);
-    this->board->z80ctc.init_daisychain(&this->board->z80pio.int_ctrl);
-}
-
-//------------------------------------------------------------------------------
-void
 kc85::decode_audio(float* buffer, int num_samples) {
     this->board->speaker.fill_samples(buffer, num_samples);
 }

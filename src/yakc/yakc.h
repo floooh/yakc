@@ -54,9 +54,6 @@ public:
     /// get pointer to emulator framebuffer, its width, and height
     const void* framebuffer(int& out_width, int& out_height);
 
-    /// do a partial init after applying a snapshot
-    void on_context_switched();
-
     /// return true if switched on
     bool switchedon() const;
     /// check if currently emulated system matches

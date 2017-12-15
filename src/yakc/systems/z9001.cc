@@ -126,20 +126,6 @@ z9001::init_memory_mapping() {
 
 //------------------------------------------------------------------------------
 void
-z9001::on_context_switched() {
-    this->init_memory_mapping();
-    z80& cpu = this->board->z80;
-    z80pio& pio1 = this->board->z80pio;
-    z80pio& pio2 = this->board->z80pio2;
-    z80ctc& ctc = this->board->z80ctc;
-    cpu.connect_irq_device(&pio1.int_ctrl);
-    pio1.int_ctrl.connect_irq_device(&pio2.int_ctrl);
-    pio2.int_ctrl.connect_irq_device(&ctc.channels[0].int_ctrl);
-    ctc.init_daisychain(nullptr);
-}
-
-//------------------------------------------------------------------------------
-void
 z9001::poweron(system m, os_rom os) {
     YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(system::any_z9001) & int(m));

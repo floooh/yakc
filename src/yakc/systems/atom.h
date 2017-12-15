@@ -50,8 +50,6 @@ public:
     void decode_audio(float* buffer, int num_samples);    
     /// get info about emulated system
     const char* system_info() const;
-    /// called after snapshot restore
-    void on_context_switched();    
     /// put a key and joystick input
     void put_input(uint8_t ascii, uint8_t joy0mask);
     /// file quickloading
