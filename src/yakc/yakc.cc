@@ -220,8 +220,8 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
     uint64_t min_cycle_count = 0;
     uint64_t max_cycle_count = 0;
     if (audio_cycle_count > 0) {
-        const uint64_t cpu_min_ahead_cycles = (board.clck.base_freq_khz*1000)/100;
-        const uint64_t cpu_max_ahead_cycles = (board.clck.base_freq_khz*1000)/25;
+        const uint64_t cpu_min_ahead_cycles = (board.freq_khz*1000)/100;
+        const uint64_t cpu_max_ahead_cycles = (board.freq_khz*1000)/25;
         min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
         max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
     }
@@ -231,7 +231,7 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
     if (this->abs_cycle_count == 0) {
         this->abs_cycle_count = min_cycle_count;
     }
-    int64_t num_cycles = board.clck.cycles(micro_secs) - this->overflow_cycles;
+    int64_t num_cycles = clk_ticks(board.freq_khz, micro_secs) - this->overflow_cycles;
     if (num_cycles < 0) {
         num_cycles = 0;
     }

@@ -146,7 +146,6 @@ YakcApp::OnRunning() {
     this->keyboard.HandleInput();
     #endif
 
-    Gfx::BeginPass(PassAction::Clear(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     int micro_secs = (int) frameTime.AsMicroSeconds();
     uint64_t processed_audio_cycles = this->audio.GetProcessedCycles();
     TimePoint emu_start_time = Clock::Now();
@@ -167,6 +166,7 @@ YakcApp::OnRunning() {
     this->audio.Update();
     int width = 0;
     int height = 0;
+    Gfx::BeginPass(PassAction::Clear(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     const void* fb = this->emu.framebuffer(width, height);
     if (fb) {
         this->draw.Render(fb, width, height);

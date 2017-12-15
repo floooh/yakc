@@ -11,7 +11,7 @@ class z1013_t z1013;
 //------------------------------------------------------------------------------
 void
 z1013_t::init() {
-    this->rgba8_buffer = board.rgba8_buffer;
+    // empty
 }
 
 //------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ z1013_t::poweron(system m) {
     this->init_memory_mapping();
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
-    board.clck.init((m == system::z1013_01) ? 1000 : 2000);
+    board.freq_khz = (m == system::z1013_01) ? 1000 : 2000;
 
     // initialize hardware components
     board.init_z80(cpu_tick);
@@ -350,7 +350,7 @@ z1013_t::init_keymap_8x8() {
 //------------------------------------------------------------------------------
 void
 z1013_t::decode_video() {
-    uint32_t* dst = rgba8_buffer;
+    uint32_t* dst = board.rgba8_buffer;
     const uint8_t* src = board.ram[vidmem_page];
     const uint8_t* font = roms.ptr(rom_images::z1013_font);
     for (int y = 0; y < 32; y++) {
@@ -371,7 +371,7 @@ const void*
 z1013_t::framebuffer(int& out_width, int& out_height) {
     out_width = display_width;
     out_height = display_height;
-    return this->rgba8_buffer;
+    return board.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------

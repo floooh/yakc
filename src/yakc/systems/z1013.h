@@ -98,7 +98,6 @@ public:
     static const int display_height = 256;
     static_assert(display_width <= global_max_fb_width, "z1013 fb size");
     static_assert(display_height <= global_max_fb_height, "z1013 fb size");
-    uint32_t* rgba8_buffer = nullptr;
 };
 extern class z1013_t z1013;
 

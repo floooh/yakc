@@ -4,6 +4,7 @@
 #include "rom_images.h"
 
 namespace YAKC {
+uint8_t rom_images::buffer[rom_images::buf_size];
 rom_images roms;
 
 //------------------------------------------------------------------------------

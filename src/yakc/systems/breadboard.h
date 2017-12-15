@@ -5,7 +5,6 @@
     @brief houses all the common chips required by emulated systems
 */
 #include "yakc/core/core.h"
-#include "yakc/core/clock.h"
 //#include "yakc/chips/mos6502.h"
 #include "yakc/chips/cpudbg.h"
 //#include "yakc/chips/i8255.h"
@@ -16,6 +15,7 @@
 //#include "yakc/peripherals/beeper.h"
 //#include "yakc/peripherals/speaker.h"
 #include "yakc/peripherals/crt.h"
+#include "chips/clk.h"
 #include "chips/mem.h"
 #include "chips/kbd.h"
 #include "chips/z80.h"
@@ -25,7 +25,7 @@
 namespace YAKC {
 
 struct breadboard {
-    clock clck;
+    int freq_khz = 0;
     mem_t mem;
     z80_t z80;
     z80pio_t z80pio;
@@ -46,10 +46,10 @@ struct breadboard {
     class crt crt;          // this is not a chip, but a cathode-ray-tube emulation
     static const int num_ram_banks = 8;
     static const int ram_bank_size = 0x4000;
-    uint8_t ram[num_ram_banks][ram_bank_size];
-    uint8_t random[ram_bank_size];  // a 16-kbyte bank filled with random numbers
-    uint8_t junk[ram_bank_size];    // a 16-kbyte page for junk writes
-    uint32_t rgba8_buffer[global_max_fb_width*global_max_fb_height]; // RGBA8 linear pixel buffer
+    static uint8_t ram[num_ram_banks][ram_bank_size];
+    static uint8_t random[ram_bank_size];  // a 16-kbyte bank filled with random numbers
+    static uint8_t junk[ram_bank_size];    // a 16-kbyte page for junk writes
+    static uint32_t rgba8_buffer[global_max_fb_width*global_max_fb_height]; // RGBA8 linear pixel buffer
 
     void init_kbd(int sticky_count) {
         kbd_desc_t desc = { };

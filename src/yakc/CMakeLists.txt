@@ -4,7 +4,6 @@ fips_begin_module(yakc)
     fips_dir(core)
     fips_files(
         core.h core.cc 
-        clock.h clock.cc
         filesystem.h filesystem.cc
         filetypes.h
     )

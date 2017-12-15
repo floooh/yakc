@@ -69,7 +69,7 @@ private:
 
     static const int buf_size = 1024 * 1024;
     int cur_pos = 0;
-    uint8_t buffer[buf_size];
+    static uint8_t buffer[buf_size];
 };
 extern rom_images roms;
 
