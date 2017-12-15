@@ -12,7 +12,7 @@ namespace YAKC {
 static const int offset = 128;
 
 //------------------------------------------------------------------------------
-PIOWindow::PIOWindow(const char* name, z80pio* pio) :
+PIOWindow::PIOWindow(const char* name, z80pio_t* pio) :
 Name(name),
 PIO(pio) {
     // empty
@@ -45,7 +45,7 @@ modeAsString(uint8_t m) {
 
 //------------------------------------------------------------------------------
 static void
-pioStatus(z80pio* pio, int port_id) {
+pioStatus(z80pio_t* pio, int port_id) {
     const auto& p = pio->PORT[port_id];
     status("mode:", p.mode); ImGui::SameLine(); ImGui::Text("%s", modeAsString(p.mode));
     status("output:", p.output);

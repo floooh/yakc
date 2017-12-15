@@ -15,7 +15,7 @@ yakc::init(const ext_funcs& sys_funcs) {
     this->cpu_behind = false;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
-    this->z1013.init();
+    z1013.init();
 /*
     this->kc85.init(&this->board, &this->roms);
     this->z9001.init(&this->board, &this->roms);
@@ -36,7 +36,7 @@ yakc::add_rom(rom_images::rom type, const uint8_t* ptr, int size) {
 bool
 yakc::check_roms(system m, os_rom os) {
     if (is_system(m, system::any_z1013)) {
-        return z1013::check_roms(m, os);
+        return z1013_t::check_roms(m, os);
     }
     /*
     else if (is_system(m, system::any_kc85)) {
@@ -71,7 +71,7 @@ yakc::poweron(system m, os_rom rom) {
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
     if (this->is_system(system::any_z1013)) {
-        this->z1013.poweron(m);
+        z1013.poweron(m);
     }
     /*
     else if (this->is_system(system::any_kc85)) {
@@ -98,8 +98,8 @@ yakc::poweron(system m, os_rom rom) {
 //------------------------------------------------------------------------------
 void
 yakc::poweroff() {
-    if (this->z1013.on) {
-        this->z1013.poweroff();
+    if (z1013.on) {
+        z1013.poweroff();
     }
     /*
     if (this->kc85.on) {
@@ -126,7 +126,7 @@ yakc::poweroff() {
 //------------------------------------------------------------------------------
 bool
 yakc::switchedon() const {
-return this->z1013.on;
+return z1013.on;
 /*
     return this->kc85.on || this->z1013.on || this->z9001.on ||
            this->zx.on || this->cpc.on || this->bbcmicro.on ||
@@ -138,8 +138,8 @@ return this->z1013.on;
 void
 yakc::reset() {
     this->overflow_cycles = 0;
-    if (this->z1013.on) {
-        this->z1013.reset();
+    if (z1013.on) {
+        z1013.reset();
     }
     /*
     if (this->kc85.on) {
@@ -167,7 +167,7 @@ yakc::reset() {
 void
 yakc::on_context_switched() {
     if (this->is_system(system::any_z1013)) {
-        this->z1013.on_context_switched();
+        z1013.on_context_switched();
     }
     /*
     else if (this->is_system(system::any_kc85)) {
@@ -248,8 +248,8 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
         this->abs_cycle_count = abs_end_cycles;
     }
     if (!board.dbg.active) {
-        if (this->z1013.on) {
-            this->abs_cycle_count = this->z1013.step(this->abs_cycle_count, abs_end_cycles);
+        if (z1013.on) {
+            this->abs_cycle_count = z1013.step(this->abs_cycle_count, abs_end_cycles);
         }
         /*
         else if (this->kc85.on) {
@@ -283,8 +283,8 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
 //------------------------------------------------------------------------------
 uint32_t
 yakc::step_debug() {
-    if (this->z1013.on) {
-        return this->z1013.step_debug();
+    if (z1013.on) {
+        return z1013.step_debug();
     }
     /*
     else if (this->kc85.on) {
@@ -318,8 +318,8 @@ yakc::put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask) {
         joy0_kbd_mask = 0;
     }
     //const uint8_t joy0_mask = joy0_kbd_mask|joy0_pad_mask;
-    if (this->z1013.on) {
-        this->z1013.put_key(ascii);
+    if (z1013.on) {
+        z1013.put_key(ascii);
     }
     /*
     if (this->kc85.on) {
@@ -355,8 +355,8 @@ yakc::is_joystick_enabled() const {
 //------------------------------------------------------------------------------
 const char*
 yakc::system_info() const {
-    if (this->z1013.on) {
-        return this->z1013.system_info();
+    if (z1013.on) {
+        return z1013.system_info();
     }
     /*
     else if (this->kc85.on) {
@@ -412,8 +412,8 @@ yakc::fill_sound_samples(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 yakc::framebuffer(int& out_width, int& out_height) {
-    if (this->z1013.on) {
-        return this->z1013.framebuffer(out_width, out_height);
+    if (z1013.on) {
+        return z1013.framebuffer(out_width, out_height);
     }
     /*
     else if (this->kc85.on) {
@@ -445,8 +445,8 @@ yakc::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 bool
 yakc::quickload(const char* name, filetype type, bool start) {
-    if (this->z1013.on) {
-        return this->z1013.quickload(&this->filesystem, name, type, start);
+    if (z1013.on) {
+        return z1013.quickload(&this->filesystem, name, type, start);
     }
     /*
     else if (this->kc85.on) {

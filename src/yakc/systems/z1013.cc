@@ -6,29 +6,17 @@
 
 namespace YAKC {
 
-z1013* z1013::ptr = nullptr;
-
-//------------------------------------------------------------------------------
-z1013::z1013() {
-    YAKC_ASSERT(!ptr);
-    ptr = this;
-}
-
-//------------------------------------------------------------------------------
-z1013::~z1013() {
-    YAKC_ASSERT(ptr);
-    ptr = nullptr;
-}
+class z1013_t z1013;
 
 //------------------------------------------------------------------------------
 void
-z1013::init() {
+z1013_t::init() {
     this->rgba8_buffer = board.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------
 bool
-z1013::check_roms(system model, os_rom os) {
+z1013_t::check_roms(system model, os_rom os) {
     if (system::z1013_01 == model) {
         return roms.has(rom_images::z1013_mon202) && roms.has(rom_images::z1013_font);
     }
@@ -39,31 +27,30 @@ z1013::check_roms(system model, os_rom os) {
 
 //------------------------------------------------------------------------------
 void
-z1013::init_memory_mapping() {
-    memory* m = &board.mem;
-    mem_unmap_all(m);
+z1013_t::init_memory_mapping() {
+    mem_unmap_all(&board.mem);
     if (system::z1013_64 == this->cur_model) {
         // 64 kByte RAM
-        mem_map_ram(m, 1, 0x0000, 0x10000, board.ram[0]);
+        mem_map_ram(&board.mem, 1, 0x0000, 0x10000, board.ram[0]);
     }
     else {
         // 16 kByte RAM
-        mem_map_ram(m, 1, 0x0000, 0x4000, board.ram[0]);
+        mem_map_ram(&board.mem, 1, 0x0000, 0x4000, board.ram[0]);
     }
     // 1 kByte video memory
-    mem_map_ram(m, 0, 0xEC00, 0x0400, board.ram[vidmem_page]);
+    mem_map_ram(&board.mem, 0, 0xEC00, 0x0400, board.ram[vidmem_page]);
     // 2 kByte system rom
     if (os_rom::z1013_mon202 == this->cur_os) {
-        mem_map_rom(m, 0, 0xF000, roms.size(rom_images::z1013_mon202), roms.ptr(rom_images::z1013_mon202));
+        mem_map_rom(&board.mem, 0, 0xF000, roms.size(rom_images::z1013_mon202), roms.ptr(rom_images::z1013_mon202));
     }
     else {
-        mem_map_rom(m, 0, 0xF000, roms.size(rom_images::z1013_mon_a2), roms.ptr(rom_images::z1013_mon_a2));
+        mem_map_rom(&board.mem, 0, 0xF000, roms.size(rom_images::z1013_mon_a2), roms.ptr(rom_images::z1013_mon_a2));
     }
 }
 
 //------------------------------------------------------------------------------
 void
-z1013::init_keymaps() {
+z1013_t::init_keymaps() {
     if (this->cur_model == system::z1013_01) {
         this->init_keymap_8x4();
     }
@@ -74,14 +61,14 @@ z1013::init_keymaps() {
 
 //------------------------------------------------------------------------------
 void
-z1013::on_context_switched() {
+z1013_t::on_context_switched() {
     this->init_keymaps();
     this->init_memory_mapping();
 }
 
 //------------------------------------------------------------------------------
 void
-z1013::poweron(system m) {
+z1013_t::poweron(system m) {
     YAKC_ASSERT(int(system::any_z1013) & int(m));
     YAKC_ASSERT(!this->on);
 
@@ -116,7 +103,7 @@ z1013::poweron(system m) {
 
 //------------------------------------------------------------------------------
 void
-z1013::poweroff() {
+z1013_t::poweroff() {
     YAKC_ASSERT(this->on);
     mem_unmap_all(&board.mem);
     this->on = false;
@@ -124,7 +111,7 @@ z1013::poweroff() {
 
 //------------------------------------------------------------------------------
 void
-z1013::reset() {
+z1013_t::reset() {
     z80pio_reset(&board.z80pio);
     z80_reset(&board.z80);
     this->kbd_request_column = 0;
@@ -134,7 +121,7 @@ z1013::reset() {
 
 //------------------------------------------------------------------------------
 uint64_t
-z1013::step(uint64_t start_tick, uint64_t end_tick) {
+z1013_t::step(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = end_tick - start_tick;
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
@@ -145,7 +132,7 @@ z1013::step(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 uint32_t
-z1013::step_debug() {
+z1013_t::step_debug() {
 return 0;
 /* FIME
     auto& cpu = this->board->z80;
@@ -171,7 +158,7 @@ return 0;
 
 //------------------------------------------------------------------------------
 uint64_t
-z1013::cpu_tick(int num_ticks, uint64_t pins) {
+z1013_t::cpu_tick(int num_ticks, uint64_t pins) {
     if (pins & Z80_MREQ) {
         // a memory request
         const uint16_t addr = Z80_ADDR(pins);
@@ -227,7 +214,7 @@ z1013::cpu_tick(int num_ticks, uint64_t pins) {
             /* port 8 is connected to a hardware latch to store the
                requested keyboard column for the next keyboard scan
             */
-            z1013::ptr->kbd_request_column = Z80_DATA(pins);
+            z1013.kbd_request_column = Z80_DATA(pins);
         }
     }
     /* there are no interrupts happening in a vanilla Z1013,
@@ -238,20 +225,18 @@ z1013::cpu_tick(int num_ticks, uint64_t pins) {
 
 //------------------------------------------------------------------------------
 void
-z1013::pio_out(int port_id, uint8_t val) {
-    z1013* self = z1013::ptr;
+z1013_t::pio_out(int port_id, uint8_t val) {
     if (Z80PIO_PORT_B == port_id) {
         // for z1013a2, bit 4 is for monitor A.2 with 8x8 keyboard
         // and selects the upper/lower 4 keyboard matrix lines
-        self->kbd_request_line_hilo = 0 != (val & (1<<4));
+        z1013.kbd_request_line_hilo = 0 != (val & (1<<4));
         // FIXME: bit 7 is for cassette output
     }
 }
 
 //------------------------------------------------------------------------------
 uint8_t
-z1013::pio_in(int port_id) {
-    z1013* self = z1013::ptr;
+z1013_t::pio_in(int port_id) {
     if (Z80PIO_PORT_A == port_id) {
         // nothing to return here, PIO-A is for user devices
         return 0xFF;
@@ -260,15 +245,15 @@ z1013::pio_in(int port_id) {
         // FIXME: handle bit 7 for cassette input
         // read keyboard matrix state into lower 4 bits
         uint8_t data = 0;
-        if (system::z1013_01 == self->cur_model) {
-            uint16_t column_mask = (1<<(self->kbd_request_column & 7));
+        if (system::z1013_01 == z1013.cur_model) {
+            uint16_t column_mask = (1<<(z1013.kbd_request_column & 7));
             uint16_t line_mask = kbd_test_lines(&board.kbd, column_mask);
             data = 0xF & ~(line_mask & 0xF);
         }
         else {
-            uint16_t column_mask = (1<<self->kbd_request_column);
+            uint16_t column_mask = (1<<z1013.kbd_request_column);
             uint16_t line_mask = kbd_test_lines(&board.kbd, column_mask);
-            if (self->kbd_request_line_hilo) {
+            if (z1013.kbd_request_line_hilo) {
                 line_mask >>= 4;
             }
             data = 0xF & ~(line_mask & 0xF);
@@ -279,7 +264,7 @@ z1013::pio_in(int port_id) {
 
 //------------------------------------------------------------------------------
 void
-z1013::put_key(uint8_t ascii) {
+z1013_t::put_key(uint8_t ascii) {
     if (ascii) {
         kbd_key_down(&board.kbd, ascii);
         kbd_key_up(&board.kbd, ascii);
@@ -288,7 +273,7 @@ z1013::put_key(uint8_t ascii) {
 
 //------------------------------------------------------------------------------
 void
-z1013::init_keymap_8x4() {
+z1013_t::init_keymap_8x4() {
     // keyboard layers for the 4x4 keyboard (no shift key, plus the 4 shift keys)
     // use space as special placeholder
     const char* layers_8x4 =
@@ -328,7 +313,7 @@ z1013::init_keymap_8x4() {
 
 //------------------------------------------------------------------------------
 void
-z1013::init_keymap_8x8() {
+z1013_t::init_keymap_8x8() {
     // see: http://www.z1013.de/images/21.gif
     /* shift key is column 7, line 6 */
     const int shift = 0, shift_mask = (1<<shift);
@@ -364,7 +349,7 @@ z1013::init_keymap_8x8() {
 
 //------------------------------------------------------------------------------
 void
-z1013::decode_video() {
+z1013_t::decode_video() {
     uint32_t* dst = rgba8_buffer;
     const uint8_t* src = board.ram[vidmem_page];
     const uint8_t* font = roms.ptr(rom_images::z1013_font);
@@ -383,7 +368,7 @@ z1013::decode_video() {
 
 //------------------------------------------------------------------------------
 const void*
-z1013::framebuffer(int& out_width, int& out_height) {
+z1013_t::framebuffer(int& out_width, int& out_height) {
     out_width = display_width;
     out_height = display_height;
     return this->rgba8_buffer;
@@ -391,7 +376,7 @@ z1013::framebuffer(int& out_width, int& out_height) {
 
 //------------------------------------------------------------------------------
 bool
-z1013::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+z1013_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     auto fp = fs->open(name, filesystem::mode::read);
     if (!fp) {
         return false;
@@ -434,7 +419,7 @@ z1013::quickload(filesystem* fs, const char* name, filetype type, bool start) {
 
 //------------------------------------------------------------------------------
 const char*
-z1013::system_info() const {
+z1013_t::system_info() const {
     if (this->cur_model == system::z1013_01) {
         return
             "The Z1013 was the only East German home computer that was "

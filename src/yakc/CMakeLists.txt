@@ -4,11 +4,8 @@ fips_begin_module(yakc)
     fips_dir(core)
     fips_files(
         core.h core.cc 
-        counter.h
         clock.h clock.cc
-        sound.h sound.cc
         filesystem.h filesystem.cc
-        system_bus.h system_bus.cc
         filetypes.h
     )
     fips_dir(chips)
@@ -24,8 +21,8 @@ fips_begin_module(yakc)
     fips_dir(peripherals)
     fips_files(
         crt.h crt.cc
-        beeper.h beeper.cc
-        speaker.h speaker.cc
+#        beeper.h beeper.cc
+#        speaker.h speaker.cc
         tapedeck.h tapedeck.cc
     )
     fips_dir(systems)
@@ -44,8 +41,6 @@ fips_begin_module(yakc)
 #        bbcmicro.h bbcmicro.cc
 #        bbcmicro_video.h bbcmicro_video.cc
 #        atom.h atom.cc
-#        keybuffer.h keybuffer.cc
-#        snapshot.h snapshot.cc
     )
     fips_dir(roms)
     fips_generate(FROM rom_dumps.yml TYPE dump)

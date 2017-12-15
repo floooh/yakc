@@ -12,14 +12,14 @@ class PIOWindow : public WindowBase {
     OryolClassDecl(PIOWindow);
 public:
     /// constructor
-    PIOWindow(const char* name, z80pio* pio);
+    PIOWindow(const char* name, z80pio_t* pio);
     /// setup the window
     virtual void Setup(yakc& emu) override;
     /// draw method
     virtual bool Draw(yakc& emu) override;
 
     const char* Name = nullptr;
-    z80pio* PIO = nullptr;
+    z80pio_t* PIO = nullptr;
 };
 
 } // namespace YAKC

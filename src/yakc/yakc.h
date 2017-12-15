@@ -70,7 +70,6 @@ public:
 
     system model = system::none;
     os_rom os = os_rom::none;
-    class z1013 z1013;
 /*
     class kc85 kc85;
     class z9001 z9001;

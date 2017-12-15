@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "AY8910Window.h"
 #include "IMUI/IMUI.h"
-#include "yakc/chips/ay8910.h"
+//#include "yakc/chips/ay8910.h"
 
 using namespace Oryol;
 

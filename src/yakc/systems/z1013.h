@@ -40,14 +40,8 @@
 
 namespace YAKC {
 
-class z1013 {
+class z1013_t {
 public:
-    static z1013* ptr;
-
-    /// constructor
-    z1013();
-    /// destructor
-    ~z1013();
     /// one-time setup
     void init();
     /// check if required roms are loaded
@@ -106,5 +100,6 @@ public:
     static_assert(display_height <= global_max_fb_height, "z1013 fb size");
     uint32_t* rgba8_buffer = nullptr;
 };
+extern class z1013_t z1013;
 
 } // namespace YAKC
