@@ -6,5 +6,12 @@ files:
     - 'z1013_mon202.bin'
     - 'z1013_mon_a2.bin'
     - 'z1013_font.bin'
-    
+    - 'z9001_basic.bin'
+    - 'z9001_basic_507_511.bin'
+    - 'z9001_font.bin'
+    - 'z9001_os12_1.bin'
+    - 'z9001_os12_2.bin'
+    - 'kc87_font_1.bin'
+    - 'kc87_font_2.bin'
+    - 'kc87_os_2.bin'
 

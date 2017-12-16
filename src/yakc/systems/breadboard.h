@@ -5,6 +5,7 @@
     @brief houses all the common chips required by emulated systems
 */
 #include "yakc/core/core.h"
+#include "yakc/core/audiobuffer.h"
 //#include "yakc/chips/mos6502.h"
 #include "yakc/chips/cpudbg.h"
 //#include "yakc/chips/i8255.h"
@@ -12,12 +13,11 @@
 //#include "yakc/chips/mc6845.h"
 //#include "yakc/chips/mc6847.h"
 //#include "yakc/chips/ay8910.h"
-//#include "yakc/peripherals/beeper.h"
-//#include "yakc/peripherals/speaker.h"
 #include "yakc/peripherals/crt.h"
 #include "chips/clk.h"
 #include "chips/mem.h"
 #include "chips/kbd.h"
+#include "chips/beeper.h"
 #include "chips/z80.h"
 #include "chips/z80pio.h"
 #include "chips/z80ctc.h"
@@ -38,12 +38,12 @@ struct breadboard {
     class mc6845 mc6845;
     class mc6847 mc6847;
     class ay8910 ay8910;
-    class beeper beeper;
-    class speaker speaker;
     */
+    beeper_t beeper;
     kbd_t kbd;
     class cpudbg dbg;
     class crt crt;          // this is not a chip, but a cathode-ray-tube emulation
+    class audiobuffer audiobuffer;
     static const int num_ram_banks = 8;
     static const int ram_bank_size = 0x4000;
     static uint8_t ram[num_ram_banks][ram_bank_size];

@@ -46,10 +46,6 @@ public:
     void init();
     /// check if required roms are loaded
     static bool check_roms(system model, os_rom os);
-    /// initialize memory mapping (called from poweron)
-    void init_memory_mapping();
-    /// initialize keymap tables (called from poweron)
-    void init_keymaps();
 
     /// power-on the device
     void poweron(system m);
@@ -59,11 +55,11 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    /// get framebuffer, width and height
-    const void* framebuffer(int& out_width, int& out_height);
-    /// file quickloading
-    bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
+    /// process a number of cycles, return final processed tick
+    uint64_t step(uint64_t start_tick, uint64_t end_tick);
+    /// perform a single debug-step
+    uint32_t step_debug();
     /// the Z80 CPU tick callback
     static uint64_t cpu_tick(int num_ticks, uint64_t pins);
     /// the Z80 PIO out callback
@@ -73,15 +69,19 @@ public:
 
     /// put a key as ASCII code
     void put_key(uint8_t ascii);
-    /// process a number of cycles, return final processed tick
-    uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// perform a single debug-step
-    uint32_t step_debug();
+    /// get framebuffer, width and height
+    const void* framebuffer(int& out_width, int& out_height);
+    /// file quickloading
+    bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
     /// initialize the key translation table for the basic 8x4 keyboard (z1013.01)
     void init_keymap_8x4();
     /// initialize the key translation table for the 8x8 keyboard (z1013.16/64)
     void init_keymap_8x8();
+    /// initialize memory mapping (called from poweron)
+    void init_memory_mapping();
+    /// initialize keymap tables (called from poweron)
+    void init_keymaps();
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
 

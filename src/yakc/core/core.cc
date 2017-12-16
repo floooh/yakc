@@ -2,8 +2,6 @@
 //  yakc/core.cc
 //------------------------------------------------------------------------------
 #include "core.h"
-#include <string.h>
-#include <stdlib.h>
 
 namespace YAKC {
 
@@ -16,26 +14,21 @@ clear(void* ptr, int num_bytes) {
 }
 
 //------------------------------------------------------------------------------
+static uint32_t xorshift_state = 0x6D98302B;
+static uint32_t xorshift32() {
+    uint32_t x = xorshift_state;
+    x ^= x<<13; x ^= x>>17; x ^= x<<5;
+    xorshift_state = x;
+    return x;
+}
+
+//------------------------------------------------------------------------------
 void
 fill_random(void* ptr, int num_bytes) {
     YAKC_ASSERT((num_bytes & 0x03) == 0);
-
-    // RAND_MAX in Visual Studio is (1<<15)
-    if (RAND_MAX <= (1<<16)) {
-        unsigned short* uptr = (unsigned short*)ptr;
-        int num_ushorts = num_bytes >> 1;
-        for (int i = 0; i < num_ushorts; i++) {
-            unsigned short r = rand();
-            *uptr++ = r;
-        }
-    }
-    else {
-        unsigned int* uptr = (unsigned int*)ptr;
-        int num_uints = num_bytes >> 2;
-        for (int i = 0; i < num_uints; i++) {
-            unsigned int r = rand();
-            *uptr++ = r;
-        }
+    uint32_t* uptr = (uint32_t*)ptr;
+    for (int i = 0; i < (num_bytes/4); i++) {
+        *uptr++ = xorshift32();
     }
 }
 

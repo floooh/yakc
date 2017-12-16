@@ -5,6 +5,7 @@ fips_begin_module(yakc)
     fips_files(
         core.h core.cc 
         filesystem.h filesystem.cc
+        audiobuffer.h audiobuffer.cc
         filetypes.h
     )
     fips_dir(chips)
@@ -20,8 +21,6 @@ fips_begin_module(yakc)
     fips_dir(peripherals)
     fips_files(
         crt.h crt.cc
-#        beeper.h beeper.cc
-#        speaker.h speaker.cc
         tapedeck.h tapedeck.cc
     )
     fips_dir(systems)
@@ -33,7 +32,7 @@ fips_begin_module(yakc)
 #        kc85_audio.h kc85_audio.cc
 #        kc85_exp.h kc85_exp.cc
         z1013.h z1013.cc
-#        z9001.h z9001.cc
+        z9001.h z9001.cc
 #        zx.h zx.cc
 #        cpc.h cpc.cc
 #        cpc_video.h cpc_video.cc

@@ -6,7 +6,7 @@
 
 namespace YAKC {
 
-class z1013_t z1013;
+z1013_t z1013;
 
 //------------------------------------------------------------------------------
 void
@@ -72,9 +72,9 @@ z1013_t::poweron(system m) {
     else {
         this->cur_os = os_rom::z1013_mon_a2;
     }
+    this->on = true;
     kbd_init(&board.kbd, 2);
     this->init_keymaps();
-    this->on = true;
     this->kbd_request_column = 0;
     this->kbd_request_line_hilo = false;
 
@@ -107,6 +107,7 @@ void
 z1013_t::reset() {
     z80pio_reset(&board.z80pio);
     z80_reset(&board.z80);
+    z80pio_reset(&board.z80pio);
     this->kbd_request_column = 0;
     // execution after reset starts at 0x0000(??? -> doesn't work)
     board.z80.PC = 0xF000;
