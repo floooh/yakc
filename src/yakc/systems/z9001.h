@@ -76,7 +76,7 @@ public:
     os_rom cur_os = os_rom::kc87_os_2;
     bool on = false;
 
-    uint64_t ctc_clktrg3_state = 0;     // pin mask to store state of CTC CLKTRG3
+    uint64_t ctc_zcto2 = 0;     // pin mask to store state of CTC ZCTO2
     uint32_t blink_counter = 0;
     bool blink_flip_flop = false;
     uint8_t brd_color = 0;              // border color byte extracted from PIO1-A

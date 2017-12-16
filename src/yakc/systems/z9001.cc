@@ -144,7 +144,7 @@ z9001_t::poweron(system m, os_rom os) {
     z80pio_init(&board.z80pio2, pio2_in, pio2_out);
     z80ctc_init(&board.z80ctc);
     beeper_init(&board.beeper, board.freq_khz, SOUND_SAMPLE_RATE, 0.5f);
-    this->ctc_clktrg3_state = 0;
+    this->ctc_zcto2 = 0;
     
     // execution on power-on starts at 0xF000
     board.z80.PC = 0xF000;
@@ -219,13 +219,13 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
        which drives the system clock, store the state of ZCTO2 for the
        next tick
     */
-    pins |= z9001.ctc_clktrg3_state;
+    pins |= z9001.ctc_zcto2;
     for (int i = 0; i < num_ticks; i++) {
         if (pins & Z80CTC_ZCTO2) { pins |= Z80CTC_CLKTRG3; }
         else                     { pins &= ~Z80CTC_CLKTRG3; }
         pins = z80ctc_tick(&board.z80ctc, pins);
         if (pins & Z80CTC_ZCTO0) {
-            /* CTC channel 0 controls the beeper frequency */
+            // CTC channel 0 controls the beeper frequency
             beeper_toggle(&board.beeper);
         }
         /* the blink flip flop is controlled by a 'bisync' video signal
@@ -238,8 +238,7 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
             z9001.blink_flip_flop = !z9001.blink_flip_flop;
         }
     }
-    z9001.ctc_clktrg3_state = (pins & Z80CTC_ZCTO2) ? Z80CTC_CLKTRG3:0;
-
+    z9001.ctc_zcto2 = (pins & Z80CTC_ZCTO2);
     if (beeper_tick(&board.beeper, num_ticks)) {
         // new audio sample is ready
         board.audiobuffer.write(board.beeper.sample);
@@ -297,12 +296,13 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
        is PIO1>PIO2>CTC, the interrupt handling functions must be called
        in this order
     */
-    for (int i = 0; i < num_ticks; i++) {
-        pins |= Z80_IEIO;   // enable the interrupt enable in for highest priority device 
+    Z80_DAISYCHAIN_BEGIN(pins)
+    {
         pins = z80pio_int(&board.z80pio, pins);
         pins = z80pio_int(&board.z80pio2, pins);
         pins = z80ctc_int(&board.z80ctc, pins);
     }
+    Z80_DAISYCHAIN_END(pins);
     return (pins & Z80_PIN_MASK);
 }
 
