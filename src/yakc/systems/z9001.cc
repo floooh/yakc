@@ -46,7 +46,7 @@ z9001_t::check_roms(system model, os_rom os) {
 
 //------------------------------------------------------------------------------
 void
-z9001_t::init_memory_mapping() {
+z9001_t::init_memorymap() {
     mem_unmap_all(&board.mem);
     if (system::z9001 == this->cur_model) {
         // emulate a Z9001 with 16 KByte RAM module and BASIC module
@@ -135,7 +135,7 @@ z9001_t::poweron(system m, os_rom os) {
     for (int i = 0; i < breadboard::num_ram_banks; i++) {
         memcpy(board.ram[i], board.random, breadboard::ram_bank_size);
     }
-    this->init_memory_mapping();
+    this->init_memorymap();
 
     // initialize hardware components, main clock frequency is 2.4576
     board.freq_khz = 2458;
@@ -165,7 +165,8 @@ z9001_t::reset() {
     z80pio_reset(&board.z80pio);
     z80pio_reset(&board.z80pio2);
     z80ctc_reset(&board.z80ctc);
-    this->init_memory_mapping();
+    beeper_reset(&board.beeper);
+    this->init_memorymap();
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
     board.z80.PC = 0xF000;

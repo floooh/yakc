@@ -4,7 +4,6 @@
     @class YAKC::zx
     @brief Sinclair ZX Spectrum 48K/128K emulation
 */
-#include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
@@ -12,23 +11,13 @@
 
 namespace YAKC {
 
-class zx : public system_bus {
+class zx {
 public:
-    /// the main board
-    breadboard* board = nullptr;
-    /// rom image storage
-    rom_images* roms = nullptr;
-
     /// one-time setup
-    void init(breadboard* board, rom_images* roms);
+    void init();
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, system model, os_rom os);
-    /// initialize the memory map
-    void init_memory_map();
-    /// initialize the keyboard matrix mapping table
-    void init_keymap();
-    /// initialize a single entry in the key-map table
-    void init_key_mask(uint8_t ascii, int column, int line, int shift);
+    static bool check_roms(system model, os_rom os);
+    
     /// power-on the device
     void poweron(system m);
     /// power-off the device
@@ -37,16 +26,16 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    /// put a key and joystick input (Kempston)
-    void put_input(uint8_t ascii, uint8_t joy0_mask);
 
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// perform a single debug-step
     uint32_t step_debug();
-    
-    /// decode the next line into RGBA8Buffer
-    void decode_video_line(uint16_t y);
+    /// the Z80 CPU tick callback
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+
+    /// put a key and joystick input (Kempston)
+    void put_input(uint8_t ascii, uint8_t joy0_mask);
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
     /// get framebuffer, width and height
@@ -54,37 +43,32 @@ public:
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);    
 
-    /// the z80 out callback
-    virtual void cpu_out(uint16_t port, uint8_t val) override;
-    /// the z80 in callback
-    virtual uint8_t cpu_in(uint16_t port) override;
-    /// interrupt request callback
-    virtual void irq(bool b) override;
-    /// clock timer-trigger callback
-    virtual void timer(int timer_id) override;
-
-    /// called by timer for each PAL scanline (decodes 1 line of vidmem)
-    void scanline();
+    /// initialize the memory map
+    void init_memorymap();
+    /// initialize the keyboard matrix mapping table
+    void init_keymap();
+    /// decode the next line into RGBA8Buffer
+    void decode_video_line(uint16_t y);
+    /// called by timer for each PAL scanline (decodes 1 line of vidmem), return true if vblank interrupt
+    bool scanline();
 
     static uint32_t palette[8];
 
     system cur_model = system::zxspectrum48k;
     bool on = false;
     bool memory_paging_disabled = false;
+    bool int_requested = false;
     uint8_t last_fe_out = 0;            // last OUT value to xxFE port
     uint8_t blink_counter = 0;          // increased by one every vblank
+    uint32_t scanline_period = 0;
     uint16_t scanline_counter = 0;
     uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
     uint32_t border_color = 0xFF000000;
 
     static const int display_width = 320;
     static const int display_height = 256;
-    uint32_t* rgba8_buffer = nullptr;
-    
+
     uint8_t joy_mask = 0;                 // joystick mask
-    uint64_t next_kbd_mask = 0;
-    uint64_t cur_kbd_mask = 0;
-    uint64_t key_map[256];              // 8x5 keyboard matrix bits by key code
 };
 
 } // namespace YAKC

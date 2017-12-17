@@ -63,7 +63,7 @@ public:
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
     /// initialize the memory map
-    void init_memory_mapping();
+    void init_memorymap();
     /// initialize the keyboard matrix
     void init_keymap();
     /// decode an entire frame into RGBA8Buffer

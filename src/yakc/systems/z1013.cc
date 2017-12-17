@@ -27,7 +27,7 @@ z1013_t::check_roms(system model, os_rom os) {
 
 //------------------------------------------------------------------------------
 void
-z1013_t::init_memory_mapping() {
+z1013_t::init_memorymap() {
     mem_unmap_all(&board.mem);
     if (system::z1013_64 == this->cur_model) {
         // 64 kByte RAM
@@ -81,7 +81,7 @@ z1013_t::poweron(system m) {
     // map memory
     clear(board.ram, sizeof(board.ram));
     mem_init(&board.mem);
-    this->init_memory_mapping();
+    this->init_memorymap();
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
     board.freq_khz = (m == system::z1013_01) ? 1000 : 2000;

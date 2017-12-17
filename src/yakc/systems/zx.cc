@@ -28,18 +28,13 @@ uint32_t zx::palette[8] = {
 
 //------------------------------------------------------------------------------
 void
-zx::init(breadboard* b, rom_images* r) {
-    YAKC_ASSERT(b && r);
-    this->board = b;
-    this->roms = r;
-    this->rgba8_buffer = this->board->rgba8_buffer;
-    // setup key translation table
-    this->init_keymap();
+zx::init() {
+    // empty
 }
 
 //------------------------------------------------------------------------------
 bool
-zx::check_roms(const rom_images& roms, system model, os_rom os) {
+zx::check_roms(system model, os_rom os) {
     if (system::zxspectrum48k == model) {
         return roms.has(rom_images::zx48k);
     }
@@ -50,43 +45,39 @@ zx::check_roms(const rom_images& roms, system model, os_rom os) {
 }
 
 //------------------------------------------------------------------------------
-static uint64_t
-key_bit(int column, int line) {
-    // returns keyboard matrix bit mask with single bit set at column and line
-    YAKC_ASSERT((column >= 0) && (column < 8));
-    YAKC_ASSERT((line >= 0) && (line < 5));
-    return (uint64_t(1)<<line)<<(column*5);
-}
-
-//------------------------------------------------------------------------------
 void
-zx::init_key_mask(uint8_t ascii, int column, int line, int shift) {
-    // initialize an entry in the keyboard mapping table which
-    // maps ASCII codes to keyboard matrix bit mask
-    YAKC_ASSERT((column >= 0) && (column < 8));
-    YAKC_ASSERT((line >= 0) && (line < 5));
-    YAKC_ASSERT((shift >= 0) && (shift < 3));
-    uint64_t mask = key_bit(column, line);
+zx::init_memorymap() {
+    mem_unmap_all(&board.mem);
+    if (system::zxspectrum48k == this->cur_model) {
+        // 48k RAM between 0x4000 and 0xFFFF
+        mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[0]);
+        mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[1]);
+        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[2]);
 
-    // FIXME: hmm, may need simultanous caps+sym shift later
-    if (1 == shift) {
-        // caps-shift
-        mask |= key_bit(0, 0);
+        // 16k ROM between 0x0000 and 0x3FFF
+        YAKC_ASSERT(roms.has(rom_images::zx48k) && (roms.size(rom_images::zx48k) == 0x4000));
+        mem_map_rom(&board.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx48k));
     }
-    else if (2 == shift) {
-        // sym-shift
-        mask |= key_bit(7, 1);
+    else {
+        // Spectrum 128k initial memory mapping
+        mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[5]);
+        mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[2]);
+        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[0]);
+        YAKC_ASSERT(roms.has(rom_images::zx128k_0) && (roms.size(rom_images::zx128k_0) == 0x4000));
+        YAKC_ASSERT(roms.has(rom_images::zx128k_1) && (roms.size(rom_images::zx128k_1) == 0x4000));
+        mem_map_rom(&board.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_0));
     }
-    this->key_map[ascii] = mask;
 }
 
 //------------------------------------------------------------------------------
 void
 zx::init_keymap() {
-    // initialize the keyboard matrix lookup table, maps
-    // ASCII codes to keyboard matrix state
-    clear(this->key_map, sizeof(this->key_map));
-    const char* kbd =
+    // caps-shift is column 0, line 0
+    kbd_register_modifier(&board.kbd, 0, 0, 0);
+    // sym-shift is column 7, line 1
+    kbd_register_modifier(&board.kbd, 1, 7, 1);
+    // alpha-numeric keys
+    const char* keymap =
         // no shift
         " zxcv"         // A8       shift,z,x,c,v
         "asdfg"         // A9       a,s,d,f,g
@@ -116,179 +107,121 @@ zx::init_keymap() {
         "\";   "        // A13
         " =+-^"         // A14
         "  .,*";        // A15
-
-    for (int shift = 0; shift < 3; shift++) {
-        for (int column = 0; column < 8; column++) {
+    for (int layer = 0; layer < 3; layer++) {
+        for (int col = 0; col < 8; col++) {
             for (int line = 0; line < 5; line++) {
-                const uint8_t c = kbd[shift*40 + column*5 + line];
+                const uint8_t c = keymap[layer*40 + col*5 + line];
                 if (c != 0x20) {
-                    this->init_key_mask(c, column, line, shift);
+                    kbd_register_key(&board.kbd, c, col, line, (layer>0) ? (1<<(layer-1)) : 0);
                 }
             }
         }
     }
 
     // special keys
-    this->init_key_mask(' ', 7, 0, 0);  // Space
-    this->init_key_mask(0x0F, 7, 1, 0); // SymShift
-    this->init_key_mask(0x08, 3, 4, 1); // Cursor Left (Shift+5)
-    this->init_key_mask(0x0A, 4, 4, 1); // Cursor Down (Shift+6)
-    this->init_key_mask(0x0B, 4, 3, 1); // Cursor Up (Shift+7)
-    this->init_key_mask(0x09, 4, 2, 1); // Cursor Right (Shift+8)
-    this->init_key_mask(0x07, 3, 0, 1); // Edit (Shift+1)
-    this->init_key_mask(0x0C, 4, 0, 1); // Delete (Shift+0)
-    this->init_key_mask(0x0D, 6, 0, 0); // Enter
-}
-
-//------------------------------------------------------------------------------
-void
-zx::init_memory_map() {
-    z80& cpu = this->board->z80;
-    cpu.mem.unmap_all();
-    if (system::zxspectrum48k == this->cur_model) {
-        // 48k RAM between 0x4000 and 0xFFFF
-        cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[0], true);
-        cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[1], true);
-        cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[2], true);
-
-        // 16k ROM between 0x0000 and 0x3FFF
-        YAKC_ASSERT(this->roms->has(rom_images::zx48k) && (this->roms->size(rom_images::zx48k) == 0x4000));
-        cpu.mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx48k), false);
-    }
-    else {
-        // Spectrum 128k initial memory mapping
-        cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[5], true);
-        cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[2], true);
-        cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[0], true);
-        YAKC_ASSERT(this->roms->has(rom_images::zx128k_0) && (this->roms->size(rom_images::zx128k_0) == 0x4000));
-        YAKC_ASSERT(this->roms->has(rom_images::zx128k_1) && (this->roms->size(rom_images::zx128k_1) == 0x4000));
-        cpu.mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx128k_0), false);
-    }
+    kbd_register_key(&board.kbd, ' ', 7, 0, 0);  // Space
+    kbd_register_key(&board.kbd, 0x0F, 7, 1, 0); // SymShift
+    kbd_register_key(&board.kbd, 0x08, 3, 4, 1); // Cursor Left (Shift+5)
+    kbd_register_key(&board.kbd, 0x0A, 4, 4, 1); // Cursor Down (Shift+6)
+    kbd_register_key(&board.kbd, 0x0B, 4, 3, 1); // Cursor Up (Shift+7)
+    kbd_register_key(&board.kbd, 0x09, 4, 2, 1); // Cursor Right (Shift+8)
+    kbd_register_key(&board.kbd, 0x07, 3, 0, 1); // Edit (Shift+1)
+    kbd_register_key(&board.kbd, 0x0C, 4, 0, 1); // Delete (Shift+0)
+    kbd_register_key(&board.kbd, 0x0D, 6, 0, 0); // Enter
 }
 
 //------------------------------------------------------------------------------
 void
 zx::poweron(system m) {
-    YAKC_ASSERT(this->board);
     YAKC_ASSERT(int(system::any_zx) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
+    this->on = true;
+
     this->border_color = 0xFF000000;
     this->last_fe_out = 0;
     this->scanline_counter = 0;
     this->blink_counter = 0;
     this->memory_paging_disabled = false;
+    this->int_requested = false;
     this->joy_mask = 0;
-    this->next_kbd_mask = 0;
-    this->cur_kbd_mask = 0;
     if (system::zxspectrum48k == this->cur_model) {
         this->display_ram_bank = 0;
     }
     else {
         this->display_ram_bank = 5;
     }
-    this->on = true;
 
     // map memory
-    clear(this->board->ram, sizeof(this->board->ram));
-    this->init_memory_map();
+    clear(board.ram, sizeof(board.ram));
+    this->init_memorymap();
 
     // initialize the system clock and PAL-line timer
-    int cpu_khz;
     if (system::zxspectrum48k == m) {
         // Spectrum48K is exactly 3.5 MHz
-        cpu_khz = 3500;
-        this->board->clck.init(cpu_khz);
-        this->board->clck.config_timer_cycles(0, 224);
+        board.freq_khz = 3500;
+        this->scanline_period = board.freq_khz * 224;
     }
     else {
         // 128K is slightly faster
-        cpu_khz = 3547;
-        this->board->clck.init(cpu_khz);
-        this->board->clck.config_timer_cycles(0, 228);
+        board.freq_khz = 3547;
+        this->scanline_period = board.freq_khz * 228;
     }
 
-    // initialize sound generator
-    this->board->beeper.init(cpu_khz, SOUND_SAMPLE_RATE);
+    // initialize hardware components
+    z80_init(&board.z80, cpu_tick);
+    beeper_init(&board.beeper, board.freq_khz, SOUND_SAMPLE_RATE, 0.5f);
     if (system::zxspectrum128k == this->cur_model) {
-        this->board->ay8910.init(cpu_khz, cpu_khz/2, SOUND_SAMPLE_RATE);
+        //board.ay38912.init(cpu_khz, cpu_khz/2, SOUND_SAMPLE_RATE);
     }
 
     // cpu start state
-    this->board->z80.init();
-    this->board->z80.PC = 0x0000;
+    board.z80.PC = 0x0000;
 }
 
 //------------------------------------------------------------------------------
 void
 zx::poweroff() {
     YAKC_ASSERT(this->on);
-    this->board->z80.mem.unmap_all();
+    mem_unmap_all(&board.mem);
     this->on = false;
 }
 
 //------------------------------------------------------------------------------
 void
 zx::reset() {
-    this->board->beeper.reset();
+    z80_reset(&board.z80);
+    beeper_reset(&board.beeper);
     if (system::zxspectrum128k == this->cur_model) {
-        this->board->ay8910.reset();
+        //this->board->ay8910.reset();
     }
     this->memory_paging_disabled = false;
+    this->int_requested = false;
     this->joy_mask = 0;
-    this->next_kbd_mask = 0;
-    this->cur_kbd_mask = 0;
     this->last_fe_out = 0;
     this->scanline_counter = 0;
     this->blink_counter = 0;
     this->display_ram_bank = 5;
-    this->board->z80.reset();
-    this->board->z80.PC = 0x0000;
-    this->init_memory_map();
+    this->init_memorymap();
+    board.z80.PC = 0x0000;
 }
 
 //------------------------------------------------------------------------------
 uint64_t
 zx::step(uint64_t start_tick, uint64_t end_tick) {
-    auto& cpu = this->board->z80;
-    auto& dbg = this->board->dbg;
-    uint64_t cur_tick = start_tick;
-    if (system::zxspectrum48k == this->cur_model) {
-        while (cur_tick < end_tick) {
-            uint32_t ticks = cpu.handle_irq(this);
-            if (0 == ticks) {
-                ticks = cpu.step(this);
-            }
-            this->board->clck.step(this, ticks);
-            this->board->beeper.step(ticks);
-            if (dbg.step(cpu.PC, ticks)) {
-                return end_tick;
-            }
-            cur_tick += ticks;
-        }
-    }
-    else {
-        while (cur_tick < end_tick) {
-            uint32_t ticks = cpu.handle_irq(this);
-            if (0 == ticks) {
-                ticks = cpu.step(this);
-            }
-            this->board->clck.step(this, ticks);
-            this->board->beeper.step(ticks);
-            this->board->ay8910.step(ticks);
-            if (dbg.step(cpu.PC, ticks)) {
-                return end_tick;
-            }
-            cur_tick += ticks;
-        }
-    }
-    return cur_tick;
+    YAKC_ASSERT(start_tick <= end_tick);
+    uint32_t num_ticks = end_tick - start_tick;
+    uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
+    kbd_update(&board.kbd);
+    return start_tick + ticks_executed;
 }
 
 //------------------------------------------------------------------------------
 uint32_t
 zx::step_debug() {
+return 0;
+/*
     auto& cpu = this->board->z80;
     auto& dbg = this->board->dbg;
     uint64_t all_ticks = 0;
@@ -309,9 +242,11 @@ zx::step_debug() {
     }
     while ((old_pc == cpu.PC) && !cpu.INV);    
     return uint32_t(all_ticks);
+*/
 }
 
 //------------------------------------------------------------------------------
+/*
 void
 zx::cpu_out(uint16_t port, uint8_t val) {
     // handle Z80 OUT instruction
@@ -366,26 +301,23 @@ zx::cpu_out(uint16_t port, uint8_t val) {
             this->board->ay8910.write(val);
         }
     }
-
 }
+*/
 
 //------------------------------------------------------------------------------
 void
 zx::put_input(uint8_t ascii, uint8_t joy_mask) {
     // register a new key press with the emulator,
     // ascii=0 means no key pressed
-    this->next_kbd_mask = this->key_map[ascii];
+    if (ascii) {
+        kbd_key_down(&board.kbd, ascii);
+        kbd_key_up(&board.kbd, ascii);
+    }
     this->joy_mask = joy_mask;
 }
 
 //------------------------------------------------------------------------------
-static uint8_t
-extract_kbd_line_bits(uint64_t mask, int column) {
-    // extract keyboard matrix line bits by column
-    return (uint8_t) ((mask>>(column*5)) & 0x1F);
-}
-
-//------------------------------------------------------------------------------
+/*
 uint8_t
 zx::cpu_in(uint16_t port) {
     // handle Z80 IN instruction
@@ -435,26 +367,10 @@ zx::cpu_in(uint16_t port) {
     }
     return 0xFF;
 }
+*/
 
 //------------------------------------------------------------------------------
-void
-zx::irq(bool b) {
-    // forward interrupt request to CPU
-    this->board->z80.irq(b);
-}
-
-//------------------------------------------------------------------------------
-void
-zx::timer(int timer_id) {
-    // clock timer callback
-    if (0 == timer_id) {
-        // timer 0: new PAL line
-        this->scanline();
-    }
-}
-
-//------------------------------------------------------------------------------
-void
+bool
 zx::scanline() {
     // this is called by the timer callback for every PAL line, controlling
     // the vidmem decoding and vblank interrupt
@@ -485,10 +401,12 @@ zx::scanline() {
 
     if (this->scanline_counter++ >= frame_scanlines) {
         // start new frame, fetch next key, request vblank interrupt
-        this->cur_kbd_mask = this->next_kbd_mask;
         this->scanline_counter = 0;
         this->blink_counter++;
-        this->irq(true);
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
@@ -516,8 +434,8 @@ zx::decode_video_line(uint16_t y) {
     //
     // the blink flag flips every 16 frames
     //
-    uint32_t* dst = &(this->rgba8_buffer[y*display_width]);
-    const uint8_t* vidmem_bank = this->board->ram[this->display_ram_bank];
+    uint32_t* dst = &(board.rgba8_buffer[y*display_width]);
+    const uint8_t* vidmem_bank = board.ram[this->display_ram_bank];
     const bool blink = 0 != (this->blink_counter & 0x10);
     uint32_t fg, bg;
     if ((y < 32) || (y >= 224)) {
@@ -578,10 +496,10 @@ zx::decode_video_line(uint16_t y) {
 //------------------------------------------------------------------------------
 void
 zx::decode_audio(float* buffer, int num_samples) {
-    this->board->beeper.fill_samples(buffer, num_samples);
+    board.audiobuffer.read(buffer, num_samples);
     // if 128k, mix-in AY-8910 data
     if (system::zxspectrum128k == this->cur_model) {
-        this->board->ay8910.fill_samples(buffer, num_samples, true);
+        board.audiobuffer2.read(buffer, num_samples, true);
     }
 }
 
@@ -590,7 +508,7 @@ const void*
 zx::framebuffer(int& out_width, int& out_height) {
     out_width = display_width;
     out_height = display_height;
-    return this->rgba8_buffer;
+    return board.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------
@@ -667,10 +585,10 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
             }
             uint8_t* dst_ptr;
             if (-1 == page_index) {
-                dst_ptr = this->board->junk;
+                dst_ptr = board.junk;
             }
             else {
-                dst_ptr = this->board->ram[page_index];
+                dst_ptr = board.ram[page_index];
             }
             const uint8_t* dst_end_ptr = dst_ptr + dst_len;
             if (0xFFFF == src_len) {
@@ -733,7 +651,7 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
 
     // start loaded image
     if (start && hdr_valid) {
-        z80& cpu = this->board->z80;
+        z80_t& cpu = board.z80;
         cpu.A = hdr.A; cpu.F = hdr.F;
         cpu.B = hdr.B; cpu.C = hdr.C;
         cpu.D = hdr.D; cpu.E = hdr.E;
@@ -748,17 +666,19 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         cpu.I = hdr.I;
         cpu.R = (hdr.R & 0x7F) | ((hdr.flags0 & 1)<<7);
         cpu.IFF2 = hdr.IFF2 != 0;
-        cpu.int_enable = hdr.EI != 0;
+        cpu.ei_pending = hdr.EI != 0;
         if (hdr.flags1 != 0xFF) {
             cpu.IM = (hdr.flags1 & 3);
         }
         else {
             cpu.IM = 1;
         }
+/*
+FIXME
         if (ext_hdr_valid) {
             cpu.PC = (ext_hdr.PC_h<<8 | ext_hdr.PC_l) & 0xFFFF;
             for (int i = 0; i < 16; i++) {
-                this->board->ay8910.regs[i] = ext_hdr.audio[i];
+                board.ay38910.regs[i] = ext_hdr.audio[i];
             }
             cpu.out(this, 0xFFFD, ext_hdr.out_fffd);
             cpu.out(this, 0x7FFD, ext_hdr.out_7ffd);
@@ -766,6 +686,7 @@ zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         else {
             cpu.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
         }
+*/
         this->border_color = zx::palette[(hdr.flags0>>1) & 7] & 0xFFD7D7D7;
     }
     return true;

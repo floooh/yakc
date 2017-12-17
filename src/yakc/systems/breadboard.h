@@ -44,6 +44,7 @@ struct breadboard {
     class cpudbg dbg;
     class crt crt;          // this is not a chip, but a cathode-ray-tube emulation
     class audiobuffer audiobuffer;
+    class audiobuffer audiobuffer2;
     static const int num_ram_banks = 8;
     static const int ram_bank_size = 0x4000;
     static uint8_t ram[num_ram_banks][ram_bank_size];

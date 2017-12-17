@@ -79,7 +79,7 @@ public:
     /// initialize the key translation table for the 8x8 keyboard (z1013.16/64)
     void init_keymap_8x8();
     /// initialize memory mapping (called from poweron)
-    void init_memory_mapping();
+    void init_memorymap();
     /// initialize keymap tables (called from poweron)
     void init_keymaps();
     /// decode an entire frame into RGBA8Buffer
