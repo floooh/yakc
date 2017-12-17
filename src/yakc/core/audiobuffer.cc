@@ -21,7 +21,11 @@ void audiobuffer::read(float* buffer, int num_samples, bool mix) {
     for (int chunk_index = 0; chunk_index < (num_samples / chunk_size); chunk_index++) {
         if (this->read_chunk == this->write_chunk) {
             // CPU was falling behind, add a block of silence
-            clear(dst_ptr, chunk_size * sizeof(float));
+            if (!mix) {
+                for (int i = 0; i < chunk_size; i++) {
+                    dst_ptr[i] = this->last_sample;
+                }
+            }
         }
         else if (mix) {
             // mix new sound data with existing buffer content
