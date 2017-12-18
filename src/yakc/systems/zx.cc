@@ -273,6 +273,11 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
     }
 
+    // tick the beeper
+    if (beeper_tick(&board.beeper, num_ticks)) {
+        board.audiobuffer.write(board.beeper.sample);
+    }
+
     // memory and IO requests
     if (pins & Z80_MREQ) {
         // a memory request machine cycle
@@ -370,65 +375,6 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
 }
 
 //------------------------------------------------------------------------------
-/*
-void
-zx::cpu_out(uint16_t port, uint8_t val) {
-    // handle Z80 OUT instruction
-    if ((port & 1) == 0) {
-        // "every even IO port addresses the ULA but to avoid
-        // problems with other I/O devices, only FE should be used"
-        this->border_color = palette[val & 7] & 0xFFD7D7D7;
-        // FIXME:
-        //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
-        //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
-        this->last_fe_out = val;
-        this->board->beeper.write(0 != (val & (1<<4)));
-        return;
-    }
-
-    // Spectrum128K specific out ports
-    if (system::zxspectrum128k == this->cur_model) {
-        // control memory bank switching on 128K
-        // http://8bit.yarek.pl/computer/zx.128/
-        if (0x7FFD == port) {
-            if (!this->memory_paging_disabled) {
-                // bit 3 defines the video scanout memory bank (5 or 7)
-                this->display_ram_bank = (val & (1<<3)) ? 7 : 5;
-
-                auto& mem = this->board->z80.mem;
-
-                // only last memory bank is mappable
-                mem.map(0, 0xC000, 0x4000, this->board->ram[val & 0x7], true);
-
-                // ROM0 or ROM1
-                if (val & (1<<4)) {
-                    // bit 4 set: ROM1
-                    mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx128k_1), false);
-                }
-                else {
-                    // bit 4 clear: ROM0
-                    mem.map(0, 0x0000, 0x4000, this->roms->ptr(rom_images::zx128k_0), false);
-                }
-            }
-            if (val & (1<<5)) {
-                // bit 5 prevents further changes to memory pages
-                // until computer is reset, this is used when switching
-                // to the 48k ROM
-                this->memory_paging_disabled = true;
-            }
-            return;
-        }
-        else if (0xFFFD == port) {
-            this->board->ay8910.select(val);
-        }
-        else if (0xBFFD == port) {
-            this->board->ay8910.write(val);
-        }
-    }
-}
-*/
-
-//------------------------------------------------------------------------------
 void
 zx_t::put_input(uint8_t ascii, uint8_t joy_mask) {
     // register a new key press with the emulator,
@@ -439,59 +385,6 @@ zx_t::put_input(uint8_t ascii, uint8_t joy_mask) {
     }
     this->joy_mask = joy_mask;
 }
-
-//------------------------------------------------------------------------------
-/*
-uint8_t
-zx::cpu_in(uint16_t port) {
-    // handle Z80 IN instruction
-    //
-    // FIXME: reading from port xxFF should return 'current VRAM data'
-
-    // keyboard
-    if ((port & 0xFF) == 0xFE) {
-        uint8_t val = 0;
-        // MIC/EAR flags -> bit 6
-        if (this->last_fe_out & (1<<3|1<<4)) {
-            val |= (1<<6);
-        }
-
-        // keyboard matrix bits
-        uint8_t kbd_bits = 0;
-        for (int i = 0; i < 8; i++) {
-            if ((port & (0x0100 << i)) == 0) {
-                kbd_bits |= extract_kbd_line_bits(this->cur_kbd_mask, i);
-            }
-        }
-        val |= (~kbd_bits) & 0x1F;
-        return val;
-    }
-    else if ((port & 0xFF) == 0x1F) {
-        // Kempston Joystick
-        uint8_t val = 0;
-        if (this->joy_mask & joystick::left) {
-            val |= 1<<1;
-        }
-        if (this->joy_mask & joystick::right) {
-            val |= 1<<0;
-        }
-        if (this->joy_mask & joystick::up) {
-            val |= 1<<3;
-        }
-        if (this->joy_mask & joystick::down) {
-            val |= 1<<2;
-        }
-        if (this->joy_mask & joystick::btn0) {
-            val |= 1<<4;
-        }
-        return val;
-    }
-    else if (port == 0xFFFD) {
-        return this->board->ay8910.read();
-    }
-    return 0xFF;
-}
-*/
 
 //------------------------------------------------------------------------------
 bool
