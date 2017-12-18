@@ -142,7 +142,7 @@ zx_t::poweron(system m) {
     this->on = true;
 
     // keyboard init
-    kbd_init(&board.kbd, 4);
+    kbd_init(&board.kbd, 1);
     this->init_keymap();
 
     this->border_color = 0xFF000000;
@@ -167,13 +167,12 @@ zx_t::poweron(system m) {
     if (system::zxspectrum48k == m) {
         // Spectrum48K is exactly 3.5 MHz
         board.freq_khz = 3500;
-        this->scanline_period = 224;
     }
     else {
         // 128K is slightly faster
         board.freq_khz = 3547;
-        this->scanline_period = 228;
     }
+    this->scanline_period = 224;
     this->scanline_counter = this->scanline_period;
     z80_init(&board.z80, cpu_tick);
 
@@ -298,6 +297,8 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
             uint8_t data = 0;
             // FIXME: reading from port xxFF should return 'current VRAM data'
             if ((addr & 1) == 0) {
+                /* Bits 5 and 7 as read by INning from Port 0xfe are always one. */
+                data |= (1<<7)|(1<<5);
                 // MIC/EAR flags -> bit 6
                 if (zx.last_fe_out & (1<<3|1<<4)) {
                     data |= (1<<6);
