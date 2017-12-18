@@ -14,4 +14,6 @@ files:
     - 'kc87_font_1.bin'
     - 'kc87_font_2.bin'
     - 'kc87_os_2.bin'
-
+    - 'amstrad_zx128k_0.bin'
+    - 'amstrad_zx128k_1.bin'
+    - 'amstrad_zx48k.bin'
