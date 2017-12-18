@@ -211,6 +211,9 @@ this->emu.add_rom(rom_images::z9001_basic, dump_z9001_basic, sizeof(dump_z9001_b
 this->emu.add_rom(rom_images::kc87_os_2, dump_kc87_os_2, sizeof(dump_kc87_os_2));
 this->emu.add_rom(rom_images::z9001_basic_507_511, dump_z9001_basic_507_511, sizeof(dump_z9001_basic_507_511));
 this->emu.add_rom(rom_images::kc87_font_2, dump_kc87_font_2, sizeof(dump_kc87_font_2));
+this->emu.add_rom(rom_images::zx48k, dump_amstrad_zx48k, sizeof(dump_amstrad_zx48k));
+this->emu.add_rom(rom_images::zx128k_0, dump_amstrad_zx128k_0, sizeof(dump_amstrad_zx128k_0));
+this->emu.add_rom(rom_images::zx128k_1, dump_amstrad_zx128k_1, sizeof(dump_amstrad_zx128k_1));
 
     // async-load optional ROMs
     IO::Load("rom:hc900.852", [this](IO::LoadResult ioRes) {
@@ -259,7 +262,6 @@ this->emu.add_rom(rom_images::kc87_font_2, dump_kc87_font_2, sizeof(dump_kc87_fo
     IO::Load("rom:kc87_font_2.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::kc87_font_2, ioRes.Data.Data(), ioRes.Data.Size());
     });
-*/
     IO::Load("rom:amstrad_zx48k.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::zx48k, ioRes.Data.Data(), ioRes.Data.Size());
     });
@@ -269,6 +271,7 @@ this->emu.add_rom(rom_images::kc87_font_2, dump_kc87_font_2, sizeof(dump_kc87_fo
     IO::Load("rom:amstrad_zx128k_1.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::zx128k_1, ioRes.Data.Data(), ioRes.Data.Size());
     });
+*/
     IO::Load("rom:cpc464_os.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::cpc464_os, ioRes.Data.Data(), ioRes.Data.Size());
     });

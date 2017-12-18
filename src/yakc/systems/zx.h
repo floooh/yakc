@@ -11,7 +11,7 @@
 
 namespace YAKC {
 
-class zx {
+class zx_t {
 public:
     /// one-time setup
     void init();
@@ -31,8 +31,10 @@ public:
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// perform a single debug-step
     uint32_t step_debug();
-    /// the Z80 CPU tick callback
-    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    /// the Z80 CPU tick callback for ZX Spectrum 48k
+    static uint64_t cpu_tick_48k(int num_ticks, uint64_t pins);
+    /// the Z80 CPU tick callback for ZX Spectrum 128k
+    static uint64_t cpu_tick_128k(int num_ticks, uint64_t pins);
 
     /// put a key and joystick input (Kempston)
     void put_input(uint8_t ascii, uint8_t joy0_mask);
@@ -60,8 +62,9 @@ public:
     bool int_requested = false;
     uint8_t last_fe_out = 0;            // last OUT value to xxFE port
     uint8_t blink_counter = 0;          // increased by one every vblank
-    uint32_t scanline_period = 0;
-    uint16_t scanline_counter = 0;
+    int scanline_period = 0;
+    int scanline_counter = 0;           // tick counter for one scanline
+    uint16_t scanline_y = 0;            // current scanline-y
     uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
     uint32_t border_color = 0xFF000000;
 
@@ -70,5 +73,6 @@ public:
 
     uint8_t joy_mask = 0;                 // joystick mask
 };
+extern zx_t zx;
 
 } // namespace YAKC

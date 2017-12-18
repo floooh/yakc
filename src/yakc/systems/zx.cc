@@ -15,7 +15,9 @@
 
 namespace YAKC {
 
-uint32_t zx::palette[8] = {
+zx_t zx;
+
+uint32_t zx_t::palette[8] = {
     0xFF000000,     // black
     0xFFFF0000,     // blue
     0xFF0000FF,     // red
@@ -28,13 +30,13 @@ uint32_t zx::palette[8] = {
 
 //------------------------------------------------------------------------------
 void
-zx::init() {
+zx_t::init() {
     // empty
 }
 
 //------------------------------------------------------------------------------
 bool
-zx::check_roms(system model, os_rom os) {
+zx_t::check_roms(system model, os_rom os) {
     if (system::zxspectrum48k == model) {
         return roms.has(rom_images::zx48k);
     }
@@ -46,7 +48,7 @@ zx::check_roms(system model, os_rom os) {
 
 //------------------------------------------------------------------------------
 void
-zx::init_memorymap() {
+zx_t::init_memorymap() {
     mem_unmap_all(&board.mem);
     if (system::zxspectrum48k == this->cur_model) {
         // 48k RAM between 0x4000 and 0xFFFF
@@ -71,7 +73,7 @@ zx::init_memorymap() {
 
 //------------------------------------------------------------------------------
 void
-zx::init_keymap() {
+zx_t::init_keymap() {
     // caps-shift is column 0, line 0
     kbd_register_modifier(&board.kbd, 0, 0, 0);
     // sym-shift is column 7, line 1
@@ -132,7 +134,7 @@ zx::init_keymap() {
 
 //------------------------------------------------------------------------------
 void
-zx::poweron(system m) {
+zx_t::poweron(system m) {
     YAKC_ASSERT(int(system::any_zx) & int(m));
     YAKC_ASSERT(!this->on);
 
@@ -141,7 +143,7 @@ zx::poweron(system m) {
 
     this->border_color = 0xFF000000;
     this->last_fe_out = 0;
-    this->scanline_counter = 0;
+    this->scanline_y = 0;
     this->blink_counter = 0;
     this->memory_paging_disabled = false;
     this->int_requested = false;
@@ -161,16 +163,18 @@ zx::poweron(system m) {
     if (system::zxspectrum48k == m) {
         // Spectrum48K is exactly 3.5 MHz
         board.freq_khz = 3500;
-        this->scanline_period = board.freq_khz * 224;
+        this->scanline_period = 224;
+        z80_init(&board.z80, cpu_tick_48k);
     }
     else {
         // 128K is slightly faster
         board.freq_khz = 3547;
-        this->scanline_period = board.freq_khz * 228;
+        this->scanline_period = 228;
+        z80_init(&board.z80, cpu_tick_128k);
     }
+    this->scanline_counter = this->scanline_period;
 
     // initialize hardware components
-    z80_init(&board.z80, cpu_tick);
     beeper_init(&board.beeper, board.freq_khz, SOUND_SAMPLE_RATE, 0.5f);
     if (system::zxspectrum128k == this->cur_model) {
         //board.ay38912.init(cpu_khz, cpu_khz/2, SOUND_SAMPLE_RATE);
@@ -182,7 +186,7 @@ zx::poweron(system m) {
 
 //------------------------------------------------------------------------------
 void
-zx::poweroff() {
+zx_t::poweroff() {
     YAKC_ASSERT(this->on);
     mem_unmap_all(&board.mem);
     this->on = false;
@@ -190,7 +194,7 @@ zx::poweroff() {
 
 //------------------------------------------------------------------------------
 void
-zx::reset() {
+zx_t::reset() {
     z80_reset(&board.z80);
     beeper_reset(&board.beeper);
     if (system::zxspectrum128k == this->cur_model) {
@@ -200,7 +204,8 @@ zx::reset() {
     this->int_requested = false;
     this->joy_mask = 0;
     this->last_fe_out = 0;
-    this->scanline_counter = 0;
+    this->scanline_counter = this->scanline_period;
+    this->scanline_y = 0;
     this->blink_counter = 0;
     this->display_ram_bank = 5;
     this->init_memorymap();
@@ -209,7 +214,7 @@ zx::reset() {
 
 //------------------------------------------------------------------------------
 uint64_t
-zx::step(uint64_t start_tick, uint64_t end_tick) {
+zx_t::step(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = end_tick - start_tick;
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
@@ -219,7 +224,7 @@ zx::step(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 uint32_t
-zx::step_debug() {
+zx_t::step_debug() {
 return 0;
 /*
     auto& cpu = this->board->z80;
@@ -243,6 +248,62 @@ return 0;
     while ((old_pc == cpu.PC) && !cpu.INV);    
     return uint32_t(all_ticks);
 */
+}
+
+//------------------------------------------------------------------------------
+uint64_t
+zx_t::cpu_tick_48k(int num_ticks, uint64_t pins) {
+
+    // handle per-tick counters
+    zx.scanline_counter -= num_ticks;
+    if (zx.scanline_counter <= 0) {
+        zx.scanline_counter += zx.scanline_period;
+        // decode next scanline
+        if (zx.scanline()) {
+            // request vblank interrupt
+            pins |= Z80_INT;
+        }
+    }
+
+    // memory and IO requests
+    if (pins & Z80_MREQ) {
+        // a memory request machine cycle
+        const uint16_t addr = Z80_ADDR(pins);
+        if (pins & Z80_RD) {
+            Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
+        }
+        else if (pins & Z80_WR) {
+            mem_wr(&board.mem, addr, Z80_DATA(pins));
+        }
+    }
+    else if (pins & Z80_IORQ) {
+        const uint16_t addr = Z80_ADDR(pins);
+        // an IO request machine cycle
+        if (pins & Z80_RD) {
+
+        }
+        else if (pins & Z80_WR) {
+            if (addr & 1) {
+                const uint8_t data = Z80_DATA(pins);
+                // "every even IO port addresses the ULA but to avoid
+                // problems with other I/O devices, only FE should be used"
+                zx.border_color = palette[data & 7] & 0xFFD7D7D7;
+                // FIXME:
+                //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
+                //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
+                zx.last_fe_out = data;
+                beeper_write(&board.beeper, 0 != (data & (1<<4)));
+            }
+        }
+    }
+    return pins;
+}
+
+//------------------------------------------------------------------------------
+uint64_t
+zx_t::cpu_tick_128k(int num_ticks, uint64_t pins) {
+
+    return pins;
 }
 
 //------------------------------------------------------------------------------
@@ -306,7 +367,7 @@ zx::cpu_out(uint16_t port, uint8_t val) {
 
 //------------------------------------------------------------------------------
 void
-zx::put_input(uint8_t ascii, uint8_t joy_mask) {
+zx_t::put_input(uint8_t ascii, uint8_t joy_mask) {
     // register a new key press with the emulator,
     // ascii=0 means no key pressed
     if (ascii) {
@@ -371,7 +432,7 @@ zx::cpu_in(uint16_t port) {
 
 //------------------------------------------------------------------------------
 bool
-zx::scanline() {
+zx_t::scanline() {
     // this is called by the timer callback for every PAL line, controlling
     // the vidmem decoding and vblank interrupt
     //
@@ -395,13 +456,13 @@ zx::scanline() {
     //
     const uint32_t top_decode_line = top_border - 32;
     const uint32_t btm_decode_line = top_border + 192 + 32;
-    if ((this->scanline_counter >= top_decode_line) && (this->scanline_counter < btm_decode_line)) {
-        this->decode_video_line(this->scanline_counter - top_decode_line);
+    if ((this->scanline_y >= top_decode_line) && (this->scanline_y < btm_decode_line)) {
+        this->decode_video_line(this->scanline_y - top_decode_line);
     }
 
-    if (this->scanline_counter++ >= frame_scanlines) {
+    if (this->scanline_y++ >= frame_scanlines) {
         // start new frame, fetch next key, request vblank interrupt
-        this->scanline_counter = 0;
+        this->scanline_y = 0;
         this->blink_counter++;
         return true;
     }
@@ -412,7 +473,7 @@ zx::scanline() {
 
 //------------------------------------------------------------------------------
 const char*
-zx::system_info() const {
+zx_t::system_info() const {
     return
         "FIXME!\n\n"
         "ZX ROM images acknowledgement:\n\n"
@@ -422,7 +483,7 @@ zx::system_info() const {
 
 //------------------------------------------------------------------------------
 void
-zx::decode_video_line(uint16_t y) {
+zx_t::decode_video_line(uint16_t y) {
     YAKC_ASSERT(y < display_height);
 
     // decode a single line from the ZX framebuffer into the
@@ -495,7 +556,7 @@ zx::decode_video_line(uint16_t y) {
 
 //------------------------------------------------------------------------------
 void
-zx::decode_audio(float* buffer, int num_samples) {
+zx_t::decode_audio(float* buffer, int num_samples) {
     board.audiobuffer.read(buffer, num_samples);
     // if 128k, mix-in AY-8910 data
     if (system::zxspectrum128k == this->cur_model) {
@@ -505,7 +566,7 @@ zx::decode_audio(float* buffer, int num_samples) {
 
 //------------------------------------------------------------------------------
 const void*
-zx::framebuffer(int& out_width, int& out_height) {
+zx_t::framebuffer(int& out_width, int& out_height) {
     out_width = display_width;
     out_height = display_height;
     return board.rgba8_buffer;
@@ -513,7 +574,7 @@ zx::framebuffer(int& out_width, int& out_height) {
 
 //------------------------------------------------------------------------------
 bool
-zx::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     auto fp = fs->open(name, filesystem::mode::read);
     if (!fp) {
         return false;
@@ -687,7 +748,7 @@ FIXME
             cpu.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
         }
 */
-        this->border_color = zx::palette[(hdr.flags0>>1) & 7] & 0xFFD7D7D7;
+        this->border_color = zx_t::palette[(hdr.flags0>>1) & 7] & 0xFFD7D7D7;
     }
     return true;
 
