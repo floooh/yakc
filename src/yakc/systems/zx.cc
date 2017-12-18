@@ -9,6 +9,8 @@
 //      - use this counter to find the VRAM byte
 //  - add the system info text
 //
+//  https://www.worldofspectrum.org/faq/reference/48kreference.htm
+//  https://www.worldofspectrum.org/faq/reference/128kreference.htm
 //------------------------------------------------------------------------------
 #include "zx.h"
 #include "yakc/core/filetypes.h"
@@ -167,12 +169,17 @@ zx_t::poweron(system m) {
     if (system::zxspectrum48k == m) {
         // Spectrum48K is exactly 3.5 MHz
         board.freq_khz = 3500;
+        this->frame_scanlines = 312;
+        this->top_border_scanlines = 64;
+        this->scanline_period = 224;
     }
     else {
         // 128K is slightly faster
         board.freq_khz = 3547;
+        this->frame_scanlines = 311;
+        this->top_border_scanlines = 63;
+        this->scanline_period = 228;
     }
-    this->scanline_period = 224;
     this->scanline_counter = this->scanline_period;
     z80_init(&board.z80, cpu_tick);
 
@@ -345,7 +352,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
             else if (system::zxspectrum128k == zx.cur_model) {
                 // control memory bank switching on 128K
                 // http://8bit.yarek.pl/computer/zx.128/
-                if (0x7FFD == addr) {
+                if (0 == (addr & ((1<<15)|(1<<1)))) {
                     if (!zx.memory_paging_disabled) {
                         // bit 3 defines the video scanout memory bank (5 or 7)
                         zx.display_ram_bank = (data & (1<<3)) ? 7 : 5;
@@ -400,8 +407,6 @@ zx_t::scanline() {
     // one PAL line takes 224 T-states on 48K, and 228 T-states on 128K
     // one PAL frame is 312 lines on 48K, and 311 lines on 128K
     //
-    const uint32_t frame_scanlines = this->cur_model == system::zxspectrum128k ? 311 : 312;
-    const uint32_t top_border = this->cur_model == system::zxspectrum128k ? 63 : 64;
 
     // decode the next videomem line into the emulator framebuffer,
     // the border area of a real Spectrum is bigger than the emulator
@@ -411,13 +416,13 @@ zx_t::scanline() {
     //  56 border lines bottom border
     //  48 pixels on each side horizontal border
     //
-    const uint32_t top_decode_line = top_border - 32;
-    const uint32_t btm_decode_line = top_border + 192 + 32;
+    const int top_decode_line = this->top_border_scanlines - 32;
+    const int btm_decode_line = this->top_border_scanlines + 192 + 32;
     if ((this->scanline_y >= top_decode_line) && (this->scanline_y < btm_decode_line)) {
         this->decode_video_line(this->scanline_y - top_decode_line);
     }
 
-    if (this->scanline_y++ >= frame_scanlines) {
+    if (this->scanline_y++ >= this->frame_scanlines) {
         // start new frame, fetch next key, request vblank interrupt
         this->scanline_y = 0;
         this->blink_counter++;
@@ -691,20 +696,25 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         else {
             cpu.IM = 1;
         }
-/*
-FIXME
         if (ext_hdr_valid) {
             cpu.PC = (ext_hdr.PC_h<<8 | ext_hdr.PC_l) & 0xFFFF;
+            /*
             for (int i = 0; i < 16; i++) {
                 board.ay38910.regs[i] = ext_hdr.audio[i];
             }
-            cpu.out(this, 0xFFFD, ext_hdr.out_fffd);
-            cpu.out(this, 0x7FFD, ext_hdr.out_7ffd);
+            */
+            // simulate an out of port 0xFFFD and 0x7FFD
+            uint64_t pins = Z80_IORQ|Z80_WR;
+            Z80_SET_ADDR(pins, 0xFFFD);
+            Z80_SET_DATA(pins, ext_hdr.out_fffd);
+            zx_t::cpu_tick(4, pins);
+            Z80_SET_ADDR(pins, 0x7FFD);
+            Z80_SET_DATA(pins, ext_hdr.out_7ffd);
+            zx_t::cpu_tick(4, pins);
         }
         else {
             cpu.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
         }
-*/
         this->border_color = zx_t::palette[(hdr.flags0>>1) & 7] & 0xFFD7D7D7;
     }
     return true;

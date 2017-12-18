@@ -62,7 +62,10 @@ public:
     uint8_t blink_counter = 0;          // increased by one every vblank
     int scanline_period = 0;
     int scanline_counter = 0;           // tick counter for one scanline
-    uint16_t scanline_y = 0;            // current scanline-y
+    int scanline_y = 0;                 // current scanline-y
+    int frame_scanlines = 0;            // number of scanlines in a frame
+    int top_border_scanlines = 0;       // height of top border
+
     uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
     uint32_t border_color = 0xFF000000;
 
