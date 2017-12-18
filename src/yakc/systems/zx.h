@@ -31,10 +31,8 @@ public:
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
     /// perform a single debug-step
     uint32_t step_debug();
-    /// the Z80 CPU tick callback for ZX Spectrum 48k
-    static uint64_t cpu_tick_48k(int num_ticks, uint64_t pins);
-    /// the Z80 CPU tick callback for ZX Spectrum 128k
-    static uint64_t cpu_tick_128k(int num_ticks, uint64_t pins);
+    /// the Z80 CPU tick callback
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
 
     /// put a key and joystick input (Kempston)
     void put_input(uint8_t ascii, uint8_t joy0_mask);

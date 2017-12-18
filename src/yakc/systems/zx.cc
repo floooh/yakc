@@ -141,6 +141,10 @@ zx_t::poweron(system m) {
     this->cur_model = m;
     this->on = true;
 
+    // keyboard init
+    kbd_init(&board.kbd, 4);
+    this->init_keymap();
+
     this->border_color = 0xFF000000;
     this->last_fe_out = 0;
     this->scanline_y = 0;
@@ -164,15 +168,14 @@ zx_t::poweron(system m) {
         // Spectrum48K is exactly 3.5 MHz
         board.freq_khz = 3500;
         this->scanline_period = 224;
-        z80_init(&board.z80, cpu_tick_48k);
     }
     else {
         // 128K is slightly faster
         board.freq_khz = 3547;
         this->scanline_period = 228;
-        z80_init(&board.z80, cpu_tick_128k);
     }
     this->scanline_counter = this->scanline_period;
+    z80_init(&board.z80, cpu_tick);
 
     // initialize hardware components
     beeper_init(&board.beeper, board.freq_khz, SOUND_SAMPLE_RATE, 0.5f);
@@ -252,7 +255,7 @@ return 0;
 
 //------------------------------------------------------------------------------
 uint64_t
-zx_t::cpu_tick_48k(int num_ticks, uint64_t pins) {
+zx_t::cpu_tick(int num_ticks, uint64_t pins) {
 
     // handle per-tick counters
     zx.scanline_counter -= num_ticks;
@@ -277,13 +280,44 @@ zx_t::cpu_tick_48k(int num_ticks, uint64_t pins) {
         }
     }
     else if (pins & Z80_IORQ) {
-        const uint16_t addr = Z80_ADDR(pins);
         // an IO request machine cycle
+        const uint16_t addr = Z80_ADDR(pins);
         if (pins & Z80_RD) {
-
+            uint8_t data = 0;
+            // FIXME: reading from port xxFF should return 'current VRAM data'
+            if ((addr & 1) == 0) {
+                // MIC/EAR flags -> bit 6
+                if (zx.last_fe_out & (1<<3|1<<4)) {
+                    data |= (1<<6);
+                }
+                // keyboard matrix bits
+                uint16_t column_mask = (~(addr>>8)) & 0x00FF;
+                kbd_set_active_columns(&board.kbd, column_mask);
+                const uint8_t kbd_lines = kbd_scan_lines(&board.kbd);
+                data |= (~kbd_lines) & 0x1F;
+            }
+            else if ((addr & 0xFF) == 0x1F) {
+                // Kempston Joystick
+                if (zx.joy_mask & joystick::left) {
+                    data |= 1<<1;
+                }
+                if (zx.joy_mask & joystick::right) {
+                    data |= 1<<0;
+                }
+                if (zx.joy_mask & joystick::up) {
+                    data |= 1<<3;
+                }
+                if (zx.joy_mask & joystick::down) {
+                    data |= 1<<2;
+                }
+                if (zx.joy_mask & joystick::btn0) {
+                    data |= 1<<4;
+                }
+            }
+            Z80_SET_DATA(pins, data);
         }
         else if (pins & Z80_WR) {
-            if (addr & 1) {
+            if ((addr & 1) == 0) {
                 const uint8_t data = Z80_DATA(pins);
                 // "every even IO port addresses the ULA but to avoid
                 // problems with other I/O devices, only FE should be used"
@@ -296,13 +330,6 @@ zx_t::cpu_tick_48k(int num_ticks, uint64_t pins) {
             }
         }
     }
-    return pins;
-}
-
-//------------------------------------------------------------------------------
-uint64_t
-zx_t::cpu_tick_128k(int num_ticks, uint64_t pins) {
-
     return pins;
 }
 
