@@ -210,7 +210,12 @@ zx_t::reset() {
     this->scanline_counter = this->scanline_period;
     this->scanline_y = 0;
     this->blink_counter = 0;
-    this->display_ram_bank = 5;
+    if (system::zxspectrum48k == this->cur_model) {
+        this->display_ram_bank = 0;
+    }
+    else {
+        this->display_ram_bank = 5;
+    }
     this->init_memorymap();
     board.z80.PC = 0x0000;
 }
@@ -282,7 +287,9 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
     else if (pins & Z80_IORQ) {
         // an IO request machine cycle
         const uint16_t addr = Z80_ADDR(pins);
+        // FIXME: AY-3-8910 read/write, ZX Spectrum only
         if (pins & Z80_RD) {
+            // an IO read
             uint8_t data = 0;
             // FIXME: reading from port xxFF should return 'current VRAM data'
             if ((addr & 1) == 0) {
@@ -317,8 +324,9 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
             Z80_SET_DATA(pins, data);
         }
         else if (pins & Z80_WR) {
+            // an IO write
+            const uint8_t data = Z80_DATA(pins);
             if ((addr & 1) == 0) {
-                const uint8_t data = Z80_DATA(pins);
                 // "every even IO port addresses the ULA but to avoid
                 // problems with other I/O devices, only FE should be used"
                 zx.border_color = palette[data & 7] & 0xFFD7D7D7;
@@ -327,6 +335,34 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
                 zx.last_fe_out = data;
                 beeper_write(&board.beeper, 0 != (data & (1<<4)));
+            }
+            else if (system::zxspectrum128k == zx.cur_model) {
+                // control memory bank switching on 128K
+                // http://8bit.yarek.pl/computer/zx.128/
+                if (0x7FFD == addr) {
+                    if (!zx.memory_paging_disabled) {
+                        // bit 3 defines the video scanout memory bank (5 or 7)
+                        zx.display_ram_bank = (data & (1<<3)) ? 7 : 5;
+                        // only last memory bank is mappable
+                        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[data & 0x7]);
+
+                        // ROM0 or ROM1
+                        if (data & (1<<4)) {
+                            // bit 4 set: ROM1
+                            mem_map_rom(&board.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_1));
+                        }
+                        else {
+                            // bit 4 clear: ROM0
+                            mem_map_rom(&board.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_0));
+                        }
+                    }
+                    if (data & (1<<5)) {
+                        // bit 5 prevents further changes to memory pages
+                        // until computer is reset, this is used when switching
+                        // to the 48k ROM
+                        zx.memory_paging_disabled = true;
+                    }
+                }
             }
         }
     }
