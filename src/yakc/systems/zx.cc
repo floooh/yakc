@@ -184,9 +184,9 @@ zx_t::poweron(system m) {
     z80_init(&board.z80, cpu_tick);
 
     // initialize hardware components
-    beeper_init(&board.beeper, board.freq_khz, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper, board.freq_khz*1000, SOUND_SAMPLE_RATE, 0.5f);
     if (system::zxspectrum128k == this->cur_model) {
-        //board.ay38912.init(cpu_khz, cpu_khz/2, SOUND_SAMPLE_RATE);
+        ay38912_init(&board.ay38912, 2, (board.freq_khz*1000)/2, SOUND_SAMPLE_RATE, 0.5f);
     }
 
     // cpu start state
@@ -207,7 +207,7 @@ zx_t::reset() {
     z80_reset(&board.z80);
     beeper_reset(&board.beeper);
     if (system::zxspectrum128k == this->cur_model) {
-        //this->board->ay8910.reset();
+        ay38912_reset(&board.ay38912);
     }
     this->memory_paging_disabled = false;
     this->int_requested = false;
@@ -284,6 +284,13 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
         board.audiobuffer.write(board.beeper.sample);
     }
 
+    // on ZX 128k, tick the AY-38912 chip
+    if (system::zxspectrum128k == zx.cur_model) {
+        if (ay38912_tick(&board.ay38912, num_ticks)) {
+            board.audiobuffer2.write(board.ay38912.sample);
+        }
+    }
+
     // memory and IO requests
     if (pins & Z80_MREQ) {
         // a memory request machine cycle
@@ -333,6 +340,12 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                     data |= 1<<4;
                 }
             }
+            else if (system::zxspectrum128k == zx.cur_model) {
+                // read from AY-3-8910, FIXME: better address decoding
+                if (addr == 0xFFFD) {
+                    pins = ay38912_iorq(&board.ay38912, AY38912_BC1|pins) & Z80_PIN_MASK;
+                }
+            }
             Z80_SET_DATA(pins, data);
         }
         else if (pins & Z80_WR) {
@@ -374,6 +387,13 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                         // to the 48k ROM
                         zx.memory_paging_disabled = true;
                     }
+                }
+                // FIXME: better address decoding for AY-3-8912!
+                else if (addr == 0xFFFD) {
+                    ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|pins);
+                }
+                else if (addr == 0xBFFD) {
+                    ay38912_iorq(&board.ay38912, AY38912_BDIR|pins);
                 }
             }
         }
@@ -697,11 +717,12 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         }
         if (ext_hdr_valid) {
             cpu.PC = (ext_hdr.PC_h<<8 | ext_hdr.PC_l) & 0xFFFF;
-            /*
             for (int i = 0; i < 16; i++) {
-                board.ay38910.regs[i] = ext_hdr.audio[i];
+                // latch AY-3-8912 register address
+                ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|(i<<16));
+                // write AY-3-8912 register value
+                ay38912_iorq(&board.ay38912, AY38912_BDIR|(ext_hdr.audio[i]<<16));
             }
-            */
             // simulate an out of port 0xFFFD and 0x7FFD
             uint64_t pins = Z80_IORQ|Z80_WR;
             Z80_SET_ADDR(pins, 0xFFFD);

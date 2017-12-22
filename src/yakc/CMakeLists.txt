@@ -16,7 +16,6 @@ fips_begin_module(yakc)
 #        i8255.h i8255.cc
 #        mc6845.h mc6845.cc
 #        mc6847.h mc6847.cc
-#        ay8910.h ay8910.cc
     )
     fips_dir(peripherals)
     fips_files(
