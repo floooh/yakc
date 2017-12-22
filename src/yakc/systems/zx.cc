@@ -312,8 +312,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 }
                 // keyboard matrix bits
                 uint16_t column_mask = (~(addr>>8)) & 0x00FF;
-                kbd_set_active_columns(&board.kbd, column_mask);
-                const uint8_t kbd_lines = kbd_scan_lines(&board.kbd);
+                const uint8_t kbd_lines = kbd_test_lines(&board.kbd, column_mask);
                 data |= (~kbd_lines) & 0x1F;
             }
             else if ((addr & 0xFF) == 0x1F) {
