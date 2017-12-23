@@ -4,6 +4,7 @@
 //  TODO
 //  - wait states when CPU accesses 'contended memory' and IO ports
 //  - reads from port 0xFF must return 'current VRAM byte'
+//  - video decoding only has scanline accuracy, not pixel accuracy
 //
 //  https://www.worldofspectrum.org/faq/reference/48kreference.htm
 //  https://www.worldofspectrum.org/faq/reference/128kreference.htm
