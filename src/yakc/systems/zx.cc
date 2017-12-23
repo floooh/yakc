@@ -3,11 +3,7 @@
 //
 //  TODO
 //  - wait states when CPU accesses 'contended memory' and IO ports
-//  - reads from port 0xFF must return 'current VRAM byte':
-//      - reset a T-state counter at start of each PAL-line
-//      - on CPU instruction, increment PAL-line T-state counter
-//      - use this counter to find the VRAM byte
-//  - add the system info text
+//  - reads from port 0xFF must return 'current VRAM byte'
 //
 //  https://www.worldofspectrum.org/faq/reference/48kreference.htm
 //  https://www.worldofspectrum.org/faq/reference/128kreference.htm
@@ -279,7 +275,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
         board.audiobuffer.write(board.beeper.sample);
     }
 
-    // on ZX 128k, tick the AY-38912 chip
+    // on Spectrum 128, tick the AY-38912 chip
     if (system::zxspectrum128k == zx.cur_model) {
         if (ay38912_tick(&board.ay38912, num_ticks)) {
             board.audiobuffer2.write(board.ay38912.sample);
@@ -299,14 +295,15 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
     }
     else if (pins & Z80_IORQ) {
         // an IO request machine cycle
+        // see http://problemkaputt.de/zxdocs.htm#zxspectrum for address decoding
         const uint16_t addr = Z80_ADDR(pins);
-        // FIXME: AY-3-8910 read/write, ZX Spectrum only
         if (pins & Z80_RD) {
             // an IO read
             uint8_t data = 0;
             // FIXME: reading from port xxFF should return 'current VRAM data'
             if ((addr & 1) == 0) {
-                /* Bits 5 and 7 as read by INning from Port 0xfe are always one. */
+                // Spectrum ULA (...............0)
+                // Bits 5 and 7 as read by INning from Port 0xfe are always one
                 data |= (1<<7)|(1<<5);
                 // MIC/EAR flags -> bit 6
                 if (zx.last_fe_out & (1<<3|1<<4)) {
@@ -317,8 +314,8 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 const uint8_t kbd_lines = kbd_test_lines(&board.kbd, column_mask);
                 data |= (~kbd_lines) & 0x1F;
             }
-            else if ((addr & 0xFF) == 0x1F) {
-                // Kempston Joystick
+            else if ((addr & ((1<<7)|(1<<6)|(1<<5))) == 0) {
+                // Kempston Joystick (........000.....)
                 if (zx.joy_mask & joystick::left) {
                     data |= 1<<1;
                 }
@@ -336,8 +333,8 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 }
             }
             else if (system::zxspectrum128k == zx.cur_model) {
-                // read from AY-3-8910, FIXME: better address decoding
-                if (addr == 0xFFFD) {
+                // read from AY-3-8912 (11............0.)
+                if ((addr & ((1<<15)|(1<<14)|(1<<1))) == ((1<<15)|(1<<14))) {
                     pins = ay38912_iorq(&board.ay38912, AY38912_BC1|pins) & Z80_PIN_MASK;
                 }
             }
@@ -347,6 +344,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
             // an IO write
             const uint8_t data = Z80_DATA(pins);
             if ((addr & 1) == 0) {
+                // Spectrum ULA (...............0)
                 // "every even IO port addresses the ULA but to avoid
                 // problems with other I/O devices, only FE should be used"
                 zx.border_color = palette[data & 7] & 0xFFD7D7D7;
@@ -357,9 +355,9 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 beeper_write(&board.beeper, 0 != (data & (1<<4)));
             }
             else if (system::zxspectrum128k == zx.cur_model) {
-                // control memory bank switching on 128K
+                // Spectrum 128 memory control (0.............0.)
                 // http://8bit.yarek.pl/computer/zx.128/
-                if (0 == (addr & ((1<<15)|(1<<1)))) {
+                if ((addr & ((1<<15)|(1<<1))) == 0) {
                     if (!zx.memory_paging_disabled) {
                         // bit 3 defines the video scanout memory bank (5 or 7)
                         zx.display_ram_bank = (data & (1<<3)) ? 7 : 5;
@@ -384,10 +382,12 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                     }
                 }
                 // FIXME: better address decoding for AY-3-8912!
-                else if (addr == 0xFFFD) {
+                else if ((addr & ((1<<15)|(1<<14)|(1<<1))) == ((1<<15)|(1<<14))) {
+                    // select AY-3-8912 register (11............0.)
                     ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|pins);
                 }
-                else if (addr == 0xBFFD) {
+                else if ((addr & ((1<<15)|(1<<1))) == (1<<15)) {
+                    // write to AY-3-8912 (10............0.)
                     ay38912_iorq(&board.ay38912, AY38912_BDIR|pins);
                 }
             }
