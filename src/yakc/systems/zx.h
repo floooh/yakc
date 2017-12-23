@@ -13,8 +13,6 @@ namespace YAKC {
 
 class zx_t {
 public:
-    /// one-time setup
-    void init();
     /// check if required roms are loaded
     static bool check_roms(system model, os_rom os);
     
@@ -65,7 +63,6 @@ public:
     int scanline_y = 0;                 // current scanline-y
     int frame_scanlines = 0;            // number of scanlines in a frame
     int top_border_scanlines = 0;       // height of top border
-
     uint32_t display_ram_bank = 0;      // which RAM bank to use as display mem
     uint32_t border_color = 0xFF000000;
 

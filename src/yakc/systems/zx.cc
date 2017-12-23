@@ -11,6 +11,7 @@
 //
 //  https://www.worldofspectrum.org/faq/reference/48kreference.htm
 //  https://www.worldofspectrum.org/faq/reference/128kreference.htm
+//  http://problemkaputt.de/zxdocs.htm
 //------------------------------------------------------------------------------
 #include "zx.h"
 #include "yakc/core/filetypes.h"
@@ -29,12 +30,6 @@ uint32_t zx_t::palette[8] = {
     0xFF00FFFF,     // yellow
     0xFFFFFFFF,     // white
 };
-
-//------------------------------------------------------------------------------
-void
-zx_t::init() {
-    // empty
-}
 
 //------------------------------------------------------------------------------
 bool

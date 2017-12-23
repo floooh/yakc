@@ -15,9 +15,6 @@ yakc::init(const ext_funcs& sys_funcs) {
     this->cpu_behind = false;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
-    z1013.init();
-    z9001.init();
-    zx.init();
 /*
     this->kc85.init(&this->board, &this->roms);
     this->cpc.init(&this->board, &this->roms, &this->tapedeck);

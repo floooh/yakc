@@ -21,7 +21,7 @@ fips_begin_module(yakc_ui)
         AudioWindow.cc AudioWindow.h
         KC85IOWindow.cc KC85IOWindow.h
         InfoWindow.cc InfoWindow.h
-        AY8910Window.cc AY8910Window.h
+        AY38912Window.cc AY38912Window.h
         MC6845Window.cc MC6845Window.h
         MC6847Window.cc MC6847Window.h
         I8255Window.cc I8255Window.h

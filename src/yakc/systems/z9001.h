@@ -24,8 +24,6 @@ namespace YAKC {
 
 class z9001_t {
 public:
-    /// one-time setup
-    void init();
     /// check if required roms are loaded
     static bool check_roms(system model, os_rom os);
 

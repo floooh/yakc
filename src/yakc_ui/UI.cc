@@ -16,7 +16,7 @@
 #include "AudioWindow.h"
 #include "KC85IOWindow.h"
 #include "InfoWindow.h"
-#include "AY8910Window.h"
+#include "AY38912Window.h"
 #include "MC6845Window.h"
 #include "MC6847Window.h"
 #include "I8255Window.h"
@@ -416,8 +416,8 @@ UI::OnFrame(yakc& emu) {
                 if (ImGui::MenuItem("Z80 CTC")) {
                     this->OpenWindow(emu, CTCWindow::Create());
                 }
-                if (ImGui::MenuItem("AY-3-8910")) {
-                    this->OpenWindow(emu, AY8910Window::Create());
+                if (ImGui::MenuItem("AY-3-8912")) {
+                    this->OpenWindow(emu, AY38912Window::Create());
                 }
                 if (ImGui::MenuItem("MC6845")) {
                     this->OpenWindow(emu, MC6845Window::Create());
