@@ -159,14 +159,14 @@ zx_t::poweron(system m) {
     // initialize the system clock and PAL-line timer
     if (system::zxspectrum48k == m) {
         // Spectrum48K is exactly 3.5 MHz
-        board.freq_khz = 3500;
+        board.freq_hz = 3500000;
         this->frame_scanlines = 312;
         this->top_border_scanlines = 64;
         this->scanline_period = 224;
     }
     else {
-        // 128K is slightly faster
-        board.freq_khz = 3547;
+        // Spectrum 128 CPU clock is (17.73447MHz / 5) (and video clock is (17.73447MHz / 4)
+        board.freq_hz = 3546894;
         this->frame_scanlines = 311;
         this->top_border_scanlines = 63;
         this->scanline_period = 228;
@@ -175,9 +175,9 @@ zx_t::poweron(system m) {
     z80_init(&board.z80, cpu_tick);
 
     // initialize hardware components
-    beeper_init(&board.beeper, board.freq_khz*1000, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     if (system::zxspectrum128k == this->cur_model) {
-        ay38912_init(&board.ay38912, 2, (board.freq_khz*1000)/2, SOUND_SAMPLE_RATE, 0.5f);
+        ay38912_init(&board.ay38912, 2, board.freq_hz/2, SOUND_SAMPLE_RATE, 0.5f);
     }
 
     // cpu start state

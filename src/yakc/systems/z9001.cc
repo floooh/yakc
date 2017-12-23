@@ -132,12 +132,12 @@ z9001_t::poweron(system m, os_rom os) {
     this->init_memorymap();
 
     // initialize hardware components, main clock frequency is 2.4576
-    board.freq_khz = 2458;
+    board.freq_hz = 2457600;
     z80_init(&board.z80, cpu_tick);
     z80pio_init(&board.z80pio, pio1_in, pio1_out);
     z80pio_init(&board.z80pio2, pio2_in, pio2_out);
     z80ctc_init(&board.z80ctc);
-    beeper_init(&board.beeper, board.freq_khz*1000, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     this->ctc_zcto2 = 0;
     
     // execution on power-on starts at 0xF000
@@ -229,7 +229,7 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
            to the blink flip flop.
         */
         if (0 >= z9001.blink_counter--) {
-            z9001.blink_counter = (board.freq_khz * 1000 * 8) / 25;
+            z9001.blink_counter = (board.freq_hz * 8) / 25;
             z9001.blink_flip_flop = !z9001.blink_flip_flop;
         }
     }

@@ -1,5 +1,7 @@
 //------------------------------------------------------------------------------
 //  z1013.cc
+//
+//  FIXME: 8x4 keyboard input currently broken!
 //------------------------------------------------------------------------------
 #include "z1013.h"
 #include "yakc/core/filetypes.h"
@@ -78,7 +80,7 @@ z1013_t::poweron(system m) {
     this->init_memorymap();
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz
-    board.freq_khz = (m == system::z1013_01) ? 1000 : 2000;
+    board.freq_hz = (m == system::z1013_01) ? 1000000 : 2000000;
 
     // initialize hardware components
     z80_init(&board.z80, cpu_tick);
