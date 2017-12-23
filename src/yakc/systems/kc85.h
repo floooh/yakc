@@ -4,18 +4,16 @@
     @class YAKC::kc85
     @brief wrapper class for the KC85/2, /3, /4
 */
-#include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
 #include "yakc/core/filetypes.h"
 #include "yakc/systems/kc85_video.h"
-#include "yakc/systems/kc85_audio.h"
 #include "yakc/systems/kc85_exp.h"
 
 namespace YAKC {
 
-class kc85 : public system_bus {
+class kc85_t {
 public:
     /// IO bits
     enum {
@@ -46,21 +44,15 @@ public:
         IO86_CAOS_ROM_C = (1<<7)
     };
 
-    /// hardware components
-    breadboard* board = nullptr;
-    rom_images* roms = nullptr;
     kc85_video video;
-    kc85_audio audio;
     kc85_exp exp;
     uint8_t pio_a = 0;        // backing for PIO-A data
     uint8_t pio_b = 0;        // backing for PIO-B data
     uint8_t io84 = 0;         // special KC85/4 io register
     uint8_t io86 = 0;         // special KC85/4 io register
 
-    /// one-time init
-    void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, system model, os_rom os);
+    static bool check_roms(system model, os_rom os);
 
     /// power-on the device
     void poweron(system m, os_rom os);
@@ -70,39 +62,29 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
+    
+    /// process a number of cycles, return final processed tick
+    uint64_t step(uint64_t start_tick, uint64_t end_tick);
+    /// perform a single debug-step
+    uint32_t step_debug();
+    /// the CPU tick callback
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    /// the PIO out callback
+    static void pio_out(int port_id, uint8_t data);
+    /// the PIO in callback
+    static uint8_t pio_in(int port_id);
+
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
     /// get pointer to framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
 
-    /// process a number of cycles, return final processed tick
-    uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// perform a single debug-step
-    uint32_t step_debug();
-    
     /// put a key as ASCII code
     void put_key(uint8_t ascii);
     /// handle keyboard input
     void handle_keyboard_input();
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
-
-    /// the z80 out callback
-    virtual void cpu_out(uint16_t port, uint8_t val) override;
-    /// the z80 in callback
-    virtual uint8_t cpu_in(uint16_t port) override;
-    /// CTC write callback
-    virtual void ctc_write(int ctc_id, int chn_id) override;
-    /// CTC zcto callback
-    virtual void ctc_zcto(int ctc_id, int chn_id) override;
-    /// Z80 PIO input callback
-    virtual uint8_t pio_in(int pio_id, int port_id) override;
-    /// Z80 PIO output callback
-    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
-    /// interrupt request callback
-    virtual void irq(bool b) override;
-    /// clock timer-trigger callback
-    virtual void timer(int timer_id) override;
 
     /// update module/memory mapping
     void update_bank_switching();
@@ -111,6 +93,10 @@ public:
 
     system cur_model = system::kc85_3;
     os_rom cur_caos = os_rom::caos_3_1;
+    int scanline_period = 0;
+    int scanline_counter = 0;
+    int vblank_period = 0;
+    int vblank_counter = 0;
     bool on = false;
     uint8_t key_code = 0;
     uint8_t* caos_c_ptr = nullptr;
@@ -120,6 +106,7 @@ public:
     uint8_t* basic_ptr = nullptr;
     int basic_size = 0;
 };
+extern kc85_t kc85;
 
 } // namespace YAKC
 

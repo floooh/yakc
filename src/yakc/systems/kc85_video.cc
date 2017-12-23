@@ -37,10 +37,8 @@ static uint32_t bg_palette[8] = {
 
 //------------------------------------------------------------------------------
 void
-kc85_video::init(system m, breadboard* b) {
+kc85_video::poweron(system m) {
     this->model = m;
-    this->board = b;
-    this->rgba8_buffer = this->board->rgba8_buffer;
     this->irm_control = 0;
 }
 
@@ -74,7 +72,7 @@ kc85_video::scanline() {
     // this needs to be called for each PAL line (one PAL line: 64 microseconds)
     if (this->cur_scanline < display_height) {
         const bool blink_bg = this->ctc_blink_flag && this->pio_blink_flag;
-        this->decode_one_line(this->rgba8_buffer, this->cur_scanline, blink_bg);
+        this->decode_one_line(board.rgba8_buffer, this->cur_scanline, blink_bg);
     }
     this->cur_scanline++;
     // wraparound pal line counter at 312 lines (see KC85/3 service manual),
@@ -114,8 +112,8 @@ kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
     if (system::kc85_4 == this->model) {
         // KC85/4
         int irm_index = (this->irm_control & 1) * 2;
-        const uint8_t* pixel_data = this->board->ram[irm0_page + irm_index];
-        const uint8_t* color_data = this->board->ram[irm0_page + irm_index + 1];
+        const uint8_t* pixel_data = board.ram[irm0_page + irm_index];
+        const uint8_t* color_data = board.ram[irm0_page + irm_index + 1];
         for (int x = 0; x < width; x++) {
             int offset = y | (x<<8);
             uint8_t src_pixels = pixel_data[offset];
@@ -125,8 +123,8 @@ kc85_video::decode_one_line(unsigned int* dst_start, int y, bool blink_bg) {
     }
     else {
         // KC85/3
-        const uint8_t* pixel_data = this->board->ram[irm0_page];
-        const uint8_t* color_data = this->board->ram[irm0_page] + 0x2800;
+        const uint8_t* pixel_data = board.ram[irm0_page];
+        const uint8_t* color_data = board.ram[irm0_page] + 0x2800;
         const int left_pixel_offset  = (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>4)&0xF)<<9);
         const int left_color_offset  = (((y>>2)&0x3f)<<5);
         const int right_pixel_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>6)&0x3)<<9);

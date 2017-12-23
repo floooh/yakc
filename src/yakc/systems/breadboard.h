@@ -33,6 +33,7 @@ struct breadboard {
     z80ctc_t z80ctc;
     ay38912_t ay38912;
     beeper_t beeper;
+    beeper_t beeper2;
     kbd_t kbd;
     /*
     class mos6502 mos6502;

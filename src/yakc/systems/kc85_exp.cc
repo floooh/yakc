@@ -2,12 +2,13 @@
 //  kc85_exp.cc
 //------------------------------------------------------------------------------
 #include "kc85_exp.h"
+#include "breadboard.h"
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-kc85_exp::init() {
+kc85_exp::poweron() {
     // base device module slots, order is important
     this->slots[0].slot_addr = 0x08;
     this->slots[1].slot_addr = 0x0C;
@@ -184,9 +185,9 @@ kc85_exp::insert_module(uint8_t slot_addr, module_type type) {
 
 //------------------------------------------------------------------------------
 void
-kc85_exp::remove_module(uint8_t slot_addr, memory& mem) {
+kc85_exp::remove_module(uint8_t slot_addr) {
     YAKC_ASSERT(this->slot_occupied(slot_addr));
-    mem.unmap_layer(this->memory_layer_by_slot_addr(slot_addr));
+    mem_unmap_layer(&board.mem, this->memory_layer_by_slot_addr(slot_addr));
     auto& slot = this->slot_by_addr(slot_addr);
     slot.addr = 0x0000;
     if (slot.mod.mem_owned && slot.mod.mem_ptr) {
@@ -217,11 +218,11 @@ kc85_exp::module_type_in_slot(uint8_t slot_addr) const {
 
 //------------------------------------------------------------------------------
 void
-kc85_exp::update_memory_mappings(memory& mem) {
+kc85_exp::update_memory_mappings() {
     for (auto& slot : this->slots) {
         if (0xFF != slot.mod.id) {
             const int memory_layer = this->memory_layer_by_slot_addr(slot.slot_addr);
-            mem.unmap_layer(memory_layer);
+            mem_unmap_layer(&board.mem, memory_layer);
 
             // compute module start address from control-byte
             slot.addr = (slot.control_byte & slot.mod.addr_mask)<<8;
@@ -229,11 +230,16 @@ kc85_exp::update_memory_mappings(memory& mem) {
                 if (slot.control_byte & 0x01) {
                     // activate the module
                     bool writable = (slot.control_byte & 0x02) && slot.mod.writable;
-                    mem.map(memory_layer, slot.addr, slot.mod.mem_size, slot.mod.mem_ptr, writable);
+                    if (writable) {
+                        mem_map_ram(&board.mem, memory_layer, slot.addr, slot.mod.mem_size, slot.mod.mem_ptr);
+                    }
+                    else {
+                        mem_map_rom(&board.mem, memory_layer, slot.addr, slot.mod.mem_size, slot.mod.mem_ptr);
+                    }
                 }
                 else {
                     // deactivate the module
-                    mem.unmap_layer(memory_layer);
+                    mem_unmap_layer(&board.mem, memory_layer);
                 }
             }
         }

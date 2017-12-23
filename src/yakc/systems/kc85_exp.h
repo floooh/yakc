@@ -5,7 +5,6 @@
     @brief emulate the KC85 expansion slot system
 */
 #include "yakc/core/core.h"
-#include "yakc/core/memory.h"
 
 namespace YAKC {
 
@@ -45,7 +44,7 @@ public:
     };
 
     /// initialize the expansion system
-    void init();
+    void poweron();
     /// reset the expansion system
     void reset();
 
@@ -78,14 +77,14 @@ public:
     /// insert module into slot, slot must be free!
     void insert_module(uint8_t slot_addr, module_type type);
     /// remove an expansion module
-    void remove_module(uint8_t slot_addr, memory& mem);
+    void remove_module(uint8_t slot_addr);
 
     /// update module control byte
     void update_control_byte(uint8_t slot_addr, uint8_t ctrl_byte);
     /// get module type in slot (0xFF if slot doesn't exist or no module in slot)
     uint8_t module_type_in_slot(uint8_t slot_addr) const;
     /// map or unmap a module based on its current control byte
-    void update_memory_mappings(memory& mem);
+    void update_memory_mappings();
 
     /// convert a slot address to a memory layer
     int memory_layer_by_slot_addr(uint8_t slot_addr) const;

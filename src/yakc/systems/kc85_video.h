@@ -11,7 +11,7 @@ namespace YAKC {
 class kc85_video {
 public:
     /// initialize the video hardware
-    void init(system m, breadboard* b);
+    void poweron(system m);
     /// reset the video hardware
     void reset();
 
@@ -34,10 +34,8 @@ public:
     static const int display_height = 256;
     static_assert(display_width <= global_max_fb_width, "kc85 fb size");
     static_assert(display_height <= global_max_fb_height, "kc85 fb size");
-    uint32_t* rgba8_buffer = nullptr;
 
     static const int irm0_page = 4;
-    breadboard* board = nullptr;
     system model = system::kc85_3;
     uint8_t irm_control = 0;
     bool pio_blink_flag = true;

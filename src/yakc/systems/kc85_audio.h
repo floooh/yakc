@@ -23,7 +23,7 @@ namespace YAKC {
 class kc85_audio {
 public:
     /// initialize the audio hardware
-    void init(breadboard* board);
+    void poweron();
     /// reset the audio hardware
     void reset();
     /// called after executing CPU instruction
