@@ -46,10 +46,10 @@ public:
 
     kc85_video video;
     kc85_exp exp;
-    uint8_t pio_a = 0;        // backing for PIO-A data
-    uint8_t pio_b = 0;        // backing for PIO-B data
-    uint8_t io84 = 0;         // special KC85/4 io register
-    uint8_t io86 = 0;         // special KC85/4 io register
+    uint8_t pio_a = 0;          // current pio_a content, used by bankswitching
+    uint8_t pio_b = 0;          // current pio_b content, used by bankswitching
+    uint8_t io84 = 0;           // special KC85/4 io register
+    uint8_t io86 = 0;           // special KC85/4 io register
 
     /// check if required roms are loaded
     static bool check_roms(system model, os_rom os);

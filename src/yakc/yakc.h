@@ -11,8 +11,8 @@
 #include "yakc/systems/z1013.h"
 #include "yakc/systems/z9001.h"
 #include "yakc/systems/zx.h"
-/*
 #include "yakc/systems/kc85.h"
+/*
 #include "yakc/systems/cpc.h"
 #include "yakc/systems/atom.h"
 #include "yakc/systems/bbcmicro.h"
@@ -68,7 +68,6 @@ public:
     system model = system::none;
     os_rom os = os_rom::none;
 /*
-    class kc85 kc85;
     class cpc cpc;
     class atom atom;
     class bbcmicro bbcmicro;

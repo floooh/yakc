@@ -272,8 +272,10 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
     }
 
     // tick the beeper
-    if (beeper_tick(&board.beeper, num_ticks)) {
-        board.audiobuffer.write(board.beeper.sample);
+    for (int i = 0; i < num_ticks; i++) {
+        if (beeper_tick(&board.beeper)) {
+            board.audiobuffer.write(board.beeper.sample);
+        }
     }
 
     // on Spectrum 128, tick the AY-38912 chip

@@ -84,7 +84,11 @@ kc85_t::poweron(system m, os_rom os) {
     this->vblank_counter = this->vblank_period;
 
     // initial memory map
-    cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x88, 0x9f));
+    this->pio_a = PIO_A_RAM|PIO_A_IRM|PIO_A_CAOS_ROM;
+    if (system::kc85_3 == this->cur_model) {
+        this->pio_a |= PIO_A_BASIC_ROM;
+    }
+    this->update_bank_switching();
 
     // execution on power-on starts at 0xF000
     board.z80.PC = 0xF000;
@@ -108,6 +112,8 @@ kc85_t::reset() {
     z80_reset(&board.z80);
     z80ctc_reset(&board.z80ctc);
     z80pio_reset(&board.z80pio);
+    this->pio_a = 0;
+    this->pio_b = 0;
     this->io84 = 0;
     this->io86 = 0;
     // execution after reset starts at 0xE000
@@ -115,14 +121,15 @@ kc85_t::reset() {
 }
 
 //------------------------------------------------------------------------------
-uint64_t cpu_tick(int num_ticks, uint64_t pins) {
+uint64_t
+kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
 
     // decode new video scanline?
     kc85.scanline_counter -= num_ticks;
     if (kc85.scanline_counter <= 0) {
-        kc85.scanline_counter += kc85.vblank_period;
+        kc85.scanline_counter += kc85.scanline_period;
         kc85.video.scanline();
-        // vertical blank signal? this trigger CTC2 for the video blinking effect
+        // vertical blank signal? this triggers CTC2 for the video blinking effect
         if (--kc85.vblank_counter == 0) {
             kc85.vblank_counter = kc85.vblank_period;
             pins |= Z80CTC_CLKTRG2;
@@ -143,6 +150,13 @@ uint64_t cpu_tick(int num_ticks, uint64_t pins) {
         if (pins & Z80CTC_ZCTO2) {
             kc85.video.ctc_blink();
         }
+        pins &= Z80_PIN_MASK;
+        if (beeper_tick(&board.beeper)) {
+            board.audiobuffer.write(board.beeper.sample);
+        }
+        if (beeper_tick(&board.beeper2)) {
+            board.audiobuffer2.write(board.beeper2.sample);
+        }
     }
 
     // memory and IO requests
@@ -159,18 +173,89 @@ uint64_t cpu_tick(int num_ticks, uint64_t pins) {
     else if (pins & Z80_IORQ) {
         // IO request machine cycle
 
-        // FIXME: chip-enable pins for CTC and PIO
+        // on the KC85/3, the chips-select signals for the CTC and PIO
+        // are generated through logic gates, on KC85/4 this is implemented
+        // with a PROM chip (details are in the KC85/3 and KC85/4 service manuals)
+        //
+        // the I/O addresses are as follows:
+        //
+        //      0x88:   PIO Port A, data
+        //      0x89:   PIO Port B, data
+        //      0x8A:   PIO Port A, control
+        //      0x8B:   PIO Port B, control
+        //      0x8C:   CTC Channel 0
+        //      0x8D:   CTC Channel 0
+        //      0x8E:   CTC Channel 0
+        //      0x8F:   CTC Channel 0
+        //
+        //      0x80:   controls the expansion module system, the upper
+        //              8-bits of the port number address the module slot
+        //      0x84:   (KC85/4 only) control the vide memory bank switching
+        //      0x86:   (KC85/4 only) control RAM block at 0x4000 and ROM switching
 
-        pins = pins & Z80_PIN_MASK;
-        if (chip_enable) {
-            switch (chip_select) {
+        // check if any of the valid port numbers is addressed (0x80..0x8F)
+        if ((pins & (Z80_A7|Z80_A6|Z80_A5|Z80_A4)) == Z80_A7) {
+            // check if the PIO or CTC is addressed (0x88 to 0x8F)
+            if (pins & Z80_A3) {
+                pins &= Z80_PIN_MASK;
+                // bit A2 selects the PIO or CTC
+                if (pins & Z80_A2) {
+                    // a CTC IO request
+                    pins |= Z80CTC_CE;
+                    if (pins & Z80_A0) { pins |= Z80CTC_CS0; }
+                    if (pins & Z80_A1) { pins |= Z80CTC_CS1; }
+                    pins = z80ctc_iorq(&board.z80ctc, pins) & Z80_PIN_MASK;
+                }
+                else {
+                    // a PIO IO request
+                    pins |= Z80PIO_CE;
+                    if (pins & Z80_A0) { pins |= Z80PIO_BASEL; }
+                    if (pins & Z80_A1) { pins |= Z80PIO_CDSEL; }
+                    pins = z80pio_iorq(&board.z80pio, pins) & Z80_PIN_MASK;
+                }
+            }
+            else {
+                // we're in range 0x80..0x87
+                const uint8_t data = Z80_DATA(pins);
+                switch (pins & (Z80_A2|Z80_A1|Z80_A0)) {
+                    case 0x00:
+                        // port 0x80: expansion module control, high byte
+                        // of port address contains module slot address
+                        {
+                            const uint8_t slot_addr = Z80_ADDR(pins)>>8;
+                            if (pins & Z80_WR) {
+                                // write expansion slot control byte
+                                if (kc85.exp.slot_exists(slot_addr)) {
+                                    kc85.exp.update_control_byte(slot_addr, data);
+                                    kc85.update_bank_switching();
+                                }
+                            }
+                            else {
+                                // read expansion slot module type
+                                return kc85.exp.module_type_in_slot(slot_addr);
+                            }
+                        }
+                        break;
 
+                    case 0x04:
+                        // port 0x84, KC85/4 only, this is a write-only 8-bit latch
+                        if ((system::kc85_4 == kc85.cur_model) && (pins & Z80_WR)) {
+                            kc85.io84 = data;
+                            kc85.video.kc85_4_irm_control(data);
+                            kc85.update_bank_switching();
+                        }
+                        break;
+
+                    case 0x06:
+                        // port 0x86, KC85/4 only, this is a write-only 8-bit latch
+                        if ((system::kc85_4 == kc85.cur_model) && (pins & Z80_WR)) {
+                            kc85.io86 = data;
+                            kc85.update_bank_switching();
+                        }
+                        break;
+                }
             }
         }
-        else {
-            // FIXME: module control, and additional KC85/4 hardware latches
-        }
-        
     }
 
     // interrupt daisy chain, CTC is higher priority then PIO
@@ -224,6 +309,28 @@ kc85_t::update_rom_pointers() {
             YAKC_ASSERT(false);
             break;
     }
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+kc85_t::pio_in(int port_id) {
+    //return z80pio::A == port_id ? this->pio_a : this->pio_b;
+    return 0xFF;
+}
+
+//------------------------------------------------------------------------------
+void
+kc85_t::pio_out(int port_id, uint8_t val) {
+    if (Z80PIO_PORT_A == port_id) {
+        kc85.pio_a = val;
+    }
+    else {
+        kc85.pio_b = val;
+        kc85.video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
+        // FIXME: audio volume
+        //this->audio.update_volume(val & PIO_B_VOLUME_MASK);
+    }
+    kc85.update_bank_switching();
 }
 
 //------------------------------------------------------------------------------
@@ -337,124 +444,6 @@ kc85_t::handle_keyboard_input() {
             mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8)|keyready);
             mem_wr(&board.mem, ix+0xA, 0);
         }
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-kc85_t::cpu_out(uint16_t port, uint8_t val) {
-    switch (port & 0xFF) {
-        case 0x80:
-            if (this->exp.slot_exists(port>>8)) {
-                this->exp.update_control_byte(port>>8, val);
-                this->update_bank_switching();
-            }
-            break;
-        case 0x84:
-            if (system::kc85_4 == this->cur_model) {
-                this->io84 = val;
-                this->video.kc85_4_irm_control(val);
-                this->update_bank_switching();
-            }
-            break;
-        case 0x86:
-            if (system::kc85_4 == this->cur_model) {
-                this->io86 = val;
-                this->update_bank_switching();
-            }
-            break;
-        case 0x88:
-            this->board->z80pio.write_data(this, z80pio::A, val);
-            break;
-        case 0x89:
-            this->board->z80pio.write_data(this, z80pio::B, val);
-            break;
-        case 0x8A:
-            this->board->z80pio.write_control(z80pio::A, val);
-            break;
-        case 0x8B:
-            this->board->z80pio.write_control(z80pio::B, val);
-            break;
-        case 0x8C:
-            this->board->z80ctc.write(this, z80ctc::CTC0, val);
-            break;
-        case 0x8D:
-            this->board->z80ctc.write(this, z80ctc::CTC1, val);
-            break;
-        case 0x8E:
-            this->board->z80ctc.write(this, z80ctc::CTC2, val);
-            break;
-        case 0x8F:
-            this->board->z80ctc.write(this, z80ctc::CTC3, val);
-            break;
-        default:
-            break;
-    }
-}
-
-//------------------------------------------------------------------------------
-uint8_t
-kc85_t::cpu_in(uint16_t port) {
-    // NOTE: on KC85/4, the hardware doesn't provide a way to read-back
-    // the additional IO ports at 0x84 and 0x86 (see KC85/4 service manual)
-    switch (port & 0xFF) {
-        case 0x80:
-            return this->exp.module_type_in_slot(port>>8);
-        case 0x88:
-            return this->board->z80pio.read_data(this, z80pio::A);
-        case 0x89:
-            return this->board->z80pio.read_data(this, z80pio::B);
-        case 0x8A:
-        case 0x8B:
-            return this->board->z80pio.read_control();
-        case 0x8C:
-            return this->board->z80ctc.read(z80ctc::CTC0);
-        case 0x8D:
-            return this->board->z80ctc.read(z80ctc::CTC1);
-        case 0x8E:
-            return this->board->z80ctc.read(z80ctc::CTC2);
-        case 0x8F:
-            return this->board->z80ctc.read(z80ctc::CTC3);
-        default:
-            return 0xFF;
-    }
-}
-
-//------------------------------------------------------------------------------
-uint8_t
-kc85_t::pio_in(int port_id) {
-    return z80pio::A == port_id ? this->pio_a : this->pio_b;
-}
-
-//------------------------------------------------------------------------------
-void
-kc85_t::pio_out(int port_id, uint8_t val) {
-    if (z80pio::A == port_id) {
-        this->pio_a = val;
-        this->update_bank_switching();
-    }
-    else {
-        this->pio_b = val;
-        this->video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
-        // FIXME: audio volume
-        //this->audio.update_volume(val & PIO_B_VOLUME_MASK);
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-kc85_t::timer(int timer_id) {
-    switch (timer_id) {
-        case 0:
-            // timer 0 is a 50Hz vertical blank timer and controls the
-            // foreground color blinking
-            this->board->z80ctc.ctrg(this, z80ctc::CTC2);
-            break;
-        case 1:
-            // timer 1 triggers every PAL line (64ns) for the video scanline
-            // decoder callback
-            this->video.scanline();
-            break;
     }
 }
 

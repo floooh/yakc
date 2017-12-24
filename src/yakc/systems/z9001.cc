@@ -232,12 +232,14 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
             z9001.blink_counter = (board.freq_hz * 8) / 25;
             z9001.blink_flip_flop = !z9001.blink_flip_flop;
         }
+        pins &= Z80_PIN_MASK;
+
+        if (beeper_tick(&board.beeper)) {
+            // new audio sample is ready
+            board.audiobuffer.write(board.beeper.sample);
+        }
     }
     z9001.ctc_zcto2 = (pins & Z80CTC_ZCTO2);
-    if (beeper_tick(&board.beeper, num_ticks)) {
-        // new audio sample is ready
-        board.audiobuffer.write(board.beeper.sample);
-    }
 
     /* memory and IO requests */
     if (pins & Z80_MREQ) {
@@ -258,7 +260,7 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
         const bool chip_enable = (pins & (Z80_IORQ|Z80_M1|Z80_A7|Z80_A6)) == (Z80_IORQ|Z80_A7);
         const int chip_select = (pins & (Z80_A5|Z80_A4|Z80_A3))>>3;
 
-        pins = pins & Z80_PIN_MASK;
+        pins &= Z80_PIN_MASK;
         if (chip_enable) {
             switch (chip_select) {
                 /* IO request on CTC? */
