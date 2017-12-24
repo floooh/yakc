@@ -314,7 +314,6 @@ kc85_t::update_rom_pointers() {
 //------------------------------------------------------------------------------
 uint8_t
 kc85_t::pio_in(int port_id) {
-    //return z80pio::A == port_id ? this->pio_a : this->pio_b;
     return 0xFF;
 }
 
