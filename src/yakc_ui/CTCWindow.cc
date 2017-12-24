@@ -27,8 +27,6 @@ drawModeBit(const yakc& emu, int chn_index, uint8_t mask, const char* name, cons
     }
 }
 
-
-
 //------------------------------------------------------------------------------
 bool
 CTCWindow::Draw(yakc& emu) {
