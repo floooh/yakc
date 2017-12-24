@@ -8,7 +8,6 @@
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
 #include "yakc/core/filetypes.h"
-#include "yakc/systems/kc85_video.h"
 #include "yakc/systems/kc85_exp.h"
 
 namespace YAKC {
@@ -44,7 +43,6 @@ public:
         IO86_CAOS_ROM_C = (1<<7)
     };
 
-    kc85_video video;
     kc85_exp exp;
     uint8_t pio_a = 0;          // current pio_a content, used by bankswitching
     uint8_t pio_b = 0;          // current pio_b content, used by bankswitching
@@ -76,6 +74,10 @@ public:
 
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
+    /// decode 8 pixels
+    void decode_8pixels(uint32_t* ptr, uint8_t pixels, uint8_t colors, bool blink_off) const;
+    /// decode current video scanline
+    void decode_scanline();
     /// get pointer to framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
 
@@ -93,10 +95,6 @@ public:
 
     system cur_model = system::kc85_3;
     os_rom cur_caos = os_rom::caos_3_1;
-    int scanline_period = 0;
-    int scanline_counter = 0;
-    int vblank_period = 0;
-    int vblank_counter = 0;
     bool on = false;
     uint8_t key_code = 0;
     uint8_t* caos_c_ptr = nullptr;
@@ -105,6 +103,18 @@ public:
     int caos_e_size = 0;
     uint8_t* basic_ptr = nullptr;
     int basic_size = 0;
+
+    // video hardware
+    static const int display_width = 320;
+    static const int display_height = 256;
+    static_assert(display_width <= global_max_fb_width, "kc85 fb size");
+    static_assert(display_height <= global_max_fb_height, "kc85 fb size");
+    static const int irm0_page = 4;
+    static const int num_scanlines = 312;
+    int scanline_period = 0;
+    int scanline_counter = 0;
+    int cur_scanline = 0;
+    bool ctc_blink_flag = true;
 };
 extern kc85_t kc85;
 

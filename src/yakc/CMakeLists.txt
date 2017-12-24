@@ -27,7 +27,6 @@ fips_begin_module(yakc)
         breadboard.h breadboard.cc
         rom_images.h rom_images.cc
         kc85.h kc85.cc
-        kc85_video.h kc85_video.cc
         kc85_exp.h kc85_exp.cc
         z1013.h z1013.cc
         z9001.h z9001.cc

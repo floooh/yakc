@@ -8,6 +8,38 @@ namespace YAKC {
 
 kc85_t kc85;
 
+// foreground colors
+static uint32_t fg_palette[16] = {
+    0xFF000000,     // black
+    0xFFFF0000,     // blue
+    0xFF0000FF,     // red
+    0xFFFF00FF,     // magenta
+    0xFF00FF00,     // green
+    0xFFFFFF00,     // cyan
+    0xFF00FFFF,     // yellow
+    0xFFFFFFFF,     // white
+    0xFF000000,     // black #2
+    0xFFFF00A0,     // violet
+    0xFF00A0FF,     // orange
+    0xFFA000FF,     // purple
+    0xFFA0FF00,     // blueish green
+    0xFFFFA000,     // greenish blue
+    0xFF00FFA0,     // yellow-green
+    0xFFFFFFFF,     // white #2
+};
+
+// background colors
+static uint32_t bg_palette[8] = {
+    0xFF000000,      // black
+    0xFFA00000,      // dark-blue
+    0xFF0000A0,      // dark-red
+    0xFFA000A0,      // dark-magenta
+    0xFF00A000,      // dark-green
+    0xFFA0A000,      // dark-cyan
+    0xFF00A0A0,      // dark-yellow
+    0xFFA0A0A0,      // gray
+};
+
 //------------------------------------------------------------------------------
 bool
 kc85_t::check_roms(system model, os_rom os) {
@@ -74,14 +106,12 @@ kc85_t::poweron(system m, os_rom os) {
     beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     beeper_init(&board.beeper2, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     this->exp.poweron();
-    this->video.poweron(m);
+    this->cur_scanline = 0;
 
     // scanline length in clock ticks
     this->scanline_period = (m == system::kc85_4) ? 113 : 112;
     this->scanline_counter = this->scanline_period;
-    // vertical blank trigger period in ticks (312 scanlines)
-    this->vblank_period = 312;
-    this->vblank_counter = this->vblank_period;
+    this->cur_scanline = 0;
 
     // initial memory map
     this->pio_a = PIO_A_RAM|PIO_A_IRM|PIO_A_CAOS_ROM;
@@ -106,7 +136,6 @@ kc85_t::poweroff() {
 void
 kc85_t::reset() {
     this->exp.reset();
-    this->video.reset();
     beeper_reset(&board.beeper);
     beeper_reset(&board.beeper2);
     z80_reset(&board.z80);
@@ -116,6 +145,9 @@ kc85_t::reset() {
     this->pio_b = 0;
     this->io84 = 0;
     this->io86 = 0;
+    this->cur_scanline = 0;
+    this->scanline_counter = this->scanline_period;
+
     // execution after reset starts at 0xE000
     board.z80.PC = 0xE000;
 }
@@ -124,14 +156,17 @@ kc85_t::reset() {
 uint64_t
 kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
 
-    // decode new video scanline?
+    // video decoding
     kc85.scanline_counter -= num_ticks;
     if (kc85.scanline_counter <= 0) {
         kc85.scanline_counter += kc85.scanline_period;
-        kc85.video.scanline();
+        if (kc85.cur_scanline < display_height) {
+            kc85.decode_scanline();
+        }
+        kc85.cur_scanline++;
         // vertical blank signal? this triggers CTC2 for the video blinking effect
-        if (--kc85.vblank_counter == 0) {
-            kc85.vblank_counter = kc85.vblank_period;
+        if (kc85.cur_scanline >= 312) {
+            kc85.cur_scanline = 0;
             pins |= Z80CTC_CLKTRG2;
         }
     }
@@ -148,7 +183,7 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
         // CTC channel 2 trigger controls video blink frequency
         if (pins & Z80CTC_ZCTO2) {
-            kc85.video.ctc_blink();
+            kc85.ctc_blink_flag = !kc85.ctc_blink_flag;
         }
         pins &= Z80_PIN_MASK;
         if (beeper_tick(&board.beeper)) {
@@ -241,7 +276,6 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
                         // port 0x84, KC85/4 only, this is a write-only 8-bit latch
                         if ((system::kc85_4 == kc85.cur_model) && (pins & Z80_WR)) {
                             kc85.io84 = data;
-                            kc85.video.kc85_4_irm_control(data);
                             kc85.update_bank_switching();
                         }
                         break;
@@ -319,15 +353,13 @@ kc85_t::pio_in(int port_id) {
 
 //------------------------------------------------------------------------------
 void
-kc85_t::pio_out(int port_id, uint8_t val) {
+kc85_t::pio_out(int port_id, uint8_t data) {
     if (Z80PIO_PORT_A == port_id) {
-        kc85.pio_a = val;
+        kc85.pio_a = data;
     }
     else {
-        kc85.pio_b = val;
-        kc85.video.pio_blink_enable(0 != (val & PIO_B_BLINK_ENABLED));
+        kc85.pio_b = data;
         // FIXME: audio volume
-        //this->audio.update_volume(val & PIO_B_VOLUME_MASK);
     }
     kc85.update_bank_switching();
 }
@@ -450,7 +482,6 @@ kc85_t::handle_keyboard_input() {
 void
 kc85_t::update_bank_switching() {
     mem_unmap_layer(&board.mem, 0);
-
     if (system::kc85_4 != this->cur_model) {
         // ** KC85/3 or KC85/2 **
 
@@ -460,7 +491,7 @@ kc85_t::update_bank_switching() {
         }
         // 16 KByte video memory at 0x8000
         if (pio_a & PIO_A_IRM) {
-            mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[kc85_video::irm0_page]);
+            mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[irm0_page]);
         }
         // 8 KByte BASIC ROM at 0xC000 (only KC85/3)
         if (system::kc85_3 == this->cur_model) {
@@ -493,7 +524,7 @@ kc85_t::update_bank_switching() {
         // the area A800 to BFFF is always mapped to IRM0!
         if (pio_a & PIO_A_IRM) {
             int irm_index = (this->io84 & 6)>>1;
-            uint8_t* irm_ptr = board.ram[kc85_video::irm0_page + irm_index];
+            uint8_t* irm_ptr = board.ram[irm0_page + irm_index];
             // on the KC85, an access to IRM banks other than the
             // first is only possible for the first 10 KByte until
             // A800, memory access to the remaining 6 KBytes
@@ -502,7 +533,7 @@ kc85_t::update_bank_switching() {
             mem_map_ram(&board.mem, 0, 0x8000, 0x2800, irm_ptr);
 
             // always force access to A800 and above to the first IRM bank
-            mem_map_ram(&board.mem, 0, 0xA800, 0x1800, board.ram[kc85_video::irm0_page]+0x2800);
+            mem_map_ram(&board.mem, 0, 0xA800, 0x1800, board.ram[irm0_page]+0x2800);
         }
         // 8 KByte BASIC ROM at 0xC000
         if (pio_a & PIO_A_BASIC_ROM) {
@@ -530,10 +561,79 @@ kc85_t::decode_audio(float* buffer, int num_samples) {
 }
 
 //------------------------------------------------------------------------------
+void
+kc85_t::decode_8pixels(uint32_t* ptr, uint8_t pixels, uint8_t colors, bool blink_bg) const {
+    // select foreground- and background color:
+    //  bit 7: blinking
+    //  bits 6..3: foreground color
+    //  bits 2..0: background color
+    //
+    // index 0 is background color, index 1 is foreground color
+    const uint8_t bg_index = colors & 0x7;
+    const uint8_t fg_index = (colors>>3)&0xF;
+    const unsigned int bg = bg_palette[bg_index];
+    const unsigned int fg = (blink_bg && (colors & 0x80)) ? bg : fg_palette[fg_index];
+    ptr[0] = pixels & 0x80 ? fg : bg;
+    ptr[1] = pixels & 0x40 ? fg : bg;
+    ptr[2] = pixels & 0x20 ? fg : bg;
+    ptr[3] = pixels & 0x10 ? fg : bg;
+    ptr[4] = pixels & 0x08 ? fg : bg;
+    ptr[5] = pixels & 0x04 ? fg : bg;
+    ptr[6] = pixels & 0x02 ? fg : bg;
+    ptr[7] = pixels & 0x01 ? fg : bg;
+}
+
+//------------------------------------------------------------------------------
+void
+kc85_t::decode_scanline() {
+    const int y = this->cur_scanline;
+    const bool blink_bg = this->ctc_blink_flag && (this->pio_b & PIO_B_BLINK_ENABLED);
+    const int width = display_width>>3;
+    unsigned int* dst_ptr = &(board.rgba8_buffer[y*display_width]);
+    if (system::kc85_4 == this->cur_model) {
+        // KC85/4
+        int irm_index = (this->io84 & 1) * 2;
+        const uint8_t* pixel_data = board.ram[irm0_page + irm_index];
+        const uint8_t* color_data = board.ram[irm0_page + irm_index + 1];
+        for (int x = 0; x < width; x++) {
+            int offset = y | (x<<8);
+            uint8_t src_pixels = pixel_data[offset];
+            uint8_t src_colors = color_data[offset];
+            this->decode_8pixels(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
+        }
+    }
+    else {
+        // KC85/3
+        const uint8_t* pixel_data = board.ram[irm0_page];
+        const uint8_t* color_data = board.ram[irm0_page] + 0x2800;
+        const int left_pixel_offset  = (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>4)&0xF)<<9);
+        const int left_color_offset  = (((y>>2)&0x3f)<<5);
+        const int right_pixel_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | ((y&0x3)<<7) | (((y>>6)&0x3)<<9);
+        const int right_color_offset = (((y>>4)&0x3)<<3) | (((y>>2)&0x3)<<5) | (((y>>6)&0x3)<<7);
+        int pixel_offset, color_offset;
+        for (int x = 0; x < width; x++) {
+            if (x < 0x20) {
+                // left 256x256 quad
+                pixel_offset = x | left_pixel_offset;
+                color_offset = x | left_color_offset;
+            }
+            else {
+                // right 64x256 strip
+                pixel_offset = 0x2000 + ((x&0x7) | right_pixel_offset);
+                color_offset = 0x0800 + ((x&0x7) | right_color_offset);
+            }
+            uint8_t src_pixels = pixel_data[pixel_offset];
+            uint8_t src_colors = color_data[color_offset];
+            this->decode_8pixels(&(dst_ptr[x<<3]), src_pixels, src_colors, blink_bg);
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
 const void*
 kc85_t::framebuffer(int& out_width, int& out_height) {
-    out_width = kc85_video::display_width;
-    out_height = kc85_video::display_height;
+    out_width = display_width;
+    out_height = display_height;
     return board.rgba8_buffer;
 }
 
