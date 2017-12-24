@@ -232,7 +232,7 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
                             }
                             else {
                                 // read expansion slot module type
-                                return kc85.exp.module_type_in_slot(slot_addr);
+                                Z80_SET_DATA(pins, kc85.exp.module_type_in_slot(slot_addr));
                             }
                         }
                         break;
