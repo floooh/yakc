@@ -317,7 +317,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 data |= (~kbd_lines) & 0x1F;
                 Z80_SET_DATA(pins, data);
             }
-            else if ((pins & (Z80_A7|Z80_A7|Z80_A5)) == 0) {
+            else if ((pins & (Z80_A7|Z80_A6|Z80_A5)) == 0) {
                 // Kempston Joystick (........000.....)
                 uint8_t data = 0;
                 if (zx.joy_mask & joystick::left) {
