@@ -260,11 +260,11 @@ return 0;
 uint64_t
 zx_t::cpu_tick(int num_ticks, uint64_t pins) {
 
-    // handle per-tick counters
+    // video decoding and vblank interrupt
     zx.scanline_counter -= num_ticks;
     if (zx.scanline_counter <= 0) {
         zx.scanline_counter += zx.scanline_period;
-        // decode next scanline
+        // decode next video scanline
         if (zx.scanline()) {
             // request vblank interrupt
             pins |= Z80_INT;
@@ -278,7 +278,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
     }
 
-    // on Spectrum 128, tick the AY-38912 chip
+    // on Spectrum 128, tick the AY-3-8912 chip
     if (system::zxspectrum128k == zx.cur_model) {
         if (ay38912_tick(&board.ay38912, num_ticks)) {
             board.audiobuffer2.write(board.ay38912.sample);
@@ -288,37 +288,38 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
     // memory and IO requests
     if (pins & Z80_MREQ) {
         // a memory request machine cycle
-        const uint16_t addr = Z80_ADDR(pins);
+        // FIXME: 'contended memory' accesses should inject wait states
+        const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
             Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
         }
         else if (pins & Z80_WR) {
-            mem_wr(&board.mem, addr, Z80_DATA(pins));
+            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if (pins & Z80_IORQ) {
         // an IO request machine cycle
         // see http://problemkaputt.de/zxdocs.htm#zxspectrum for address decoding
-        const uint16_t addr = Z80_ADDR(pins);
         if (pins & Z80_RD) {
             // an IO read
-            uint8_t data = 0;
             // FIXME: reading from port xxFF should return 'current VRAM data'
-            if ((addr & 1) == 0) {
+            if ((pins & Z80_A0) == 0) {
                 // Spectrum ULA (...............0)
                 // Bits 5 and 7 as read by INning from Port 0xfe are always one
-                data |= (1<<7)|(1<<5);
+                uint8_t data = (1<<7)|(1<<5);
                 // MIC/EAR flags -> bit 6
                 if (zx.last_fe_out & (1<<3|1<<4)) {
                     data |= (1<<6);
                 }
-                // keyboard matrix bits
-                uint16_t column_mask = (~(addr>>8)) & 0x00FF;
+                // keyboard matrix bits are encoded in the upper 8 bit of the port address
+                uint16_t column_mask = (~(Z80_GET_ADDR(pins)>>8)) & 0x00FF;
                 const uint8_t kbd_lines = kbd_test_lines(&board.kbd, column_mask);
                 data |= (~kbd_lines) & 0x1F;
+                Z80_SET_DATA(pins, data);
             }
-            else if ((addr & ((1<<7)|(1<<6)|(1<<5))) == 0) {
+            else if ((pins & (Z80_A7|Z80_A7|Z80_A5)) == 0) {
                 // Kempston Joystick (........000.....)
+                uint8_t data = 0;
                 if (zx.joy_mask & joystick::left) {
                     data |= 1<<1;
                 }
@@ -334,19 +335,19 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 if (zx.joy_mask & joystick::btn0) {
                     data |= 1<<4;
                 }
+                Z80_SET_DATA(pins, data);
             }
             else if (system::zxspectrum128k == zx.cur_model) {
                 // read from AY-3-8912 (11............0.)
-                if ((addr & ((1<<15)|(1<<14)|(1<<1))) == ((1<<15)|(1<<14))) {
+                if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == (Z80_A15|Z80_A14)) {
                     pins = ay38912_iorq(&board.ay38912, AY38912_BC1|pins) & Z80_PIN_MASK;
                 }
             }
-            Z80_SET_DATA(pins, data);
         }
         else if (pins & Z80_WR) {
             // an IO write
-            const uint8_t data = Z80_DATA(pins);
-            if ((addr & 1) == 0) {
+            const uint8_t data = Z80_GET_DATA(pins);
+            if ((pins & Z80_A0) == 0) {
                 // Spectrum ULA (...............0)
                 // "every even IO port addresses the ULA but to avoid
                 // problems with other I/O devices, only FE should be used"
@@ -360,7 +361,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
             else if (system::zxspectrum128k == zx.cur_model) {
                 // Spectrum 128 memory control (0.............0.)
                 // http://8bit.yarek.pl/computer/zx.128/
-                if ((addr & ((1<<15)|(1<<1))) == 0) {
+                if ((pins & (Z80_A15|Z80_A1)) == 0) {
                     if (!zx.memory_paging_disabled) {
                         // bit 3 defines the video scanout memory bank (5 or 7)
                         zx.display_ram_bank = (data & (1<<3)) ? 7 : 5;
@@ -384,12 +385,11 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                         zx.memory_paging_disabled = true;
                     }
                 }
-                // FIXME: better address decoding for AY-3-8912!
-                else if ((addr & ((1<<15)|(1<<14)|(1<<1))) == ((1<<15)|(1<<14))) {
+                else if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == (Z80_A15|Z80_A14)) {
                     // select AY-3-8912 register (11............0.)
                     ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|pins);
                 }
-                else if ((addr & ((1<<15)|(1<<1))) == (1<<15)) {
+                else if ((pins & (Z80_A15|Z80_A1)) == Z80_A15) {
                     // write to AY-3-8912 (10............0.)
                     ay38912_iorq(&board.ay38912, AY38912_BDIR|pins);
                 }
@@ -448,16 +448,6 @@ zx_t::scanline() {
     else {
         return false;
     }
-}
-
-//------------------------------------------------------------------------------
-const char*
-zx_t::system_info() const {
-    return
-        "FIXME!\n\n"
-        "ZX ROM images acknowledgement:\n\n"
-        "Amstrad have kindly given their permission for the redistribution of their copyrighted material but retain that copyright.\n\n"
-        "See: http://www.worldofspectrum.org/permits/amstrad-roms.txt";
 }
 
 //------------------------------------------------------------------------------
@@ -741,6 +731,16 @@ error:
     fs->close(fp);
     fs->rm(name);
     return false;
+}
+
+//------------------------------------------------------------------------------
+const char*
+zx_t::system_info() const {
+    return
+        "FIXME!\n\n"
+        "ZX ROM images acknowledgement:\n\n"
+        "Amstrad have kindly given their permission for the redistribution of their copyrighted material but retain that copyright.\n\n"
+        "See: http://www.worldofspectrum.org/permits/amstrad-roms.txt";
 }
 
 } // namespace YAKC

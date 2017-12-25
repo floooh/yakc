@@ -151,7 +151,7 @@ uint64_t
 z1013_t::cpu_tick(int num_ticks, uint64_t pins) {
     if (pins & Z80_MREQ) {
         // a memory request
-        const uint16_t addr = Z80_ADDR(pins);
+        const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
             // a memory read
             const uint8_t data = mem_rd(&board.mem, addr);
@@ -159,7 +159,7 @@ z1013_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
         else if (pins & Z80_WR) {
             // a memory write
-            mem_wr(&board.mem, addr, Z80_DATA(pins));
+            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if (pins & Z80_IORQ) {
@@ -204,7 +204,7 @@ z1013_t::cpu_tick(int num_ticks, uint64_t pins) {
             /* port 8 is connected to a hardware latch to store the
                requested keyboard column for the next keyboard scan
             */
-            z1013.kbd_request_column = Z80_DATA(pins);
+            z1013.kbd_request_column = Z80_GET_DATA(pins);
         }
     }
     /* there are no interrupts happening in a vanilla Z1013,

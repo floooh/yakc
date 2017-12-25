@@ -197,12 +197,12 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
     // memory and IO requests
     if (pins & Z80_MREQ) {
         // memory request machine cycle
-        const uint16_t addr = Z80_ADDR(pins);
+        const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
             Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
         }
         else if (pins & Z80_WR) {
-            mem_wr(&board.mem, addr, Z80_DATA(pins));
+            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if (pins & Z80_IORQ) {
@@ -251,13 +251,13 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
             }
             else {
                 // we're in range 0x80..0x87
-                const uint8_t data = Z80_DATA(pins);
+                const uint8_t data = Z80_GET_DATA(pins);
                 switch (pins & (Z80_A2|Z80_A1|Z80_A0)) {
                     case 0x00:
                         // port 0x80: expansion module control, high byte
                         // of port address contains module slot address
                         {
-                            const uint8_t slot_addr = Z80_ADDR(pins)>>8;
+                            const uint8_t slot_addr = Z80_GET_ADDR(pins)>>8;
                             if (pins & Z80_WR) {
                                 // write expansion slot control byte
                                 if (kc85.exp.slot_exists(slot_addr)) {

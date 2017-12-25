@@ -244,12 +244,12 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
     /* memory and IO requests */
     if (pins & Z80_MREQ) {
         /* a memory request machine cycle */
-        const uint16_t addr = Z80_ADDR(pins);
+        const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
             Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
         }
         else if (pins & Z80_WR) {
-            mem_wr(&board.mem, addr, Z80_DATA(pins));
+            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if (pins & Z80_IORQ) {
