@@ -279,9 +279,9 @@ z1013_t::init_keymap_8x4() {
 
     // 4 shift keys are on column 0/1/2/3, line 3
     kbd_register_modifier(&board.kbd, 0, 0, 3);
-    kbd_register_modifier(&board.kbd, 1, 0, 3);
-    kbd_register_modifier(&board.kbd, 2, 0, 3);
-    kbd_register_modifier(&board.kbd, 3, 0, 3);
+    kbd_register_modifier(&board.kbd, 1, 1, 3);
+    kbd_register_modifier(&board.kbd, 2, 2, 3);
+    kbd_register_modifier(&board.kbd, 3, 3, 3);
     for (int layer = 0; layer < 5; layer++) {
         for (int line = 0; line < 4; line++) {
             for (int col = 0; col < 8; col++) {
