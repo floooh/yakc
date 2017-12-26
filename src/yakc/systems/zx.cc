@@ -389,7 +389,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                     // select AY-3-8912 register (11............0.)
                     ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|pins);
                 }
-                else if ((pins & (Z80_A15|Z80_A1)) == Z80_A15) {
+                else if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == Z80_A15) {
                     // write to AY-3-8912 (10............0.)
                     ay38912_iorq(&board.ay38912, AY38912_BDIR|pins);
                 }
