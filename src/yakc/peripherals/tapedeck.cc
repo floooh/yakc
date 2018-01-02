@@ -8,6 +8,8 @@
 
 namespace YAKC {
 
+tapedeck tape;
+
 //------------------------------------------------------------------------------
 bool
 tapedeck::insert_tape(const char* name_, filetype type_, const void* data, int num_bytes) {

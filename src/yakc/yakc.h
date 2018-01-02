@@ -12,9 +12,9 @@
 #include "yakc/systems/z9001.h"
 #include "yakc/systems/zx.h"
 #include "yakc/systems/kc85.h"
+#include "yakc/systems/atom.h"
 /*
 #include "yakc/systems/cpc.h"
-#include "yakc/systems/atom.h"
 #include "yakc/systems/bbcmicro.h"
 */
 
@@ -69,11 +69,9 @@ public:
     os_rom os = os_rom::none;
 /*
     class cpc cpc;
-    class atom atom;
     class bbcmicro bbcmicro;
 */
     class filesystem filesystem;
-    class tapedeck tapedeck;
 
     bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count

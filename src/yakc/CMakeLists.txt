@@ -30,7 +30,7 @@ fips_begin_module(yakc)
 #        cpc_video.h cpc_video.cc
 #        bbcmicro.h bbcmicro.cc
 #        bbcmicro_video.h bbcmicro_video.cc
-#        atom.h atom.cc
+        atom.h atom.cc
     )
     fips_dir(roms)
     fips_generate(FROM rom_dumps.yml TYPE dump)

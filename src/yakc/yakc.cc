@@ -17,7 +17,6 @@ yakc::init(const ext_funcs& sys_funcs) {
     this->overflow_cycles = 0;
 /*
     this->cpc.init(&this->board, &this->roms, &this->tapedeck);
-    this->atom.init(&this->board, &this->roms, &this->tapedeck);
     this->bbcmicro.init(&this->board, &this->roms);
 */
 }
@@ -43,12 +42,12 @@ yakc::check_roms(system m, os_rom os) {
     else if (is_system(m, system::any_kc85)) {
         return kc85_t::check_roms(m, os);
     }
+    else if (is_system(m, system::acorn_atom)) {
+        return atom_t::check_roms(m, os);
+    }
     /*
     else if (is_system(m, system::any_cpc)) {
         return cpc::check_roms(m, os);
-    }
-    else if (is_system(m, system::acorn_atom)) {
-        return atom::check_roms(m, os);
     }
     else if (is_system(m, system::bbcmicro_b)) {
         return bbcmicro::check_roms(m, os);
@@ -78,12 +77,12 @@ yakc::poweron(system m, os_rom rom) {
     else if (this->is_system(system::any_kc85)) {
         kc85.poweron(m, rom);
     }
+    else if (this->is_system(system::acorn_atom)) {
+        atom.poweron();
+    }
     /*
     else if (this->is_system(system::any_cpc)) {
         this->cpc.poweron(m);
-    }
-    else if (this->is_system(system::acorn_atom)) {
-        this->atom.poweron();
     }
     else if (this->is_system(system::bbcmicro_b)) {
         this->bbcmicro.poweron(m);
@@ -106,12 +105,12 @@ yakc::poweroff() {
     if (kc85.on) {
         kc85.poweroff();
     }
+    if (atom.on) {
+        atom.poweroff();
+    }
     /*
     if (this->cpc.on) {
         this->cpc.poweroff();
-    }
-    if (this->atom.on) {
-        this->atom.poweroff();
     }
     if (this->bbcmicro.on) {
         this->bbcmicro.poweroff();
@@ -122,7 +121,7 @@ yakc::poweroff() {
 //------------------------------------------------------------------------------
 bool
 yakc::switchedon() const {
-    return z1013.on || z9001.on | zx.on | kc85.on;
+    return z1013.on || z9001.on | zx.on | kc85.on | atom.on;
 /*
     return this->kc85.on || this->z1013.on || this->z9001.on ||
            this->zx.on || this->cpc.on || this->bbcmicro.on ||
@@ -146,12 +145,12 @@ yakc::reset() {
     if (kc85.on) {
         kc85.reset();
     }
+    if (atom.on) {
+        atom.reset();
+    }
     /*
     if (this->cpc.on) {
         this->cpc.reset();
-    }
-    if (this->atom.on) {
-        this->atom.reset();
     }
     if (this->bbcmicro.on) {
         this->bbcmicro.reset();
@@ -228,12 +227,12 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
         else if (kc85.on) {
             this->abs_cycle_count = kc85.step(this->abs_cycle_count, abs_end_cycles);
         }
+        else if (atom.on) {
+            this->abs_cycle_count = atom.step(this->abs_cycle_count, abs_end_cycles);
+        }
         /*
         else if (this->cpc.on) {
             this->abs_cycle_count = this->cpc.step(this->abs_cycle_count, abs_end_cycles);
-        }
-        else if (this->atom.on) {
-            this->abs_cycle_count = this->atom.step(this->abs_cycle_count, abs_end_cycles);
         }
         else if (this->bbcmicro.on) {
             this->abs_cycle_count = this->bbcmicro.step(this->abs_cycle_count, abs_end_cycles);
@@ -266,12 +265,12 @@ yakc::step_debug() {
     else if (kc85.on) {
         return kc85.step_debug();
     }
+    else if (atom.on) {
+        return atom.step_debug();
+    }
     /*
     else if (this->cpc.on) {
         return this->cpc.step_debug();
-    }
-    else if (this->atom.on) {
-        return this->atom.step_debug();
     }
     else if (this->bbcmicro.on) {
         return this->bbcmicro.step_debug();
@@ -301,10 +300,10 @@ yakc::put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask) {
     if (kc85.on) {
         kc85.put_key(ascii);
     }
-    /*
-    if (this->atom.on) {
-        this->atom.put_input(ascii, joy0_mask);
+    if (atom.on) {
+        atom.put_input(ascii, joy0_mask);
     }
+    /*
     if (this->cpc.on) {
         this->cpc.put_input(ascii, joy0_mask);
     }
@@ -338,12 +337,12 @@ yakc::system_info() const {
     else if (kc85.on) {
         return kc85.system_info();
     }
+    else if (atom.on) {
+        return atom.system_info();
+    }
     /*
     else if (this->cpc.on) {
         return this->cpc.system_info();
-    }
-    else if (this->atom.on) {
-        return this->atom.system_info();
     }
     else if (this->bbcmicro.on) {
         return this->bbcmicro.system_info();
@@ -367,12 +366,12 @@ yakc::fill_sound_samples(float* buffer, int num_samples) {
         if (kc85.on) {
             return kc85.decode_audio(buffer, num_samples);
         }
+        else if (atom.on) {
+            return atom.decode_audio(buffer, num_samples);
+        }
     /*
         else if (this->cpc.on) {
             return this->cpc.decode_audio(buffer, num_samples);
-        }
-        else if (this->atom.on) {
-            return this->atom.decode_audio(buffer, num_samples);
         }
     */
     }
@@ -395,12 +394,12 @@ yakc::framebuffer(int& out_width, int& out_height) {
     else if (kc85.on) {
         return kc85.framebuffer(out_width, out_height);
     }
+    else if (atom.on) {
+        return atom.framebuffer(out_width, out_height);
+    }
     /*
     else if (this->cpc.on) {
         return this->cpc.framebuffer(out_width, out_height);
-    }
-    else if (this->atom.on) {
-        return this->atom.framebuffer(out_width, out_height);
     }
     else if (this->bbcmicro.on) {
         return this->bbcmicro.framebuffer(out_width, out_height);

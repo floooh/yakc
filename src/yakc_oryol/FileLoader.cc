@@ -151,7 +151,7 @@ FileLoader::LoadTape(const Item& item) {
             this->FileData = std::move(ioResult.Data);
             this->Info = parseHeader(this->FileData, item);
             this->State = Ready;
-            this->emu->tapedeck.insert_tape(item.Name.AsCStr(), item.Type, this->FileData.Data(), this->FileData.Size());
+            tape.insert_tape(item.Name.AsCStr(), item.Type, this->FileData.Data(), this->FileData.Size());
         },
         // load failed
         [this](const URL& url, IOStatus::Code ioStatus) {

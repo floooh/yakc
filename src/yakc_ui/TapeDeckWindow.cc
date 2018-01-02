@@ -27,7 +27,7 @@ TapeDeckWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(180, 136), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders|ImGuiWindowFlags_NoResize)) {
 
-        if (emu.tapedeck.is_playing()) {
+        if (tape.is_playing()) {
             this->angle += 0.025f;
         }
 
@@ -71,7 +71,7 @@ TapeDeckWindow::Draw(yakc& emu) {
         // play button
         p = ImGui::GetCursorScreenPos();
         if (ImGui::Button("##play", btn_s)) {
-            emu.tapedeck.play();
+            tape.play();
         }
         p.x += 8; p.y += 3;
         p0.x=p.x+t0.x; p0.y=p.y+t0.y;
@@ -82,7 +82,7 @@ TapeDeckWindow::Draw(yakc& emu) {
         ImGui::SameLine();
         p = ImGui::GetCursorScreenPos();
         if (ImGui::Button("##stop", btn_s)) {
-            emu.tapedeck.stop_rewind();
+            tape.stop_rewind();
         }
         p.x += 5; p.y += 5;
         draw_list->AddRectFilled(ImVec2(p.x+r0.x, p.y+r0.y), ImVec2(p.x+r1.x, p.y+r1.y), darker_gray);
@@ -93,12 +93,12 @@ TapeDeckWindow::Draw(yakc& emu) {
         p1 = ImGui::GetCursorScreenPos();
         ImGui::SetWindowFontScale(2.0f);
         ImGui::SetCursorScreenPos(ImVec2(p1.x+32, p1.y-4));
-        ImGui::Text("%03d", emu.tapedeck.counter());
+        ImGui::Text("%03d", tape.counter());
         ImGui::SetWindowFontScale(1.0f);
         ImGui::SetCursorScreenPos(p0);
 
         // insert tape button
-        const char* tape_name = emu.tapedeck.tape_name();
+        const char* tape_name = tape.tape_name();
         if (!tape_name[0]) {
             tape_name = "insert tape";
         }

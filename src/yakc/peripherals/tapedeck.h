@@ -47,6 +47,7 @@ private:
     bool playing = false;
     int count = 0;
 };
+extern tapedeck tape;
 
 } // namespace YAKC
 
