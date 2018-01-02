@@ -29,12 +29,10 @@ DebugWindow::Draw(yakc& emu) {
             ImGui::Separator();
         }
         else {
-        /*
-            this->draw6502RegisterTable(emu);
+            this->draw6502RegisterTable();
             ImGui::Separator();
-            this->drawMainContent(emu, board.mos6502.PC, 48);
+            this->drawMainContent(emu, board.m6502.PC, 48);
             ImGui::Separator();
-        */
         }
         this->drawControls(emu);
     }
@@ -89,8 +87,7 @@ DebugWindow::drawZ80RegisterTable() {
 //------------------------------------------------------------------------------
 void
 DebugWindow::draw6502RegisterTable() {
-/*
-    auto& cpu = board.mos6502;
+    auto& cpu = board.m6502;
     Util::InputHex8("A", cpu.A); ImGui::SameLine(1 * 48 + 4);
     Util::InputHex8("X", cpu.X); ImGui::SameLine(2 * 48);
     Util::InputHex8("Y", cpu.Y); ImGui::SameLine(3 * 48);
@@ -99,18 +96,17 @@ DebugWindow::draw6502RegisterTable() {
     Util::InputHex16("PC", cpu.PC); ImGui::SameLine(6 * 46 + 20);
 
     char strFlags[9];
-    const uint8_t f = board.mos6502.P;
-    strFlags[0] = (f & mos6502::NF) ? 'N':'-';
-    strFlags[1] = (f & mos6502::VF) ? 'V':'-';
-    strFlags[2] = (f & mos6502::XF) ? 'x':'-';
-    strFlags[3] = (f & mos6502::BF) ? 'B':'-';
-    strFlags[4] = (f & mos6502::DF) ? 'D':'-';
-    strFlags[5] = (f & mos6502::IF) ? 'I':'-';
-    strFlags[6] = (f & mos6502::ZF) ? 'Z':'-';
-    strFlags[7] = (f & mos6502::CF) ? 'C':'-';
+    const uint8_t f = board.m6502.P;
+    strFlags[0] = (f & M6502_NF) ? 'N':'-';
+    strFlags[1] = (f & M6502_VF) ? 'V':'-';
+    strFlags[2] = (f & M6502_XF) ? 'x':'-';
+    strFlags[3] = (f & M6502_BF) ? 'B':'-';
+    strFlags[4] = (f & M6502_DF) ? 'D':'-';
+    strFlags[5] = (f & M6502_IF) ? 'I':'-';
+    strFlags[6] = (f & M6502_ZF) ? 'Z':'-';
+    strFlags[7] = (f & M6502_CF) ? 'C':'-';
     strFlags[8] = 0;
     ImGui::Text(" %s ", strFlags);
-*/
 }
 
 //------------------------------------------------------------------------------
