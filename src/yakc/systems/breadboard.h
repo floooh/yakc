@@ -6,12 +6,8 @@
 */
 #include "yakc/core/core.h"
 #include "yakc/core/audiobuffer.h"
-//#include "yakc/chips/mos6502.h"
 #include "yakc/chips/cpudbg.h"
-//#include "yakc/chips/i8255.h"
-//#include "yakc/chips/mos6522.h"
 //#include "yakc/chips/mc6845.h"
-//#include "yakc/chips/mc6847.h"
 #include "yakc/peripherals/crt.h"
 #include "chips/clk.h"
 #include "chips/mem.h"
@@ -21,6 +17,9 @@
 #include "chips/z80pio.h"
 #include "chips/z80ctc.h"
 #include "chips/ay38912.h"
+#include "chips/m6502.h"
+#include "chips/i8255.h"
+#include "chips/mc6847.h"
 
 namespace YAKC {
 
@@ -32,15 +31,14 @@ struct breadboard {
     z80pio_t z80pio2;
     z80ctc_t z80ctc;
     ay38912_t ay38912;
+    m6502_t m6502;
+    i8255_t i8255;
+    mc6847_t mc6847;
     beeper_t beeper;
     beeper_t beeper2;
     kbd_t kbd;
     /*
-    class mos6502 mos6502;
-    class i8255 i8255;
-    class mos6522 mos6522;
     class mc6845 mc6845;
-    class mc6847 mc6847;
     */
     class cpudbg dbg;
     class crt crt;          // this is not a chip, but a cathode-ray-tube emulation

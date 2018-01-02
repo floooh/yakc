@@ -11,11 +11,6 @@ fips_begin_module(yakc)
     fips_dir(chips)
     fips_files(
         cpudbg.h cpudbg.cc
-#        mos6502.h mos6502.cc
-#        mos6522.h mos6522.cc
-#        i8255.h i8255.cc
-#        mc6845.h mc6845.cc
-#        mc6847.h mc6847.cc
     )
     fips_dir(peripherals)
     fips_files(

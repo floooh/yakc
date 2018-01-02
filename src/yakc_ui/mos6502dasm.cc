@@ -2,12 +2,8 @@
 //  mos6502dasm.cc
 //------------------------------------------------------------------------------
 #include "mos6502dasm.h"
-//#include "yakc/chips/mos6502.h"
+#include "chips/m6502.h"
 #include <stdio.h>
-
-/*
-using namespace YAKC;
-using namespace mos6502_enums;
 
 namespace mos6502dasm {
 
@@ -203,7 +199,7 @@ int mos6502disasm(fetch_func fetch, unsigned short pc, char* buffer, void* userd
     dst += sprintf(dst, "%s", n);
 
     uint8_t l,h;
-    switch (mos6502::ops[cc][bbb][aaa].addr) {
+    switch (mos6502_ops[cc][bbb][aaa].addr) {
         case A_IMM:
             l = fetch(pc, pos++, userdata);
             dst += sprintf(dst, " #$%02X", l);
@@ -255,7 +251,6 @@ int mos6502disasm(fetch_func fetch, unsigned short pc, char* buffer, void* userd
     return pos;
 }
 } // namespace mos6502dasm
-*/
 
 
 
