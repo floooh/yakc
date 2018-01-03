@@ -48,8 +48,10 @@ atom_t::init_keymap() {
     for (int layer = 0; layer < 2; layer++) {
         for (int col = 0; col < 10; col++) {
             for (int line = 0; line < 6; line++) {
-                uint8_t c = kbd[shift*60 + line*10 + col];
-                kbd_register_key(&board.kbd, c, col, line, layer?shift:0);
+                uint8_t c = kbd[layer*60 + line*10 + col];
+                if (c != 0x20) {
+                    kbd_register_key(&board.kbd, c, col, line, layer?shift:0);
+                }
             }
         }
     }
@@ -195,7 +197,8 @@ atom_t::put_input(uint8_t ascii, uint8_t joy0mask) {
         }
     }
     else {
-        /* FIXME
+        // FIXME
+        /*
         next_key_mask = key_mask();
         if (joy0mask & joystick::left) {
             mmc_joymask |= 0x2;
