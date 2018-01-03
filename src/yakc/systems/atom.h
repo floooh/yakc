@@ -62,7 +62,6 @@ public:
     bool state_2_4khz = false;
     bool out_cass0 = false;
     bool out_cass1 = false;
-    uint16_t osload_trap = 0x0000;
 
     // FIXME: implement a proper AtomMMC emulation
     uint8_t mmc_joymask = 0;

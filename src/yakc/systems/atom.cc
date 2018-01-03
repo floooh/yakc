@@ -142,7 +142,7 @@ atom_t::poweron() {
 
     // trap the OSLOAD function
     // http://ladybug.xs4all.nl/arlet/fpga/6502/kernel.dis
-    this->osload_trap = 0xF96E;
+    m6502_set_trap(&board.m6502, 0, 0xF96E, mem_readptr(&board.mem, 0xF96E));
 }
 
 //------------------------------------------------------------------------------
@@ -171,6 +171,11 @@ atom_t::step(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = end_tick - start_tick;
     uint32_t ticks_executed = m6502_exec(&board.m6502, num_ticks);
+    /* did we hit the osload() trap? */
+    if (board.m6502.trap_id == 0) {
+        osload();
+        return end_tick;
+    }
     kbd_update(&board.kbd);
     return start_tick + ticks_executed;
 }
