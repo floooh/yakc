@@ -2,9 +2,7 @@
 //  atom.cc
 //
 //  TODO
-//      - trap OS Load function
-//      - joystick input
-//      - interrupt from VIA
+//      - minimal VIA emulation (required by some games)
 //      - handle Shift key (some games use this as jump button)
 //
 //------------------------------------------------------------------------------
@@ -73,13 +71,6 @@ atom_t::init_keymap() {
     kbd_register_key(&board.kbd, 0x15, 6, 5, ctrl);      // Ctrl+U end screen
     kbd_register_key(&board.kbd, 0x18, 3, 5, ctrl);      // Ctrl+X cancel
     kbd_register_key(&board.kbd, 0x1B, 0, 5, 0);         // escape
-
-    // keyboard joystick (just use some unused upper ascii codes)
-    kbd_register_key(&board.kbd, 0xF0, 0, 0, 0);
-    kbd_register_key(&board.kbd, 0xF1, 0, 1, 0);
-    kbd_register_key(&board.kbd, 0xF2, 0, 2, 0);
-    kbd_register_key(&board.kbd, 0xF3, 0, 3, 0);
-    kbd_register_key(&board.kbd, 0xF4, 0, 4, 0);
 }
 
 //------------------------------------------------------------------------------
@@ -202,30 +193,21 @@ atom_t::put_input(uint8_t ascii, uint8_t joy0mask) {
         }
     }
     else {
-        // FIXME
-        /*
-        next_key_mask = key_mask();
         if (joy0mask & joystick::left) {
             mmc_joymask |= 0x2;
-            next_key_mask.combine(this->key_map[0xF1]);
         }
         if (joy0mask & joystick::right) {
             mmc_joymask |= 0x1;
-            next_key_mask.combine(this->key_map[0xF3]);
         }
         if (joy0mask & joystick::up) {
             mmc_joymask |= 0x8;
-            next_key_mask.combine(this->key_map[0xF4]);
         }
         if (joy0mask & joystick::down) {
             mmc_joymask |= 0x4;
-            next_key_mask.combine(this->key_map[0xF2]);
         }
         if (joy0mask & joystick::btn0) {
             mmc_joymask |= 0x10;
-            next_key_mask.combine(this->key_map[0xF0]);
         }
-        */
     }
 }
 
