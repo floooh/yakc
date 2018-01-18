@@ -180,8 +180,8 @@ UI::OnFrame(yakc& emu) {
     IMUI::NewFrame(Clock::LapTime(this->curTime));
 
     #if !ORYOL_EMSCRIPTEN
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 40, 16));
-    if (ImGui::Begin("Menu", nullptr, ImVec2(0,0), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize))
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 60, 16));
+    if (ImGui::Begin("Menu", nullptr, ImVec2(40,100), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoResize))
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 15.0f));
