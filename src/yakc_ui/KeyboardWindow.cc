@@ -68,7 +68,7 @@ KeyboardWindow::Draw(yakc& emu) {
     const ImVec2& dispSize = ImGui::GetIO().DisplaySize;
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     ImGui::SetNextWindowPos(ImVec2((dispSize.x-width)/2, dispSize.y-height-20), ImGuiSetCond_FirstUseEver);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImVec2(676, 180), 0.25f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImVec2(676, 180), 0.25f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize)) {
         ImGui::PushButtonRepeat(true);
         // main section keys
         const ImVec2 size(40,24);

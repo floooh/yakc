@@ -20,7 +20,7 @@ DisasmWindow::Setup(yakc& emu) {
 bool
 DisasmWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         this->drawMainContent(emu, this->startAddr, this->numLines);
         ImGui::Separator();
         this->drawControls();
@@ -33,7 +33,7 @@ DisasmWindow::Draw(yakc& emu) {
 void
 DisasmWindow::drawMainContent(const yakc& emu, uint16_t start_addr, int num_lines) {
     // this is a modified version of ImGuiMemoryEditor.h
-    ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));
+    ImGui::BeginChild("##scrolling", ImVec2(0, -(4 + ImGui::GetFrameHeightWithSpacing())));
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));

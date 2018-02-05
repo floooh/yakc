@@ -53,7 +53,6 @@ UI::Setup(yakc& emu, Audio* audio_) {
     style.Alpha = 1.0f;
     style.TouchExtraPadding = ImVec2(5.0f, 5.0f);
     style.AntiAliasedLines = this->imguiAntiAliasedLines;
-    style.AntiAliasedShapes = false;
     this->darkTheme = style;
 
     // bright style from here: https://github.com/ocornut/imgui/pull/511
@@ -75,7 +74,6 @@ UI::Setup(yakc& emu, Audio* audio_) {
     style.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.69f, 0.69f, 0.69f, 0.80f);
     style.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.49f, 0.49f, 0.49f, 0.80f);
     style.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
-    style.Colors[ImGuiCol_ComboBg]               = ImVec4(0.86f, 0.86f, 0.86f, 0.99f);
     style.Colors[ImGuiCol_CheckMark]             = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
     style.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.26f, 0.59f, 0.98f, 0.78f);
     style.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
@@ -180,8 +178,8 @@ UI::OnFrame(yakc& emu) {
     IMUI::NewFrame(Clock::LapTime(this->curTime));
 
     #if !ORYOL_EMSCRIPTEN
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 40, 16));
-    if (ImGui::Begin("Menu", nullptr, ImVec2(0,0), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize))
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 60, 16));
+    if (ImGui::Begin("Menu", nullptr, ImVec2(40,100), 0.0f, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoResize))
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 15.0f));

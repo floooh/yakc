@@ -21,7 +21,7 @@ DebugWindow::Setup(yakc& emu) {
 bool
 DebugWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(460, 400), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         if (emu.cpu_type() == cpu_model::z80) {
             this->drawZ80RegisterTable();
             ImGui::Separator();
@@ -139,7 +139,7 @@ DebugWindow::drawControls(yakc& emu) {
 void
 DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
     // this is a modified version of ImGuiMemoryEditor.h
-    ImGui::BeginChild("##scrolling", ImVec2(0, -2 * ImGui::GetItemsLineHeightWithSpacing()));
+    ImGui::BeginChild("##scrolling", ImVec2(0, -2 * (ImGui::GetFrameHeightWithSpacing()+2)));
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(1,1));

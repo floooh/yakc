@@ -22,7 +22,7 @@ CommandWindow::Setup(yakc& emu) {
 bool
 CommandWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 250), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         Util::InputHex8("Prolog Byte", this->prologByte);
         ImGui::SameLine();
         if (ImGui::Button("Scan...")) {

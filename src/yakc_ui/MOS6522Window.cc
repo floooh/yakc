@@ -19,7 +19,7 @@ MOS6522Window::Setup(yakc& emu) {
 bool
 MOS6522Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
     /*
         const mos6522& via = emu.board.mos6522;
         ImGui::Text("A OUT:     0x%02X", via.out_a);

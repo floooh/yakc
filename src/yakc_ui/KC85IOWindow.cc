@@ -30,7 +30,7 @@ onOffLine(const char* text, bool on) {
 bool
 KC85IOWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(240, 384), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         if (ImGui::CollapsingHeader("PIO A (0x88)", "#kc85_io_a", true, true)) {
             const uint8_t a = board.z80pio.port[Z80PIO_PORT_A].output;
             onOffLine("Bit 0: CAOS ROM E", 0 != (a&kc85_t::PIO_A_CAOS_ROM));

@@ -102,7 +102,7 @@ put_bits(yakc& emu, int first, int num, int port, uint8_t val, const char* dir) 
 bool
 I8255Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         const i8255_t& ppi = board.i8255;
         ImGui::Text("only updated on CPU I/O!");
         if (ImGui::CollapsingHeader("Port A", "#ppi_a", true, true)) {

@@ -29,7 +29,7 @@ on_off(const char* text, bool on) {
 bool
 MC6847Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         const mc6847_t& mc = board.mc6847;
         on_off("HSYNC:", mc.pins & MC6847_HS);
         on_off("FSYNC:", mc.pins & MC6847_FS);

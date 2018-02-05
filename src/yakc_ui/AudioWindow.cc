@@ -31,7 +31,7 @@ bool
 AudioWindow::Draw(yakc& emu) {
     o_assert_dbg(Audio::soloud);
     ImGui::SetNextWindowSize(ImVec2(600, 220), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         Audio::soloud->setVisualizationEnable(true);
         ImGui::Checkbox("Pause", &this->paused);
         if (!this->paused) {

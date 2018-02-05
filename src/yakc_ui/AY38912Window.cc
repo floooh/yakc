@@ -18,7 +18,7 @@ AY38912Window::Setup(yakc& emu) {
 bool
 AY38912Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 240), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         const ay38912_t& ay = board.ay38912;
         ImGui::Text("Period A:     0x%04X", (ay.reg[AY38912_REG_PERIOD_A_COARSE]<<8)|ay.reg[AY38912_REG_PERIOD_A_FINE]);
         ImGui::Text("Period B:     0x%04X", (ay.reg[AY38912_REG_PERIOD_B_COARSE]<<8)|ay.reg[AY38912_REG_PERIOD_B_FINE]);
