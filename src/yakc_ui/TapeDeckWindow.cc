@@ -25,7 +25,7 @@ TapeDeckWindow::Setup(yakc& emu) {
 bool
 TapeDeckWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(180, 136), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders|ImGuiWindowFlags_NoResize)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
 
         if (emu.tapedeck.is_playing()) {
             this->angle += 0.025f;

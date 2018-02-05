@@ -18,7 +18,7 @@ InfoWindow::Setup(yakc& emu) {
 bool
 InfoWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(540, 440), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         ImGui::TextWrapped("%s", emu.system_info());
     }
     ImGui::End();

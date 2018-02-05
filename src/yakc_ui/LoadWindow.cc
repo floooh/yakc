@@ -28,7 +28,7 @@ LoadWindow::Draw(yakc& emu) {
     YAKC_ASSERT(this->loader);
 
     ImGui::SetNextWindowSize(ImVec2(384, 220), ImGuiSetCond_Appearing);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         auto& ldr = *this->loader;
         if (!ldr.ExtFileReady && ldr.State != FileLoader::Ready) {
             #if ORYOL_EMSCRIPTEN

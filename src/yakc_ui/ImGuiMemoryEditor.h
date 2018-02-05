@@ -55,9 +55,9 @@ struct MemoryEditor
 
     bool Draw(const char* title, cb_read read_func, cb_write write_func, void* userdata)
     {
-        if (ImGui::Begin(title, &Open, ImGuiWindowFlags_ShowBorders))
+        if (ImGui::Begin(title, &Open))
         {
-            ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));
+            ImGui::BeginChild("##scrolling", ImVec2(0, -(5 + ImGui::GetFrameHeightWithSpacing())));
 
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));

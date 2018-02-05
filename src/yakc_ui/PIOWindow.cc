@@ -74,7 +74,7 @@ bool
 PIOWindow::Draw(yakc& emu) {
     o_assert(this->PIO);
     ImGui::SetNextWindowSize(ImVec2(220, 420), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         if (ImGui::CollapsingHeader("PIO A", "#pio_a", true, true)) {
             pioStatus(this->PIO, z80pio::A);
         }

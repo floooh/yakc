@@ -20,7 +20,7 @@ bool
 MC6845Window::Draw(yakc& emu) {
     const mc6845& mc = emu.board.mc6845;
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         ImGui::Text("H Total:       0x%02X", mc.regs[mc6845::H_TOTAL]);
         ImGui::Text("H Displayed:   0x%02X", mc.regs[mc6845::H_DISPLAYED]);
         ImGui::Text("H Sync Pos:    0x%02X", mc.regs[mc6845::H_SYNC_POS]);

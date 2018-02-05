@@ -31,7 +31,7 @@ bool
 MC6847Window::Draw(yakc& emu) {
     const mc6847& mc = emu.board.mc6847;
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
-    if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_ShowBorders)) {
+    if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         on_off("HSYNC:", mc.test(mc6847::HSYNC));
         on_off("FSYNC:", mc.test(mc6847::FSYNC));
         on_off("A/G:", mc.test(mc6847::A_G));
