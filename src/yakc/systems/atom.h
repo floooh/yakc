@@ -39,6 +39,10 @@ public:
     static uint8_t ppi_in(int port_id);
     /// i8255 output callback
     static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data);
+    /// m6522 input callback
+    static uint8_t via_in(int port_id);
+    /// m6522 output callback
+    static void via_out(int port_id, uint8_t data);
 
     /// get framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);

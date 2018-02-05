@@ -120,6 +120,7 @@ atom_t::poweron() {
     m6502_init(&board.m6502, cpu_tick);
     m6502_reset(&board.m6502);
     i8255_init(&board.i8255, ppi_in, ppi_out);
+    m6522_init(&board.m6522, via_in, via_out);
     mc6847_desc_t vdg_desc;
     vdg_desc.tick_hz = board.freq_hz;
     vdg_desc.rgba8_buffer = board.rgba8_buffer;
@@ -149,6 +150,7 @@ void
 atom_t::reset() {
     m6502_reset(&board.m6502);
     i8255_reset(&board.i8255);
+    m6522_reset(&board.m6522);
     mc6847_reset(&board.mc6847);
     beeper_reset(&board.beeper);
     state_2_4khz = false;
@@ -218,6 +220,9 @@ atom_t::cpu_tick(uint64_t pins) {
     /* tick the video chip */
     mc6847_tick(&board.mc6847);
 
+    /* tick the 6522 VIA chip */
+    m6522_tick(&board.m6522);
+
     /* tick the 2.4khz counter */
     atom.count_2_4khz++;
     if (atom.count_2_4khz >= atom.period_2_4khz) {
@@ -268,11 +273,12 @@ atom_t::cpu_tick(uint64_t pins) {
                     atom.mmc_cmd = M6502_GET_DATA(pins);
                 }
             }
-        }
+        } 
         else if ((addr >= 0xB800) && (addr < 0xBC00)) {
             // 6522 VIA: http://www.acornatom.nl/sites/fpga/www.howell1964.freeserve.co.uk/acorn/atom/amb/amb_6522.htm
-            // FIXME
-            M6502_SET_DATA(pins, 0);
+            uint64_t via_pins = (pins & M6502_PIN_MASK)|M6522_CS1;
+            // NOTE: M6522_RW pin is identical with M6502_RW)
+            pins = m6522_iorq(&board.m6522, via_pins) & M6502_PIN_MASK;
         }
         else {
             //printf("UNKNOWN: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
@@ -424,6 +430,18 @@ atom_t::ppi_in(int port_id) {
             break;
     }
     return data;
+}
+
+//------------------------------------------------------------------------------
+void
+atom_t::via_out(int port_id, uint8_t data) {
+    // FIXME
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+atom_t::via_in(int port_id) {
+    return 0x00;
 }
 
 //------------------------------------------------------------------------------

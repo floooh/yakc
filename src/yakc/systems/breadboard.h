@@ -18,6 +18,7 @@
 #include "chips/z80ctc.h"
 #include "chips/ay38912.h"
 #include "chips/m6502.h"
+#include "chips/m6522.h"
 #include "chips/i8255.h"
 #include "chips/mc6847.h"
 
@@ -32,6 +33,7 @@ struct breadboard {
     z80ctc_t z80ctc;
     ay38912_t ay38912;
     m6502_t m6502;
+    m6522_t m6522;
     i8255_t i8255;
     mc6847_t mc6847;
     beeper_t beeper;
