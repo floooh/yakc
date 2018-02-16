@@ -1,41 +1,48 @@
 //------------------------------------------------------------------------------
 //  cpc.cc
 //
-//  TODO:
-//  - improve CRTC emulation so that demos work (implement CRTC closer
-//    to the real thing, a cascade of counters, and decode video memory
-//    per CRTC cycle, not per line)
-//  - subtle differences between different CRTC types
-//  - ROM module switching
-//  - KC Compact: doesn't have custom gate array
-//  - support more emulator file formats
-//
+//  Schematics:
+//  - 646: http://www.cpcwiki.eu/imgs/6/6d/Schaltplan_cpc_464.jpg
+//  - 664: http://www.cpcwiki.eu/index.php/File:CPC664_Schematic.png
+//  - 6128: http://www.cpcwiki.eu/index.php/File:CPC6128_Schematic.png
 //------------------------------------------------------------------------------
 #include "cpc.h"
 #include "yakc/core/filetypes.h"
-#include "yakc/chips/z80_cycles.h"
 
 namespace YAKC {
 
+cpc_t cpc;
+
 //------------------------------------------------------------------------------
-void
-cpc::init_key_mask(uint8_t ascii, int col, int bit, int shift) {
-    YAKC_ASSERT((col >= 0) && (col < 10));
-    YAKC_ASSERT((bit >= 0) && (bit < 8));
-    YAKC_ASSERT((shift >= 0) && (shift < 2));
-    this->key_map[ascii] = key_mask();
-    this->key_map[ascii].col[col] = (1<<bit);
-    if (shift != 0) {
-        this->key_map[ascii].col[2] = (1<<5);
+bool
+cpc_t::check_roms(system model, os_rom os) {
+    if (system::cpc464 == model) {
+        return roms.has(rom_images::cpc464_os) && roms.has(rom_images::cpc464_basic);
+    }
+    else if (system::cpc6128 == model) {
+        return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
+    }
+    else if (system::kccompact == model) {
+        return roms.has(rom_images::kcc_os) && roms.has(rom_images::kcc_basic);
+    }
+    else {
+        return false;
     }
 }
 
 //------------------------------------------------------------------------------
 void
-cpc::init_keymap() {
-    // http://cpctech.cpc-live.com/docs/keyboard.html
-    clear(this->key_map, sizeof(this->key_map));
-    const char* kbd =
+cpc_t::init_keymap() {
+    /*
+        http://cpctech.cpc-live.com/docs/keyboard.html
+    
+        CPC has a 10 columns by 8 lines keyboard matrix. The 10 columns
+        are lit up by bits 0..3 of PPI port C connected to a 74LS145
+        BCD decoder, and the lines are read through port A of the
+        AY-3-8912 chip.
+    */
+    kbd_init(&board.kbd, 1);
+    const char* keymap =
         // no shift
         "   ^08641 "
         "  [-97532 "
@@ -55,84 +62,61 @@ cpc::init_keymap() {
         "   *KJFDA "
         "  `?MNBC  "
         "   >< VXZ ";
-    YAKC_ASSERT(strlen(kbd) == 160);
+    YAKC_ASSERT(strlen(keymap) == 160);
+    // shift key is on column 2, line 5
+    kbd_register_modifier(&board.kbd, 0, 2, 5);
+    // ctrl key is on column 2, line 7
+    kbd_register_modifier(&board.kbd, 1, 2, 7);
+
     for (int shift = 0; shift < 2; shift++) {
         for (int col = 0; col < 10; col++) {
-            for (int bit = 0; bit < 8; bit++) {
-                uint8_t ascii = kbd[shift*80 + bit*10 + col];
-                this->init_key_mask(ascii, col, bit, shift);
+            for (int line = 0; line < 8; line++) {
+                int c = keymap[shift*80 + line*10 + col];
+                if (c != 0x20) {
+                    kbd_register_key(&board.kbd, c, col, line, shift?(1<<0):0);
+                }
             }
         }
     }
 
     // special keys
-    this->init_key_mask(' ',  5, 7, 0);     // Space
-    this->init_key_mask(0x02, 2, 5, 0);     // Shift
-    this->init_key_mask(0x08, 1, 0, 0);     // Cursor Left
-    this->init_key_mask(0x09, 0, 1, 0);     // Cursor Right
-    this->init_key_mask(0x0A, 0, 2, 0);     // Cursor Down
-    this->init_key_mask(0x0B, 0, 0, 0);     // Cursor Up
-    this->init_key_mask(0x01, 9, 7, 0);     // Delete
-    this->init_key_mask(0x0C, 2, 0, 0);     // Clr
-    this->init_key_mask(0x0D, 2, 2, 0);     // Return
-    this->init_key_mask(0x03, 8, 2, 0);     // Escape
+    kbd_register_key(&board.kbd, 0x20, 5, 7, 0);    // space
+    kbd_register_key(&board.kbd, 0x08, 1, 0, 0);    // cursor left
+    kbd_register_key(&board.kbd, 0x09, 0, 1, 0);    // cursor right
+    kbd_register_key(&board.kbd, 0x0A, 0, 2, 0);    // cursor down
+    kbd_register_key(&board.kbd, 0x0B, 0, 0, 0);    // cursor up
+    kbd_register_key(&board.kbd, 0x01, 9, 7, 0);    // delete
+    kbd_register_key(&board.kbd, 0x0C, 2, 0, 0);    // clr
+    kbd_register_key(&board.kbd, 0x0D, 2, 2, 0);    // return
+    kbd_register_key(&board.kbd, 0x03, 8, 2, 0);    // escape
 
     // joystick (just use some unused upper ascii codes)
-    this->init_key_mask(0xF0, 9, 2, 0);     // joystick left
-    this->init_key_mask(0xF1, 9, 3, 0);     // joystick right
-    this->init_key_mask(0xF2, 9, 0, 0);     // joystick down
-    this->init_key_mask(0xF3, 9, 1, 0);     // joystick up
-    this->init_key_mask(0xF4, 9, 5, 0);     // joystick fire0
-    this->init_key_mask(0xF5, 9, 4, 0);     // joystick fire1
+    kbd_register_key(&board.kbd, 0xF0, 9, 2, 0);    // joystick left
+    kbd_register_key(&board.kbd, 0xF1, 9, 3, 0);    // joystick right
+    kbd_register_key(&board.kbd, 0xF2, 9, 0, 0);    // joystick down
+    kbd_register_key(&board.kbd, 0xF3, 9, 1, 0);    // joystick up
+    kbd_register_key(&board.kbd, 0xF4, 9, 5, 0);    // joystick fire0
+    kbd_register_key(&board.kbd, 0xF5, 9, 4, 0);    // joystick fire1
 }
 
 //------------------------------------------------------------------------------
 void
-cpc::init(breadboard* b, rom_images* r, tapedeck* t) {
-    YAKC_ASSERT(b && r && t);
-    this->board = b;
-    this->roms = r;
-    this->tape = t;
-    this->init_keymap();
-}
-
-//------------------------------------------------------------------------------
-bool
-cpc::check_roms(const rom_images& roms, system model, os_rom os) {
-    if (system::cpc464 == model) {
-        return roms.has(rom_images::cpc464_os) && roms.has(rom_images::cpc464_basic);
-    }
-    else if (system::cpc6128 == model) {
-        return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
-    }
-    else if (system::kccompact == model) {
-        return roms.has(rom_images::kcc_os) && roms.has(rom_images::kcc_basic);
-    }
-    else {
-        return false;
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-cpc::init_memory_map() {
-    auto& cpu = this->board->z80;
-    cpu.mem.unmap_all();
-    YAKC_ASSERT(check_roms(*this->roms, this->cur_model, os_rom::none));
-    this->ga_config = 0x00;     // enable both ROMs
-    this->ram_config = 0x00;    // standard RAM bank config (0,1,2,3)
-    this->update_memory_mapping();
-}
-
-//------------------------------------------------------------------------------
-void
-cpc::poweron(system m) {
-    YAKC_ASSERT(this->board);
+cpc_t::poweron(system m) {
     YAKC_ASSERT(int(system::any_cpc) & int(m));
     YAKC_ASSERT(!this->on);
 
     this->cur_model = m;
     this->on = true;
+
+    this->init_keymap();
+
+    // setup memory system
+    clear(board.ram, sizeof(board.ram));
+    mem_unmap_all(&board.mem);
+    this->ga_config = 0x00;     // enable both ROMs
+    this->ram_config = 0x00;    // standard RAM bank config (0,1,2,3)
+    this->update_memory_mapping();
+
     // http://www.cpcwiki.eu/index.php/Format:TAP_tape_image_file_format
     if (m == system::cpc464) {
         this->casread_trap = 0x2836;
@@ -142,93 +126,59 @@ cpc::poweron(system m) {
         this->casread_trap = 0x29A6;
         this->casread_ret = 0x29E2;
     }
-    this->ga_config = 0;
-    this->ram_config = 0;
-    this->scan_kbd_line = 0;
-    this->next_key_mask = key_mask();
-    this->next_joy_mask = key_mask();
-    this->cur_key_mask = key_mask();
 
-    // map memory
-    clear(this->board->ram, sizeof(this->board->ram));
-    this->init_memory_map();
+    // initialize hardware components, main clock frequency is 4 MHz
+    board.freq_hz = 4000000;
+    z80_init(&board.z80, cpu_tick);
+    ay38912_init(&board.ay38912, 1, 1000000, SOUND_SAMPLE_RATE, 0.5f);
+    i8255_init(&board.i8255, ppi_in, ppi_out);
+    mc6845_init(&board.mc6845, MC6845_TYPE_UM6845R);
+    crt_init(&board.crt, CRT_PAL, 2, 32, max_display_width/16, max_display_height);
+    this->tick_count = 0;
 
-    // initialize clock to 4 MHz
-    this->board->clck.init(4000);
-
-    // initialize support chips
-    this->board->i8255.init(0);
-    this->video.init(m, this->board);
-    this->board->ay8910.init(this->board->clck.base_freq_khz, 1000, SOUND_SAMPLE_RATE);
-
-    // CPU start state with special CPC instruction timings
-    this->board->z80.init();
-    this->board->z80.cc_op = cpc_cc_op;
-    this->board->z80.cc_cb = cpc_cc_cb;
-    this->board->z80.cc_ed = cpc_cc_ed;
-    this->board->z80.cc_dd = cpc_cc_dd;
-    this->board->z80.cc_fd = cpc_cc_fd;
-    this->board->z80.cc_ddcb = cpc_cc_ddcb;
-    this->board->z80.cc_fdcb = cpc_cc_fdcb;
-    this->board->z80.cc_ex = cpc_cc_ex;
-    this->board->z80.PC = 0x0000;
+    // CPU start address
+    board.z80.PC = 0x0000;
 }
 
 //------------------------------------------------------------------------------
 void
-cpc::poweroff() {
+cpc_t::poweroff() {
     YAKC_ASSERT(this->on);
-    this->board->z80.mem.unmap_all();
+    mem_unmap_all(&board.mem);
     this->on = false;
 }
 
 //------------------------------------------------------------------------------
 void
-cpc::reset() {
-    this->video.reset();
-    this->board->ay8910.reset();
-    this->board->i8255.reset();
+cpc_t::reset() {
+    mc6845_reset(&board.mc6845);
+    crt_reset(&board.crt);
+    ay38912_reset(&board.ay38912);
+    i8255_reset(&board.i8255);
     this->ga_config = 0;
     this->ram_config = 0;
-    this->scan_kbd_line = 0;
-    this->next_key_mask = key_mask();
-    this->next_joy_mask = key_mask();
-    this->cur_key_mask = key_mask();
-    this->board->z80.reset();
-    this->board->z80.PC = 0x0000;
-    this->init_memory_map();
+    z80_reset(&board.z80);
+    board.z80.PC = 0x0000;
+    mem_unmap_all(&board.mem);
+    this->update_memory_mapping();
+    this->tick_count = 0;
 }
 
 //------------------------------------------------------------------------------
 uint64_t
-cpc::step(uint64_t start_tick, uint64_t end_tick) {
-    // step the system for given number of cycles, return actually
-    // executed number of cycles
-    auto& cpu = this->board->z80;
-    auto& dbg = this->board->dbg;
-    uint64_t cur_tick = start_tick;
-    while (cur_tick < end_tick) {
-        uint32_t ticks = cpu.handle_irq(this);
-        if (0 == ticks) {
-            ticks = cpu.step(this);
-        }
-        this->video.step(this, ticks);
-        this->board->ay8910.step(ticks);
-        if (dbg.step(cpu.PC, ticks)) {
-            return end_tick;
-        }
-        if (cpu.PC == this->casread_trap) {
-            // trapped cassette read function
-            this->casread();
-        }
-        cur_tick += ticks;
-    }
-    return cur_tick;
+cpc_t::step(uint64_t start_tick, uint64_t end_tick) {
+    YAKC_ASSERT(start_tick <= end_tick);
+    uint32_t num_ticks = end_tick - start_tick;
+    uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
+    kbd_update(&board.kbd);
+    return start_tick + ticks_executed;
 }
 
 //------------------------------------------------------------------------------
 uint32_t
-cpc::step_debug() {
+cpc_t::step_debug() {
+return 0;
+/*
     auto& cpu = this->board->z80;
     auto& dbg = this->board->dbg;
     uint32_t all_ticks = 0;
@@ -246,9 +196,98 @@ cpc::step_debug() {
     }
     while ((old_pc == cpu.PC) && !cpu.INV);
     return all_ticks;
+*/
 }
 
 //------------------------------------------------------------------------------
+uint64_t
+cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
+    /*
+        decide how many wait states must be injected, the CPC signals
+        the wait line in 3 out of 4 cycles:
+    
+         0: wait inactive
+         1: wait active
+         2: wait active
+         3: wait active
+    
+        the CPU samples the wait line only on specific clock ticks
+        during memory or IO operations, a wait states are only injected
+        if the 'wait active' happens on the same clock tick as the
+        CPU would sample the wait line
+    */
+    int wait_sample_tick = -1;
+    if (pins & Z80_MREQ) {
+        // a memory request or opcode fetch, wait is sampled on second clock tick
+        wait_sample_tick = 1;
+    }
+    else if (pins & Z80_IORQ) {
+        if (pins & Z80_M1) {
+            // an interrupt acknowledge cycle, wait is sampled on fourth clock tick
+            wait_sample_tick = 3;
+        }
+        else {
+            // an IO cycle, wait is sampled on third clock tick
+            wait_sample_tick = 2;
+        }
+    }
+    bool wait = false;
+    uint32_t wait_cycles = 0;
+    for (int i = 0; i<num_ticks; i++) {
+        do {
+            // CPC gate array sets the wait pin for 3 out of 4 clock ticks
+            bool wait_pin = (cpc.tick_count++ & 3) != 0;
+            wait = (wait_pin && (wait || (i == wait_sample_tick)));
+            if (wait) {
+                wait_cycles++;
+            }
+            // on every 4th clock cycle, tick the system
+            if (!wait_pin) {
+                if (ay38912_tick(&board.ay38912, 1)) {
+                    board.audiobuffer.write(board.ay38912.sample);
+                }
+            }
+        }
+        while (wait);
+    }
+    Z80_SET_WAIT(pins, wait_cycles);
+
+    // memory and IO requests
+    if (pins & Z80_MREQ) {
+        const uint16_t addr = Z80_GET_ADDR(pins);
+        if (pins & Z80_RD) {
+            Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
+        }
+        else if (pins & Z80_WR) {
+            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
+        }
+    }
+    else if (pins & Z80_IORQ) {
+        if (pins & Z80_RD) {
+            // FIXME: IO read
+        }
+        else if (pins & Z80_WR) {
+            // FIXME: IO write
+        }
+    }
+
+    return pins;
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+cpc_t::ppi_in(int port_id) {
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+uint64_t
+cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
+    return pins;
+}
+
+//------------------------------------------------------------------------------
+/*
 void
 cpc::cpu_out(uint16_t port, uint8_t val) {
     // http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
@@ -326,8 +365,10 @@ cpc::cpu_out(uint16_t port, uint8_t val) {
         //printf("OUT Peripheral Soft Reset: %02x\n", val);
     }
 }
+*/
 
 //------------------------------------------------------------------------------
+/*
 uint8_t
 cpc::cpu_in(uint16_t port) {
     if (0 == (port & (1<<14))) {
@@ -356,10 +397,12 @@ cpc::cpu_in(uint16_t port) {
     // fallthrough
     return 0x00;
 }
+*/
 
 //------------------------------------------------------------------------------
+/*
 void
-cpc::pio_out(int /*pio_id*/, int port_id, uint8_t val) {
+cpc::pio_out(int , int port_id, uint8_t val) {
     if (i8255::PORT_C == port_id) {
         // PSG function
         const uint8_t func = val & 0xC0;
@@ -390,10 +433,12 @@ cpc::pio_out(int /*pio_id*/, int port_id, uint8_t val) {
         }
     }
 }
+*/
 
 //------------------------------------------------------------------------------
+/*
 uint8_t
-cpc::pio_in(int /*pio_id*/, int port_id) {
+cpc::pio_in(int, int port_id) {
     if (i8255::PORT_A == port_id) {
         // catch keyboard data which is normally in PSG PORT A
         if (this->board->ay8910.selected() == ay8910::IO_PORT_A) {
@@ -436,9 +481,10 @@ cpc::pio_in(int /*pio_id*/, int port_id) {
         return 0xFF;
     }
 }
+*/
 
 //------------------------------------------------------------------------------
-// CPC6128 RAM block indices (see cpu_out())
+// CPC6128 RAM block indices 
 static int ram_config_table[8][4] = {
     { 0, 1, 2, 3 },
     { 0, 1, 2, 7 },
@@ -451,26 +497,25 @@ static int ram_config_table[8][4] = {
 };
 
 void
-cpc::update_memory_mapping() {
+cpc_t::update_memory_mapping() {
     // index into RAM config array
     int ram_table_index;
     uint8_t* rom0_ptr,*rom1_ptr;
     if (system::kccompact == this->cur_model) {
         ram_table_index = 0;
-        rom0_ptr = this->roms->ptr(rom_images::kcc_os);
-        rom1_ptr = this->roms->ptr(rom_images::kcc_basic);
+        rom0_ptr = roms.ptr(rom_images::kcc_os);
+        rom1_ptr = roms.ptr(rom_images::kcc_basic);
     }
     else if (system::cpc6128 == this->cur_model) {
         ram_table_index = this->ram_config & 0x07;
-        rom0_ptr = this->roms->ptr(rom_images::cpc6128_os);
-        rom1_ptr = this->roms->ptr(rom_images::cpc6128_basic);
+        rom0_ptr = roms.ptr(rom_images::cpc6128_os);
+        rom1_ptr = roms.ptr(rom_images::cpc6128_basic);
     }
     else {
         ram_table_index = 0;
-        rom0_ptr = this->roms->ptr(rom_images::cpc464_os);
-        rom1_ptr = this->roms->ptr(rom_images::cpc464_basic);
+        rom0_ptr = roms.ptr(rom_images::cpc464_os);
+        rom1_ptr = roms.ptr(rom_images::cpc464_basic);
     }
-    auto& cpu = this->board->z80;
     const int i0 = ram_config_table[ram_table_index][0];
     const int i1 = ram_config_table[ram_table_index][1];
     const int i2 = ram_config_table[ram_table_index][2];
@@ -478,99 +523,59 @@ cpc::update_memory_mapping() {
     // 0x0000..0x3FFF
     if (this->ga_config & (1<<2)) {
         // read/write from and to RAM bank
-        cpu.mem.map(0, 0x0000, 0x4000, this->board->ram[i0], true);
+        mem_map_ram(&board.mem, 0, 0x0000, 0x4000, board.ram[i0]);
     }
     else {
         // read from ROM, write to RAM
-        cpu.mem.map_rw(0, 0x0000, 0x4000, rom0_ptr, this->board->ram[i0]);
+        mem_map_rw(&board.mem, 0, 0x0000, 0x4000, rom0_ptr, board.ram[i0]);
     }
     // 0x4000..0x7FFF
-    cpu.mem.map(0, 0x4000, 0x4000, this->board->ram[i1], true);
+    mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[i1]);
     // 0x8000..0xBFFF
-    cpu.mem.map(0, 0x8000, 0x4000, this->board->ram[i2], true);
+    mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[i2]);
     // 0xC000..0xFFFF
     if (this->ga_config & (1<<3)) {
         // read/write from and to RAM bank
-        cpu.mem.map(0, 0xC000, 0x4000, this->board->ram[i3], true);
+        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[i3]);
     }
     else {
         // read from ROM, write to RAM
-        cpu.mem.map_rw(0, 0xC000, 0x4000, rom1_ptr, this->board->ram[i3]);
+        mem_map_rw(&board.mem, 0, 0xC000, 0x4000, rom1_ptr, board.ram[i3]);
     }
 }
 
 //------------------------------------------------------------------------------
 void
-cpc::put_input(uint8_t ascii, uint8_t joy0_mask) {
-    // ascii=0 means no key pressed, joystick input mutes keyboard input
-    this->next_joy_mask = key_mask();
-    if (0 == joy0_mask) {
-        this->next_key_mask = this->key_map[ascii];
+cpc_t::put_input(uint8_t ascii, uint8_t joy0_mask) {
+    if (ascii) {
+        kbd_key_down(&board.kbd, ascii);
+        kbd_key_up(&board.kbd, ascii);
     }
-    else {
-        this->next_key_mask = key_mask();
-        if (joy0_mask & joystick::left) {
-            this->next_joy_mask.combine(this->key_map[0xF0]);
-        }
-        if (joy0_mask & joystick::right) {
-            this->next_joy_mask.combine(this->key_map[0xF1]);
-        }
-        if (joy0_mask & joystick::up) {
-            this->next_joy_mask.combine(this->key_map[0xF2]);
-        }
-        if (joy0_mask & joystick::down) {
-            this->next_joy_mask.combine(this->key_map[0xF3]);
-        }
-        if (joy0_mask & joystick::btn0) {
-            this->next_joy_mask.combine(this->key_map[0xF5]);
-        }
-        if (joy0_mask & joystick::btn1) {
-            this->next_joy_mask.combine(this->key_map[0xF4]);
-        }
-    }
+    // FIXME: joystick
 }
 
 //------------------------------------------------------------------------------
 void
-cpc::irq(bool b) {
-    this->board->z80.irq(b);
-}
-
-//------------------------------------------------------------------------------
-void
-cpc::iack() {
-    this->video.interrupt_acknowledge();
-}
-
-//------------------------------------------------------------------------------
-void
-cpc::vblank() {
-    // fetch next key mask
-    this->cur_key_mask = this->next_key_mask;
-    this->cur_key_mask.combine(this->next_joy_mask);
-}
-
-//------------------------------------------------------------------------------
-void
-cpc::decode_audio(float* buffer, int num_samples) {
-    this->board->ay8910.fill_samples(buffer, num_samples);
+cpc_t::decode_audio(float* buffer, int num_samples) {
+    board.audiobuffer.read(buffer, num_samples);
 }
 
 //------------------------------------------------------------------------------
 const void*
-cpc::framebuffer(int& out_width, int& out_height) {
-    if (this->video.debug_video) {
-        out_width = cpc_video::dbg_max_display_width;
-        out_height = cpc_video::dbg_max_display_height;
+cpc_t::framebuffer(int& out_width, int& out_height) {
+    if (this->debug_video) {
+        out_width = dbg_max_display_width;
+        out_height = dbg_max_display_height;
     }
     else {
-        out_width = cpc_video::max_display_width;
-        out_height = cpc_video::max_display_height;
+        out_width = max_display_width;
+        out_height = max_display_height;
     }
-    return this->video.rgba8_buffer;
+    return board.rgba8_buffer;
 }
 
 //------------------------------------------------------------------------------
+/*
 bool
 cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     auto fp = fs->open(name, filesystem::mode::read);
@@ -639,8 +644,10 @@ cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     }
     return true;
 }
+*/
 
 //------------------------------------------------------------------------------
+/*
 bool
 cpc::load_bin(filesystem* fs, const char* name, filetype type, bool start) {
     auto fp = fs->open(name, filesystem::mode::read);
@@ -670,10 +677,13 @@ cpc::load_bin(filesystem* fs, const char* name, filetype type, bool start) {
     fs->rm(name);
     return true;
 }
+*/
 
 //------------------------------------------------------------------------------
 bool
-cpc::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+cpc_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+return false;
+/*
     if (filetype::cpc_sna == type) {
         return this->load_sna(fs, name, type, start);
     }
@@ -683,9 +693,11 @@ cpc::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     else {
         return false;
     }
+*/
 }
 
 //------------------------------------------------------------------------------
+/*
 void
 cpc::casread() {
     auto& cpu = this->board->z80;
@@ -707,10 +719,11 @@ cpc::casread() {
     cpu.F = success ? 0x45 : 0x00;
     cpu.PC = this->casread_ret;
 }
+*/
 
 //------------------------------------------------------------------------------
 const char*
-cpc::system_info() const {
+cpc_t::system_info() const {
     return "FIXME!";
 }
 

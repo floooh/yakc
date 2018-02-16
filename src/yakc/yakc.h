@@ -13,8 +13,8 @@
 #include "yakc/systems/zx.h"
 #include "yakc/systems/kc85.h"
 #include "yakc/systems/atom.h"
-/*
 #include "yakc/systems/cpc.h"
+/*
 #include "yakc/systems/bbcmicro.h"
 */
 
@@ -67,17 +67,11 @@ public:
 
     system model = system::none;
     os_rom os = os_rom::none;
-/*
-    class cpc cpc;
-    class bbcmicro bbcmicro;
-*/
     class filesystem filesystem;
-
     bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count
     uint64_t abs_cycle_count = 0;           // total CPU cycle count
     uint32_t overflow_cycles = 0;           // cycles that have overflowed from last frame
-
 private:
     bool joystick_enabled = false;
 };
