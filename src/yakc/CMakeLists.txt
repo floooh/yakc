@@ -14,7 +14,6 @@ fips_begin_module(yakc)
     )
     fips_dir(peripherals)
     fips_files(
-        crt.h crt.cc
         tapedeck.h tapedeck.cc
     )
     fips_dir(systems)

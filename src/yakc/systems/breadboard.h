@@ -7,11 +7,10 @@
 #include "yakc/core/core.h"
 #include "yakc/core/audiobuffer.h"
 #include "yakc/chips/cpudbg.h"
-//#include "yakc/chips/mc6845.h"
-#include "yakc/peripherals/crt.h"
 #include "chips/clk.h"
 #include "chips/mem.h"
 #include "chips/kbd.h"
+#include "chips/crt.h"
 #include "chips/beeper.h"
 #include "chips/z80.h"
 #include "chips/z80pio.h"
@@ -21,6 +20,7 @@
 #include "chips/m6522.h"
 #include "chips/i8255.h"
 #include "chips/mc6847.h"
+#include "chips/mc6845.h"
 
 namespace YAKC {
 
@@ -36,14 +36,12 @@ struct breadboard {
     m6522_t m6522;
     i8255_t i8255;
     mc6847_t mc6847;
+    mc6845_t mc6845;
     beeper_t beeper;
     beeper_t beeper2;
     kbd_t kbd;
-    /*
-    class mc6845 mc6845;
-    */
+    crt_t crt;
     class cpudbg dbg;
-    class crt crt;          // this is not a chip, but a cathode-ray-tube emulation
     class audiobuffer audiobuffer;
     class audiobuffer audiobuffer2;
     static const int num_ram_banks = 8;
