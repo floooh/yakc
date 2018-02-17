@@ -450,11 +450,9 @@ UI::OnFrame(yakc& emu) {
                     }
                 }
                 if (emu.is_system(system::any_cpc)) {
-                    /*
-                    if (ImGui::MenuItem("CPC CRTC Visualization", nullptr, emu.cpc.video.debug_video)) {
-                        emu.cpc.video.debug_video = !emu.cpc.video.debug_video;
+                    if (ImGui::MenuItem("CPC CRTC Visualization", nullptr, cpc.video.debug_video)) {
+                        cpc.video.debug_video = !cpc.video.debug_video;
                     }
-                    */
                 }
                 ImGui::EndMenu();
             }
