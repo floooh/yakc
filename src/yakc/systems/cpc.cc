@@ -130,7 +130,7 @@ cpc_t::poweron(system m) {
     // initialize hardware components, main clock frequency is 4 MHz
     board.freq_hz = 4000000;
     z80_init(&board.z80, cpu_tick);
-    ay38912_init(&board.ay38912, 1, 1000000, SOUND_SAMPLE_RATE, 0.5f);
+    ay38912_init(&board.ay38912, 1000000, SOUND_SAMPLE_RATE, 0.5f);
     i8255_init(&board.i8255, ppi_in, ppi_out);
     mc6845_init(&board.mc6845, MC6845_TYPE_UM6845R);
     crt_init(&board.crt, CRT_PAL, 2, 32, max_display_width/16, max_display_height);
@@ -243,7 +243,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
             }
             // on every 4th clock cycle, tick the system
             if (!wait_pin) {
-                if (ay38912_tick(&board.ay38912, 1)) {
+                if (ay38912_tick(&board.ay38912)) {
                     board.audiobuffer.write(board.ay38912.sample);
                 }
             }

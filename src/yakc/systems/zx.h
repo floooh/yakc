@@ -56,6 +56,7 @@ public:
     bool on = false;
     bool memory_paging_disabled = false;
     bool int_requested = false;
+    uint32_t tick_count = 0;
     uint8_t last_fe_out = 0;            // last OUT value to xxFE port
     uint8_t blink_counter = 0;          // increased by one every vblank
     int scanline_period = 0;

@@ -178,7 +178,7 @@ zx_t::poweron(system m) {
     // initialize hardware components
     beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     if (system::zxspectrum128k == this->cur_model) {
-        ay38912_init(&board.ay38912, 2, board.freq_hz/2, SOUND_SAMPLE_RATE, 0.5f);
+        ay38912_init(&board.ay38912, board.freq_hz/2, SOUND_SAMPLE_RATE, 0.5f);
     }
 
     // cpu start state
@@ -259,7 +259,6 @@ return 0;
 //------------------------------------------------------------------------------
 uint64_t
 zx_t::cpu_tick(int num_ticks, uint64_t pins) {
-
     // video decoding and vblank interrupt
     zx.scanline_counter -= num_ticks;
     if (zx.scanline_counter <= 0) {
@@ -271,17 +270,19 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
     }
 
-    // tick the beeper
+    // tick audio systems
     for (int i = 0; i < num_ticks; i++) {
+        zx.tick_count++;
         if (beeper_tick(&board.beeper)) {
             board.audiobuffer.write(board.beeper.sample);
         }
-    }
-
-    // on Spectrum 128, tick the AY-3-8912 chip
-    if (system::zxspectrum128k == zx.cur_model) {
-        if (ay38912_tick(&board.ay38912, num_ticks)) {
-            board.audiobuffer2.write(board.ay38912.sample);
+        // the AY-3-8912 chip runs at half CPU frequency
+        if (system::zxspectrum128k == zx.cur_model) {
+            if (zx.tick_count & 1) {
+                if (ay38912_tick(&board.ay38912)) {
+                    board.audiobuffer2.write(board.ay38912.sample);
+                }
+            }
         }
     }
 
