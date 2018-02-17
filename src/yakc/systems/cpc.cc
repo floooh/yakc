@@ -181,31 +181,28 @@ cpc_t::step(uint64_t start_tick, uint64_t end_tick) {
 //------------------------------------------------------------------------------
 uint32_t
 cpc_t::step_debug() {
-return 0;
-/*
-    auto& cpu = this->board->z80;
-    auto& dbg = this->board->dbg;
+    auto& cpu = board.z80;
+    auto& dbg = board.dbg;
     uint32_t all_ticks = 0;
     uint16_t old_pc;
     do {
         old_pc = cpu.PC;
-        uint32_t ticks = cpu.handle_irq(this);
-        if (0 == ticks) {
-            ticks = cpu.step(this);
-        }
-        this->video.step(this, ticks);
-        this->board->ay8910.step(ticks);
+        uint32_t ticks = z80_exec(&cpu, 0);
         dbg.step(cpu.PC, ticks);
         all_ticks += ticks;
     }
-    while ((old_pc == cpu.PC) && !cpu.INV);
+    while (old_pc == cpu.PC);
     return all_ticks;
-*/
 }
 
 //------------------------------------------------------------------------------
 uint64_t
 cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
+    // interrupt acknowledge?
+    if ((pins & (Z80_M1|Z80_IORQ)) == (Z80_M1|Z80_IORQ)) {
+        cpc.video.interrupt_acknowledge();
+    }
+
     /*
         decide how many wait states must be injected, the CPC signals
         the wait line in 3 out of 4 cycles:
@@ -276,7 +273,6 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
             cpc.cpu_out(pins);
         }
     }
-
     return pins;
 }
 
@@ -369,7 +365,7 @@ cpc_t::cpu_out(uint64_t pins) {
 //------------------------------------------------------------------------------
 uint8_t
 cpc_t::cpu_in(uint64_t pins) {
-    const uint16_t addr = Z80_GET_DATA(pins);
+    const uint16_t addr = Z80_GET_ADDR(pins);
     if (0 == (addr & (1<<14))) {
         // CRTC function
         // FIXME: untested

@@ -156,8 +156,7 @@ cpc_video::handle_crtc_sync(uint64_t crtc_pins) {
         this->hsync_start_count--;
         if (this->hsync_start_count == 0) {
             //crt.trigger_hsync();
-//            this->hsync_end_count = 4;
-this->hsync_end_count = 1;
+            this->hsync_end_count = 4;
         }
     }
     if (this->hsync_end_count > 0) {
@@ -269,7 +268,6 @@ cpc_video::tick(uint64_t cpu_pins) {
     crt_tick(&crt, crtc_pins & MC6845_HS, crtc_pins & MC6845_VS);
     if (this->request_interrupt) {
         cpu_pins |= Z80_INT;
-        this->request_interrupt = false;
     }
 
     if (!this->debug_video) {
