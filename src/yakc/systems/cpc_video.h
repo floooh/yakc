@@ -31,13 +31,14 @@ public:
     /// get current state of the vsync bit
     bool vsync_bit() const;
     /// gate array hsync/vsync stuff (irq and vblank)  
-    uint64_t handle_crtc_sync(uint64_t crtc_pins);
+    void handle_crtc_sync(uint64_t crtc_pins);
     /// decode the next 16 pixels into the emulator framebuffer
     void decode_pixels(uint32_t* dst, uint64_t crtc_pins);
 
     system model = system::none;
     bool debug_video = false;
 
+    uint64_t prev_crtc_pins = 0;
     int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
     int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
     int hsync_start_count = 0;

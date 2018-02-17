@@ -111,7 +111,15 @@ cpc_video::reset() {
 }
 
 //------------------------------------------------------------------------------
-uint64_t
+static bool edge_raise(uint64_t prev_pins, uint64_t new_pins, uint64_t mask) {
+    return (new_pins & mask) && !(prev_pins & mask);
+}
+
+static bool edge_fall(uint64_t prev_pins, uint64_t new_pins, uint64_t mask) {
+    return !(new_pins & mask) && (prev_pins & mask);
+}
+
+void
 cpc_video::handle_crtc_sync(uint64_t crtc_pins) {
     // checks the HSYNC and VSYN CRTC flags and issues CPU interrupt
     // request and system_bus vblank callback if needed
@@ -122,21 +130,19 @@ cpc_video::handle_crtc_sync(uint64_t crtc_pins) {
     // feed state of hsync and vsync signals into CRT, and step the CRT
     // NOTE: HSYNC from the CRTC is delayed by 2us and will last for
     // at most 4us unless CRTC HSYNC is triggered off earlier
-    /*
     auto& crtc = board.mc6845;
     auto& crt = board.crt;
-    if (edge_raise(this->prev_crtc_pins, crtc_pins, MC6845_HSYNC))
+    if (edge_raise(this->prev_crtc_pins, crtc_pins, MC6845_HS)) {
         this->hsync_start_count = 2;
     }
-    if (edge_fall(this->prev_crtc_pins, crtc_pins, MC6845_HSYNC)) {
+    if (edge_fall(this->prev_crtc_pins, crtc_pins, MC6845_HS)) {
         if (this->hsync_end_count > 2) {
             this->hsync_end_count = 2;
         }
     }
-    if (edge_raise(this->prev_crtc_pins, crtc_pins, MC6845_VSYNC)) {
-        crt.trigger_vsync();
+    if (edge_raise(this->prev_crtc_pins, crtc_pins, MC6845_VS)) {
+        //crt.trigger_vsync();
         this->hsync_after_vsync_counter = 2;
-        bus->vblank();
     }
     if (this->int_acknowledge_counter > 0) {
         this->int_acknowledge_counter--;
@@ -144,14 +150,14 @@ cpc_video::handle_crtc_sync(uint64_t crtc_pins) {
             // clear top bit of hsync counter, makes sure the next hsync irq
             // won't happen until at least 32 lines later
             this->hsync_irq_count &= 0x1F;
-            bus->irq(false);
         }
     }    
     if (hsync_start_count > 0) {
         this->hsync_start_count--;
         if (this->hsync_start_count == 0) {
-            crt.trigger_hsync();
-            this->hsync_end_count = 4;
+            //crt.trigger_hsync();
+//            this->hsync_end_count = 4;
+this->hsync_end_count = 1;
         }
     }
     if (this->hsync_end_count > 0) {
@@ -179,13 +185,9 @@ cpc_video::handle_crtc_sync(uint64_t crtc_pins) {
                 this->hsync_irq_count = 0;
                 this->request_interrupt = true;
             }
-            if (this->request_interrupt) {
-                bus->irq(true);
-            }
         }
     }
-    */
-    return crtc_pins;
+    this->prev_crtc_pins = crtc_pins;
 }
 
 //------------------------------------------------------------------------------
@@ -263,8 +265,12 @@ cpc_video::tick(uint64_t cpu_pins) {
     auto& crt = board.crt;
 
     uint64_t crtc_pins = mc6845_tick(&crtc);
-//    this->handle_crtc_sync(crtc_pins);
+    this->handle_crtc_sync(crtc_pins);
     crt_tick(&crt, crtc_pins & MC6845_HS, crtc_pins & MC6845_VS);
+    if (this->request_interrupt) {
+        cpu_pins |= Z80_INT;
+        this->request_interrupt = false;
+    }
 
     if (!this->debug_video) {
         if (crt.visible) {
