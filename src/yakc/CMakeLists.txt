@@ -5,7 +5,7 @@ fips_begin_module(yakc)
     fips_files(
         audiobuffer.cc audiobuffer.h
         core.h core.cc 
-        cpudbg.cc cpudbg.h
+        debugger.cc debugger.h
         filesystem.h filesystem.cc
         audiobuffer.h audiobuffer.cc
         filetypes.h

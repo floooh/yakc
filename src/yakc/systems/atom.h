@@ -26,11 +26,9 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-
     /// process a number of cycles, return final processed tick
-    uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// perform a single debug-step
-    uint32_t step_debug();
+    uint64_t exec(uint64_t start_tick, uint64_t end_tick);
+
     /// the m6502 tick callback
     static uint64_t cpu_tick(uint64_t pins);
     /// the MC6847 video memory fetch callback

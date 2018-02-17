@@ -170,29 +170,12 @@ cpc_t::reset() {
 
 //------------------------------------------------------------------------------
 uint64_t
-cpc_t::step(uint64_t start_tick, uint64_t end_tick) {
+cpc_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = end_tick - start_tick;
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
     kbd_update(&board.kbd);
     return start_tick + ticks_executed;
-}
-
-//------------------------------------------------------------------------------
-uint32_t
-cpc_t::step_debug() {
-    auto& cpu = board.z80;
-    auto& dbg = board.dbg;
-    uint32_t all_ticks = 0;
-    uint16_t old_pc;
-    do {
-        old_pc = cpu.PC;
-        uint32_t ticks = z80_exec(&cpu, 0);
-        dbg.step(cpu.PC, ticks);
-        all_ticks += ticks;
-    }
-    while (old_pc == cpu.PC);
-    return all_ticks;
 }
 
 //------------------------------------------------------------------------------

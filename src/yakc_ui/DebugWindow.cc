@@ -118,18 +118,25 @@ DebugWindow::drawControls(yakc& emu) {
     }
     if (Util::InputHex16("", bp_addr)) {
         if (bp_addr != 0xFFFF) {
-            board.dbg.enable_breakpoint(bp_addr);
+            board.dbg.set_breakpoint(bp_addr);
         }
         else {
             board.dbg.disable_breakpoint();
         }
     }
     ImGui::SameLine();
-    ImGui::Checkbox("break", &board.dbg.active);
-    if (board.dbg.active) {
+    if (board.dbg.break_stopped()) {
+        if (ImGui::Button("Cont")) {
+            board.dbg.break_continue();
+        }
         ImGui::SameLine();
-        if (ImGui::Button("step")) {
+        if (ImGui::Button("Step")) {
             emu.step_debug();
+        }
+    }
+    else {
+        if (ImGui::Button("Stop")) {
+            board.dbg.break_trap();
         }
     }
     //ImGui::Checkbox("break on invalid opcode", &board.z80.break_on_invalid_opcode);
@@ -154,15 +161,15 @@ DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
     uint16_t cur_addr = start_addr;
 
     // set cur_addr to start of displayed region
-    for (int line_i = cpudbg::history_size; line_i < clipper.DisplayStart; line_i++) {
+    for (int line_i = debugger::history_size; line_i < clipper.DisplayStart; line_i++) {
         cur_addr += disasm.Disassemble(emu, cur_addr);
     }
 
     // display only visible items
     for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
         uint16_t op_addr, op_cycles, num_bytes;
-        if (line_i < cpudbg::history_size) {
-            auto hist_item = board.dbg.get_pc_history(line_i);
+        if (line_i < debugger::history_size) {
+            auto hist_item = board.dbg.get_history_item(line_i);
             op_addr = hist_item.pc;
             op_cycles = hist_item.cycles;
             num_bytes = disasm.Disassemble(emu, hist_item.pc);
@@ -190,7 +197,7 @@ DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
         }
 
         // wrap current PC into 2 separator lines
-        if ((line_i == cpudbg::history_size) || (line_i == cpudbg::history_size+1)) {
+        if ((line_i == debugger::history_size) || (line_i == debugger::history_size+1)) {
             ImGui::Separator();
         }
 

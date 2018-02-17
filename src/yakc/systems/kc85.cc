@@ -366,40 +366,12 @@ kc85_t::pio_out(int port_id, uint8_t data) {
 
 //------------------------------------------------------------------------------
 uint64_t
-kc85_t::step(uint64_t start_tick, uint64_t end_tick) {
+kc85_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = end_tick - start_tick;
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
     this->handle_keyboard_input();
     return start_tick + ticks_executed;
-}
-
-//------------------------------------------------------------------------------
-uint32_t
-kc85_t::step_debug() {
-return 0;
-/*
-    auto& cpu = this->board->z80;
-    auto& ctc = this->board->z80ctc;
-    auto& clk = this->board->clck;
-    auto& dbg = this->board->dbg;
-    uint64_t all_ticks = 0;
-    uint16_t old_pc;
-    do {
-        old_pc = cpu.PC;
-        uint32_t ticks = cpu.handle_irq(this);
-        if (0 == ticks) {
-            ticks = cpu.step(this);
-        }
-        clk.step(this, ticks);
-        ctc.step(this, ticks);
-        this->audio.step(ticks);
-        dbg.step(cpu.PC, ticks);
-        all_ticks += ticks;
-    }
-    while ((old_pc == cpu.PC) && !cpu.INV);    
-    return uint32_t(all_ticks);
-*/
 }
 
 //------------------------------------------------------------------------------

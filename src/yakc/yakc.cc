@@ -61,6 +61,7 @@ yakc::poweron(system m, os_rom rom) {
     this->os = rom;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
+    board.dbg.init(this->cpu_type());
     if (this->is_system(system::any_z1013)) {
         z1013.poweron(m);
     }
@@ -174,7 +175,7 @@ yakc::cpu_type() const {
 
 //------------------------------------------------------------------------------
 void
-yakc::step(int micro_secs, uint64_t audio_cycle_count) {
+yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
     uint64_t min_cycle_count = 0;
     uint64_t max_cycle_count = 0;
     if (audio_cycle_count > 0) {
@@ -205,35 +206,51 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
     if (this->abs_cycle_count > abs_end_cycles) {
         this->abs_cycle_count = abs_end_cycles;
     }
-    if (!board.dbg.active) {
+    if (!board.dbg.break_stopped()) {
         if (z1013.on) {
-            this->abs_cycle_count = z1013.step(this->abs_cycle_count, abs_end_cycles);
+            this->abs_cycle_count = z1013.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (z9001.on) {
-            this->abs_cycle_count = z9001.step(this->abs_cycle_count, abs_end_cycles);
+            this->abs_cycle_count = z9001.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (zx.on) {
-            this->abs_cycle_count = zx.step(this->abs_cycle_count, abs_end_cycles);
+            this->abs_cycle_count = zx.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (kc85.on) {
-            this->abs_cycle_count = kc85.step(this->abs_cycle_count, abs_end_cycles);
+            this->abs_cycle_count = kc85.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (atom.on) {
-            this->abs_cycle_count = atom.step(this->abs_cycle_count, abs_end_cycles);
+            this->abs_cycle_count = atom.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (cpc.on) {
-            this->abs_cycle_count = cpc.step(this->abs_cycle_count, abs_end_cycles);
+            this->abs_cycle_count = cpc.exec(this->abs_cycle_count, abs_end_cycles);
         }
         /*
         else if (this->bbcmicro.on) {
-            this->abs_cycle_count = this->bbcmicro.step(this->abs_cycle_count, abs_end_cycles);
+            this->abs_cycle_count = this->bbcmicro.exec(this->abs_cycle_count, abs_end_cycles);
         }
         */
         else {
             this->abs_cycle_count = abs_end_cycles;
         }
-        YAKC_ASSERT(this->abs_cycle_count >= abs_end_cycles);
-        this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
+        if (this->abs_cycle_count > abs_end_cycles) {
+            this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
+        }
+        else {
+            this->overflow_cycles = 0;
+        }
+
+        // check if breakpoint has been hit
+        if (this->cpu_type() == cpu_model::z80) {
+            if (board.z80.trap_id == 0) {
+                board.dbg.break_trap();
+            }
+        }
+        else {
+            if (board.m6502.trap_id == 0) {
+                board.dbg.break_trap();
+            }
+        }
     }
     else {
         this->abs_cycle_count = abs_end_cycles;
@@ -244,32 +261,27 @@ yakc::step(int micro_secs, uint64_t audio_cycle_count) {
 //------------------------------------------------------------------------------
 uint32_t
 yakc::step_debug() {
-    if (z1013.on) {
-        return z1013.step_debug();
+    uint32_t all_ticks = 0;
+    uint16_t old_pc;
+    if (this->cpu_type() == cpu_model::z80) {
+        do {
+            old_pc = board.z80.PC;
+            uint32_t ticks = z80_exec(&board.z80, 0);
+            board.dbg.add_history_item(board.z80.PC, ticks);
+            all_ticks += ticks;
+        }
+        while (old_pc == board.z80.PC);
     }
-    else if (z9001.on) {
-        return z9001.step_debug();
-    }
-    else if (zx.on) {
-        return zx.step_debug();
-    }
-    else if (kc85.on) {
-        return kc85.step_debug();
-    }
-    else if (atom.on) {
-        return atom.step_debug();
-    }
-    else if (cpc.on) {
-        return cpc.step_debug();
-    }
-    /*
-    else if (this->bbcmicro.on) {
-        return this->bbcmicro.step_debug();
-    }
-    */
     else {
-        return 0;
+        do {
+            old_pc = board.m6502.PC;
+            uint32_t ticks = m6502_exec(&board.m6502, 0);
+            board.dbg.add_history_item(board.m6502.PC, ticks);
+            all_ticks += ticks;
+        }
+        while (old_pc == board.m6502.PC);
     }
+    return all_ticks;
 }
 
 //------------------------------------------------------------------------------
@@ -345,7 +357,7 @@ yakc::system_info() const {
 //------------------------------------------------------------------------------
 void
 yakc::fill_sound_samples(float* buffer, int num_samples) {
-    if (!board.dbg.active) {
+    if (!board.dbg.break_stopped()) {
         if (z9001.on) {
             return z9001.decode_audio(buffer, num_samples);
         }

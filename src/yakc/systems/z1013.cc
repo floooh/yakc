@@ -111,39 +111,13 @@ z1013_t::reset() {
 
 //------------------------------------------------------------------------------
 uint64_t
-z1013_t::step(uint64_t start_tick, uint64_t end_tick) {
+z1013_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = end_tick - start_tick;
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
     kbd_update(&board.kbd);
     this->decode_video();
     return start_tick + ticks_executed;
-}
-
-//------------------------------------------------------------------------------
-uint32_t
-z1013_t::step_debug() {
-return 0;
-/* FIME
-    auto& cpu = this->board->z80;
-    auto& dbg = this->board->dbg;
-    auto& clk = this->board->clck;
-    uint64_t all_ticks = 0;
-    uint16_t old_pc;
-    do {
-        old_pc = cpu.PC;
-        uint32_t ticks = cpu.handle_irq(this);
-        if (0 == ticks) {
-            ticks = cpu.step(this);
-        }
-        clk.step(this, ticks);
-        dbg.step(cpu.PC, ticks);
-        all_ticks += ticks;
-    }
-    while ((old_pc == cpu.PC) && !cpu.INV);    
-    this->decode_video();
-    return uint32_t(all_ticks);
-*/
 }
 
 //------------------------------------------------------------------------------

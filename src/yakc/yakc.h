@@ -35,7 +35,7 @@ public:
     /// reset the emu
     void reset();
     /// process one frame, up to absolute number of cycles
-    void step(int micro_secs, uint64_t audio_cycle_count);
+    void exec(int micro_secs, uint64_t audio_cycle_count);
     /// step over one instruction and return number of cycles (called by debuggers)
     uint32_t step_debug();
 

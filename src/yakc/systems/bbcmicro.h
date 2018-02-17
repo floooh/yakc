@@ -40,8 +40,6 @@ public:
     void put_key(uint8_t ascii);
     /// process a number of cycles, return final processed tick
     uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// perform a single debug-step
-    uint32_t step_debug();
 
     /// memory-mapped-io callback
     static uint8_t memio(bool write, uint16_t addr, uint8_t inval);

@@ -6,7 +6,7 @@
 */
 #include "yakc/util/core.h"
 #include "yakc/util/audiobuffer.h"
-#include "yakc/util/cpudbg.h"
+#include "yakc/util/debugger.h"
 #include "chips/clk.h"
 #include "chips/mem.h"
 #include "chips/kbd.h"
@@ -41,7 +41,7 @@ struct breadboard {
     beeper_t beeper2;
     kbd_t kbd;
     crt_t crt;
-    class cpudbg dbg;
+    class debugger dbg;
     class audiobuffer audiobuffer;
     class audiobuffer audiobuffer2;
     static const int num_ram_banks = 8;

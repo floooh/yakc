@@ -148,7 +148,7 @@ YakcApp::OnRunning() {
     TimePoint emu_start_time = Clock::Now();
     #if YAKC_UI
         // keep CPU synchronized to a small time window ahead of audio playback
-        this->emu.step(micro_secs, processed_audio_cycles);
+        this->emu.exec(micro_secs, processed_audio_cycles);
         this->draw.UpdateParams(
             this->ui.Settings.crtEffect,
             this->ui.Settings.colorTV,
