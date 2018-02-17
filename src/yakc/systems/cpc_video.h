@@ -4,7 +4,6 @@
     @class YAKC::cpc_video
     @brief CPC video decoder (CRTC, color palette, video mode)
 */
-#include "yakc/core/system_bus.h"
 #include "yakc/systems/breadboard.h"
 
 namespace YAKC {
@@ -12,11 +11,11 @@ namespace YAKC {
 class cpc_video {
 public:
     /// initialize the object
-    void init(system model, breadboard* board);
+    void init(system model);
     /// perform a reset
     void reset();
-    /// call after each CPU instruction, calls the scanline() method
-    void step(system_bus* bus, int cycles);
+    /// call per CPU tick
+    uint64_t tick(uint64_t cpu_pins);
 
     /// called from CPU OUT handler to select pen for modification
     void select_pen(uint8_t val);
@@ -25,22 +24,20 @@ public:
     /// set display mode (0..2)
     void set_video_mode(uint8_t val);
     /// called when bit 4 in CPU OUT 0x7Fxx is set (resets HSYNC counter)
-    void interrupt_control(system_bus* bus);
+    void interrupt_control();
     /// called when CPU acknowledges interrupt, clears bit 5 of HSYNC counter
     void interrupt_acknowledge();
 
     /// get current state of the vsync bit
     bool vsync_bit() const;
     /// gate array hsync/vsync stuff (irq and vblank)  
-    void handle_crtc_sync(system_bus* bus);
+    uint64_t handle_crtc_sync(uint64_t crtc_pins);
     /// decode the next 16 pixels into the emulator framebuffer
-    void decode_pixels(uint32_t* dst);
+    void decode_pixels(uint32_t* dst, uint64_t crtc_pins);
 
-    breadboard* board = nullptr;
     system model = system::none;
     bool debug_video = false;
 
-    counter cycle_counter;
     int hsync_irq_count = 0;        // interrupt counter, incremented each scanline, reset at 52
     int hsync_after_vsync_counter = 0;  // special case hsync irq after vsync (32 instead of 52 lines)
     int hsync_start_count = 0;
@@ -96,14 +93,13 @@ cpc_video::set_video_mode(uint8_t val) {
 //------------------------------------------------------------------------------
 inline bool
 cpc_video::vsync_bit() const {
-    return this->board->mc6845.test(mc6845::VSYNC);
+    return board.mc6845.vs;
 }
 
 //------------------------------------------------------------------------------
 inline void
-cpc_video::interrupt_control(system_bus* bus) {
+cpc_video::interrupt_control() {
     this->hsync_irq_count = 0;
-    bus->irq(false);
 }
 
 //------------------------------------------------------------------------------

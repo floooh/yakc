@@ -26,7 +26,7 @@ fips_begin_module(yakc)
         z9001.h z9001.cc
         zx.h zx.cc
         cpc.h cpc.cc
-#        cpc_video.h cpc_video.cc
+        cpc_video.h cpc_video.cc
 #        bbcmicro.h bbcmicro.cc
 #        bbcmicro_video.h bbcmicro_video.cc
         atom.h atom.cc

@@ -60,13 +60,9 @@ static uint32_t kcc_color_rom[32] = {
 
 //------------------------------------------------------------------------------
 void
-cpc_video::init(system model_, breadboard* board_) {
+cpc_video::init(system model_) {
     this->model = model_;
-    this->board = board_;
-    this->rgba8_buffer = this->board->rgba8_buffer;
-    this->cycle_counter.init(4);    // step every 4 CPU cycles
-    this->board->mc6845.init(mc6845::TYPE_UM6845R);
-    this->board->crt.init(crt::PAL, 32/16, 32, max_display_width/16, max_display_height);
+    this->rgba8_buffer = board.rgba8_buffer;
 
     // initialize the color palette (CPC and KC Compact have slightly different colors)
     if (system::kccompact != this->model) {
@@ -102,9 +98,6 @@ cpc_video::init(system model_, breadboard* board_) {
 void
 cpc_video::reset() {
     clear(this->pens, sizeof(this->pens));
-    this->board->mc6845.reset();
-    this->board->crt.reset();
-    this->cycle_counter.reset();
     this->hsync_irq_count = 0;
     this->hsync_after_vsync_counter = 0;
     this->hsync_start_count = 0;
@@ -118,8 +111,8 @@ cpc_video::reset() {
 }
 
 //------------------------------------------------------------------------------
-void
-cpc_video::handle_crtc_sync(system_bus* bus) {
+uint64_t
+cpc_video::handle_crtc_sync(uint64_t crtc_pins) {
     // checks the HSYNC and VSYN CRTC flags and issues CPU interrupt
     // request and system_bus vblank callback if needed
     //
@@ -129,17 +122,18 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
     // feed state of hsync and vsync signals into CRT, and step the CRT
     // NOTE: HSYNC from the CRTC is delayed by 2us and will last for
     // at most 4us unless CRTC HSYNC is triggered off earlier
-    auto& crtc = this->board->mc6845;
-    auto& crt = this->board->crt;
-    if (crtc.on(mc6845::HSYNC)) {
+    /*
+    auto& crtc = board.mc6845;
+    auto& crt = board.crt;
+    if (edge_raise(this->prev_crtc_pins, crtc_pins, MC6845_HSYNC))
         this->hsync_start_count = 2;
     }
-    if (crtc.off(mc6845::HSYNC)) {
+    if (edge_fall(this->prev_crtc_pins, crtc_pins, MC6845_HSYNC)) {
         if (this->hsync_end_count > 2) {
             this->hsync_end_count = 2;
         }
     }
-    if (crtc.on(mc6845::VSYNC)) {
+    if (edge_raise(this->prev_crtc_pins, crtc_pins, MC6845_VSYNC)) {
         crt.trigger_vsync();
         this->hsync_after_vsync_counter = 2;
         bus->vblank();
@@ -190,11 +184,13 @@ cpc_video::handle_crtc_sync(system_bus* bus) {
             }
         }
     }
+    */
+    return crtc_pins;
 }
 
 //------------------------------------------------------------------------------
 void
-cpc_video::decode_pixels(uint32_t* dst) {
+cpc_video::decode_pixels(uint32_t* dst, uint64_t crtc_pins) {
 
     // compute the source address from current CRTC ma (memory address)
     // and ra (raster address) like this:
@@ -204,10 +200,11 @@ cpc_video::decode_pixels(uint32_t* dst) {
     // Bits ma12 and m11 point to the 16 KByte page, and all
     // other bits are the index into that page.
     //
-    auto& crtc = this->board->mc6845;
-    const uint32_t page_index  = (crtc.ma>>12) & 3;
-    const uint32_t page_offset = ((crtc.ma & 0x03FF)<<1) | ((crtc.ra & 7)<<11);
-    const uint8_t* src = &(this->board->ram[page_index][page_offset]);
+    const uint16_t ma = MC6845_GET_ADDR(crtc_pins);
+    const uint8_t ra = MC6845_GET_RA(crtc_pins);
+    const uint32_t page_index  = (ma>>12) & 3;
+    const uint32_t page_offset = ((ma & 0x03FF)<<1) | ((ra & 7)<<11);
+    const uint8_t* src = &(board.ram[page_index][page_offset]);
     uint8_t c;
     uint32_t p;
     if (0 == this->video_mode) {
@@ -256,86 +253,85 @@ cpc_video::decode_pixels(uint32_t* dst) {
 }
 
 //------------------------------------------------------------------------------
-void
-cpc_video::step(system_bus* bus, int cycles) {
+uint64_t
+cpc_video::tick(uint64_t cpu_pins) {
 
     // http://cpctech.cpc-live.com/docs/ints.html
     // http://www.cpcwiki.eu/forum/programming/frame-flyback-and-interrupts/msg25106/#msg25106
     // http://www.grimware.org/doku.php/documentations/devices/gatearray#interrupt.generator
-    auto& crtc = this->board->mc6845;
-    auto& crt = this->board->crt;
-    this->cycle_counter.update(cycles);
-    while (this->cycle_counter.step()) {
-        crtc.step();
-        this->handle_crtc_sync(bus);
-        crt.step();
+    auto& crtc = board.mc6845;
+    auto& crt = board.crt;
 
-        if (!this->debug_video) {
-            if (crt.visible) {
-                int dst_x = crt.x * 16;
-                int dst_y = crt.y;
-                YAKC_ASSERT((dst_x <= (max_display_width-16)) && (dst_y < max_display_height));
-                uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * max_display_width]);
-                if (crtc.test(mc6845::DISPEN)) {
-                    // decode visible pixels
-                    this->decode_pixels(dst);
-                }
-                else if (crtc.test(mc6845::HSYNC|mc6845::VSYNC)) {
-                    // blacker than black
-                    for (int i = 0; i < 16; i++) {
-                        dst[i] = 0xFF000000;
-                    }
-                }
-                else {
-                    // border color
-                    for (int i = 0; i < 16; i++) {
-                        dst[i] = this->border_color;
-                    }
+    uint64_t crtc_pins = mc6845_tick(&crtc);
+//    this->handle_crtc_sync(crtc_pins);
+    crt_tick(&crt, crtc_pins & MC6845_HS, crtc_pins & MC6845_VS);
+
+    if (!this->debug_video) {
+        if (crt.visible) {
+            int dst_x = crt.pos_x * 16;
+            int dst_y = crt.pos_y;
+            YAKC_ASSERT((dst_x <= (max_display_width-16)) && (dst_y < max_display_height));
+            uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * max_display_width]);
+            if (crtc_pins & MC6845_DE) {
+                // decode visible pixels
+                this->decode_pixels(dst, crtc_pins);
+            }
+            else if (crtc_pins & (MC6845_HS|MC6845_VS)) {
+                // blacker than black
+                for (int i = 0; i < 16; i++) {
+                    dst[i] = 0xFF000000;
                 }
             }
-        }
-        else {
-            // debug mode
-            int dst_x = crt.h_pos * 16;
-            int dst_y = crt.v_pos;
-            if ((dst_x < (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
-                uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
-                if (!crtc.test(mc6845::DISPEN)) {
-                    uint8_t r = 0x3F;
-                    uint8_t g = 0x3F;
-                    uint8_t b = 0x3F;
-                    if (crtc.test(mc6845::HSYNC)) {
-                        r = 0x7F;
-                    }
-                    if (crtc.test(mc6845::VSYNC)) {
-                        g = 0x7F;
-                    }
-                    if (this->request_interrupt) {
-                        r = g = b = 0xFF;
-                    }
-                    else if (0 == crtc.scanline_count) {
-                        r = g = b = 0x00;
-                    }
-                    if (crt.h_black || crt.v_black) {
-                        r >>= 1;
-                        g >>= 1;
-                        b >>= 1;
-                    }
-                    for (int i = 0; i < 16; i++) {
-                        if (i == 0) {
-                            *dst++ = 0xFF000000;
-                        }
-                        else {
-                            *dst++ = 0xFF<<24 | b<<16 | g<<8 | r;
-                        }
-                    }
-                }
-                else {
-                    this->decode_pixels(dst);
+            else {
+                // border color
+                for (int i = 0; i < 16; i++) {
+                    dst[i] = this->border_color;
                 }
             }
         }
     }
+    else {
+        // debug mode
+        int dst_x = crt.h_pos * 16;
+        int dst_y = crt.v_pos;
+        if ((dst_x < (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
+            uint32_t* dst = &(this->rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
+            if (!(crtc_pins & MC6845_DE)) {
+                uint8_t r = 0x3F;
+                uint8_t g = 0x3F;
+                uint8_t b = 0x3F;
+                if (crtc_pins & MC6845_HS) {
+                    r = 0x7F;
+                }
+                if (crtc_pins & MC6845_VS) {
+                    g = 0x7F;
+                }
+                if (this->request_interrupt) {
+                    r = g = b = 0xFF;
+                }
+                else if (0 == crtc.scanline_ctr) {
+                    r = g = b = 0x00;
+                }
+                if (crt.h_blank || crt.v_blank) {
+                    r >>= 1;
+                    g >>= 1;
+                    b >>= 1;
+                }
+                for (int i = 0; i < 16; i++) {
+                    if (i == 0) {
+                        *dst++ = 0xFF000000;
+                    }
+                    else {
+                        *dst++ = 0xFF<<24 | b<<16 | g<<8 | r;
+                    }
+                }
+            }
+            else {
+                this->decode_pixels(dst, crtc_pins);
+            }
+        }
+    }
+    return cpu_pins;
 }
 
 } // namespace YAKC

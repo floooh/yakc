@@ -8,6 +8,7 @@
 #include "yakc/systems/rom_images.h"
 #include "yakc/core/filesystem.h"
 #include "yakc/peripherals/tapedeck.h"
+#include "yakc/systems/cpc_video.h"
 
 namespace YAKC {
 
@@ -31,10 +32,16 @@ public:
     uint32_t step_debug();
     /// the Z80 CPU tick callback
     static uint64_t cpu_tick(int num_ticks, uint64_t pins);
-    /// i8255 input callback
-    static uint8_t ppi_in(int port_id);
     /// i8255 output callback
     static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data);
+    /// i8255 input callback
+    static uint8_t ppi_in(int port_id);
+    /// tick the gate array
+    uint64_t ga_tick(uint64_t pins);
+    /// perform a CPU OUT
+    void cpu_out(uint64_t pins);
+    /// perform a CPU IN
+    uint8_t cpu_in(uint64_t pins);
 
     /// update bank switching
     void update_memory_mapping();
@@ -58,22 +65,10 @@ public:
 
     system cur_model = system::cpc464;
     bool on = false;
+    cpc_video video;
     uint32_t tick_count = 0;
     uint16_t casread_trap = 0x0000;
     uint16_t casread_ret = 0x0000;
-
-//    cpc_video video;
-
-    // gate array stuff
-    static const int max_display_width = 768;
-    static const int max_display_height = 272;
-    static const int dbg_max_display_width  = 1024;     // 64*16
-    static const int dbg_max_display_height = 312;
-    static_assert(max_display_width <= global_max_fb_width, "cpc display size");
-    static_assert(max_display_height <= global_max_fb_height, "cpc display size");
-    static_assert(dbg_max_display_width <= global_max_fb_width, "cpc display size");
-    static_assert(dbg_max_display_height <= global_max_fb_height, "cpc display size");
-    bool debug_video = false;
 
     uint8_t ga_config = 0x00;     // out to port 0x7Fxx func 0x80
     uint8_t ram_config = 0x00;    // out to port 0x7Fxx func 0xC0

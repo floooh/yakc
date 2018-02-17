@@ -9,6 +9,8 @@
 #include "cpc.h"
 #include "yakc/core/filetypes.h"
 
+#include <stdio.h>
+
 namespace YAKC {
 
 cpc_t cpc;
@@ -133,7 +135,8 @@ cpc_t::poweron(system m) {
     ay38912_init(&board.ay38912, 1000000, SOUND_SAMPLE_RATE, 0.5f);
     i8255_init(&board.i8255, ppi_in, ppi_out);
     mc6845_init(&board.mc6845, MC6845_TYPE_UM6845R);
-    crt_init(&board.crt, CRT_PAL, 2, 32, max_display_width/16, max_display_height);
+    crt_init(&board.crt, CRT_PAL, 2, 32, cpc_video::max_display_width/16, cpc_video::max_display_height);
+    this->video.init(m);
     this->tick_count = 0;
 
     // CPU start address
@@ -151,6 +154,7 @@ cpc_t::poweroff() {
 //------------------------------------------------------------------------------
 void
 cpc_t::reset() {
+    this->video.reset();
     mc6845_reset(&board.mc6845);
     crt_reset(&board.crt);
     ay38912_reset(&board.ay38912);
@@ -246,6 +250,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
                 if (ay38912_tick(&board.ay38912)) {
                     board.audiobuffer.write(board.ay38912.sample);
                 }
+                pins = cpc.video.tick(pins);
             }
         }
         while (wait);
@@ -264,10 +269,11 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
     }
     else if (pins & Z80_IORQ) {
         if (pins & Z80_RD) {
-            // FIXME: IO read
+            uint8_t data = cpc.cpu_in(pins);
+            Z80_SET_DATA(pins, data);
         }
         else if (pins & Z80_WR) {
-            // FIXME: IO write
+            cpc.cpu_out(pins);
         }
     }
 
@@ -275,34 +281,23 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
 }
 
 //------------------------------------------------------------------------------
-uint8_t
-cpc_t::ppi_in(int port_id) {
-    return 0;
-}
-
-//------------------------------------------------------------------------------
-uint64_t
-cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
-    return pins;
-}
-
-//------------------------------------------------------------------------------
-/*
 void
-cpc::cpu_out(uint16_t port, uint8_t val) {
+cpc_t::cpu_out(uint64_t pins) {
     // http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
-    if (0 == (port & (1<<15))) {
+    const uint16_t addr = Z80_GET_ADDR(pins);
+    const uint8_t data = Z80_GET_DATA(pins);
+    if (0 == (addr & (1<<15))) {
         // Gate Array or RAM configuration
-        if (0 != (port & (1<<14))) {
+        if (0 != (addr & (1<<14))) {
             // Gate Array
-            switch (val & 0xC0) {
+            switch (data & 0xC0) {
                 // select pen
                 case 0x00:
-                    this->video.select_pen(val);
+                    this->video.select_pen(data);
                     break;
                 // assign color to selected pen
                 case 0x40:
-                    this->video.assign_color(val);
+                    this->video.assign_color(data);
                     break;
                 // select screen mode, rom config, interrupt ctrl
                 case 0x80:
@@ -317,111 +312,121 @@ cpc::cpu_out(uint16_t port, uint8_t val) {
                     //
                     //  - bit 4: interrupt generation control
                     //
-                    this->ga_config = val;
-                    this->video.set_video_mode(val & 3);
-                    if (val & (1<<4)) {
-                        this->video.interrupt_control(this);
+                    this->ga_config = data;
+                    this->video.set_video_mode(data & 3);
+                    if (data & (1<<4)) {
+                        this->video.interrupt_control();
                     }
                     this->update_memory_mapping();
                     break;
             }
         }
         // CPC6128 RAM configuration
-        if (((val & 0xC0) == 0xC0) && (system::cpc6128 == this->cur_model)) {
-            this->ram_config = val;
+        if (((data & 0xC0) == 0xC0) && (system::cpc6128 == this->cur_model)) {
+            this->ram_config = data;
             this->update_memory_mapping();
         }
     }
-    if (0 == (port & (1<<14))) {
+    if (0 == (addr & (1<<14))) {
         // CRTC function
-        const uint16_t crtc_func = port & 0x0300;
+        // FIXME: check schematics for actual pin connections!
+        uint64_t crtc_pins = (pins & Z80_PIN_MASK)|MC6845_CS|MC6845_RW;
+        const uint16_t crtc_func = addr & 0x0300;
         if (crtc_func == 0x0000) {
             // 0xBCxx: select CRTC register
-            this->board->mc6845.select(val);
+            mc6845_iorq(&board.mc6845, crtc_pins|MC6845_RS);
         }
         else if (crtc_func == 0x0100) {
-            // 0xBDxx: write CRTC register
-            this->board->mc6845.write(val);
+            // 0xBDxx: write to selected CRTC register
+            mc6845_iorq(&board.mc6845, crtc_pins);
         }
         else {
-            //printf("OUT: unknown CRTC function!\n");
+            printf("WARNING: unknown CRTC function\n");
         }
         return;
     }
-    if (0 == (port & (1<<13))) {
+    if (0 == (addr & (1<<13))) {
         // FIXME: ROM select
-        //printf("OUT ROM Select: %02x\n", val);
+        printf("OUT ROM Select: %02x\n", data);
     }
-    if (0 == (port & (1<<12))) {
+    if (0 == (addr & (1<<12))) {
         // FIXME: printer port
-        //printf("OUT Printer Port: %02x\n", val);
+        printf("OUT Printer Port: %02x\n", data);
     }
-    if (0 == (port & (1<<11))) {
+    if (0 == (addr & (1<<11))) {
         // 8255 PPI
-        this->board->i8255.write(this, ((port & 0x0300)>>8) & 0x03, val);
+        uint64_t ppi_pins = (pins & Z80_PIN_MASK)|I8255_CS|I8255_WR;
+        if (addr & 0x0100) { ppi_pins |= I8255_A0; }
+        if (addr & 0x0200) { ppi_pins |= I8255_A1; }
+        i8255_iorq(&board.i8255, ppi_pins);
     }
-    if (0 == (port & (1<<10))) {
+    if (0 == (addr & (1<<10))) {
         // FIXME: peripheral soft reset
-        //printf("OUT Peripheral Soft Reset: %02x\n", val);
+        printf("OUT Peripheral Soft Reset: %02x\n", data);
     }
 }
-*/
 
 //------------------------------------------------------------------------------
-/*
 uint8_t
-cpc::cpu_in(uint16_t port) {
-    if (0 == (port & (1<<14))) {
+cpc_t::cpu_in(uint64_t pins) {
+    const uint16_t addr = Z80_GET_DATA(pins);
+    if (0 == (addr & (1<<14))) {
         // CRTC function
         // FIXME: untested
-        const uint16_t crtc_func = port & 0x0300;
+        // FIXME: check actual board schematics for pin connections
+        const uint16_t crtc_func = addr & 0x0300;
+        uint64_t crtc_pins = (pins & Z80_PIN_MASK)|MC6845_CS;
         if (crtc_func == 0x0200) {
             // 0xBExx: read status register on type 1 CRTC
-            return this->board->mc6845.read_status();
+            crtc_pins |= MC6845_RS;
+            crtc_pins = mc6845_iorq(&board.mc6845, crtc_pins);
+            uint8_t data = MC6845_GET_DATA(crtc_pins);
+            return data;
         }
         else if (crtc_func == 0x0300) {
             // 0xBFxx: read from selected CRTC register
-            return this->board->mc6845.read();
+            crtc_pins = mc6845_iorq(&board.mc6845, crtc_pins);
+            uint8_t data = MC6845_GET_DATA(crtc_pins);
+            return data;
         }
         else {
             //printf("IN: CRTC unknown function!\n");
             return 0xFF;
         }
     }
-    if (0 == (port & (1<<11))) {
-        return this->board->i8255.read(this, ((port & 0x0300)>>8) & 0x03);
+    if (0 == (addr & (1<<11))) {
+        uint64_t ppi_pins = (pins & Z80_PIN_MASK)|I8255_CS;
+        if (addr & 0x0100) { ppi_pins |= I8255_A0; }
+        if (addr & 0x0200) { ppi_pins |= I8255_A1; }
+        ppi_pins = i8255_iorq(&board.i8255, ppi_pins);
+        return I8255_GET_DATA(ppi_pins);
     }
-    if (0 == (port & (1<<10))) {
+    if (0 == (addr & (1<<10))) {
         // FIXME: Expansion Peripherals
     }
     // fallthrough
     return 0x00;
 }
-*/
 
 //------------------------------------------------------------------------------
-/*
-void
-cpc::pio_out(int , int port_id, uint8_t val) {
-    if (i8255::PORT_C == port_id) {
+uint64_t
+cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
+    if (I8255_PORT_C == port_id) {
         // PSG function
-        const uint8_t func = val & 0xC0;
-        switch (func) {
-            case 0xC0:
-                // select PSG register from PIO Port A
-                this->board->ay8910.select(this->board->i8255.output[i8255::PORT_A]);
-                break;
-            case 0x80:
-                // write to selected PSG register
-                this->board->ay8910.write(this->board->i8255.output[i8255::PORT_A]);
-                break;
+        if (data & 0xC0) {
+            // PSG function
+            uint64_t ay_pins = AY38912_BDIR;    // select or write
+            if (data & 0x40) { ay_pins |= AY38912_BC1; }   // select register
+            AY38912_SET_DATA(ay_pins, board.i8255.output[I8255_PORT_A]);
+            ay38912_iorq(&board.ay38912, ay_pins);
         }
         // FIXME: cassette write data
-        // bits 0..5: select keyboard matrix line
-        this->scan_kbd_line = val & 0x1F;
+        // bits 0..3: select keyboard matrix line
+        kbd_set_active_columns(&board.kbd, 1<<(data & 0x0F));
 
         // cassette deck motor control
-        if (val & (1<<4)) {
+        /*
+        if (data & (1<<4)) {
             if (!this->tape->is_playing()) {
                 this->tape->play();
             }
@@ -431,30 +436,27 @@ cpc::pio_out(int , int port_id, uint8_t val) {
                 this->tape->stop();
             }
         }
+        */
     }
+    return pins;
 }
-*/
 
 //------------------------------------------------------------------------------
-/*
 uint8_t
-cpc::pio_in(int, int port_id) {
-    if (i8255::PORT_A == port_id) {
+cpc_t::ppi_in(int port_id) {
+    if (I8255_PORT_A == port_id) {
         // catch keyboard data which is normally in PSG PORT A
-        if (this->board->ay8910.selected() == ay8910::IO_PORT_A) {
-            if (this->scan_kbd_line < 10) {
-                return ~(this->cur_key_mask.col[this->scan_kbd_line]);
-            }
-            else {
-                return 0xFF;
-            }
+        if (board.ay38912.addr == AY38912_REG_IO_PORT_A) {
+            return ~kbd_scan_lines(&board.kbd);
         }
         else {
             // read PSG register
-            return this->board->ay8910.read();
+            uint64_t ay_pins = AY38912_BC1;
+            ay_pins = ay38912_iorq(&board.ay38912, ay_pins);
+            return AY38912_GET_DATA(ay_pins);
         }
     }
-    else if (i8255::PORT_B == port_id) {
+    else if (I8255_PORT_B == port_id) {
         //  Bit 7: cassette data input
         //  Bit 6: printer port ready (1=not ready, 0=ready)
         //  Bit 5: expansion port /EXP pin
@@ -471,7 +473,7 @@ cpc::pio_in(int, int port_id) {
         //  Bit 0: vsync
         //
         uint8_t val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
-        if (this->video.vsync_bit()) {
+        if (cpc.video.vsync_bit()) {
             val |= (1<<0);
         }
         return val;
@@ -481,7 +483,6 @@ cpc::pio_in(int, int port_id) {
         return 0xFF;
     }
 }
-*/
 
 //------------------------------------------------------------------------------
 // CPC6128 RAM block indices 
@@ -563,13 +564,13 @@ cpc_t::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 cpc_t::framebuffer(int& out_width, int& out_height) {
-    if (this->debug_video) {
-        out_width = dbg_max_display_width;
-        out_height = dbg_max_display_height;
+    if (this->video.debug_video) {
+        out_width = cpc_video::dbg_max_display_width;
+        out_height = cpc_video::dbg_max_display_height;
     }
     else {
-        out_width = max_display_width;
-        out_height = max_display_height;
+        out_width = cpc_video::max_display_width;
+        out_height = cpc_video::max_display_height;
     }
     return board.rgba8_buffer;
 }
