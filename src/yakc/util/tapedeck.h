@@ -4,9 +4,9 @@
     @class YAKC::tapedeck
     @brief a sort-of-tapedeck abstraction
 */
-#include "yakc/core/core.h"
-#include "yakc/core/filesystem.h"
-#include "yakc/core/filetypes.h"
+#include "yakc/util/core.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/filetypes.h"
 
 namespace YAKC {
 

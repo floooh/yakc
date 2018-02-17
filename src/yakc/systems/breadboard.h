@@ -4,9 +4,9 @@
     @class YAKC::breadboard
     @brief houses all the common chips required by emulated systems
 */
-#include "yakc/core/core.h"
-#include "yakc/core/audiobuffer.h"
-#include "yakc/chips/cpudbg.h"
+#include "yakc/util/core.h"
+#include "yakc/util/audiobuffer.h"
+#include "yakc/util/cpudbg.h"
 #include "chips/clk.h"
 #include "chips/mem.h"
 #include "chips/kbd.h"

@@ -6,7 +6,7 @@
     A simple memory filesystem for transferring files between 
     emulated systems and the outside world.
 */
-#include "yakc/core/core.h"
+#include "yakc/util/core.h"
 
 namespace YAKC {
 

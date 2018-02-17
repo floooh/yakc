@@ -6,9 +6,9 @@
 */
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
-#include "yakc/core/filesystem.h"
-#include "yakc/peripherals/tapedeck.h"
 #include "yakc/systems/cpc_video.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/tapedeck.h"
 
 namespace YAKC {
 

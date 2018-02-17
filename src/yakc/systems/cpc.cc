@@ -7,7 +7,7 @@
 //  - 6128: http://www.cpcwiki.eu/index.php/File:CPC6128_Schematic.png
 //------------------------------------------------------------------------------
 #include "cpc.h"
-#include "yakc/core/filetypes.h"
+#include "yakc/util/filetypes.h"
 
 #include <stdio.h>
 

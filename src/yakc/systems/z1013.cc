@@ -4,7 +4,7 @@
 //  FIXME: 8x4 keyboard input currently broken!
 //------------------------------------------------------------------------------
 #include "z1013.h"
-#include "yakc/core/filetypes.h"
+#include "yakc/util/filetypes.h"
 
 namespace YAKC {
 

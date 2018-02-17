@@ -7,7 +7,7 @@
     are coming out of emulation until they are consumed by the
     external audio playback callback.
 */
-#include "yakc/core/core.h"
+#include "yakc/util/core.h"
 #include <atomic>
 
 namespace YAKC {

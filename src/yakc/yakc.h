@@ -4,10 +4,10 @@
     @class YAKC::yakc
     @brief main emulator class
 */
-#include "yakc/core/core.h"
 #include "yakc/systems/rom_images.h"
-#include "yakc/core/filesystem.h"
-#include "yakc/peripherals/tapedeck.h"
+#include "yakc/util/core.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/tapedeck.h"
 #include "yakc/systems/z1013.h"
 #include "yakc/systems/z9001.h"
 #include "yakc/systems/zx.h"

@@ -2,7 +2,7 @@
 //  z9001.cc
 //------------------------------------------------------------------------------
 #include "z9001.h"
-#include "yakc/core/filetypes.h"
+#include "yakc/util/filetypes.h"
 
 namespace YAKC {
 

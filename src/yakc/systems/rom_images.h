@@ -4,7 +4,7 @@
     class YAKC::rom_images
     @brief storage for dynamically loaded ROM images
 */
-#include "yakc/core/core.h"
+#include "yakc/util/core.h"
 
 namespace YAKC {
 

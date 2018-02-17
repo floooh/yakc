@@ -1,6 +1,6 @@
 // #version:4#
 // machine generated, do not edit!
-#include "yakc/core/core.h"
+#include "yakc/util/core.h"
 struct cpu_state {
     uint16_t PC;
     uint8_t A,X,Y,P,S;

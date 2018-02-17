@@ -6,9 +6,9 @@
 */
 #include "yakc/systems/breadboard.h"
 #include "yakc/systems/rom_images.h"
-#include "yakc/core/filesystem.h"
-#include "yakc/core/filetypes.h"
 #include "yakc/systems/kc85_exp.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/filetypes.h"
 
 namespace YAKC {
 

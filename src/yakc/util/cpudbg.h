@@ -4,7 +4,7 @@
     @class YAKC::cpudbg
     @brief debug helper functions
 */
-#include "yakc/core/core.h"
+#include "yakc/util/core.h"
 
 namespace YAKC {
 

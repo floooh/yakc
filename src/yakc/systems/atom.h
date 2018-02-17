@@ -7,9 +7,9 @@
     https://fjkraan.home.xs4all.nl/comp/atom/index.html
 */
 #include "yakc/systems/breadboard.h"
-#include "yakc/core/filesystem.h"
 #include "yakc/systems/rom_images.h"
-#include "yakc/peripherals/tapedeck.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/tapedeck.h"
 
 namespace YAKC {
 

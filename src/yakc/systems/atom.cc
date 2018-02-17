@@ -7,7 +7,7 @@
 //
 //------------------------------------------------------------------------------
 #include "atom.h"
-#include "yakc/core/filetypes.h"
+#include "yakc/util/filetypes.h"
 
 namespace YAKC {
 

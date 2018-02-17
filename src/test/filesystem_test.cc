@@ -2,7 +2,7 @@
 //  filesystem_test.cc
 //------------------------------------------------------------------------------
 #include "UnitTest++/src/UnitTest++.h"
-#include "yakc/core/filesystem.h"
+#include "yakc/util/filesystem.h"
 
 using namespace YAKC;
 

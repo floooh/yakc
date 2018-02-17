@@ -1,20 +1,15 @@
 fips_begin_module(yakc)
     fips_vs_warning_level(3)
     fips_files(yakc.h yakc.cc)
-    fips_dir(core)
+    fips_dir(util)
     fips_files(
+        audiobuffer.cc audiobuffer.h
         core.h core.cc 
+        cpudbg.cc cpudbg.h
         filesystem.h filesystem.cc
         audiobuffer.h audiobuffer.cc
         filetypes.h
-    )
-    fips_dir(chips)
-    fips_files(
-        cpudbg.h cpudbg.cc
-    )
-    fips_dir(peripherals)
-    fips_files(
-        tapedeck.h tapedeck.cc
+        tapedeck.cc tapedeck.h
     )
     fips_dir(systems)
     fips_files(

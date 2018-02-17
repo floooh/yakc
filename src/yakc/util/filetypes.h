@@ -1,10 +1,10 @@
 #pragma once
 //------------------------------------------------------------------------------
 /** 
-    @file yakc/core/filetypes.h
+    @file yakc/util/filetypes.h
     @brief various emulator file format structures
 */
-#include "yakc/core/core.h"
+#include "yakc/util/core.h"
 
 /// file type enum
 enum class filetype {

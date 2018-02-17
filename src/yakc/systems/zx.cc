@@ -11,7 +11,7 @@
 //  http://problemkaputt.de/zxdocs.htm
 //------------------------------------------------------------------------------
 #include "zx.h"
-#include "yakc/core/filetypes.h"
+#include "yakc/util/filetypes.h"
 
 namespace YAKC {
 
