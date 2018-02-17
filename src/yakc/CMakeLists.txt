@@ -10,11 +10,11 @@ fips_begin_module(yakc)
         audiobuffer.h audiobuffer.cc
         filetypes.h
         tapedeck.cc tapedeck.h
+        breadboard.cc breadboard.h
+        rom_images.cc rom_images.h
     )
     fips_dir(systems)
     fips_files(
-        breadboard.h breadboard.cc
-        rom_images.h rom_images.cc
         kc85.h kc85.cc
         kc85_exp.h kc85_exp.cc
         z1013.h z1013.cc

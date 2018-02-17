@@ -15,8 +15,8 @@
         http://www.sax.de/~zander/z9001/z9sch_5.pdf
         http://www.sax.de/~zander/z9001/z9sch_1.pdf
 */
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/filetypes.h"
 

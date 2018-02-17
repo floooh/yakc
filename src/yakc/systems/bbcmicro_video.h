@@ -4,7 +4,7 @@
     @class YAKC::bbcmicro_video
     @brief BBC Micro video subsystem
 */
-#include "yakc/systems/breadboard.h"
+#include "yakc/util/breadboard.h"
 
 namespace YAKC {
 

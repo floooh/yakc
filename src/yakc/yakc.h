@@ -4,7 +4,7 @@
     @class YAKC::yakc
     @brief main emulator class
 */
-#include "yakc/systems/rom_images.h"
+#include "yakc/util/rom_images.h"
 #include "yakc/util/core.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/tapedeck.h"

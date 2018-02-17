@@ -5,8 +5,8 @@
     @brief BBC Micro emulator wrapper
 */
 #include "yakc/core/system_bus.h"
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
 #include "yakc/systems/bbcmicro_video.h"
 
 namespace YAKC {

@@ -4,7 +4,7 @@
     @class YAKC::cpc_video
     @brief CPC video decoder (CRTC, color palette, video mode)
 */
-#include "yakc/systems/breadboard.h"
+#include "yakc/util/breadboard.h"
 
 namespace YAKC {
 

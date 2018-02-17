@@ -33,8 +33,8 @@
     'key_map'. The full bit mask is necessary because an ASCII code
     can require more than one key to be set (e.g. shift keys).
 */
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/filetypes.h"
 

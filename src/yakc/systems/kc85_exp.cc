@@ -2,7 +2,7 @@
 //  kc85_exp.cc
 //------------------------------------------------------------------------------
 #include "kc85_exp.h"
-#include "breadboard.h"
+#include "yakc/util/breadboard.h"
 
 namespace YAKC {
 

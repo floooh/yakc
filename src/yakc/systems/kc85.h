@@ -4,11 +4,11 @@
     @class YAKC::kc85
     @brief wrapper class for the KC85/2, /3, /4
 */
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
-#include "yakc/systems/kc85_exp.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/filetypes.h"
+#include "yakc/systems/kc85_exp.h"
 
 namespace YAKC {
 

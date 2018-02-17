@@ -4,11 +4,11 @@
     @class YAKC::cpc
     @brief Amstrad CPC 464/6128 and KC Compact emulation
 */
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
-#include "yakc/systems/cpc_video.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/tapedeck.h"
+#include "yakc/systems/cpc_video.h"
 
 namespace YAKC {
 

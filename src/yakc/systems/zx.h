@@ -4,8 +4,8 @@
     @class YAKC::zx
     @brief Sinclair ZX Spectrum 48K/128K emulation
 */
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/filetypes.h"
 

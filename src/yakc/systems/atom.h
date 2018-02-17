@@ -6,8 +6,8 @@
     
     https://fjkraan.home.xs4all.nl/comp/atom/index.html
 */
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/tapedeck.h"
 
