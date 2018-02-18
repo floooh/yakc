@@ -251,7 +251,7 @@ yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
 
 //------------------------------------------------------------------------------
 uint32_t
-yakc::step_debug() {
+yakc::step() {
     uint32_t all_ticks = 0;
     uint16_t old_pc;
     if (this->cpu_type() == cpu_model::z80) {
@@ -273,6 +273,17 @@ yakc::step_debug() {
         while (old_pc == board.m6502.PC);
     }
     return all_ticks;
+}
+
+//------------------------------------------------------------------------------
+uint32_t
+yakc::step_until(std::function<bool(uint32_t)> fn) {
+    uint32_t ticks = 0;
+    do {
+        ticks += this->step();
+    }
+    while (!fn(ticks));
+    return ticks;
 }
 
 //------------------------------------------------------------------------------

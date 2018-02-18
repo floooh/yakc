@@ -130,8 +130,6 @@ cpc_video::handle_crtc_sync(uint64_t crtc_pins) {
     // feed state of hsync and vsync signals into CRT, and step the CRT
     // NOTE: HSYNC from the CRTC is delayed by 2us and will last for
     // at most 4us unless CRTC HSYNC is triggered off earlier
-    auto& crtc = board.mc6845;
-    auto& crt = board.crt;
     if (edge_raise(this->prev_crtc_pins, crtc_pins, MC6845_HS)) {
         this->hsync_start_count = 2;
     }

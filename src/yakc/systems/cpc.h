@@ -8,7 +8,6 @@
 #include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/tapedeck.h"
-#include "yakc/systems/cpc_video.h"
 
 namespace YAKC {
 
@@ -34,12 +33,17 @@ public:
     static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data);
     /// i8255 input callback
     static uint8_t ppi_in(int port_id);
+
+    /// initialize the gate array (called from init and reset)
+    void ga_init();
     /// tick the gate array
     uint64_t ga_tick(uint64_t pins);
-    /// perform a CPU OUT
-    void cpu_out(uint64_t pins);
-    /// perform a CPU IN
-    uint8_t cpu_in(uint64_t pins);
+    /// called on an interrupt acknowledge machine cycle
+    void ga_int_ack();
+    /// get the current VSYNC status from the gate array
+    bool ga_vsync_bit();
+    /// called when the interrupt-control bit is set by a CPU IO operation
+    void ga_int_ctrl();
 
     /// update bank switching
     void update_memory_mapping();
@@ -63,13 +67,30 @@ public:
 
     system cur_model = system::cpc464;
     bool on = false;
-    cpc_video video;
     uint32_t tick_count = 0;
     uint16_t casread_trap = 0x0000;
     uint16_t casread_ret = 0x0000;
 
-    uint8_t ga_config = 0x00;     // out to port 0x7Fxx func 0x80
-    uint8_t ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
+    uint8_t ga_config = 0;          // out to port 0x7Fxx func 0x80
+    uint8_t ga_next_video_mode = 0;
+    uint8_t ga_video_mode = 0;
+    uint8_t ga_ram_config = 0;      // out to port 0x7Fxx func 0xC0
+    uint8_t ga_pen = 0x00;          // currently selected pen (order border)
+    uint32_t ga_colors[32];         // CPC and KC Compact have different colors
+    uint32_t ga_palette[16];        // the current pen colors
+    uint32_t ga_border_color = 0;   // the current border color
+    int ga_hsync_irq_counter = 0;   // incremented each scanline, reset at 52
+    int ga_int_ack_counter = 0;     // delay-counter for interrupt-acknowledge
+    
+    bool debug_video = false;
+    static const int max_display_width = 768;
+    static const int max_display_height = 272;
+    static_assert(max_display_width <= global_max_fb_width, "cpc display size");
+    static_assert(max_display_height <= global_max_fb_height, "cpc display size");
+    static const int dbg_max_display_width  = 1024;     // 64*16
+    static const int dbg_max_display_height = 312;
+    static_assert(dbg_max_display_width <= global_max_fb_width, "cpc display size");
+    static_assert(dbg_max_display_height <= global_max_fb_height, "cpc display size");
 };
 extern cpc_t cpc;
 

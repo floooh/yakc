@@ -136,7 +136,7 @@ DebugWindow::drawControls(yakc& emu) {
         }
         ImGui::SameLine();
         if (ImGui::Button("Step")) {
-            emu.step_debug();
+            emu.step();
         }
         ImGui::SameLine();
         // tint the framebuffer red, to visualize video decoding

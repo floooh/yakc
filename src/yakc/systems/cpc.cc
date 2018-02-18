@@ -9,11 +9,62 @@
 #include "cpc.h"
 #include "yakc/util/filetypes.h"
 
-#include <stdio.h>
-
 namespace YAKC {
 
 cpc_t cpc;
+
+//------------------------------------------------------------------------------
+//
+//  the fixed hardware color palette
+//
+//  http://www.cpcwiki.eu/index.php/CPC_Palette
+//  http://www.grimware.org/doku.php/documentations/devices/gatearray
+//
+//  index into this palette is the 'hardware color number' & 0x1F
+//  order is ABGR
+//
+static uint32_t cpc_colors[32] = {
+    0xff6B7D6E,         // #40 white
+    0xff6D7D6E,         // #41 white
+    0xff6BF300,         // #42 sea green
+    0xff6DF3F3,         // #43 pastel yellow
+    0xff6B0200,         // #44 blue
+    0xff6802F0,         // #45 purple
+    0xff687800,         // #46 cyan
+    0xff6B7DF3,         // #47 pink
+    0xff6802F3,         // #48 purple
+    0xff6BF3F3,         // #49 pastel yellow
+    0xff0DF3F3,         // #4A bright yellow
+    0xffF9F3FF,         // #4B bright white
+    0xff0605F3,         // #4C bright red
+    0xffF402F3,         // #4D bright magenta
+    0xff0D7DF3,         // #4E orange
+    0xffF980FA,         // #4F pastel magenta
+    0xff680200,         // #50 blue
+    0xff6BF302,         // #51 sea green
+    0xff01F002,         // #52 bright green
+    0xffF2F30F,         // #53 bright cyan
+    0xff010200,         // #54 black
+    0xffF4020C,         // #55 bright blue
+    0xff017802,         // #56 green
+    0xffF47B0C,         // #57 sky blue
+    0xff680269,         // #58 magenta
+    0xff6BF371,         // #59 pastel green
+    0xff04F571,         // #5A lime
+    0xffF4F371,         // #5B pastel cyan
+    0xff01026C,         // #5C red
+    0xffF2026C,         // #5D mauve
+    0xff017B6E,         // #5E yellow
+    0xffF67B6E,         // #5F pastel blue
+};
+
+// first 32 bytes of the KC Compact color ROM
+static uint32_t kcc_color_rom[32] = {
+    0x15, 0x15, 0x31, 0x3d, 0x01, 0x0d, 0x11, 0x1d,
+    0x0d, 0x3d, 0x3c, 0x3f, 0x0c, 0x0f, 0x1c, 0x1f,
+    0x01, 0x31, 0x30, 0x33, 0x00, 0x03, 0x10, 0x13,
+    0x05, 0x35, 0x34, 0x37, 0x04, 0x07, 0x14, 0x17
+};
 
 //------------------------------------------------------------------------------
 bool
@@ -111,12 +162,11 @@ cpc_t::poweron(system m) {
     this->on = true;
 
     this->init_keymap();
+    this->ga_init();
 
     // setup memory system
     clear(board.ram, sizeof(board.ram));
     mem_unmap_all(&board.mem);
-    this->ga_config = 0x00;     // enable both ROMs
-    this->ram_config = 0x00;    // standard RAM bank config (0,1,2,3)
     this->update_memory_mapping();
 
     // http://www.cpcwiki.eu/index.php/Format:TAP_tape_image_file_format
@@ -135,8 +185,7 @@ cpc_t::poweron(system m) {
     ay38912_init(&board.ay38912, 1000000, SOUND_SAMPLE_RATE, 0.5f);
     i8255_init(&board.i8255, ppi_in, ppi_out);
     mc6845_init(&board.mc6845, MC6845_TYPE_UM6845R);
-    crt_init(&board.crt, CRT_PAL, 2, 32, cpc_video::max_display_width/16, cpc_video::max_display_height);
-    this->video.init(m);
+    crt_init(&board.crt, CRT_PAL, 2, 32, max_display_width/16, max_display_height);
     this->tick_count = 0;
 
     // CPU start address
@@ -154,18 +203,16 @@ cpc_t::poweroff() {
 //------------------------------------------------------------------------------
 void
 cpc_t::reset() {
-    this->video.reset();
     mc6845_reset(&board.mc6845);
     crt_reset(&board.crt);
     ay38912_reset(&board.ay38912);
     i8255_reset(&board.i8255);
-    this->ga_config = 0;
-    this->ram_config = 0;
     z80_reset(&board.z80);
     board.z80.PC = 0x0000;
     mem_unmap_all(&board.mem);
     this->update_memory_mapping();
     this->tick_count = 0;
+    this->ga_init();
 }
 
 //------------------------------------------------------------------------------
@@ -183,7 +230,7 @@ uint64_t
 cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
     // interrupt acknowledge?
     if ((pins & (Z80_M1|Z80_IORQ)) == (Z80_M1|Z80_IORQ)) {
-        cpc.video.interrupt_acknowledge();
+        cpc.ga_int_ack();
     }
 
     /*
@@ -200,19 +247,19 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
         if the 'wait active' happens on the same clock tick as the
         CPU would sample the wait line
     */
-    int wait_sample_tick = -1;
+    int wait_scan_tick = -1;
     if (pins & Z80_MREQ) {
         // a memory request or opcode fetch, wait is sampled on second clock tick
-        wait_sample_tick = 1;
+        wait_scan_tick = 1;
     }
     else if (pins & Z80_IORQ) {
         if (pins & Z80_M1) {
             // an interrupt acknowledge cycle, wait is sampled on fourth clock tick
-            wait_sample_tick = 3;
+            wait_scan_tick = 3;
         }
         else {
             // an IO cycle, wait is sampled on third clock tick
-            wait_sample_tick = 2;
+            wait_scan_tick = 2;
         }
     }
     bool wait = false;
@@ -221,7 +268,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
         do {
             // CPC gate array sets the wait pin for 3 out of 4 clock ticks
             bool wait_pin = (cpc.tick_count++ & 3) != 0;
-            wait = (wait_pin && (wait || (i == wait_sample_tick)));
+            wait = (wait_pin && (wait || (i == wait_scan_tick)));
             if (wait) {
                 wait_cycles++;
             }
@@ -230,7 +277,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
                 if (ay38912_tick(&board.ay38912)) {
                     board.audiobuffer.write(board.ay38912.sample);
                 }
-                pins = cpc.video.tick(pins);
+                pins = cpc.ga_tick(pins);
             }
         }
         while (wait);
@@ -239,6 +286,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
 
     // memory and IO requests
     if (pins & Z80_MREQ) {
+        // CPU MEMORY REQUEST
         const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
             Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
@@ -248,148 +296,113 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
     }
     else if (pins & Z80_IORQ) {
-        if (pins & Z80_RD) {
-            uint8_t data = cpc.cpu_in(pins);
-            Z80_SET_DATA(pins, data);
-        }
-        else if (pins & Z80_WR) {
-            cpc.cpu_out(pins);
+        if (pins & (Z80_RD|Z80_WR)) {
+            /*
+                CPU IO REQUEST
+
+                For address decoding, see the main board schematics!
+                also: http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
+            */
+            /*
+                Z80 to i8255 PPI pin connections:
+                    ~A11 -> CS (CS is active-low)
+                        A8 -> A0
+                        A9 -> A1
+                        RD -> RD
+                        WR -> WR
+                    D0..D7 -> D0..D7
+            */
+            if ((pins & Z80_A11) == 0) {
+                // i8255 in/out
+                uint64_t ppi_pins = (pins & Z80_PIN_MASK)|I8255_CS;
+                if (pins & Z80_A9) { ppi_pins |= I8255_A1; }
+                if (pins & Z80_A8) { ppi_pins |= I8255_A0; }
+                if (pins & Z80_RD) { ppi_pins |= I8255_RD; }
+                if (pins & Z80_WR) { ppi_pins |= I8255_WR; }
+                pins = i8255_iorq(&board.i8255, ppi_pins) & Z80_PIN_MASK;
+            }
+            /*
+                Z80 to MC6845 pin connections:
+
+                    ~A14 -> CS (CS is active low)
+                    A9  -> RW (high: read, low: write)
+                    A8  -> RS
+                D0..D7  -> D0..D7
+            */
+            if ((pins & Z80_A14) == 0) {
+                // 6845 in/out
+                uint64_t vdu_pins = (pins & Z80_PIN_MASK)|MC6845_CS;
+                if (pins & Z80_A9) { vdu_pins |= MC6845_RW; }
+                if (pins & Z80_A8) { vdu_pins |= MC6845_RS; }
+                pins = mc6845_iorq(&board.mc6845, vdu_pins) & Z80_PIN_MASK;
+            }
+            /*
+                Gate Array Function (only writing to the gate array
+                is possible)
+            */
+            if ((pins & (Z80_A15|Z80_A14|Z80_WR)) == (Z80_A14|Z80_WR)) {
+                // D6 and D7 select the gate array operation
+                const uint8_t data = Z80_GET_DATA(pins);
+                switch (pins & ((1<<7)|(1<<6))) {
+                    case 0:
+                        // select pen:
+                        //  bit 4 set means 'select border', otherwise
+                        //  bits 0..3 contain the pen number
+                        cpc.ga_pen = data & 0x1F;
+                        break;
+                    case (1<<6):
+                        // select color for border or selected pen:
+                        if (cpc.ga_pen & (1<<4)) {
+                            // border color
+                            cpc.ga_border_color = cpc.ga_colors[data & 0x1F];
+                        }
+                        else {
+                            cpc.ga_palette[cpc.ga_pen & 0x0F] = cpc.ga_colors[data & 0x1F];
+                        }
+                        break;
+                    case (1<<7):
+                        // select screen mode, ROM config and interrupt control
+                        //  - bits 0 and 1 select the screen mode
+                        //      00: Mode 0 (160x200 @ 16 colors)
+                        //      01: Mode 1 (320x200 @ 4 colors)
+                        //      02: Mode 2 (640x200 @ 2 colors)
+                        //      11: Mode 3 (160x200 @ 2 colors, undocumented)
+                        //
+                        //  - bit 2: disable/enable lower ROM
+                        //  - bit 3: disable/enable upper ROM
+                        //
+                        //  - bit 4: interrupt generation control
+                        //
+                        cpc.ga_config = data;
+                        cpc.ga_next_video_mode = data & 3;
+                        if (data & (1<<4)) {
+                            cpc.ga_int_ctrl();
+                        }
+                        cpc.update_memory_mapping();
+                        break;
+                    case (1<<7)|(1<<6):
+                        // RAM memory management (only CPC6128)
+                        if (system::cpc6128 == cpc.cur_model) {
+                            cpc.ga_ram_config = data;
+                            cpc.update_memory_mapping();
+                        }
+                        break;
+                }
+            }
         }
     }
     return pins;
 }
 
 //------------------------------------------------------------------------------
-void
-cpc_t::cpu_out(uint64_t pins) {
-    // http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
-    const uint16_t addr = Z80_GET_ADDR(pins);
-    const uint8_t data = Z80_GET_DATA(pins);
-    if (0 == (addr & (1<<15))) {
-        // Gate Array or RAM configuration
-        if (0 != (addr & (1<<14))) {
-            // Gate Array
-            switch (data & 0xC0) {
-                // select pen
-                case 0x00:
-                    this->video.select_pen(data);
-                    break;
-                // assign color to selected pen
-                case 0x40:
-                    this->video.assign_color(data);
-                    break;
-                // select screen mode, rom config, interrupt ctrl
-                case 0x80:
-                    //  - bits 0 and 1 select the screen mode
-                    //      00: Mode 0 (160x200 @ 16 colors)
-                    //      01: Mode 1 (320x200 @ 4 colors)
-                    //      02: Mode 2 (640x200 @ 2 colors)
-                    //      11: Mode 3 (160x200 @ 2 colors, undocumented)
-                    //
-                    //  - bit 2: disable/enable lower ROM
-                    //  - bit 3: disable/enable upper ROM
-                    //
-                    //  - bit 4: interrupt generation control
-                    //
-                    this->ga_config = data;
-                    this->video.set_video_mode(data & 3);
-                    if (data & (1<<4)) {
-                        this->video.interrupt_control();
-                    }
-                    this->update_memory_mapping();
-                    break;
-            }
-        }
-        // CPC6128 RAM configuration
-        if (((data & 0xC0) == 0xC0) && (system::cpc6128 == this->cur_model)) {
-            this->ram_config = data;
-            this->update_memory_mapping();
-        }
-    }
-    if (0 == (addr & (1<<14))) {
-        // CRTC function
-        // FIXME: check schematics for actual pin connections!
-        uint64_t crtc_pins = (pins & Z80_PIN_MASK)|MC6845_CS|MC6845_RW;
-        const uint16_t crtc_func = addr & 0x0300;
-        if (crtc_func == 0x0000) {
-            // 0xBCxx: select CRTC register
-            mc6845_iorq(&board.mc6845, crtc_pins|MC6845_RS);
-        }
-        else if (crtc_func == 0x0100) {
-            // 0xBDxx: write to selected CRTC register
-            mc6845_iorq(&board.mc6845, crtc_pins);
-        }
-        else {
-            printf("WARNING: unknown CRTC function\n");
-        }
-        return;
-    }
-    if (0 == (addr & (1<<13))) {
-        // FIXME: ROM select
-        printf("OUT ROM Select: %02x\n", data);
-    }
-    if (0 == (addr & (1<<12))) {
-        // FIXME: printer port
-        printf("OUT Printer Port: %02x\n", data);
-    }
-    if (0 == (addr & (1<<11))) {
-        // 8255 PPI
-        uint64_t ppi_pins = (pins & Z80_PIN_MASK)|I8255_CS|I8255_WR;
-        if (addr & 0x0100) { ppi_pins |= I8255_A0; }
-        if (addr & 0x0200) { ppi_pins |= I8255_A1; }
-        i8255_iorq(&board.i8255, ppi_pins);
-    }
-    if (0 == (addr & (1<<10))) {
-        // FIXME: peripheral soft reset
-        printf("OUT Peripheral Soft Reset: %02x\n", data);
-    }
-}
-
-//------------------------------------------------------------------------------
-uint8_t
-cpc_t::cpu_in(uint64_t pins) {
-    const uint16_t addr = Z80_GET_ADDR(pins);
-    if (0 == (addr & (1<<14))) {
-        // CRTC function
-        // FIXME: untested
-        // FIXME: check actual board schematics for pin connections
-        const uint16_t crtc_func = addr & 0x0300;
-        uint64_t crtc_pins = (pins & Z80_PIN_MASK)|MC6845_CS;
-        if (crtc_func == 0x0200) {
-            // 0xBExx: read status register on type 1 CRTC
-            crtc_pins |= MC6845_RS;
-            crtc_pins = mc6845_iorq(&board.mc6845, crtc_pins);
-            uint8_t data = MC6845_GET_DATA(crtc_pins);
-            return data;
-        }
-        else if (crtc_func == 0x0300) {
-            // 0xBFxx: read from selected CRTC register
-            crtc_pins = mc6845_iorq(&board.mc6845, crtc_pins);
-            uint8_t data = MC6845_GET_DATA(crtc_pins);
-            return data;
-        }
-        else {
-            //printf("IN: CRTC unknown function!\n");
-            return 0xFF;
-        }
-    }
-    if (0 == (addr & (1<<11))) {
-        uint64_t ppi_pins = (pins & Z80_PIN_MASK)|I8255_CS;
-        if (addr & 0x0100) { ppi_pins |= I8255_A0; }
-        if (addr & 0x0200) { ppi_pins |= I8255_A1; }
-        ppi_pins = i8255_iorq(&board.i8255, ppi_pins);
-        return I8255_GET_DATA(ppi_pins);
-    }
-    if (0 == (addr & (1<<10))) {
-        // FIXME: Expansion Peripherals
-    }
-    // fallthrough
-    return 0x00;
-}
-
-//------------------------------------------------------------------------------
 uint64_t
 cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
+    /*
+        i8255 PPI to AY-3-8912 PSG pin connections:
+            PA0..PA7    -> D0..D7
+                 PC7    -> BDIR
+                 PC6    -> BC1
+    */
     if (I8255_PORT_C == port_id) {
         // PSG function
         if (data & 0xC0) {
@@ -452,7 +465,7 @@ cpc_t::ppi_in(int port_id) {
         //  Bit 0: vsync
         //
         uint8_t val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
-        if (cpc.video.vsync_bit()) {
+        if (cpc.ga_vsync_bit()) {
             val |= (1<<0);
         }
         return val;
@@ -461,6 +474,74 @@ cpc_t::ppi_in(int port_id) {
         // shouldn't happen
         return 0xFF;
     }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::ga_init() {
+    this->ga_config = 0;
+    this->ga_next_video_mode = 1;
+    this->ga_video_mode = 1;
+    this->ga_ram_config = 0;
+    this->ga_pen = 0;
+    this->ga_border_color = 0;
+    this->ga_hsync_irq_counter = 0;
+    this->ga_int_ack_counter = 0;
+    clear(this->ga_palette, sizeof(this->ga_palette));
+    
+    // setup the color palette, this is different for CPC and KC Compact
+    if (system::kccompact != this->cur_model) {
+        // CPC models
+        for (int i = 0; i < 32; i++) {
+            this->ga_colors[i] = cpc_colors[i];
+        }
+    }
+    else {
+        // KC Compact
+        for (int i = 0; i < 32; i++) {
+            uint32_t rgba8 = 0xFF000000;
+            const uint8_t val = kcc_color_rom[i];
+            // color bits:
+            //  xx|gg|rr|bb
+            //
+            const uint8_t b = val & 0x03;
+            const uint8_t r = (val>>2) & 0x03;
+            const uint8_t g = (val>>4) & 0x03;
+            if (b == 0x03)     rgba8 |= 0x00FF0000;    // full blue
+            else if (b != 0)   rgba8 |= 0x007F0000;    // half blue
+            if (g == 0x03)     rgba8 |= 0x0000FF00;    // full green
+            else if (g != 0)   rgba8 |= 0x00007F00;    // half green
+            if (r == 0x03)     rgba8 |= 0x000000FF;    // full red
+            else if (r != 0)   rgba8 |= 0x0000007F;    // half red
+            this->ga_colors[i] = rgba8;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::ga_int_ctrl() {
+    this->ga_hsync_irq_counter = 0;
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::ga_int_ack() {
+    this->ga_int_ack_counter = 2;
+}
+
+//------------------------------------------------------------------------------
+bool
+cpc_t::ga_vsync_bit() {
+    // FIXME: is this correct?
+    return board.mc6845.vs;
+}
+
+//------------------------------------------------------------------------------
+uint64_t
+cpc_t::ga_tick(uint64_t pins) {
+return pins;
+//    return this->video.tick();
 }
 
 //------------------------------------------------------------------------------
@@ -487,7 +568,7 @@ cpc_t::update_memory_mapping() {
         rom1_ptr = roms.ptr(rom_images::kcc_basic);
     }
     else if (system::cpc6128 == this->cur_model) {
-        ram_table_index = this->ram_config & 0x07;
+        ram_table_index = this->ga_ram_config & 0x07;
         rom0_ptr = roms.ptr(rom_images::cpc6128_os);
         rom1_ptr = roms.ptr(rom_images::cpc6128_basic);
     }
@@ -543,13 +624,13 @@ cpc_t::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 cpc_t::framebuffer(int& out_width, int& out_height) {
-    if (this->video.debug_video) {
-        out_width = cpc_video::dbg_max_display_width;
-        out_height = cpc_video::dbg_max_display_height;
+    if (this->debug_video) {
+        out_width = dbg_max_display_width;
+        out_height = dbg_max_display_height;
     }
     else {
-        out_width = cpc_video::max_display_width;
-        out_height = cpc_video::max_display_height;
+        out_width = max_display_width;
+        out_height = max_display_height;
     }
     return board.rgba8_buffer;
 }

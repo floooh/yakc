@@ -15,6 +15,8 @@ public:
     virtual void Setup(yakc& emu) override;
     /// draw method
     virtual bool Draw(yakc& emu) override;
+
+    uint64_t pins = 0;
 };
 
 } // namespace YAKC

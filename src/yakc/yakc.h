@@ -14,6 +14,7 @@
 #include "yakc/systems/kc85.h"
 #include "yakc/systems/atom.h"
 #include "yakc/systems/cpc.h"
+#include <functional>
 /*
 #include "yakc/systems/bbcmicro.h"
 */
@@ -37,7 +38,9 @@ public:
     /// process one frame, up to absolute number of cycles
     void exec(int micro_secs, uint64_t audio_cycle_count);
     /// step over one instruction and return number of cycles (called by debuggers)
-    uint32_t step_debug();
+    uint32_t step();
+    /// step until function returns true
+    uint32_t step_until(std::function<bool(uint32_t)> fn);
 
     /// put key and joystick input
     void put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask=0);
