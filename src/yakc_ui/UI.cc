@@ -22,6 +22,7 @@
 #include "I8255Window.h"
 #include "MOS6522Window.h"
 #include "TapeDeckWindow.h"
+#include "CPCGateArrayWindow.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -50,6 +51,7 @@ UI::Setup(yakc& emu, Audio* audio_) {
 
     ImGuiStyle style = ImGui::GetStyle();
     style.WindowRounding = 0.0f;
+    style.WindowBorderSize = 1.0f;
     style.Alpha = 1.0f;
     style.TouchExtraPadding = ImVec2(5.0f, 5.0f);
     style.AntiAliasedLines = this->imguiAntiAliasedLines;
@@ -450,8 +452,8 @@ UI::OnFrame(yakc& emu) {
                     }
                 }
                 if (emu.is_system(system::any_cpc)) {
-                    if (ImGui::MenuItem("CPC CRTC Visualization", nullptr, cpc.debug_video)) {
-                        cpc.debug_video = !cpc.debug_video;
+                    if (ImGui::MenuItem("CPC Gate Array")) {
+                        this->OpenWindow(emu, CPCGateArrayWindow::Create());
                     }
                 }
                 ImGui::EndMenu();
