@@ -113,16 +113,20 @@ DebugWindow::draw6502RegisterTable() {
 void
 DebugWindow::drawControls(yakc& emu) {
     uint16_t bp_addr = 0xFFFF;
-    if (board.dbg.breakpoint_enabled()) {
-        bp_addr = board.dbg.breakpoint_addr();
-    }
-    if (Util::InputHex16("", bp_addr)) {
-        if (bp_addr != 0xFFFF) {
+    bool bp_enabled = board.dbg.breakpoint_enabled();
+    bp_addr = board.dbg.breakpoint_addr();
+    if (ImGui::Checkbox("##breakpoint", &bp_enabled)) {
+        if (bp_enabled) {
             board.dbg.set_breakpoint(bp_addr);
         }
         else {
             board.dbg.disable_breakpoint();
         }
+    }
+    if (ImGui::IsItemHovered()) { ImGui::SetTooltip("enable/disable breakpoint"); }
+    ImGui::SameLine();
+    if (Util::InputHex16("", bp_addr)) {
+        board.dbg.set_breakpoint(bp_addr);
     }
     ImGui::SameLine();
     if (board.dbg.break_stopped()) {
@@ -134,6 +138,27 @@ DebugWindow::drawControls(yakc& emu) {
         if (ImGui::Button("Step")) {
             emu.step_debug();
         }
+        ImGui::SameLine();
+        // tint the framebuffer red, to visualize video decoding
+        if (ImGui::Button("Tint")) {
+            int w, h;
+            uint32_t* ptr = (uint32_t*) emu.framebuffer(w, h);
+            if (ptr) {
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++, ptr++) {
+                        uint32_t c = *ptr;
+                        uint8_t r = (uint8_t) c;
+                        uint8_t g = (uint8_t) (c>>8);
+                        uint8_t b = (uint8_t) (c>>16);
+                        uint8_t a = (uint8_t) (c>>24);
+                        r>>=2; g>>=2; b>>=2;
+                        r|=0x80;
+                        *ptr = (a<<24)|(b<<16)|(g<<8)|r;
+                    }
+                }
+            }
+        }
+        if (ImGui::IsItemHovered()) { ImGui::SetTooltip("tint framebuffer content"); }
     }
     else {
         if (ImGui::Button("Stop")) {
@@ -145,7 +170,7 @@ DebugWindow::drawControls(yakc& emu) {
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
-    ImGui::BeginChild("##scrolling", ImVec2(0, -2 * (ImGui::GetFrameHeightWithSpacing()+2)));
+    ImGui::BeginChild("##scrolling", ImVec2(0, -1 * (ImGui::GetFrameHeightWithSpacing()+4)));
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(1,1));

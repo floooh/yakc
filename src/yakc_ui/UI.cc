@@ -100,7 +100,7 @@ UI::Setup(yakc& emu, Audio* audio_) {
     style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
     this->lightTheme = style;
 
-    this->EnableLightTheme();
+    this->EnableDarkTheme();
 
     this->FileLoader.Setup(emu);
     this->curTime = Clock::Now();

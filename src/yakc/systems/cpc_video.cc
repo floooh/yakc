@@ -18,7 +18,7 @@ namespace YAKC {
 static uint32_t cpc_palette[32] = {
     0xff6B7D6E,         // #40 white
     0xff6D7D6E,         // #41 white
-    0xff6BF300,         // #42 sea grean
+    0xff6BF300,         // #42 sea green
     0xff6DF3F3,         // #43 pastel yellow
     0xff6B0200,         // #44 blue
     0xff6802F0,         // #45 purple
