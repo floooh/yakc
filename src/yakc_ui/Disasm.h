@@ -18,10 +18,7 @@ public:
     const char* Result() const;
 
 private:
-    /// fetch next opcode byte for z80dasm
-    static uint8_t fetch(uint16_t base, int offset, void* userdata);
-
-    const yakc* emu;
+    const yakc* emu = nullptr;
     char buffer[64];
 };
 

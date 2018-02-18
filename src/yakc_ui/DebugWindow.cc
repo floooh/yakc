@@ -127,6 +127,7 @@ DebugWindow::drawControls(yakc& emu) {
     ImGui::SameLine();
     if (board.dbg.break_stopped()) {
         if (ImGui::Button("Cont")) {
+            board.dbg.clear_history();
             board.dbg.break_continue();
         }
         ImGui::SameLine();
@@ -136,16 +137,14 @@ DebugWindow::drawControls(yakc& emu) {
     }
     else {
         if (ImGui::Button("Stop")) {
-            board.dbg.break_trap();
+            board.dbg.break_stop();
         }
     }
-    //ImGui::Checkbox("break on invalid opcode", &board.z80.break_on_invalid_opcode);
 }
 
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
-    // this is a modified version of ImGuiMemoryEditor.h
     ImGui::BeginChild("##scrolling", ImVec2(0, -2 * (ImGui::GetFrameHeightWithSpacing()+2)));
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
@@ -166,18 +165,26 @@ DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
     }
 
     // display only visible items
-    for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
+    int line_i = clipper.DisplayStart;
+    int hist_i = line_i;
+    for (; line_i < clipper.DisplayEnd; hist_i++) {
         uint16_t op_addr, op_cycles, num_bytes;
-        if (line_i < debugger::history_size) {
-            auto hist_item = board.dbg.get_history_item(line_i);
-            op_addr = hist_item.pc;
-            op_cycles = hist_item.cycles;
-            num_bytes = disasm.Disassemble(emu, hist_item.pc);
-            if (board.dbg.is_breakpoint(hist_item.pc)) {
-                ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
+        bool line_valid = true;
+        if (hist_i < debugger::history_size) {
+            auto hist_item = board.dbg.get_history_item(hist_i);
+            if (hist_item.valid) {
+                op_addr = hist_item.pc;
+                op_cycles = hist_item.cycles;
+                num_bytes = disasm.Disassemble(emu, hist_item.pc);
+                if (board.dbg.is_breakpoint(hist_item.pc)) {
+                    ImGui::PushStyleColor(ImGuiCol_Text, UI::EnabledBreakpointColor);
+                }
+                else {
+                    ImGui::PushStyleColor(ImGuiCol_Text, UI::DisabledBreakpointColor);
+                }
             }
             else {
-                ImGui::PushStyleColor(ImGuiCol_Text, UI::DisabledBreakpointColor);
+                line_valid = false;
             }
         }
         else {
@@ -195,9 +202,11 @@ DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
             }
             cur_addr += num_bytes;
         }
-
+        if (!line_valid) {
+            continue;
+        }
         // wrap current PC into 2 separator lines
-        if ((line_i == debugger::history_size) || (line_i == debugger::history_size+1)) {
+        if ((hist_i == debugger::history_size) || (hist_i == debugger::history_size+1)) {
             ImGui::Separator();
         }
 
@@ -230,6 +239,7 @@ DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
             ImGui::Text("%d", op_cycles);
         }
         ImGui::PopStyleColor();
+        line_i++;
     }
     clipper.End();
     ImGui::PopStyleVar(2);

@@ -241,16 +241,7 @@ yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
         }
 
         // check if breakpoint has been hit
-        if (this->cpu_type() == cpu_model::z80) {
-            if (board.z80.trap_id == 0) {
-                board.dbg.break_trap();
-            }
-        }
-        else {
-            if (board.m6502.trap_id == 0) {
-                board.dbg.break_trap();
-            }
-        }
+        board.dbg.break_check();
     }
     else {
         this->abs_cycle_count = abs_end_cycles;
@@ -270,7 +261,7 @@ yakc::step_debug() {
             board.dbg.add_history_item(board.z80.PC, ticks);
             all_ticks += ticks;
         }
-        while (old_pc == board.z80.PC);
+        while ((old_pc == board.z80.PC) && (0 == (board.z80.PINS & Z80_HALT)));
     }
     else {
         do {

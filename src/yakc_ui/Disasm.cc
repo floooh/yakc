@@ -13,14 +13,12 @@ using namespace mos6502dasm;
 namespace YAKC {
 
 //------------------------------------------------------------------------------
-Disasm::Disasm() :
-emu(0) {
+Disasm::Disasm() {
     Memory::Clear(this->buffer, sizeof(this->buffer));
 }
 
 //------------------------------------------------------------------------------
-uint8_t
-Disasm::fetch(uint16_t base, int offset, void* /*userdata*/) {
+static uint8_t fetch(uint16_t base, int offset, void* /*userdata*/) {
     return mem_rd(&board.mem, base+offset);
 }
 

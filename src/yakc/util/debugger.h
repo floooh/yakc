@@ -13,6 +13,7 @@ class debugger {
 public:
     static const int history_size = ringbuffer_size - 1;
     struct history_item {
+        bool valid = false;
         uint16_t pc = 0;
         uint16_t cycles = 0;    // cycles==0 means the item is invalid
     };
@@ -33,9 +34,10 @@ public:
     void disable_breakpoint();
     uint16_t breakpoint_addr();
 
-    void break_trap();
-    void break_continue();
-    bool break_stopped();
+    void break_stop();              // manual stop
+    void break_check();             // stop of CPU has hit out breakpoint
+    void break_continue();          // continue from stopped state
+    bool break_stopped();           // check if in stopped state
 
 private:
     void set_cpu_trap();
