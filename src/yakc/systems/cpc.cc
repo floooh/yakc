@@ -501,8 +501,7 @@ cpc_t::ga_init() {
     this->ga_border_color = 0;
     this->ga_hsync_irq_counter = 0;
     this->ga_hsync_after_vsync_counter = 0;
-    this->ga_hsync = false;
-    this->ga_vsync = false;
+    this->ga_sync = false;
     this->ga_dbg_irq = false;
     this->ga_crtc_pins = 0;
     clear(this->ga_palette, sizeof(this->ga_palette));
@@ -598,9 +597,9 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
           executed by the CPU, enough time to sense the VSync...
 
         NOTES:
-            - we also set the video mode on HSYNC falling edge, is this correct?
-            - the interrupt acknowledge is handled once per machine
+            - the interrupt acknowledge is handled once per machine 
               cycle in cpu_tick()
+            - the video mode will take effect *after the next HSYNC*
     */
     if (rising_edge(crtc_pins, this->ga_crtc_pins, MC6845_VS)) {
         this->ga_hsync_after_vsync_counter = 2;
@@ -630,12 +629,12 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
     }
 
     // FIXME: HSYNC length
-    this->ga_hsync = (crtc_pins & MC6845_HS);
+    this->ga_sync = (crtc_pins & MC6845_HS);
 
     // >>>FIXME
-    this->ga_vsync = (crtc_pins & MC6845_VS);
     this->ga_crtc_pins = crtc_pins;
-    crt_tick(&board.crt, this->ga_hsync, this->ga_vsync);
+    const bool vsync = (crtc_pins & MC6845_VS);
+    crt_tick(&board.crt, this->ga_sync, vsync);
     this->ga_decode_video(crtc_pins);
 
     return cpu_pins;
@@ -736,7 +735,7 @@ cpc_t::ga_decode_video(uint64_t crtc_pins) {
         // debug mode
         int dst_x = board.crt.h_pos * 16;
         int dst_y = board.crt.v_pos;
-        if ((dst_x < (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
+        if ((dst_x <= (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
             uint32_t* dst = &(board.rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
             if (!(crtc_pins & MC6845_DE)) {
                 uint8_t r = 0x3F;

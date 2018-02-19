@@ -63,6 +63,8 @@ CPCGateArrayWindow::Draw(yakc& emu) {
         ImGui::Text("CRT HSync:  %s  VSync:  %s\n", board.crt.h_sync?"ON ":"OFF", board.crt.v_sync?"ON ":"OFF");
         ImGui::Text("CRT HBlank: %s  VBlank: %s\n", board.crt.h_blank?"ON ":"OFF", board.crt.v_blank?"ON ":"OFF");
         ImGui::Text("CRT HPos:   %2d   VPos:   %3d\n", board.crt.h_pos, board.crt.v_pos);
+        ImGui::Text("GA Sync:    %s", cpc.ga_sync?"ON ":"OFF");
+        ImGui::Text("GA IRQ Counter: %d", cpc.ga_hsync_irq_counter);
     }
     ImGui::End();
     return this->Visible;

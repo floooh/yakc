@@ -85,10 +85,9 @@ public:
     uint32_t ga_border_color = 0;   // the current border color
     int ga_hsync_irq_counter = 0;   // incremented each scanline, reset at 52
     int ga_hsync_after_vsync_counter = 0;   // for 2-hsync-delay after vsync
-    bool ga_hsync = false;          // gate-array generated HSYNC
-    bool ga_vsync = false;          // gate-array generated VSYNC
+    bool ga_sync = false;           // gate-array generated video sync (modified HSYNC)
     bool ga_dbg_irq = false;        // interrupt was requested from gate array
-    uint64_t ga_crtc_pins;     // store CRTC pins to detect rising/falling bits
+    uint64_t ga_crtc_pins;          // store CRTC pins to detect rising/falling bits
     
     bool debug_video = false;
     static const int max_display_width = 768;
