@@ -44,11 +44,6 @@ yakc::check_roms(system m, os_rom os) {
     else if (is_system(m, system::any_cpc)) {
         return cpc_t::check_roms(m, os);
     }
-    /*
-    else if (is_system(m, system::bbcmicro_b)) {
-        return bbcmicro::check_roms(m, os);
-    }
-    */
     else {
         return false;
     }
@@ -80,11 +75,6 @@ yakc::poweron(system m, os_rom rom) {
     else if (this->is_system(system::any_cpc)) {
         cpc.poweron(m);
     }
-    /*
-    else if (this->is_system(system::bbcmicro_b)) {
-        this->bbcmicro.poweron(m);
-    }
-    */
 }
 
 //------------------------------------------------------------------------------
@@ -108,11 +98,6 @@ yakc::poweroff() {
     if (cpc.on) {
         cpc.poweroff();
     }
-    /*
-    if (this->bbcmicro.on) {
-        this->bbcmicro.poweroff();
-    }
-    */
 }
 
 //------------------------------------------------------------------------------
@@ -143,11 +128,6 @@ yakc::reset() {
     if (cpc.on) {
         cpc.reset();
     }
-    /*
-    if (this->bbcmicro.on) {
-        this->bbcmicro.reset();
-    }
-    */
 }
 
 //------------------------------------------------------------------------------
@@ -165,7 +145,7 @@ yakc::is_system(system model, system mask) {
 //------------------------------------------------------------------------------
 cpu_model
 yakc::cpu_type() const {
-    if (this->is_system(system::bbcmicro_b) || this->is_system(system::acorn_atom)) {
+    if (this->is_system(system::acorn_atom)) {
         return cpu_model::mos6502;
     }
     else {
@@ -225,11 +205,6 @@ yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
         else if (cpc.on) {
             this->abs_cycle_count = cpc.exec(this->abs_cycle_count, abs_end_cycles);
         }
-        /*
-        else if (this->bbcmicro.on) {
-            this->abs_cycle_count = this->bbcmicro.exec(this->abs_cycle_count, abs_end_cycles);
-        }
-        */
         else {
             this->abs_cycle_count = abs_end_cycles;
         }
@@ -346,11 +321,6 @@ yakc::system_info() const {
     else if (cpc.on) {
         return cpc.system_info();
     }
-    /*
-    else if (this->bbcmicro.on) {
-        return this->bbcmicro.system_info();
-    }
-    */
     else {
         return "no info available";
     }
@@ -401,11 +371,6 @@ yakc::framebuffer(int& out_width, int& out_height) {
     else if (cpc.on) {
         return cpc.framebuffer(out_width, out_height);
     }
-    /*
-    else if (this->bbcmicro.on) {
-        return this->bbcmicro.framebuffer(out_width, out_height);
-    }
-    */
     else {
         out_width = 0;
         out_height = 0;

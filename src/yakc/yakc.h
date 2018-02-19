@@ -15,9 +15,6 @@
 #include "yakc/systems/atom.h"
 #include "yakc/systems/cpc.h"
 #include <functional>
-/*
-#include "yakc/systems/bbcmicro.h"
-*/
 
 namespace YAKC {
 

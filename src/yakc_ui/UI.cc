@@ -234,7 +234,6 @@ UI::OnFrame(yakc& emu) {
                 case system::cpc464:            model = "CPC464"; break;
                 case system::cpc6128:           model = "CPC6128"; break;
                 case system::kccompact:         model = "KCCompact"; break;
-                case system::bbcmicro_b:        model = "BBC Micro-B"; break;
                 case system::acorn_atom:        model = "Acorn Atom"; break;
                 default: model="??"; break;
             }

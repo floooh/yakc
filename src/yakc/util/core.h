@@ -57,7 +57,6 @@ enum class system {
     cpc464          = (1<<11),
     cpc6128         = (1<<12),
     kccompact       = (1<<13),
-    bbcmicro_b      = (1<<14),
     acorn_atom      = (1<<15),
     none = 0,
     any_kc85        = (kc85_2|kc85_3|kc85_4),
@@ -92,8 +91,6 @@ enum class os_rom {
     cpc6128_basic,
     kcc_os,
     kcc_basic,
-    bbcmicro_b_os,
-    bbcmicro_b_basic,
     none,
 };
 

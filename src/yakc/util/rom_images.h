@@ -42,8 +42,6 @@ public:
         z1013_font,             // Z1013 font ROM
         kcc_os,                 // KC Compact OS ROM
         kcc_basic,              // KC Compact OS Basic
-        bbcmicro_b_os,          // BBC Micro Model B ROM
-        bbcmicro_b_basic,       // BBC Micro Model B BASIC
         atom_basic,             // Acorn Atom BASIC + kernel
         atom_float,             // Acorn Atom floating point extensions
         atom_dos,               // Acorn Atom DOS ROM

@@ -48,7 +48,6 @@ system_from_string(const char* str) {
     if (strcmp(str, "cpc464")==0) return system::cpc464;
     if (strcmp(str, "cpc6128")==0) return system::cpc6128;
     if (strcmp(str, "kccompact")==0) return system::kccompact;
-    if (strcmp(str, "bbcmicro_b")==0) return system::bbcmicro_b;
     if (strcmp(str, "acorn_atom")==0) return system::acorn_atom;
     if (strcmp(str, "any_kc85")==0) return system::any_kc85;
     if (strcmp(str, "any_z1013")==0) return system::any_z1013;
@@ -76,7 +75,6 @@ string_from_system(system sys) {
         case system::cpc464:            return "cpc464";
         case system::cpc6128:           return "cpc6128";
         case system::kccompact:         return "kccompact";
-        case system::bbcmicro_b:        return "bbcmicro_b";
         case system::acorn_atom:        return "acorn_atom";
         default:                        return "none";
     }
@@ -102,8 +100,6 @@ os_from_string(const char* str) {
     if (strcmp(str, "cpc6128_basic")==0) return os_rom::cpc6128_basic;
     if (strcmp(str, "kcc_os")==0) return os_rom::kcc_os;
     if (strcmp(str, "kcc_basic")==0) return os_rom::kcc_basic;
-    if (strcmp(str, "bbcmicro_b_os")==0) return os_rom::bbcmicro_b_os;
-    if (strcmp(str, "bbcmicro_b_basic")==0) return os_rom::bbcmicro_b_basic;
     return os_rom::none;
 }
 
