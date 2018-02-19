@@ -187,7 +187,7 @@ cpc_t::poweron(system m) {
     ay38912_init(&board.ay38912, 1000000, SOUND_SAMPLE_RATE, 0.5f);
     i8255_init(&board.i8255, ppi_in, ppi_out);
     mc6845_init(&board.mc6845, MC6845_TYPE_UM6845R);
-    crt_init(&board.crt, CRT_PAL, 2, 32, max_display_width/16, max_display_height);
+    crt_init(&board.crt, CRT_PAL, 6, 32, max_display_width/16, max_display_height);
     this->tick_count = 0;
 
     // CPU start address
