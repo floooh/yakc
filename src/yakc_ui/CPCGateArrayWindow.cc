@@ -65,6 +65,7 @@ CPCGateArrayWindow::Draw(yakc& emu) {
         ImGui::Text("CRT HPos:   %2d   VPos:   %3d\n", board.crt.h_pos, board.crt.v_pos);
         ImGui::Text("GA Sync:    %s", cpc.ga_sync?"ON ":"OFF");
         ImGui::Text("GA IRQ Counter: %d", cpc.ga_hsync_irq_counter);
+        ImGui::Text("GA INT: %s", cpc.ga_int?"ON ":"OFF");
     }
     ImGui::End();
     return this->Visible;

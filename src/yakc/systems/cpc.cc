@@ -505,7 +505,7 @@ cpc_t::ga_init() {
     this->ga_hsync_after_vsync_counter = 0;
     this->ga_hsync_delay_counter = 2;
     this->ga_sync = false;
-    this->ga_dbg_irq = false;
+    this->ga_int = false;
     this->ga_crtc_pins = 0;
     clear(this->ga_palette, sizeof(this->ga_palette));
     
@@ -542,6 +542,7 @@ cpc_t::ga_init() {
 void
 cpc_t::ga_int_ctrl() {
     this->ga_hsync_irq_counter = 0;
+    this->ga_int = false;
 }
 
 //------------------------------------------------------------------------------
@@ -549,8 +550,9 @@ void
 cpc_t::ga_int_ack() {
     // on interrupt acknowledge from the CPU, clear the top bit from the
     // hsync counter, so the next interrupt can't occur closer then 
-    // 32 HSYNC
+    // 32 HSYNC, and clear the gate array interrupt pin state
     this->ga_hsync_irq_counter &= 0x1F;
+    this->ga_int = false;
 }
 
 //------------------------------------------------------------------------------
@@ -612,15 +614,13 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
     if (falling_edge(crtc_pins, this->ga_crtc_pins, MC6845_HS)) {
         this->ga_video_mode = this->ga_next_video_mode;
         this->ga_hsync_irq_counter = (this->ga_hsync_irq_counter + 1) & 0x3F;
-        this->ga_dbg_irq = false;
 
         // 2 HSync delay?
         if (this->ga_hsync_after_vsync_counter > 0) {
             this->ga_hsync_after_vsync_counter--;
             if (this->ga_hsync_after_vsync_counter == 0) {
                 if (this->ga_hsync_irq_counter >= 32) {
-                    cpu_pins |= Z80_INT;
-                    this->ga_dbg_irq = true;
+                    this->ga_int = true;
                 }
                 this->ga_hsync_irq_counter = 0;
             }
@@ -628,8 +628,7 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
         // normal behaviour, request interrupt each 52 scanlines
         if (this->ga_hsync_irq_counter == 52) {
             this->ga_hsync_irq_counter = 0;
-            cpu_pins |= Z80_INT;
-            this->ga_dbg_irq = true;
+            this->ga_int = true;
         }
     }
 
@@ -665,6 +664,10 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
     this->ga_decode_video(crtc_pins);
 
     this->ga_crtc_pins = crtc_pins;
+
+    if (this->ga_int) {
+        cpu_pins |= Z80_INT;
+    }
     return cpu_pins;
 }
 
@@ -778,19 +781,12 @@ cpc_t::ga_decode_video(uint64_t crtc_pins) {
                 if (crtc_pins & MC6845_VS) {
                     g = 0x7F;
                 }
-                if (this->ga_dbg_irq) {
+                if (this->ga_int) {
                     r = g = b = 0xFF;
                 }
                 else if (0 == board.mc6845.scanline_ctr) {
                     r = g = b = 0x00;
                 }
-                /*
-                if (board.crt.h_blank || board.crt.v_blank) {
-                    r >>= 1;
-                    g >>= 1;
-                    b >>= 1;
-                }
-                */
                 for (int i = 0; i < 16; i++) {
                     if (i == 0) {
                         *dst++ = 0xFF000000;

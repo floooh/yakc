@@ -86,7 +86,7 @@ public:
     int ga_hsync_delay_counter = 0; // hsync to monitor is delayed 2 ticks
     int ga_hsync_counter = 0;       // countdown until hsync to monitor is deactivated
     bool ga_sync = false;           // gate-array generated video sync (modified HSYNC)
-    bool ga_dbg_irq = false;        // interrupt was requested from gate array
+    bool ga_int = false;            // GA interrupt pin active
     uint64_t ga_crtc_pins;          // store CRTC pins to detect rising/falling bits
     
     bool debug_video = false;
