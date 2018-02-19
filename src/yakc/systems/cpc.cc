@@ -235,57 +235,6 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
         cpc.ga_int_ack();
     }
 
-    /*
-        decide how many wait states must be injected, the CPC signals
-        the wait line in 3 out of 4 cycles:
-    
-         0: wait inactive
-         1: wait active
-         2: wait active
-         3: wait active
-    
-        the CPU samples the wait line only on specific clock ticks
-        during memory or IO operations, a wait states are only injected
-        if the 'wait active' happens on the same clock tick as the
-        CPU would sample the wait line
-    */
-    int wait_scan_tick = -1;
-    if (pins & Z80_MREQ) {
-        // a memory request or opcode fetch, wait is sampled on second clock tick
-        wait_scan_tick = 1;
-    }
-    else if (pins & Z80_IORQ) {
-        if (pins & Z80_M1) {
-            // an interrupt acknowledge cycle, wait is sampled on fourth clock tick
-            wait_scan_tick = 3;
-        }
-        else {
-            // an IO cycle, wait is sampled on third clock tick
-            wait_scan_tick = 2;
-        }
-    }
-    bool wait = false;
-    uint32_t wait_cycles = 0;
-    for (int i = 0; i<num_ticks; i++) {
-        do {
-            // CPC gate array sets the wait pin for 3 out of 4 clock ticks
-            bool wait_pin = (cpc.tick_count++ & 3) != 0;
-            wait = (wait_pin && (wait || (i == wait_scan_tick)));
-            if (wait) {
-                wait_cycles++;
-            }
-            // on every 4th clock cycle, tick the system
-            if (!wait_pin) {
-                if (ay38912_tick(&board.ay38912)) {
-                    board.audiobuffer.write(board.ay38912.sample);
-                }
-                pins = cpc.ga_tick(pins);
-            }
-        }
-        while (wait);
-    }
-    Z80_SET_WAIT(pins, wait_cycles);
-
     // memory and IO requests
     if (pins & Z80_MREQ) {
         // CPU MEMORY REQUEST
@@ -393,6 +342,59 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
             }
         }
     }
+    
+    /*
+        tick the gate array and audio chip at 1 MHz, and decide how many wait
+        states must be injected, the CPC signals the wait line in 3 out of 4
+        cycles:
+    
+         0: wait inactive
+         1: wait active
+         2: wait active
+         3: wait active
+    
+        the CPU samples the wait line only on specific clock ticks
+        during memory or IO operations, a wait states are only injected
+        if the 'wait active' happens on the same clock tick as the
+        CPU would sample the wait line
+    */
+    int wait_scan_tick = -1;
+    if (pins & Z80_MREQ) {
+        // a memory request or opcode fetch, wait is sampled on second clock tick
+        wait_scan_tick = 1;
+    }
+    else if (pins & Z80_IORQ) {
+        if (pins & Z80_M1) {
+            // an interrupt acknowledge cycle, wait is sampled on fourth clock tick
+            wait_scan_tick = 3;
+        }
+        else {
+            // an IO cycle, wait is sampled on third clock tick
+            wait_scan_tick = 2;
+        }
+    }
+    bool wait = false;
+    uint32_t wait_cycles = 0;
+    for (int i = 0; i<num_ticks; i++) {
+        do {
+            // CPC gate array sets the wait pin for 3 out of 4 clock ticks
+            bool wait_pin = (cpc.tick_count++ & 3) != 0;
+            wait = (wait_pin && (wait || (i == wait_scan_tick)));
+            if (wait) {
+                wait_cycles++;
+            }
+            // on every 4th clock cycle, tick the system
+            if (!wait_pin) {
+                if (ay38912_tick(&board.ay38912)) {
+                    board.audiobuffer.write(board.ay38912.sample);
+                }
+                pins = cpc.ga_tick(pins);
+            }
+        }
+        while (wait);
+    }
+    Z80_SET_WAIT(pins, wait_cycles);
+
     return pins;
 }
 
@@ -552,13 +554,6 @@ cpc_t::ga_int_ack() {
 }
 
 //------------------------------------------------------------------------------
-bool
-cpc_t::ga_vsync_bit() {
-    // FIXME: is this correct?
-    return board.mc6845.vs;
-}
-
-//------------------------------------------------------------------------------
 static bool falling_edge(uint64_t new_pins, uint64_t old_pins, uint64_t mask) {
     return 0 != (mask & (~new_pins & (new_pins ^ old_pins)));
 }
@@ -662,6 +657,8 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
             this->ga_sync = false;
         }
     }
+
+    // FIXME delayed VSYNC to monitor
 
     const bool vsync = (crtc_pins & MC6845_VS);
     crt_tick(&board.crt, this->ga_sync, vsync);

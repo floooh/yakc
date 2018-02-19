@@ -40,8 +40,6 @@ public:
     uint64_t ga_tick(uint64_t pins);
     /// called on an interrupt acknowledge machine cycle
     void ga_int_ack();
-    /// get the current VSYNC status from the gate array
-    bool ga_vsync_bit();
     /// called when the interrupt-control bit is set by a CPU IO operation
     void ga_int_ctrl();
     /// top-level video frame decoding
