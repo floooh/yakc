@@ -87,7 +87,7 @@ public:
     int ga_hsync_after_vsync_counter = 0;   // for 2-hsync-delay after vsync
     bool ga_hsync = false;          // gate-array generated HSYNC
     bool ga_vsync = false;          // gate-array generated VSYNC
-    bool ga_irq = false;            // interrupt request from gate array
+    bool ga_dbg_irq = false;        // interrupt was requested from gate array
     uint64_t ga_crtc_pins;     // store CRTC pins to detect rising/falling bits
     
     bool debug_video = false;

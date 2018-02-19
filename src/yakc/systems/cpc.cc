@@ -503,7 +503,7 @@ cpc_t::ga_init() {
     this->ga_hsync_after_vsync_counter = 0;
     this->ga_hsync = false;
     this->ga_vsync = false;
-    this->ga_irq = false;
+    this->ga_dbg_irq = false;
     this->ga_crtc_pins = 0;
     clear(this->ga_palette, sizeof(this->ga_palette));
     
@@ -608,6 +608,7 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
     if (falling_edge(crtc_pins, this->ga_crtc_pins, MC6845_HS)) {
         this->ga_video_mode = this->ga_next_video_mode;
         this->ga_hsync_irq_counter = (this->ga_hsync_irq_counter + 1) & 0x3F;
+        this->ga_dbg_irq = false;
 
         // 2 HSync delay?
         if (this->ga_hsync_after_vsync_counter > 0) {
@@ -615,6 +616,7 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
             if (this->ga_hsync_after_vsync_counter == 0) {
                 if (this->ga_hsync_irq_counter >= 32) {
                     cpu_pins |= Z80_INT;
+                    this->ga_dbg_irq = true;
                 }
                 this->ga_hsync_irq_counter = 0;
             }
@@ -623,6 +625,7 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
         if (this->ga_hsync_irq_counter == 52) {
             this->ga_hsync_irq_counter = 0;
             cpu_pins |= Z80_INT;
+            this->ga_dbg_irq = true;
         }
     }
 
@@ -745,7 +748,7 @@ cpc_t::ga_decode_video(uint64_t crtc_pins) {
                 if (crtc_pins & MC6845_VS) {
                     g = 0x7F;
                 }
-                if (this->ga_irq) {
+                if (this->ga_dbg_irq) {
                     r = g = b = 0xFF;
                 }
                 else if (0 == board.mc6845.scanline_ctr) {
