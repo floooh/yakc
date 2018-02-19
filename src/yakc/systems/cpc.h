@@ -29,6 +29,8 @@ public:
 
     /// the Z80 CPU tick callback
     static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    /// perform a CPU IO request (called from cpu_tick)
+    static uint64_t cpu_iorq(uint64_t pins);
     /// i8255 output callback
     static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data);
     /// i8255 input callback
@@ -77,7 +79,7 @@ public:
     uint8_t ga_next_video_mode = 0;
     uint8_t ga_video_mode = 0;
     uint8_t ga_ram_config = 0;      // out to port 0x7Fxx func 0xC0
-    uint8_t ga_pen = 0x00;          // currently selected pen (order border)
+    uint8_t ga_pen = 0x00;          // currently selected pen (or border)
     uint32_t ga_colors[32];         // CPC and KC Compact have different colors
     uint32_t ga_palette[16];        // the current pen colors
     uint32_t ga_border_color = 0;   // the current border color

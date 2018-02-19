@@ -248,98 +248,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
     }
     else if (pins & Z80_IORQ) {
         if (pins & (Z80_RD|Z80_WR)) {
-            /*
-                CPU IO REQUEST
-
-                For address decoding, see the main board schematics!
-                also: http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
-            */
-            /*
-                Z80 to i8255 PPI pin connections:
-                    ~A11 -> CS (CS is active-low)
-                        A8 -> A0
-                        A9 -> A1
-                        RD -> RD
-                        WR -> WR
-                    D0..D7 -> D0..D7
-            */
-            if ((pins & Z80_A11) == 0) {
-                // i8255 in/out
-                uint64_t ppi_pins = (pins & Z80_PIN_MASK)|I8255_CS;
-                if (pins & Z80_A9) { ppi_pins |= I8255_A1; }
-                if (pins & Z80_A8) { ppi_pins |= I8255_A0; }
-                if (pins & Z80_RD) { ppi_pins |= I8255_RD; }
-                if (pins & Z80_WR) { ppi_pins |= I8255_WR; }
-                pins = i8255_iorq(&board.i8255, ppi_pins) & Z80_PIN_MASK;
-            }
-            /*
-                Z80 to MC6845 pin connections:
-
-                    ~A14 -> CS (CS is active low)
-                    A9  -> RW (high: read, low: write)
-                    A8  -> RS
-                D0..D7  -> D0..D7
-            */
-            if ((pins & Z80_A14) == 0) {
-                // 6845 in/out
-                uint64_t vdu_pins = (pins & Z80_PIN_MASK)|MC6845_CS;
-                if (pins & Z80_A9) { vdu_pins |= MC6845_RW; }
-                if (pins & Z80_A8) { vdu_pins |= MC6845_RS; }
-                pins = mc6845_iorq(&board.mc6845, vdu_pins) & Z80_PIN_MASK;
-            }
-            /*
-                Gate Array Function (only writing to the gate array
-                is possible)
-            */
-            if ((pins & (Z80_A15|Z80_A14|Z80_WR)) == (Z80_A14|Z80_WR)) {
-                // D6 and D7 select the gate array operation
-                const uint8_t data = Z80_GET_DATA(pins);
-                switch (data & ((1<<7)|(1<<6))) {
-                    case 0:
-                        // select pen:
-                        //  bit 4 set means 'select border', otherwise
-                        //  bits 0..3 contain the pen number
-                        cpc.ga_pen = data & 0x1F;
-                        break;
-                    case (1<<6):
-                        // select color for border or selected pen:
-                        if (cpc.ga_pen & (1<<4)) {
-                            // border color
-                            cpc.ga_border_color = cpc.ga_colors[data & 0x1F];
-                        }
-                        else {
-                            cpc.ga_palette[cpc.ga_pen & 0x0F] = cpc.ga_colors[data & 0x1F];
-                        }
-                        break;
-                    case (1<<7):
-                        // select screen mode, ROM config and interrupt control
-                        //  - bits 0 and 1 select the screen mode
-                        //      00: Mode 0 (160x200 @ 16 colors)
-                        //      01: Mode 1 (320x200 @ 4 colors)
-                        //      02: Mode 2 (640x200 @ 2 colors)
-                        //      11: Mode 3 (160x200 @ 2 colors, undocumented)
-                        //
-                        //  - bit 2: disable/enable lower ROM
-                        //  - bit 3: disable/enable upper ROM
-                        //
-                        //  - bit 4: interrupt generation control
-                        //
-                        cpc.ga_config = data;
-                        cpc.ga_next_video_mode = data & 3;
-                        if (data & (1<<4)) {
-                            cpc.ga_int_ctrl();
-                        }
-                        cpc.update_memory_mapping();
-                        break;
-                    case (1<<7)|(1<<6):
-                        // RAM memory management (only CPC6128)
-                        if (system::cpc6128 == cpc.cur_model) {
-                            cpc.ga_ram_config = data;
-                            cpc.update_memory_mapping();
-                        }
-                        break;
-                }
-            }
+            pins = cpc.cpu_iorq(pins);
         }
     }
     
@@ -395,6 +304,104 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
     }
     Z80_SET_WAIT(pins, wait_cycles);
 
+    return pins;
+}
+
+//------------------------------------------------------------------------------
+uint64_t
+cpc_t::cpu_iorq(uint64_t pins) {
+    /*
+        CPU IO REQUEST
+
+        For address decoding, see the main board schematics!
+        also: http://cpcwiki.eu/index.php/Default_I/O_Port_Summary
+    */
+    /*
+        Z80 to i8255 PPI pin connections:
+            ~A11 -> CS (CS is active-low)
+                A8 -> A0
+                A9 -> A1
+                RD -> RD
+                WR -> WR
+            D0..D7 -> D0..D7
+    */
+    if ((pins & Z80_A11) == 0) {
+        // i8255 in/out
+        uint64_t ppi_pins = (pins & Z80_PIN_MASK)|I8255_CS;
+        if (pins & Z80_A9) { ppi_pins |= I8255_A1; }
+        if (pins & Z80_A8) { ppi_pins |= I8255_A0; }
+        if (pins & Z80_RD) { ppi_pins |= I8255_RD; }
+        if (pins & Z80_WR) { ppi_pins |= I8255_WR; }
+        pins = i8255_iorq(&board.i8255, ppi_pins) & Z80_PIN_MASK;
+    }
+    /*
+        Z80 to MC6845 pin connections:
+
+            ~A14 -> CS (CS is active low)
+            A9  -> RW (high: read, low: write)
+            A8  -> RS
+        D0..D7  -> D0..D7
+    */
+    if ((pins & Z80_A14) == 0) {
+        // 6845 in/out
+        uint64_t vdu_pins = (pins & Z80_PIN_MASK)|MC6845_CS;
+        if (pins & Z80_A9) { vdu_pins |= MC6845_RW; }
+        if (pins & Z80_A8) { vdu_pins |= MC6845_RS; }
+        pins = mc6845_iorq(&board.mc6845, vdu_pins) & Z80_PIN_MASK;
+    }
+    /*
+        Gate Array Function (only writing to the gate array
+        is possible)
+    */
+    if ((pins & (Z80_A15|Z80_A14|Z80_WR)) == (Z80_A14|Z80_WR)) {
+        // D6 and D7 select the gate array operation
+        const uint8_t data = Z80_GET_DATA(pins);
+        switch (data & ((1<<7)|(1<<6))) {
+            case 0:
+                // select pen:
+                //  bit 4 set means 'select border', otherwise
+                //  bits 0..3 contain the pen number
+                cpc.ga_pen = data & 0x1F;
+                break;
+            case (1<<6):
+                // select color for border or selected pen:
+                if (cpc.ga_pen & (1<<4)) {
+                    // border color
+                    cpc.ga_border_color = cpc.ga_colors[data & 0x1F];
+                }
+                else {
+                    cpc.ga_palette[cpc.ga_pen & 0x0F] = cpc.ga_colors[data & 0x1F];
+                }
+                break;
+            case (1<<7):
+                // select screen mode, ROM config and interrupt control
+                //  - bits 0 and 1 select the screen mode
+                //      00: Mode 0 (160x200 @ 16 colors)
+                //      01: Mode 1 (320x200 @ 4 colors)
+                //      02: Mode 2 (640x200 @ 2 colors)
+                //      11: Mode 3 (160x200 @ 2 colors, undocumented)
+                //
+                //  - bit 2: disable/enable lower ROM
+                //  - bit 3: disable/enable upper ROM
+                //
+                //  - bit 4: interrupt generation control
+                //
+                cpc.ga_config = data;
+                cpc.ga_next_video_mode = data & 3;
+                if (data & (1<<4)) {
+                    cpc.ga_int_ctrl();
+                }
+                cpc.update_memory_mapping();
+                break;
+            case (1<<7)|(1<<6):
+                // RAM memory management (only CPC6128)
+                if (system::cpc6128 == cpc.cur_model) {
+                    cpc.ga_ram_config = data;
+                    cpc.update_memory_mapping();
+                }
+                break;
+        }
+    }
     return pins;
 }
 
@@ -895,9 +902,8 @@ cpc_t::framebuffer(int& out_width, int& out_height) {
 }
 
 //------------------------------------------------------------------------------
-/*
 bool
-cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
+cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     auto fp = fs->open(name, filesystem::mode::read);
     if (!fp) {
         return false;
@@ -908,16 +914,16 @@ cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
         hdr_valid = true;
         const uint16_t dump_size = (hdr.dump_size_h<<8 | hdr.dump_size_l) & 0xFFFF;
         if (dump_size == 64) {
-            YAKC_ASSERT(sizeof(this->board->ram) >= 0x10000);
-            fs->read(fp, this->board->ram, 0x10000);
+            YAKC_ASSERT(sizeof(board.ram) >= 0x10000);
+            fs->read(fp, board.ram, 0x10000);
         }
         else {
-            YAKC_ASSERT(sizeof(this->board->ram) >= 0x20000);
-            fs->read(fp, this->board->ram, 0x20000);
+            YAKC_ASSERT(sizeof(board.ram) >= 0x20000);
+            fs->read(fp, board.ram, 0x20000);
         }
     }
     // CPU state
-    auto& cpu = this->board->z80;
+    auto& cpu = board.z80;
     cpu.F = hdr.F; cpu.A = hdr.A;
     cpu.C = hdr.C; cpu.B = hdr.B;
     cpu.E = hdr.E; cpu.D = hdr.D;
@@ -935,28 +941,33 @@ cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     cpu.DE_ = (hdr.D_<<8 | hdr.E_) & 0xFFFF;
     cpu.HL_ = (hdr.H_<<8 | hdr.L_) & 0xFFFF;
     // gate array state
-    for (int i = 0; i < 17; i++) {
-        this->cpu_out(0x7FFF, i);
-        this->cpu_out(0x7FFF, (hdr.pens[i] & 0x1F) | 0x40);
-    }
-    this->cpu_out(0x7FFF, hdr.selected_pen & 0x1F);
-    this->cpu_out(0x7FFF, (hdr.gate_array_config & 0x3F) | 0x80);
-    this->cpu_out(0x7FFF, (hdr.ram_config & 0x3F) | 0xC0);
-    auto& vdg = this->board->mc6845;
-    for (int i = 0; i < 18; i++) {
-        vdg.select(i);
-        vdg.write(hdr.crtc_regs[i]);
-    }
-    vdg.select(hdr.crtc_selected);
-    // FIXME: rom_config
-    auto& ppi = this->board->i8255;
-    ppi.output[i8255::PORT_A] = hdr.ppi_a;
-    ppi.output[i8255::PORT_B] = hdr.ppi_b;
-    ppi.output[i8255::PORT_C] = hdr.ppi_c;
-    this->board->ay8910.select(hdr.psg_selected);
     for (int i = 0; i < 16; i++) {
-        this->board->ay8910.regs[i] = hdr.psg_regs[i];
+        this->ga_palette[i] = this->ga_colors[hdr.pens[i] & 0x1F];
     }
+    this->ga_border_color = this->ga_colors[hdr.pens[16] & 0x1F];
+    this->ga_pen = hdr.selected_pen & 0x1F;
+    this->ga_config = hdr.gate_array_config & 0x3F;
+    this->ga_next_video_mode = hdr.gate_array_config & 3;
+    this->ga_ram_config = hdr.ram_config & 0x3F;
+    this->update_memory_mapping();
+    auto& vdg = board.mc6845;
+    for (int i = 0; i < 18; i++) {
+        vdg.reg[i] = hdr.crtc_regs[i];
+    }
+    vdg.sel = hdr.crtc_selected;
+    // FIXME: rom_config
+    auto& ppi = board.i8255;
+    ppi.output[I8255_PORT_A] = hdr.ppi_a;
+    ppi.output[I8255_PORT_B] = hdr.ppi_b;
+    ppi.output[I8255_PORT_C] = hdr.ppi_c;
+    for (int i = 0; i < 16; i++) {
+        // latch AY-3-8912 register address
+        ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|(i<<16));
+        // write AY-3-8912 register value
+        ay38912_iorq(&board.ay38912, AY38912_BDIR|(hdr.psg_regs[i]<<16));
+    }
+    // latch AY-3-8912 selected address
+    ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|(hdr.psg_selected<<16));
     fs->close(fp);
     fs->rm(name);
     if (!hdr_valid) {
@@ -964,12 +975,10 @@ cpc::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     }
     return true;
 }
-*/
 
 //------------------------------------------------------------------------------
-/*
 bool
-cpc::load_bin(filesystem* fs, const char* name, filetype type, bool start) {
+cpc_t::load_bin(filesystem* fs, const char* name, filetype type, bool start) {
     auto fp = fs->open(name, filesystem::mode::read);
     if (!fp) {
         return false;
@@ -983,37 +992,32 @@ cpc::load_bin(filesystem* fs, const char* name, filetype type, bool start) {
         const uint16_t load_addr = (hdr.load_addr_h<<8)|hdr.load_addr_l;
         const uint16_t start_addr = (hdr.start_addr_h<<8)|hdr.start_addr_l;
         const uint16_t len = (hdr.length_h<<8)|hdr.length_l;
-        auto& cpu = this->board->z80;
         uint8_t val;
         for (uint16_t i=0; i < len; i++) {
             fs->read(fp, &val, sizeof(val));
-            cpu.mem.w8(load_addr + i, val);
+            mem_wr(&board.mem, load_addr+i, val);
         }
-        cpu.PC = start_addr;
+        auto& cpu = board.z80;
         cpu.IFF1 = cpu.IFF2 = true;
-        cpu.HALT = false;
+        cpu.C = 0;  // hmm "ROM select number"
+        cpu.HL = start_addr;
+        cpu.PC = 0xBD16;        // MC START PROGRAM
     }
     fs->close(fp);
     fs->rm(name);
     return true;
 }
-*/
 
 //------------------------------------------------------------------------------
 bool
 cpc_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
-return false;
-/*
     if (filetype::cpc_sna == type) {
         return this->load_sna(fs, name, type, start);
     }
     else if (filetype::cpc_bin == type) {
         return this->load_bin(fs, name, type, start);
     }
-    else {
-        return false;
-    }
-*/
+    return false;
 }
 
 //------------------------------------------------------------------------------

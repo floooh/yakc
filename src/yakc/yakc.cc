@@ -381,24 +381,32 @@ yakc::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 bool
 yakc::quickload(const char* name, filetype type, bool start) {
+    bool retval = false;
+    if (board.dbg.has_breakpoint()) {
+        board.dbg.disable_breakpoint();
+    }
     if (z1013.on) {
-        return z1013.quickload(&this->filesystem, name, type, start);
+        retval = z1013.quickload(&this->filesystem, name, type, start);
     }
     else if (z9001.on) {
-        return z9001.quickload(&this->filesystem, name, type, start);
+        retval = z9001.quickload(&this->filesystem, name, type, start);
     }
     else if (zx.on) {
-        return zx.quickload(&this->filesystem, name, type, start);
+        retval = zx.quickload(&this->filesystem, name, type, start);
     }
     else if (kc85.on) {
-        return kc85.quickload(&this->filesystem, name, type, start);
+        retval = kc85.quickload(&this->filesystem, name, type, start);
     }
     else if (cpc.on) {
-        return cpc.quickload(&this->filesystem, name, type, start);
+        retval = cpc.quickload(&this->filesystem, name, type, start);
     }
     else {
-        return false;
+        retval = false;
     }
+    if (board.dbg.has_breakpoint()) {
+        board.dbg.enable_breakpoint();
+    }
+    return retval;
 }
 
 } // namespace YAKC
