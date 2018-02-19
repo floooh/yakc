@@ -501,6 +501,7 @@ cpc_t::ga_init() {
     this->ga_border_color = 0;
     this->ga_hsync_irq_counter = 0;
     this->ga_hsync_after_vsync_counter = 0;
+    this->ga_hsync_delay_counter = 2;
     this->ga_sync = false;
     this->ga_dbg_irq = false;
     this->ga_crtc_pins = 0;
@@ -596,6 +597,15 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
         - This 2 HSync delay after a VSync is used to let the main program,
           executed by the CPU, enough time to sense the VSync...
 
+        From: http://www.cpcwiki.eu/index.php?title=CRTC
+        
+        - The HSYNC is modified before being sent to the monitor. It happens
+          2us after the HSYNC from the CRTC and lasts 4us when HSYNC length
+          is greater or equal to 6.
+        - The VSYNC is also modified before being sent to the monitor, it happens
+          two lines after the VSYNC from the CRTC and stay 2 lines (same cut
+          rule if VSYNC is lower than 4).
+
         NOTES:
             - the interrupt acknowledge is handled once per machine 
               cycle in cpu_tick()
@@ -628,15 +638,36 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
         }
     }
 
-    // FIXME: HSYNC length
-    this->ga_sync = (crtc_pins & MC6845_HS);
+    // generate HSYNC signal to monitor:
+    //  - starts 2 ticks after HSYNC rising edge from CRTC
+    //  - stays active for 4 ticks or less if CRTC HSYNC goes inactive earlier
+    if (rising_edge(crtc_pins, this->ga_crtc_pins, MC6845_HS)) {
+        this->ga_hsync_delay_counter = 3;
+    }
+    if (falling_edge(crtc_pins, this->ga_crtc_pins, MC6845_HS)) {
+        this->ga_hsync_delay_counter = 0;
+        this->ga_hsync_counter = 0;
+        this->ga_sync = false;
+    }
+    if (this->ga_hsync_delay_counter > 0) {
+        this->ga_hsync_delay_counter--;
+        if (this->ga_hsync_delay_counter == 0) {
+            this->ga_sync = true;
+            this->ga_hsync_counter = 5;
+        }
+    }
+    if (this->ga_hsync_counter > 0) {
+        this->ga_hsync_counter--;
+        if (this->ga_hsync_counter == 0) {
+            this->ga_sync = false;
+        }
+    }
 
-    // >>>FIXME
-    this->ga_crtc_pins = crtc_pins;
     const bool vsync = (crtc_pins & MC6845_VS);
     crt_tick(&board.crt, this->ga_sync, vsync);
     this->ga_decode_video(crtc_pins);
 
+    this->ga_crtc_pins = crtc_pins;
     return cpu_pins;
 }
 
@@ -742,7 +773,10 @@ cpc_t::ga_decode_video(uint64_t crtc_pins) {
                 uint8_t g = 0x3F;
                 uint8_t b = 0x3F;
                 if (crtc_pins & MC6845_HS) {
-                    r = 0x7F;
+                    r = 0x7F; g = 0; b = 0;
+                }
+                if (this->ga_sync) {
+                    r = 0xFF; g = 0; b = 0;
                 }
                 if (crtc_pins & MC6845_VS) {
                     g = 0x7F;
@@ -753,11 +787,13 @@ cpc_t::ga_decode_video(uint64_t crtc_pins) {
                 else if (0 == board.mc6845.scanline_ctr) {
                     r = g = b = 0x00;
                 }
+                /*
                 if (board.crt.h_blank || board.crt.v_blank) {
                     r >>= 1;
                     g >>= 1;
                     b >>= 1;
                 }
+                */
                 for (int i = 0; i < 16; i++) {
                     if (i == 0) {
                         *dst++ = 0xFF000000;
