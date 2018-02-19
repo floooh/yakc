@@ -15,11 +15,8 @@ public:
     virtual void Setup(yakc& emu) override;
     virtual bool Draw(yakc& emu) override;
 
-    void drawMainWindow(yakc& emu);
-    void drawColorWindow(yakc& emu);
+    void drawColors();
 
-    bool colorWindowOpen = false;
-    ImVec4 hwColors[32];
     ImVec4 paletteColors[16];
     ImVec4 borderColor;
 };

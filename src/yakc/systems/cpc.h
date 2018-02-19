@@ -44,6 +44,10 @@ public:
     bool ga_vsync_bit();
     /// called when the interrupt-control bit is set by a CPU IO operation
     void ga_int_ctrl();
+    /// top-level video frame decoding
+    void ga_decode_video(uint64_t crtc_pins);
+    /// decode the next pixel block
+    void ga_decode_pixels(uint32_t* dst, uint64_t crtc_pins);
 
     /// update bank switching
     void update_memory_mapping();
@@ -80,7 +84,11 @@ public:
     uint32_t ga_palette[16];        // the current pen colors
     uint32_t ga_border_color = 0;   // the current border color
     int ga_hsync_irq_counter = 0;   // incremented each scanline, reset at 52
-    int ga_int_ack_counter = 0;     // delay-counter for interrupt-acknowledge
+    int ga_hsync_after_vsync_counter = 0;   // for 2-hsync-delay after vsync
+    bool ga_hsync = false;          // gate-array generated HSYNC
+    bool ga_vsync = false;          // gate-array generated VSYNC
+    bool ga_irq = false;            // interrupt request from gate array
+    uint64_t ga_crtc_pins;     // store CRTC pins to detect rising/falling bits
     
     bool debug_video = false;
     static const int max_display_width = 768;

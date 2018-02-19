@@ -9,6 +9,8 @@
 #include "cpc.h"
 #include "yakc/util/filetypes.h"
 
+#include <stdio.h>
+
 namespace YAKC {
 
 cpc_t cpc;
@@ -343,7 +345,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
             if ((pins & (Z80_A15|Z80_A14|Z80_WR)) == (Z80_A14|Z80_WR)) {
                 // D6 and D7 select the gate array operation
                 const uint8_t data = Z80_GET_DATA(pins);
-                switch (pins & ((1<<7)|(1<<6))) {
+                switch (data & ((1<<7)|(1<<6))) {
                     case 0:
                         // select pen:
                         //  bit 4 set means 'select border', otherwise
@@ -404,18 +406,20 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
                  PC6    -> BC1
     */
     if (I8255_PORT_C == port_id) {
-        // PSG function
-        if (data & 0xC0) {
-            // PSG function
-            uint64_t ay_pins = AY38912_BDIR;    // select or write
-            if (data & 0x40) { ay_pins |= AY38912_BC1; }   // select register
-            AY38912_SET_DATA(ay_pins, board.i8255.output[I8255_PORT_A]);
+        // AY-3-8912 PSG function?
+        if (data & ((1<<7)|(1<<6))) {
+            uint64_t ay_pins = 0;
+            if (data & (1<<7)) ay_pins |= AY38912_BDIR;
+            if (data & (1<<6)) ay_pins |= AY38912_BC1;
+            uint8_t ay_data = board.i8255.output[I8255_PORT_A];
+            AY38912_SET_DATA(ay_pins, ay_data);
             ay38912_iorq(&board.ay38912, ay_pins);
         }
-        // FIXME: cassette write data
+
         // bits 0..3: select keyboard matrix line
         kbd_set_active_columns(&board.kbd, 1<<(data & 0x0F));
 
+        // FIXME: cassette write data
         // cassette deck motor control
         /*
         if (data & (1<<4)) {
@@ -430,6 +434,9 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
         }
         */
     }
+    else {
+        //printf("cpc_t::ppi_out: write to port %d: 0x%02X!\n", port_id, data);
+    }
     return pins;
 }
 
@@ -442,8 +449,13 @@ cpc_t::ppi_in(int port_id) {
             return ~kbd_scan_lines(&board.kbd);
         }
         else {
-            // read PSG register
-            uint64_t ay_pins = AY38912_BC1;
+            // AY-3-8912 PSG function
+            uint64_t ay_pins = 0;
+            uint8_t ay_ctrl = board.i8255.output[I8255_PORT_C];
+            if (ay_ctrl & (1<<7)) ay_pins |= AY38912_BDIR;
+            if (ay_ctrl & (1<<6)) ay_pins |= AY38912_BC1;
+            uint8_t ay_data = board.i8255.output[I8255_PORT_A];
+            AY38912_SET_DATA(ay_pins, ay_data);
             ay_pins = ay38912_iorq(&board.ay38912, ay_pins);
             return AY38912_GET_DATA(ay_pins);
         }
@@ -465,13 +477,15 @@ cpc_t::ppi_in(int port_id) {
         //  Bit 0: vsync
         //
         uint8_t val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
-        if (cpc.ga_vsync_bit()) {
+        // PPI Port B Bit 0 is directly wired to the 6845 VSYNC pin (see schematics)
+        if (board.mc6845.vs) {
             val |= (1<<0);
         }
         return val;
     }
     else {
         // shouldn't happen
+        printf("cpc_t::ppi_in: read from port %d\n", port_id);
         return 0xFF;
     }
 }
@@ -486,7 +500,11 @@ cpc_t::ga_init() {
     this->ga_pen = 0;
     this->ga_border_color = 0;
     this->ga_hsync_irq_counter = 0;
-    this->ga_int_ack_counter = 0;
+    this->ga_hsync_after_vsync_counter = 0;
+    this->ga_hsync = false;
+    this->ga_vsync = false;
+    this->ga_irq = false;
+    this->ga_crtc_pins = 0;
     clear(this->ga_palette, sizeof(this->ga_palette));
     
     // setup the color palette, this is different for CPC and KC Compact
@@ -527,7 +545,10 @@ cpc_t::ga_int_ctrl() {
 //------------------------------------------------------------------------------
 void
 cpc_t::ga_int_ack() {
-    this->ga_int_ack_counter = 2;
+    // on interrupt acknowledge from the CPU, clear the top bit from the
+    // hsync counter, so the next interrupt can't occur closer then 
+    // 32 HSYNC
+    this->ga_hsync_irq_counter &= 0x1F;
 }
 
 //------------------------------------------------------------------------------
@@ -538,10 +559,217 @@ cpc_t::ga_vsync_bit() {
 }
 
 //------------------------------------------------------------------------------
+static bool falling_edge(uint64_t new_pins, uint64_t old_pins, uint64_t mask) {
+    return 0 != (mask & (~new_pins & (new_pins ^ old_pins)));
+}
+
+//------------------------------------------------------------------------------
+static bool rising_edge(uint64_t new_pins, uint64_t old_pins, uint64_t mask) {
+    return 0 != (mask & (new_pins & (new_pins ^ old_pins)));
+}
+
+//------------------------------------------------------------------------------
 uint64_t
-cpc_t::ga_tick(uint64_t pins) {
-return pins;
-//    return this->video.tick();
+cpc_t::ga_tick(uint64_t cpu_pins) {
+    // http://cpctech.cpc-live.com/docs/ints.html
+    // http://www.cpcwiki.eu/forum/programming/frame-flyback-and-interrupts/msg25106/#msg25106
+    // https://web.archive.org/web/20170612081209/http://www.grimware.org/doku.php/documentations/devices/gatearray
+
+    uint64_t crtc_pins = mc6845_tick(&board.mc6845);
+
+    /*
+        INTERRUPT GENERATION:
+
+        From: https://web.archive.org/web/20170612081209/http://www.grimware.org/doku.php/documentations/devices/gatearray
+
+        - On every falling edge of the HSYNC signal (from the 6845),
+          the gate array will increment the counter by one. When the
+          counter reaches 52, the gate array will raise the INT signal
+          and reset the counter.
+        - When the CPU acknowledges the interrupt, the gate array will
+          reset bit5 of the counter, so the next interrupt can't occur
+          closer than 32 HSync.
+        - When a VSync occurs, the gate array will wait for 2 HSync and:
+            - if the counter>=32 (bit5=1) then no interrupt request is issued
+              and counter is reset to 0
+            - if the counter<32 (bit5=0) then an interrupt request is issued
+              and counter is reset to 0
+        - This 2 HSync delay after a VSync is used to let the main program,
+          executed by the CPU, enough time to sense the VSync...
+
+        NOTES:
+            - we also set the video mode on HSYNC falling edge, is this correct?
+            - the interrupt acknowledge is handled once per machine
+              cycle in cpu_tick()
+    */
+    if (rising_edge(crtc_pins, this->ga_crtc_pins, MC6845_VS)) {
+        this->ga_hsync_after_vsync_counter = 2;
+    }
+    if (falling_edge(crtc_pins, this->ga_crtc_pins, MC6845_HS)) {
+        this->ga_video_mode = this->ga_next_video_mode;
+        this->ga_hsync_irq_counter = (this->ga_hsync_irq_counter + 1) & 0x3F;
+
+        // 2 HSync delay?
+        if (this->ga_hsync_after_vsync_counter > 0) {
+            this->ga_hsync_after_vsync_counter--;
+            if (this->ga_hsync_after_vsync_counter == 0) {
+                if (this->ga_hsync_irq_counter >= 32) {
+                    cpu_pins |= Z80_INT;
+                }
+                this->ga_hsync_irq_counter = 0;
+            }
+        }
+        // normal behaviour, request interrupt each 52 scanlines
+        if (this->ga_hsync_irq_counter == 52) {
+            this->ga_hsync_irq_counter = 0;
+            cpu_pins |= Z80_INT;
+        }
+    }
+
+    // FIXME: HSYNC length
+    this->ga_hsync = (crtc_pins & MC6845_HS);
+
+    // >>>FIXME
+    this->ga_vsync = (crtc_pins & MC6845_VS);
+    this->ga_crtc_pins = crtc_pins;
+    crt_tick(&board.crt, this->ga_hsync, this->ga_vsync);
+    this->ga_decode_video(crtc_pins);
+
+    return cpu_pins;
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::ga_decode_pixels(uint32_t* dst, uint64_t crtc_pins) {
+
+    // compute the source address from current CRTC ma (memory address)
+    // and ra (raster address) like this:
+    //
+    // |ma12|ma11|ra2|ra1|ra0|ma9|ma8|...|ma2|ma1|ma0|0|
+    //
+    // Bits ma12 and m11 point to the 16 KByte page, and all
+    // other bits are the index into that page.
+    //
+    const uint16_t ma = MC6845_GET_ADDR(crtc_pins);
+    const uint8_t ra = MC6845_GET_RA(crtc_pins);
+    const uint32_t page_index  = (ma>>12) & 3;
+    const uint32_t page_offset = ((ma & 0x03FF)<<1) | ((ra & 7)<<11);
+    const uint8_t* src = &(board.ram[page_index][page_offset]);
+    uint8_t c;
+    uint32_t p;
+    if (0 == this->ga_video_mode) {
+        // 160x200 @ 16 colors
+        // pixel    bit mask
+        // 0:       |3|7|
+        // 1:       |2|6|
+        // 2:       |1|5|
+        // 3:       |0|4|
+        for (int i = 0; i < 2; i++) {
+            c = *src++;
+            p = this->ga_palette[((c>>7)&0x1)|((c>>2)&0x2)|((c>>3)&0x4)|((c<<2)&0x8)];
+            *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
+            p = this->ga_palette[((c>>6)&0x1)|((c>>1)&0x2)|((c>>2)&0x4)|((c<<3)&0x8)];
+            *dst++ = p; *dst++ = p; *dst++ = p; *dst++ = p;
+        }
+    }
+    else if (1 == this->ga_video_mode) {
+        // 320x200 @ 4 colors
+        // pixel    bit mask
+        // 0:       |3|7|
+        // 1:       |2|6|
+        // 2:       |1|5|
+        // 3:       |0|4|
+        for (int i = 0; i < 2; i++) {
+            c = *src++;
+            p = this->ga_palette[((c>>2)&2)|((c>>7)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->ga_palette[((c>>1)&2)|((c>>6)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->ga_palette[((c>>0)&2)|((c>>5)&1)];
+            *dst++ = p; *dst++ = p;
+            p = this->ga_palette[((c<<1)&2)|((c>>4)&1)];
+            *dst++ = p; *dst++ = p;
+        }
+    }
+    else if (2 == this->ga_video_mode) {
+        // 640x200 @ 2 colors
+        for (int i = 0; i < 2; i++) {
+            c = *src++;
+            for (int j = 7; j >= 0; j--) {
+                *dst++ = this->ga_palette[(c>>j)&1];
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::ga_decode_video(uint64_t crtc_pins) {
+    if (!this->debug_video) {
+        if (board.crt.visible) {
+            int dst_x = board.crt.pos_x * 16;
+            int dst_y = board.crt.pos_y;
+            YAKC_ASSERT((dst_x <= (max_display_width-16)) && (dst_y < max_display_height));
+            uint32_t* dst = &(board.rgba8_buffer[dst_x + dst_y * max_display_width]);
+            if (crtc_pins & MC6845_DE) {
+                // decode visible pixels
+                this->ga_decode_pixels(dst, crtc_pins);
+            }
+            else if (crtc_pins & (MC6845_HS|MC6845_VS)) {
+                // blacker than black
+                for (int i = 0; i < 16; i++) {
+                    dst[i] = 0xFF000000;
+                }
+            }
+            else {
+                // border color
+                for (int i = 0; i < 16; i++) {
+                    dst[i] = this->ga_border_color;
+                }
+            }
+        }
+    }
+    else {
+        // debug mode
+        int dst_x = board.crt.h_pos * 16;
+        int dst_y = board.crt.v_pos;
+        if ((dst_x < (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
+            uint32_t* dst = &(board.rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
+            if (!(crtc_pins & MC6845_DE)) {
+                uint8_t r = 0x3F;
+                uint8_t g = 0x3F;
+                uint8_t b = 0x3F;
+                if (crtc_pins & MC6845_HS) {
+                    r = 0x7F;
+                }
+                if (crtc_pins & MC6845_VS) {
+                    g = 0x7F;
+                }
+                if (this->ga_irq) {
+                    r = g = b = 0xFF;
+                }
+                else if (0 == board.mc6845.scanline_ctr) {
+                    r = g = b = 0x00;
+                }
+                if (board.crt.h_blank || board.crt.v_blank) {
+                    r >>= 1;
+                    g >>= 1;
+                    b >>= 1;
+                }
+                for (int i = 0; i < 16; i++) {
+                    if (i == 0) {
+                        *dst++ = 0xFF000000;
+                    }
+                    else {
+                        *dst++ = 0xFF<<24 | b<<16 | g<<8 | r;
+                    }
+                }
+            }
+            else {
+                this->ga_decode_pixels(dst, crtc_pins);
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
