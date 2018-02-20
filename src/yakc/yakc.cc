@@ -227,27 +227,16 @@ yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
 //------------------------------------------------------------------------------
 uint32_t
 yakc::step() {
-    uint32_t all_ticks = 0;
-    uint16_t old_pc;
+    uint32_t ticks = 0;
     if (this->cpu_type() == cpu_model::z80) {
-        do {
-            old_pc = board.z80.PC;
-            uint32_t ticks = z80_exec(&board.z80, 0);
-            board.dbg.add_history_item(board.z80.PC, ticks);
-            all_ticks += ticks;
-        }
-        while ((old_pc == board.z80.PC) && (0 == (board.z80.PINS & Z80_HALT)));
+        ticks = z80_exec(&board.z80, 0);
+        board.dbg.add_history_item(board.z80.PC, ticks);
     }
     else {
-        do {
-            old_pc = board.m6502.PC;
-            uint32_t ticks = m6502_exec(&board.m6502, 0);
-            board.dbg.add_history_item(board.m6502.PC, ticks);
-            all_ticks += ticks;
-        }
-        while (old_pc == board.m6502.PC);
+        ticks = m6502_exec(&board.m6502, 0);
+        board.dbg.add_history_item(board.m6502.PC, ticks);
     }
-    return all_ticks;
+    return ticks;
 }
 
 //------------------------------------------------------------------------------

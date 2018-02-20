@@ -800,7 +800,7 @@ cpc_t::ga_decode_video(uint64_t crtc_pins) {
                     g = 0x7F;
                 }
                 if (this->ga_int) {
-                    r = g = b = 0xFF;
+                    b = 0xFF;
                 }
                 else if (0 == board.mc6845.scanline_ctr) {
                     r = g = b = 0x00;
