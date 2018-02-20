@@ -144,14 +144,6 @@ cpc_t::init_keymap() {
     kbd_register_key(&board.kbd, 0x0C, 2, 0, 0);    // clr
     kbd_register_key(&board.kbd, 0x0D, 2, 2, 0);    // return
     kbd_register_key(&board.kbd, 0x03, 8, 2, 0);    // escape
-
-    // joystick (just use some unused upper ascii codes)
-    kbd_register_key(&board.kbd, 0xF0, 9, 2, 0);    // joystick left
-    kbd_register_key(&board.kbd, 0xF1, 9, 3, 0);    // joystick right
-    kbd_register_key(&board.kbd, 0xF2, 9, 0, 0);    // joystick down
-    kbd_register_key(&board.kbd, 0xF3, 9, 1, 0);    // joystick up
-    kbd_register_key(&board.kbd, 0xF4, 9, 5, 0);    // joystick fire0
-    kbd_register_key(&board.kbd, 0xF5, 9, 4, 0);    // joystick fire1
 }
 
 //------------------------------------------------------------------------------
@@ -162,6 +154,7 @@ cpc_t::poweron(system m) {
 
     this->cur_model = m;
     this->on = true;
+    this->joymask = 0;
 
     this->init_keymap();
     this->ga_init();
@@ -213,6 +206,7 @@ cpc_t::reset() {
     board.z80.PC = 0x0000;
     mem_unmap_all(&board.mem);
     this->update_memory_mapping();
+    this->joymask = 0;
     this->tick_count = 0;
     this->ga_init();
 }
@@ -453,9 +447,26 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
 uint8_t
 cpc_t::ppi_in(int port_id) {
     if (I8255_PORT_A == port_id) {
-        // catch keyboard data which is normally in PSG PORT A
+        // catch keyboard/joystick data which is normally in PSG PORT A
         if (board.ay38912.addr == AY38912_REG_IO_PORT_A) {
-            return ~kbd_scan_lines(&board.kbd);
+            if (board.kbd.active_columns & (1<<9)) {
+                /*
+                    joystick input is implemented like this:
+                    - the keyboard column 9 is routed to the joystick
+                      ports "COM1" pin, this means the joystick is only
+                      "powered" when the keyboard line 9 is active
+                    - the joysticks direction and fire pins are
+                      connected to the keyboard matrix lines as
+                      input to PSG port A
+                    - thus, only when the keyboard matrix column 9 is sampled,
+                      joystick input will be provided on the keyboard
+                      matrix lines
+                */
+                return ~cpc.joymask;
+            }
+            else {
+                return ~kbd_scan_lines(&board.kbd);
+            }
         }
         else {
             // AY-3-8912 PSG function
@@ -874,11 +885,31 @@ cpc_t::update_memory_mapping() {
 //------------------------------------------------------------------------------
 void
 cpc_t::put_input(uint8_t ascii, uint8_t joy0_mask) {
-    if (ascii) {
+    if (ascii && !joy0_mask) {
         kbd_key_down(&board.kbd, ascii);
         kbd_key_up(&board.kbd, ascii);
     }
-    // FIXME: joystick
+    // setup the joystick bits which are overlayed
+    // to the keyboard line input to the AY-3-8912 port
+    this->joymask = 0;
+    if (joy0_mask & joystick::up) {
+        this->joymask |= (1<<0);
+    }
+    if (joy0_mask & joystick::down) {
+        this->joymask |= (1<<1);
+    }
+    if (joy0_mask & joystick::left) {
+        this->joymask |= (1<<2);
+    }
+    if (joy0_mask & joystick::right) {
+        this->joymask |= (1<<3);
+    }
+    if (joy0_mask & joystick::btn0) {
+        this->joymask |= (1<<4);
+    }
+    if (joy0_mask & joystick::btn1) {
+        this->joymask |= (1<<5);
+    }
 }
 
 //------------------------------------------------------------------------------
