@@ -162,7 +162,7 @@ cpc_t::poweron(system m) {
     // setup memory system
     clear(board.ram, sizeof(board.ram));
     mem_unmap_all(&board.mem);
-    this->update_memory_mapping();
+    this->update_memory_mapping(true, true);
 
     // http://www.cpcwiki.eu/index.php/Format:TAP_tape_image_file_format
     if (m == system::cpc464) {
@@ -204,11 +204,11 @@ cpc_t::reset() {
     i8255_reset(&board.i8255);
     z80_reset(&board.z80);
     board.z80.PC = 0x0000;
-    mem_unmap_all(&board.mem);
-    this->update_memory_mapping();
     this->joymask = 0;
     this->tick_count = 0;
     this->ga_init();
+    mem_unmap_all(&board.mem);
+    this->update_memory_mapping(true, true);
 }
 
 //------------------------------------------------------------------------------
@@ -240,10 +240,8 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
             mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
         }
     }
-    else if (pins & Z80_IORQ) {
-        if (pins & (Z80_RD|Z80_WR)) {
-            pins = cpc.cpu_iorq(pins);
-        }
+    else if ((pins & Z80_IORQ) && (pins & (Z80_RD|Z80_WR))) {
+        pins = cpc.cpu_iorq(pins);
     }
     
     /*
@@ -385,13 +383,15 @@ cpc_t::cpu_iorq(uint64_t pins) {
                 if (data & (1<<4)) {
                     cpc.ga_int_ctrl();
                 }
-                cpc.update_memory_mapping();
+                // only update ROM banks
+                cpc.update_memory_mapping(true, false);
                 break;
             case (1<<7)|(1<<6):
                 // RAM memory management (only CPC6128)
                 if (system::cpc6128 == cpc.cur_model) {
                     cpc.ga_ram_config = data;
-                    cpc.update_memory_mapping();
+                    // only update RAM banks
+                    cpc.update_memory_mapping(false, true);
                 }
                 break;
         }
@@ -835,7 +835,7 @@ static int ram_config_table[8][4] = {
 };
 
 void
-cpc_t::update_memory_mapping() {
+cpc_t::update_memory_mapping(bool upd_rom, bool upd_ram) {
     // index into RAM config array
     int ram_table_index;
     uint8_t* rom0_ptr,*rom1_ptr;
@@ -858,27 +858,31 @@ cpc_t::update_memory_mapping() {
     const int i1 = ram_config_table[ram_table_index][1];
     const int i2 = ram_config_table[ram_table_index][2];
     const int i3 = ram_config_table[ram_table_index][3];
-    // 0x0000..0x3FFF
-    if (this->ga_config & (1<<2)) {
-        // read/write from and to RAM bank
-        mem_map_ram(&board.mem, 0, 0x0000, 0x4000, board.ram[i0]);
+    if (upd_ram) {
+        // 0x4000..0x7FFF
+        mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[i1]);
+        // 0x8000..0xBFFF
+        mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[i2]);
     }
-    else {
-        // read from ROM, write to RAM
-        mem_map_rw(&board.mem, 0, 0x0000, 0x4000, rom0_ptr, board.ram[i0]);
-    }
-    // 0x4000..0x7FFF
-    mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[i1]);
-    // 0x8000..0xBFFF
-    mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[i2]);
-    // 0xC000..0xFFFF
-    if (this->ga_config & (1<<3)) {
-        // read/write from and to RAM bank
-        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[i3]);
-    }
-    else {
-        // read from ROM, write to RAM
-        mem_map_rw(&board.mem, 0, 0xC000, 0x4000, rom1_ptr, board.ram[i3]);
+    if (upd_rom) {
+        // 0x0000..0x3FFF
+        if (this->ga_config & (1<<2)) {
+            // read/write from and to RAM bank
+            mem_map_ram(&board.mem, 0, 0x0000, 0x4000, board.ram[i0]);
+        }
+        else {
+            // read from ROM, write to RAM
+            mem_map_rw(&board.mem, 0, 0x0000, 0x4000, rom0_ptr, board.ram[i0]);
+        }
+        // 0xC000..0xFFFF
+        if (this->ga_config & (1<<3)) {
+            // read/write from and to RAM bank
+            mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[i3]);
+        }
+        else {
+            // read from ROM, write to RAM
+            mem_map_rw(&board.mem, 0, 0xC000, 0x4000, rom1_ptr, board.ram[i3]);
+        }
     }
 }
 
@@ -980,7 +984,7 @@ cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     this->ga_config = hdr.gate_array_config & 0x3F;
     this->ga_next_video_mode = hdr.gate_array_config & 3;
     this->ga_ram_config = hdr.ram_config & 0x3F;
-    this->update_memory_mapping();
+    this->update_memory_mapping(true, true);
     auto& vdg = board.mc6845;
     for (int i = 0; i < 18; i++) {
         vdg.reg[i] = hdr.crtc_regs[i];

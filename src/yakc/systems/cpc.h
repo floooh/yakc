@@ -50,7 +50,7 @@ public:
     void ga_decode_pixels(uint32_t* dst, uint64_t crtc_pins);
 
     /// update bank switching
-    void update_memory_mapping();
+    void update_memory_mapping(bool upd_rom, bool upd_ram);
     /// initialize the keycode translation map
     void init_keymap();
 
