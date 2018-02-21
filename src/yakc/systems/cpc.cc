@@ -9,8 +9,6 @@
 #include "cpc.h"
 #include "yakc/util/filetypes.h"
 
-#include <stdio.h>
-
 namespace YAKC {
 
 cpc_t cpc;
@@ -465,38 +463,16 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
 uint8_t
 cpc_t::ppi_in(int port_id) {
     if (I8255_PORT_A == port_id) {
-        // catch keyboard/joystick data which is normally in PSG PORT A
-        if (board.ay38910.addr == AY38910_REG_IO_PORT_A) {
-            if (board.kbd.active_columns & (1<<9)) {
-                /*
-                    joystick input is implemented like this:
-                    - the keyboard column 9 is routed to the joystick
-                      ports "COM1" pin, this means the joystick is only
-                      "powered" when the keyboard line 9 is active
-                    - the joysticks direction and fire pins are
-                      connected to the keyboard matrix lines as
-                      input to PSG port A
-                    - thus, only when the keyboard matrix column 9 is sampled,
-                      joystick input will be provided on the keyboard
-                      matrix lines
-                */
-                return ~cpc.joymask;
-            }
-            else {
-                return ~kbd_scan_lines(&board.kbd);
-            }
-        }
-        else {
-            // AY-3-8912 PSG function
-            uint64_t ay_pins = 0;
-            uint8_t ay_ctrl = board.i8255.output[I8255_PORT_C];
-            if (ay_ctrl & (1<<7)) ay_pins |= AY38910_BDIR;
-            if (ay_ctrl & (1<<6)) ay_pins |= AY38910_BC1;
-            uint8_t ay_data = board.i8255.output[I8255_PORT_A];
-            AY38910_SET_DATA(ay_pins, ay_data);
-            ay_pins = ay38910_iorq(&board.ay38910, ay_pins);
-            return AY38910_GET_DATA(ay_pins);
-        }
+        // AY-3-8912 PSG function (indirectly this also triggers
+        // a read of the keyboard matrix via the AY's IO port
+        uint64_t ay_pins = 0;
+        uint8_t ay_ctrl = board.i8255.output[I8255_PORT_C];
+        if (ay_ctrl & (1<<7)) ay_pins |= AY38910_BDIR;
+        if (ay_ctrl & (1<<6)) ay_pins |= AY38910_BC1;
+        uint8_t ay_data = board.i8255.output[I8255_PORT_A];
+        AY38910_SET_DATA(ay_pins, ay_data);
+        ay_pins = ay38910_iorq(&board.ay38910, ay_pins);
+        return AY38910_GET_DATA(ay_pins);
     }
     else if (I8255_PORT_B == port_id) {
         //  Bit 7: cassette data input
@@ -523,22 +499,46 @@ cpc_t::ppi_in(int port_id) {
     }
     else {
         // shouldn't happen
-        printf("cpc_t::ppi_in: read from port %d\n", port_id);
+        //printf("cpc_t::ppi_in: read from port %d\n", port_id);
         return 0xFF;
     }
 }
 
 //------------------------------------------------------------------------------
 void
-cpc_t::psg_out(int port_id, uint8_t data) {
-    // FIXME
+cpc_t::psg_out(int /*port_id*/, uint8_t /*data*/) {
+    // this shouldn't be called
+    //printf("AY-3-8912 out: %d => 0x%02X\n", port_id, data);
 }
 
 //------------------------------------------------------------------------------
 uint8_t
 cpc_t::psg_in(int port_id) {
-    // FIXME
-    return 0xFF;
+    // read the keyboard matrix and joystick port
+    if (port_id == AY38910_PORT_A) {
+        if (board.kbd.active_columns & (1<<9)) {
+            /*
+                joystick input is implemented like this:
+                - the keyboard column 9 is routed to the joystick
+                  ports "COM1" pin, this means the joystick is only
+                  "powered" when the keyboard line 9 is active
+                - the joysticks direction and fire pins are
+                  connected to the keyboard matrix lines as
+                  input to PSG port A
+                - thus, only when the keyboard matrix column 9 is sampled,
+                  joystick input will be provided on the keyboard
+                  matrix lines
+            */
+            return ~cpc.joymask;
+        }
+        else {
+            return ~kbd_scan_lines(&board.kbd);
+        }
+    }
+    else {
+        // this shouldn't happen since the AY-3-8912 only has one IO port
+        return 0xFF;
+    }
 }
 
 //------------------------------------------------------------------------------
