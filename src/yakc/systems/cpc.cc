@@ -241,6 +241,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
     }
     else if ((pins & Z80_IORQ) && (pins & (Z80_RD|Z80_WR))) {
+        // CPU IO REQUEST
         pins = cpc.cpu_iorq(pins);
     }
     
@@ -255,7 +256,7 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
          3: wait active
     
         the CPU samples the wait line only on specific clock ticks
-        during memory or IO operations, a wait states are only injected
+        during memory or IO operations, wait states are only injected
         if the 'wait active' happens on the same clock tick as the
         CPU would sample the wait line
     */
