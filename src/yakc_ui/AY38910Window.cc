@@ -54,6 +54,7 @@ AY38910Window::Draw(yakc& emu) {
             !ay.tone[0].noise_disable ? "ON  ":"OFF ",
             !ay.tone[1].noise_disable ? "ON  ":"OFF ",
             !ay.tone[2].noise_disable ? "ON  ":"OFF ");
+        ImGui::Text("Env Counter:  %04X", ay.env.counter);
     }
     ImGui::End();
     return this->Visible;
