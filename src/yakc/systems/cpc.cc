@@ -343,9 +343,14 @@ cpc_t::cpu_iorq(uint64_t pins) {
     }
     /*
         Gate Array Function (only writing to the gate array
-        is possible)
+        is possible, but the gate array doesn't check the
+        CPU R/W pins, so each access is a write).
+
+        This is used by the Arnold Acid test "OnlyInc", which
+        access the PPI and gate array in the same IO operation
+        to move data directly from the PPI into the gate array.
     */
-    if ((pins & (Z80_A15|Z80_A14|Z80_WR)) == (Z80_A14|Z80_WR)) {
+    if ((pins & (Z80_A15|Z80_A14)) == Z80_A14) {
         // D6 and D7 select the gate array operation
         const uint8_t data = Z80_GET_DATA(pins);
         switch (data & ((1<<7)|(1<<6))) {
