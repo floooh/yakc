@@ -1001,6 +1001,7 @@ cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     ppi.output[I8255_PORT_A] = hdr.ppi_a;
     ppi.output[I8255_PORT_B] = hdr.ppi_b;
     ppi.output[I8255_PORT_C] = hdr.ppi_c;
+    ppi.control = hdr.ppi_control;
     for (int i = 0; i < 16; i++) {
         // latch AY-3-8912 register address
         ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|(i<<16));
