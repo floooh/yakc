@@ -94,7 +94,7 @@ cpc_t::init_keymap() {
         CPC has a 10 columns by 8 lines keyboard matrix. The 10 columns
         are lit up by bits 0..3 of PPI port C connected to a 74LS145
         BCD decoder, and the lines are read through port A of the
-        AY-3-8912 chip.
+        AY-3-8910 chip.
     */
     kbd_init(&board.kbd, 1);
     const char* keymap =
@@ -162,7 +162,7 @@ cpc_t::poweron(system m) {
     // setup memory system
     clear(board.ram, sizeof(board.ram));
     mem_unmap_all(&board.mem);
-    this->update_memory_mapping(true, true);
+    this->update_memory_mapping();
 
     // http://www.cpcwiki.eu/index.php/Format:TAP_tape_image_file_format
     if (m == system::cpc464) {
@@ -177,7 +177,14 @@ cpc_t::poweron(system m) {
     // initialize hardware components, main clock frequency is 4 MHz
     board.freq_hz = 4000000;
     z80_init(&board.z80, cpu_tick);
-    ay38912_init(&board.ay38912, 1000000, SOUND_SAMPLE_RATE, 0.5f);
+    ay38910_desc_t ay_desc = { };
+    ay_desc.type = AY38910_TYPE_8912;
+    ay_desc.in_cb = psg_in;
+    ay_desc.out_cb = psg_out;
+    ay_desc.tick_hz = 1000000;
+    ay_desc.sound_hz = SOUND_SAMPLE_RATE;
+    ay_desc.magnitude = 0.5f;
+    ay38910_init(&board.ay38910, &ay_desc);
     i8255_init(&board.i8255, ppi_in, ppi_out);
     mc6845_init(&board.mc6845, MC6845_TYPE_UM6845R);
     crt_init(&board.crt, CRT_PAL, 6, 32, max_display_width/16, max_display_height);
@@ -185,6 +192,9 @@ cpc_t::poweron(system m) {
 
     // CPU start address
     board.z80.PC = 0x0000;
+    
+    // trap the casread function
+    z80_set_trap(&board.z80, 1, this->casread_trap, mem_readptr(&board.mem, this->casread_trap));
 }
 
 //------------------------------------------------------------------------------
@@ -200,7 +210,7 @@ void
 cpc_t::reset() {
     mc6845_reset(&board.mc6845);
     crt_reset(&board.crt);
-    ay38912_reset(&board.ay38912);
+    ay38910_reset(&board.ay38910);
     i8255_reset(&board.i8255);
     z80_reset(&board.z80);
     board.z80.PC = 0x0000;
@@ -208,7 +218,7 @@ cpc_t::reset() {
     this->tick_count = 0;
     this->ga_init();
     mem_unmap_all(&board.mem);
-    this->update_memory_mapping(true, true);
+    this->update_memory_mapping();
 }
 
 //------------------------------------------------------------------------------
@@ -218,6 +228,10 @@ cpc_t::exec(uint64_t start_tick, uint64_t end_tick) {
     uint32_t num_ticks = end_tick - start_tick;
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
     kbd_update(&board.kbd);
+    // check if casread trap has been hit
+    if (board.z80.trap_id == 1) {
+        this->casread();
+    }
     return start_tick + ticks_executed;
 }
 
@@ -287,8 +301,8 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
             }
             // on every 4th clock cycle, tick the system
             if (!wait_pin) {
-                if (ay38912_tick(&board.ay38912)) {
-                    board.audiobuffer.write(board.ay38912.sample);
+                if (ay38910_tick(&board.ay38910)) {
+                    board.audiobuffer.write(board.ay38910.sample);
                 }
                 pins = cpc.ga_tick(pins);
             }
@@ -390,14 +404,14 @@ cpc_t::cpu_iorq(uint64_t pins) {
                     cpc.ga_int_ctrl();
                 }
                 // only update ROM banks
-                cpc.update_memory_mapping(true, false);
+                cpc.update_memory_mapping();
                 break;
             case (1<<7)|(1<<6):
                 // RAM memory management (only CPC6128)
                 if (system::cpc6128 == cpc.cur_model) {
                     cpc.ga_ram_config = data;
                     // only update RAM banks
-                    cpc.update_memory_mapping(false, true);
+                    cpc.update_memory_mapping();
                 }
                 break;
         }
@@ -418,11 +432,11 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
         // AY-3-8912 PSG function?
         if (data & ((1<<7)|(1<<6))) {
             uint64_t ay_pins = 0;
-            if (data & (1<<7)) ay_pins |= AY38912_BDIR;
-            if (data & (1<<6)) ay_pins |= AY38912_BC1;
+            if (data & (1<<7)) ay_pins |= AY38910_BDIR;
+            if (data & (1<<6)) ay_pins |= AY38910_BC1;
             uint8_t ay_data = board.i8255.output[I8255_PORT_A];
-            AY38912_SET_DATA(ay_pins, ay_data);
-            ay38912_iorq(&board.ay38912, ay_pins);
+            AY38910_SET_DATA(ay_pins, ay_data);
+            ay38910_iorq(&board.ay38910, ay_pins);
         }
 
         // bits 0..3: select keyboard matrix line
@@ -430,18 +444,16 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
 
         // FIXME: cassette write data
         // cassette deck motor control
-        /*
         if (data & (1<<4)) {
-            if (!this->tape->is_playing()) {
-                this->tape->play();
+            if (!tape.is_playing()) {
+                tape.play();
             }
         }
         else {
-            if (this->tape->is_playing()) {
-                this->tape->stop();
+            if (tape.is_playing()) {
+                tape.stop();
             }
         }
-        */
     }
     else {
         //printf("cpc_t::ppi_out: write to port %d: 0x%02X!\n", port_id, data);
@@ -454,7 +466,7 @@ uint8_t
 cpc_t::ppi_in(int port_id) {
     if (I8255_PORT_A == port_id) {
         // catch keyboard/joystick data which is normally in PSG PORT A
-        if (board.ay38912.addr == AY38912_REG_IO_PORT_A) {
+        if (board.ay38910.addr == AY38910_REG_IO_PORT_A) {
             if (board.kbd.active_columns & (1<<9)) {
                 /*
                     joystick input is implemented like this:
@@ -478,12 +490,12 @@ cpc_t::ppi_in(int port_id) {
             // AY-3-8912 PSG function
             uint64_t ay_pins = 0;
             uint8_t ay_ctrl = board.i8255.output[I8255_PORT_C];
-            if (ay_ctrl & (1<<7)) ay_pins |= AY38912_BDIR;
-            if (ay_ctrl & (1<<6)) ay_pins |= AY38912_BC1;
+            if (ay_ctrl & (1<<7)) ay_pins |= AY38910_BDIR;
+            if (ay_ctrl & (1<<6)) ay_pins |= AY38910_BC1;
             uint8_t ay_data = board.i8255.output[I8255_PORT_A];
-            AY38912_SET_DATA(ay_pins, ay_data);
-            ay_pins = ay38912_iorq(&board.ay38912, ay_pins);
-            return AY38912_GET_DATA(ay_pins);
+            AY38910_SET_DATA(ay_pins, ay_data);
+            ay_pins = ay38910_iorq(&board.ay38910, ay_pins);
+            return AY38910_GET_DATA(ay_pins);
         }
     }
     else if (I8255_PORT_B == port_id) {
@@ -514,6 +526,19 @@ cpc_t::ppi_in(int port_id) {
         printf("cpc_t::ppi_in: read from port %d\n", port_id);
         return 0xFF;
     }
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::psg_out(int port_id, uint8_t data) {
+    // FIXME
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+cpc_t::psg_in(int port_id) {
+    // FIXME
+    return 0xFF;
 }
 
 //------------------------------------------------------------------------------
@@ -841,7 +866,7 @@ static int ram_config_table[8][4] = {
 };
 
 void
-cpc_t::update_memory_mapping(bool upd_rom, bool upd_ram) {
+cpc_t::update_memory_mapping() {
     // index into RAM config array
     int ram_table_index;
     uint8_t* rom0_ptr,*rom1_ptr;
@@ -864,31 +889,27 @@ cpc_t::update_memory_mapping(bool upd_rom, bool upd_ram) {
     const int i1 = ram_config_table[ram_table_index][1];
     const int i2 = ram_config_table[ram_table_index][2];
     const int i3 = ram_config_table[ram_table_index][3];
-    if (upd_ram) {
-        // 0x4000..0x7FFF
-        mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[i1]);
-        // 0x8000..0xBFFF
-        mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[i2]);
+    // 0x0000..0x3FFF
+    if (this->ga_config & (1<<2)) {
+        // read/write from and to RAM bank
+        mem_map_ram(&board.mem, 0, 0x0000, 0x4000, board.ram[i0]);
     }
-    if (upd_rom) {
-        // 0x0000..0x3FFF
-        if (this->ga_config & (1<<2)) {
-            // read/write from and to RAM bank
-            mem_map_ram(&board.mem, 0, 0x0000, 0x4000, board.ram[i0]);
-        }
-        else {
-            // read from ROM, write to RAM
-            mem_map_rw(&board.mem, 0, 0x0000, 0x4000, rom0_ptr, board.ram[i0]);
-        }
-        // 0xC000..0xFFFF
-        if (this->ga_config & (1<<3)) {
-            // read/write from and to RAM bank
-            mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[i3]);
-        }
-        else {
-            // read from ROM, write to RAM
-            mem_map_rw(&board.mem, 0, 0xC000, 0x4000, rom1_ptr, board.ram[i3]);
-        }
+    else {
+        // read from ROM, write to RAM
+        mem_map_rw(&board.mem, 0, 0x0000, 0x4000, rom0_ptr, board.ram[i0]);
+    }
+    // 0x4000..0x7FFF
+    mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[i1]);
+    // 0x8000..0xBFFF
+    mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[i2]);
+    // 0xC000..0xFFFF
+    if (this->ga_config & (1<<3)) {
+        // read/write from and to RAM bank
+        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[i3]);
+    }
+    else {
+        // read from ROM, write to RAM
+        mem_map_rw(&board.mem, 0, 0xC000, 0x4000, rom1_ptr, board.ram[i3]);
     }
 }
 
@@ -990,7 +1011,7 @@ cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     this->ga_config = hdr.gate_array_config & 0x3F;
     this->ga_next_video_mode = hdr.gate_array_config & 3;
     this->ga_ram_config = hdr.ram_config & 0x3F;
-    this->update_memory_mapping(true, true);
+    this->update_memory_mapping();
     auto& vdg = board.mc6845;
     for (int i = 0; i < 18; i++) {
         vdg.reg[i] = hdr.crtc_regs[i];
@@ -1004,12 +1025,12 @@ cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     ppi.control = hdr.ppi_control;
     for (int i = 0; i < 16; i++) {
         // latch AY-3-8912 register address
-        ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|(i<<16));
+        ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|(i<<16));
         // write AY-3-8912 register value
-        ay38912_iorq(&board.ay38912, AY38912_BDIR|(hdr.psg_regs[i]<<16));
+        ay38910_iorq(&board.ay38910, AY38910_BDIR|(hdr.psg_regs[i]<<16));
     }
     // latch AY-3-8912 selected address
-    ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|(hdr.psg_selected<<16));
+    ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|(hdr.psg_selected<<16));
     fs->close(fp);
     fs->rm(name);
     if (!hdr_valid) {
@@ -1063,29 +1084,26 @@ cpc_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
 }
 
 //------------------------------------------------------------------------------
-/*
 void
-cpc::casread() {
-    auto& cpu = this->board->z80;
+cpc_t::casread() {
     bool success = false;
     // read the next block
     uint16_t len = 0;
-    this->tape->read(&len, sizeof(len));
+    tape.read(&len, sizeof(len));
     uint8_t sync = 0;
-    this->tape->read(&sync, sizeof(sync));
-    if (sync == cpu.A) {
+    tape.read(&sync, sizeof(sync));
+    if (sync == board.z80.A) {
         success = true;
-        this->tape->inc_counter(1);
+        tape.inc_counter(1);
         for (uint16_t i = 0; i < (len-1); i++) {
             uint8_t val;
-            this->tape->read(&val, sizeof(val));
-            cpu.mem.w8(cpu.HL++, val);
+            tape.read(&val, sizeof(val));
+            mem_wr(&board.mem, board.z80.HL++, val);
         }
     }
-    cpu.F = success ? 0x45 : 0x00;
-    cpu.PC = this->casread_ret;
+    board.z80.F = success ? 0x45 : 0x00;
+    board.z80.PC = this->casread_ret;
 }
-*/
 
 //------------------------------------------------------------------------------
 const char*

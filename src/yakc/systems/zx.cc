@@ -178,7 +178,12 @@ zx_t::poweron(system m) {
     // initialize hardware components
     beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     if (system::zxspectrum128k == this->cur_model) {
-        ay38912_init(&board.ay38912, board.freq_hz/2, SOUND_SAMPLE_RATE, 0.5f);
+        ay38910_desc_t ay_desc = { };
+        ay_desc.type = AY38910_TYPE_8912;
+        ay_desc.tick_hz = board.freq_hz/2;
+        ay_desc.sound_hz = SOUND_SAMPLE_RATE;
+        ay_desc.magnitude = 0.5f;
+        ay38910_init(&board.ay38910, &ay_desc);
     }
 
     // cpu start state
@@ -199,7 +204,7 @@ zx_t::reset() {
     z80_reset(&board.z80);
     beeper_reset(&board.beeper);
     if (system::zxspectrum128k == this->cur_model) {
-        ay38912_reset(&board.ay38912);
+        ay38910_reset(&board.ay38910);
     }
     this->memory_paging_disabled = false;
     this->int_requested = false;
@@ -251,8 +256,8 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
         // the AY-3-8912 chip runs at half CPU frequency
         if (system::zxspectrum128k == zx.cur_model) {
             if (zx.tick_count & 1) {
-                if (ay38912_tick(&board.ay38912)) {
-                    board.audiobuffer2.write(board.ay38912.sample);
+                if (ay38910_tick(&board.ay38910)) {
+                    board.audiobuffer2.write(board.ay38910.sample);
                 }
             }
         }
@@ -313,7 +318,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
             else if (system::zxspectrum128k == zx.cur_model) {
                 // read from AY-3-8912 (11............0.)
                 if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == (Z80_A15|Z80_A14)) {
-                    pins = ay38912_iorq(&board.ay38912, AY38912_BC1|pins) & Z80_PIN_MASK;
+                    pins = ay38910_iorq(&board.ay38910, AY38910_BC1|pins) & Z80_PIN_MASK;
                 }
             }
         }
@@ -360,11 +365,11 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 }
                 else if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == (Z80_A15|Z80_A14)) {
                     // select AY-3-8912 register (11............0.)
-                    ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|pins);
+                    ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|pins);
                 }
                 else if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == Z80_A15) {
                     // write to AY-3-8912 (10............0.)
-                    ay38912_iorq(&board.ay38912, AY38912_BDIR|pins);
+                    ay38910_iorq(&board.ay38910, AY38910_BDIR|pins);
                 }
             }
         }
@@ -680,9 +685,9 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
             cpu.PC = (ext_hdr.PC_h<<8 | ext_hdr.PC_l) & 0xFFFF;
             for (int i = 0; i < 16; i++) {
                 // latch AY-3-8912 register address
-                ay38912_iorq(&board.ay38912, AY38912_BDIR|AY38912_BC1|(i<<16));
+                ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|(i<<16));
                 // write AY-3-8912 register value
-                ay38912_iorq(&board.ay38912, AY38912_BDIR|(ext_hdr.audio[i]<<16));
+                ay38910_iorq(&board.ay38910, AY38910_BDIR|(ext_hdr.audio[i]<<16));
             }
             // simulate an out of port 0xFFFD and 0x7FFD
             uint64_t pins = Z80_IORQ|Z80_WR;

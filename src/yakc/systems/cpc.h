@@ -35,6 +35,10 @@ public:
     static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data);
     /// i8255 input callback
     static uint8_t ppi_in(int port_id);
+    /// AY-3-8912 port output callback
+    static void psg_out(int port_id, uint8_t data);
+    /// AY-3-8912 port input callback
+    static uint8_t psg_in(int port_id);
 
     /// initialize the gate array (called from init and reset)
     void ga_init();
@@ -50,7 +54,7 @@ public:
     void ga_decode_pixels(uint32_t* dst, uint64_t crtc_pins);
 
     /// update bank switching
-    void update_memory_mapping(bool upd_rom, bool upd_ram);
+    void update_memory_mapping();
     /// initialize the keycode translation map
     void init_keymap();
 

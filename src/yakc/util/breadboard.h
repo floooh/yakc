@@ -15,7 +15,7 @@
 #include "chips/z80.h"
 #include "chips/z80pio.h"
 #include "chips/z80ctc.h"
-#include "chips/ay38912.h"
+#include "chips/ay38910.h"
 #include "chips/m6502.h"
 #include "chips/m6522.h"
 #include "chips/i8255.h"
@@ -31,7 +31,7 @@ struct breadboard {
     z80pio_t z80pio;
     z80pio_t z80pio2;
     z80ctc_t z80ctc;
-    ay38912_t ay38912;
+    ay38910_t ay38910;
     m6502_t m6502;
     m6522_t m6522;
     i8255_t i8255;

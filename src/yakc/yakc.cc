@@ -171,11 +171,11 @@ yakc::chip_types() const {
         case system::zxspectrum48k:
             return chip::z80;
         case system::zxspectrum128k:
-            return chip::z80|chip::ay38912;
+            return chip::z80|chip::ay38910;
         case system::cpc464:
         case system::cpc6128:
         case system::kccompact:
-            return chip::z80|chip::ay38912|chip::i8255|chip::mc6845;
+            return chip::z80|chip::ay38910|chip::i8255|chip::mc6845;
         case system::acorn_atom:
             return chip::m6502|chip::i8255|chip::m6522|chip::mc6847;
         default:
