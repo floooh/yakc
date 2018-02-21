@@ -27,7 +27,7 @@ uint16_t
 Disasm::Disassemble(const yakc& emu, uint16_t addr) {
     int res = 0;
     this->emu = &emu;
-    if (this->emu->cpu_type() == cpu_model::mos6502) {
+    if (this->emu->cpu_type() == cpu_model::m6502) {
         res = mos6502disasm(fetch, addr, this->buffer, this);
     }
     else {

@@ -17,7 +17,7 @@ static const int bank_div = 160;
 //------------------------------------------------------------------------------
 void
 MemoryMapWindow::Setup(yakc& emu) {
-    this->setName("Memory Map");
+    this->setName("KC85 Memory Map");
 }
 
 //------------------------------------------------------------------------------

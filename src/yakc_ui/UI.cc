@@ -395,40 +395,61 @@ UI::OnFrame(yakc& emu) {
             }
             if (ImGui::BeginMenu("Hardware")) {
                 if (emu.is_system(system::any_kc85)) {
-                    if (ImGui::MenuItem("Expansion Slots")) {
+                    if (ImGui::MenuItem("KC85 Expansion Slots")) {
                         this->OpenWindow(emu, ModuleWindow::Create());
                     }
-                    if (ImGui::MenuItem("Memory Map")) {
+                    if (ImGui::MenuItem("KC85 Memory Map")) {
                         this->OpenWindow(emu, MemoryMapWindow::Create());
                     }
                     if (ImGui::MenuItem("KC85 IO Ports")) {
                         this->OpenWindow(emu, KC85IOWindow::Create());
                     }
                 }
-                // the Z9001 has 2 PIOs
-                if (ImGui::MenuItem("Z80 PIO 1")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO 1", &board.z80pio));
+                if (emu.is_system(system::any_cpc)) {
+                    if (ImGui::MenuItem("CPC Gate Array")) {
+                        this->OpenWindow(emu, CPCGateArrayWindow::Create());
+                    }
                 }
-                if (ImGui::MenuItem("Z80 PIO 2")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO 2", &board.z80pio2));
+                chip::mask chips = emu.chip_types();
+                if (chips & chip::z80pio) {
+                    if (ImGui::MenuItem("Z80 PIO")) {
+                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO", &board.z80pio));
+                    }
                 }
-                if (ImGui::MenuItem("Z80 CTC")) {
-                    this->OpenWindow(emu, CTCWindow::Create());
+                if (chips & chip::z80pio2) {
+                    if (ImGui::MenuItem("Z80 PIO 2")) {
+                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO 2", &board.z80pio2));
+                    }
                 }
-                if (ImGui::MenuItem("AY-3-8912")) {
-                    this->OpenWindow(emu, AY38912Window::Create());
+                if (chips & chip::z80ctc) {
+                    if (ImGui::MenuItem("Z80 CTC")) {
+                        this->OpenWindow(emu, CTCWindow::Create());
+                    }
                 }
-                if (ImGui::MenuItem("MC6845")) {
-                    this->OpenWindow(emu, MC6845Window::Create());
+                if (chips & chip::ay38912) {
+                    if (ImGui::MenuItem("AY-3-8912")) {
+                        this->OpenWindow(emu, AY38912Window::Create());
+                    }
                 }
-                if (ImGui::MenuItem("MC6847")) {
-                    this->OpenWindow(emu, MC6847Window::Create());
+                if (chips & chip::mc6845) {
+                    if (ImGui::MenuItem("MC6845")) {
+                        this->OpenWindow(emu, MC6845Window::Create());
+                    }
                 }
-                if (ImGui::MenuItem("i8255")) {
-                    this->OpenWindow(emu, I8255Window::Create());
+                if (chips & chip::mc6847) {
+                    if (ImGui::MenuItem("MC6847")) {
+                        this->OpenWindow(emu, MC6847Window::Create());
+                    }
                 }
-                if (ImGui::MenuItem("MOS6522")) {
-                    this->OpenWindow(emu, MOS6522Window::Create());
+                if (chips & chip::i8255) {
+                    if (ImGui::MenuItem("i8255")) {
+                        this->OpenWindow(emu, I8255Window::Create());
+                    }
+                }
+                if (chips & chip::m6522) {
+                    if (ImGui::MenuItem("M6522")) {
+                        this->OpenWindow(emu, MOS6522Window::Create());
+                    }
                 }
                 ImGui::EndMenu();
             }
@@ -448,11 +469,6 @@ UI::OnFrame(yakc& emu) {
                 if (emu.is_system(system::any_kc85)) {
                     if (ImGui::MenuItem("Scan for Commands...")) {
                         this->OpenWindow(emu, CommandWindow::Create());
-                    }
-                }
-                if (emu.is_system(system::any_cpc)) {
-                    if (ImGui::MenuItem("CPC Gate Array")) {
-                        this->OpenWindow(emu, CPCGateArrayWindow::Create());
                     }
                 }
                 ImGui::EndMenu();

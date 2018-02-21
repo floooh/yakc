@@ -70,7 +70,7 @@ enum class system {
 
 enum class cpu_model {
     z80,
-    mos6502,
+    m6502,
 };
 
 enum class os_rom {
@@ -92,6 +92,22 @@ enum class os_rom {
     kcc_os,
     kcc_basic,
     none,
+};
+
+namespace chip {
+    enum id {
+        z80 = (1<<0),
+        z80pio = (1<<1),
+        z80pio2 = (1<<2),
+        z80ctc = (1<<3),
+        ay38912 = (1<<4),
+        m6502 = (1<<5),
+        m6522 = (1<<6),
+        i8255 = (1<<7),
+        mc6847 = (1<<8),
+        mc6845 = (1<<9)
+    };
+    typedef uint32_t mask;
 };
 
 extern system system_from_string(const char* str);

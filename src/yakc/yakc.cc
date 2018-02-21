@@ -146,10 +146,40 @@ yakc::is_system(system model, system mask) {
 cpu_model
 yakc::cpu_type() const {
     if (this->is_system(system::acorn_atom)) {
-        return cpu_model::mos6502;
+        return cpu_model::m6502;
     }
     else {
         return cpu_model::z80;
+    }
+}
+
+//------------------------------------------------------------------------------
+chip::mask
+yakc::chip_types() const {
+    switch (this->model) {
+        case system::kc85_2:
+        case system::kc85_3:
+        case system::kc85_4:
+            return chip::z80|chip::z80ctc|chip::z80pio;
+        case system::z1013_01:
+        case system::z1013_16:
+        case system::z1013_64:
+            return chip::z80|chip::z80pio;
+        case system::z9001:
+        case system::kc87:
+            return chip::z80|chip::z80pio|chip::z80pio2|chip::z80ctc;
+        case system::zxspectrum48k:
+            return chip::z80;
+        case system::zxspectrum128k:
+            return chip::z80|chip::ay38912;
+        case system::cpc464:
+        case system::cpc6128:
+        case system::kccompact:
+            return chip::z80|chip::ay38912|chip::i8255|chip::mc6845;
+        case system::acorn_atom:
+            return chip::m6502|chip::i8255|chip::m6522|chip::mc6847;
+        default:
+            return 0;
     }
 }
 

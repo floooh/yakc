@@ -11,7 +11,7 @@ namespace YAKC {
 //------------------------------------------------------------------------------
 void
 ModuleWindow::Setup(yakc& emu) {
-    this->setName("Expansion Slots");
+    this->setName("KC85 Expansion Slots");
 }
 
 //------------------------------------------------------------------------------
