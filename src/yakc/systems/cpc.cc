@@ -426,17 +426,18 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
                  PC7    -> BDIR
                  PC6    -> BC1
     */
-    if (I8255_PORT_C == port_id) {
-        // AY-3-8912 PSG function?
-        if (data & ((1<<7)|(1<<6))) {
+    if ((I8255_PORT_A == port_id) || (I8255_PORT_C == port_id)) {
+        const uint8_t ay_ctrl = board.i8255.output[I8255_PORT_C] & ((1<<7)|(1<<6));
+        if (ay_ctrl) {
             uint64_t ay_pins = 0;
-            if (data & (1<<7)) ay_pins |= AY38910_BDIR;
-            if (data & (1<<6)) ay_pins |= AY38910_BC1;
-            uint8_t ay_data = board.i8255.output[I8255_PORT_A];
+            if (ay_ctrl & (1<<7)) { ay_pins |= AY38910_BDIR; }
+            if (ay_ctrl & (1<<6)) { ay_pins |= AY38910_BC1; }
+            const uint8_t ay_data = board.i8255.output[I8255_PORT_A];
             AY38910_SET_DATA(ay_pins, ay_data);
             ay38910_iorq(&board.ay38910, ay_pins);
         }
-
+    }
+    if (I8255_PORT_C == port_id) {
         // bits 0..3: select keyboard matrix line
         kbd_set_active_columns(&board.kbd, 1<<(data & 0x0F));
 
@@ -453,9 +454,6 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
             }
         }
     }
-    else {
-        //printf("cpc_t::ppi_out: write to port %d: 0x%02X!\n", port_id, data);
-    }
     return pins;
 }
 
@@ -463,7 +461,7 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
 uint8_t
 cpc_t::ppi_in(int port_id) {
     if (I8255_PORT_A == port_id) {
-        // AY-3-8912 PSG function (indirectly this also triggers
+        // AY-3-8912 PSG function (indirectly this may also trigger
         // a read of the keyboard matrix via the AY's IO port
         uint64_t ay_pins = 0;
         uint8_t ay_ctrl = board.i8255.output[I8255_PORT_C];
