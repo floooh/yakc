@@ -17,7 +17,7 @@ AY38910Window::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 bool
 AY38910Window::Draw(yakc& emu) {
-    ImGui::SetNextWindowSize(ImVec2(220, 270), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(240, 352), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         const ay38910_t& ay = board.ay38910;
         const char* type = "unknown";
@@ -54,7 +54,14 @@ AY38910Window::Draw(yakc& emu) {
             !ay.tone[0].noise_disable ? "ON  ":"OFF ",
             !ay.tone[1].noise_disable ? "ON  ":"OFF ",
             !ay.tone[2].noise_disable ? "ON  ":"OFF ");
-        ImGui::Text("Env Counter:  %04X", ay.env.counter);
+        ImGui::Text("Env Enable:   %s %s %s",
+            (ay.amp_a & (1<<4)) ? "ON  ":"OFF ",
+            (ay.amp_b & (1<<4)) ? "ON  ":"OFF ",
+            (ay.amp_c & (1<<4)) ? "ON  ":"OFF ");
+        ImGui::Text("Env Counter:   %04X", ay.env.counter);
+        ImGui::Text("Env Shape Ctr: %02X", ay.env.shape_counter);
+        ImGui::Text("Env Volume:    %02X", ay.env.shape_state);
+        ImGui::Text("Env Hold/Holding: %s/%s", ay.env.shape_hold?"ON ":"OFF", ay.env.shape_holding?"ON ":"OFF");
     }
     ImGui::End();
     return this->Visible;
