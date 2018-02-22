@@ -55,7 +55,7 @@ static const char* video_mode_names[4] = {
 
 bool
 CPCGateArrayWindow::Draw(yakc& emu) {
-    ImGui::SetNextWindowSize(ImVec2(336, 400), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(336, 240), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         ImGui::Checkbox("Debug Visualization", &cpc.debug_video);
         this->drawColors();
