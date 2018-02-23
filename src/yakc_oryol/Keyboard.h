@@ -26,11 +26,9 @@ public:
 
     bool hasInputFocus = true;
     yakc* emu = nullptr;
-    uint8_t cur_char = 0;
     uint8_t cur_kbd_joy = 0;
     uint8_t cur_pad_joy = 0;
     Oryol::Input::CallbackId callbackId = 0;
-    Oryol::Set<Oryol::Key::Code> pressedKeys;
 
     int playbackCounter = 0;
     bool playbackFlipFlop = 0;

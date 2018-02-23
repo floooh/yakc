@@ -175,30 +175,41 @@ atom_t::exec(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 void
-atom_t::put_input(uint8_t ascii, uint8_t joy0mask) {
+atom_t::on_ascii(uint8_t ascii) {
+    kbd_key_down(&board.kbd, ascii);
+    kbd_key_up(&board.kbd, ascii);
+}
+
+//------------------------------------------------------------------------------
+void
+atom_t::on_key_down(uint8_t key) {
+    kbd_key_down(&board.kbd, key);
+}
+
+//------------------------------------------------------------------------------
+void
+atom_t::on_key_up(uint8_t key) {
+    kbd_key_up(&board.kbd, key);
+}
+
+//------------------------------------------------------------------------------
+void
+atom_t::on_joystick(uint8_t mask) {
     mmc_joymask = 0;
-    if (0 == joy0mask) {
-        if (ascii) {
-            kbd_key_down(&board.kbd, ascii);
-            kbd_key_up(&board.kbd, ascii);
-        }
+    if (mask & joystick::left) {
+        mmc_joymask |= 0x2;
     }
-    else {
-        if (joy0mask & joystick::left) {
-            mmc_joymask |= 0x2;
-        }
-        if (joy0mask & joystick::right) {
-            mmc_joymask |= 0x1;
-        }
-        if (joy0mask & joystick::up) {
-            mmc_joymask |= 0x8;
-        }
-        if (joy0mask & joystick::down) {
-            mmc_joymask |= 0x4;
-        }
-        if (joy0mask & joystick::btn0) {
-            mmc_joymask |= 0x10;
-        }
+    if (mask & joystick::right) {
+        mmc_joymask |= 0x1;
+    }
+    if (mask & joystick::up) {
+        mmc_joymask |= 0x8;
+    }
+    if (mask & joystick::down) {
+        mmc_joymask |= 0x4;
+    }
+    if (mask & joystick::btn0) {
+        mmc_joymask |= 0x10;
     }
 }
 

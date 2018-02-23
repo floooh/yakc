@@ -24,6 +24,8 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
+    /// return number of supported joysticks
+    int num_joysticks() const { return 1; };
     /// process a number of cycles, return final processed tick
     uint64_t exec(uint64_t start_tick, uint64_t end_tick);
 
@@ -58,8 +60,14 @@ public:
     /// initialize the keycode translation map
     void init_keymap();
 
-    /// put a key and joystick input
-    void put_input(uint8_t ascii, uint8_t joy0_mask);
+    /// called when alpha-numeric key has been pressed
+    void on_ascii(uint8_t ascii);
+    /// called when non-alnum key has been pressed down
+    void on_key_down(uint8_t key);
+    /// called when non-alnum key has been released
+    void on_key_up(uint8_t key);
+    /// called for joystick input
+    void on_joystick(uint8_t mask);
     /// decode next audio buffer
     void decode_audio(float* buffer, int num_samples);
     /// get pointer to framebuffer, width and height

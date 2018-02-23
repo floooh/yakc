@@ -39,8 +39,16 @@ public:
     /// step until function returns true
     uint32_t step_until(std::function<bool(uint32_t)> fn);
 
-    /// put key and joystick input
-    void put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask=0);
+    /// called when an ASCII key is pressed
+    void on_ascii(uint8_t ascii);
+    /// called when a non-ascii key is pressed down
+    void on_key_down(uint8_t keycode);
+    /// called when a non-ascii key is released
+    void on_key_up(uint8_t keycode);
+    /// called per frame with new joystick input
+    void on_joystick(uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask);
+    /// get number of supported joysticks of current system
+    int num_joysticks() const;
     /// enable/disable joystick
     void enable_joystick(bool b);
     /// return true if joystick is enabled

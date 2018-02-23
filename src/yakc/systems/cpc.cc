@@ -913,30 +913,43 @@ cpc_t::update_memory_mapping() {
 
 //------------------------------------------------------------------------------
 void
-cpc_t::put_input(uint8_t ascii, uint8_t joy0_mask) {
-    if (ascii && !joy0_mask) {
-        kbd_key_down(&board.kbd, ascii);
-        kbd_key_up(&board.kbd, ascii);
-    }
-    // setup the joystick bits which are overlayed
-    // to the keyboard line input to the AY-3-8912 port
+cpc_t::on_ascii(uint8_t ascii) {
+    kbd_key_down(&board.kbd, ascii);
+    kbd_key_up(&board.kbd, ascii);
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::on_key_down(uint8_t key) {
+    kbd_key_down(&board.kbd, key);
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::on_key_up(uint8_t key) {
+    kbd_key_up(&board.kbd, key);
+}
+
+//------------------------------------------------------------------------------
+void
+cpc_t::on_joystick(uint8_t mask) {
     this->joymask = 0;
-    if (joy0_mask & joystick::up) {
+    if (mask & joystick::up) {
         this->joymask |= (1<<0);
     }
-    if (joy0_mask & joystick::down) {
+    if (mask & joystick::down) {
         this->joymask |= (1<<1);
     }
-    if (joy0_mask & joystick::left) {
+    if (mask & joystick::left) {
         this->joymask |= (1<<2);
     }
-    if (joy0_mask & joystick::right) {
+    if (mask & joystick::right) {
         this->joymask |= (1<<3);
     }
-    if (joy0_mask & joystick::btn0) {
+    if (mask & joystick::btn0) {
         this->joymask |= (1<<4);
     }
-    if (joy0_mask & joystick::btn1) {
+    if (mask & joystick::btn1) {
         this->joymask |= (1<<5);
     }
 }

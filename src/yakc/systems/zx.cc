@@ -379,14 +379,27 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
 
 //------------------------------------------------------------------------------
 void
-zx_t::put_input(uint8_t ascii, uint8_t joy_mask) {
-    // register a new key press with the emulator,
-    // ascii=0 means no key pressed
-    if (ascii) {
-        kbd_key_down(&board.kbd, ascii);
-        kbd_key_up(&board.kbd, ascii);
-    }
-    this->joy_mask = joy_mask;
+zx_t::on_ascii(uint8_t ascii) {
+    kbd_key_down(&board.kbd, ascii);
+    kbd_key_up(&board.kbd, ascii);
+}
+
+//------------------------------------------------------------------------------
+void
+zx_t::on_key_down(uint8_t key) {
+    kbd_key_down(&board.kbd, key);
+}
+
+//------------------------------------------------------------------------------
+void
+zx_t::on_key_up(uint8_t key) {
+    kbd_key_up(&board.kbd, key);
+}
+
+//------------------------------------------------------------------------------
+void
+zx_t::on_joystick(uint8_t mask) {
+    this->joy_mask = mask;
 }
 
 //------------------------------------------------------------------------------

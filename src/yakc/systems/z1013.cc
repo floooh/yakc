@@ -228,11 +228,21 @@ z1013_t::pio_in(int port_id) {
 
 //------------------------------------------------------------------------------
 void
-z1013_t::put_key(uint8_t ascii) {
-    if (ascii) {
-        kbd_key_down(&board.kbd, ascii);
-        kbd_key_up(&board.kbd, ascii);
-    }
+z1013_t::on_ascii(uint8_t ascii) {
+    kbd_key_down(&board.kbd, ascii);
+    kbd_key_up(&board.kbd, ascii);
+}
+
+//------------------------------------------------------------------------------
+void
+z1013_t::on_key_down(uint8_t key) {
+    kbd_key_down(&board.kbd, key);
+}
+
+//------------------------------------------------------------------------------
+void
+z1013_t::on_key_up(uint8_t key) {
+    kbd_key_up(&board.kbd, key);
 }
 
 //------------------------------------------------------------------------------

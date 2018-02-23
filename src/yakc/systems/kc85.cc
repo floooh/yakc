@@ -77,11 +77,15 @@ kc85_t::poweron(system m, os_rom os) {
     this->cur_model = m;
     this->cur_caos = os;
     this->on = true;
-    this->key_code = 0;
     this->io84 = 0;
     this->io86 = 0;
     this->pio_a = 0;
     this->pio_b = 0;
+
+    // use keyboard helper only as input buffer to store multiple key pressed,
+    // the KC85 doesn't have a typical keyboard matrix but has a serial
+    // connection to the keyboard
+    kbd_init(&board.kbd, 1);
 
     // fill RAM banks with noise (but not on KC85/4? at least the 4
     // doesn't have the random-color-pattern when switching it on)
@@ -376,8 +380,21 @@ kc85_t::exec(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 void
-kc85_t::put_key(uint8_t ascii) {
-    this->key_code = ascii;
+kc85_t::on_ascii(uint8_t ascii) {
+    kbd_key_down(&board.kbd, ascii);
+    kbd_key_up(&board.kbd, ascii);
+}
+
+//------------------------------------------------------------------------------
+void
+kc85_t::on_key_down(uint8_t key) {
+    kbd_key_down(&board.kbd, key);
+}
+
+//------------------------------------------------------------------------------
+void
+kc85_t::on_key_up(uint8_t key) {
+    kbd_key_up(&board.kbd, key);
 }
 
 //------------------------------------------------------------------------------
@@ -397,6 +414,16 @@ kc85_t::handle_keyboard_input() {
         return;
     }
 
+    // get the first valid key code from the key buffer
+    kbd_update(&board.kbd);
+    uint8_t key_code = 0;
+    for (const auto& item : board.kbd.key_buffer) {
+        if (item.key != 0) {
+            key_code = item.key;
+            break;
+        }
+    }
+
     // status bits
     static const uint8_t timeout = (1<<3);
     static const uint8_t keyready = (1<<0);
@@ -405,7 +432,7 @@ kc85_t::handle_keyboard_input() {
     static const uint8_t long_repeat_count = 60;
 
     const uint16_t ix = board.z80.IX;
-    if (0 == this->key_code) {
+    if (0 == key_code) {
         // if keycode is 0, this basically means the CTC3 timeout was hit
         mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8) | timeout); // set the CTC3 timeout bit
         mem_wr(&board.mem, ix+0xD, 0); // clear current keycode
@@ -415,9 +442,9 @@ kc85_t::handle_keyboard_input() {
         mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8) & ~timeout);
 
         // check for key-repeat
-        if (this->key_code != mem_rd(&board.mem, ix+0xD)) {
+        if (key_code != mem_rd(&board.mem, ix+0xD)) {
             // no key-repeat
-            mem_wr(&board.mem, ix+0xD, this->key_code);                         // write new keycode
+            mem_wr(&board.mem, ix+0xD, key_code);                               // write new keycode
             mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8)&~repeat);     // clear the first-key-repeat bit
             mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8)|keyready);    // set the key-ready bit
             mem_wr(&board.mem, ix+0xA, 0);                                      // clear the key-repeat counter

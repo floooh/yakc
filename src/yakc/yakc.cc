@@ -282,28 +282,88 @@ yakc::step_until(std::function<bool(uint32_t)> fn) {
 
 //------------------------------------------------------------------------------
 void
-yakc::put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask) {
+yakc::on_ascii(uint8_t ascii) {
+    if (z1013.on) {
+        z1013.on_ascii(ascii);
+    }
+    if (z9001.on) {
+        z9001.on_ascii(ascii);
+    }
+    if (zx.on) {
+        zx.on_ascii(ascii);
+    }
+    if (kc85.on) {
+        kc85.on_ascii(ascii);
+    }
+    if (atom.on) {
+        atom.on_ascii(ascii);
+    }
+    if (cpc.on) {
+        cpc.on_ascii(ascii);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+yakc::on_key_down(uint8_t key) {
+    if (z1013.on) {
+        z1013.on_key_down(key);
+    }
+    if (z9001.on) {
+        z9001.on_key_down(key);
+    }
+    if (zx.on) {
+        zx.on_key_down(key);
+    }
+    if (kc85.on) {
+        kc85.on_key_down(key);
+    }
+    if (atom.on) {
+        atom.on_key_down(key);
+    }
+    if (cpc.on) {
+        cpc.on_key_down(key);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+yakc::on_key_up(uint8_t key) {
+    if (z1013.on) {
+        z1013.on_key_up(key);
+    }
+    if (z9001.on) {
+        z9001.on_key_up(key);
+    }
+    if (zx.on) {
+        zx.on_key_up(key);
+    }
+    if (kc85.on) {
+        kc85.on_key_up(key);
+    }
+    if (atom.on) {
+        atom.on_key_up(key);
+    }
+    if (cpc.on) {
+        cpc.on_key_up(key);
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+yakc::on_joystick(uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask) {
     if (!this->joystick_enabled) {
         joy0_kbd_mask = 0;
     }
     const uint8_t joy0_mask = joy0_kbd_mask|joy0_pad_mask;
-    if (z1013.on) {
-        z1013.put_key(ascii);
-    }
-    if (z9001.on) {
-        z9001.put_key(ascii);
-    }
     if (zx.on) {
-        zx.put_input(ascii, joy0_mask);
-    }
-    if (kc85.on) {
-        kc85.put_key(ascii);
+        zx.on_joystick(joy0_mask);
     }
     if (atom.on) {
-        atom.put_input(ascii, joy0_mask);
+        atom.on_joystick(joy0_mask);
     }
     if (cpc.on) {
-        cpc.put_input(ascii, joy0_mask);
+        cpc.on_joystick(joy0_mask);
     }
 }
 
@@ -317,6 +377,32 @@ yakc::enable_joystick(bool b) {
 bool
 yakc::is_joystick_enabled() const {
     return this->joystick_enabled;
+}
+
+//------------------------------------------------------------------------------
+int
+yakc::num_joysticks() const {
+    if (z1013.on) {
+        return z1013.num_joysticks();
+    }
+    else if (z9001.on) {
+        return z9001.num_joysticks();
+    }
+    else if (zx.on) {
+        return zx.num_joysticks();
+    }
+    else if (kc85.on) {
+        return kc85.num_joysticks();
+    }
+    else if (atom.on) {
+        return atom.num_joysticks();
+    }
+    else if (cpc.on) {
+        return cpc.num_joysticks();
+    }
+    else {
+        return 0;
+    }
 }
 
 //------------------------------------------------------------------------------

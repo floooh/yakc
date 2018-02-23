@@ -325,18 +325,37 @@ void z9001_t::pio2_out(int port_id, uint8_t data) {
 
 //------------------------------------------------------------------------------
 void
-z9001_t::put_key(uint8_t ascii) {
-    if (ascii) {
-        // replace BREAK with STOP
-        if (ascii == 0x13) {
-            ascii = 0x3;
-        }
-        kbd_key_down(&board.kbd, ascii);
-        kbd_key_up(&board.kbd, ascii);
-        /* keyboard matrix lines are directly connected to the PIO2's Port B */
-        z80pio_write_port(&board.z80pio2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
-    }
+z9001_t::on_ascii(uint8_t ascii) {
+    kbd_key_down(&board.kbd, ascii);
+    kbd_key_up(&board.kbd, ascii);
+    /* keyboard matrix lines are directly connected to the PIO2's Port B */
+    z80pio_write_port(&board.z80pio2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
 }
+
+//------------------------------------------------------------------------------
+void
+z9001_t::on_key_down(uint8_t key) {
+    // replace BREAK with STOP
+    if (key == 0x13) {
+        key = 0x3;
+    }
+    kbd_key_down(&board.kbd, key);
+    /* keyboard matrix lines are directly connected to the PIO2's Port B */
+    z80pio_write_port(&board.z80pio2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
+}
+
+//------------------------------------------------------------------------------
+void
+z9001_t::on_key_up(uint8_t key) {
+    // replace BREAK with STOP
+    if (key == 0x13) {
+        key = 0x3;
+    }
+    kbd_key_up(&board.kbd, key);
+    /* keyboard matrix lines are directly connected to the PIO2's Port B */
+    z80pio_write_port(&board.z80pio2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
+}
+
 
 //------------------------------------------------------------------------------
 void

@@ -60,7 +60,9 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    
+    /// return number of supported joysticks
+    int num_joysticks() const { return 0; };
+
     /// process a number of cycles, return final processed tick
     uint64_t exec(uint64_t start_tick, uint64_t end_tick);
     /// the CPU tick callback
@@ -79,8 +81,12 @@ public:
     /// get pointer to framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
 
-    /// put a key as ASCII code
-    void put_key(uint8_t ascii);
+    /// called when alpha-numeric key has been pressed
+    void on_ascii(uint8_t ascii);
+    /// called when non-alnum key has been pressed down
+    void on_key_down(uint8_t key);
+    /// called when non-alnum key has been released
+    void on_key_up(uint8_t key);
     /// handle keyboard input
     void handle_keyboard_input();
     /// file quickloading

@@ -24,14 +24,22 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
+    /// return number of supported joysticks
+    int num_joysticks() const { return 1; };
 
     /// process a number of cycles, return final processed tick
     uint64_t exec(uint64_t start_tick, uint64_t end_tick);
     /// the Z80 CPU tick callback
     static uint64_t cpu_tick(int num_ticks, uint64_t pins);
 
-    /// put a key and joystick input (Kempston)
-    void put_input(uint8_t ascii, uint8_t joy0_mask);
+    /// called when alpha-numeric key has been pressed
+    void on_ascii(uint8_t ascii);
+    /// called when non-alnum key has been pressed down
+    void on_key_down(uint8_t key);
+    /// called when non-alnum key has been released
+    void on_key_up(uint8_t key);
+    /// called for joystick input
+    void on_joystick(uint8_t mask);
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
     /// get framebuffer, width and height
