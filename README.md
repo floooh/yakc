@@ -165,7 +165,7 @@ to citizens.
 
 A Z1013 running a clone of the ZX81 game Mazogs:
 
-![z1013_mazogs.png]
+![Z1013 Mazogs](misc/z1013_mazogs.png)
 
 ## ZX Spectrum 48k and 128k
 
