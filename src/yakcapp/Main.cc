@@ -487,7 +487,7 @@ EMSCRIPTEN_KEEPALIVE int yakc_loadfile(const char* filename, const uint8_t* data
             }
             else if (filetype::none != loader->Info.Type){
                 // load through tape deck
-                app->emu.tapedeck.insert_tape(filename, loader->Info.Type, data, size);
+                tape.insert_tape(filename, loader->Info.Type, data, size);
 
                 // send the right load/run BASIC command to the emulator
                 String cmd;

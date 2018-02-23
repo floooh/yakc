@@ -57,12 +57,13 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Head over Heels", "head_over_heels.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("Boulderdash", "boulder_dash.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("Bomb Jack", "bomb_jack.sna", filetype::cpc_sna, system::any_cpc, true);
-    this->Items.Add("Chase HQ", "chase_hq.sna", filetype::cpc_sna, system::any_cpc, true);
+    this->Items.Add("Chase HQ", "chase_hq.sna", filetype::cpc_sna, system::cpc6128, true);
     this->Items.Add("Cybernoid", "cybernoid.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("Fruity Frank", "fruity_frank.sna", filetype::cpc_sna, system(int(system::kccompact)|int(system::cpc6128)), true);
     this->Items.Add("Ikari Warriors", "ikari_warriors.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("1943", "1943.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("DTC (Demo)", "dtc.sna", filetype::cpc_sna, system::any_cpc, true);
+    #if !ORYOL_EMSCRIPTEN
     this->Items.Add("Tire Au Flan (Demo)", "tire_au_flan.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("Acid Test: Colours", "cpcacid_colours.bin", filetype::cpc_bin, system::any_cpc, true);
     this->Items.Add("Acid Test: Border", "cpcacid_cpcborder.bin", filetype::cpc_bin, system::any_cpc, true);
@@ -83,7 +84,8 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Acid Test: PPI Audio", "cpcacid_ppi_audio.bin", filetype::cpc_bin, system::any_cpc, true);
     this->Items.Add("Acid Test: PPI VSyncOut", "cpcacid_vsyncout.bin", filetype::cpc_bin, system::any_cpc, true);
     this->Items.Add("Acid Test: HSyncLen", "cpcacid_hsynclen.bin", filetype::cpc_bin, system::any_cpc, true);
-    this->Items.Add("1942", "1942.tap", filetype::cpc_tap, system::any_cpc, true);
+    #endif
+    this->Items.Add("1942", "1942.tap", filetype::cpc_tap, system::cpc464, true);
     this->Items.Add("Ghosts'n'Goblins", "ghostsng.tap", filetype::cpc_tap, system::any_cpc, true);
     this->Items.Add("Tir Na Nog", "tirnanog.tap", filetype::cpc_tap, system::any_cpc, true);
     this->Items.Add("Back to Reality", "backtore.tap", filetype::cpc_tap, system::any_cpc, true);
@@ -104,7 +106,7 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Cyclone", "cyclone.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Boulderdash", "boulderdash_zx.z80", filetype::zx_z80, system::zxspectrum48k, true);
     this->Items.Add("Bomb Jack", "bombjack_zx.z80", filetype::zx_z80, system::zxspectrum48k, true);
-    this->Items.Add("Arkanoid (not working)", "arkanoid_zx128k.z80", filetype::zx_z80, system::zxspectrum128k, true);
+    this->Items.Add("Arkanoid", "arkanoid_zx128k.z80", filetype::zx_z80, system::zxspectrum128k, true);
     this->Items.Add("Silkworm", "silkworm_zx128k.z80", filetype::zx_z80, system::zxspectrum128k, true);
     this->Items.Add("Hello World!", "atom_hello.txt", filetype::text, system::acorn_atom, true);
     this->Items.Add("Text Mode Test", "atom_alnum_test.txt", filetype::text, system::acorn_atom, true);

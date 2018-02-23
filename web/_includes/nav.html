@@ -21,13 +21,13 @@
             <li class="main-nav-item">
                 <div class="main-nav-link" onclick="nav_toggle();toggle_load_panel();">load file...</div>
             </li>
-            {% if page.wasm == true %}
+            {% if page.asmjs == true %}
             <li class="main-nav-item">
-                <a class="main-nav-link" onclick="nav_toggle()" href="index.html">asm.js version</a>
+                <a class="main-nav-link" onclick="nav_toggle()" href="index.html">wasm version</a>
             </li>
-            {% elsif page.asmjs == true %}
+            {% elsif page.wasm == true %}
             <li class="main-nav-item">
-                <a class="main-nav-link" onclick="nav_toggle()" href="index_wasm.html">wasm version</a>
+                <a class="main-nav-link" onclick="nav_toggle()" href="index_asmjs.html">asm.js version</a>
             </li>
             {% endif %}
             <li class="main-nav-item">

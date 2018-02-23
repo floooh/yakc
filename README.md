@@ -48,7 +48,7 @@ YAKC currently emulates the following 8-bit systems:
 - Z9001 (aka KC85/1) and KC87 (Robotron Dresden)
 - Z1013 (Robotron Riesa)
 - Sinclair ZX Spectrum 48k and 128k
-- Amstrad CPC646 and CPC6128
+- Amstrad CPC464 and CPC6128
 - Acorn Atom
 
 Source code of the system emulators is here: https://github.com/floooh/yakc/tree/master/src/yakc/systems

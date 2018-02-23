@@ -239,7 +239,7 @@ UI::OnFrame(yakc& emu) {
             }
             #if ORYOL_EMSCRIPTEN
             // make room for hamburger menu :)
-            ImGui::SameLine(64.0f);
+            ImGui::Text("        ");
             #endif
             if (ImGui::BeginMenu(model)) {
                 if (ImGui::BeginMenu("System")) {
