@@ -10,6 +10,7 @@ namespace YAKC {
 AudioSource::AudioSource() {
     this->mChannels = 1;
     this->mBaseSamplerate = SOUND_SAMPLE_RATE;
+    this->sample_cycle_count = 0;
 }
 
 //------------------------------------------------------------------------------

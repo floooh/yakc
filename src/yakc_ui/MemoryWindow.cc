@@ -17,25 +17,13 @@ MemoryWindow::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 static uint8_t
 read_func(void* userdata, uint16_t addr) {
-    yakc* emu = (yakc*) userdata;
-    if (emu->cpu_type() == cpu_model::z80) {
-        return emu->board.z80.mem.r8(addr);
-    }
-    else {
-        return emu->board.mos6502.mem.r8(addr);
-    }
+    return mem_rd(&board.mem, addr);
 }
 
 //------------------------------------------------------------------------------
 static void
 write_func(void* userdata, uint16_t addr, uint8_t value) {
-    yakc* emu = (yakc*) userdata;
-    if (emu->cpu_type() == cpu_model::z80) {
-        emu->board.z80.mem.w8(addr, value);
-    }
-    else {
-        emu->board.mos6502.mem.w8io(addr, value);
-    }
+    mem_wr(&board.mem, addr, value);
 }
 
 //------------------------------------------------------------------------------

@@ -93,7 +93,7 @@ KeyboardWindow::Draw(yakc& emu) {
                             this->shift = true;
                         }
                         else {
-                            emu.put_input(this->shift ? k.shift_code:k.code, 0);
+                            emu.on_ascii(this->shift ? k.shift_code:k.code);
 
                             // clear shift state after one key, unless caps_lock is on
                             if (!this->caps_lock) {
@@ -108,7 +108,7 @@ KeyboardWindow::Draw(yakc& emu) {
         // space bar
         ImGui::Dummy(ImVec2(80,0)); ImGui::SameLine();
         if (ImGui::Button("SPACE", ImVec2(400, 24))) {
-            emu.put_input(this->caps_lock ? 0x5B : 0x20, 0);
+            emu.on_ascii(this->caps_lock ? 0x5B : 0x20);
         }
         ImGui::PopButtonRepeat();
     }

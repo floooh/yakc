@@ -4,7 +4,7 @@
     @class Util
     @brief emulator app utility functions
 */
-#include "yakc/core/core.h"
+#include "yakc/util/core.h"
 
 namespace YAKC {
 

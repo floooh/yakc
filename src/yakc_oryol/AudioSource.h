@@ -6,6 +6,7 @@
 */
 #include "soloud.h"
 #include "yakc/yakc.h"
+#include <atomic>
 
 namespace YAKC {
 

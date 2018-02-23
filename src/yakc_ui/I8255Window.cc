@@ -4,7 +4,6 @@
 #include "I8255Window.h"
 #include "IMUI/IMUI.h"
 #include "yakc_ui/UI.h"
-#include "yakc/chips/i8255.h"
 
 using namespace Oryol;
 
@@ -20,10 +19,10 @@ I8255Window::Setup(yakc& emu) {
 static const char* bit_name(const yakc& emu, int port, int bit) {
     if (emu.is_system(system::any_cpc)) {
         switch (port) {
-            case i8255::PORT_A:
+            case I8255_PORT_A:
                 return "psg/kbd";
 
-            case i8255::PORT_B:
+            case I8255_PORT_B:
                 switch (bit) {
                     case 0: return "vsync";
                     case 1:
@@ -35,7 +34,7 @@ static const char* bit_name(const yakc& emu, int port, int bit) {
                     case 7: return "cass in";
                 }
                 break;
-            case i8255::PORT_C:
+            case I8255_PORT_C:
                 switch (bit) {
                     case 0:
                     case 1:
@@ -51,7 +50,7 @@ static const char* bit_name(const yakc& emu, int port, int bit) {
     }
     else if (emu.is_system(system::acorn_atom)) {
         switch (port) {
-            case i8255::PORT_A:
+            case I8255_PORT_A:
                 switch (bit) {
                     case 0:
                     case 1:
@@ -63,7 +62,7 @@ static const char* bit_name(const yakc& emu, int port, int bit) {
                     case 7: return "vdg gm2";
                 }
                 break;
-            case i8255::PORT_B:
+            case I8255_PORT_B:
                 switch (bit) {
                     case 0:
                     case 1:
@@ -75,7 +74,7 @@ static const char* bit_name(const yakc& emu, int port, int bit) {
                     case 7: return "kbd shft";
                 }
                 break;
-            case i8255::PORT_C:
+            case I8255_PORT_C:
                 switch (bit) {
                     case 0: return "cas out";
                     case 1: return "cas 2.4khz";
@@ -102,38 +101,52 @@ put_bits(yakc& emu, int first, int num, int port, uint8_t val, const char* dir) 
 //------------------------------------------------------------------------------
 bool
 I8255Window::Draw(yakc& emu) {
-    const i8255& ppi = emu.board.i8255;
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        ImGui::Text("only updated on CPU I/O!");
+        const i8255_t& ppi = board.i8255;
+        ImGui::Text("Group A (A+Chi):");
+        ImGui::Text("  Port C (hi): %s", (ppi.control & (1<<3))?" IN":"OUT");
+        ImGui::Text("  Port A:      %s", (ppi.control & (1<<4))?" IN":"OUT");
+        const char* mode_a;
+        switch (ppi.control & ((1<<7)|(1<<6))) {
+            case 0:     mode_a = "BASIC";
+            case 0x40:  mode_a = "STROBE";
+            default:    mode_a = "BIDIR";
+        }
+        ImGui::Text("  Mode:     %6s", mode_a);
+        ImGui::Text("Group B (B+Clo):");
+        ImGui::Text("  Port C (lo): %s", (ppi.control & (1<<0))?" IN":"OUT");
+        ImGui::Text("  Port B:      %s", (ppi.control & (1<<1))?" IN":"OUT");
+        ImGui::Text("  Mode:     %6s", (ppi.control & (1<<2))?"STROBE":"BASIC");
+
         if (ImGui::CollapsingHeader("Port A", "#ppi_a", true, true)) {
-            if (ppi.port_a_mode() == i8255::MODE_INPUT) {
-                put_bits(emu, 0, 8, i8255::PORT_A, ppi.last_read[i8255::PORT_A], "<=");
+            if ((ppi.control & I8255_CTRL_A) == I8255_CTRL_A_INPUT) {
+                put_bits(emu, 0, 8, I8255_PORT_A, ppi.dbg_input[I8255_PORT_A], "<=");
             }
             else {
-                put_bits(emu, 0, 8, i8255::PORT_A, ppi.output[i8255::PORT_A], "=>");
+                put_bits(emu, 0, 8, I8255_PORT_A, ppi.output[I8255_PORT_A], "=>");
             }
         }
         if (ImGui::CollapsingHeader("Port B", "#ppi_b", true, true)) {
-            if (ppi.port_b_mode() == i8255::MODE_INPUT) {
-                put_bits(emu, 0, 8, i8255::PORT_B, ppi.last_read[i8255::PORT_B], "<=");
+            if ((ppi.control & I8255_CTRL_B) == I8255_CTRL_B_INPUT) {
+                put_bits(emu, 0, 8, I8255_PORT_B, ppi.dbg_input[I8255_PORT_B], "<=");
             }
             else {
-                put_bits(emu, 0, 8, i8255::PORT_B, ppi.output[i8255::PORT_B], "=>");
+                put_bits(emu, 0, 8, I8255_PORT_B, ppi.output[I8255_PORT_B], "=>");
             }
         }
         if (ImGui::CollapsingHeader("Port C", "#ppi_c", true, true)) {
-            if (ppi.port_c_lower_mode() == i8255::MODE_INPUT) {
-                put_bits(emu, 0, 4, i8255::PORT_C, ppi.last_read[i8255::PORT_C], "<=");
+            if ((ppi.control & I8255_CTRL_CLO) == I8255_CTRL_CLO_INPUT) {
+                put_bits(emu, 0, 4, I8255_PORT_C, ppi.dbg_input[I8255_PORT_C], "<=");
             }
             else {
-                put_bits(emu, 0, 4, i8255::PORT_C, ppi.output[i8255::PORT_C], "=>");
+                put_bits(emu, 0, 4, I8255_PORT_C, ppi.output[I8255_PORT_C], "=>");
             }
-            if (ppi.port_c_upper_mode() == i8255::MODE_INPUT) {
-                put_bits(emu, 4, 4, i8255::PORT_C, ppi.last_read[i8255::PORT_C], "<=");
+            if ((ppi.control & I8255_CTRL_CHI) == I8255_CTRL_CHI_INPUT) {
+                put_bits(emu, 4, 4, I8255_PORT_C, ppi.dbg_input[I8255_PORT_C], "<=");
             }
             else {
-                put_bits(emu, 4, 4, i8255::PORT_C, ppi.output[i8255::PORT_C], "=>");
+                put_bits(emu, 4, 4, I8255_PORT_C, ppi.output[I8255_PORT_C], "=>");
             }
         }
     }

@@ -33,7 +33,7 @@ public:
     /// draw a 'memory rectangle'
     void drawRect(int layer, uint16_t addr, unsigned int len, const char* tooltip, type t);
     /// get name for a memory layer and page
-    pageInfo getPageInfo(kc85& kc, int layer_index, int page_index) const;
+    pageInfo getPageInfo(kc85_t& kc, int layer_index, int page_index) const;
 };
 
 } // namespace YAKC

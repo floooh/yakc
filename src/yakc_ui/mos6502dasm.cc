@@ -2,13 +2,89 @@
 //  mos6502dasm.cc
 //------------------------------------------------------------------------------
 #include "mos6502dasm.h"
-#include "yakc/chips/mos6502.h"
+#include "chips/m6502.h"
 #include <stdio.h>
 
-using namespace YAKC;
-using namespace mos6502_enums;
-
 namespace mos6502dasm {
+
+enum {
+    A____,      // no addressing mode
+    A_IMM,      // #
+    A_ZER,      // zp
+    A_ZPX,      // zp,X
+    A_ZPY,      // zp,Y
+    A_ABS,      // abs
+    A_ABX,      // abs,X
+    A_ABY,      // abs,Y
+    A_IDX,      // (zp,X)
+    A_IDY,      // (zp),Y
+    A_JMP,      // special JMP abs
+    A_JSR,      // special JSR abs
+
+    A_INV,      // this is an invalid instruction
+};
+enum {
+    M___,       // no memory access
+    M_R_,        // read
+    M__W,        // write in current cycle
+    M_RW,       // read-modify-write
+};
+struct op_desc {
+    uint8_t addr;       // addressing mode
+    uint8_t mem;        // memory access mode
+};
+
+// opcode descriptions
+op_desc ops[4][8][8] = {
+// cc = 00
+{
+    //---         BIT          JMP          JMP()        STY          LDY          CPY          CPX
+    {{A____,M___},{A_JSR,M_R_},{A____,M_R_},{A____,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},
+    {{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_}},
+    {{A____,M___},{A____,M___},{A____,M__W},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
+    {{A_ABS,M_R_},{A_ABS,M_R_},{A_JMP,M_R_},{A_JMP,M_R_},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_}},
+    {{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},  // relative branches
+    {{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M__W},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_}},
+    {{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
+    {{A_ABX,M_R_},{A_ABX,M_R_},{A_ABS,M_R_},{A_ABS,M_R_},{A_INV,M___},{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M_R_}}
+},
+// cc = 01
+{
+    //ORA         AND          EOR          ADC          STA          LDA          CMP          SBC
+    {{A_IDX,M_R_},{A_IDX,M_R_},{A_IDX,M_R_},{A_IDX,M_R_},{A_IDX,M__W},{A_IDX,M_R_},{A_IDX,M_R_},{A_IDX,M_R_}},
+    {{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_R_},{A_ZER,M_R_}},
+    {{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},
+    {{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_R_},{A_ABS,M_R_}},
+    {{A_IDY,M_R_},{A_IDY,M_R_},{A_IDY,M_R_},{A_IDY,M_R_},{A_IDY,M__W},{A_IDY,M_R_},{A_IDY,M_R_},{A_IDY,M_R_}},
+    {{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M__W},{A_ZPX,M_R_},{A_ZPX,M_R_},{A_ZPX,M_R_}},
+    {{A_ABY,M_R_},{A_ABY,M_R_},{A_ABY,M_R_},{A_ABY,M_R_},{A_ABY,M__W},{A_ABY,M_R_},{A_ABY,M_R_},{A_ABY,M_R_}},
+    {{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M__W},{A_ABX,M_R_},{A_ABX,M_R_},{A_ABX,M_R_}},
+},
+// cc = 02
+{
+    //ASL         ROL          LSR          ROR          STX          LDX          DEC          INC
+    {{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_},{A_IMM,M_R_}},
+    {{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_RW},{A_ZER,M_RW}},
+    {{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___},{A____,M___}},
+    {{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_RW},{A_ABS,M_RW}},
+    {{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_INV,M_RW},{A_INV,M__W},{A_INV,M_R_},{A_INV,M_RW},{A_INV,M_RW}},
+    {{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPY,M__W},{A_ZPY,M_R_},{A_ZPX,M_RW},{A_ZPX,M_RW}},
+    {{A____,M_R_},{A____,M_R_},{A____,M_R_},{A____,M_R_},{A____,M___},{A____,M___},{A____,M_R_},{A____,M_R_}},
+    {{A_ABX,M_RW},{A_ABX,M_RW},{A_ABX,M_RW},{A_ABX,M_RW},{A_INV,M__W},{A_ABY,M_R_},{A_ABX,M_RW},{A_ABX,M_RW}},
+},
+// cc = 03
+{
+    {{A_IDX,M_RW},{A_IDX,M_RW},{A_IDX,M_RW},{A_IDX,M_RW},{A_IDX,M__W},{A_IDX,M_R_},{A_IDX,M_RW},{A_IDX,M_RW}},
+    {{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M_RW},{A_ZER,M__W},{A_ZER,M_R_},{A_ZER,M_RW},{A_ZER,M_RW}},
+    {{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_INV,M___},{A_IMM,M_R_}},
+    {{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M_RW},{A_ABS,M__W},{A_ABS,M_R_},{A_ABS,M_RW},{A_ABS,M_RW}},
+    {{A_IDY,M_RW},{A_IDY,M_RW},{A_IDY,M_RW},{A_IDY,M_RW},{A_INV,M___},{A_IDY,M_R_},{A_IDY,M_RW},{A_IDY,M_RW}},
+    {{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPX,M_RW},{A_ZPY,M__W},{A_ZPY,M_R_},{A_ZPX,M_RW},{A_ZPX,M_RW}},
+    {{A_ABY,M_RW},{A_ABY,M_RW},{A_ABY,M_RW},{A_ABY,M_RW},{A_INV,M___},{A_INV,M___},{A_ABY,M_RW},{A_ABY,M_RW}},
+    {{A_ABX,M_RW},{A_ABX,M_RW},{A_ABX,M_RW},{A_ABX,M_RW},{A_INV,M___},{A_ABY,M_R_},{A_ABX,M_RW},{A_ABX,M_RW}}
+}
+};
+
 
 int mos6502disasm(fetch_func fetch, unsigned short pc, char* buffer, void* userdata) {
 
@@ -202,7 +278,7 @@ int mos6502disasm(fetch_func fetch, unsigned short pc, char* buffer, void* userd
     dst += sprintf(dst, "%s", n);
 
     uint8_t l,h;
-    switch (mos6502::ops[cc][bbb][aaa].addr) {
+    switch (ops[cc][bbb][aaa].addr) {
         case A_IMM:
             l = fetch(pc, pos++, userdata);
             dst += sprintf(dst, " #$%02X", l);
@@ -253,7 +329,7 @@ int mos6502disasm(fetch_func fetch, unsigned short pc, char* buffer, void* userd
     *dst = 0;
     return pos;
 }
-
 } // namespace mos6502dasm
+
 
 

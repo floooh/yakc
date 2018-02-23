@@ -4,18 +4,17 @@
     @class YAKC::yakc
     @brief main emulator class
 */
-#include "yakc/core/core.h"
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
-#include "yakc/core/filesystem.h"
-#include "yakc/peripherals/tapedeck.h"
-#include "yakc/systems/kc85.h"
+#include "yakc/util/rom_images.h"
+#include "yakc/util/core.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/tapedeck.h"
 #include "yakc/systems/z1013.h"
 #include "yakc/systems/z9001.h"
 #include "yakc/systems/zx.h"
-#include "yakc/systems/cpc.h"
+#include "yakc/systems/kc85.h"
 #include "yakc/systems/atom.h"
-#include "yakc/systems/bbcmicro.h"
+#include "yakc/systems/cpc.h"
+#include <functional>
 
 namespace YAKC {
 
@@ -34,12 +33,22 @@ public:
     /// reset the emu
     void reset();
     /// process one frame, up to absolute number of cycles
-    void step(int micro_secs, uint64_t audio_cycle_count);
+    void exec(int micro_secs, uint64_t audio_cycle_count);
     /// step over one instruction and return number of cycles (called by debuggers)
-    uint32_t step_debug();
+    uint32_t step();
+    /// step until function returns true
+    uint32_t step_until(std::function<bool(uint32_t)> fn);
 
-    /// put key and joystick input
-    void put_input(uint8_t ascii, uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask=0);
+    /// called when an ASCII key is pressed
+    void on_ascii(uint8_t ascii);
+    /// called when a non-ascii key is pressed down
+    void on_key_down(uint8_t keycode);
+    /// called when a non-ascii key is released
+    void on_key_up(uint8_t keycode);
+    /// called per frame with new joystick input
+    void on_joystick(uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask);
+    /// get number of supported joysticks of current system
+    int num_joysticks() const;
     /// enable/disable joystick
     void enable_joystick(bool b);
     /// return true if joystick is enabled
@@ -53,11 +62,6 @@ public:
     /// get pointer to emulator framebuffer, its width, and height
     const void* framebuffer(int& out_width, int& out_height);
 
-    /// clear the current interrupt daisychain
-    void clear_daisychain();
-    /// do a partial init after applying a snapshot
-    void on_context_switched();
-
     /// return true if switched on
     bool switchedon() const;
     /// check if currently emulated system matches
@@ -66,32 +70,18 @@ public:
     static bool is_system(system model, system mask);
     /// get the cpu model of the current system
     cpu_model cpu_type() const;
+    /// get a bit mask of chip::id bits in the current system
+    chip::mask chip_types() const;
     /// get human-readable info about current system
     const char* system_info() const;
-    /// get current border color
-    void border_color(float& out_red, float& out_green, float& out_blue);
-    /// get the currently active system_bus
-    system_bus* get_bus();
 
     system model = system::none;
     os_rom os = os_rom::none;
-    class kc85 kc85;
-    class z1013 z1013;
-    class z9001 z9001;
-    class zx zx;
-    class cpc cpc;
-    class atom atom;
-    class bbcmicro bbcmicro;
-    breadboard board;
-    class rom_images roms;
     class filesystem filesystem;
-    class tapedeck tapedeck;
-
     bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count
     uint64_t abs_cycle_count = 0;           // total CPU cycle count
     uint32_t overflow_cycles = 0;           // cycles that have overflowed from last frame
-
 private:
     bool joystick_enabled = false;
 };

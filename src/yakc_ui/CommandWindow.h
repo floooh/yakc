@@ -18,7 +18,7 @@ public:
     virtual bool Draw(yakc& emu) override;
 
     /// populate commands array
-    void scan(const yakc& emu, uint8_t prologByte);
+    void scan(uint8_t prologByte);
 
     uint8_t prologByte = 0x7F;
     struct Cmd {

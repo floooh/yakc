@@ -21,12 +21,13 @@ fips_begin_module(yakc_ui)
         AudioWindow.cc AudioWindow.h
         KC85IOWindow.cc KC85IOWindow.h
         InfoWindow.cc InfoWindow.h
-        AY8910Window.cc AY8910Window.h
+        AY38910Window.cc AY38910Window.h
         MC6845Window.cc MC6845Window.h
         MC6847Window.cc MC6847Window.h
         I8255Window.cc I8255Window.h
         MOS6522Window.cc MOS6522Window.h
         TapeDeckWindow.cc TapeDeckWindow.h
+        CPCGateArrayWindow.cc CPCGateArrayWindow.h
     )
     fips_deps(IMUI yakc yakc_oryol soloud)
 fips_end_module()

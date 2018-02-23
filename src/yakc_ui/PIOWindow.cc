@@ -3,7 +3,6 @@
 //------------------------------------------------------------------------------
 #include "PIOWindow.h"
 #include "IMUI/IMUI.h"
-#include "yakc/chips/z80pio.h"
 #include "yakc_ui/UI.h"
 
 using namespace Oryol;
@@ -13,7 +12,7 @@ namespace YAKC {
 static const int offset = 128;
 
 //------------------------------------------------------------------------------
-PIOWindow::PIOWindow(const char* name, z80pio* pio) :
+PIOWindow::PIOWindow(const char* name, z80pio_t* pio) :
 Name(name),
 PIO(pio) {
     // empty
@@ -46,26 +45,23 @@ modeAsString(uint8_t m) {
 
 //------------------------------------------------------------------------------
 static void
-pioStatus(z80pio* pio, int port_id) {
+pioStatus(z80pio_t* pio, int port_id) {
     const auto& p = pio->port[port_id];
     status("mode:", p.mode); ImGui::SameLine(); ImGui::Text("%s", modeAsString(p.mode));
     status("output:", p.output);
     status("input:", p.input);
     status("io select:", p.io_select);
     status("int control:", p.int_control);
-    ImGui::Text("    int enabled: %s", (p.int_control & 0x80) ? "ENABLED":"DISABLED");
-    ImGui::Text("    and/or:      %s", (p.int_control & 0x40) ? "AND":"OR");
-    ImGui::Text("    high/low:    %s", (p.int_control & 0x20) ? "HIGH":"LOW");
+    ImGui::Text("    int enabled: %s", (p.int_control & Z80PIO_INTCTRL_EI) ? "ENABLED":"DISABLED");
+    ImGui::Text("    and/or:      %s", (p.int_control & Z80PIO_INTCTRL_ANDOR) ? "AND":"OR");
+    ImGui::Text("    high/low:    %s", (p.int_control & Z80PIO_INTCTRL_HILO) ? "HIGH":"LOW");
     status("int vector:", p.int_vector);
     status("int mask:", p.int_mask);
     ImGui::Text("expect:"); ImGui::SameLine(float(offset));
     const char* expect = "???";
-    switch (p.expect) {
-        case z80pio::expect_any: expect = "ANY"; break;
-        case z80pio::expect_io_select: expect = "SELECT"; break;
-        case z80pio::expect_int_mask: expect = "MASK"; break;
-        default: break;
-    }
+    if (p.expect_int_mask) expect = "MASK";
+    else if (p.expect_io_select) expect = "IOSELECT";
+    else expect = "ANY";
     ImGui::Text("%s", expect);
 }
 
@@ -76,10 +72,10 @@ PIOWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(220, 420), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         if (ImGui::CollapsingHeader("PIO A", "#pio_a", true, true)) {
-            pioStatus(this->PIO, z80pio::A);
+            pioStatus(this->PIO, Z80PIO_PORT_A);
         }
         if (ImGui::CollapsingHeader("PIO B", "#pio_b", true, true)) {
-            pioStatus(this->PIO, z80pio::B);
+            pioStatus(this->PIO, Z80PIO_PORT_B);
         }
     }
     ImGui::End();

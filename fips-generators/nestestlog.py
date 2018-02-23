@@ -16,7 +16,7 @@ def gen_header(in_log, out_hdr):
     with open(out_hdr, 'w') as f:
         f.write('// #version:{}#\n'.format(Version))
         f.write('// machine generated, do not edit!\n')
-        f.write('#include "yakc/core/core.h"\n')
+        f.write('#include "yakc/util/core.h"\n')
         f.write('struct cpu_state {\n')
         f.write('    uint16_t PC;\n')
         f.write('    uint8_t A,X,Y,P,S;\n')

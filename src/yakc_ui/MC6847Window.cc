@@ -4,7 +4,6 @@
 #include "MC6847Window.h"
 #include "IMUI/IMUI.h"
 #include "yakc_ui/UI.h"
-#include "yakc/chips/mc6847.h"
 
 using namespace Oryol;
 
@@ -29,20 +28,20 @@ on_off(const char* text, bool on) {
 //------------------------------------------------------------------------------
 bool
 MC6847Window::Draw(yakc& emu) {
-    const mc6847& mc = emu.board.mc6847;
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        on_off("HSYNC:", mc.test(mc6847::HSYNC));
-        on_off("FSYNC:", mc.test(mc6847::FSYNC));
-        on_off("A/G:", mc.test(mc6847::A_G));
-        on_off("A/S:", mc.test(mc6847::A_S));
-        on_off("INT/EXT:", mc.test(mc6847::INT_EXT));
-        on_off("INV:", mc.test(mc6847::INV));
-        on_off("CSS:", mc.test(mc6847::CSS));
-        on_off("GM0:", mc.test(mc6847::GM0));
-        on_off("GM1:", mc.test(mc6847::GM1));
-        on_off("GM2:", mc.test(mc6847::GM2));
-        ImGui::Text("Hori Count: %d\n", mc.h_count/mc6847::prec);
+        const mc6847_t& mc = board.mc6847;
+        on_off("HSYNC:", mc.pins & MC6847_HS);
+        on_off("FSYNC:", mc.pins & MC6847_FS);
+        on_off("A/G:", mc.pins & MC6847_AG);
+        on_off("A/S:", mc.pins & MC6847_AS);
+        on_off("INT/EXT:", mc.pins & MC6847_INTEXT);
+        on_off("INV:", mc.pins & MC6847_INV);
+        on_off("CSS:", mc.pins & MC6847_CSS);
+        on_off("GM0:", mc.pins & MC6847_GM0);
+        on_off("GM1:", mc.pins & MC6847_GM1);
+        on_off("GM2:", mc.pins & MC6847_GM2);
+        ImGui::Text("Hori Count: %d\n", mc.h_count / MC6847_PRECISION_BOOST);
         ImGui::Text("Line Count: %d\n", mc.l_count);
     }
     ImGui::End();

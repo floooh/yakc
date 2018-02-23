@@ -15,28 +15,17 @@
         http://www.sax.de/~zander/z9001/z9sch_5.pdf
         http://www.sax.de/~zander/z9001/z9sch_1.pdf
 */
-#include "yakc/core/system_bus.h"
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/keybuffer.h"
-#include "yakc/systems/rom_images.h"
-#include "yakc/core/filesystem.h"
-#include "yakc/core/filetypes.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/filetypes.h"
 
 namespace YAKC {
 
-class z9001 : public system_bus {
+class z9001_t {
 public:
-    /// the main board
-    breadboard* board = nullptr;
-    /// rom image store
-    rom_images* roms = nullptr;
-
-    /// one-time setup
-    void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, system model, os_rom os);
-    /// init the memory map
-    void init_memory_mapping();
+    static bool check_roms(system model, os_rom os);
 
     /// power-on the device
     void poweron(system m, os_rom os);
@@ -46,40 +35,28 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    /// called after snapshot restore
-    void on_context_switched();
-    /// get current border color
-    void border_color(float& out_red, float& out_green, float& out_blue);
-
+    /// return number of supported joysticks
+    int num_joysticks() const { return 0; };
     /// process a number of cycles, return final processed tick
-    uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// perform a single debug-step
-    uint32_t step_debug();
+    uint64_t exec(uint64_t start_tick, uint64_t end_tick);
 
-    /// the z80 out callback
-    virtual void cpu_out(uint16_t port, uint8_t val) override;
-    /// the z80 in callback
-    virtual uint8_t cpu_in(uint16_t port) override;
-    /// CTC write callback (used for audio)
-    virtual void ctc_write(int ctc_id, int chn_id) override;
-    /// CTC ZCTO callback (used to trigger CTC channel 3)
-    virtual void ctc_zcto(int ctc_id, int chn_id) override;
-    /// PIO output callback
-    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
-    /// PIO input callback
-    virtual uint8_t pio_in(int pio_id, int port_id) override;
-    /// request a CPU interrupt
-    virtual void irq(bool b) override;
-    /// clock timer triggered
-    virtual void timer(int timer_id) override;
+    /// the Z80 CPU tick callback
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    /// the Z80 PIO1 out callback
+    static void pio1_out(int port_id, uint8_t data);
+    /// the Z80 PIO1 in callback
+    static uint8_t pio1_in(int port_id);
+    /// the Z80 PIO2 out callback
+    static void pio2_out(int port_id, uint8_t data);
+    /// the Z80 PIO2 in callback
+    static uint8_t pio2_in(int port_id);
 
-    /// put a key as ASCII code
-    void put_key(uint8_t ascii);
-    /// handle key input (called from onframe())
-    void handle_key();
-
-    /// decode an entire frame into RGBA8Buffer
-    void decode_video();
+    /// called when alpha-numeric key has been pressed
+    void on_ascii(uint8_t ascii);
+    /// called when non-alnum key has been pressed down
+    void on_key_down(uint8_t key);
+    /// called when non-alnum key has been released
+    void on_key_up(uint8_t key);
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
     /// get framebuffer, width and height
@@ -87,33 +64,30 @@ public:
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
+    /// initialize the memory map
+    void init_memorymap();
+    /// initialize the keyboard matrix
+    void init_keymap();
+    /// decode an entire frame into RGBA8Buffer
+    void decode_video();
+
     static const int video_ram_page = 4;
     static const int color_ram_page = 5;
 
     system cur_model = system::kc87;
     os_rom cur_os = os_rom::kc87_os_2;
     bool on = false;
-    uint64_t cur_tick = 0;
 
-    keybuffer keybuf;
-    uint64_t key_mask = 0;              // (column<<8)|line bits for currently pressed key
-    uint8_t kbd_column_mask = 0;        // PIO2-A keyboard matrix column mask
-    uint8_t kbd_line_mask = 0;          // PIO2-B keyboard matrix line mask
-    static const int max_num_keys = 128;
-    uint64_t key_map[max_num_keys];     // complete keyboard matrix state for each ascii code
-
-    bool blink_flipflop = false;
-    uint8_t brd_color = 0;              // border color byte extracted from PIO1-A
+    uint64_t ctc_zcto2 = 0;     // pin mask to store state of CTC ZCTO2
     uint32_t blink_counter = 0;
+    bool blink_flip_flop = false;
+    uint8_t brd_color = 0;              // border color byte extracted from PIO1-A
 
     static const int display_width = 320;
     static const int display_height = 192;
     static_assert(display_width <= global_max_fb_width, "z9001 fb size");
     static_assert(display_height <= global_max_fb_height, "z9001 fb size");
-    uint32_t* rgba8_buffer = nullptr;
-
-    uint8_t ctc0_mode = z80ctc::RESET;    // CTC0 state for audio output
-    uint8_t ctc0_constant = 0;
 };
+extern class z9001_t z9001;
 
 } // namespace YAKC

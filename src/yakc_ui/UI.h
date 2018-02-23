@@ -7,7 +7,6 @@
 #include "yakc_oryol/Audio.h"
 #include "yakc_ui/WindowBase.h"
 #include "yakc_oryol/FileLoader.h"
-#include "yakc_oryol/SnapshotStorage.h"
 #include "Core/Time/TimePoint.h"
 #include "Core/Containers/Array.h"
 #include "IMUI/IMUI.h"
@@ -55,7 +54,6 @@ public:
     Oryol::Duration EmulationTime;
     class FileLoader FileLoader;
 
-    SnapshotStorage snapshotStorage;
     Oryol::TimePoint curTime;
     Oryol::Array<Oryol::Ptr<WindowBase>> windows;
     Oryol::Ptr<WindowBase> keyboardWindow;

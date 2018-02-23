@@ -4,34 +4,18 @@
     @class YAKC::cpc
     @brief Amstrad CPC 464/6128 and KC Compact emulation
 */
-#include "yakc/core/system_bus.h"
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
-#include "yakc/core/filesystem.h"
-#include "yakc/peripherals/tapedeck.h"
-#include "yakc/systems/cpc_video.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/tapedeck.h"
 
 namespace YAKC {
 
-class cpc : public system_bus {
+class cpc_t {
 public:
-    /// the main board
-    breadboard* board = nullptr;
-    /// rom image storage
-    rom_images* roms = nullptr;
-    /// tapedeck
-    class tapedeck* tape = nullptr;
-
-    /// one-time setup
-    void init(breadboard* board, rom_images* roms, class tapedeck* tape);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, system model, os_rom os);
-    /// initialize the memory map
-    void init_memory_map();
-    /// initialize the keycode translation map
-    void init_keymap();
-    /// initialize a single entry in the key-map table
-    void init_key_mask(uint8_t ascii, int column, int line, int shift);
+    static bool check_roms(system model, os_rom os);
+    
     /// power-on the device
     void poweron(system m);
     /// power-off the device
@@ -40,18 +24,50 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    /// called after snapshot restore
-    void on_context_switched();
-    /// put a key and joystick input
-    void put_input(uint8_t ascii, uint8_t joy0_mask);
-
+    /// return number of supported joysticks
+    int num_joysticks() const { return 1; };
     /// process a number of cycles, return final processed tick
-    uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// perform a single debug-step
-    uint32_t step_debug();
+    uint64_t exec(uint64_t start_tick, uint64_t end_tick);
+
+    /// the Z80 CPU tick callback
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    /// perform a CPU IO request (called from cpu_tick)
+    static uint64_t cpu_iorq(uint64_t pins);
+    /// i8255 output callback
+    static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data);
+    /// i8255 input callback
+    static uint8_t ppi_in(int port_id);
+    /// AY-3-8912 port output callback
+    static void psg_out(int port_id, uint8_t data);
+    /// AY-3-8912 port input callback
+    static uint8_t psg_in(int port_id);
+
+    /// initialize the gate array (called from init and reset)
+    void ga_init();
+    /// tick the gate array
+    uint64_t ga_tick(uint64_t pins);
+    /// called on an interrupt acknowledge machine cycle
+    void ga_int_ack();
+    /// called when the interrupt-control bit is set by a CPU IO operation
+    void ga_int_ctrl();
+    /// top-level video frame decoding
+    void ga_decode_video(uint64_t crtc_pins);
+    /// decode the next pixel block
+    void ga_decode_pixels(uint32_t* dst, uint64_t crtc_pins);
 
     /// update bank switching
     void update_memory_mapping();
+    /// initialize the keycode translation map
+    void init_keymap();
+
+    /// called when alpha-numeric key has been pressed
+    void on_ascii(uint8_t ascii);
+    /// called when non-alnum key has been pressed down
+    void on_key_down(uint8_t key);
+    /// called when non-alnum key has been released
+    void on_key_up(uint8_t key);
+    /// called for joystick input
+    void on_joystick(uint8_t mask);
     /// decode next audio buffer
     void decode_audio(float* buffer, int num_samples);
     /// get pointer to framebuffer, width and height
@@ -65,49 +81,39 @@ public:
     /// the trapped casread function for TAP files
     void casread();
 
-    /// the z80 out callback
-    virtual void cpu_out(uint16_t port, uint8_t val) override;
-    /// the z80 in callback
-    virtual uint8_t cpu_in(uint16_t port) override;
-    /// PIO output callback
-    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
-    /// PIO input callback
-    virtual uint8_t pio_in(int pio_id, int port_id) override;
-    /// interrupt request callback
-    virtual void irq(bool b) override;
-    /// interrupt acknowledge callback
-    virtual void iack() override;
-    /// vblank callback
-    virtual void vblank() override;
-
     system cur_model = system::cpc464;
     bool on = false;
+    uint32_t tick_count = 0;
     uint16_t casread_trap = 0x0000;
     uint16_t casread_ret = 0x0000;
+    uint8_t joymask = 0;
 
-    cpc_video video;
-
-    uint8_t ga_config = 0x00;     // out to port 0x7Fxx func 0x80
-    uint8_t ram_config = 0x00;    // out to port 0x7Fxx func 0xC0
-    struct key_mask {
-        static const int num_lines = 10;
-        uint8_t col[num_lines] = { };
-        void combine(const key_mask& m) {
-            for (int i = 0; i < num_lines; i++) {
-                this->col[i] |= m.col[i];
-            }
-        }
-        void clear(const key_mask& m) {
-            for (int i = 0; i < num_lines; i++) {
-                this->col[i] &= ~m.col[i];
-            }
-        }
-    };
-    uint8_t scan_kbd_line = 0;    // next keyboard line to be scanned
-    key_mask next_key_mask;
-    key_mask next_joy_mask;
-    key_mask cur_key_mask;
-    key_mask key_map[256];
+    uint8_t ga_config = 0;          // out to port 0x7Fxx func 0x80
+    uint8_t ga_next_video_mode = 0;
+    uint8_t ga_video_mode = 0;
+    uint8_t ga_ram_config = 0;      // out to port 0x7Fxx func 0xC0
+    uint8_t ga_pen = 0x00;          // currently selected pen (or border)
+    uint32_t ga_colors[32];         // CPC and KC Compact have different colors
+    uint32_t ga_palette[16];        // the current pen colors
+    uint32_t ga_border_color = 0;   // the current border color
+    int ga_hsync_irq_counter = 0;   // incremented each scanline, reset at 52
+    int ga_hsync_after_vsync_counter = 0;   // for 2-hsync-delay after vsync
+    int ga_hsync_delay_counter = 0; // hsync to monitor is delayed 2 ticks
+    int ga_hsync_counter = 0;       // countdown until hsync to monitor is deactivated
+    bool ga_sync = false;           // gate-array generated video sync (modified HSYNC)
+    bool ga_int = false;            // GA interrupt pin active
+    uint64_t ga_crtc_pins;          // store CRTC pins to detect rising/falling bits
+    
+    bool debug_video = false;
+    static const int max_display_width = 768;
+    static const int max_display_height = 272;
+    static_assert(max_display_width <= global_max_fb_width, "cpc display size");
+    static_assert(max_display_height <= global_max_fb_height, "cpc display size");
+    static const int dbg_max_display_width  = 1024;     // 64*16
+    static const int dbg_max_display_height = 312;
+    static_assert(dbg_max_display_width <= global_max_fb_width, "cpc display size");
+    static_assert(dbg_max_display_height <= global_max_fb_height, "cpc display size");
 };
+extern cpc_t cpc;
 
 } // namespace YAKC

@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "MOS6522Window.h"
 #include "IMUI/IMUI.h"
-#include "yakc/chips/mos6522.h"
+#include "chips/m6522.h"
 
 using namespace Oryol;
 
@@ -18,9 +18,9 @@ MOS6522Window::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 bool
 MOS6522Window::Draw(yakc& emu) {
-    const mos6522& via = emu.board.mos6522;
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
+        const m6522_t& via = board.m6522;
         ImGui::Text("A OUT:     0x%02X", via.out_a);
         ImGui::Text("A IN:      0x%02X", via.in_a);
         ImGui::Text("A DDR:     0x%02X", via.ddr_a);

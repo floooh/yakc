@@ -13,21 +13,13 @@ using namespace mos6502dasm;
 namespace YAKC {
 
 //------------------------------------------------------------------------------
-Disasm::Disasm() :
-emu(0) {
+Disasm::Disasm() {
     Memory::Clear(this->buffer, sizeof(this->buffer));
 }
 
 //------------------------------------------------------------------------------
-uint8_t
-Disasm::fetch(uint16_t base, int offset, void* userdata) {
-    Disasm* self = (Disasm*) userdata;
-    if (self->emu->cpu_type() == cpu_model::mos6502) {
-        return self->emu->board.mos6502.mem.r8(base + offset);
-    }
-    else {
-        return self->emu->board.z80.mem.r8(base + offset);
-    }
+static uint8_t fetch(uint16_t base, int offset, void* /*userdata*/) {
+    return mem_rd(&board.mem, base+offset);
 }
 
 //------------------------------------------------------------------------------
@@ -35,7 +27,7 @@ uint16_t
 Disasm::Disassemble(const yakc& emu, uint16_t addr) {
     int res = 0;
     this->emu = &emu;
-    if (this->emu->cpu_type() == cpu_model::mos6502) {
+    if (this->emu->cpu_type() == cpu_model::m6502) {
         res = mos6502disasm(fetch, addr, this->buffer, this);
     }
     else {

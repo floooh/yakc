@@ -62,13 +62,7 @@ DisasmWindow::drawMainContent(const yakc& emu, uint16_t start_addr, int num_line
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            uint8_t val = 0x00;
-            if (emu.cpu_type() == cpu_model::mos6502) {
-                val = emu.board.mos6502.mem.r8(cur_addr++);
-            }
-            else {
-                val = emu.board.z80.mem.r8(cur_addr++);
-            }
+            uint8_t val = mem_rd(&board.mem, cur_addr++);
             ImGui::Text("%02X ", val);
         }
 

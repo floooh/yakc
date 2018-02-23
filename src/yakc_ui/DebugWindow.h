@@ -17,9 +17,9 @@ public:
     virtual bool Draw(yakc& emu) override;
 
     /// draw the register table (Z80)
-    void drawZ80RegisterTable(yakc& emu);
+    void drawZ80RegisterTable();
     /// draw the register table (m6502)
-    void draw6502RegisterTable(yakc& emu);
+    void draw6502RegisterTable();
     
     /// draw the main window content, starting at given address
     void drawMainContent(yakc& emu, uint16_t start_addr, int num_lines);

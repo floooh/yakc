@@ -4,18 +4,15 @@
     @class YAKC::kc85
     @brief wrapper class for the KC85/2, /3, /4
 */
-#include "yakc/core/system_bus.h"
-#include "yakc/systems/breadboard.h"
-#include "yakc/systems/rom_images.h"
-#include "yakc/core/filesystem.h"
-#include "yakc/core/filetypes.h"
-#include "yakc/systems/kc85_video.h"
-#include "yakc/systems/kc85_audio.h"
+#include "yakc/util/breadboard.h"
+#include "yakc/util/rom_images.h"
+#include "yakc/util/filesystem.h"
+#include "yakc/util/filetypes.h"
 #include "yakc/systems/kc85_exp.h"
 
 namespace YAKC {
 
-class kc85 : public system_bus {
+class kc85_t {
 public:
     /// IO bits
     enum {
@@ -46,21 +43,14 @@ public:
         IO86_CAOS_ROM_C = (1<<7)
     };
 
-    /// hardware components
-    breadboard* board = nullptr;
-    rom_images* roms = nullptr;
-    kc85_video video;
-    kc85_audio audio;
     kc85_exp exp;
-    uint8_t pio_a = 0;        // backing for PIO-A data
-    uint8_t pio_b = 0;        // backing for PIO-B data
-    uint8_t io84 = 0;         // special KC85/4 io register
-    uint8_t io86 = 0;         // special KC85/4 io register
+    uint8_t pio_a = 0;          // current pio_a content, used by bankswitching
+    uint8_t pio_b = 0;          // current pio_b content, used by bankswitching
+    uint8_t io84 = 0;           // special KC85/4 io register
+    uint8_t io86 = 0;           // special KC85/4 io register
 
-    /// one-time init
-    void init(breadboard* board, rom_images* roms);
     /// check if required roms are loaded
-    static bool check_roms(const rom_images& roms, system model, os_rom os);
+    static bool check_roms(system model, os_rom os);
 
     /// power-on the device
     void poweron(system m, os_rom os);
@@ -70,41 +60,37 @@ public:
     void reset();
     /// get info about emulated system
     const char* system_info() const;
-    /// called after snapshot restore
-    void on_context_switched();
+    /// return number of supported joysticks
+    int num_joysticks() const { return 0; };
+
+    /// process a number of cycles, return final processed tick
+    uint64_t exec(uint64_t start_tick, uint64_t end_tick);
+    /// the CPU tick callback
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    /// the PIO out callback
+    static void pio_out(int port_id, uint8_t data);
+    /// the PIO in callback
+    static uint8_t pio_in(int port_id);
+
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
+    /// decode 8 pixels
+    void decode_8pixels(uint32_t* ptr, uint8_t pixels, uint8_t colors, bool blink_off) const;
+    /// decode current video scanline
+    void decode_scanline();
     /// get pointer to framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
 
-    /// process a number of cycles, return final processed tick
-    uint64_t step(uint64_t start_tick, uint64_t end_tick);
-    /// perform a single debug-step
-    uint32_t step_debug();
-    
-    /// put a key as ASCII code
-    void put_key(uint8_t ascii);
+    /// called when alpha-numeric key has been pressed
+    void on_ascii(uint8_t ascii);
+    /// called when non-alnum key has been pressed down
+    void on_key_down(uint8_t key);
+    /// called when non-alnum key has been released
+    void on_key_up(uint8_t key);
     /// handle keyboard input
     void handle_keyboard_input();
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
-
-    /// the z80 out callback
-    virtual void cpu_out(uint16_t port, uint8_t val) override;
-    /// the z80 in callback
-    virtual uint8_t cpu_in(uint16_t port) override;
-    /// CTC write callback
-    virtual void ctc_write(int ctc_id, int chn_id) override;
-    /// CTC zcto callback
-    virtual void ctc_zcto(int ctc_id, int chn_id) override;
-    /// Z80 PIO input callback
-    virtual uint8_t pio_in(int pio_id, int port_id) override;
-    /// Z80 PIO output callback
-    virtual void pio_out(int pio_id, int port_id, uint8_t val) override;
-    /// interrupt request callback
-    virtual void irq(bool b) override;
-    /// clock timer-trigger callback
-    virtual void timer(int timer_id) override;
 
     /// update module/memory mapping
     void update_bank_switching();
@@ -121,7 +107,20 @@ public:
     int caos_e_size = 0;
     uint8_t* basic_ptr = nullptr;
     int basic_size = 0;
+
+    // video hardware
+    static const int display_width = 320;
+    static const int display_height = 256;
+    static_assert(display_width <= global_max_fb_width, "kc85 fb size");
+    static_assert(display_height <= global_max_fb_height, "kc85 fb size");
+    static const int irm0_page = 4;
+    static const int num_scanlines = 312;
+    int scanline_period = 0;
+    int scanline_counter = 0;
+    int cur_scanline = 0;
+    bool ctc_blink_flag = true;
 };
+extern kc85_t kc85;
 
 } // namespace YAKC
 

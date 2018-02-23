@@ -10,10 +10,13 @@ using namespace Oryol;
 
 //------------------------------------------------------------------------------
 static bool
-is_modifier(Key::Code key) {
+is_joystick_key(Key::Code key) {
     switch (key) {
-        case Key::LeftShift:
-        case Key::RightShift:
+        case Key::Left:
+        case Key::Right:
+        case Key::Down:
+        case Key::Up:
+        case Key::Space:
             return true;
         default:
             return false;
@@ -23,8 +26,12 @@ is_modifier(Key::Code key) {
 //------------------------------------------------------------------------------
 static uint8_t
 translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
+    if ((emu->num_joysticks() > 0) && emu->is_joystick_enabled() && is_joystick_key(key)) {
+        return 0;
+    }
     if (emu->is_system(system::any_zx)) {
         switch (key) {
+            case Key::Space:        return 0x20;
             case Key::Left:         return 0x08;
             case Key::Right:        return 0x09;
             case Key::Down:         return 0x0A;
@@ -39,6 +46,7 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
     else if (emu->is_system(system::acorn_atom)) {
         // http://www.vintagecomputer.net/fjkraan/comp/atom/atap/atap03.html#131
         switch (key) {
+            case Key::Space:        return 0x20;
             case Key::Left:         return 0x08;
             case Key::Right:        return 0x09;
             case Key::Down:         return 0x0A;
@@ -64,6 +72,7 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
     }
     else if (emu->is_system(system::any_cpc)) {
         switch (key) {
+            case Key::Space:        return 0x20;
             case Key::Left:         return 0x08;
             case Key::Right:        return 0x09;
             case Key::Down:         return 0x0A;
@@ -89,6 +98,7 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
     }
     else {
         switch (key) {
+            case Key::Space:        return 0x20;
             case Key::Left:         return 0x08;
             case Key::Right:        return 0x09;
             case Key::Down:         return 0x0A;
@@ -123,7 +133,7 @@ Keyboard::Setup(yakc& emu_) {
             return;
         }
         if (e.Type == InputEvent::WChar) {
-            if ((e.WCharCode >= 32) && (e.WCharCode < 127)) {
+            if ((e.WCharCode > 32) && (e.WCharCode < 127)) {
                 uint8_t ascii = (uint8_t) e.WCharCode;
                 // invert case (not on ZX or CPC machines)
                 if (!(this->emu->is_system(system::any_zx)||this->emu->is_system(system::any_cpc))) {
@@ -134,67 +144,73 @@ Keyboard::Setup(yakc& emu_) {
                         ascii = std::tolower(ascii);
                     }
                 }
-                this->cur_char = ascii;
+                this->emu->on_ascii(ascii);
             }
         }
         else if (e.Type == InputEvent::KeyDown) {
-            // keep track of pressed keys
-            if (!is_modifier(e.KeyCode) && !this->pressedKeys.Contains(e.KeyCode)) {
-                this->pressedKeys.Add(e.KeyCode);
-            }
             // translate any non-alphanumeric keys (Enter, Esc, cursor keys etc...)
             bool shift = Input::KeyPressed(Key::LeftShift);
             bool ctrl = Input::KeyPressed(Key::LeftControl);
-            uint8_t special_ascii = translate_special_key(this->emu, e.KeyCode, shift, ctrl);
-            if (0 != special_ascii) {
-                this->cur_char = special_ascii;
+            uint8_t keycode = translate_special_key(this->emu, e.KeyCode, shift, ctrl);
+            if (0 != keycode) {
+                this->emu->on_key_down(keycode);
             }
-            // joystick
-            if (e.KeyCode == Key::Left) {
-                this->cur_kbd_joy |= joystick::left;
+            // simulated joystick
+            if ((this->emu->num_joysticks() > 0) && this->emu->is_joystick_enabled()) {
+                if (e.KeyCode == Key::Left) {
+                    this->cur_kbd_joy |= joystick::left;
+                }
+                else if (e.KeyCode == Key::Right) {
+                    this->cur_kbd_joy |= joystick::right;
+                }
+                else if (e.KeyCode == Key::Up) {
+                    this->cur_kbd_joy |= joystick::up;
+                }
+                else if (e.KeyCode == Key::Down) {
+                    this->cur_kbd_joy |= joystick::down;
+                }
+                else if (e.KeyCode == Key::Space) {
+                    this->cur_kbd_joy |= joystick::btn0;
+                }
+                else if (e.KeyCode == Key::LeftControl) {
+                    this->cur_kbd_joy |= joystick::btn1;
+                }
             }
-            else if (e.KeyCode == Key::Right) {
-                this->cur_kbd_joy |= joystick::right;
-            }
-            else if (e.KeyCode == Key::Up) {
-                this->cur_kbd_joy |= joystick::up;
-            }
-            else if (e.KeyCode == Key::Down) {
-                this->cur_kbd_joy |= joystick::down;
-            }
-            else if (e.KeyCode == Key::Space) {
-                this->cur_kbd_joy |= joystick::btn0;
-            }
-            else if (e.KeyCode == Key::LeftControl) {
-                this->cur_kbd_joy |= joystick::btn1;
+            else {
+                this->cur_kbd_joy = 0;
             }
         }
         else if (e.Type == InputEvent::KeyUp) {
-            // keep track of pressed keys
-            if (!is_modifier(e.KeyCode) && this->pressedKeys.Contains(e.KeyCode)) {
-                this->pressedKeys.Erase(e.KeyCode);
-                if (this->pressedKeys.Empty()) {
-                    this->cur_char = 0;
+            // translate any non-alphanumeric keys (Enter, Esc, cursor keys etc...)
+            bool shift = Input::KeyPressed(Key::LeftShift);
+            bool ctrl = Input::KeyPressed(Key::LeftControl);
+            uint8_t keycode = translate_special_key(this->emu, e.KeyCode, shift, ctrl);
+            if (0 != keycode) {
+                this->emu->on_key_up(keycode);
+            }
+            // simulated joystick
+            if ((this->emu->num_joysticks() > 0) && this->emu->is_joystick_enabled()) {
+                if (e.KeyCode == Key::Left) {
+                    this->cur_kbd_joy &= ~joystick::left;
+                }
+                else if (e.KeyCode == Key::Right) {
+                    this->cur_kbd_joy &= ~joystick::right;
+                }
+                else if (e.KeyCode == Key::Up) {
+                    this->cur_kbd_joy &= ~joystick::up;
+                }
+                else if (e.KeyCode == Key::Down) {
+                    this->cur_kbd_joy &= ~joystick::down;
+                }
+                else if (e.KeyCode == Key::Space) {
+                    this->cur_kbd_joy &= ~joystick::btn0;
+                }
+                else if (e.KeyCode == Key::LeftControl) {
+                    this->cur_kbd_joy &= ~joystick::btn1;
                 }
             }
-            // keyboard joystick emulation
-            if (e.KeyCode == Key::Left) {
-                this->cur_kbd_joy &= ~joystick::left;
-            }
-            else if (e.KeyCode == Key::Right) {
-                this->cur_kbd_joy &= ~joystick::right;
-            }
-            else if (e.KeyCode == Key::Up) {
-                this->cur_kbd_joy &= ~joystick::up;
-            }
-            else if (e.KeyCode == Key::Down) {
-                this->cur_kbd_joy &= ~joystick::down;
-            }
-            else if (e.KeyCode == Key::Space) {
-                this->cur_kbd_joy &= ~joystick::btn0;
-            }
-            else if (e.KeyCode == Key::LeftControl) {
-                this->cur_kbd_joy &= ~joystick::btn1;
+            else {
+                this->cur_kbd_joy = 0;
             }
         }
     });
@@ -254,12 +270,7 @@ Keyboard::HandleInput() {
         if (!this->playbackBuffer.Empty()) {
             this->handleTextPlayback();
         }
-        else {
-            this->emu->put_input(this->cur_char, this->cur_kbd_joy, this->cur_pad_joy);
-        }
-    }
-    else {
-        this->emu->put_input(0, 0);
+        this->emu->on_joystick(this->cur_kbd_joy, this->cur_pad_joy);
     }
 }
 
@@ -275,10 +286,10 @@ void
 Keyboard::handleTextPlayback() {
     if (this->playbackPos < this->playbackBuffer.Size()) {
         if (this->playbackCounter-- > 0) {
-            this->emu->put_input(this->playbackChar, 0);
+            this->emu->on_ascii(this->playbackChar);
         }
         else {
-            // alternate between press and release
+            // give the system some time before the next character
             this->playbackFlipFlop = !this->playbackFlipFlop;
             if (this->playbackFlipFlop) {
                 this->playbackCounter = 4;
@@ -293,7 +304,6 @@ Keyboard::handleTextPlayback() {
                 }
             }
             else {
-                this->playbackChar = 0;
                 this->playbackCounter = 4;
             }
         }

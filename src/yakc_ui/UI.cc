@@ -16,12 +16,13 @@
 #include "AudioWindow.h"
 #include "KC85IOWindow.h"
 #include "InfoWindow.h"
-#include "AY8910Window.h"
+#include "AY38910Window.h"
 #include "MC6845Window.h"
 #include "MC6847Window.h"
 #include "I8255Window.h"
 #include "MOS6522Window.h"
 #include "TapeDeckWindow.h"
+#include "CPCGateArrayWindow.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -50,6 +51,7 @@ UI::Setup(yakc& emu, Audio* audio_) {
 
     ImGuiStyle style = ImGui::GetStyle();
     style.WindowRounding = 0.0f;
+    style.WindowBorderSize = 1.0f;
     style.Alpha = 1.0f;
     style.TouchExtraPadding = ImVec2(5.0f, 5.0f);
     style.AntiAliasedLines = this->imguiAntiAliasedLines;
@@ -100,7 +102,7 @@ UI::Setup(yakc& emu, Audio* audio_) {
     style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
     this->lightTheme = style;
 
-    this->EnableLightTheme();
+    this->EnableDarkTheme();
 
     this->FileLoader.Setup(emu);
     this->curTime = Clock::Now();
@@ -232,7 +234,6 @@ UI::OnFrame(yakc& emu) {
                 case system::cpc464:            model = "CPC464"; break;
                 case system::cpc6128:           model = "CPC6128"; break;
                 case system::kccompact:         model = "KCCompact"; break;
-                case system::bbcmicro_b:        model = "BBC Micro-B"; break;
                 case system::acorn_atom:        model = "Acorn Atom"; break;
                 default: model="??"; break;
             }
@@ -394,40 +395,61 @@ UI::OnFrame(yakc& emu) {
             }
             if (ImGui::BeginMenu("Hardware")) {
                 if (emu.is_system(system::any_kc85)) {
-                    if (ImGui::MenuItem("Expansion Slots")) {
+                    if (ImGui::MenuItem("KC85 Expansion Slots")) {
                         this->OpenWindow(emu, ModuleWindow::Create());
                     }
-                    if (ImGui::MenuItem("Memory Map")) {
+                    if (ImGui::MenuItem("KC85 Memory Map")) {
                         this->OpenWindow(emu, MemoryMapWindow::Create());
                     }
                     if (ImGui::MenuItem("KC85 IO Ports")) {
                         this->OpenWindow(emu, KC85IOWindow::Create());
                     }
                 }
-                // the Z9001 has 2 PIOs
-                if (ImGui::MenuItem("Z80 PIO 1")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO 1", &emu.board.z80pio));
+                if (emu.is_system(system::any_cpc)) {
+                    if (ImGui::MenuItem("CPC Gate Array")) {
+                        this->OpenWindow(emu, CPCGateArrayWindow::Create());
+                    }
                 }
-                if (ImGui::MenuItem("Z80 PIO 2")) {
-                    this->OpenWindow(emu, PIOWindow::Create("PIO 2", &emu.board.z80pio2));
+                chip::mask chips = emu.chip_types();
+                if (chips & chip::z80pio) {
+                    if (ImGui::MenuItem("Z80 PIO")) {
+                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO", &board.z80pio));
+                    }
                 }
-                if (ImGui::MenuItem("Z80 CTC")) {
-                    this->OpenWindow(emu, CTCWindow::Create());
+                if (chips & chip::z80pio2) {
+                    if (ImGui::MenuItem("Z80 PIO 2")) {
+                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO 2", &board.z80pio2));
+                    }
                 }
-                if (ImGui::MenuItem("AY-3-8910")) {
-                    this->OpenWindow(emu, AY8910Window::Create());
+                if (chips & chip::z80ctc) {
+                    if (ImGui::MenuItem("Z80 CTC")) {
+                        this->OpenWindow(emu, CTCWindow::Create());
+                    }
                 }
-                if (ImGui::MenuItem("MC6845")) {
-                    this->OpenWindow(emu, MC6845Window::Create());
+                if (chips & chip::ay38910) {
+                    if (ImGui::MenuItem("AY-3-8910")) {
+                        this->OpenWindow(emu, AY38910Window::Create());
+                    }
                 }
-                if (ImGui::MenuItem("MC6847")) {
-                    this->OpenWindow(emu, MC6847Window::Create());
+                if (chips & chip::mc6845) {
+                    if (ImGui::MenuItem("MC6845")) {
+                        this->OpenWindow(emu, MC6845Window::Create());
+                    }
                 }
-                if (ImGui::MenuItem("i8255")) {
-                    this->OpenWindow(emu, I8255Window::Create());
+                if (chips & chip::mc6847) {
+                    if (ImGui::MenuItem("MC6847")) {
+                        this->OpenWindow(emu, MC6847Window::Create());
+                    }
                 }
-                if (ImGui::MenuItem("MOS6522")) {
-                    this->OpenWindow(emu, MOS6522Window::Create());
+                if (chips & chip::i8255) {
+                    if (ImGui::MenuItem("i8255")) {
+                        this->OpenWindow(emu, I8255Window::Create());
+                    }
+                }
+                if (chips & chip::m6522) {
+                    if (ImGui::MenuItem("M6522")) {
+                        this->OpenWindow(emu, MOS6522Window::Create());
+                    }
                 }
                 ImGui::EndMenu();
             }
@@ -447,35 +469,6 @@ UI::OnFrame(yakc& emu) {
                 if (emu.is_system(system::any_kc85)) {
                     if (ImGui::MenuItem("Scan for Commands...")) {
                         this->OpenWindow(emu, CommandWindow::Create());
-                    }
-                }
-                if (emu.is_system(system::any_cpc)) {
-                    if (ImGui::MenuItem("CPC CRTC Visualization", nullptr, emu.cpc.video.debug_video)) {
-                        emu.cpc.video.debug_video = !emu.cpc.video.debug_video;
-                    }
-                }
-                if (!(emu.is_system(system::any_zx) || emu.is_system(system::any_cpc))) {
-                    if (ImGui::BeginMenu("Take Snapshot")) {
-                        for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                            strBuilder.Format(32, "Snapshot %d", i);
-                            if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                this->snapshotStorage.TakeSnapshot(emu, i);
-                            }
-                        }
-                        ImGui::EndMenu();
-                    }
-                    if (this->snapshotStorage.HasSnapshots()) {
-                        if (ImGui::BeginMenu("Apply Snapshot")) {
-                            for (int i = 0; i < SnapshotStorage::MaxNumSnapshots; i++) {
-                                if (this->snapshotStorage.HasSnapshot(i)) {
-                                    strBuilder.Format(32, "Snapshot %d", i);
-                                    if (ImGui::MenuItem(strBuilder.AsCStr())) {
-                                        this->snapshotStorage.ApplySnapshot(i, emu);
-                                    }
-                                }
-                            }
-                            ImGui::EndMenu();
-                        }
                     }
                 }
                 ImGui::EndMenu();

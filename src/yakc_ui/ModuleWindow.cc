@@ -11,16 +11,16 @@ namespace YAKC {
 //------------------------------------------------------------------------------
 void
 ModuleWindow::Setup(yakc& emu) {
-    this->setName("Expansion Slots");
+    this->setName("KC85 Expansion Slots");
 }
 
 //------------------------------------------------------------------------------
 void
-ModuleWindow::drawModuleSlot(kc85& kc, uint8_t slot_addr) {
+ModuleWindow::drawModuleSlot(uint8_t slot_addr) {
     ImGui::PushID(slot_addr);
     ImGui::AlignFirstTextHeightToWidgets();
     ImGui::Text("SLOT %02X:", slot_addr); ImGui::SameLine();
-    const auto& slot = kc.exp.slot_by_addr(slot_addr);
+    const auto& slot = kc85.exp.slot_by_addr(slot_addr);
     if (ImGui::Button(slot.mod.name, ImVec2(192, 0))) {
         ImGui::OpenPopup("select");
     }
@@ -32,14 +32,13 @@ ModuleWindow::drawModuleSlot(kc85& kc, uint8_t slot_addr) {
     if (ImGui::BeginPopup("select")) {
         for (int i = 0; i < kc85_exp::num_module_types; i++) {
             kc85_exp::module_type type = (kc85_exp::module_type)i;
-            if (kc.exp.is_module_registered(type)) {
-                const auto& mod = kc.exp.module_template(type);
+            if (kc85.exp.is_module_registered(type)) {
+                const auto& mod = kc85.exp.module_template(type);
                 if (ImGui::Selectable(mod.name)) {
-                    if (kc.exp.slot_occupied(slot_addr)) {
-                        kc.exp.remove_module(slot_addr, kc.board->z80.mem);
+                    if (kc85.exp.slot_occupied(slot_addr)) {
+                        kc85.exp.remove_module(slot_addr);
                     }
-                    kc.exp.insert_module(slot_addr, type);
-                    kc.board->z80.out(&kc, slot_addr<<8|0x80, 0x00);
+                    kc85.exp.insert_module(slot_addr, type);
                 }
             }
         }
@@ -53,8 +52,8 @@ bool
 ModuleWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(384, 116), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
-        this->drawModuleSlot(emu.kc85, 0x08);     // base device, right expansion slot
-        this->drawModuleSlot(emu.kc85, 0x0C);     // base device, left expansion slot
+        this->drawModuleSlot(0x08);     // base device, right expansion slot
+        this->drawModuleSlot(0x0C);     // base device, left expansion slot
         ImGui::TextWrapped("Hover over slot buttons to get help about inserted module!");
     }
     ImGui::End();
