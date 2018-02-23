@@ -82,17 +82,18 @@ the different chips are connected on the motherboard instead of relying on
 
 # Emulated System Details
 
-All the East German computer models had 'unlicensed' Z80-chip-family clones called U880 (Z80 CPU), U855 (Z80 PIO) and U857 (Z80 CTC). 
-The East German clones had some hardware bugfixes compared to the
-original Z80 and thus some undocumented instructions behaved slightly
-different. YAKC emulates the original Z80, not the 'fixed'
-U880 clones (doesn't make a difference with all software I tested).
+All the East German computer models had 'unlicensed' Z80-chip-family clones
+called U880 (Z80 CPU), U855 (Z80 PIO) and U857 (Z80 CTC). The East German
+clones had some hardware bugfixes compared to the original Z80 and thus some
+undocumented instructions behaved slightly different. YAKC emulates the
+original Z80, not the 'fixed' U880 clones (doesn't make a difference with all
+software I tested).
 
 ## KC85/2, KC85/3 and KC85/4
 
 These were East German home computers with fairly impressive hardware- and
 software-capabilities, at least given the 'real-world-socialist' economic
-restrictions of 80's Eastern Germany . Unlike many other Eastern computers,
+restrictions of 80's Eastern Germany. Unlike many other Eastern computers,
 the KC85 line wasn't a direct clone of Western machines, but implemented some
 unique ideas both in hardware and software. In terms of hardware
 capabilities, the ZX Spectrum was the closest Western system, the KC85 had a
@@ -104,7 +105,7 @@ to 1989 (KC85/4)
 - 320x256 display resolution with 16 foreground and 8 background colors
 - 8x4 pixels or 8x1 pixels color attribute resolution (same idea as the
 ZX Spectrum but with smaller color attribute blocks)
-- 16 KByte (KC85/2 and /3) to ~128 KB RAM (KC85/3)
+- 16 KByte (KC85/2 and /3) to ~128 KB RAM (KC85/4)
 - 8 KByte to 20 KByte ROM (operating system and BASIC)
 - no hardware sprites, programmable video signal generator or 
 dedicated sound chip
