@@ -209,7 +209,7 @@ The start screen of Arkanoid RoD on the 128k:
 
 ![ZX 128k Arkanoid](misc/zx128k_arkanoid.png)
 
-## Amstrad CPC 646, 6128 and KC Compact
+## Amstrad CPC 464, 6128 and KC Compact
 
 The Amstrad CPC had a very interesting architecture which is
 surprisingly tricky to emulate. Even though the video system
