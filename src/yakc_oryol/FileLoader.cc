@@ -62,7 +62,7 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Fruity Frank", "fruity_frank.sna", filetype::cpc_sna, system(int(system::kccompact)|int(system::cpc6128)), true);
     this->Items.Add("Ikari Warriors", "ikari_warriors.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("1943", "1943.sna", filetype::cpc_sna, system::any_cpc, true);
-    this->Items.Add("DTC (Demo)", "dtc.sna", filetype::cpc_sna, system::any_cpc, true);
+    this->Items.Add("DTC (Demo)", "dtc.sna", filetype::cpc_sna, system::cpc6128, true);
     #if !ORYOL_EMSCRIPTEN
     this->Items.Add("Tire Au Flan (Demo)", "tire_au_flan.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("Acid Test: Colours", "cpcacid_colours.bin", filetype::cpc_bin, system::any_cpc, true);
