@@ -30,14 +30,12 @@ script:
   - git --version
 
   # LINUX
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips set config yakc-linux-make-unittest; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips set config linux-make-debug; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips clean all; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips make Test; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips run Test; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips build; fi
 
   # OSX
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips set config yakc-osx-make-unittest; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips set config osx-make-debug; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips clean all; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips make Test; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips run Test; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips build; fi
 
