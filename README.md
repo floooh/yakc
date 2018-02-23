@@ -27,6 +27,19 @@ cmake version 3.3.2
 > ./fips run yakcapp
 ```
 
+In debug mode, the emulator tries to load additional ROMs and games
+from a local HTTP server at port 8000. Just do this:
+
+```bash
+> cd yakc/files
+> python -m SimpleHTTPServer
+...
+```
+
+And run the emulator from another terminal window. When building in
+release mode, the emulator will load the data directly from the
+webpage at http://floooh.github.io/virtualkc/
+
 # Overview
 
 YAKC currently emulates the following 8-bit systems:
