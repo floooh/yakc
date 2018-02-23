@@ -169,7 +169,7 @@ A Z1013 running a clone of the ZX81 game Mazogs:
 
 ## ZX Spectrum 48k and 128k
 
-The ZX Spectrum was a popular British machine which was also
+The ZX Spectrum was a British machine which was also
 popular as self-built hobbyist machine or official clone in
 the Eastern hemisphere because of its simple hardware architecture.
 
@@ -184,7 +184,7 @@ The iconic 128k start screen:
 
 ![ZX Spectrum 128k](misc/zx128k.png)
 
-The 48k version on Bomb Jack:
+The 48k version of Bomb Jack:
 
 ![ZX 48k Bomb Jack](misc/zx48k_bombjack.png)
 
