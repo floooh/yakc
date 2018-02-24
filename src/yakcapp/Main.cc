@@ -266,6 +266,9 @@ YakcApp::initRoms() {
     IO::Load("rom:cpc6128_basic.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::cpc6128_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
+    IO::Load("rom:cpc6128_amsdos.bin", [this](IO::LoadResult ioRes) {
+        this->emu.add_rom(rom_images::cpc6128_amsdos, ioRes.Data.Data(), ioRes.Data.Size());
+    });
     IO::Load("rom:kcc_os.bin", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::kcc_os, ioRes.Data.Data(), ioRes.Data.Size());
     });

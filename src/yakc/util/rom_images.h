@@ -30,6 +30,7 @@ public:
         cpc464_basic,           // CPC 464 BASIC ROM
         cpc6128_os,             // CPC 6128 OS ROM
         cpc6128_basic,          // CPC 6128 BASIC ROM
+        cpc6128_amsdos,         // CPC 6128 AMSDOS ROM
         z9001_basic_507_511,    // Z9001 original BASIC ROM
         z9001_os12_1,           // Z9001 OS 1.2 ROM 1
         z9001_os12_2,           // Z9001 OS 1.2 ROM 2

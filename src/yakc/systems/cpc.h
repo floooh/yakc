@@ -87,6 +87,7 @@ public:
     uint16_t casread_trap = 0x0000;
     uint16_t casread_ret = 0x0000;
     uint8_t joymask = 0;
+    uint8_t upper_rom_select = 0;
 
     uint8_t ga_config = 0;          // out to port 0x7Fxx func 0x80
     uint8_t ga_next_video_mode = 0;

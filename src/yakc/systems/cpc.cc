@@ -73,7 +73,10 @@ cpc_t::check_roms(system model, os_rom os) {
         return roms.has(rom_images::cpc464_os) && roms.has(rom_images::cpc464_basic);
     }
     else if (system::cpc6128 == model) {
-        return roms.has(rom_images::cpc6128_os) && roms.has(rom_images::cpc6128_basic);
+        return roms.has(rom_images::cpc6128_os) &&
+               roms.has(rom_images::cpc6128_basic) &&
+               roms.has(rom_images::cpc6128_amsdos);
+
     }
     else if (system::kccompact == model) {
         return roms.has(rom_images::kcc_os) && roms.has(rom_images::kcc_basic);
@@ -153,6 +156,7 @@ cpc_t::poweron(system m) {
     this->cur_model = m;
     this->on = true;
     this->joymask = 0;
+    this->upper_rom_select = 0;
 
     this->init_keymap();
     this->ga_init();
@@ -214,6 +218,7 @@ cpc_t::reset() {
     board.z80.PC = 0x0000;
     this->joymask = 0;
     this->tick_count = 0;
+    this->upper_rom_select = 0;
     this->ga_init();
     mem_unmap_all(&board.mem);
     this->update_memory_mapping();
@@ -401,17 +406,40 @@ cpc_t::cpu_iorq(uint64_t pins) {
                 if (data & (1<<4)) {
                     cpc.ga_int_ctrl();
                 }
-                // only update ROM banks
                 cpc.update_memory_mapping();
                 break;
             case (1<<7)|(1<<6):
                 // RAM memory management (only CPC6128)
                 if (system::cpc6128 == cpc.cur_model) {
                     cpc.ga_ram_config = data;
-                    // only update RAM banks
                     cpc.update_memory_mapping();
                 }
                 break;
+        }
+    }
+    /*
+        Upper ROM Bank number
+
+        This is used to select a ROM in the
+        0xC000..0xFFFF region, without expansions,
+        this is just the BASIC and AMSDOS ROM.
+    */
+    if ((pins & Z80_A13) == 0) {
+        cpc.upper_rom_select = Z80_GET_DATA(pins);
+        cpc.update_memory_mapping();
+    }
+    /*
+        Floppy Disk Interface
+    */
+    if (system::cpc6128 == cpc.cur_model) {
+        if ((pins & (Z80_A10|Z80_A8|Z80_A7)) == 0) {
+            // floppy disk motor control
+        }
+        else if ((pins & (Z80_A10|Z80_A8|Z80_A7)) == Z80_A8) {
+            // floppy controller status/data register
+            if (pins & Z80_RD) {
+                Z80_SET_DATA(pins, 0xFF);
+            }
         }
     }
     return pins;
@@ -875,7 +903,12 @@ cpc_t::update_memory_mapping() {
     else if (system::cpc6128 == this->cur_model) {
         ram_table_index = this->ga_ram_config & 0x07;
         rom0_ptr = roms.ptr(rom_images::cpc6128_os);
-        rom1_ptr = roms.ptr(rom_images::cpc6128_basic);
+        if (this->upper_rom_select == 7) {
+            rom1_ptr = roms.ptr(rom_images::cpc6128_amsdos);
+        }
+        else {
+            rom1_ptr = roms.ptr(rom_images::cpc6128_basic);
+        }
     }
     else {
         ram_table_index = 0;
@@ -1027,7 +1060,7 @@ cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
         vdg.reg[i] = hdr.crtc_regs[i];
     }
     vdg.sel = hdr.crtc_selected;
-    // FIXME: rom_config
+    this->upper_rom_select = hdr.rom_config;
     auto& ppi = board.i8255;
     ppi.output[I8255_PORT_A] = hdr.ppi_a;
     ppi.output[I8255_PORT_B] = hdr.ppi_b;
