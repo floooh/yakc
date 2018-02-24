@@ -285,26 +285,17 @@ Keyboard::StartPlayback(Buffer&& buf) {
 void
 Keyboard::handleTextPlayback() {
     if (this->playbackPos < this->playbackBuffer.Size()) {
-        if (this->playbackCounter-- > 0) {
-            this->emu->on_ascii(this->playbackChar);
-        }
-        else {
-            // give the system some time before the next character
-            this->playbackFlipFlop = !this->playbackFlipFlop;
-            if (this->playbackFlipFlop) {
-                this->playbackCounter = 4;
-                // feed the next character from buffer
-                // filter out unwanted characters and convert
-                do {
-                    this->playbackChar = this->playbackBuffer.Data()[this->playbackPos++];
+        // give the system some time between characters
+        if (this->playbackCounter-- == 0) {
+            this->playbackCounter = 10;
+            // feed the next character from buffer
+            // filter out unwanted characters and convert
+            uint8_t chr = this->playbackBuffer.Data()[this->playbackPos++];
+            if (chr != '\t' && chr != '\r') {
+                if (chr == '\n') {
+                    chr = 0x0D;
                 }
-                while ((this->playbackChar == '\t') || (this->playbackChar == '\r'));
-                if (this->playbackChar == '\n') {
-                    this->playbackChar = 0x0D;
-                }
-            }
-            else {
-                this->playbackCounter = 4;
+                this->emu->on_ascii(chr);
             }
         }
     }
