@@ -514,6 +514,7 @@ uint8_t
 cpc_t::psg_in(int port_id) {
     // read the keyboard matrix and joystick port
     if (port_id == AY38910_PORT_A) {
+        uint8_t data = kbd_scan_lines(&board.kbd);
         if (board.kbd.active_columns & (1<<9)) {
             /*
                 joystick input is implemented like this:
@@ -527,11 +528,9 @@ cpc_t::psg_in(int port_id) {
                   joystick input will be provided on the keyboard
                   matrix lines
             */
-            return ~cpc.joymask;
+            data |= cpc.joymask;
         }
-        else {
-            return ~kbd_scan_lines(&board.kbd);
-        }
+        return ~data;
     }
     else {
         // this shouldn't happen since the AY-3-8912 only has one IO port
