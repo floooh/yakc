@@ -11,6 +11,7 @@
 #include "IO/IO.h"
 #include "HttpFS/HTTPFileSystem.h"
 #include "yakc/yakc.h"
+#include "yakc/systems/kc85.h"
 #include "yakc_oryol/Draw.h"
 #include "yakc_oryol/Audio.h"
 #include "yakc_oryol/Keyboard.h"
@@ -283,6 +284,15 @@ YakcApp::initRoms() {
     });
     IO::Load("rom:dosrom.u15", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::atom_dos, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:c64_kernalv3.bin", [this](IO::LoadResult ioRes) {
+        this->emu.add_rom(rom_images::c64_kernalv3, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:c64_char.bin", [this](IO::LoadResult ioRes) {
+        this->emu.add_rom(rom_images::c64_char, ioRes.Data.Data(), ioRes.Data.Size());
+    });
+    IO::Load("rom:c64_basic.bin", [this](IO::LoadResult ioRes) {
+        this->emu.add_rom(rom_images::c64_basic, ioRes.Data.Data(), ioRes.Data.Size());
     });
 }
 

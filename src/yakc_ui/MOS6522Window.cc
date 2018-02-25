@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "MOS6522Window.h"
 #include "IMUI/IMUI.h"
-#include "chips/m6522.h"
+#include "yakc/util/breadboard.h"
 
 using namespace Oryol;
 

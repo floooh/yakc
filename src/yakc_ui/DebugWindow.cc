@@ -6,6 +6,7 @@
 #include "yakc_ui/UI.h"
 #include "Disasm.h"
 #include "Util.h"
+#include "yakc/util/breadboard.h"
 
 using namespace Oryol;
 

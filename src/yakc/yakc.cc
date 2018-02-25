@@ -2,6 +2,13 @@
 //  yakc.cc
 //------------------------------------------------------------------------------
 #include "yakc.h"
+#include "yakc/systems/z1013.h"
+#include "yakc/systems/z9001.h"
+#include "yakc/systems/zx.h"
+#include "yakc/systems/kc85.h"
+#include "yakc/systems/atom.h"
+#include "yakc/systems/cpc.h"
+#include "yakc/systems/c64.h"
 #include <stdio.h>
 
 namespace YAKC {
@@ -10,6 +17,7 @@ namespace YAKC {
 void
 yakc::init(const ext_funcs& sys_funcs) {
     func = sys_funcs;
+    mem_init(&board.mem);
     fill_random(board.random, sizeof(board.random));
     this->cpu_ahead = false;
     this->cpu_behind = false;
@@ -44,6 +52,9 @@ yakc::check_roms(system m, os_rom os) {
     else if (is_system(m, system::any_cpc)) {
         return cpc_t::check_roms(m, os);
     }
+    else if (is_system(m, system::any_c64)) {
+        return c64_t::check_roms(m, os);
+    }
     else {
         return false;
     }
@@ -76,6 +87,9 @@ yakc::poweron(system m, os_rom rom) {
     else if (this->is_system(system::any_cpc)) {
         cpc.poweron(m);
     }
+    else if (this->is_system(system::any_c64)) {
+        c64.poweron(m);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -99,12 +113,15 @@ yakc::poweroff() {
     if (cpc.on) {
         cpc.poweroff();
     }
+    if (c64.on) {
+        c64.poweroff();
+    }
 }
 
 //------------------------------------------------------------------------------
 bool
 yakc::switchedon() const {
-    return z1013.on || z9001.on | zx.on | kc85.on | atom.on | cpc.on;
+    return z1013.on || z9001.on | zx.on | kc85.on | atom.on | cpc.on | c64.on;
 }
 
 //------------------------------------------------------------------------------
@@ -130,6 +147,9 @@ yakc::reset() {
     if (cpc.on) {
         cpc.reset();
     }
+    if (c64.on) {
+        c64.reset();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -147,7 +167,7 @@ yakc::is_system(system model, system mask) {
 //------------------------------------------------------------------------------
 cpu_model
 yakc::cpu_type() const {
-    if (this->is_system(system::acorn_atom)) {
+    if (this->is_system(system::acorn_atom) || this->is_system(system::any_c64)) {
         return cpu_model::m6502;
     }
     else {
@@ -169,7 +189,7 @@ yakc::chip_types() const {
             return chip::z80|chip::z80pio;
         case system::z9001:
         case system::kc87:
-            return chip::z80|chip::z80pio|chip::z80pio2|chip::z80ctc;
+            return chip::z80|chip::z80pio|chip::z80pio_2|chip::z80ctc;
         case system::zxspectrum48k:
             return chip::z80;
         case system::zxspectrum128k:
@@ -180,6 +200,9 @@ yakc::chip_types() const {
             return chip::z80|chip::ay38910|chip::i8255|chip::mc6845;
         case system::acorn_atom:
             return chip::m6502|chip::i8255|chip::m6522|chip::mc6847;
+        case system::c64_pal:
+        case system::c64_ntsc:
+            return chip::m6502|chip::m6526|chip::m6526_2|chip::m6567|chip::m6581;
         default:
             return 0;
     }
@@ -236,6 +259,9 @@ yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
         }
         else if (cpc.on) {
             this->abs_cycle_count = cpc.exec(this->abs_cycle_count, abs_end_cycles);
+        }
+        else if (c64.on) {
+            this->abs_cycle_count = c64.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else {
             this->abs_cycle_count = abs_end_cycles;
@@ -303,6 +329,9 @@ yakc::on_ascii(uint8_t ascii) {
     if (cpc.on) {
         cpc.on_ascii(ascii);
     }
+    if (c64.on) {
+        c64.on_ascii(ascii);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -325,6 +354,9 @@ yakc::on_key_down(uint8_t key) {
     }
     if (cpc.on) {
         cpc.on_key_down(key);
+    }
+    if (c64.on) {
+        c64.on_key_down(key);
     }
 }
 
@@ -349,6 +381,9 @@ yakc::on_key_up(uint8_t key) {
     if (cpc.on) {
         cpc.on_key_up(key);
     }
+    if (c64.on) {
+        c64.on_key_up(key);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -366,6 +401,9 @@ yakc::on_joystick(uint8_t joy0_kbd_mask, uint8_t joy0_pad_mask) {
     }
     if (cpc.on) {
         cpc.on_joystick(joy0_mask);
+    }
+    if (c64.on) {
+        c64.on_joystick(joy0_mask);
     }
 }
 
@@ -402,6 +440,9 @@ yakc::num_joysticks() const {
     else if (cpc.on) {
         return cpc.num_joysticks();
     }
+    else if (c64.on) {
+        return c64.num_joysticks();
+    }
     else {
         return 0;
     }
@@ -428,6 +469,9 @@ yakc::system_info() const {
     else if (cpc.on) {
         return cpc.system_info();
     }
+    else if (c64.on) {
+        return c64.system_info();
+    }
     else {
         return "no info available";
     }
@@ -451,6 +495,9 @@ yakc::fill_sound_samples(float* buffer, int num_samples) {
         }
         else if (cpc.on) {
             return cpc.decode_audio(buffer, num_samples);
+        }
+        else if (c64.on) {
+            return c64.decode_audio(buffer, num_samples);
         }
     }
     // fallthrough: all systems off, or debugging active: return silence
@@ -477,6 +524,9 @@ yakc::framebuffer(int& out_width, int& out_height) {
     }
     else if (cpc.on) {
         return cpc.framebuffer(out_width, out_height);
+    }
+    else if (c64.on) {
+        return c64.framebuffer(out_width, out_height);
     }
     else {
         out_width = 0;

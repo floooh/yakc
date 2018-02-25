@@ -46,7 +46,10 @@ public:
         atom_basic,             // Acorn Atom BASIC + kernel
         atom_float,             // Acorn Atom floating point extensions
         atom_dos,               // Acorn Atom DOS ROM
-
+        c64_basic,              // C64 BASIC ROM
+        c64_char,               // C64 Character ROM
+        c64_kernalv3,           // C64 Kernal ROM Revision 3
+        
         num_roms
     };
 

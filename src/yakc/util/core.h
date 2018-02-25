@@ -58,12 +58,15 @@ enum class system {
     cpc6128         = (1<<12),
     kccompact       = (1<<13),
     acorn_atom      = (1<<15),
+    c64_pal         = (1<<16),
+    c64_ntsc        = (1<<17),
     none = 0,
     any_kc85        = (kc85_2|kc85_3|kc85_4),
     any_z1013       = (z1013_01|z1013_16|z1013_64),
     any_z9001       = (z9001|kc87),
     any_zx          = (zxspectrum48k|zxspectrum128k),
     any_cpc         = (cpc464|cpc6128|kccompact),
+    any_c64         = (c64_pal|c64_ntsc),
     any = 0x7FFFFFFF
 };
 
@@ -98,14 +101,18 @@ namespace chip {
     enum id {
         z80 = (1<<0),
         z80pio = (1<<1),
-        z80pio2 = (1<<2),
+        z80pio_2 = (1<<2),
         z80ctc = (1<<3),
         ay38910 = (1<<4),
         m6502 = (1<<5),
         m6522 = (1<<6),
         i8255 = (1<<7),
         mc6847 = (1<<8),
-        mc6845 = (1<<9)
+        mc6845 = (1<<9),
+        m6526 = (1<<10),    // C64 CIA
+        m6526_2 = (1<<11),
+        m6567 = (1<<12),    // C64 VIC-II
+        m6581 = (1<<13)     // C64 SID
     };
     typedef uint32_t mask;
 };

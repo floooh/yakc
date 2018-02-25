@@ -22,6 +22,7 @@ fips_begin_module(yakc)
         zx.h zx.cc
         cpc.h cpc.cc
         atom.h atom.cc
+        c64.h c64.cc
     )
     fips_dir(roms)
     fips_generate(FROM rom_dumps.yml TYPE dump)

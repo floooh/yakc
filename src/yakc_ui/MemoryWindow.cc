@@ -4,6 +4,7 @@
 #include "IMUI/IMUI.h"
 #include "MemoryWindow.h"
 #include "Input/Input.h"
+#include "yakc/util/breadboard.h"
 
 using namespace Oryol;
 

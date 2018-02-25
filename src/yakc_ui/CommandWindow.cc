@@ -6,6 +6,7 @@
 #include "Core/String/StringBuilder.h"
 #include "UI.h"
 #include "Util.h"
+#include "yakc/util/breadboard.h"
 #include <ctype.h>
 
 using namespace Oryol;

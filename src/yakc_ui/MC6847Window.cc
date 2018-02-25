@@ -4,6 +4,7 @@
 #include "MC6847Window.h"
 #include "IMUI/IMUI.h"
 #include "yakc_ui/UI.h"
+#include "yakc/util/breadboard.h"
 
 using namespace Oryol;
 

@@ -5,6 +5,7 @@
 #include "z80dasm.h"
 #include "mos6502dasm.h"
 #include "Core/Memory/Memory.h"
+#include "yakc/util/breadboard.h"
 
 using namespace Oryol;
 using namespace z80dasm;

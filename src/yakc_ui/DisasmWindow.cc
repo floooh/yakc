@@ -5,6 +5,7 @@
 #include "IMUI/IMUI.h"
 #include "Util.h"
 #include "Disasm.h"
+#include "yakc/util/breadboard.h"
 
 using namespace Oryol;
 

@@ -8,12 +8,6 @@
 #include "yakc/util/core.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/tapedeck.h"
-#include "yakc/systems/z1013.h"
-#include "yakc/systems/z9001.h"
-#include "yakc/systems/zx.h"
-#include "yakc/systems/kc85.h"
-#include "yakc/systems/atom.h"
-#include "yakc/systems/cpc.h"
 #include <functional>
 
 namespace YAKC {

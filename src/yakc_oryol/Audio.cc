@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "Audio.h"
 #include "soloud.h"
+#include "yakc/util/breadboard.h"
 
 using namespace Oryol;
 

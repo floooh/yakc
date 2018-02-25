@@ -235,6 +235,8 @@ UI::OnFrame(yakc& emu) {
                 case system::cpc6128:           model = "CPC6128"; break;
                 case system::kccompact:         model = "KCCompact"; break;
                 case system::acorn_atom:        model = "Acorn Atom"; break;
+                case system::c64_pal:           model = "C64 (PAL)"; break;
+                case system::c64_ntsc:          model = "C64 (NTSC)"; break;
                 default: model="??"; break;
             }
             #if ORYOL_EMSCRIPTEN
@@ -357,6 +359,21 @@ UI::OnFrame(yakc& emu) {
                         }
                         ImGui::EndMenu();
                     }
+                    if (ImGui::BeginMenu("Commodore")) {
+                        if (emu.check_roms(system::c64_pal)) {
+                            if (ImGui::MenuItem("C64 (PAL)")) {
+                                emu.poweroff();
+                                emu.poweron(system::c64_pal);
+                            }
+                        }
+                        if (emu.check_roms(system::c64_ntsc)) {
+                            if (ImGui::MenuItem("C64 (NTSC)")) {
+                                emu.poweroff();
+                                emu.poweron(system::c64_ntsc);
+                            }
+                        }
+                        ImGui::EndMenu();
+                    }
                     ImGui::EndMenu();
                 }
                 if (ImGui::MenuItem("Info...")) {
@@ -416,7 +433,7 @@ UI::OnFrame(yakc& emu) {
                         this->OpenWindow(emu, PIOWindow::Create("Z80 PIO", &board.z80pio));
                     }
                 }
-                if (chips & chip::z80pio2) {
+                if (chips & chip::z80pio_2) {
                     if (ImGui::MenuItem("Z80 PIO 2")) {
                         this->OpenWindow(emu, PIOWindow::Create("Z80 PIO 2", &board.z80pio2));
                     }

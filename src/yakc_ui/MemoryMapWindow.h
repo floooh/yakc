@@ -5,6 +5,7 @@
     @brief visualize the current memory map configuration
 */
 #include "yakc_ui/WindowBase.h"
+#include "yakc/systems/kc85.h"
 
 namespace YAKC {
 

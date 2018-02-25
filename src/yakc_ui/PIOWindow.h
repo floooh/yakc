@@ -5,6 +5,7 @@
     @brief visualize the current PIO state
 */
 #include "yakc_ui/WindowBase.h"
+#include "yakc/util/breadboard.h"
 
 namespace YAKC {
 

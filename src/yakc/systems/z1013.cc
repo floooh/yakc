@@ -76,7 +76,6 @@ z1013_t::poweron(system m) {
 
     // map memory
     clear(board.ram, sizeof(board.ram));
-    mem_init(&board.mem);
     this->init_memorymap();
 
     // initialize the clock, the z1013_01 runs at 1MHz, all others at 2MHz

@@ -4,6 +4,7 @@
 #include "CTCWindow.h"
 #include "IMUI/IMUI.h"
 #include "Core/String/StringBuilder.h"
+#include "yakc/util/breadboard.h"
 
 using namespace Oryol;
 
