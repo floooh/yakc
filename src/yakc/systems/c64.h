@@ -33,6 +33,8 @@ public:
     static uint8_t cpu_port_in();
     /// callback for M6510 port output
     static void cpu_port_out(uint8_t data);
+    /// VIC-II memory fetch callback
+    static uint64_t vic_fetch(uint64_t pins);
 
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);

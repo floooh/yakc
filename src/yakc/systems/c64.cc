@@ -36,6 +36,7 @@ c64_t::poweron(system m) {
     // setup initial memory map
     this->init_memory_map();
 
+    // initialize the CPU
     board.freq_hz = (m == system::c64_pal) ? 985248 : 1022727;
     m6502_desc_t cpu_desc = { };
     cpu_desc.tick_cb = cpu_tick;
@@ -43,6 +44,14 @@ c64_t::poweron(system m) {
     cpu_desc.out_cb = cpu_port_out;
     m6502_init(&board.m6502, &cpu_desc);
     m6502_reset(&board.m6502);
+    
+    // initialize the VIC-II display chip
+    m6567_desc_t vic_desc = { };
+    vic_desc.type = (m == system::c64_pal) ? M6567_TYPE_6569 : M6567_TYPE_6567R8;
+    vic_desc.fetch_cb = vic_fetch;
+    vic_desc.rgba8_buffer = board.rgba8_buffer;
+    vic_desc.rgba8_buffer_size = sizeof(board.rgba8_buffer);
+    m6567_init(&board.m6567, &vic_desc);
 }
 
 //------------------------------------------------------------------------------
@@ -60,6 +69,7 @@ c64_t::reset() {
     this->io_mapped = true;
     this->update_memory_map();
     m6502_reset(&board.m6502);
+    m6567_reset(&board.m6567);
 }
 
 //------------------------------------------------------------------------------
@@ -77,6 +87,10 @@ uint64_t
 c64_t::cpu_tick(uint64_t pins) {
     const uint16_t addr = M6502_GET_ADDR(pins);
 
+    // tick the VIC-II display chip
+    // FIXME: stop CPU on 'bad lines'
+    pins = m6567_tick(&board.m6567, pins);
+
     // CPU port I/O?
     if (M6510_CHECK_IO(pins)) {
         pins = m6510_iorq(&board.m6502, pins);
@@ -84,12 +98,18 @@ c64_t::cpu_tick(uint64_t pins) {
     else {
         // check for I/O range at 0xD000..0xDFFF
         if (c64.io_mapped && ((addr & 0xF000) == 0xD000)) {
-            // FIXME: perform memory-mapped IO
-            if (pins & M6502_RW) {
-                printf("IO READ: %04X\n", addr);
+            // VIC-II IO request?
+            if ((addr & 0x0F00) == 0x0000) {
+                uint64_t vic_pins = (pins & M6502_PIN_MASK)|M6567_CS;
+                pins = m6567_iorq(&board.m6567, vic_pins) & M6502_PIN_MASK;
             }
             else {
-                printf("IO WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
+                if (pins & M6502_RW) {
+                    printf("IO READ: %04X\n", addr);
+                }
+                else {
+                    printf("IO WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
+                }
             }
         }
         else {
@@ -128,6 +148,13 @@ c64_t::cpu_port_out(uint8_t data) {
     */
     c64.cpu_port = data;
     c64.update_memory_map();
+}
+
+//------------------------------------------------------------------------------
+uint64_t
+c64_t::vic_fetch(uint64_t pins) {
+    // FIXME
+    return pins;
 }
 
 //------------------------------------------------------------------------------
