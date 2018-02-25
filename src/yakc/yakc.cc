@@ -56,6 +56,7 @@ yakc::poweron(system m, os_rom rom) {
     this->os = rom;
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
+    this->enable_joystick(false);
     board.dbg.init(this->cpu_type());
     if (this->is_system(system::any_z1013)) {
         z1013.poweron(m);
@@ -109,6 +110,7 @@ yakc::switchedon() const {
 //------------------------------------------------------------------------------
 void
 yakc::reset() {
+    this->enable_joystick(false);
     this->overflow_cycles = 0;
     if (z1013.on) {
         z1013.reset();
