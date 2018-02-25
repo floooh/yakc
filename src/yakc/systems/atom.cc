@@ -117,7 +117,9 @@ atom_t::poweron() {
 
     // 1 MHz CPU clock frequency
     board.freq_hz = 1000000;
-    m6502_init(&board.m6502, cpu_tick);
+    m6502_desc_t m6502_desc = { };
+    m6502_desc.tick_cb = cpu_tick;
+    m6502_init(&board.m6502, &m6502_desc);
     m6502_reset(&board.m6502);
     i8255_init(&board.i8255, ppi_in, ppi_out);
     m6522_init(&board.m6522, via_in, via_out);
