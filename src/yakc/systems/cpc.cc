@@ -5,6 +5,10 @@
 //  - 646: http://www.cpcwiki.eu/imgs/6/6d/Schaltplan_cpc_464.jpg
 //  - 664: http://www.cpcwiki.eu/index.php/File:CPC664_Schematic.png
 //  - 6128: http://www.cpcwiki.eu/index.php/File:CPC6128_Schematic.png
+//
+//  TODO:
+//      - graphics in some demos still broken
+//      - floppy disk controller emulation and DSK file loading
 //------------------------------------------------------------------------------
 #include "cpc.h"
 #include "yakc/util/filetypes.h"

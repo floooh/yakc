@@ -66,11 +66,11 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Donkey Kong", "donkey_kong.sna", filetype::cpc_sna, system::cpc6128, true);
     this->Items.Add("DTC (Demo)", "dtc.sna", filetype::cpc_sna, system::cpc6128, true);
     this->Items.Add("Wolfenstrad (Demo)", "wolfenstrad.sna", filetype::cpc_sna, system::cpc6128, true);
+    this->Items.Add("Ecole Buissonniere (Demo)", "ecole_buissonniere.sna", filetype::cpc_sna, system::cpc6128, true);
+    this->Items.Add("Backtro (Demo, broken)", "backtro.sna", filetype::cpc_sna, system::cpc6128, true);
+    this->Items.Add("From Scratch (Demo, broken)", "from_scratch.sna", filetype::cpc_sna, system::cpc6128, true);
+    this->Items.Add("Tire Au Flan (Demo, broken)", "tire_au_flan.sna", filetype::cpc_sna, system::any_cpc, true);
     #if !ORYOL_EMSCRIPTEN
-    this->Items.Add("Ecole Buissonniere", "ecole_buissonniere.sna", filetype::cpc_sna, system::cpc6128, true);
-    this->Items.Add("Backtro (Demo)", "backtro.sna", filetype::cpc_sna, system::cpc6128, true);
-    this->Items.Add("From Scratch (Demo)", "from_scratch.sna", filetype::cpc_sna, system::cpc6128, true);
-    this->Items.Add("Tire Au Flan (Demo)", "tire_au_flan.sna", filetype::cpc_sna, system::any_cpc, true);
     this->Items.Add("Acid Test: Colours", "cpcacid_colours.bin", filetype::cpc_bin, system::any_cpc, true);
     this->Items.Add("Acid Test: Border", "cpcacid_cpcborder.bin", filetype::cpc_bin, system::any_cpc, true);
     this->Items.Add("Acid Test: Col", "cpcacid_cpccol.bin", filetype::cpc_bin, system::any_cpc, true);
