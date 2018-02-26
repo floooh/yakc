@@ -51,6 +51,10 @@ c64_t::poweron(system m) {
     vic_desc.fetch_cb = vic_fetch;
     vic_desc.rgba8_buffer = board.rgba8_buffer;
     vic_desc.rgba8_buffer_size = sizeof(board.rgba8_buffer);
+    vic_desc.vis_x0 = 0;
+    vic_desc.vis_y0 = 0;
+    vic_desc.vis_w = 512;
+    vic_desc.vis_h = 312;
     m6567_init(&board.m6567, &vic_desc);
 }
 
@@ -243,9 +247,7 @@ c64_t::on_joystick(uint8_t mask) {
 //------------------------------------------------------------------------------
 const void*
 c64_t::framebuffer(int& out_width, int &out_height) {
-    // FIXME
-    out_width = 320;
-    out_height = 200;
+    m6567_display_size(&board.m6567, &out_width, &out_height);
     return board.rgba8_buffer;
 }
 

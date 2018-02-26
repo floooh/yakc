@@ -5,6 +5,7 @@
     @brief emulator app utility functions
 */
 #include "yakc/util/core.h"
+#include "IMUI/IMUI.h"
 
 namespace YAKC {
 
@@ -24,6 +25,8 @@ public:
     static uint16_t ParseUWord(const char* str, uint16_t oldVal);
     /// parse 2 hex characters into an uint8_t, return old value if failed
     static uint8_t ParseUByte(const char* str, uint8_t oldVal);
+    /// convert a RGBA8 uint32_t to an ImVec4
+    static ImVec4 RGBA8toImVec4(uint32_t c);
 };
 
 } // namespace YAKC

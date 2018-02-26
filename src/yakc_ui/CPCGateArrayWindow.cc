@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "CPCGateArrayWindow.h"
 #include "yakc_ui/UI.h"
+#include "yakc_ui/Util.h"
 #include "yakc/systems/cpc.h"
 
 using namespace Oryol;
@@ -16,23 +17,12 @@ CPCGateArrayWindow::Setup(yakc& emu) {
 }
 
 //------------------------------------------------------------------------------
-static ImVec4
-uint32ToImVec4(uint32_t c) {
-    ImVec4 v;
-    v.x = float(c & 0xFF) / 255.0f;
-    v.y = float((c>>8) & 0xFF) / 255.0f;
-    v.z = float((c>>16) & 0xFF) / 255.0f;
-    v.w = float((c>>16) & 0xFF) / 255.0f;
-    return v;
-}
-
-//------------------------------------------------------------------------------
 void
 CPCGateArrayWindow::drawColors() {
     const ImVec2 size(12, 12);
     ImGui::Text("Palette Colors:");
     for (int i = 0; i < 16; i++) {
-        this->paletteColors[i] = uint32ToImVec4(cpc.ga_palette[i]);
+        this->paletteColors[i] = Util::RGBA8toImVec4(cpc.ga_palette[i]);
         ImGui::PushID(i);
         ImGui::ColorButton("##palette_color", this->paletteColors[i], ImGuiColorEditFlags_NoAlpha, size);
         ImGui::PopID();
@@ -41,7 +31,7 @@ CPCGateArrayWindow::drawColors() {
         }
     }
     ImGui::Text("Border Color: ");
-    this->borderColor = uint32ToImVec4(cpc.ga_border_color);
+    this->borderColor = Util::RGBA8toImVec4(cpc.ga_border_color);
     ImGui::ColorButton("##border_color", this->borderColor, ImGuiColorEditFlags_NoAlpha, size);
 }
 

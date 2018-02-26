@@ -88,4 +88,15 @@ Util::ParseUByte(const char* str, uint8_t oldVal) {
     }
 }
 
+//------------------------------------------------------------------------------
+ImVec4
+Util::RGBA8toImVec4(uint32_t c) {
+    ImVec4 v;
+    v.x = float(c & 0xFF) / 255.0f;
+    v.y = float((c>>8) & 0xFF) / 255.0f;
+    v.z = float((c>>16) & 0xFF) / 255.0f;
+    v.w = float((c>>16) & 0xFF) / 255.0f;
+    return v;
+}
+
 } // namespace YAKC

@@ -21,6 +21,7 @@
 #include "MC6847Window.h"
 #include "I8255Window.h"
 #include "MOS6522Window.h"
+#include "M6567Window.h"
 #include "TapeDeckWindow.h"
 #include "CPCGateArrayWindow.h"
 #include "Core/Time/Clock.h"
@@ -466,6 +467,11 @@ UI::OnFrame(yakc& emu) {
                 if (chips & chip::m6522) {
                     if (ImGui::MenuItem("M6522")) {
                         this->OpenWindow(emu, MOS6522Window::Create());
+                    }
+                }
+                if (chips & chip::m6567) {
+                    if (ImGui::MenuItem("M6567 (VIC-II)")) {
+                        this->OpenWindow(emu, M6567Window::Create());
                     }
                 }
                 ImGui::EndMenu();
