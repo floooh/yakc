@@ -13,7 +13,7 @@ namespace YAKC {
 //------------------------------------------------------------------------------
 void
 M6567Window::Setup(yakc& emu) {
-    this->setName("MC6567 (VIC-II) State");
+    this->setName("M6567 (VIC-II) State");
     for (int i = 0; i < 16; i++) {
         this->paletteColors[i] = Util::RGBA8toImVec4(m6567_color(i));
     }
@@ -31,7 +31,7 @@ M6567Window::drawColor(const char* text, uint8_t palIndex) {
 #define UINT8_BITS(m) m&(1<<7)?'1':'0',m&(1<<6)?'1':'0',m&(1<<5)?'1':'0',m&(1<<4)?'1':'0',m&(1<<3)?'1':'0',m&(1<<2)?'1':'0',m&(1<<1)?'1':'0',m&(1<<0)?'1':'0'
 bool
 M6567Window::Draw(yakc& emy) {
-    ImGui::SetNextWindowSize(ImVec2(380, 448), ImGuiSetCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(380, 460), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         m6567_t& vic = board.m6567;
         const char* type = "unknown";
@@ -101,6 +101,7 @@ M6567Window::Draw(yakc& emy) {
         ImGui::Text("brd_right: %2d  brd_btm: %3d", vic.border_right, vic.border_bottom);
         ImGui::Text("m_border: %s v_border: %s", vic.main_border?"ON ":"OFF", vic.vert_border?"ON ":"OFF");
         ImGui::Text("h_blank:  %s v_blank:  %s", vic.hs?"ON ":"OFF", vic.vs?"ON ":"OFF");
+        ImGui::Text("badline:  %s", vic.badline?"ON ":"OFF");
         ImGui::Text("crt_x: %2d crt_y: %3d", vic.crt_x, vic.crt_y);
 
     }
