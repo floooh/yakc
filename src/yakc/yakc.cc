@@ -18,6 +18,7 @@ void
 yakc::init(const ext_funcs& sys_funcs) {
     func = sys_funcs;
     mem_init(&board.mem);
+    mem_init(&board.mem2);
     fill_random(board.random, sizeof(board.random));
     this->cpu_ahead = false;
     this->cpu_behind = false;

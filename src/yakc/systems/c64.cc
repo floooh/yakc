@@ -102,17 +102,54 @@ c64_t::cpu_tick(uint64_t pins) {
     else {
         // check for I/O range at 0xD000..0xDFFF
         if (c64.io_mapped && ((addr & 0xF000) == 0xD000)) {
-            // VIC-II IO request?
-            if ((addr & 0x0F00) == 0x0000) {
+            if (addr < 0xD400) {
+                // VIC-II IO request
                 uint64_t vic_pins = (pins & M6502_PIN_MASK)|M6567_CS;
                 pins = m6567_iorq(&board.m6567, vic_pins) & M6502_PIN_MASK;
             }
-            else {
+            else if (addr < 0xD800) {
+                // SID IO request
                 if (pins & M6502_RW) {
-                    printf("IO READ: %04X\n", addr);
+                    printf("SID READ: %04X\n", addr);
                 }
                 else {
-                    printf("IO WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
+                    printf("SID WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
+                }
+            }
+            else if (addr < 0xDC00) {
+                // color ram access
+                if (pins & M6502_RW) {
+                    M6502_SET_DATA(pins, c64.color_ram[addr & 0x03FF]);
+                }
+                else {
+                    c64.color_ram[addr & 0x03FF] = M6502_GET_DATA(pins);
+                }
+            }
+            else if (addr < 0xDD00) {
+                // CIA-1 IO request
+                if (pins & M6502_RW) {
+                    printf("CIA-1 READ: %04X\n", addr);
+                }
+                else {
+                    printf("CIA-1 WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
+                }
+            }
+            else if (addr < 0xDE00) {
+                // CIA-2 IO request
+                if (pins & M6502_RW) {
+                    printf("CIA-2 READ: %04X\n", addr);
+                }
+                else {
+                    printf("CIA-2 WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
+                }
+            }
+            else {
+                // expansion system
+                if (pins & M6502_RW) {
+                    printf("EXP READ: %04X\n", addr);
+                }
+                else {
+                    printf("EXP WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
                 }
             }
         }
@@ -155,10 +192,12 @@ c64_t::cpu_port_out(uint8_t data) {
 }
 
 //------------------------------------------------------------------------------
-uint64_t
-c64_t::vic_fetch(uint64_t pins) {
-    // FIXME
-    return pins;
+uint16_t
+c64_t::vic_fetch(uint16_t addr) {
+    // FIXME: get upper 4 bits form CIA-2 port A (inverted) for the upper 4 address bits
+    // read the 8-bit value
+    uint16_t data = mem_rd(&board.mem2, addr) | (c64.color_ram[addr & 0x03FF]<<8);
+    return data;
 }
 
 //------------------------------------------------------------------------------
@@ -168,6 +207,8 @@ c64_t::init_memory_map() {
     YAKC_ASSERT(roms.size(rom_images::c64_char) == 0x1000);
     YAKC_ASSERT(roms.size(rom_images::c64_kernalv3) == 0x2000);
     clear(board.ram, sizeof(board.ram));
+
+    // setup the initial CPU memory map
     mem_unmap_all(&board.mem);
     uint8_t* ram = &(board.ram[0][0]);
     // 0000..9FFF and C000.CFFF is always RAM
@@ -175,6 +216,16 @@ c64_t::init_memory_map() {
     mem_map_ram(&board.mem, 0, 0xC000, 0x1000, ram+0xC000);
     // A000..BFFF, D000..DFFF and E000..FFFF are configurable
     this->update_memory_map();
+
+    // setup the separate VIC-II memory map (16 KB RAM 4x mirrored,
+    // with character ROM at 0x1000.0x1FFF and 0x9000..0x9FFF)
+    mem_unmap_all(&board.mem2);
+    mem_map_ram(&board.mem2, 1, 0x0000, 0x4000, ram);
+    mem_map_ram(&board.mem2, 1, 0x4000, 0x4000, ram);
+    mem_map_ram(&board.mem2, 1, 0x8000, 0x4000, ram);
+    mem_map_ram(&board.mem2, 1, 0xC000, 0x4000, ram);
+    mem_map_rom(&board.mem2, 0, 0x1000, 0x1000, roms.ptr(rom_images::c64_char));
+    mem_map_rom(&board.mem2, 0, 0x9000, 0x1000, roms.ptr(rom_images::c64_char));
 }
 
 //------------------------------------------------------------------------------

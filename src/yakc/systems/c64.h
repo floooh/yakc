@@ -33,8 +33,8 @@ public:
     static uint8_t cpu_port_in();
     /// callback for M6510 port output
     static void cpu_port_out(uint8_t data);
-    /// VIC-II memory fetch callback
-    static uint64_t vic_fetch(uint64_t pins);
+    /// VIC-II memory fetch callback (returns a 4+8 bits value)
+    static uint16_t vic_fetch(uint16_t addr);
 
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);
@@ -56,7 +56,9 @@ public:
     bool on = false;
     system model = system::c64_pal;
     uint8_t cpu_port = 0;
+    uint8_t cia2_a = 0;
     bool io_mapped = false;
+    uint8_t color_ram[1024];    // special static color ram
 };
 extern c64_t c64;
 

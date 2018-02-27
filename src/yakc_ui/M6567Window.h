@@ -20,6 +20,7 @@ public:
     void drawColor(const char* text, uint8_t palIndex);
 
     ImVec4 paletteColors[16];
+    bool badline = false;
 };
 
 } // namespace YAKC

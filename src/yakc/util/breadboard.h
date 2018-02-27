@@ -28,6 +28,7 @@ namespace YAKC {
 struct breadboard {
     int freq_hz = 0;
     mem_t mem;
+    mem_t mem2;
     z80_t z80;
     z80pio_t z80pio;
     z80pio_t z80pio2;

@@ -59,8 +59,8 @@ MC6845Window::Draw(yakc& emu) {
         ImGui::Text("Disp Enable: %s", (mc.h_de&&mc.v_de) ? "ON":"OFF");
         ImGui::Text("Mem Address:  %04X", mc.ma);
 
-        ImGui::Separator();
         if (board.dbg.break_stopped()) {
+            ImGui::Separator();
             if (ImGui::Button(">| HSync")) {
                 this->pins = board.mc6845.pins;
                 emu.step_until([this](uint32_t ticks)->bool {
