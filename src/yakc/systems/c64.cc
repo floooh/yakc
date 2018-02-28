@@ -61,10 +61,10 @@ c64_t::poweron(system m) {
     vic_desc.fetch_cb = vic_fetch;
     vic_desc.rgba8_buffer = board.rgba8_buffer;
     vic_desc.rgba8_buffer_size = sizeof(board.rgba8_buffer);
-    vic_desc.vis_x0 = 0;
-    vic_desc.vis_y0 = 0;
-    vic_desc.vis_w = 512;
-    vic_desc.vis_h = 312;
+    vic_desc.vis_x = 64;
+    vic_desc.vis_y = 24;
+    vic_desc.vis_w = 392;
+    vic_desc.vis_h = 272;
     m6567_init(&board.m6567, &vic_desc);
 }
 
@@ -396,24 +396,17 @@ c64_t::init_keymap() {
         }
     }
 
-    /* special keys */
+    // special keys
     kbd_register_key(&board.kbd, 0x20, 4, 7, 0);    // space
-    kbd_register_key(&board.kbd, 0x08, 1, 7, 0);    // cursor left
-    kbd_register_key(&board.kbd, 0x09, 1, 7, 1);    // cursor right
-    kbd_register_key(&board.kbd, 0x0A, 6, 6, 1);    // cursor down
-    kbd_register_key(&board.kbd, 0x0B, 6, 6, 0);    // cursor up
+    kbd_register_key(&board.kbd, 0x08, 2, 0, 1);    // cursor left
+    kbd_register_key(&board.kbd, 0x09, 2, 0, 0);    // cursor right
+    kbd_register_key(&board.kbd, 0x0A, 7, 0, 0);    // cursor down
+    kbd_register_key(&board.kbd, 0x0B, 7, 0, 1);    // cursor up
     kbd_register_key(&board.kbd, 0x01, 0, 0, 0);    // delete
-    kbd_register_key(&board.kbd, 0x0C, 3, 6, 0);    // clear
+    kbd_register_key(&board.kbd, 0x0C, 3, 6, 1);    // clear
     kbd_register_key(&board.kbd, 0x0D, 1, 0, 0);    // return
     kbd_register_key(&board.kbd, 0x03, 7, 7, 0);    // stop
-    kbd_register_key(&board.kbd, 0xF1, 4, 0, 0);    // F1
-    kbd_register_key(&board.kbd, 0xF2, 4, 0, 1);    // F2
-    kbd_register_key(&board.kbd, 0xF3, 5, 0, 0);    // F3
-    kbd_register_key(&board.kbd, 0xF4, 5, 0, 1);    // F4
-    kbd_register_key(&board.kbd, 0xF5, 6, 0, 0);    // F5
-    kbd_register_key(&board.kbd, 0xF6, 6, 0, 1);    // F6
-    kbd_register_key(&board.kbd, 0xF7, 3, 0, 0);    // F7
-    kbd_register_key(&board.kbd, 0xF8, 3, 0, 1);    // F8
+    kbd_register_key(&board.kbd, 0xF1, 5, 7, 1);    // F1 -> Shift + C= key
 }
 
 //------------------------------------------------------------------------------

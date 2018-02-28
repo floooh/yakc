@@ -237,7 +237,7 @@ UI::OnFrame(yakc& emu) {
                 case system::cpc6128:           model = "CPC6128"; break;
                 case system::kccompact:         model = "KCCompact"; break;
                 case system::acorn_atom:        model = "Acorn Atom"; break;
-                case system::c64_pal:           model = "C64 (PAL)"; break;
+                case system::c64_pal:           model = "C64 (WIP!)"; break;
                 case system::c64_ntsc:          model = "C64 (NTSC)"; break;
                 default: model="??"; break;
             }
@@ -368,12 +368,14 @@ UI::OnFrame(yakc& emu) {
                                 emu.poweron(system::c64_pal);
                             }
                         }
+                        /*
                         if (emu.check_roms(system::c64_ntsc)) {
                             if (ImGui::MenuItem("C64 (NTSC)")) {
                                 emu.poweroff();
                                 emu.poweron(system::c64_ntsc);
                             }
                         }
+                        */
                         ImGui::EndMenu();
                     }
                     ImGui::EndMenu();
@@ -481,7 +483,7 @@ UI::OnFrame(yakc& emu) {
                     }
                 }
                 if (chips & chip::m6526_2) {
-                    if (ImGui::MenuItem("M6526 (CIA-2")) {
+                    if (ImGui::MenuItem("M6526 (CIA-2)")) {
                         this->OpenWindow(emu, M6526Window::Create("M6526 (CIA-2)", &board.m6526_2));
                     }
                 }
