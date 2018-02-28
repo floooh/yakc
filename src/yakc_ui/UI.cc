@@ -21,6 +21,7 @@
 #include "MC6847Window.h"
 #include "I8255Window.h"
 #include "MOS6522Window.h"
+#include "M6526Window.h"
 #include "M6567Window.h"
 #include "TapeDeckWindow.h"
 #include "CPCGateArrayWindow.h"
@@ -472,6 +473,16 @@ UI::OnFrame(yakc& emu) {
                 if (chips & chip::m6567) {
                     if (ImGui::MenuItem("M6567 (VIC-II)")) {
                         this->OpenWindow(emu, M6567Window::Create());
+                    }
+                }
+                if (chips & chip::m6526) {
+                    if (ImGui::MenuItem("M6526 (CIA-1)")) {
+                        this->OpenWindow(emu, M6526Window::Create("M6526 (CIA-1)", &board.m6526_1));
+                    }
+                }
+                if (chips & chip::m6526_2) {
+                    if (ImGui::MenuItem("M6526 (CIA-2")) {
+                        this->OpenWindow(emu, M6526Window::Create("M6526 (CIA-2)", &board.m6526_2));
                     }
                 }
                 ImGui::EndMenu();

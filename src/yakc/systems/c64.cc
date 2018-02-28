@@ -44,6 +44,10 @@ c64_t::poweron(system m) {
     cpu_desc.out_cb = cpu_port_out;
     m6502_init(&board.m6502, &cpu_desc);
     m6502_reset(&board.m6502);
+
+    // initialize the CIAs
+    m6526_init(&board.m6526_1, cia1_in, cia1_out);
+    m6526_init(&board.m6526_2, cia2_in, cia2_out);
     
     // initialize the VIC-II display chip
     m6567_desc_t vic_desc = { };
@@ -73,6 +77,8 @@ c64_t::reset() {
     this->io_mapped = true;
     this->update_memory_map();
     m6502_reset(&board.m6502);
+    m6526_reset(&board.m6526_1);
+    m6526_reset(&board.m6526_2);
     m6567_reset(&board.m6567);
 }
 
@@ -94,6 +100,10 @@ c64_t::cpu_tick(uint64_t pins) {
     // tick the VIC-II display chip
     // FIXME: stop CPU on 'bad lines'
     pins = m6567_tick(&board.m6567, pins);
+
+    // tick the CIAs
+    pins = m6526_tick(&board.m6526_1, pins);
+    pins = m6526_tick(&board.m6526_2, pins);
 
     // CPU port I/O?
     if (M6510_CHECK_IO(pins)) {
@@ -127,21 +137,13 @@ c64_t::cpu_tick(uint64_t pins) {
             }
             else if (addr < 0xDD00) {
                 // CIA-1 IO request
-                if (pins & M6502_RW) {
-                    printf("CIA-1 READ: %04X\n", addr);
-                }
-                else {
-                    printf("CIA-1 WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
-                }
+                uint64_t cia_pins = (pins & M6502_PIN_MASK)|M6526_CS;
+                pins = m6526_iorq(&board.m6526_1, cia_pins) & M6502_PIN_MASK;
             }
             else if (addr < 0xDE00) {
                 // CIA-2 IO request
-                if (pins & M6502_RW) {
-                    printf("CIA-2 READ: %04X\n", addr);
-                }
-                else {
-                    printf("CIA-2 WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
-                }
+                uint64_t cia_pins = (pins & M6502_PIN_MASK)|M6526_CS;
+                pins = m6526_iorq(&board.m6526_2, cia_pins) & M6502_PIN_MASK;
             }
             else {
                 // expansion system
@@ -189,6 +191,32 @@ c64_t::cpu_port_out(uint8_t data) {
     */
     c64.cpu_port = data;
     c64.update_memory_map();
+}
+
+//------------------------------------------------------------------------------
+void
+c64_t::cia1_out(int port_id, uint8_t data) {
+    printf("CIA-1 out %s: %02X\n", port_id==0?"A":"B", data);
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+c64_t::cia1_in(int port_id) {
+    printf("CIA-1 in %s\n", port_id==0?"A":"B");
+    return 0xFF;
+}
+
+//------------------------------------------------------------------------------
+void
+c64_t::cia2_out(int port_id, uint8_t data) {
+    printf("CIA-2 out %s: %02X\n", port_id==0?"A":"B", data);
+}
+
+//------------------------------------------------------------------------------
+uint8_t
+c64_t::cia2_in(int port_id) {
+    printf("CIA-2 in %s\n", port_id==0?"A":"B");
+    return 0xFF;
 }
 
 //------------------------------------------------------------------------------

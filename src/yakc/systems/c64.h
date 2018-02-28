@@ -29,10 +29,19 @@ public:
 
     /// the m6502 tick callback
     static uint64_t cpu_tick(uint64_t pins);
-    /// callback for m6510 port input
+    /// CPU port input callback
     static uint8_t cpu_port_in();
-    /// callback for M6510 port output
+    /// CPU port output callback
     static void cpu_port_out(uint8_t data);
+    /// CIA-1 port output callback
+    static void cia1_out(int port_id, uint8_t data);
+    /// CIA-1 port input callback
+    static uint8_t cia1_in(int port_id);
+    /// CIA-2 port output callback
+    static void cia2_out(int port_id, uint8_t data);
+    /// CIA-2 port input callback
+    static uint8_t cia2_in(int port_id);
+
     /// VIC-II memory fetch callback (returns a 4+8 bits value)
     static uint16_t vic_fetch(uint16_t addr);
 
