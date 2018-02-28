@@ -45,6 +45,8 @@ public:
     /// VIC-II memory fetch callback (returns a 4+8 bits value)
     static uint16_t vic_fetch(uint16_t addr);
 
+    /// setup the keyboard matrix
+    void init_keymap();
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);
     /// called when non-alnum key has been pressed down
@@ -65,7 +67,7 @@ public:
     bool on = false;
     system model = system::c64_pal;
     uint8_t cpu_port = 0;
-    uint8_t cia2_a = 0;
+    uint16_t vic_bank_select = 0;   // upper 4 address bits from CIA-2 port A
     bool io_mapped = false;
     uint8_t color_ram[1024];    // special static color ram
 };
