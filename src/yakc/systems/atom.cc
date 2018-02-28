@@ -129,7 +129,7 @@ atom_t::poweron() {
     vdg_desc.rgba8_buffer_size = sizeof(board.rgba8_buffer);
     vdg_desc.fetch_cb = vdg_fetch;
     mc6847_init(&board.mc6847, &vdg_desc);
-    beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     period_2_4khz = board.freq_hz / 4800;
     count_2_4khz = 0;
     state_2_4khz = false;
@@ -154,7 +154,7 @@ atom_t::reset() {
     i8255_reset(&board.i8255);
     m6522_reset(&board.m6522);
     mc6847_reset(&board.mc6847);
-    beeper_reset(&board.beeper);
+    beeper_reset(&board.beeper_1);
     state_2_4khz = false;
     out_cass0 = false;
     out_cass1 = false;
@@ -235,8 +235,8 @@ atom_t::cpu_tick(uint64_t pins) {
     // update the sound beeper
     // NOTE: don't make the cassette output audible, since it
     // seems to get stuck at a 2.4kHz sound at the end of saving BASIC programs
-    if (beeper_tick(&board.beeper)) {
-        board.audiobuffer.write(board.beeper.sample);
+    if (beeper_tick(&board.beeper_1)) {
+        board.audiobuffer.write(board.beeper_1.sample);
     }
 
     // decode address for memory-mapped-io or regular memory access
@@ -394,7 +394,7 @@ atom_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
         case I8255_PORT_C:
             atom.out_cass0 = 0 == (data & (1<<0));
             atom.out_cass1 = 0 == (data & (1<<1));
-            beeper_write(&board.beeper, 0 == (data & (1<<2)));
+            beeper_write(&board.beeper_1, 0 == (data & (1<<2)));
             vdg_pins = 0;
             vdg_mask = MC6847_CSS;
             if (data & (1<<3)) {

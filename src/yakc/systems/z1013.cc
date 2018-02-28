@@ -83,7 +83,7 @@ z1013_t::poweron(system m) {
 
     // initialize hardware components
     z80_init(&board.z80, cpu_tick);
-    z80pio_init(&board.z80pio, pio_in, pio_out);
+    z80pio_init(&board.z80pio_1, pio_in, pio_out);
 
     // execution on power-on starts at 0xF000
     board.z80.PC = 0xF000;
@@ -100,9 +100,8 @@ z1013_t::poweroff() {
 //------------------------------------------------------------------------------
 void
 z1013_t::reset() {
-    z80pio_reset(&board.z80pio);
     z80_reset(&board.z80);
-    z80pio_reset(&board.z80pio);
+    z80pio_reset(&board.z80pio_1);
     this->kbd_request_column = 0;
     // execution after reset starts at 0x0000(??? -> doesn't work)
     board.z80.PC = 0xF000;
@@ -171,7 +170,7 @@ z1013_t::cpu_tick(int num_ticks, uint64_t pins) {
             if (pio_pins & (1<<0)) pio_pins |= Z80PIO_CDSEL;
             /* address bit 1 selects port A/B */
             if (pio_pins & (1<<1)) pio_pins |= Z80PIO_BASEL;
-            pins = z80pio_iorq(&board.z80pio, pio_pins) & Z80_PIN_MASK;
+            pins = z80pio_iorq(&board.z80pio_1, pio_pins) & Z80_PIN_MASK;
         }
         else if ((pins & (Z80_A3|Z80_WR)) == (Z80_A3|Z80_WR)) {
             /* port 8 is connected to a hardware latch to store the

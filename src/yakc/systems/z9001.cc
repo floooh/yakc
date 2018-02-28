@@ -134,10 +134,10 @@ z9001_t::poweron(system m, os_rom os) {
     // initialize hardware components, main clock frequency is 2.4576
     board.freq_hz = 2457600;
     z80_init(&board.z80, cpu_tick);
-    z80pio_init(&board.z80pio, pio1_in, pio1_out);
-    z80pio_init(&board.z80pio2, pio2_in, pio2_out);
+    z80pio_init(&board.z80pio_1, pio1_in, pio1_out);
+    z80pio_init(&board.z80pio_2, pio2_in, pio2_out);
     z80ctc_init(&board.z80ctc);
-    beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     this->ctc_zcto2 = 0;
     
     // execution on power-on starts at 0xF000
@@ -156,10 +156,10 @@ z9001_t::poweroff() {
 void
 z9001_t::reset() {
     z80_reset(&board.z80);
-    z80pio_reset(&board.z80pio);
-    z80pio_reset(&board.z80pio2);
+    z80pio_reset(&board.z80pio_1);
+    z80pio_reset(&board.z80pio_2);
     z80ctc_reset(&board.z80ctc);
-    beeper_reset(&board.beeper);
+    beeper_reset(&board.beeper_1);
     this->init_memorymap();
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
@@ -194,7 +194,7 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
         pins = z80ctc_tick(&board.z80ctc, pins);
         if (pins & Z80CTC_ZCTO0) {
             // CTC channel 0 controls the beeper frequency
-            beeper_toggle(&board.beeper);
+            beeper_toggle(&board.beeper_1);
         }
         /* the blink flip flop is controlled by a 'bisync' video signal
            (I guess that means it triggers at half PAL frequency: 25Hz),
@@ -207,9 +207,9 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
         pins &= Z80_PIN_MASK;
 
-        if (beeper_tick(&board.beeper)) {
+        if (beeper_tick(&board.beeper_1)) {
             // new audio sample is ready
-            board.audiobuffer.write(board.beeper.sample);
+            board.audiobuffer.write(board.beeper_1.sample);
         }
     }
     z9001.ctc_zcto2 = (pins & Z80CTC_ZCTO2);
@@ -249,7 +249,7 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
                     pins |= Z80PIO_CE;
                     if (pins & Z80_A0) { pins |= Z80PIO_BASEL; }
                     if (pins & Z80_A1) { pins |= Z80PIO_CDSEL; }
-                    pins = z80pio_iorq(&board.z80pio, pins) & Z80_PIN_MASK;
+                    pins = z80pio_iorq(&board.z80pio_1, pins) & Z80_PIN_MASK;
                     break;
                 /* IO request on PIO2? */
                 case 2:
@@ -257,7 +257,7 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
                     pins |= Z80PIO_CE;
                     if (pins & Z80_A0) { pins |= Z80PIO_BASEL; }
                     if (pins & Z80_A1) { pins |= Z80PIO_CDSEL; }
-                    pins = z80pio_iorq(&board.z80pio2, pins) & Z80_PIN_MASK;
+                    pins = z80pio_iorq(&board.z80pio_2, pins) & Z80_PIN_MASK;
             }
         }
     }
@@ -268,8 +268,8 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
     */
     Z80_DAISYCHAIN_BEGIN(pins)
     {
-        pins = z80pio_int(&board.z80pio, pins);
-        pins = z80pio_int(&board.z80pio2, pins);
+        pins = z80pio_int(&board.z80pio_1, pins);
+        pins = z80pio_int(&board.z80pio_2, pins);
         pins = z80ctc_int(&board.z80ctc, pins);
     }
     Z80_DAISYCHAIN_END(pins);
@@ -329,7 +329,7 @@ z9001_t::on_ascii(uint8_t ascii) {
     kbd_key_down(&board.kbd, ascii);
     kbd_key_up(&board.kbd, ascii);
     /* keyboard matrix lines are directly connected to the PIO2's Port B */
-    z80pio_write_port(&board.z80pio2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
+    z80pio_write_port(&board.z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
 }
 
 //------------------------------------------------------------------------------
@@ -341,7 +341,7 @@ z9001_t::on_key_down(uint8_t key) {
     }
     kbd_key_down(&board.kbd, key);
     /* keyboard matrix lines are directly connected to the PIO2's Port B */
-    z80pio_write_port(&board.z80pio2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
+    z80pio_write_port(&board.z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
 }
 
 //------------------------------------------------------------------------------
@@ -353,7 +353,7 @@ z9001_t::on_key_up(uint8_t key) {
     }
     kbd_key_up(&board.kbd, key);
     /* keyboard matrix lines are directly connected to the PIO2's Port B */
-    z80pio_write_port(&board.z80pio2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
+    z80pio_write_port(&board.z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
 }
 
 

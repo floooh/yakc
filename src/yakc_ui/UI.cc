@@ -431,12 +431,12 @@ UI::OnFrame(yakc& emu) {
                 chip::mask chips = emu.chip_types();
                 if (chips & chip::z80pio) {
                     if (ImGui::MenuItem("Z80 PIO")) {
-                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO", &board.z80pio));
+                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO", &board.z80pio_1));
                     }
                 }
                 if (chips & chip::z80pio_2) {
                     if (ImGui::MenuItem("Z80 PIO 2")) {
-                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO 2", &board.z80pio2));
+                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO 2", &board.z80pio_2));
                     }
                 }
                 if (chips & chip::z80ctc) {

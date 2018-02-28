@@ -22,6 +22,7 @@
 #include "chips/mc6847.h"
 #include "chips/mc6845.h"
 #include "chips/m6567.h"
+#include "chips/m6526.h"
 
 namespace YAKC {
 
@@ -30,18 +31,20 @@ struct breadboard {
     mem_t mem;
     mem_t mem2;
     z80_t z80;
-    z80pio_t z80pio;
-    z80pio_t z80pio2;
+    z80pio_t z80pio_1;
+    z80pio_t z80pio_2;
     z80ctc_t z80ctc;
     ay38910_t ay38910;
     m6502_t m6502;
     m6522_t m6522;
+    m6526_t m6526_1;
+    m6526_t m6526_2;
     i8255_t i8255;
     mc6847_t mc6847;
     mc6845_t mc6845;
     m6567_t m6567;
-    beeper_t beeper;
-    beeper_t beeper2;
+    beeper_t beeper_1;
+    beeper_t beeper_2;
     kbd_t kbd;
     crt_t crt;
     class debugger dbg;

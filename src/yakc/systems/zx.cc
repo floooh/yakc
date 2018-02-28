@@ -176,7 +176,7 @@ zx_t::poweron(system m) {
     z80_init(&board.z80, cpu_tick);
 
     // initialize hardware components
-    beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     if (system::zxspectrum128k == this->cur_model) {
         ay38910_desc_t ay_desc = { };
         ay_desc.type = AY38910_TYPE_8912;
@@ -202,7 +202,7 @@ zx_t::poweroff() {
 void
 zx_t::reset() {
     z80_reset(&board.z80);
-    beeper_reset(&board.beeper);
+    beeper_reset(&board.beeper_1);
     if (system::zxspectrum128k == this->cur_model) {
         ay38910_reset(&board.ay38910);
     }
@@ -250,8 +250,8 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
     // tick audio systems
     for (int i = 0; i < num_ticks; i++) {
         zx.tick_count++;
-        if (beeper_tick(&board.beeper)) {
-            board.audiobuffer.write(board.beeper.sample);
+        if (beeper_tick(&board.beeper_1)) {
+            board.audiobuffer.write(board.beeper_1.sample);
         }
         // the AY-3-8912 chip runs at half CPU frequency
         if (system::zxspectrum128k == zx.cur_model) {
@@ -334,7 +334,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
                 //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
                 zx.last_fe_out = data;
-                beeper_write(&board.beeper, 0 != (data & (1<<4)));
+                beeper_write(&board.beeper_1, 0 != (data & (1<<4)));
             }
             else if (system::zxspectrum128k == zx.cur_model) {
                 // Spectrum 128 memory control (0.............0.)

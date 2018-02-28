@@ -105,10 +105,10 @@ kc85_t::poweron(system m, os_rom os) {
     // initialize hardware components
     board.freq_hz = (m == system::kc85_4) ? 1770000 : 1750000;
     z80_init(&board.z80, cpu_tick);
-    z80pio_init(&board.z80pio, pio_in, pio_out);
+    z80pio_init(&board.z80pio_1, pio_in, pio_out);
     z80ctc_init(&board.z80ctc);
-    beeper_init(&board.beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
-    beeper_init(&board.beeper2, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper_2, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     this->exp.poweron();
     this->cur_scanline = 0;
 
@@ -140,11 +140,11 @@ kc85_t::poweroff() {
 void
 kc85_t::reset() {
     this->exp.reset();
-    beeper_reset(&board.beeper);
-    beeper_reset(&board.beeper2);
+    beeper_reset(&board.beeper_1);
+    beeper_reset(&board.beeper_2);
     z80_reset(&board.z80);
     z80ctc_reset(&board.z80ctc);
-    z80pio_reset(&board.z80pio);
+    z80pio_reset(&board.z80pio_1);
     this->pio_a = 0;
     this->pio_b = 0;
     this->io84 = 0;
@@ -180,21 +180,21 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
         pins = z80ctc_tick(&board.z80ctc, pins);
         // CTC channels 0 and 1 triggers control audio frequencies
         if (pins & Z80CTC_ZCTO0) {
-            beeper_toggle(&board.beeper);
+            beeper_toggle(&board.beeper_1);
         }
         if (pins & Z80CTC_ZCTO1) {
-            beeper_toggle(&board.beeper2);
+            beeper_toggle(&board.beeper_2);
         }
         // CTC channel 2 trigger controls video blink frequency
         if (pins & Z80CTC_ZCTO2) {
             kc85.ctc_blink_flag = !kc85.ctc_blink_flag;
         }
         pins &= Z80_PIN_MASK;
-        if (beeper_tick(&board.beeper)) {
-            board.audiobuffer.write(board.beeper.sample);
+        if (beeper_tick(&board.beeper_1)) {
+            board.audiobuffer.write(board.beeper_1.sample);
         }
-        if (beeper_tick(&board.beeper2)) {
-            board.audiobuffer2.write(board.beeper2.sample);
+        if (beeper_tick(&board.beeper_2)) {
+            board.audiobuffer2.write(board.beeper_2.sample);
         }
     }
 
@@ -250,7 +250,7 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
                     pins |= Z80PIO_CE;
                     if (pins & Z80_A0) { pins |= Z80PIO_BASEL; }
                     if (pins & Z80_A1) { pins |= Z80PIO_CDSEL; }
-                    pins = z80pio_iorq(&board.z80pio, pins) & Z80_PIN_MASK;
+                    pins = z80pio_iorq(&board.z80pio_1, pins) & Z80_PIN_MASK;
                 }
             }
             else {
@@ -300,7 +300,7 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
     Z80_DAISYCHAIN_BEGIN(pins)
     {
         pins = z80ctc_int(&board.z80ctc, pins);
-        pins = z80pio_int(&board.z80pio, pins);
+        pins = z80pio_int(&board.z80pio_1, pins);
     }
     Z80_DAISYCHAIN_END(pins);
     
