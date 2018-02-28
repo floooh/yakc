@@ -205,7 +205,6 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
             z9001.blink_counter = (board.freq_hz * 8) / 25;
             z9001.blink_flip_flop = !z9001.blink_flip_flop;
         }
-        pins &= Z80_PIN_MASK;
 
         if (beeper_tick(&board.beeper_1)) {
             // new audio sample is ready
@@ -213,6 +212,7 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
         }
     }
     z9001.ctc_zcto2 = (pins & Z80CTC_ZCTO2);
+    pins &= Z80_PIN_MASK;
 
     /* memory and IO requests */
     if (pins & Z80_MREQ) {
