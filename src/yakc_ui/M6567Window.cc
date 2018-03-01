@@ -36,8 +36,8 @@ M6567Window::Draw(yakc& emu) {
         m6567_t& vic = board.m6567;
         const char* type = "unknown";
         switch (vic.type) {
-            case M6567_TYPE_6567R8: type = "6567R8 (NTSC)";
-            case M6567_TYPE_6569: type = "6569 (PAL)";
+            case M6567_TYPE_6567R8: type = "6567R8 (NTSC)"; break;
+            case M6567_TYPE_6569: type = "6569 (PAL)"; break;
         }
         ImGui::Text("Type: %s", type);
         if (ImGui::CollapsingHeader("Registers", "#vicreg", true, true)) {
@@ -103,8 +103,7 @@ M6567Window::Draw(yakc& emu) {
             ImGui::Text("brd_right: %2d  brd_btm: %3d", vic.border_right, vic.border_bottom);
             ImGui::Text("m_border: %s v_border:  %s", vic.main_border?"ON ":"OFF", vic.vert_border?"ON ":"OFF");
             ImGui::Text("h_blank:  %s v_blank:   %s", vic.hs?"ON ":"OFF", vic.vs?"ON ":"OFF");
-            ImGui::Text("badline:  %s display:   %s BA: %s", vic.badline?"ON ":"OFF", vic.display_state?"ON ":"OFF", vic.ba?"ON":"OFF");
-            ImGui::Text("c_access: %s g_access:  %s", vic.c_access?"ON ":"OFF", vic.g_access?"ON ":"OFF");
+            ImGui::Text("badline:  %s display:   %s", vic.badline?"ON ":"OFF", vic.display_state?"ON ":"OFF");
             ImGui::Text("crt_x: %2d crt_y: %3d", vic.crt_x, vic.crt_y);
             ImGui::Text("line buffer:");
             const uint16_t* l = vic.line_buffer;

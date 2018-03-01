@@ -110,9 +110,9 @@ I8255Window::Draw(yakc& emu) {
         ImGui::Text("  Port A:      %s", (ppi.control & (1<<4))?" IN":"OUT");
         const char* mode_a;
         switch (ppi.control & ((1<<7)|(1<<6))) {
-            case 0:     mode_a = "BASIC";
-            case 0x40:  mode_a = "STROBE";
-            default:    mode_a = "BIDIR";
+            case 0:     mode_a = "BASIC"; break;
+            case 0x40:  mode_a = "STROBE"; break;
+            default:    mode_a = "BIDIR"; break;
         }
         ImGui::Text("  Mode:     %6s", mode_a);
         ImGui::Text("Group B (B+Clo):");
