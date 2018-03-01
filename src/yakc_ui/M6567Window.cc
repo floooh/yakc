@@ -122,7 +122,7 @@ M6567Window::Draw(yakc& emu) {
             if (ImGui::Button(">| Bad")) {
                 this->badline = vic.badline;
                 emu.step_until([this](uint32_t ticks)->bool {
-                    bool cur_badline = vic.badline;
+                    bool cur_badline = board.m6567.badline;
                     bool triggered = (cur_badline != this->badline) && cur_badline;
                     this->badline = cur_badline;
                     return (ticks > (64*312)) || triggered;
