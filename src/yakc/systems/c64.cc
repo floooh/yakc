@@ -1,8 +1,5 @@
 //------------------------------------------------------------------------------
 //  c64.cc
-//
-//  - FIXME: the C64 thinks it's running on NTSC (at least from the
-//    CIA-timer?
 //------------------------------------------------------------------------------
 #include "c64.h"
 
@@ -49,7 +46,6 @@ c64_t::poweron(system m) {
     cpu_desc.in_cb = cpu_port_in;
     cpu_desc.out_cb = cpu_port_out;
     m6502_init(&board.m6502, &cpu_desc);
-    m6502_reset(&board.m6502);
 
     // initialize the CIAs
     m6526_init(&board.m6526_1, cia1_in, cia1_out);
@@ -66,6 +62,9 @@ c64_t::poweron(system m) {
     vic_desc.vis_w = 392;
     vic_desc.vis_h = 272;
     m6567_init(&board.m6567, &vic_desc);
+
+    // put the CPU into start state
+    m6502_reset(&board.m6502);
 }
 
 //------------------------------------------------------------------------------
@@ -104,7 +103,6 @@ c64_t::cpu_tick(uint64_t pins) {
     const uint16_t addr = M6502_GET_ADDR(pins);
 
     // tick the VIC-II display chip
-    // FIXME: stop CPU on 'bad lines'
     pins = m6567_tick(&board.m6567, pins);
 
     // tick the CIAs
@@ -374,8 +372,8 @@ c64_t::init_keymap() {
         "%rd&cftx"
         "'yg(bhuv"
         ")ij0mkon"
-        "+pl->[@<"
-        "$*]  = ?"
+        " pl >[ <"
+        "$ ]    ?"
         "!  \"  q ";
     YAKC_ASSERT(strlen(keymap) == 128);
     // shift is column 7, line 1
