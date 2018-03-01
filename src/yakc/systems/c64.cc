@@ -299,13 +299,10 @@ c64_t::init_memory_map() {
     // A000..BFFF, D000..DFFF and E000..FFFF are configurable
     this->update_memory_map();
 
-    // setup the separate VIC-II memory map (16 KB RAM 4x mirrored,
-    // with character ROM at 0x1000.0x1FFF and 0x9000..0x9FFF)
+    // setup the separate VIC-II memory map (64 KByte RAM) overlayed with
+    // character ROMS at 0x1000.0x1FFF and 0x9000..0x9FFF
     mem_unmap_all(&board.mem2);
-    mem_map_ram(&board.mem2, 1, 0x0000, 0x4000, ram);
-    mem_map_ram(&board.mem2, 1, 0x4000, 0x4000, ram);
-    mem_map_ram(&board.mem2, 1, 0x8000, 0x4000, ram);
-    mem_map_ram(&board.mem2, 1, 0xC000, 0x4000, ram);
+    mem_map_ram(&board.mem2, 1, 0x0000, 0x10000, ram);
     mem_map_rom(&board.mem2, 0, 0x1000, 0x1000, roms.ptr(rom_images::c64_char));
     mem_map_rom(&board.mem2, 0, 0x9000, 0x1000, roms.ptr(rom_images::c64_char));
 }
