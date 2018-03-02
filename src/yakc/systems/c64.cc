@@ -1,5 +1,11 @@
 //------------------------------------------------------------------------------
 //  c64.cc
+//
+//  FIXME:
+//  - when scrolling down with 25 rows display mode (poke 53265,31), a black
+//    bar appears on a real C64, this is because in idle state the VIC-II
+//    reads the byte at 0x3FFF, which seems to be set to 0xFF on a real C64,
+//    but this isn't the case in here, why?
 //------------------------------------------------------------------------------
 #include "c64.h"
 
@@ -286,11 +292,19 @@ c64_t::init_memory_map() {
     YAKC_ASSERT(roms.size(rom_images::c64_basic) == 0x2000);
     YAKC_ASSERT(roms.size(rom_images::c64_char) == 0x1000);
     YAKC_ASSERT(roms.size(rom_images::c64_kernalv3) == 0x2000);
-    clear(board.ram, sizeof(board.ram));
+
+    // the C64 has a weird RAM init pattern of 64 bytes 00 and 64 bytes FF
+    // alternating, probably with some randomness sprinkled in
+    // (see this thread: http://csdb.dk/forums/?roomid=11&topicid=116800&firstpost=2)
+    // this is important at least for the value of the 'ghost byte' at 0x3FFF,
+    // which is 0xFF
+    uint8_t* ram = &(board.ram[0][0]);
+    for (int i = 0; i < (1<<16); i++) {
+        ram[i] = (i & (1<<6)) ? 0xFF : 0x00;
+    }
 
     // setup the initial CPU memory map
     mem_unmap_all(&board.mem);
-    uint8_t* ram = &(board.ram[0][0]);
     // 0000..9FFF and C000.CFFF is always RAM
     mem_map_ram(&board.mem, 0, 0x0000, 0xA000, ram);
     mem_map_ram(&board.mem, 0, 0xC000, 0x1000, ram+0xC000);

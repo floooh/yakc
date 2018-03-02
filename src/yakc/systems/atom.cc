@@ -547,15 +547,15 @@ atom_t::osload() {
 
     // execute RTS
     auto& cpu = board.m6502;
-    cpu.S++;
-    uint8_t l = mem_rd(&board.mem, 0x0100|cpu.S++);
-    uint8_t h = mem_rd(&board.mem, 0x0100|cpu.S);
-    cpu.PC = (h<<8)|l;
-    cpu.PC++;
+    cpu.state.S++;
+    uint8_t l = mem_rd(&board.mem, 0x0100|cpu.state.S++);
+    uint8_t h = mem_rd(&board.mem, 0x0100|cpu.state.S);
+    cpu.state.PC = (h<<8)|l;
+    cpu.state.PC++;
 
     // FIXME: patch PC????
     if (success) {
-        board.m6502.PC = hdr.exec_addr;
+        board.m6502.state.PC = hdr.exec_addr;
     }
 }
 

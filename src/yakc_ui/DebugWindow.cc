@@ -32,7 +32,7 @@ DebugWindow::Draw(yakc& emu) {
         else {
             this->draw6502RegisterTable();
             ImGui::Separator();
-            this->drawMainContent(emu, board.m6502.PC, 48);
+            this->drawMainContent(emu, board.m6502.state.PC, 48);
             ImGui::Separator();
         }
         this->drawControls(emu);
@@ -89,15 +89,15 @@ DebugWindow::drawZ80RegisterTable() {
 void
 DebugWindow::draw6502RegisterTable() {
     auto& cpu = board.m6502;
-    Util::InputHex8("A", cpu.A); ImGui::SameLine(1 * 48 + 4);
-    Util::InputHex8("X", cpu.X); ImGui::SameLine(2 * 48);
-    Util::InputHex8("Y", cpu.Y); ImGui::SameLine(3 * 48);
-    Util::InputHex8("S", cpu.S); ImGui::SameLine(4 * 48);
-    Util::InputHex8("P", cpu.P); ImGui::SameLine(5 * 48);
-    Util::InputHex16("PC", cpu.PC); ImGui::SameLine(6 * 46 + 20);
+    Util::InputHex8("A", cpu.state.A); ImGui::SameLine(1 * 48 + 4);
+    Util::InputHex8("X", cpu.state.X); ImGui::SameLine(2 * 48);
+    Util::InputHex8("Y", cpu.state.Y); ImGui::SameLine(3 * 48);
+    Util::InputHex8("S", cpu.state.S); ImGui::SameLine(4 * 48);
+    Util::InputHex8("P", cpu.state.P); ImGui::SameLine(5 * 48);
+    Util::InputHex16("PC", cpu.state.PC); ImGui::SameLine(6 * 46 + 20);
 
     char strFlags[9];
-    const uint8_t f = board.m6502.P;
+    const uint8_t f = board.m6502.state.P;
     strFlags[0] = (f & M6502_NF) ? 'N':'-';
     strFlags[1] = (f & M6502_VF) ? 'V':'-';
     strFlags[2] = (f & M6502_XF) ? 'x':'-';

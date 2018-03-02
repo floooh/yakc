@@ -293,7 +293,7 @@ yakc::step() {
     }
     else {
         ticks = m6502_exec(&board.m6502, 0);
-        board.dbg.add_history_item(board.m6502.PC, ticks);
+        board.dbg.add_history_item(board.m6502.state.PC, ticks);
     }
     return ticks;
 }
