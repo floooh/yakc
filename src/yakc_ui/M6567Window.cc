@@ -66,17 +66,17 @@ M6567Window::Draw(yakc& emu) {
                 r.ctrl_2 & 7);
             ImGui::Text("MYE:  %c%c%c%c%c%c%c%c", UINT8_BITS(r.mob_yexp));
             ImGui::Text("MEMPTRS VM:%02X CB:%02X", (r.mem_ptrs>>4)&0x0F, (r.mem_ptrs>>1)&0x07);
-            ImGui::Text("INTR IRQ:%c ILP:%c IMMC:%c IMBC:%c IRST:%c",
-                r.interrupt & (1<<7) ? '1':'0',
-                r.interrupt & (1<<3) ? '1':'0',
-                r.interrupt & (1<<2) ? '1':'0',
-                r.interrupt & (1<<1) ? '1':'0',
-                r.interrupt & (1<<0) ? '1':'0');
-            ImGui::Text("INT ENABLE ELP:%c EMMC:%c IMBC:%c ERST:%c",
-                r.int_enable & (1<<3) ? '1':'0',
-                r.int_enable & (1<<2) ? '1':'0',
-                r.int_enable & (1<<1) ? '1':'0',
-                r.int_enable & (1<<0) ? '1':'0');
+            ImGui::Text("INT IRQ:%c ILP:%c IMMC:%c IMBC:%c IRST:%c",
+                r.int_latch & (1<<7) ? '1':'0',
+                r.int_latch & (1<<3) ? '1':'0',
+                r.int_latch & (1<<2) ? '1':'0',
+                r.int_latch & (1<<1) ? '1':'0',
+                r.int_latch & (1<<0) ? '1':'0');
+            ImGui::Text("INT MASK  ELP:%c EMMC:%c EMBC:%c ERST:%c",
+                r.int_mask & (1<<3) ? '1':'0',
+                r.int_mask & (1<<2) ? '1':'0',
+                r.int_mask & (1<<1) ? '1':'0',
+                r.int_mask & (1<<0) ? '1':'0');
             ImGui::Text("MDP: %c%c%c%c%c%c%c%c  MMC: %c%c%c%c%c%c%c%c",
                 UINT8_BITS(r.mob_data_priority),
                 UINT8_BITS(r.mob_multicolor));
@@ -98,7 +98,7 @@ M6567Window::Draw(yakc& emu) {
             this->drawColor("M7C: ", r.mob_color[7]);
         }
         if (ImGui::CollapsingHeader("Internal State", "#vicstate", true, true)) {
-            ImGui::Text("g_mode: %d\n", vic.gseq.mode);
+            ImGui::Text("g_mode: %d   v_irq_line: %3d\n", vic.gseq.mode, vic.rs.v_irq);
             ImGui::Text("h_count:   %2d  v_count: %3d", vic.rs.h_count, vic.rs.v_count);
             ImGui::Text("vc: %04X: vcbase: %04X rc: %d vmli: %2d", vic.rs.vc, vic.rs.vc_base, vic.rs.rc, vic.vm.vmli);
             ImGui::Text("c_addr_or: %04X i_addr:     %04X", vic.mem.c_addr_or, vic.mem.i_addr);
@@ -106,7 +106,6 @@ M6567Window::Draw(yakc& emu) {
             ImGui::Text("brd_left:  %2d  brd_top: %3d", vic.brd.left, vic.brd.top);
             ImGui::Text("brd_right: %2d  brd_btm: %3d", vic.brd.right, vic.brd.bottom);
             ImGui::Text("m_border: %s v_border:  %s", vic.brd.main?"ON ":"OFF", vic.brd.vert?"ON ":"OFF");
-            ImGui::Text("h_blank:  %s v_blank:   %s", vic.rs.h_sync?"ON ":"OFF", vic.rs.v_sync?"ON ":"OFF");
             ImGui::Text("badline:  %s display:   %s", vic.rs.badline?"ON ":"OFF", vic.rs.display_state?"ON ":"OFF");
             ImGui::Text("crt_x: %2d crt_y: %3d", vic.crt.x, vic.crt.y);
             ImGui::Text("line buffer:");
