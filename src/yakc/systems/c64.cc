@@ -509,21 +509,47 @@ c64_t::on_tape_inserted() {
 //------------------------------------------------------------------------------
 bool
 c64_t::tape_tick() {
+    // NOTE: the Boulderdash fastloader doesn't work, and gets
+    // out of sync from time to time... it uses CIA-2 timer A
+    // with a length of 0x180, and checks on a pulse interrupt
+    // from CIA-1 if the CIA-2 underflow IRQ bit is set or not...
+    // (is the interrupt disabled there???)
+    //
+    // the status of the FLAG IRQ bit is tested with a tight
+    // BIT testing loop (CIA-1 clears the IRQ status bits
+    // on read), finally interrupts on the CPU are disabled
+    // (but what about CIA-2's NMI?)
     if (this->tape_valid && tape.motor_on && (this->tape_byte_count >= 0)) {
-        if (this->tape_tick_count-- == 0) {
-            this->tape_byte_count--;
-            uint8_t val;
+        if (this->tape_tick_count == 0) {
+            if (tape.eof()) {
+                return false;
+            }
+            uint8_t val = 0;
             tape.read(&val, 1);
             if (val == 0) {
                 uint8_t bytes[3];
                 tape.read(&bytes, sizeof(bytes));
                 this->tape_tick_count = bytes[2]<<16 | bytes[1]<<8 | bytes[0];
+                printf("long: %d at %d\n", this->tape_tick_count, this->tape_byte_count);
+                this->tape_byte_count -= 4;
             }
             else {
                 this->tape_tick_count = val * 8;
+                this->tape_byte_count--;
             }
             return true;
         }
+        else {
+            this->tape_tick_count--;
+        }
+    }
+
+    static uint16_t old_addr = 0;
+    uint16_t new_addr = mem_rd16(&board.mem, 0xC1);
+    if (new_addr != old_addr) {
+        const uint8_t* ram = &(board.ram[0][0]);
+        printf("%04X: %02X\n", old_addr, ram[old_addr]);
+        old_addr = new_addr;
     }
     return false;
 }
