@@ -476,14 +476,10 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
         // FIXME: cassette write data
         // cassette deck motor control
         if (data & (1<<4)) {
-            if (!tape.is_playing()) {
-                tape.play();
-            }
+            tape.start_motor();
         }
         else {
-            if (tape.is_playing()) {
-                tape.stop();
-            }
+            tape.stop_motor();
         }
     }
     return pins;

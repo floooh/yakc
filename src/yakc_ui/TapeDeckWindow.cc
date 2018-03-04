@@ -27,7 +27,7 @@ TapeDeckWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(180, 136), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
 
-        if (tape.is_playing()) {
+        if (tape.is_motor_on()) {
             this->angle += 0.025f;
         }
 

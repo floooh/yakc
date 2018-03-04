@@ -8,6 +8,7 @@
 //    but this isn't the case in here, why?
 //------------------------------------------------------------------------------
 #include "c64.h"
+#include "yakc/util/tapedeck.h"
 
 #include <stdio.h>
 
@@ -111,13 +112,17 @@ c64_t::cpu_tick(uint64_t pins) {
     // tick the VIC-II display chip
     pins = m6567_tick(&board.m6567, pins);
 
-    // tick the CIAs
-    if (m6526_tick(&board.m6526_1)) {
-        /* CIA-1 is connected to the CPU IRQ pin */
+    // tick the CIAs, since the CIA IRQ pins are connected to different
+    // processor pins (CIA-1 IRQ => CPU IRQ, CIA-2 IRQ => CPU NMI), we
+    // need to clear the input IRQ pins, so they wont pollute the CPU
+    // IRQ/NMI pins
+    // FIXME: CIA-1 FLAG pin is connected to the datasette
+    if (m6526_tick(&board.m6526_1, pins & ~M6502_IRQ) & M6502_IRQ) {
+        // CIA-1 is connected to the CPU IRQ pin
         pins |= M6502_IRQ;
     }
-    if (m6526_tick(&board.m6526_2)) {
-        /* CIA-2 is connected to the CPU NMI pin */
+    if (m6526_tick(&board.m6526_2, pins & ~M6502_IRQ) & M6502_IRQ) {
+        // CIA-2 is connected to the CPU NMI pin
         pins |= M6502_NMI;
     }
 
@@ -189,8 +194,17 @@ c64_t::cpu_tick(uint64_t pins) {
 //------------------------------------------------------------------------------
 uint8_t
 c64_t::cpu_port_in() {
-    // FIXME
-    return 0xFF;
+    /*
+        Input from CPU port
+
+        bit 4: [in] datasette button status (1: no button pressed)
+    */
+    if (tape.is_motor_on()) {
+        return ~(1<<4);
+    }
+    else {
+        return 0xFF;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -199,12 +213,17 @@ c64_t::cpu_port_out(uint8_t data) {
     /*
         Output to CPU port:
 
-        bits 0..2:  memory configuration
+        bits 0..2:  [out] memory configuration
 
-        bit 3: datasette output signal level
-        bit 4: datasette button status (1: no button pressed)
-        bit 5: datasette motor control (1: motor off)
+        bit 3: [out] datasette output signal level
+        bit 5: [out] datasette motor control (1: motor off)
     */
+    if (data & (1<<5)) {
+        tape.stop_motor();
+    }
+    else {
+        tape.start_motor();
+    }
     bool need_mem_update = (c64.cpu_port ^ data) & 3;
     c64.cpu_port = data;
     if (need_mem_update) {

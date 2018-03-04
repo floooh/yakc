@@ -20,18 +20,25 @@ public:
     void stop();
     /// stop and rewind the tape
     void stop_rewind();
+    /// start the motor (without physically pressing the play button)
+    void start_motor();
+    /// stop the motor (without releasing the play button)
+    void stop_motor();
 
     /// read data from the tape
     int read(void* ptr, int num_bytes);
     /// test if there's more data on the tape
     bool eof();
 
+    /// return true if the play button is pressed
+    bool is_playing() const;
+    /// return true if the motor is on (independently from play button)
+    bool is_motor_on() const;
+
     /// get name of current tape
     const char* tape_name() const;
     /// get filetype of current tape
     filetype tape_filetype() const;
-    /// return true if the tape is currently playing
-    bool is_playing() const;
 
     /// update the tape counter (can be used as progress indicator)
     void inc_counter(int val);
@@ -45,6 +52,7 @@ private:
     char name[max_name_len] = { };
     filetype type = filetype::none;
     bool playing = false;
+    bool motor = false;
     int count = 0;
 };
 extern tapedeck tape;
