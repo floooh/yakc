@@ -456,27 +456,7 @@ EMSCRIPTEN_KEEPALIVE void yakc_quickload(const char* name, const char* filename,
         auto sys = system_from_string(sys_str);
         filetype type = filetype_from_string(filetype_str);
         FileLoader::Item item(name, filename, type, sys, false);
-        if (int(item.Compat) & int(app->emu.model)) {
-            if (filetype_quickloadable(item.Type)) {
-                app->ui.FileLoader.LoadAndStart(item);
-            }
-            else {
-                // load through tape deck
-                app->ui.FileLoader.LoadTape(item);
-
-                // send the right load/run BASIC command to the emulator
-                String cmd;
-                if (app->emu.is_system(system::any_cpc)) {
-                    cmd = "run\"\n\n";
-                }
-                else if (app->emu.is_system(system::acorn_atom)) {
-                    cmd = "*LOAD\n\n";
-                }
-                Buffer buf;
-                buf.Add((const uint8_t*)cmd.AsCStr(), cmd.Length()+1);
-                app->keyboard.StartPlayback(std::move(buf));
-            }
-        }
+        app->ui.FileLoader.LoadAuto(item);
     }
 }
 
@@ -485,39 +465,8 @@ EMSCRIPTEN_KEEPALIVE int yakc_loadfile(const char* filename, const uint8_t* data
     if (YakcApp::self) {
         auto* app = YakcApp::self;
         FileLoader::Item item(filename, filename, filetype::none, system::any);
-        FileLoader* loader = FileLoader::pointer;
-        loader->FileData.Clear();
-        loader->FileData.Add(data, size);
-        loader->Info = loader->parseHeader(loader->FileData, item);
-        loader->State = FileLoader::Ready;
-        if (int(loader->Info.RequiredSystem) & int(app->emu.model)) {
-            if (filetype_quickloadable(loader->Info.Type)) {
-                loader->quickload(&app->emu, loader->Info, loader->FileData, true);
-                return 1;
-            }
-            else if (filetype::none != loader->Info.Type){
-                // load through tape deck
-                tape.insert_tape(filename, loader->Info.Type, data, size);
-
-                // send the right load/run BASIC command to the emulator
-                String cmd;
-                if (app->emu.is_system(system::any_cpc)) {
-                    cmd = "run\"\n\n";
-                }
-                else if (app->emu.is_system(system::acorn_atom)) {
-                    cmd = "*LOAD\n\n";
-                }
-                Buffer buf;
-                buf.Add((const uint8_t*)cmd.AsCStr(), cmd.Length()+1);
-                app->keyboard.StartPlayback(std::move(buf));
-                return 1;
-            }
-            else {
-                Log::Warn("filetype not accepted\n");
-            }
-        }
-        else {
-            Log::Warn("filetype not compatible with current system\n");
+        if (app->ui.FileLoader.LoadAuto(item, data, size)) {
+            return 1;
         }
     }
     return 0;

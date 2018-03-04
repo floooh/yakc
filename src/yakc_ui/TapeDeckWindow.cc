@@ -27,7 +27,7 @@ TapeDeckWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(180, 136), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
 
-        if (tape.is_motor_on()) {
+        if (tape.motor_on) {
             this->angle += 0.025f;
         }
 
@@ -110,7 +110,7 @@ TapeDeckWindow::Draw(yakc& emu) {
                 if (!filetype_quickloadable(item.Type) && (int(item.Compat) & int(emu.model)))
                 {
                     if (ImGui::MenuItem(item.Name.AsCStr())) {
-                        this->fileLoader->LoadTape(item);
+                        this->fileLoader->LoadAuto(item);
                     }
                 }
             }

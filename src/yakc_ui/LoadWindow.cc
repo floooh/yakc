@@ -55,7 +55,8 @@ LoadWindow::Draw(yakc& emu) {
                 "CPC TAP",
                 "CPC BIN",
                 "ATOM TAP",
-                "TEXT"
+                "C64 TAP",
+                "TEXT",
             };
             static_assert(int(sizeof(typeNames)/sizeof(const char*)) == int(filetype::num), "FileType mismatch");
             int curFileType = (int) ldr.Info.Type;

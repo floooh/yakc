@@ -6,6 +6,7 @@
 */
 #include "yakc/util/breadboard.h"
 #include "yakc/util/rom_images.h"
+#include "yakc/util/filetypes.h"
 
 namespace YAKC {
 
@@ -64,12 +65,24 @@ public:
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
 
+    /// called when a tape has been inserted into the tape deck
+    void on_tape_inserted();
+    /// tick the datasette, return true if CIA-1 FLAG must be triggered
+    bool tape_tick();
+
     bool on = false;
     system model = system::c64_pal;
     uint8_t cpu_port = 0;
     uint16_t vic_bank_select = 0;   // upper 4 address bits from CIA-2 port A
     bool io_mapped = false;
     uint8_t color_ram[1024];    // special static color ram
+
+    // tape emulation
+    c64tap_header tap_header;
+    bool tape_valid = false;
+    uint32_t tape_tick_count = 0;
+    uint32_t tape_next_byte_tick = 0;
+    uint32_t tape_byte_count = 0;
 };
 extern c64_t c64;
 

@@ -25,15 +25,15 @@ public:
     /// stop the motor (without releasing the play button)
     void stop_motor();
 
+    /// true between play/stop
+    bool playing = false;
+    /// true between start motor / stop motor
+    bool motor_on = false;
+
     /// read data from the tape
     int read(void* ptr, int num_bytes);
     /// test if there's more data on the tape
     bool eof();
-
-    /// return true if the play button is pressed
-    bool is_playing() const;
-    /// return true if the motor is on (independently from play button)
-    bool is_motor_on() const;
 
     /// get name of current tape
     const char* tape_name() const;
@@ -51,8 +51,6 @@ private:
     static const int max_name_len = filesystem::file_item::max_name_size;
     char name[max_name_len] = { };
     filetype type = filetype::none;
-    bool playing = false;
-    bool motor = false;
     int count = 0;
 };
 extern tapedeck tape;

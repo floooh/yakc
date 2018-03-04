@@ -537,6 +537,31 @@ yakc::framebuffer(int& out_width, int& out_height) {
 }
 
 //------------------------------------------------------------------------------
+const char*
+yakc::load_tape_cmd() {
+    if (cpc.on) {
+        return "|tape\nrun\"\n\n";
+    }
+    else if (atom.on) {
+        return "*LOAD\n\n";
+    }
+    else if (c64.on) {
+        return "LOAD\n";
+    }
+    else {
+        return nullptr;
+    }
+}
+
+//------------------------------------------------------------------------------
+void
+yakc::on_tape_inserted() {
+    if (c64.on) {
+        c64.on_tape_inserted();
+    }
+}
+
+//------------------------------------------------------------------------------
 bool
 yakc::quickload(const char* name, filetype type, bool start) {
     bool retval = false;

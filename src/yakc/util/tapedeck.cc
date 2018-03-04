@@ -18,7 +18,7 @@ tapedeck::insert_tape(const char* name_, filetype type_, const void* data, int n
     name[0] = 0;
     type = filetype::none;
     playing = false;
-    motor = false;
+    motor_on = false;
     count = 0;
 
     // remove previous tape?
@@ -73,21 +73,21 @@ tapedeck::eof() {
 void
 tapedeck::play() {
     playing = true;
-    motor = true;
+    motor_on = true;
 }
 
 //------------------------------------------------------------------------------
 void
 tapedeck::stop() {
     playing = false;
-    motor = false;
+    motor_on = false;
 }
 
 //------------------------------------------------------------------------------
 void
 tapedeck::stop_rewind() {
     playing = false;
-    motor = false;
+    motor_on = false;
     count = 0;
     if (fp) {
         fs.set_pos(fp, 0);
@@ -97,13 +97,13 @@ tapedeck::stop_rewind() {
 //------------------------------------------------------------------------------
 void
 tapedeck::start_motor() {
-    motor = true;
+    motor_on = true;
 }
 
 //------------------------------------------------------------------------------
 void
 tapedeck::stop_motor() {
-    motor = false;
+    motor_on = false;
 }
 
 //------------------------------------------------------------------------------
@@ -116,18 +116,6 @@ tapedeck::tape_name() const {
 filetype
 tapedeck::tape_filetype() const {
     return type;
-}
-
-//------------------------------------------------------------------------------
-bool
-tapedeck::is_playing() const {
-    return playing;
-}
-
-//------------------------------------------------------------------------------
-bool
-tapedeck::is_motor_on() const {
-    return motor;
 }
 
 //------------------------------------------------------------------------------

@@ -125,6 +125,7 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Hard Hat Harry", "hardhatharry.tap", filetype::atom_tap, system::acorn_atom, true);
     this->Items.Add("Jet Set Miner", "cjetsetminer.tap", filetype::atom_tap, system::acorn_atom, true);
     this->Items.Add("Dormann 6502 Test", "dormann6502.tap", filetype::atom_tap, system::acorn_atom, true);
+    this->Items.Add("Boulderdash", "boulderdash_c64.tap", filetype::c64_tap, system::any_c64, true);
 }
 
 //------------------------------------------------------------------------------
@@ -160,6 +161,7 @@ FileLoader::LoadTape(const Item& item) {
             this->Info = parseHeader(this->FileData, item);
             this->State = Ready;
             tape.insert_tape(item.Name.AsCStr(), item.Type, this->FileData.Data(), this->FileData.Size());
+            this->emu->on_tape_inserted();
         },
         // load failed
         [this](const URL& url, IOStatus::Code ioStatus) {
@@ -346,6 +348,68 @@ FileLoader::quickload(yakc* emu, const FileInfo& info, const Buffer& data, bool 
         }
     }
     FileLoader::pointer->State = newState;
+}
+
+//------------------------------------------------------------------------------
+bool
+FileLoader::LoadAuto(const Item& item) {
+    if (int(item.Compat) & int(this->emu->model)) {
+        if (filetype_quickloadable(item.Type)) {
+            this->LoadAndStart(item);
+        }
+        else {
+            // load through tape deck
+            this->LoadTape(item);
+
+            // send the right load/run BASIC command to the emulator
+            const char* cmd = this->emu->load_tape_cmd();
+            if (cmd) {
+                Buffer buf;
+                buf.Add((const uint8_t*)cmd, strlen(cmd)+1);
+                Keyboard::self->StartPlayback(std::move(buf));
+            }
+            this->emu->enable_joystick(true);
+        }
+        return true;
+    }
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool
+FileLoader::LoadAuto(const Item& item, const uint8_t* data, int size) {
+    this->FileData.Clear();
+    this->FileData.Add(data, size);
+    this->Info = this->parseHeader(this->FileData, item);
+    this->State = FileLoader::Ready;
+    if (int(this->Info.RequiredSystem) & int(this->emu->model)) {
+        if (filetype_quickloadable(this->Info.Type)) {
+            this->quickload(this->emu, this->Info, this->FileData, true);
+            return true;
+        }
+        else if (filetype::none != this->Info.Type){
+            // load through tape deck
+            tape.insert_tape(item.Filename.AsCStr(), this->Info.Type, data, size);
+            this->emu->on_tape_inserted();
+
+            // send the right load/run BASIC command to the emulator
+            const char* cmd = this->emu->load_tape_cmd();
+            if (cmd) {
+                Buffer buf;
+                buf.Add((const uint8_t*)cmd, strlen(cmd)+1);
+                Keyboard::self->StartPlayback(std::move(buf));
+            }
+            this->emu->enable_joystick(true);
+            return true;
+        }
+        else {
+            Log::Warn("filetype not accepted\n");
+        }
+    }
+    else {
+        Log::Warn("filetype not compatible with current system\n");
+    }
+    return false;
 }
 
 } // namespace YAKC

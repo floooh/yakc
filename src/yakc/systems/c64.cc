@@ -39,6 +39,11 @@ c64_t::poweron(system m) {
     this->model = m;
     this->cpu_port = 0xF7;      // for initial memory configuration
     this->io_mapped = true;
+    this->tap_header = c64tap_header();
+    this->tape_valid = false;
+    this->tape_tick_count = 0;
+    this->tape_next_byte_tick = 0;
+    this->tape_byte_count = 0;
 
     // setup the keyboard matrix
     this->init_keymap();
@@ -92,6 +97,11 @@ c64_t::reset() {
     m6526_reset(&board.m6526_1);
     m6526_reset(&board.m6526_2);
     m6567_reset(&board.m6567);
+    this->tap_header = c64tap_header();
+    this->tape_valid = false;
+    this->tape_tick_count = 0;
+    this->tape_next_byte_tick = 0;
+    this->tape_byte_count = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -112,12 +122,18 @@ c64_t::cpu_tick(uint64_t pins) {
     // tick the VIC-II display chip
     pins = m6567_tick(&board.m6567, pins);
 
+    // tick the datasette
+    uint64_t cia1_pins = pins & !M6502_IRQ;
+    if (c64.tape_tick()) {
+        cia1_pins |= M6526_FLAG;
+    }
+
     // tick the CIAs, since the CIA IRQ pins are connected to different
     // processor pins (CIA-1 IRQ => CPU IRQ, CIA-2 IRQ => CPU NMI), we
     // need to clear the input IRQ pins, so they wont pollute the CPU
     // IRQ/NMI pins
     // FIXME: CIA-1 FLAG pin is connected to the datasette
-    if (m6526_tick(&board.m6526_1, pins & ~M6502_IRQ) & M6502_IRQ) {
+    if (m6526_tick(&board.m6526_1, cia1_pins) & M6502_IRQ) {
         // CIA-1 is connected to the CPU IRQ pin
         pins |= M6502_IRQ;
     }
@@ -199,7 +215,7 @@ c64_t::cpu_port_in() {
 
         bit 4: [in] datasette button status (1: no button pressed)
     */
-    if (tape.is_motor_on()) {
+    if (tape.motor_on) {
         return ~(1<<4);
     }
     else {
@@ -239,8 +255,8 @@ c64_t::cia1_out(int port_id, uint8_t data) {
         kbd_set_active_lines(&board.kbd, ~data);
     }
     else {
-        /* CIA-1 B should never be written */
-        printf("CIA-1 out %s: %02X\n", port_id==0?"A":"B", data);
+        /* CIA-1 B should never be written (?) */
+        //printf("CIA-1 out %s: %02X\n", port_id==0?"A":"B", data);
     }
 }
 
@@ -473,6 +489,47 @@ c64_t::framebuffer(int& out_width, int &out_height) {
 void
 c64_t::decode_audio(float* buffer, int num_samples) {
     board.audiobuffer.read(buffer, num_samples);
+}
+
+//------------------------------------------------------------------------------
+void
+c64_t::on_tape_inserted() {
+    // read the .TAP header */
+    tape.read(&this->tap_header, sizeof(this->tap_header));
+    const char* sig = "C64-TAPE-RAW";
+    if (0 != memcmp(&this->tap_header.signature, sig, 12)) {
+        // FIXME: unknown file type
+        return;
+    }
+    YAKC_ASSERT(1 == this->tap_header.version);
+    // tape is valid, rewind counters
+    this->tape_valid = true;
+    this->tape_tick_count = 0;
+    this->tape_next_byte_tick = 0;
+    this->tape_byte_count = 0;
+}
+
+//------------------------------------------------------------------------------
+bool
+c64_t::tape_tick() {
+    if (this->tape_valid && tape.motor_on) {
+        if (this->tape_tick_count++ >= this->tape_next_byte_tick) {
+            uint8_t val;
+            tape.read(&val, 1);
+            uint32_t pulse_length;
+            if (val == 0) {
+                uint8_t bytes[3];
+                tape.read(&bytes, sizeof(bytes));
+                pulse_length = bytes[2]<<16 | bytes[1]<<8 | bytes[0];
+            }
+            else {
+                pulse_length = val * 8;
+            }
+            this->tape_next_byte_tick = this->tape_tick_count + pulse_length;
+            return true;
+        }
+    }
+    return false;
 }
 
 //------------------------------------------------------------------------------

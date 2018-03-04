@@ -8,6 +8,7 @@
 #include "Core/String/String.h"
 #include "Core/Containers/Array.h"
 #include "IO/IO.h"
+#include "yakc_oryol/Keyboard.h"
 
 namespace YAKC {
 
@@ -60,6 +61,10 @@ public:
     void Setup(yakc& emu);
     /// discard the loader object
     void Discard();
+    /// automatically load and start a loader item
+    bool LoadAuto(const Item& item);
+    /// automatically load and start from a data block
+    bool LoadAuto(const Item& item, const uint8_t* data, int size);
     /// load a file, and don't automatically start
     void Load(const Item& item);
     /// load and auto-start a file

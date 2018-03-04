@@ -48,6 +48,10 @@ public:
     /// return true if joystick is enabled
     bool is_joystick_enabled() const;
 
+    /// get the command text for starting a tape load
+    const char* load_tape_cmd();
+    /// called when a new tape has been inserted in the tape deck
+    void on_tape_inserted();
     /// start a quickload (may not be finished when function returns)
     bool quickload(const char* name, filetype type, bool start);
 

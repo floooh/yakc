@@ -12,6 +12,7 @@ namespace YAKC {
 
 class Keyboard {
 public:
+    static Keyboard* self;
     /// setup the keyboard handler
     void Setup(yakc& emu);
     /// discard the keyboard handler

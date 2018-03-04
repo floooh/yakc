@@ -18,6 +18,7 @@ enum class filetype {
     cpc_tap,
     cpc_bin,    // raw bin file with 128 byte AMSDOS header (http://www.cpcwiki.eu/index.php/AMSDOS_Header)
     atom_tap,
+    c64_tap,
     text,
 
     num,
@@ -36,6 +37,7 @@ inline filetype filetype_from_string(const char* str) {
     if (strcmp(str, "cpc_tap")==0) return filetype::cpc_tap;
     if (strcmp(str, "cpc_bin")==0) return filetype::cpc_bin;
     if (strcmp(str, "atom_tap")==0) return filetype::atom_tap;
+    if (strcmp(str, "c64_tap")==0) return filetype::c64_tap;
     if (strcmp(str, "text")==0) return filetype::text;
     return filetype::none;
 }
@@ -45,6 +47,7 @@ inline bool filetype_quickloadable(filetype t) {
     switch (t) {
         case filetype::cpc_tap:
         case filetype::atom_tap:
+        case filetype::c64_tap:
             return false;
         default:
             return true;
@@ -221,3 +224,12 @@ struct atomtap_header {
     uint16_t length;
 };
 static_assert(sizeof(atomtap_header) == 16 + 3*2, "atomtap header size");
+
+// C64 TAP header
+struct c64tap_header {
+    uint8_t signature[12];  // "C64-TAPE-RAW"
+    uint8_t version;        // 0x00 or 0x01
+    uint8_t pad[3];         // reserved
+    uint32_t size;          // size of the following data
+};
+static_assert(sizeof(c64tap_header) == 20, "c64tap header size");

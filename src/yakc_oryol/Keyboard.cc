@@ -8,6 +8,8 @@ namespace YAKC {
 
 using namespace Oryol;
 
+Keyboard* Keyboard::self = nullptr;
+
 //------------------------------------------------------------------------------
 static bool
 is_joystick_key(Key::Code key) {
@@ -127,6 +129,7 @@ translate_special_key(const yakc* emu, Key::Code key, bool shift, bool ctrl) {
 void
 Keyboard::Setup(yakc& emu_) {
     o_assert_dbg(!this->emu);
+    self = this;
     this->emu = &emu_;
     Input::SubscribeEvents([this](const InputEvent& e) {
         if (!this->hasInputFocus) {
@@ -220,6 +223,7 @@ Keyboard::Setup(yakc& emu_) {
 void
 Keyboard::Discard() {
     o_assert_dbg(this->emu);
+    self = nullptr;
     Input::UnsubscribeEvents(this->callbackId);
 }
 
