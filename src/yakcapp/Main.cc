@@ -137,12 +137,9 @@ YakcApp::OnRunning() {
         this->keyboard.StartPlayback(this->ui.FileLoader.ObtainTextBuffer());
     }
     // don't handle KC input if IMGUI has the keyboard focus
-    if (!ImGui::GetIO().WantCaptureKeyboard) {
-        this->keyboard.HandleInput();
-    }
-    #else
-    this->keyboard.HandleInput();
+    this->keyboard.hasInputFocus = !ImGui::GetIO().WantCaptureKeyboard;
     #endif
+    this->keyboard.HandleInput();
 
     int micro_secs = (int) frameTime.AsMicroSeconds();
     uint64_t processed_audio_cycles = this->audio.GetProcessedCycles();
