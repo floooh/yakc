@@ -42,7 +42,6 @@ c64_t::poweron(system m) {
     this->tap_header = c64tap_header();
     this->tape_valid = false;
     this->tape_tick_count = 0;
-    this->tape_next_byte_tick = 0;
     this->tape_byte_count = 0;
 
     // setup the keyboard matrix
@@ -100,7 +99,6 @@ c64_t::reset() {
     this->tap_header = c64tap_header();
     this->tape_valid = false;
     this->tape_tick_count = 0;
-    this->tape_next_byte_tick = 0;
     this->tape_byte_count = 0;
 }
 
@@ -157,10 +155,10 @@ c64_t::cpu_tick(uint64_t pins) {
             else if (addr < 0xD800) {
                 // SID IO request
                 if (pins & M6502_RW) {
-                    printf("SID READ: %04X\n", addr);
+                    //printf("SID READ: %04X\n", addr);
                 }
                 else {
-                    printf("SID WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
+                    //printf("SID WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
                 }
             }
             else if (addr < 0xDC00) {
@@ -505,27 +503,25 @@ c64_t::on_tape_inserted() {
     // tape is valid, rewind counters
     this->tape_valid = true;
     this->tape_tick_count = 0;
-    this->tape_next_byte_tick = 0;
-    this->tape_byte_count = 0;
+    this->tape_byte_count = this->tap_header.size;
 }
 
 //------------------------------------------------------------------------------
 bool
 c64_t::tape_tick() {
-    if (this->tape_valid && tape.motor_on) {
-        if (this->tape_tick_count++ >= this->tape_next_byte_tick) {
+    if (this->tape_valid && tape.motor_on && (this->tape_byte_count >= 0)) {
+        if (this->tape_tick_count-- == 0) {
+            this->tape_byte_count--;
             uint8_t val;
             tape.read(&val, 1);
-            uint32_t pulse_length;
             if (val == 0) {
                 uint8_t bytes[3];
                 tape.read(&bytes, sizeof(bytes));
-                pulse_length = bytes[2]<<16 | bytes[1]<<8 | bytes[0];
+                this->tape_tick_count = bytes[2]<<16 | bytes[1]<<8 | bytes[0];
             }
             else {
-                pulse_length = val * 8;
+                this->tape_tick_count = val * 8;
             }
-            this->tape_next_byte_tick = this->tape_tick_count + pulse_length;
             return true;
         }
     }

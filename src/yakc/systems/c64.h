@@ -81,8 +81,7 @@ public:
     c64tap_header tap_header;
     bool tape_valid = false;
     uint32_t tape_tick_count = 0;
-    uint32_t tape_next_byte_tick = 0;
-    uint32_t tape_byte_count = 0;
+    int32_t tape_byte_count = 0;
 };
 extern c64_t c64;
 
