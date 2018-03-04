@@ -25,6 +25,9 @@ public:
     void drawMainContent(yakc& emu, uint16_t start_addr, int num_lines);
     /// draw control buttons
     void drawControls(yakc& emu);
+
+    yakc* emu = nullptr;
+    uint64_t cpu_pins = 0;
 };
 
 } // namespace YAKC

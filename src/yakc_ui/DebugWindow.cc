@@ -16,6 +16,7 @@ namespace YAKC {
 void
 DebugWindow::Setup(yakc& emu) {
     this->setName("Debugger");
+    this->emu = &emu;
 }
 
 //------------------------------------------------------------------------------
@@ -139,6 +140,30 @@ DebugWindow::drawControls(yakc& emu) {
         if (ImGui::Button("Step")) {
             emu.step();
         }
+        ImGui::SameLine();
+        if (ImGui::Button(">Int")) {
+            if (emu.cpu_type() == cpu_model::z80) {
+                this->cpu_pins = board.z80.PINS;
+            }
+            else {
+                this->cpu_pins = board.m6502.state.PINS;
+            }
+            emu.step_until([this](uint32_t ticks)->bool {
+                bool triggered = false;
+                if (this->emu->cpu_type() == cpu_model::z80) {
+                    uint64_t cur_pins = board.z80.PINS;
+                    triggered = ((cur_pins ^ this->cpu_pins) & cur_pins) & Z80_INT;
+                    this->cpu_pins = cur_pins;
+                }
+                else {
+                    uint64_t cur_pins = board.m6502.state.PINS;
+                    triggered = ((cur_pins ^ this->cpu_pins) & cur_pins) & (M6502_IRQ|M6502_NMI);
+                    this->cpu_pins = cur_pins;
+                }
+                return (ticks > 1000000) || triggered;
+            });
+        }
+        if (ImGui::IsItemHovered()) { ImGui::SetTooltip("Run to next interrupt\n"); }
         ImGui::SameLine();
         // tint the framebuffer red, to visualize video decoding
         if (ImGui::Button("Tint")) {
