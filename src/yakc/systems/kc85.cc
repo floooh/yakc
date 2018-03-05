@@ -372,7 +372,7 @@ kc85_t::pio_out(int port_id, uint8_t data) {
 uint64_t
 kc85_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
-    uint32_t num_ticks = end_tick - start_tick;
+    uint32_t num_ticks = uint32_t(end_tick - start_tick);
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
     this->handle_keyboard_input();
     return start_tick + ticks_executed;

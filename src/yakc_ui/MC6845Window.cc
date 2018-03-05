@@ -65,7 +65,7 @@ MC6845Window::Draw(yakc& emu) {
                 this->pins = board.mc6845.pins;
                 emu.step_until([this](uint32_t ticks)->bool {
                     uint64_t cur_pins = board.mc6845.pins;
-                    bool triggered = ((cur_pins ^ this->pins) & cur_pins) & MC6845_HS;
+                    bool triggered = 0 != (((cur_pins ^ this->pins) & cur_pins) & MC6845_HS);
                     this->pins = cur_pins;
                     return (ticks > (80*4)) || triggered;
                 });
@@ -76,7 +76,7 @@ MC6845Window::Draw(yakc& emu) {
                 this->pins = board.mc6845.pins;
                 emu.step_until([this](uint32_t ticks)->bool {
                     uint64_t cur_pins = board.mc6845.pins;
-                    bool triggered = ((cur_pins ^ this->pins) & ~cur_pins) & MC6845_HS;
+                    bool triggered = 0 != (((cur_pins ^ this->pins) & ~cur_pins) & MC6845_HS);
                     this->pins = cur_pins;
                     return (ticks > (80*4)) || triggered;
                 });
@@ -87,7 +87,7 @@ MC6845Window::Draw(yakc& emu) {
                 this->pins = board.mc6845.pins;
                 emu.step_until([this](uint32_t ticks)->bool {
                     uint64_t cur_pins = board.mc6845.pins;
-                    bool triggered = ((cur_pins ^ this->pins) & cur_pins) & MC6845_VS;
+                    bool triggered = 0 != (((cur_pins ^ this->pins) & cur_pins) & MC6845_VS);
                     this->pins = cur_pins;
                     return (ticks > (32000*4)) || triggered;
                 });
@@ -98,7 +98,7 @@ MC6845Window::Draw(yakc& emu) {
                 this->pins = board.mc6845.pins;
                 emu.step_until([this](uint32_t ticks)->bool {
                     uint64_t cur_pins = board.mc6845.pins;
-                    bool triggered = ((cur_pins ^ this->pins) & ~cur_pins) & MC6845_VS;
+                    bool triggered = 0 != (((cur_pins ^ this->pins) & ~cur_pins) & MC6845_VS);
                     this->pins = cur_pins;
                     return (ticks > (32000*4)) || triggered;
                 });

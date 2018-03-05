@@ -32,16 +32,16 @@ MC6847Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         const mc6847_t& mc = board.mc6847;
-        on_off("HSYNC:", mc.pins & MC6847_HS);
-        on_off("FSYNC:", mc.pins & MC6847_FS);
-        on_off("A/G:", mc.pins & MC6847_AG);
-        on_off("A/S:", mc.pins & MC6847_AS);
-        on_off("INT/EXT:", mc.pins & MC6847_INTEXT);
-        on_off("INV:", mc.pins & MC6847_INV);
-        on_off("CSS:", mc.pins & MC6847_CSS);
-        on_off("GM0:", mc.pins & MC6847_GM0);
-        on_off("GM1:", mc.pins & MC6847_GM1);
-        on_off("GM2:", mc.pins & MC6847_GM2);
+        on_off("HSYNC:", 0 != (mc.pins & MC6847_HS));
+        on_off("FSYNC:", 0 != (mc.pins & MC6847_FS));
+        on_off("A/G:", 0 != (mc.pins & MC6847_AG));
+        on_off("A/S:", 0 != (mc.pins & MC6847_AS));
+        on_off("INT/EXT:", 0 != (mc.pins & MC6847_INTEXT));
+        on_off("INV:", 0 != (mc.pins & MC6847_INV));
+        on_off("CSS:", 0 != (mc.pins & MC6847_CSS));
+        on_off("GM0:", 0 != (mc.pins & MC6847_GM0));
+        on_off("GM1:", 0 != (mc.pins & MC6847_GM1));
+        on_off("GM2:", 0 != (mc.pins & MC6847_GM2));
         ImGui::Text("Hori Count: %d\n", mc.h_count / MC6847_PRECISION_BOOST);
         ImGui::Text("Line Count: %d\n", mc.l_count);
     }

@@ -152,12 +152,12 @@ DebugWindow::drawControls(yakc& emu) {
                 bool triggered = false;
                 if (this->emu->cpu_type() == cpu_model::z80) {
                     uint64_t cur_pins = board.z80.PINS;
-                    triggered = ((cur_pins ^ this->cpu_pins) & cur_pins) & Z80_INT;
+                    triggered = 0 != (((cur_pins ^ this->cpu_pins) & cur_pins) & Z80_INT);
                     this->cpu_pins = cur_pins;
                 }
                 else {
                     uint64_t cur_pins = board.m6502.state.PINS;
-                    triggered = ((cur_pins ^ this->cpu_pins) & cur_pins) & (M6502_IRQ|M6502_NMI);
+                    triggered = 0 != (((cur_pins ^ this->cpu_pins) & cur_pins) & (M6502_IRQ|M6502_NMI));
                     this->cpu_pins = cur_pins;
                 }
                 return (ticks > 1000000) || triggered;

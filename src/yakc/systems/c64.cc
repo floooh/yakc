@@ -106,7 +106,7 @@ c64_t::reset() {
 uint64_t
 c64_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
-    uint32_t num_ticks = end_tick - start_tick;
+    uint32_t num_ticks = uint32_t(end_tick - start_tick);
     uint32_t ticks_executed = m6502_exec(&board.m6502, num_ticks);
     kbd_update(&board.kbd);
     return start_tick + ticks_executed;
@@ -238,7 +238,7 @@ c64_t::cpu_port_out(uint8_t data) {
     else {
         tape.start_motor();
     }
-    bool need_mem_update = (c64.cpu_port ^ data) & 3;
+    bool need_mem_update = 0 != ((c64.cpu_port ^ data) & 3);
     c64.cpu_port = data;
     if (need_mem_update) {
         c64.update_memory_map();

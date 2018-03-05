@@ -227,7 +227,7 @@ zx_t::reset() {
 uint64_t
 zx_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
-    uint32_t num_ticks = end_tick - start_tick;
+    uint32_t num_ticks = uint32_t(end_tick - start_tick);
     uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
     kbd_update(&board.kbd);
     return start_tick + ticks_executed;
@@ -291,7 +291,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 }
                 // keyboard matrix bits are encoded in the upper 8 bit of the port address
                 uint16_t column_mask = (~(Z80_GET_ADDR(pins)>>8)) & 0x00FF;
-                const uint8_t kbd_lines = kbd_test_lines(&board.kbd, column_mask);
+                const uint16_t kbd_lines = kbd_test_lines(&board.kbd, column_mask);
                 data |= (~kbd_lines) & 0x1F;
                 Z80_SET_DATA(pins, data);
             }
