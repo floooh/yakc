@@ -1,11 +1,5 @@
 //------------------------------------------------------------------------------
 //  c64.cc
-//
-//  FIXME:
-//  - when scrolling down with 25 rows display mode (poke 53265,31), a black
-//    bar appears on a real C64, this is because in idle state the VIC-II
-//    reads the byte at 0x3FFF, which seems to be set to 0xFF on a real C64,
-//    but this isn't the case in here, why?
 //------------------------------------------------------------------------------
 #include "c64.h"
 #include "yakc/util/tapedeck.h"
@@ -117,9 +111,6 @@ uint64_t
 c64_t::cpu_tick(uint64_t pins) {
     const uint16_t addr = M6502_GET_ADDR(pins);
 
-    // tick the VIC-II display chip
-    pins = m6567_tick(&board.m6567, pins);
-
     // tick the datasette
     uint64_t cia1_pins = pins & !M6502_IRQ;
     if (c64.tape_tick()) {
@@ -138,6 +129,19 @@ c64_t::cpu_tick(uint64_t pins) {
     if (m6526_tick(&board.m6526_2, pins & ~M6502_IRQ) & M6502_IRQ) {
         // CIA-2 is connected to the CPU NMI pin
         pins |= M6502_NMI;
+    }
+
+    // tick the VIC-II display chip
+    pins &= ~M6567_AEC;
+    pins = m6567_tick(&board.m6567, pins);
+
+    // don't read while the RDY pin is active, this means that only
+    // exactly one read will be performed after the RDY pin is deactivated
+    // (and not multiple which would clear the CIA interrupt registers)
+    //
+    // FIXME: maybe we should find a better way to handle this up in the CPU emu
+    if ((pins & (M6502_RDY|M6502_RW)) == (M6502_RDY|M6502_RW)) {
+        return pins;
     }
 
     // CPU port I/O?
@@ -509,17 +513,21 @@ c64_t::on_tape_inserted() {
 //------------------------------------------------------------------------------
 bool
 c64_t::tape_tick() {
-    // NOTE: the Boulderdash fastloader doesn't work, and gets
-    // out of sync from time to time... it uses CIA-2 timer A
-    // with a length of 0x180, and checks on a pulse interrupt
-    // from CIA-1 if the CIA-2 underflow IRQ bit is set or not...
-    // (is the interrupt disabled there???)
-    //
-    // the status of the FLAG IRQ bit is tested with a tight
-    // BIT testing loop (CIA-1 clears the IRQ status bits
-    // on read), finally interrupts on the CPU are disabled
-    // (but what about CIA-2's NMI?)
     if (this->tape_valid && tape.motor_on && (this->tape_byte_count >= 0)) {
+
+        /* REMOVE ME: this is special debug dumping code for the
+            Boulderdash fast loader
+        */
+        /*
+        static uint16_t old_addr = 0;
+        uint16_t new_addr = mem_rd16(&board.mem, 0xC1);
+        if (new_addr != old_addr) {
+            const uint8_t* ram = &(board.ram[0][0]);
+            printf("%04X: %02X\n", old_addr, ram[0xBD]);
+            old_addr = new_addr;
+        }
+        */
+
         if (this->tape_tick_count == 0) {
             if (tape.eof()) {
                 return false;
@@ -530,7 +538,6 @@ c64_t::tape_tick() {
                 uint8_t bytes[3];
                 tape.read(&bytes, sizeof(bytes));
                 this->tape_tick_count = bytes[2]<<16 | bytes[1]<<8 | bytes[0];
-                printf("long: %d at %d\n", this->tape_tick_count, this->tape_byte_count);
                 this->tape_byte_count -= 4;
             }
             else {
@@ -542,14 +549,6 @@ c64_t::tape_tick() {
         else {
             this->tape_tick_count--;
         }
-    }
-
-    static uint16_t old_addr = 0;
-    uint16_t new_addr = mem_rd16(&board.mem, 0xC1);
-    if (new_addr != old_addr) {
-        const uint8_t* ram = &(board.ram[0][0]);
-        printf("%04X: %02X\n", old_addr, ram[old_addr]);
-        old_addr = new_addr;
     }
     return false;
 }

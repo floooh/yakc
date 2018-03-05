@@ -76,6 +76,25 @@ static void drawTimerState(int type, m6526_timer_t* t) {
 }
 
 //------------------------------------------------------------------------------
+static void drawInterrupt(m6526_int_t* intr) {
+    ImGui::Text("     INT  FLG SP  ALM TB  TA");
+    ImGui::Text("ICR: %s  %s %s %s %s %s",
+        (0 != (intr->icr & (1<<7))) ? "ON ":"OFF",
+        (0 != (intr->icr & (1<<4))) ? "ON ":"OFF",
+        (0 != (intr->icr & (1<<3))) ? "ON ":"OFF",
+        (0 != (intr->icr & (1<<2))) ? "ON ":"OFF",
+        (0 != (intr->icr & (1<<1))) ? "ON ":"OFF",
+        (0 != (intr->icr & (1<<0))) ? "ON ":"OFF");
+    ImGui::Text("ICM:      %s %s %s %s %s",
+        (0 != (intr->imr & (1<<4))) ? "ON ":"OFF",
+        (0 != (intr->imr & (1<<3))) ? "ON ":"OFF",
+        (0 != (intr->imr & (1<<2))) ? "ON ":"OFF",
+        (0 != (intr->imr & (1<<1))) ? "ON ":"OFF",
+        (0 != (intr->imr & (1<<0))) ? "ON ":"OFF");
+    drawPipeline("pip_irq: ", intr->pip_irq);
+}
+
+//------------------------------------------------------------------------------
 bool
 M6526Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(320, 240), ImGuiSetCond_Once);
@@ -83,6 +102,9 @@ M6526Window::Draw(yakc& emu) {
         if (ImGui::CollapsingHeader("Ports", "#port_a", true, true)) {
             drawPortState("A:", &this->CIA->pa);
             drawPortState("B:", &this->CIA->pb);
+        }
+        if (ImGui::CollapsingHeader("Interrupt", "#int", true, true)) {
+            drawInterrupt(&this->CIA->intr);
         }
         if (ImGui::CollapsingHeader("Timer A", "#timer_a", true, true)) {
             drawTimerState(0, &this->CIA->ta);
