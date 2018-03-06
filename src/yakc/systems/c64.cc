@@ -234,7 +234,7 @@ c64_t::cpu_port_in() {
 
         bit 4: [in] datasette button status (1: no button pressed)
     */
-    if (tape.motor_on) {
+    if (tape.playing) {
         return ~(1<<4);
     }
     else {
