@@ -69,6 +69,9 @@ c64_t::poweron(system m) {
     vic_desc.vis_h = 272;
     m6567_init(&board.m6567, &vic_desc);
 
+    // use a beeper for audible datasette output
+    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.1f);
+
     // put the CPU into start state
     m6502_reset(&board.m6502);
 }
@@ -113,53 +116,65 @@ uint64_t
 c64_t::cpu_tick(uint64_t pins) {
     const uint16_t addr = M6502_GET_ADDR(pins);
 
-    // tick the datasette
+    // tick the datasette, when the datasette output pulse
+    // toggles, the FLAG input pin on CIA-1 will go active for 1 tick
     uint64_t cia1_pins = pins & !M6502_IRQ;
     if (c64.tape_tick()) {
         cia1_pins |= M6526_FLAG;
     }
 
-    // tick the CIAs, since the CIA IRQ pins are connected to different
-    // processor pins (CIA-1 IRQ => CPU IRQ, CIA-2 IRQ => CPU NMI), we
-    // need to clear the input IRQ pins, so they wont pollute the CPU
-    // IRQ/NMI pins
-    // FIXME: CIA-1 FLAG pin is connected to the datasette
+    // tick the CIAs:
+    //  - CIA-1 gets the FLAG pin from the datasette
+    //  - the CIA-1 IRQ pin is connected to the CPU IRQ pin
+    //  - the CIA-2 IRQ pin is connected to the CPU NMI pin
     if (m6526_tick(&board.m6526_1, cia1_pins) & M6502_IRQ) {
-        // CIA-1 is connected to the CPU IRQ pin
         pins |= M6502_IRQ;
     }
     if (m6526_tick(&board.m6526_2, pins & ~M6502_IRQ) & M6502_IRQ) {
-        // CIA-2 is connected to the CPU NMI pin
         pins |= M6502_NMI;
     }
 
-    // tick the VIC-II display chip
-    pins &= ~M6567_AEC;
+    // tick the VIC-II display chip:
+    //  - the VIC-II IRQ pin is connected to the CPU IRQ pin and goes
+    //    active when the VIC-II requests a rasterline interrupt
+    //  - the VIC-II BA pin is connected to the CPU RDY pin, and stops
+    //    the CPU on the first CPU read access after BA goes active
+    //  - the VIC-II AEC pin is connected to the CPU AEC pin, currently
+    //    this goes active during a badline, but is not checked
     pins = m6567_tick(&board.m6567, pins);
 
-    // don't read while the RDY pin is active, this means that only
-    // exactly one read will be performed after the RDY pin is deactivated
-    // (and not multiple which would clear the CIA interrupt registers)
+    // Special handling when the VIC-II asks the CPU to stop during a
+    // 'badline' via the BA=>RDY pin. If the RDY pin is active, the
+    // CPU will 'loop' on the tick callback during the next READ access
+    // until the RDY pin goes inactive. The tick callback must make sure
+    // that only a single READ access happens during the entire RDY period.
+    // Currently this happens on the very last tick when RDY goes from
+    // active to inactive (I haven't found definitive documentation if
+    // this is the right behaviour, but it made the Boulderdash fast loader work).
     //
-    // FIXME: maybe we should find a better way to handle this up in the CPU emu
+    // FIXME: another option to handle the RDY pin would be to loop *inside*
+    // the tick callback until the RDY pin goes inactive, and only then return
+    // to the CPU instruction decoder with the number of cycles spent in the
+    // RDY loop.
     if ((pins & (M6502_RDY|M6502_RW)) == (M6502_RDY|M6502_RW)) {
         return pins;
     }
 
-    // CPU port I/O?
+    // handle IO requests
     if (M6510_CHECK_IO(pins)) {
+        // ...the integrated IO port in the M6510 CPU at addresses 0 and 1
         pins = m6510_iorq(&board.m6502, pins);
     }
     else {
-        // check for I/O range at 0xD000..0xDFFF
+        // ...the memory-mapped IO area from 0xD000 to 0xDFFF
         if (c64.io_mapped && ((addr & 0xF000) == 0xD000)) {
             if (addr < 0xD400) {
-                // VIC-II IO request
+                // VIC-II (D000..D3FF)
                 uint64_t vic_pins = (pins & M6502_PIN_MASK)|M6567_CS;
                 pins = m6567_iorq(&board.m6567, vic_pins) & M6502_PIN_MASK;
             }
             else if (addr < 0xD800) {
-                // SID IO request
+                // SID (D400..D7FF)
                 if (pins & M6502_RW) {
                     //printf("SID READ: %04X\n", addr);
                 }
@@ -168,7 +183,7 @@ c64_t::cpu_tick(uint64_t pins) {
                 }
             }
             else if (addr < 0xDC00) {
-                // color ram access
+                // the special color Static-RAM bank (D800..DBFF)
                 if (pins & M6502_RW) {
                     M6502_SET_DATA(pins, c64.color_ram[addr & 0x03FF]);
                 }
@@ -177,17 +192,17 @@ c64_t::cpu_tick(uint64_t pins) {
                 }
             }
             else if (addr < 0xDD00) {
-                // CIA-1 IO request
+                // CIA-1 (DC00..DCFF)
                 uint64_t cia_pins = (pins & M6502_PIN_MASK)|M6526_CS;
                 pins = m6526_iorq(&board.m6526_1, cia_pins) & M6502_PIN_MASK;
             }
             else if (addr < 0xDE00) {
-                // CIA-2 IO request
+                // CIA-2 (DD00..DDFF)
                 uint64_t cia_pins = (pins & M6502_PIN_MASK)|M6526_CS;
                 pins = m6526_iorq(&board.m6526_2, cia_pins) & M6502_PIN_MASK;
             }
             else {
-                // expansion system
+                // expansion system (not yet implemented)
                 if (pins & M6502_RW) {
                     printf("EXP READ: %04X\n", addr);
                 }
@@ -197,7 +212,7 @@ c64_t::cpu_tick(uint64_t pins) {
             }
         }
         else {
-            // regular memory access
+            // a regular memory access
             if (pins & M6502_RW) {
                 // memory read
                 M6502_SET_DATA(pins, mem_rd(&board.mem, addr));
@@ -215,7 +230,7 @@ c64_t::cpu_tick(uint64_t pins) {
 uint8_t
 c64_t::cpu_port_in() {
     /*
-        Input from CPU port
+        Input from the integrated M6510 CPU IO port
 
         bit 4: [in] datasette button status (1: no button pressed)
     */
@@ -231,7 +246,7 @@ c64_t::cpu_port_in() {
 void
 c64_t::cpu_port_out(uint8_t data) {
     /*
-        Output to CPU port:
+        Output to the integrated M6510 CPU IO port
 
         bits 0..2:  [out] memory configuration
 
@@ -244,6 +259,7 @@ c64_t::cpu_port_out(uint8_t data) {
     else {
         tape.start_motor();
     }
+    // only update memory configuration if the relevant bits have changed
     bool need_mem_update = 0 != ((c64.cpu_port ^ data) & 3);
     c64.cpu_port = data;
     if (need_mem_update) {
@@ -254,12 +270,18 @@ c64_t::cpu_port_out(uint8_t data) {
 //------------------------------------------------------------------------------
 void
 c64_t::cia1_out(int port_id, uint8_t data) {
+    /*
+        Write CIA-1 ports:
+
+        port A:
+            write keyboard matrix lines
+        port B:
+            ---
+    */
     if (port_id == M6526_PORT_A) {
-        /* write keyboard matrix lines */
         kbd_set_active_lines(&board.kbd, ~data);
     }
     else {
-        /* CIA-1 B should never be written (?) */
         //printf("CIA-1 out %s: %02X\n", port_id==0?"A":"B", data);
     }
 }
@@ -267,8 +289,15 @@ c64_t::cia1_out(int port_id, uint8_t data) {
 //------------------------------------------------------------------------------
 uint8_t
 c64_t::cia1_in(int port_id) {
+    /*
+        Read CIA-1 ports:
+
+        Port A:
+            joystick 2 input (FIXME)
+        Port B:
+            combined keyboard matrix columns and joystick 1
+    */
     if (port_id == M6526_PORT_A) {
-        /* FIXME: JOY-2 input */
         return 0xFF;
     }
     else {
@@ -280,37 +309,40 @@ c64_t::cia1_in(int port_id) {
 //------------------------------------------------------------------------------
 void
 c64_t::cia2_out(int port_id, uint8_t data) {
-    if (port_id == M6526_PORT_A) {
-        /* CIA-2 Port A WRITE:
-            bits 0..1: VIC bank select:
-                00 bank 3 C000..FFFF
-                01 bank 2 8000..BFFF
-                10 bank 1 4000..7FFF
-                11 bank 0 0000..3FFF
-            bit 2: RS-232 TXD Outout
-            bit 3..5: serial bus output
-            bit 6..7: input (serial bus)
+    /*
+        Write CIA-2 ports:
 
-            Only VIC bank select is implemented!
-        */
+        Port A:
+            bits 0..1: VIC-II bank select:
+                00: bank 3 C000..FFFF
+                01: bank 2 8000..BFFF
+                10: bank 1 4000..7FFF
+                11: bank 0 0000..3FFF
+            bit 2: RS-232 TXD Outout (not implemented)
+            bit 3..5: serial bus output (not implemented)
+            bit 6..7: input (see cia2_in)
+        Port B:
+            RS232 / user functionality (not implemented)
+    */
+    if (port_id == M6526_PORT_A) {
         c64.vic_bank_select = ((~data)&3)<<14;
     }
     else {
-        /* CIA-2 Port B WRITE:
-            bits 0..7: userport (not implemented)
-        */
+        // FIXME
     }
 }
 
 //------------------------------------------------------------------------------
 uint8_t
 c64_t::cia2_in(int port_id) {
-    /* CIA-2 Port A READ:
-        bits 6..7: serial bus (not implemented)
-            bit 6: CLOCK IN
-            bit 7: DATA IN
-       CIA-2 Port B READ:
-            bits 0..7: userport (not implemented)
+    /*
+        Read CIA-2 ports:
+
+        Port A:
+            bits 0..5: output (see cia2_out)
+            bits 6..7: serial bus input, not implemented
+        Port B:
+            RS232 / user functionality (not implemented)
     */
     return 0xFF;
 }
@@ -318,9 +350,22 @@ c64_t::cia2_in(int port_id) {
 //------------------------------------------------------------------------------
 uint16_t
 c64_t::vic_fetch(uint16_t addr) {
-    // replace the 2 MSB address bits with the CIA-2 MSB bits (inverted)
+    /*
+        Fetch data into the VIC-II.
+
+        The VIC-II has a 14-bit address bus and 12-bit data bus, and
+        has a different memory mapping then the CPU (that's why it
+        goes through the board.mem2 pagetable):
+            - a full 16-bit address is formed by taking the address bits
+              14 and 15 from the value written to CIA-1 port A
+            - the lower 8 bits of the VIC-II data bus are connected
+              to the shared system data bus, this is used to read
+              character mask and pixel data
+            - the upper 4 bits of the VIC-II data bus are hardwired to the
+              static color RAM
+    */
     addr |= c64.vic_bank_select;
-    uint16_t data = mem_rd(&board.mem2, addr) | (c64.color_ram[addr & 0x03FF]<<8);
+    uint16_t data = (c64.color_ram[addr & 0x03FF]<<8) | mem_rd(&board.mem2, addr);
     return data;
 }
 
@@ -518,7 +563,7 @@ c64_t::framebuffer(int& out_width, int &out_height) {
 //------------------------------------------------------------------------------
 void
 c64_t::decode_audio(float* buffer, int num_samples) {
-    board.audiobuffer.read(buffer, num_samples);
+    board.audiobuffer2.read(buffer, num_samples);
 }
 
 //------------------------------------------------------------------------------
@@ -556,10 +601,20 @@ c64_t::tape_tick() {
         }
         */
 
+        // toggle the datasette beeper output
+        if (beeper_tick(&board.beeper_1)) {
+            board.audiobuffer2.write(board.beeper_1.sample);
+        }
+
+        // handle the actual datasette pulses
         if (this->tape_tick_count == 0) {
             if (tape.eof()) {
                 return false;
             }
+
+            // toggle the datasette beeper output (not sure if frequency must be doubled)
+            beeper_toggle(&board.beeper_1);
+
             uint8_t val = 0;
             tape.read(&val, 1);
             if (val == 0) {
