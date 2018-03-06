@@ -24,6 +24,7 @@ TapeDeckWindow::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 bool
 TapeDeckWindow::Draw(yakc& emu) {
+    ImGui::SetNextWindowPos(ImVec2(400, 100), ImGuiSetCond_Once);
     ImGui::SetNextWindowSize(ImVec2(180, 136), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible, ImGuiWindowFlags_NoResize)) {
 
