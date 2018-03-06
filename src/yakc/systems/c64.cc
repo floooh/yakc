@@ -32,6 +32,7 @@ c64_t::poweron(system m) {
     this->on = true;
     this->model = m;
     this->cpu_port = 0xF7;      // for initial memory configuration
+    this->cia1_joy_bits = 0;
     this->io_mapped = true;
     this->tap_header = c64tap_header();
     this->tape_valid = false;
@@ -84,6 +85,7 @@ c64_t::poweroff() {
 void
 c64_t::reset() {
     this->cpu_port = 0xF7;
+    this->cia1_joy_bits = 0;
     this->io_mapped = true;
     this->update_memory_map();
     m6502_reset(&board.m6502);
@@ -271,8 +273,7 @@ c64_t::cia1_in(int port_id) {
     }
     else {
         /* read keyboard matrix columns */
-        /* FIXME: JOY-1 input */
-        return ~kbd_scan_columns(&board.kbd);
+        return ~(kbd_scan_columns(&board.kbd) | c64.cia1_joy_bits);
     }
 }
 
@@ -452,7 +453,19 @@ c64_t::init_keymap() {
     kbd_register_key(&board.kbd, 0x0C, 3, 6, 1);    // clear
     kbd_register_key(&board.kbd, 0x0D, 1, 0, 0);    // return
     kbd_register_key(&board.kbd, 0x03, 7, 7, 0);    // stop
-    kbd_register_key(&board.kbd, 0xF1, 5, 7, 1);    // F1 -> Shift + C= key
+
+    // function keys
+    kbd_register_key(&board.kbd, 0xF1, 4, 0, 0);
+    kbd_register_key(&board.kbd, 0xF2, 4, 0, 1);
+    kbd_register_key(&board.kbd, 0xF3, 5, 0, 0);
+    kbd_register_key(&board.kbd, 0xF4, 5, 0, 1);
+    kbd_register_key(&board.kbd, 0xF5, 6, 0, 0);
+    kbd_register_key(&board.kbd, 0xF6, 6, 0, 1);
+    kbd_register_key(&board.kbd, 0xF7, 3, 0, 0);
+    kbd_register_key(&board.kbd, 0xF8, 3, 0, 1);
+
+// FIXME!
+//    kbd_register_key(&board.kbd, 0xF1, 5, 7, 1);    // F1 -> Shift + C= key
 }
 
 //------------------------------------------------------------------------------
@@ -477,7 +490,22 @@ c64_t::on_key_up(uint8_t key) {
 //------------------------------------------------------------------------------
 void
 c64_t::on_joystick(uint8_t mask) {
-    // FIXME
+    this->cia1_joy_bits = 0;
+    if (mask & joystick::left) {
+        this->cia1_joy_bits |= (1<<2);
+    }
+    if (mask & joystick::right) {
+        this->cia1_joy_bits |= (1<<3);
+    }
+    if (mask & joystick::up) {
+        this->cia1_joy_bits |= (1<<0);
+    }
+    if (mask & joystick::down) {
+        this->cia1_joy_bits |= (1<<1);
+    }
+    if (mask & joystick::btn0) {
+        this->cia1_joy_bits |= (1<<4);
+    }
 }
 
 //------------------------------------------------------------------------------

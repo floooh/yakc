@@ -73,6 +73,7 @@ public:
     bool on = false;
     system model = system::c64_pal;
     uint8_t cpu_port = 0;
+    uint8_t cia1_joy_bits = 0;
     uint16_t vic_bank_select = 0;   // upper 4 address bits from CIA-2 port A
     bool io_mapped = false;
     uint8_t color_ram[1024];    // special static color ram
