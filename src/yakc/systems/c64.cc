@@ -569,7 +569,7 @@ c64_t::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 void
 c64_t::on_tape_inserted() {
-    // read the .TAP header */
+    // read the .TAP header
     tape.read(&this->tap_header, sizeof(this->tap_header));
     const char* sig = "C64-TAPE-RAW";
     if (0 != memcmp(&this->tap_header.signature, sig, 12)) {
