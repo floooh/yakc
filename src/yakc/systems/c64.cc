@@ -118,7 +118,7 @@ c64_t::cpu_tick(uint64_t pins) {
 
     // tick the datasette, when the datasette output pulse
     // toggles, the FLAG input pin on CIA-1 will go active for 1 tick
-    uint64_t cia1_pins = pins & !M6502_IRQ;
+    uint64_t cia1_pins = pins;
     if (c64.tape_tick()) {
         cia1_pins |= M6526_FLAG;
     }
@@ -127,7 +127,7 @@ c64_t::cpu_tick(uint64_t pins) {
     //  - CIA-1 gets the FLAG pin from the datasette
     //  - the CIA-1 IRQ pin is connected to the CPU IRQ pin
     //  - the CIA-2 IRQ pin is connected to the CPU NMI pin
-    if (m6526_tick(&board.m6526_1, cia1_pins) & M6502_IRQ) {
+    if (m6526_tick(&board.m6526_1, cia1_pins & ~M6502_IRQ) & M6502_IRQ) {
         pins |= M6502_IRQ;
     }
     if (m6526_tick(&board.m6526_2, pins & ~M6502_IRQ) & M6502_IRQ) {
