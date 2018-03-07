@@ -4,8 +4,6 @@
 #include "c64.h"
 #include "yakc/util/tapedeck.h"
 
-#include <stdio.h>
-
 namespace YAKC {
 
 c64_t c64;
@@ -204,10 +202,10 @@ c64_t::cpu_tick(uint64_t pins) {
             else {
                 // expansion system (not yet implemented)
                 if (pins & M6502_RW) {
-                    printf("EXP READ: %04X\n", addr);
+                    // printf("EXP READ: %04X\n", addr);
                 }
                 else {
-                    printf("EXP WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
+                    // printf("EXP WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
                 }
             }
         }
