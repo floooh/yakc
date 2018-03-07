@@ -126,6 +126,10 @@ FileLoader::Setup(yakc& emu_) {
     this->Items.Add("Jet Set Miner", "cjetsetminer.tap", filetype::atom_tap, system::acorn_atom, true);
     this->Items.Add("Dormann 6502 Test", "dormann6502.tap", filetype::atom_tap, system::acorn_atom, true);
     this->Items.Add("Boulderdash", "boulderdash_c64.tap", filetype::c64_tap, system::any_c64, true);
+    this->Items.Add("Zaxxon", "zaxxon_c64.tap", filetype::c64_tap, system::any_c64, true);
+    this->Items.Add("Arkanoid", "arkanoid_c64.tap", filetype::c64_tap, system::any_c64, true);
+    this->Items.Add("Dig Dug", "digdug_c64.tap", filetype::c64_tap, system::any_c64, true);
+    this->Items.Add("IK+", "ikplus_c64.tap", filetype::c64_tap, system::any_c64, true);
 }
 
 //------------------------------------------------------------------------------

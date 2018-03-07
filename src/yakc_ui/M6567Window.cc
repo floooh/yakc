@@ -40,6 +40,7 @@ M6567Window::Draw(yakc& emu) {
             case M6567_TYPE_6569: type = "6569 (PAL)"; break;
         }
         ImGui::Text("Type: %s", type);
+        ImGui::Checkbox("Debug Visualization", &board.m6567.debug_vis);
         if (ImGui::CollapsingHeader("Registers", "#vicreg", true, true)) {
             const auto& r = vic.reg;
             ImGui::Text("M0XY: %02X %02X M1XY: %02X %02X M2XY: %02X %02X M3XY: %02X %02X",
