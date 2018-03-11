@@ -267,7 +267,7 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
         else if (strb.Contains(".SNA") || strb.Contains(".sna")) {
             info.Type = filetype::cpc_sna;
         }
-        else if (strb.Contains(".BIN") || strb.Contains(".bin")) {
+        else {
             info.Type = filetype::raw;
         }
     }

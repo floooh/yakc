@@ -635,6 +635,28 @@ c64_t::tape_tick() {
 }
 
 //------------------------------------------------------------------------------
+bool
+c64_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
+    auto fp = fs->open(name, filesystem::mode::read);
+    if (!fp) {
+        return false;
+    }
+    uint16_t start_addr;
+    // start address
+    fs->read(fp, &start_addr, sizeof(start_addr));
+    uint16_t end_addr = start_addr + (fs->size(fp) - 2);
+    uint16_t addr = start_addr;
+    while (addr < end_addr) {
+        uint8_t byte;
+        fs->read(fp, &byte, 1);
+        mem_wr(&board.mem, addr++, byte);
+    }
+    fs->close(fp);
+    fs->rm(name);
+    return true;
+}
+
+//------------------------------------------------------------------------------
 const char*
 c64_t::system_info() const {
     return "FIXME!";

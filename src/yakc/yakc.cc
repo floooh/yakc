@@ -583,6 +583,9 @@ yakc::quickload(const char* name, filetype type, bool start) {
     else if (cpc.on) {
         retval = cpc.quickload(&this->filesystem, name, type, start);
     }
+    else if (c64.on) {
+        retval = c64.quickload(&this->filesystem, name, type, start);
+    }
     else {
         retval = false;
     }

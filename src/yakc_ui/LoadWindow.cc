@@ -92,13 +92,17 @@ LoadWindow::Draw(yakc& emu) {
             ImGui::Text("%s", compatMsg);
             ImGui::PopStyleColor();
             if (ImGui::Button("Load")) {
-                this->loader->Copy();
+                ldr.Copy();
                 this->Visible = false;
             }
             ImGui::SameLine();
             if (ImGui::Button("Load & Start")) {
-                this->loader->Start();
+                ldr.Start();
                 this->Visible = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Reset")) {
+                ldr.State = FileLoader::Waiting;
             }
         }
     }

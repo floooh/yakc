@@ -7,6 +7,7 @@
 #include "yakc/util/breadboard.h"
 #include "yakc/util/rom_images.h"
 #include "yakc/util/filetypes.h"
+#include "yakc/util/filesystem.h"
 
 namespace YAKC {
 
@@ -69,6 +70,8 @@ public:
     void on_tape_inserted();
     /// tick the datasette, return true if CIA-1 FLAG must be triggered
     bool tape_tick();
+    /// file quickloading (only bin/raw files)
+    bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
     bool on = false;
     system model = system::c64_pal;
