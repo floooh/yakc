@@ -99,7 +99,7 @@ M6567Window::Draw(yakc& emu) {
             this->drawColor("M7C: ", r.mob_color[7]);
         }
         if (ImGui::CollapsingHeader("Internal State", "#vicstate", true, true)) {
-            ImGui::Text("g_mode: %d   v_irq_line: %3d\n", vic.gseq.mode, vic.rs.v_irq);
+            ImGui::Text("g_mode: %d   v_irq_line: %3d\n", vic.gseq.mode, vic.rs.v_irqline);
             ImGui::Text("h_count:   %2d  v_count: %3d", vic.rs.h_count, vic.rs.v_count);
             ImGui::Text("vc: %04X: vcbase: %04X rc: %d vmli: %2d", vic.rs.vc, vic.rs.vc_base, vic.rs.rc, vic.vm.vmli);
             ImGui::Text("c_addr_or: %04X i_addr:     %04X", vic.mem.c_addr_or, vic.mem.i_addr);
