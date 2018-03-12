@@ -44,11 +44,11 @@ M6567Window::Draw(yakc& emu) {
         if (ImGui::CollapsingHeader("Registers", "#vicreg", true, true)) {
             const auto& r = vic.reg;
             ImGui::Text("M0XY: %02X %02X M1XY: %02X %02X M2XY: %02X %02X M3XY: %02X %02X",
-                r.mob_xy[0][0], r.mob_xy[0][1], r.mob_xy[1][0], r.mob_xy[1][1],
-                r.mob_xy[2][0], r.mob_xy[2][1], r.mob_xy[3][0], r.mob_xy[3][1]);
+                r.mxy[0][0], r.mxy[0][1], r.mxy[1][0], r.mxy[1][1],
+                r.mxy[2][0], r.mxy[2][1], r.mxy[3][0], r.mxy[3][1]);
             ImGui::Text("M4XY: %02X %02X M5XY: %02X %02X M6XY: %02X %02X M7XY: %02X %02X",
-                r.mob_xy[4][0], r.mob_xy[4][1], r.mob_xy[5][0], r.mob_xy[6][1],
-                r.mob_xy[6][0], r.mob_xy[6][1], r.mob_xy[7][0], r.mob_xy[7][1]);
+                r.mxy[4][0], r.mxy[4][1], r.mxy[5][0], r.mxy[6][1],
+                r.mxy[6][0], r.mxy[6][1], r.mxy[7][0], r.mxy[7][1]);
             ImGui::Text("CTRL1 RST8:%c ECM:%c BMM:%c DEN:%c RSEL:%c YSCROLL:%d\n",
                 r.ctrl_1 & (1<<7) ? '1':'0',
                 r.ctrl_1 & (1<<6) ? '1':'0',
@@ -57,7 +57,7 @@ M6567Window::Draw(yakc& emu) {
                 r.ctrl_1 & (1<<3) ? '1':'0',
                 r.ctrl_1 & 7);
             ImGui::Text("MSBX: %c%c%c%c%c%c%c%c RASTER: %02X LPX: %02X LPY: %02X",
-                UINT8_BITS(r.mob_x_msb),
+                UINT8_BITS(r.mx8),
                 r.raster, r.lightpen_xy[0], r.lightpen_xy[1]);
             ImGui::Text("ME:   %c%c%c%c%c%c%c%c", UINT8_BITS(r.mob_enabled));
             ImGui::Text("CTRL2 RES:%c MCM:%c CSEL:%c XSCROLL:%d",
@@ -65,7 +65,7 @@ M6567Window::Draw(yakc& emu) {
                 r.ctrl_2 & (1<<4) ? '1':'0',
                 r.ctrl_2 & (1<<3) ? '1':'0',
                 r.ctrl_2 & 7);
-            ImGui::Text("MYE:  %c%c%c%c%c%c%c%c", UINT8_BITS(r.mob_yexp));
+            ImGui::Text("MYE:  %c%c%c%c%c%c%c%c", UINT8_BITS(r.mye));
             ImGui::Text("MEMPTRS VM:%02X CB:%02X", (r.mem_ptrs>>4)&0x0F, (r.mem_ptrs>>1)&0x07);
             ImGui::Text("INT IRQ:%c ILP:%c IMMC:%c IMBC:%c IRST:%c",
                 r.int_latch & (1<<7) ? '1':'0',
@@ -81,7 +81,7 @@ M6567Window::Draw(yakc& emu) {
             ImGui::Text("MDP: %c%c%c%c%c%c%c%c  MMC: %c%c%c%c%c%c%c%c",
                 UINT8_BITS(r.mob_data_priority),
                 UINT8_BITS(r.mob_multicolor));
-            ImGui::Text("MXE: %c%c%c%c%c%c%c%c", UINT8_BITS(r.mob_xexp));
+            ImGui::Text("MXE: %c%c%c%c%c%c%c%c", UINT8_BITS(r.mxe));
             ImGui::Text("MCM: %c%c%c%c%c%c%c%c  MDM: %c%c%c%c%c%c%c%c",
                 UINT8_BITS(r.mob_mob_coll), UINT8_BITS(r.mob_data_coll));
             this->drawColor("EC: ", r.border_color);
@@ -97,6 +97,23 @@ M6567Window::Draw(yakc& emu) {
             this->drawColor("M5C: ", r.mob_color[5]); ImGui::SameLine();
             this->drawColor("M6C: ", r.mob_color[6]); ImGui::SameLine();
             this->drawColor("M7C: ", r.mob_color[7]);
+        }
+        if (ImGui::CollapsingHeader("Sprite Units", "#sprite", true, false)) {
+            for (int i = 0; i < 8; i++) {
+                ImGui::PushID(i);
+                static const char* labels[8] = {
+                    "Sprite Unit 0", "Sprite Unit 1", "Sprite Unit 2", "Sprite Unit 3",
+                    "Sprite Unit 4", "Sprite Unit 5", "Sprite Unit 6", "Sprite Unit 7",
+                };
+                if (ImGui::CollapsingHeader(labels[i], "#sprite", true, true)) {
+                    const auto& su = vic.sunit[i];
+                    ImGui::Text("v_mem_first/last:    %3d <=> %3d", su.v_mem_first, su.v_mem_last);
+                    ImGui::Text("v_vis_first/last:    %3d <=> %3d", su.v_vis_first, su.v_vis_last);
+                    ImGui::Text("h_first/last/offset:  %2d <=> %2d, %d", su.h_first, su.h_last, su.h_offset);
+                    ImGui::Text("p_data: %02X", su.p_data);
+                }
+                ImGui::PopID();
+            }
         }
         if (ImGui::CollapsingHeader("Internal State", "#vicstate", true, true)) {
             ImGui::Text("g_mode: %d   v_irq_line: %3d\n", vic.gunit.mode, vic.rs.v_irqline);
