@@ -59,7 +59,7 @@ M6567Window::Draw(yakc& emu) {
             ImGui::Text("MSBX: %c%c%c%c%c%c%c%c RASTER: %02X LPX: %02X LPY: %02X",
                 UINT8_BITS(r.mx8),
                 r.raster, r.lightpen_xy[0], r.lightpen_xy[1]);
-            ImGui::Text("ME:   %c%c%c%c%c%c%c%c", UINT8_BITS(r.mob_enabled));
+            ImGui::Text("ME:   %c%c%c%c%c%c%c%c", UINT8_BITS(r.me));
             ImGui::Text("CTRL2 RES:%c MCM:%c CSEL:%c XSCROLL:%d",
                 r.ctrl_2 & (1<<5) ? '1':'0',
                 r.ctrl_2 & (1<<4) ? '1':'0',
@@ -107,8 +107,6 @@ M6567Window::Draw(yakc& emu) {
                 };
                 if (ImGui::CollapsingHeader(labels[i], "#sprite", true, true)) {
                     const auto& su = vic.sunit[i];
-                    ImGui::Text("v_mem_first/last:    %3d <=> %3d", su.v_mem_first, su.v_mem_last);
-                    ImGui::Text("v_vis_first/last:    %3d <=> %3d", su.v_vis_first, su.v_vis_last);
                     ImGui::Text("h_first/last/offset:  %2d <=> %2d, %d", su.h_first, su.h_last, su.h_offset);
                     ImGui::Text("p_data: %02X", su.p_data);
                 }
