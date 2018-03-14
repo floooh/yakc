@@ -288,10 +288,15 @@ Keyboard::StartPlayback(Buffer&& buf) {
 //------------------------------------------------------------------------------
 void
 Keyboard::handleTextPlayback() {
+    int charDelay = 10;
+    if (this->emu->is_system(system::any_c64)) {
+        // C64 has a very fast input scanning routine
+        charDelay = 2;
+    }
     if (this->playbackPos < this->playbackBuffer.Size()) {
         // give the system some time between characters
         if (this->playbackCounter-- == 0) {
-            this->playbackCounter = 10;
+            this->playbackCounter = charDelay;
             // feed the next character from buffer
             // filter out unwanted characters and convert
             uint8_t chr = this->playbackBuffer.Data()[this->playbackPos++];
