@@ -28,6 +28,16 @@ M6567Window::drawColor(const char* text, uint8_t palIndex) {
 }
 
 //------------------------------------------------------------------------------
+static void drawSpriteShifter(const char* label, uint32_t shf) {
+    char str[33] = { };
+    for (int i = 0; i < 32; i++) {
+        str[i] = (((shf<<i) & (1<<31)) != 0) ? 'X':'.';
+    } 
+    str[32] = 0;
+    ImGui::Text("%s: %s\n", label, str);
+}
+
+//------------------------------------------------------------------------------
 #define UINT8_BITS(m) m&(1<<7)?'1':'0',m&(1<<6)?'1':'0',m&(1<<5)?'1':'0',m&(1<<4)?'1':'0',m&(1<<3)?'1':'0',m&(1<<2)?'1':'0',m&(1<<1)?'1':'0',m&(1<<0)?'1':'0'
 bool
 M6567Window::Draw(yakc& emu) {
@@ -108,7 +118,13 @@ M6567Window::Draw(yakc& emu) {
                 if (ImGui::CollapsingHeader(labels[i], "#sprite", true, true)) {
                     const auto& su = vic.sunit[i];
                     ImGui::Text("h_first/last/offset:  %2d <=> %2d, %d", su.h_first, su.h_last, su.h_offset);
-                    ImGui::Text("p_data: %02X", su.p_data);
+                    ImGui::Text("p_data: %02X", su.p_data); ImGui::SameLine();
+                    ImGui::Text("mc: %02X", su.mc); ImGui::SameLine();
+                    ImGui::Text("mc_base: %02X", su.mc_base);
+                    ImGui::Text("dma_enabled: %s", su.dma_enabled ? "ON ":"OFF"); ImGui::SameLine();
+                    ImGui::Text("disp_enabled: %s", su.disp_enabled ? "ON ":"OFF"); ImGui::SameLine();
+                    ImGui::Text("expand: %s", su.expand ? "ON":"OFF");
+                    drawSpriteShifter("shifter", su.shift);
                 }
                 ImGui::PopID();
             }
