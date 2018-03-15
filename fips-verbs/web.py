@@ -28,7 +28,8 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
 
     # copy game/rom image files
     for fname in glob.glob(proj_dir + '/files/*') :
-        shutil.copy(fname, webpage_dir + '/' + os.path.basename(fname))
+        if os.path.isfile(fname):
+            shutil.copy(fname, webpage_dir + '/' + os.path.basename(fname))
 
     # if the virtualkc directory exists, copy everything there
     # so that a simple git push is enough to upload
