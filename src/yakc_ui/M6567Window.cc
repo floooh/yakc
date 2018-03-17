@@ -89,7 +89,7 @@ M6567Window::Draw(yakc& emu) {
                 r.int_mask & (1<<1) ? '1':'0',
                 r.int_mask & (1<<0) ? '1':'0');
             ImGui::Text("MDP: %c%c%c%c%c%c%c%c  MMC: %c%c%c%c%c%c%c%c",
-                UINT8_BITS(r.mob_data_priority),
+                UINT8_BITS(r.mdp),
                 UINT8_BITS(r.mmc));
             ImGui::Text("MXE: %c%c%c%c%c%c%c%c", UINT8_BITS(r.mxe));
             ImGui::Text("MCM: %c%c%c%c%c%c%c%c  MDM: %c%c%c%c%c%c%c%c",
