@@ -126,7 +126,7 @@ Draw::validateTexture(int width, int height) {
         if ((width > 0) && (height > 0)) {
             auto texSetup = TextureSetup::Empty2D(width, height, 1, PixelFormat::RGBA8, Usage::Stream);
             texSetup.Sampler.MinFilter = TextureFilterMode::Linear;
-            texSetup.Sampler.MagFilter = TextureFilterMode::Linear  ;
+            texSetup.Sampler.MagFilter = TextureFilterMode::Linear;
             texSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
             texSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
             Gfx::PushResourceLabel('YAKC');

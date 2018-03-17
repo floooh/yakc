@@ -90,23 +90,25 @@ M6567Window::Draw(yakc& emu) {
                 r.int_mask & (1<<0) ? '1':'0');
             ImGui::Text("MDP: %c%c%c%c%c%c%c%c  MMC: %c%c%c%c%c%c%c%c",
                 UINT8_BITS(r.mob_data_priority),
-                UINT8_BITS(r.mob_multicolor));
+                UINT8_BITS(r.mmc));
             ImGui::Text("MXE: %c%c%c%c%c%c%c%c", UINT8_BITS(r.mxe));
             ImGui::Text("MCM: %c%c%c%c%c%c%c%c  MDM: %c%c%c%c%c%c%c%c",
                 UINT8_BITS(r.mob_mob_coll), UINT8_BITS(r.mob_data_coll));
-            this->drawColor("EC: ", r.border_color);
-            this->drawColor("B0C: ", r.background_color[0]); ImGui::SameLine();
-            this->drawColor("B1C: ", r.background_color[1]); ImGui::SameLine();
-            this->drawColor("B2C: ", r.background_color[2]); ImGui::SameLine();
-            this->drawColor("B3C: ", r.background_color[3]);
-            this->drawColor("M0C: ", r.mob_color[0]); ImGui::SameLine();
-            this->drawColor("M1C: ", r.mob_color[1]); ImGui::SameLine();
-            this->drawColor("M2C: ", r.mob_color[2]); ImGui::SameLine();
-            this->drawColor("M3C: ", r.mob_color[3]);
-            this->drawColor("M4C: ", r.mob_color[4]); ImGui::SameLine();
-            this->drawColor("M5C: ", r.mob_color[5]); ImGui::SameLine();
-            this->drawColor("M6C: ", r.mob_color[6]); ImGui::SameLine();
-            this->drawColor("M7C: ", r.mob_color[7]);
+            this->drawColor("EC: ", r.ec);
+            this->drawColor("B0C: ", r.bc[0]); ImGui::SameLine();
+            this->drawColor("B1C: ", r.bc[1]); ImGui::SameLine();
+            this->drawColor("B2C: ", r.bc[2]); ImGui::SameLine();
+            this->drawColor("B3C: ", r.bc[3]);
+            this->drawColor("MM0: ", r.mm[0]); ImGui::SameLine();
+            this->drawColor("MM1: ", r.mm[1]); 
+            this->drawColor("M0C: ", r.mc[0]); ImGui::SameLine();
+            this->drawColor("M1C: ", r.mc[1]); ImGui::SameLine();
+            this->drawColor("M2C: ", r.mc[2]); ImGui::SameLine();
+            this->drawColor("M3C: ", r.mc[3]);
+            this->drawColor("M4C: ", r.mc[4]); ImGui::SameLine();
+            this->drawColor("M5C: ", r.mc[5]); ImGui::SameLine();
+            this->drawColor("M6C: ", r.mc[6]); ImGui::SameLine();
+            this->drawColor("M7C: ", r.mc[7]);
         }
         if (ImGui::CollapsingHeader("Sprite Units", "#sprite", true, false)) {
             for (int i = 0; i < 8; i++) {
@@ -115,7 +117,7 @@ M6567Window::Draw(yakc& emu) {
                     "Sprite Unit 0", "Sprite Unit 1", "Sprite Unit 2", "Sprite Unit 3",
                     "Sprite Unit 4", "Sprite Unit 5", "Sprite Unit 6", "Sprite Unit 7",
                 };
-                if (ImGui::CollapsingHeader(labels[i], "#sprite", true, true)) {
+                if (ImGui::CollapsingHeader(labels[i], "#sprite", true, false)) {
                     const auto& su = vic.sunit[i];
                     ImGui::Text("h_first/last/offset:  %2d <=> %2d, %d", su.h_first, su.h_last, su.h_offset);
                     ImGui::Text("p_data: %02X", su.p_data); ImGui::SameLine();
