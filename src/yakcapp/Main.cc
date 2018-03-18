@@ -143,6 +143,13 @@ YakcApp::OnRunning() {
 
     int micro_secs = (int) frameTime.AsMicroSeconds();
     uint64_t processed_audio_cycles = this->audio.GetProcessedCycles();
+    
+    // FIXME? in debug mode, don't throttle or speedup by audio
+    // so that the emulator doesn't try to catchup after long
+    // pauses in the debugger
+    #if ORYOL_DEBUG
+    processed_audio_cycles = 0;
+    #endif
     TimePoint emu_start_time = Clock::Now();
     #if YAKC_UI
         // keep CPU synchronized to a small time window ahead of audio playback
