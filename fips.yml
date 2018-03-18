@@ -8,7 +8,7 @@ imports:
     oryol:
         git: https://github.com/floooh/oryol.git
     oryol-imgui:
-        git: https://github.com/fips-libs/oryol-imgui.git
+        git: https://github.com/floooh/oryol-imgui.git
     fips-soloud:
         git: https://github.com/fips-libs/fips-soloud.git
     chips:
