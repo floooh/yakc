@@ -1,5 +1,7 @@
 
 Zaxxon:
 -------
-7D7C: reset xscroll
+7D79: reset xscroll to 3
+5c6e: interrupt handler
+
 
