@@ -93,7 +93,7 @@ M6567Window::Draw(yakc& emu) {
                 UINT8_BITS(r.mmc));
             ImGui::Text("MXE: %c%c%c%c%c%c%c%c", UINT8_BITS(r.mxe));
             ImGui::Text("MCM: %c%c%c%c%c%c%c%c  MDM: %c%c%c%c%c%c%c%c",
-                UINT8_BITS(r.mob_mob_coll), UINT8_BITS(r.mob_data_coll));
+                UINT8_BITS(r.mcm), UINT8_BITS(r.mcd));
             this->drawColor("EC: ", r.ec);
             this->drawColor("B0C: ", r.bc[0]); ImGui::SameLine();
             this->drawColor("B1C: ", r.bc[1]); ImGui::SameLine();
