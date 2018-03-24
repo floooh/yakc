@@ -5,3 +5,149 @@ Zaxxon:
 5c6e: interrupt handler
 
 
+7D0F:   RASTER INTERRUPT HANDLE
+
+    7D0F    inc $8F
+    7D11    lda $48
+    7D13    and #$07
+    7D15    tax
+    7D16    lda $D012
+I0: 7D19    cmp $D012
+    7D1C    beq I0          # loop until new raster line
+    7D1E    stx $D016       :X = 02 current scroll pos (from $48)
+    7D21    lda $8f
+    8d23:   and #$03
+
+
+
+L0: 833A    lda $83d0,x
+    833D    sta $0428,y
+    8340    inx
+    8341    iny
+    8342    cpy #$28
+    8344    bne L0
+
+    8346    ldx #$00    # before: A=$20 X=$28 Y=$28
+    8348    ldy #$00
+
+L4: 834A    lda $41F7,X
+    834D    beq L1
+    834E    iny
+
+L1: 8350    cpy #$00
+    8352    bne L2
+    8354    lda #$00
+    8356    jmp L3
+
+L2: 8359    clc
+    835A    adc #$26
+    
+L3: 835C    sta $83e4,x
+    835F    inx
+    8360    cpx #$07
+    8362    bne L4
+
+    8364    ldx #$00
+    8366    ldy #$00
+
+L7: 8368    lda $41fe,x
+    836B    beq L5
+    836D    iny
+
+L5: 836E    cpy #$00
+    8370    bne L6
+    8372    tya
+    8373    jmp L6
+
+    8376    clc
+    8377    adc #$26
+
+L6: 8379    sta $0464,x
+    837c    inx
+    837d    cpx #$07
+    837f    bne L7
+
+    8381    lda #$14
+    8383    sta $0461
+    8386    lda #$0f
+    8388    sta $0462
+    838B    lda #$10
+    838D    sta $0463
+    8390    ldx #$05
+    8392    lda #$00
+
+L8: 8394    sta $8402,x
+    8397    sta $8417,x
+    839A    dex
+    839B    bpl L8
+
+    839D    ldy #$00
+    839F    ldx #$00
+    83A1    lda $4205,x
+    83A4    beq L9
+    83A6    iny
+
+L9: 83A7    
+    ...
+    83CF    rts
+--------------------------
+    7D5B    lda $48
+    7D5D    sec
+    7D5E    sbc #$01
+    7D60    and #$07
+    7D62    sta $48
+    7D64    cmp #$07
+    7D66    bne L10
+
+    7D68    inc $79AA
+    7D6B    bne L11
+    7D6D    lda #$00
+    7D6F    sta $D418       # SID volume and filter modes
+
+L11 7D72    lda $D012       # VIC current raster line
+    7D75    bmi #$FB
+    7D77    lda #$03        # this runs at end of display area
+    7D79    sta $D016
+    7D7C    ldx $79AA
+    7D7F    ldy #$27
+    ...
+
+
+-------------------------
+INTERRUPT HANDLER???
+    5C60    lda #$01
+    5C62    sta $D019       # clear VIC raster interrupt bit
+    5C65    lda $DC0D       # load CIA-1 interrupt control and status bit
+    5C68    pla
+    5C69    tay
+    5C6A    pla
+    5C6B    tax
+    5C6C    pla
+    5C6D    rti             -> 5C6E
+
+    5C6E    pha
+    5C6F    txa
+    5C70    pha
+    5C71    tya
+    5C73    pha
+    5C73    jmp ($0314)     -> interrupt service routine = 7D0F
+
+--- control raster interrupt line (not called during start scre
+    5C76    sei
+    5C77    sta $D012       -> A: raster line to generate interrupt
+    5C7A    stx $0314       -> X/Y: interrupt handler routine
+    5C7D    sty $0314
+    5C80    lda #$01
+    5C82    sta $D019       -> clear VIC interrupt status bit
+    5C83    sta $D01A       -> enable raster interrupt
+    5C88    lda #$7F
+    5C8A    sta $DC0D       -> disable all CIA-1 interrupts
+    5C8D    sta $DD0D       -> disable all CIA-2 interrupts
+    5C90    lda $DC0D       -> get CIA-1 interrupt status bits
+    5C93    rts
+
+
+
+
+
+
