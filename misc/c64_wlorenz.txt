@@ -1,0 +1,53 @@
+start with SYS 2049
+
+FAILS:
+
+cia1pb6
+cia1pb7
+cia1ta
+cntdef
+cnto2
+cpuport
+
+cputiming:
+    5C clock 8 right 9
+    7C clock 8 right 9
+
+icr01
+    CIA1 ICR is not $01
+    READING ICR=01 DID NOT CLEAR INT
+    CIA2 ICR is not $02
+    READING ICR=01 DID NOT CLEAR ICR
+    READING ICR=01 DID NOT PREVENT NMI
+    READING ICR=00 MAY NOT CLEAR ICR
+    READING ICR=00 MAY NOT PREVENT NMI
+
+imr
+    IMR=$81 NO IRQ IN CLOCK 3
+    IMR=$7F MAY NOT CLEAR INT
+
+irq
+    WRONG DC0D
+    01/5
+    STACK 1084 00 14
+    RIGHT 1085 00 14
+    03/7
+    STACK 10C4 00 14
+    RIGHT 10C5 00 14
+    ...
+
+mmu
+mmufetch ????
+nmi
+    WRONG $DD0D
+    01/5
+    STACK 105B 00 14
+    RIGHT 105C 00 14
+oneshot
+    CRA IS NOT $08 AT ICR=$01
+rtin ???
+trap1
+    SHA 93
+        AFTER 1B C6 B1 6C 30
+        RIGHT 00 C6 B1 6C 30
+    ...
