@@ -142,6 +142,9 @@ YakcApp::OnRunning() {
     this->keyboard.HandleInput();
 
     int micro_secs = (int) frameTime.AsMicroSeconds();
+    if (micro_secs > 33333) {
+        micro_secs = 33333;
+    }
     uint64_t processed_audio_cycles = this->audio.GetProcessedCycles();
     
     // FIXME? in debug mode, don't throttle or speedup by audio
