@@ -59,11 +59,6 @@ public:
     Oryol::Ptr<WindowBase> keyboardWindow;
     Oryol::Ptr<WindowBase> loadWindow;
     bool uiEnabled = false;
-    bool darkThemeEnabled = true;
-    bool lightThemeEnabled = false;
-    bool imguiAntiAliasedLines = true;
-    ImGuiStyle darkTheme;
-    ImGuiStyle lightTheme;
     Audio* audio;
 };
 

@@ -69,6 +69,7 @@ yakc::poweron(system m, os_rom rom) {
     this->abs_cycle_count = 0;
     this->overflow_cycles = 0;
     this->enable_joystick(false);
+    this->accel = 1;
     board.dbg.init(this->cpu_type());
     if (this->is_system(system::any_z1013)) {
         z1013.poweron(m);
@@ -212,9 +213,10 @@ yakc::chip_types() const {
 //------------------------------------------------------------------------------
 void
 yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
+    YAKC_ASSERT(this->accel > 0);
     uint64_t min_cycle_count = 0;
     uint64_t max_cycle_count = 0;
-    if (audio_cycle_count > 0) {
+    if ((audio_cycle_count > 0) && (this->accel == 1)) {
         const uint64_t cpu_min_ahead_cycles = board.freq_hz/100;
         const uint64_t cpu_max_ahead_cycles = board.freq_hz/25;
         min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
@@ -226,7 +228,7 @@ yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
     if (this->abs_cycle_count == 0) {
         this->abs_cycle_count = min_cycle_count;
     }
-    int64_t num_cycles = clk_ticks(board.freq_hz, micro_secs) - this->overflow_cycles;
+    int64_t num_cycles = this->accel * clk_ticks(board.freq_hz, micro_secs) - this->overflow_cycles;
     if (num_cycles < 0) {
         num_cycles = 0;
     }

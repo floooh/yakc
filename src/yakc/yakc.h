@@ -76,6 +76,7 @@ public:
     system model = system::none;
     os_rom os = os_rom::none;
     class filesystem filesystem;
+    int accel = 1;      // current acceleration factor (must be > 0)
     bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
     bool cpu_behind = false;                // cpu would have been behind of min_cycle_count
     uint64_t abs_cycle_count = 0;           // total CPU cycle count
