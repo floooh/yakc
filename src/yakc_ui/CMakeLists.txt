@@ -30,6 +30,7 @@ fips_begin_module(yakc_ui)
         M6526Window.cc M6526Window.h
         TapeDeckWindow.cc TapeDeckWindow.h
         CPCGateArrayWindow.cc CPCGateArrayWindow.h
+        C64Window.cc C64Window.h
     )
     fips_deps(IMUI yakc yakc_oryol soloud)
 fips_end_module()

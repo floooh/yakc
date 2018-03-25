@@ -8,6 +8,8 @@ cia1ta
 cntdef
 cnto2
 cpuport
+    Error DDR 00 PORT FF: read 01 is 17, should be DF
+
 
 cputiming:
     5C clock 8 right 9

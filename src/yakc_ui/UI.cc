@@ -25,6 +25,7 @@
 #include "M6567Window.h"
 #include "TapeDeckWindow.h"
 #include "CPCGateArrayWindow.h"
+#include "C64Window.h"
 #include "Core/Time/Clock.h"
 #include "Input/Input.h"
 #include "Core/String/StringBuilder.h"
@@ -410,6 +411,11 @@ UI::OnFrame(yakc& emu) {
                 if (chips & chip::m6526_2) {
                     if (ImGui::MenuItem("M6526 (CIA-2)")) {
                         this->OpenWindow(emu, M6526Window::Create("M6526 (CIA-2)", &board.m6526_2));
+                    }
+                }
+                if (emu.is_system(system::any_c64)) {
+                    if (ImGui::MenuItem("C64 State")) {
+                        this->OpenWindow(emu, C64Window::Create());
                     }
                 }
                 ImGui::EndMenu();

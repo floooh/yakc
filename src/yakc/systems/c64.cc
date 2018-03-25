@@ -49,6 +49,8 @@ c64_t::poweron(system m) {
     cpu_desc.tick_cb = cpu_tick;
     cpu_desc.in_cb = cpu_port_in;
     cpu_desc.out_cb = cpu_port_out;
+    cpu_desc.m6510_io_pullup = 0x17;
+    cpu_desc.m6510_io_floating = 0xC8;
     m6502_init(&board.m6502, &cpu_desc);
 
     // initialize the CIAs
@@ -232,12 +234,11 @@ c64_t::cpu_port_in() {
 
         bit 4: [in] datasette button status (1: no button pressed)
     */
-    if (tape.playing) {
-        return ~(1<<4);
+    uint8_t val = 7;
+    if (!tape.playing) {
+        val |= (1<<4);
     }
-    else {
-        return 0xFF;
-    }
+    return val;
 }
 
 //------------------------------------------------------------------------------
