@@ -64,9 +64,38 @@
 
 - cia1pb7: FAIL
 - cia1ta: FAIL
+    INIT:   I4 B4 IE BE
+            1E 00 10 11 -> FORCE-LOAD + START
+    AFTER:  A4 AD AE
+            FF 00 01
+    RIGHT:  00 81 01
+                                AD: INT-CONTROL AFTER
+                                AE: CRA AFTER
 - cia1tab: FAIL
 - cia1tb: FAIL
+- cia...
+- clcn OK
+- cldn OK
+- clin OK
+- clvn OK
+- cmpa OK
+- cmpax OK
+- cmpay OK
+- cmpb OK
+- cmpix OK
+- cmpiy OK
+- cmpz OK
+- cmpzx OK
+- cntdef FAIL   (requires cascaded CIA timers)
+- cnto2 FAIL    (also CIA counter-related)
+- cpuport OK
+- cputiming FAIL (undocumented opcodes 5C and 7C are 1 off)
 ...
+- flipos FAIL (CIA timer related)
+- icr01 FAIL (CIA ICR related)
+
+
+
 
 
 OK:
