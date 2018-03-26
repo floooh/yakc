@@ -92,7 +92,7 @@
 - cputiming FAIL (undocumented opcodes 5C and 7C are 1 off)
 ...
 - flipos FAIL (CIA timer related)
-- icr01 FAIL (CIA ICR related)
+- icr01 OK
 
 
 
