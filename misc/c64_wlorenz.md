@@ -57,23 +57,29 @@
 - bvcr: OK
 - bvsr: OK
 - cia1pb6: FAIL
-    09d0: sta $dc01 (A = BF)
-          cmp $dc01
-          -> check if value written to port is same as read
-
-
-- cia1pb7: FAIL
+    WRITING TA HIGH MAY NOT SET P6B HIGH
+    PB6 TOGGLE TIMED OUT
+- cia1pb7: OK
 - cia1ta: FAIL
-    INIT:   I4 B4 IE BE
-            1E 00 10 11 -> FORCE-LOAD + START
-    AFTER:  A4 AD AE
-            FF 00 01
-    RIGHT:  00 81 01
-                                AD: INT-CONTROL AFTER
-                                AE: CRA AFTER
-- cia1tab: FAIL
+    1 or 2 cycles off
+- cia1tab: OK
 - cia1tb: FAIL
-- cia...
+    1 or 2 cycles off
+- cia1tb13: FAIL
+    ERROR 00 10 CYCLE 2
+    ERROR 00 10 CYCLE 3
+    ...
+- cia2pb6: FAIL
+    WRITING TA HIGH MAY NOT SET P6B HIGH
+- cia2pb7: OK
+- cia2ta: FAIL
+    1 or 2 cycles off
+- cia2tb: FAIL
+- cia2tb123: FAIL
+    ERROR 00 10 CYCLE 2
+    ERROR 00 10 CYCLE 3
+    ...
+
 - clcn OK
 - cldn OK
 - clin OK
@@ -86,12 +92,12 @@
 - cmpiy OK
 - cmpz OK
 - cmpzx OK
-- cntdef FAIL   (requires cascaded CIA timers)
-- cnto2 FAIL    (also CIA counter-related)
+- cntdef OK
+- cnto2 OK
 - cpuport OK
 - cputiming FAIL (undocumented opcodes 5C and 7C are 1 off)
 ...
-- flipos FAIL (CIA timer related)
+- flipos OK
 - icr01 OK
 
 
