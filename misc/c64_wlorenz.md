@@ -53,7 +53,7 @@
 - bner: OK
 - bplr: OK
 - branchwrap: OK
-- brkn: OK, but doesn't finish?
+- brkn: OK
 - bvcr: OK
 - bvsr: OK
 - cia1pb6: FAIL
