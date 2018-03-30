@@ -297,7 +297,8 @@ c64_t::cia1_in(int port_id) {
             combined keyboard matrix columns and joystick 1
     */
     if (port_id == M6526_PORT_A) {
-        return 0xFF;
+        /* FIXME: currently use same input for joystick 1 and 2 */
+        return ~c64.cia1_joy_bits;
     }
     else {
         /* read keyboard matrix columns */
