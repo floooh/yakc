@@ -1,150 +1,310 @@
 
 Zaxxon:
 -------
-7D79: reset xscroll to 3
-5c6e: interrupt handler
+Interrupt handlers (frame top to bottom):
+
+When pressing cursor-right, trapped in a loop:
+
+;==== wait for joystick 2 input
+4369:   inc $D027       -> sprite 0 color
+        lda $54         $54 is always 1F!
+        cmp #$1F
+        beq $4369
 
 
-7D0F:   RASTER INTERRUPT HANDLE
+Main raster interrupt routine: 77BB
 
-    7D0F    inc $8F
-    7D11    lda $48
-    7D13    and #$07
-    7D15    tax
-    7D16    lda $D012
-I0: 7D19    cmp $D012
-    7D1C    beq I0          # loop until new raster line
-    7D1E    stx $D016       :X = 02 current scroll pos (from $48)
-    7D21    lda $8f
-    8d23:   and #$03
+        ; INTERRUPT DISPATCHER...
+77BB:   lsx $2C         -> X: 00
+        lda $3F,X       -> A: 04, 06, 07, 05
+        cmp #$05
+        bne 77C6
+        jmp $5B26       -> CASE 05
+77C6:   cmp #$07
+        beq #$3F
+        cmp #$06
+        beq #$4D
+        cmp #$08
+        beq #$58
+        cmp #$04
+        beq $7850
+
+77D6:   tay
+        tax
+        asl
+        tax
+        lda $40DF,Y
+        sta $D009,X     -> sprite 4 Y coordinate
+        lda $40E7,Y
+        sta $07FC,Y
+        sta $0BFC,Y
+        lda $40D7,Y
+        asl
+        sta $D008,X     -> sprite 4 X coordinate
+        bcc #$09
+        lda $789F,Y
+        ora $D010       -> sprite X coord bit 8
+        jmp $7803
+
+77FB:   lda $789F,Y
+        eor #$FF
+        and $D010       -> sprite X coord bit 8
+        sta $D010
+        jmp $7877
+
+7809:   ldy #$D7        -> CASE 07
+        lda $6D
+780D:   cmp $D012       -> current raster line
+        bcs 780D
+
+        sty $07FB
+        sty $0BFB
+        jmp $7877
+
+781B:   lda #$44        -> CASE 06: WAIT FOR RASTER LINE #$44
+781D:   cmp $D012       -> current raster line
+        bcs 781D
+
+        lda #$6C
+        sta $D007       -> sprite 3 Y-coord
+        jmp $7877
+
+782A:   lda $40DB
+        sta $D001       -> set sprite 0 Y-coord
+7830:   cmp $D012       -> wait for raster line of sprite Y
+        bcs 7830
+
+        lda $40D3
+        asl
+        sta $D000       -> set sprite 0 X-coord
+        lda $40E3
+        sta $07F8
+        sta $0BF8
+        lda $D01C       -> get sprite multicolor register
+        ora #$01        -> set sprite 0 to multicolor
+        sta $D01C
+        jmp $7877
+
+7850:   lda $40DD       CASE 04
+        sta $D005       -> set sprite 2 Y coord
+        lda $40D5
+        asl
+        sta $D004       -> set sprite 2 X coord
+        bcc #$08
+        lda $D010       -> sprite 0..7 X coord bit 8
+        ora #$04        -> set sprite 2 x coord > 256
+        jmp $786C
+
+7867:   lda $D010       -> sprite 0..7 X coord bit 8
+        and #$FB
+        sta $D010
+        lda $D015       -> sprite enable
+        ora #$04
+        sta $D015
+7877:   lda $D012       WAIT FOR RASTER LINE $DB
+        cmp #$DB
+        bcc #$03
+        jmp $5B26
+
+7881:   inc $2C
+        ldx $2C
+        ldy $36,X
+        dey
+        dey
+        dey
+        cpy $D012       wait for a raster line 
+        bcs #$03
+        jmp $77BB
+
+7892:   iny
+        iny
+        iny
+        sty $D012       set next raster interrupt line ($45, $53, $YY)
+        jmp $5C60
+        ---------
+
+5C60:   lda #$01
+        sta $D019       interrupt status register (acknowledge raster interrupt)
+        lda $DC0D       CIA-1 interrupt status
+        pla
+        tay
+        pla
+        tax
+        pla
+        rti
+
+5B26:   ldx #$00        CASE 05!!! (bit raster interrupt at end of frame)
+        lda #$DF        WAIT FOR RASTER LINE #$DF
+        cmp $D012
+        bcs ^^^
+        stx $D021       X=00 -> background color
+        stx $D022       extra background color 1   
+        stx $D023       extra background color 2
+        stx $D015       sprite enable (all off)
+        ldx #$17
+        ldy #$DF
+        lda $D011       screen control reg: A=$12: 
+        and #$07        isolate xscroll 
+        cmp #$07
+        bne 5B4A
+        ldy #$E0
+5B4A    cpy $D012       WAIT FOR RASTER LINE DF
+        bcs ^^^
+        stx $D011       $17 -> screen control (xscroll=7, screen on)
+        lda #$10
+        sta $D016       screen control reg 2 (yscroll=0, multicolor mode on)
+        lda #$3A
+        cpy $D012       wait for raster line E2
+        sta $D018       memory setup: A = 3A charmem=$3000, screenmem=1C00
+        ldx #$01
+        lda #$E6
+        cmp $D012       wait for raster line E6
+        stx $d021       01 -> background color
+        lda #$00
+        sta $D020       00 -> border color
+        lda #$04
+        sta $D023       04 -> extra background color 2
+        lda #$07
+        sta $D022       07 -> extra background color 1
+=======================================================================
+        lda #$FF
+        sta $DC00       FF -> CIA-1 port A (kbd matrix, paddle 1+2)
+        sta $DC01       FF -> CIA-1 port B 
+        lda $DC00       CIA-1 port A -> A (FF port 2 joystick)
+        and #$1F        isolate joystick 2 bits
+        sta $54         =====> STORE TO $54
+        jsr $60FF
+        lda $64         A: 01
+        bne 5B98
+        jsr $6B5D
+5B98:   jsr $6C91
+        inc $8F
+        lda $C0
+        eor #$01
+        sta $C0
+        lda $4069
+        and #$01
+        sta $40AC
+        ldy $64
+        bne 5BCE
+        lda $8F
+        and #$7F
+        tay
+        lda #$08
+        sta $D800,Y
+        sta $D880,Y
+        sta $D900,Y
+        sta $D980,Y
+        sta $DA00,Y
+        sta $DA80,Y
+        sta $DB00,Y
+        sta $DB80,Y
+5BCE:   lda #$F6
+        cmp $D012
+        bcs ^^^
+        jsr $5F5C
+        jsr $8170
+        lda $48...
+
+
+;=====
+5F5C:   lda $64
+        beq #$03
+        jmp $5FEE
+        ...
+5FEE:   lda $407B
+        bne #$25
+        lda $8F
+        and #$01
+        tax
+        lda $24,X
+        cmp $26,X
+        bcc #$02
+        inx
+        inx
+        lda $20,X
+        sta $E2
+        lda $24,X
+        sta $EA
+        inx
+        inx
+        txa
+        and #$03
+        tax
+        ...
 
 
 
-L0: 833A    lda $83d0,x
-    833D    sta $0428,y
-    8340    inx
-    8341    iny
-    8342    cpy #$28
-    8344    bne L0
+;===== KEYBOARD (or joystick 0?)
+60FF:   lda $0CFE       A: FE
+        sta $DC00       write kbd matrix columns
+        lda $DC01       read kbd matrix rows (and joystick #1)
+        cmp #F7
+        bne 6111
+        ...
 
-    8346    ldx #$00    # before: A=$20 X=$28 Y=$28
-    8348    ldy #$00
+6111:   cmp #$EF
+        bne 611A
+        ...
 
-L4: 834A    lda $41F7,X
-    834D    beq L1
-    834E    iny
+611A:   cmp #$DF
+        bne 6123
+        ...
 
-L1: 8350    cpy #$00
-    8352    bne L2
-    8354    lda #$00
-    8356    jmp L3
+6123:   cmp #$BF
+        bne #$05
+        ...
 
-L2: 8359    clc
-    835A    adc #$26
-    
-L3: 835C    sta $83e4,x
-    835F    inx
-    8360    cpx #$07
-    8362    bne L4
+612C:   lda #$00
+        sta $4E         0 -> 4E
+        rts
 
-    8364    ldx #$00
-    8366    ldy #$00
+;===== WRITE SOME SORT OF CONSTANTS
+6C91:   lda $407B       A = 00
+        beq 6C97
+        rts
+6C97:   lda #$44
+        sta $EB
+        lda #$45
+        sta $33
+        lda #$6E
+        sta $6C
+        lda #$D8
+        sta $DB
+        lda #$0A
+        sta $E3
+        lda $65
+        ora #$08
+        sta $65
+        lda $69     A: 08
+        ora #$08
+        sta $69
+        lda #$03
+        sta $D02A       ; sprite #3 color
+        lda $66
+        and #$F7
+        sta $66
+        lda $55
+        bne #$12
+        lda $40D3
+        sta $E0
+        lda $40DB
+        sta $E8
+        lda $40E3
+        sta $D8
+        jmp $6D1E
+        ...
 
-L7: 8368    lda $41fe,x
-    836B    beq L5
-    836D    iny
-
-L5: 836E    cpy #$00
-    8370    bne L6
-    8372    tya
-    8373    jmp L6
-
-    8376    clc
-    8377    adc #$26
-
-L6: 8379    sta $0464,x
-    837c    inx
-    837d    cpx #$07
-    837f    bne L7
-
-    8381    lda #$14
-    8383    sta $0461
-    8386    lda #$0f
-    8388    sta $0462
-    838B    lda #$10
-    838D    sta $0463
-    8390    ldx #$05
-    8392    lda #$00
-
-L8: 8394    sta $8402,x
-    8397    sta $8417,x
-    839A    dex
-    839B    bpl L8
-
-    839D    ldy #$00
-    839F    ldx #$00
-    83A1    lda $4205,x
-    83A4    beq L9
-    83A6    iny
-
-L9: 83A7    
-    ...
-    83CF    rts
---------------------------
-    7D5B    lda $48
-    7D5D    sec
-    7D5E    sbc #$01
-    7D60    and #$07
-    7D62    sta $48
-    7D64    cmp #$07
-    7D66    bne L10
-
-    7D68    inc $79AA
-    7D6B    bne L11
-    7D6D    lda #$00
-    7D6F    sta $D418       # SID volume and filter modes
-
-L11 7D72    lda $D012       # VIC current raster line
-    7D75    bmi #$FB
-    7D77    lda #$03        # this runs at end of display area
-    7D79    sta $D016
-    7D7C    ldx $79AA
-    7D7F    ldy #$27
-    ...
+6D1E:   rts
 
 
--------------------------
-INTERRUPT HANDLER???
-    5C60    lda #$01
-    5C62    sta $D019       # clear VIC raster interrupt bit
-    5C65    lda $DC0D       # load CIA-1 interrupt control and status bit
-    5C68    pla
-    5C69    tay
-    5C6A    pla
-    5C6B    tax
-    5C6C    pla
-    5C6D    rti             -> 5C6E
 
-    5C6E    pha
-    5C6F    txa
-    5C70    pha
-    5C71    tya
-    5C73    pha
-    5C73    jmp ($0314)     -> interrupt service routine = 7D0F
 
---- control raster interrupt line (not called during start scre
-    5C76    sei
-    5C77    sta $D012       -> A: raster line to generate interrupt
-    5C7A    stx $0314       -> X/Y: interrupt handler routine
-    5C7D    sty $0314
-    5C80    lda #$01
-    5C82    sta $D019       -> clear VIC interrupt status bit
-    5C83    sta $D01A       -> enable raster interrupt
-    5C88    lda #$7F
-    5C8A    sta $DC0D       -> disable all CIA-1 interrupts
-    5C8D    sta $DD0D       -> disable all CIA-2 interrupts
-    5C90    lda $DC0D       -> get CIA-1 interrupt status bits
-    5C93    rts
+
+
+
+
+
 
 
 
