@@ -259,7 +259,7 @@ c64_t::cpu_port_out(uint8_t data) {
         tape.start_motor();
     }
     // only update memory configuration if the relevant bits have changed
-    bool need_mem_update = 0 != ((c64.cpu_port ^ data) & 3);
+    bool need_mem_update = 0 != ((c64.cpu_port ^ data) & 7);
     c64.cpu_port = data;
     if (need_mem_update) {
         c64.update_memory_map();
