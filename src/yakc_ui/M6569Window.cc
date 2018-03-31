@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
-//  M6567Window.cc
+//  M6569Window.cc
 //------------------------------------------------------------------------------
-#include "M6567Window.h"
+#include "M6569Window.h"
 #include "IMUI/IMUI.h"
 #include "Util.h"
 #include "yakc/util/breadboard.h"
@@ -12,16 +12,16 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-M6567Window::Setup(yakc& emu) {
-    this->setName("M6567 (VIC-II) State");
+M6569Window::Setup(yakc& emu) {
+    this->setName("M6569 (VIC-II) State");
     for (int i = 0; i < 16; i++) {
-        this->paletteColors[i] = Util::RGBA8toImVec4(m6567_color(i));
+        this->paletteColors[i] = Util::RGBA8toImVec4(m6569_color(i));
     }
 }
 
 //------------------------------------------------------------------------------
 void
-M6567Window::drawColor(const char* text, uint8_t palIndex) {
+M6569Window::drawColor(const char* text, uint8_t palIndex) {
     ImGui::Text("%s%02X", text, palIndex);
     ImGui::SameLine();
     ImGui::ColorButton(text, this->paletteColors[palIndex&0xF], ImGuiColorEditFlags_NoAlpha, ImVec2(12, 12));
@@ -40,17 +40,11 @@ static void drawSpriteShifter(const char* label, uint32_t shf) {
 //------------------------------------------------------------------------------
 #define UINT8_BITS(m) m&(1<<7)?'1':'0',m&(1<<6)?'1':'0',m&(1<<5)?'1':'0',m&(1<<4)?'1':'0',m&(1<<3)?'1':'0',m&(1<<2)?'1':'0',m&(1<<1)?'1':'0',m&(1<<0)?'1':'0'
 bool
-M6567Window::Draw(yakc& emu) {
+M6569Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(380, 460), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        m6567_t& vic = board.m6567;
-        const char* type = "unknown";
-        switch (vic.type) {
-            case M6567_TYPE_6567R8: type = "6567R8 (NTSC)"; break;
-            case M6567_TYPE_6569: type = "6569 (PAL)"; break;
-        }
-        ImGui::Text("Type: %s", type);
-        ImGui::Checkbox("Debug Visualization", &board.m6567.debug_vis);
+        m6569_t& vic = board.m6569;
+        ImGui::Checkbox("Debug Visualization", &board.m6569.debug_vis);
         if (ImGui::CollapsingHeader("Registers", "#vicreg", true, true)) {
             const auto& r = vic.reg;
             ImGui::Text("M0XY: %02X %02X M1XY: %02X %02X M2XY: %02X %02X M3XY: %02X %02X",
@@ -158,7 +152,7 @@ M6567Window::Draw(yakc& emu) {
             if (ImGui::Button(">| Bad")) {
                 this->badline = vic.rs.badline;
                 emu.step_until([this](uint32_t ticks)->bool {
-                    bool cur_badline = board.m6567.rs.badline;
+                    bool cur_badline = board.m6569.rs.badline;
                     bool triggered = (cur_badline != this->badline) && cur_badline;
                     this->badline = cur_badline;
                     return (ticks > (64*312)) || triggered;

@@ -21,7 +21,7 @@
 #include "chips/i8255.h"
 #include "chips/mc6847.h"
 #include "chips/mc6845.h"
-#include "chips/m6567.h"
+#include "chips/m6569.h"
 #include "chips/m6526.h"
 
 namespace YAKC {
@@ -42,7 +42,7 @@ struct breadboard {
     i8255_t i8255;
     mc6847_t mc6847;
     mc6845_t mc6845;
-    m6567_t m6567;
+    m6569_t m6569;
     beeper_t beeper_1;
     beeper_t beeper_2;
     kbd_t kbd;

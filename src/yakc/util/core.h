@@ -115,7 +115,7 @@ namespace chip {
         mc6845 = (1<<9),
         m6526 = (1<<10),    // C64 CIA
         m6526_2 = (1<<11),
-        m6567 = (1<<12),    // C64 VIC-II
+        m6569 = (1<<12),    // C64 VIC-II
         m6581 = (1<<13)     // C64 SID
     };
     typedef uint32_t mask;

@@ -58,8 +58,7 @@ c64_t::poweron(system m) {
     m6526_init(&board.m6526_2, cia2_in, cia2_out);
     
     // initialize the VIC-II display chip
-    m6567_desc_t vic_desc = { };
-    vic_desc.type = (m == system::c64_pal) ? M6567_TYPE_6569 : M6567_TYPE_6567R8;
+    m6569_desc_t vic_desc = { };
     vic_desc.fetch_cb = vic_fetch;
     vic_desc.rgba8_buffer = board.rgba8_buffer;
     vic_desc.rgba8_buffer_size = sizeof(board.rgba8_buffer);
@@ -67,7 +66,7 @@ c64_t::poweron(system m) {
     vic_desc.vis_y = 24;
     vic_desc.vis_w = 392;
     vic_desc.vis_h = 272;
-    m6567_init(&board.m6567, &vic_desc);
+    m6569_init(&board.m6569, &vic_desc);
 
     // use a beeper for audible datasette output
     beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.1f);
@@ -94,7 +93,7 @@ c64_t::reset() {
     m6502_reset(&board.m6502);
     m6526_reset(&board.m6526_1);
     m6526_reset(&board.m6526_2);
-    m6567_reset(&board.m6567);
+    m6569_reset(&board.m6569);
     this->tap_header = c64tap_header();
     this->tape_valid = false;
     this->tape_tick_count = 0;
@@ -141,7 +140,7 @@ c64_t::cpu_tick(uint64_t pins) {
     //    the CPU on the first CPU read access after BA goes active
     //  - the VIC-II AEC pin is connected to the CPU AEC pin, currently
     //    this goes active during a badline, but is not checked
-    pins = m6567_tick(&board.m6567, pins);
+    pins = m6569_tick(&board.m6569, pins);
 
     // Special handling when the VIC-II asks the CPU to stop during a
     // 'badline' via the BA=>RDY pin. If the RDY pin is active, the
@@ -170,8 +169,8 @@ c64_t::cpu_tick(uint64_t pins) {
         if (c64.io_mapped && ((addr & 0xF000) == 0xD000)) {
             if (addr < 0xD400) {
                 // VIC-II (D000..D3FF)
-                uint64_t vic_pins = (pins & M6502_PIN_MASK)|M6567_CS;
-                pins = m6567_iorq(&board.m6567, vic_pins) & M6502_PIN_MASK;
+                uint64_t vic_pins = (pins & M6502_PIN_MASK)|M6569_CS;
+                pins = m6569_iorq(&board.m6569, vic_pins) & M6502_PIN_MASK;
             }
             else if (addr < 0xD800) {
                 // SID (D400..D7FF)
@@ -556,7 +555,7 @@ c64_t::on_joystick(uint8_t mask) {
 //------------------------------------------------------------------------------
 const void*
 c64_t::framebuffer(int& out_width, int &out_height) {
-    m6567_display_size(&board.m6567, &out_width, &out_height);
+    m6569_display_size(&board.m6569, &out_width, &out_height);
     return board.rgba8_buffer;
 }
 

@@ -204,7 +204,7 @@ yakc::chip_types() const {
             return chip::m6502|chip::i8255|chip::m6522|chip::mc6847;
         case system::c64_pal:
         case system::c64_ntsc:
-            return chip::m6502|chip::m6526|chip::m6526_2|chip::m6567|chip::m6581;
+            return chip::m6502|chip::m6526|chip::m6526_2|chip::m6569|chip::m6581;
         default:
             return 0;
     }

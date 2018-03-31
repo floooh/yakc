@@ -22,7 +22,7 @@
 #include "I8255Window.h"
 #include "MOS6522Window.h"
 #include "M6526Window.h"
-#include "M6567Window.h"
+#include "M6569Window.h"
 #include "TapeDeckWindow.h"
 #include "CPCGateArrayWindow.h"
 #include "C64Window.h"
@@ -390,9 +390,9 @@ UI::OnFrame(yakc& emu) {
                         this->OpenWindow(emu, MOS6522Window::Create());
                     }
                 }
-                if (chips & chip::m6567) {
-                    if (ImGui::MenuItem("M6567 (VIC-II)")) {
-                        this->OpenWindow(emu, M6567Window::Create());
+                if (chips & chip::m6569) {
+                    if (ImGui::MenuItem("M6569 (VIC-II)")) {
+                        this->OpenWindow(emu, M6569Window::Create());
                     }
                 }
                 if (chips & chip::m6526) {
