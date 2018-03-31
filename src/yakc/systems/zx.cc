@@ -643,19 +643,19 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
                         }
                         else {
                             // single ED
-                            YAKC_ASSERT(dst_ptr < dst_end_ptr);
+                            YAKC_ASSERT(dst_ptr < (dst_ptr + dst_len));
                             *dst_ptr++ = val[0];
                             src_pos++;
                         }
                     }
                     else {
                         // any value
-                        YAKC_ASSERT(dst_ptr < dst_end_ptr);
+                        YAKC_ASSERT(dst_ptr < (dst_ptr + dst_len));
                         *dst_ptr++ = val[0];
                         src_pos++;
                     }
                 }
-                YAKC_ASSERT(dst_ptr == dst_end_ptr);
+                YAKC_ASSERT(dst_ptr == (dst_ptr + dst_len));
                 YAKC_ASSERT(src_pos == src_len);
             }
             if (0xFFFF == src_len) {
