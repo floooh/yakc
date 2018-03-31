@@ -49,7 +49,8 @@ var Module = {
     preRun: [],
     postRun: [
         function() {
-            initDragAndDrop();    
+            initDragAndDrop();
+            initWebAudio();
         },
     ],
     print: (function() {
@@ -84,6 +85,22 @@ function callAsEventHandler(func_name) {
     JSEvents.currentEventHandler = eventHandler;
     Module.cwrap(func_name)()
     --JSEvents.inEventHandler;
+}
+
+// in some browsers, WebAudio starts suspended and must be activated in
+// an user input event handler
+function initWebAudio() {
+    id('canvas').addEventListener('click', resume_webaudio);
+    id('canvas').addEventListener('touchstart', resume_webaudio);
+    document.addEventListener('keydown', resume_webaudio);
+}
+
+function resume_webaudio() {
+    if (SDL.audioContext) {
+        if (SDL.audioContext.state === 'suspended') {
+            SDL.audioContext.resume();
+        }
+    }
 }
 
 // drag-n-drop functions
