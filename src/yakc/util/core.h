@@ -9,14 +9,18 @@
 #include <string.h>
 
 #if __clang_analyzer__
-#include <assert.h>
-#define YAKC_ASSERT(cond) assert(cond)
+    #include <assert.h>
+    #define YAKC_ASSERT(cond) assert(cond)
 #else
-#if !(__GNUC__ || __GNUC__)
-// on Visual Studio, replace __PRETTY_FUNCTION__ with __FUNCSIG__
-#define __PRETTY_FUNCTION__ __FUNCSIG__
-#endif
-#define YAKC_ASSERT(cond) do { if(!(cond)) { YAKC::func.assertmsg_func(#cond,nullptr,__FILE__,__LINE__,__PRETTY_FUNCTION__); abort(); } } while(0)
+    #if defined(_DEBUG)
+        #if !(__GNUC__ || __GNUC__)
+            // on Visual Studio, replace __PRETTY_FUNCTION__ with __FUNCSIG__
+            #define __PRETTY_FUNCTION__ __FUNCSIG__
+        #endif
+        #define YAKC_ASSERT(cond) do { if(!(cond)) { YAKC::func.assertmsg_func(#cond,nullptr,__FILE__,__LINE__,__PRETTY_FUNCTION__); abort(); } } while(0)
+    #else
+        #define YAKC_ASSERT(cond)
+    #endif
 #endif
 
 namespace YAKC {

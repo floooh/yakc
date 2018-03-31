@@ -611,7 +611,6 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
             else {
                 dst_ptr = board.ram[page_index];
             }
-            const uint8_t* dst_end_ptr = dst_ptr + dst_len;
             if (0xFFFF == src_len) {
                 // FIXME: uncompressed not supported yet
                 goto error;
@@ -638,7 +637,7 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
                             uint8_t data = val[3];
                             src_pos += 4;
                             for (int i = 0; i < count; i++) {
-                                YAKC_ASSERT(dst_ptr < dst_end_ptr);
+                                YAKC_ASSERT(dst_ptr < (dst_ptr + dst_len));
                                 *dst_ptr++ = data;
                             }
                         }
