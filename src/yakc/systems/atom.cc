@@ -136,7 +136,7 @@ atom_t::poweron() {
 
     // trap the OSLOAD function
     // http://ladybug.xs4all.nl/arlet/fpga/6502/kernel.dis
-    m6502_set_trap(&board.m6502, 1, 0xF96E, mem_readptr(&board.mem, 0xF96E));
+    m6502_set_trap(&board.m6502, 1, 0xF96E);
 }
 
 //------------------------------------------------------------------------------

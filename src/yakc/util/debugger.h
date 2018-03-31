@@ -24,18 +24,15 @@ public:
     void add_history_item(uint16_t pc, uint16_t cycles);
     history_item get_history_item(int index);
 
-    void clear_breakpoint();
-    void set_breakpoint(uint16_t addr);
-    bool is_breakpoint(uint16_t addr);
-    bool has_breakpoint();
-    bool breakpoint_enabled();
-    void toggle_breakpoint(uint16_t addr);
-    void enable_breakpoint();
+    void enable_breakpoint(uint16_t addr);
     void disable_breakpoint();
+    void toggle_breakpoint(uint16_t addr);
+    bool breakpoint_enabled();
+    bool is_breakpoint(uint16_t addr);
     uint16_t breakpoint_addr();
 
     void break_stop();              // manual stop
-    void break_check();             // stop of CPU has hit out breakpoint
+    void break_check();             // stop if CPU has hit out breakpoint
     void break_continue();          // continue from stopped state
     bool break_stopped();           // check if in stopped state
 
@@ -49,7 +46,6 @@ private:
     bool stopped = false;
     bool bp_enabled = false;
     uint16_t bp_addr = 0;
-    uint8_t* bp_host_addr = nullptr;
 };
 
 } // namespace YAKC

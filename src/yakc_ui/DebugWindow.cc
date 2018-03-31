@@ -119,7 +119,7 @@ DebugWindow::drawControls(yakc& emu) {
     bp_addr = board.dbg.breakpoint_addr();
     if (ImGui::Checkbox("##breakpoint", &bp_enabled)) {
         if (bp_enabled) {
-            board.dbg.set_breakpoint(bp_addr);
+            board.dbg.enable_breakpoint(bp_addr);
         }
         else {
             board.dbg.disable_breakpoint();
@@ -128,7 +128,7 @@ DebugWindow::drawControls(yakc& emu) {
     if (ImGui::IsItemHovered()) { ImGui::SetTooltip("enable/disable breakpoint"); }
     ImGui::SameLine();
     if (Util::InputHex16("", bp_addr)) {
-        board.dbg.set_breakpoint(bp_addr);
+        board.dbg.enable_breakpoint(bp_addr);
     }
     ImGui::SameLine();
     if (board.dbg.break_stopped()) {

@@ -12,7 +12,8 @@ debugger::init(cpu_model c) {
     this->cpu = c;
     this->stopped = false;
     this->clear_history();
-    this->clear_breakpoint();
+    this->bp_enabled = false;
+    this->bp_addr = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -45,10 +46,10 @@ debugger::get_history_item(int index) {
 void
 debugger::set_cpu_trap() {
     if (this->cpu == cpu_model::z80) {
-        z80_set_trap(&board.z80, 0, this->bp_addr, this->bp_host_addr);
+        z80_set_trap(&board.z80, 0, this->bp_addr);
     }
     else {
-        m6502_set_trap(&board.m6502, 0, this->bp_addr, this->bp_host_addr); 
+        m6502_set_trap(&board.m6502, 0, this->bp_addr);
     }
 }
 
@@ -56,46 +57,32 @@ debugger::set_cpu_trap() {
 void
 debugger::clear_cpu_trap() {
     if (this->cpu == cpu_model::z80) {
-        if (z80_has_trap(&board.z80, 0)) {
-            z80_clear_trap(&board.z80, 0);
-        }
+        z80_clear_trap(&board.z80, 0);
     }
     else {
-        if (m6502_has_trap(&board.m6502, 0)) {
-            m6502_clear_trap(&board.m6502, 0);
-        }
+        m6502_clear_trap(&board.m6502, 0);
     }
 }
 
 //------------------------------------------------------------------------------
 void
-debugger::clear_breakpoint() {
-    if (!this->stopped) {
-        this->clear_cpu_trap();
-    }
-    this->bp_enabled = false;
-    this->bp_addr = 0;
-    this->bp_host_addr = nullptr;
-}
-
-//------------------------------------------------------------------------------
-void
-debugger::set_breakpoint(uint16_t addr) {
+debugger::enable_breakpoint(uint16_t addr) {
     this->bp_addr = addr;
-    this->bp_host_addr = mem_readptr(&board.mem, addr);
-    this->enable_breakpoint();
+    this->bp_enabled = true;
+    this->set_cpu_trap();
+}
+
+//------------------------------------------------------------------------------
+void
+debugger::disable_breakpoint() {
+    this->bp_enabled = false;
+    this->clear_cpu_trap();
 }
 
 //------------------------------------------------------------------------------
 bool
 debugger::is_breakpoint(uint16_t addr) {
-    return this->has_breakpoint() && (addr == this->bp_addr);
-}
-
-//------------------------------------------------------------------------------
-bool
-debugger::has_breakpoint() {
-    return this->bp_host_addr != nullptr;
+    return this->bp_enabled && (addr == this->bp_addr);
 }
 
 //------------------------------------------------------------------------------
@@ -107,33 +94,16 @@ debugger::breakpoint_enabled() {
 //------------------------------------------------------------------------------
 void
 debugger::toggle_breakpoint(uint16_t addr) {
-    if (this->is_breakpoint(addr)) {
-        this->clear_breakpoint();
+    if (this->bp_enabled) {
+        if (addr == this->bp_addr) {
+            this->disable_breakpoint();
+        }
+        else {
+            this->enable_breakpoint(addr);
+        }
     }
     else {
-        this->set_breakpoint(addr);
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-debugger::enable_breakpoint() {
-    if (this->has_breakpoint()) {
-        this->bp_enabled = true;
-        if (!this->stopped) {
-            this->set_cpu_trap();
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-debugger::disable_breakpoint() {
-    if (this->has_breakpoint()) {
-        this->bp_enabled = false;
-        if (!this->stopped) {
-            this->clear_cpu_trap();
-        }
+        this->enable_breakpoint(addr);
     }
 }
 
@@ -148,9 +118,6 @@ void
 debugger::break_stop() {
     if (!this->stopped) {
         this->stopped = true;
-        if (this->has_breakpoint()) {
-            this->clear_cpu_trap();
-        }
     }
 }
 
@@ -174,9 +141,6 @@ void
 debugger::break_continue() {
     if (this->stopped) {
         this->stopped = false;
-        if (this->has_breakpoint()) {
-            this->set_cpu_trap();
-        }
     }
 }
 

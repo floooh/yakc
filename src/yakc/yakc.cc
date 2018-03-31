@@ -567,9 +567,6 @@ yakc::on_tape_inserted() {
 bool
 yakc::quickload(const char* name, filetype type, bool start) {
     bool retval = false;
-    if (board.dbg.has_breakpoint()) {
-        board.dbg.disable_breakpoint();
-    }
     if (z1013.on) {
         retval = z1013.quickload(&this->filesystem, name, type, start);
     }
@@ -590,9 +587,6 @@ yakc::quickload(const char* name, filetype type, bool start) {
     }
     else {
         retval = false;
-    }
-    if (board.dbg.has_breakpoint()) {
-        board.dbg.enable_breakpoint();
     }
     return retval;
 }

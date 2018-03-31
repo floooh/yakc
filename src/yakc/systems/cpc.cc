@@ -200,7 +200,7 @@ cpc_t::poweron(system m) {
     board.z80.PC = 0x0000;
     
     // trap the casread function
-    z80_set_trap(&board.z80, 1, this->casread_trap, mem_readptr(&board.mem, this->casread_trap));
+    z80_set_trap(&board.z80, 1, this->casread_trap);
 }
 
 //------------------------------------------------------------------------------
