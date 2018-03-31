@@ -294,14 +294,6 @@ UI::OnFrame(yakc& emu) {
                                 emu.poweron(system::c64_pal);
                             }
                         }
-                        /*
-                        if (emu.check_roms(system::c64_ntsc)) {
-                            if (ImGui::MenuItem("C64 (NTSC)")) {
-                                emu.poweroff();
-                                emu.poweron(system::c64_ntsc);
-                            }
-                        }
-                        */
                         ImGui::EndMenu();
                     }
                     ImGui::EndMenu();
@@ -461,7 +453,7 @@ UI::OnFrame(yakc& emu) {
                 }
                 ImGui::EndMenu();
             }
-            ImGui::SameLine(ImGui::GetWindowWidth() - 150);
+            ImGui::SameLine(ImGui::GetWindowWidth() - 160);
             ImGui::Text("joy: %s", emu.is_joystick_enabled()?"ON ":"OFF");
             ImGui::SameLine();
             ImGui::Text("emu: %.2fms", this->EmulationTime.AsMilliSeconds());

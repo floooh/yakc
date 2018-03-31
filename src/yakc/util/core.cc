@@ -49,11 +49,14 @@ system_from_string(const char* str) {
     if (strcmp(str, "cpc6128")==0) return system::cpc6128;
     if (strcmp(str, "kccompact")==0) return system::kccompact;
     if (strcmp(str, "acorn_atom")==0) return system::acorn_atom;
+    if (strcmp(str, "c64_pal")==0) return system::c64_pal;
+    if (strcmp(str, "c64_ntsc")==0) return system::c64_ntsc;
     if (strcmp(str, "any_kc85")==0) return system::any_kc85;
     if (strcmp(str, "any_z1013")==0) return system::any_z1013;
     if (strcmp(str, "any_z9001")==0) return system::any_z9001;
     if (strcmp(str, "any_zx")==0) return system::any_zx;
     if (strcmp(str, "any_cpc")==0) return system::any_cpc;
+    if (strcmp(str, "any_c64")==0) return system::any_c64;
     if (strcmp(str, "any")==0) return system::any;
     return system::none;
 }
@@ -76,6 +79,8 @@ string_from_system(system sys) {
         case system::cpc6128:           return "cpc6128";
         case system::kccompact:         return "kccompact";
         case system::acorn_atom:        return "acorn_atom";
+        case system::c64_pal:           return "c64_pal";
+        case system::c64_ntsc:          return "c64_ntsc";
         default:                        return "none";
     }
 }

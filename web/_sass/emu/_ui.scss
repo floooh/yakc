@@ -153,3 +153,9 @@ $hover-darken: 10%;
 .panel-list-item.acorn:hover {
     background-color: darken($acorn-color,$hover-darken);
 }
+.panel-list-item.cbm {
+    background-color: $cbm-color;
+}
+.panel-list-item.cbm:hover {
+    background-color: darken($cbm-color,$hover-darken);
+}
