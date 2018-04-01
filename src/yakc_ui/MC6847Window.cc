@@ -42,7 +42,7 @@ MC6847Window::Draw(yakc& emu) {
         on_off("GM0:", 0 != (mc.pins & MC6847_GM0));
         on_off("GM1:", 0 != (mc.pins & MC6847_GM1));
         on_off("GM2:", 0 != (mc.pins & MC6847_GM2));
-        ImGui::Text("Hori Count: %d\n", mc.h_count / MC6847_PRECISION_BOOST);
+        ImGui::Text("Hori Count: %d\n", mc.h_count / MC6847_FIXEDPOINT_SCALE);
         ImGui::Text("Line Count: %d\n", mc.l_count);
     }
     ImGui::End();

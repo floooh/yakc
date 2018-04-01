@@ -68,6 +68,13 @@ c64_t::poweron(system m) {
     vic_desc.vis_h = 272;
     m6569_init(&board.m6569, &vic_desc);
 
+    // initialize the SID audio chip
+    m6581_desc_t sid_desc = { };
+    sid_desc.tick_hz = board.freq_hz;
+    sid_desc.sound_hz = SOUND_SAMPLE_RATE;
+    sid_desc.magnitude = 0.5f;
+    m6581_init(&board.m6581, &sid_desc);
+
     // use a beeper for audible datasette output
     beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.1f);
 
@@ -94,6 +101,7 @@ c64_t::reset() {
     m6526_reset(&board.m6526_1);
     m6526_reset(&board.m6526_2);
     m6569_reset(&board.m6569);
+    m6581_reset(&board.m6581);
     this->tap_header = c64tap_header();
     this->tape_valid = false;
     this->tape_tick_count = 0;
@@ -120,6 +128,11 @@ c64_t::cpu_tick(uint64_t pins) {
     uint64_t cia1_pins = pins;
     if (c64.tape_tick()) {
         cia1_pins |= M6526_FLAG;
+    }
+
+    // tick the SID
+    if (m6581_tick(&board.m6581)) {
+        board.audiobuffer.write(board.m6581.sample);
     }
 
     // tick the CIAs:
@@ -174,12 +187,8 @@ c64_t::cpu_tick(uint64_t pins) {
             }
             else if (addr < 0xD800) {
                 // SID (D400..D7FF)
-                if (pins & M6502_RW) {
-                    //printf("SID READ: %04X\n", addr);
-                }
-                else {
-                    //printf("SID WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
-                }
+                uint64_t sid_pins = (pins & M6502_PIN_MASK)|M6581_CS;
+                pins = m6581_iorq(&board.m6581, sid_pins) & M6502_PIN_MASK;
             }
             else if (addr < 0xDC00) {
                 // the special color Static-RAM bank (D800..DBFF)
@@ -201,13 +210,7 @@ c64_t::cpu_tick(uint64_t pins) {
                 pins = m6526_iorq(&board.m6526_2, cia_pins) & M6502_PIN_MASK;
             }
             else {
-                // expansion system (not yet implemented)
-                if (pins & M6502_RW) {
-                    // printf("EXP READ: %04X\n", addr);
-                }
-                else {
-                    // printf("EXP WRITE: %04X=%02X\n", addr, M6502_GET_DATA(pins));
-                }
+                // expansion system (not implemented)
             }
         }
         else {
@@ -562,7 +565,10 @@ c64_t::framebuffer(int& out_width, int &out_height) {
 //------------------------------------------------------------------------------
 void
 c64_t::decode_audio(float* buffer, int num_samples) {
-    board.audiobuffer2.read(buffer, num_samples);
+    board.audiobuffer.read(buffer, num_samples);
+    if (this->tape_valid && tape.motor_on) {
+        board.audiobuffer2.read(buffer, num_samples, true);
+    }
 }
 
 //------------------------------------------------------------------------------

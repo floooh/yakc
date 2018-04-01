@@ -20,9 +20,10 @@
 #include "MC6845Window.h"
 #include "MC6847Window.h"
 #include "I8255Window.h"
-#include "MOS6522Window.h"
+#include "M6522Window.h"
 #include "M6526Window.h"
 #include "M6569Window.h"
+#include "M6581Window.h"
 #include "TapeDeckWindow.h"
 #include "CPCGateArrayWindow.h"
 #include "C64Window.h"
@@ -387,12 +388,17 @@ UI::OnFrame(yakc& emu) {
                 }
                 if (chips & chip::m6522) {
                     if (ImGui::MenuItem("M6522")) {
-                        this->OpenWindow(emu, MOS6522Window::Create());
+                        this->OpenWindow(emu, M6522Window::Create());
                     }
                 }
                 if (chips & chip::m6569) {
                     if (ImGui::MenuItem("M6569 (VIC-II)")) {
                         this->OpenWindow(emu, M6569Window::Create());
+                    }
+                }
+                if (chips & chip::m6581) {
+                    if (ImGui::MenuItem("M6581 (SID)")) {
+                        this->OpenWindow(emu, M6581Window::Create());
                     }
                 }
                 if (chips & chip::m6526) {

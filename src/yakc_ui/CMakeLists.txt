@@ -26,8 +26,9 @@ fips_begin_module(yakc_ui)
         MC6847Window.cc MC6847Window.h
         M6569Window.cc M6569Window.h
         I8255Window.cc I8255Window.h
-        MOS6522Window.cc MOS6522Window.h
+        M6522Window.cc M6522Window.h
         M6526Window.cc M6526Window.h
+        M6581Window.cc M6581Window.h
         TapeDeckWindow.cc TapeDeckWindow.h
         CPCGateArrayWindow.cc CPCGateArrayWindow.h
         C64Window.cc C64Window.h

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
-//  MOS6522Window.cc
+//  M6522Window.cc
 //------------------------------------------------------------------------------
-#include "MOS6522Window.h"
+#include "M6522Window.h"
 #include "IMUI/IMUI.h"
 #include "yakc/util/breadboard.h"
 
@@ -11,13 +11,13 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-MOS6522Window::Setup(yakc& emu) {
-    this->setName("MOS6522 State");
+M6522Window::Setup(yakc& emu) {
+    this->setName("M6522 State");
 }
 
 //------------------------------------------------------------------------------
 bool
-MOS6522Window::Draw(yakc& emu) {
+M6522Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         const m6522_t& via = board.m6522;
