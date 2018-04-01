@@ -1,5 +1,10 @@
 //------------------------------------------------------------------------------
 //  c64.cc
+//
+//  FIXME:
+//  - need a way to route joystick input either to joystick 1 or 2, 
+//    in Zaxxon the jet color flashes on input from joystick 1 (probably
+//    to tell the player that joystick 2 controls the jet)
 //------------------------------------------------------------------------------
 #include "c64.h"
 #include "yakc/util/tapedeck.h"
