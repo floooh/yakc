@@ -42,6 +42,11 @@ M6581Window::Draw(yakc& emu) {
                     v.ctrl & M6581_CTRL_NOISE       ? " ON":"OFF");
                 ImGui::Text("ATTACK:  %02X  DECAY:   %02X", v.attack, v.decay);
                 ImGui::Text("SUSTAIN: %02X  RELEASE: %02X", v.sustain, v.release);
+                ImGui::Text("wav_accum: %06X wav_output: %04X", v.wav_accum, v.wav_output);
+                ImGui::Text("noise_shift: %06X", v.noise_shift);
+                static const char* env_state[3] = { "ATTACK", "DECAY_SUSTAIN", "RELEASE" };
+                ImGui::Text("env_state: %s", env_state[v.env_state % 3]);
+                ImGui::Text("env_count: %02X", v.env_count);
             }
             ImGui::PopID();
         }
