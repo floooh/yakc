@@ -81,7 +81,7 @@ c64_t::poweron(system m) {
     m6581_init(&board.m6581, &sid_desc);
 
     // use a beeper for audible datasette output
-    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.1f);
+    //beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.1f);
 
     // put the CPU into start state
     m6502_reset(&board.m6502);
@@ -571,9 +571,11 @@ c64_t::framebuffer(int& out_width, int &out_height) {
 void
 c64_t::decode_audio(float* buffer, int num_samples) {
     board.audiobuffer.read(buffer, num_samples);
+    /*
     if (this->tape_valid && tape.motor_on) {
         board.audiobuffer2.read(buffer, num_samples, true);
     }
+    */
 }
 
 //------------------------------------------------------------------------------
@@ -612,9 +614,11 @@ c64_t::tape_tick() {
         */
 
         // toggle the datasette beeper output
+        /*
         if (beeper_tick(&board.beeper_1)) {
             board.audiobuffer2.write(board.beeper_1.sample);
         }
+        */
 
         // handle the actual datasette pulses
         if (this->tape_tick_count == 0) {
@@ -623,7 +627,7 @@ c64_t::tape_tick() {
             }
 
             // toggle the datasette beeper output (not sure if frequency must be doubled)
-            beeper_toggle(&board.beeper_1);
+            //beeper_toggle(&board.beeper_1);
 
             uint8_t val = 0;
             tape.read(&val, 1);
