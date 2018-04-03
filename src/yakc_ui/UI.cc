@@ -446,16 +446,9 @@ UI::OnFrame(yakc& emu) {
                     this->Settings.colorTV = !this->Settings.colorTV;
                 }
                 ImGui::SliderFloat("CRT Warp", &this->Settings.crtWarp, 0.0f, 1.0f/16.0f);
-                if (ImGui::SliderFloat("Lowpass Freq", &this->audio->LowPassFreq, 1000.0, 8000.0f)) {
-                    this->audio->UpdateFilterSettings();
-                }
-                if (ImGui::SliderFloat("Lowpass Resonance", &this->audio->LowPassResonance, 1.0f, 8.0f)) {
-                    this->audio->UpdateFilterSettings();
-                }
                 ImGui::SliderInt("CPU Speed", &emu.accel, 1, 8, "%.0fx");
                 if (ImGui::MenuItem("Reset To Defaults")) {
                     this->Settings = settings();
-                    this->audio->ResetFilterSettings();
                 }
                 ImGui::EndMenu();
             }
