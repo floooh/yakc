@@ -18,7 +18,7 @@ Audio::Setup(yakc* emu_) {
     this->emu = emu_;
     if (nullptr == soloud) {
         soloud = Memory::New<SoLoud::Soloud>();
-        soloud->init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 256, 1);
+        soloud->init(SoLoud::Soloud::CLIP_ROUNDOFF, SoLoud::Soloud::AUTO, 44100, 512, 1);
     }
     soloud_open_count++;
     this->audioSource = Memory::New<AudioSource>();
