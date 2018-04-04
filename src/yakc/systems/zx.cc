@@ -334,7 +334,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins) {
                 //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
                 //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
                 zx.last_fe_out = data;
-                beeper_write(&board.beeper_1, 0 != (data & (1<<4)));
+                beeper_set(&board.beeper_1, 0 != (data & (1<<4)));
             }
             else if (system::zxspectrum128k == zx.cur_model) {
                 // Spectrum 128 memory control (0.............0.)

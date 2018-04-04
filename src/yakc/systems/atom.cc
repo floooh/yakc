@@ -394,7 +394,7 @@ atom_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
         case I8255_PORT_C:
             atom.out_cass0 = 0 == (data & (1<<0));
             atom.out_cass1 = 0 == (data & (1<<1));
-            beeper_write(&board.beeper_1, 0 == (data & (1<<2)));
+            beeper_set(&board.beeper_1, 0 == (data & (1<<2)));
             vdg_pins = 0;
             vdg_mask = MC6847_CSS;
             if (data & (1<<3)) {

@@ -107,8 +107,8 @@ kc85_t::poweron(system m, os_rom os) {
     z80_init(&board.z80, cpu_tick);
     z80pio_init(&board.z80pio_1, pio_in, pio_out);
     z80ctc_init(&board.z80ctc);
-    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
-    beeper_init(&board.beeper_2, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.4f);
+    beeper_init(&board.beeper_2, board.freq_hz, SOUND_SAMPLE_RATE, 0.4f);
     this->exp.poweron();
     this->cur_scanline = 0;
 
