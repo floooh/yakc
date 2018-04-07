@@ -77,7 +77,7 @@ c64_t::poweron(system m) {
     m6581_desc_t sid_desc = { };
     sid_desc.tick_hz = board.freq_hz;
     sid_desc.sound_hz = SOUND_SAMPLE_RATE;
-    sid_desc.magnitude = 0.5f;
+    sid_desc.magnitude = 1.0f;
     m6581_init(&board.m6581, &sid_desc);
 
     // use a beeper for audible datasette output

@@ -54,19 +54,22 @@ M6581Window::Draw(yakc& emu) {
             const  m6581_filter_t& f = sid.filter;
             ImGui::Text("CUTOFF: %04X", f.cutoff);
             ImGui::Text("RESONANCE: %04X", f.resonance);
-            ImGui::Text("FILT1 FILT2 FILT3 FILTEX");
-            ImGui::Text("%s   %s   %s   %s",
-                f.filter & M6581_FILTER_FILT1 ? " ON":"OFF",
-                f.filter & M6581_FILTER_FILT2 ? " ON":"OFF",
-                f.filter & M6581_FILTER_FILT3 ? " ON":"OFF",
-                f.filter & M6581_FILTER_FILTEX ? " ON":"OFF");
+            ImGui::Text("VOICE1 VOICE2 VOICE3");
+            ImGui::Text("%s    %s    %s",
+                f.voices & M6581_FILTER_FILT1 ? " ON":"OFF",
+                f.voices & M6581_FILTER_FILT2 ? " ON":"OFF",
+                f.voices & M6581_FILTER_FILT3 ? " ON":"OFF");
             ImGui::Text("LOWP  BANDP HIGHP 3OFF");
             ImGui::Text("%s   %s   %s   %s",
-                f.mode & M6581_FILTER_LOWPASS ? " ON":"OFF",
-                f.mode & M6581_FILTER_BANDPASS ? " ON":"OFF",
-                f.mode & M6581_FILTER_HIGHPASS ? " ON":"OFF",
+                f.mode & M6581_FILTER_LP ? " ON":"OFF",
+                f.mode & M6581_FILTER_BP ? " ON":"OFF",
+                f.mode & M6581_FILTER_HP ? " ON":"OFF",
                 f.mode & M6581_FILTER_3OFF ? " ON":"OFF");
             ImGui::Text("VOLUME: %02X", f.volume);
+            ImGui::Text("w0:  %d", f.w0);
+            ImGui::Text("Vlp: %d", f.v_lp);
+            ImGui::Text("Vbp: %d", f.v_bp);
+            ImGui::Text("Vhp: %d", f.v_hp);
         }
     }
     ImGui::End();
