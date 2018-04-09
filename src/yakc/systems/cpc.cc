@@ -201,6 +201,16 @@ cpc_t::poweron(system m) {
     
     // trap the casread function
     z80_set_trap(&board.z80, 1, this->casread_trap);
+    board.z80.trap_func[1] = []() {
+        // this checks if the lower ROM is currently paged in
+        // when the cassette read trap point is hit
+        if (cpc.cur_model == system::cpc6128) {
+            return (0 == (cpc.ga_config & (1<<2)));
+        }
+        else {
+            return true;
+        }
+    };
 }
 
 //------------------------------------------------------------------------------
