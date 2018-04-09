@@ -197,7 +197,7 @@ cpc_t::poweron(system m) {
     this->tick_count = 0;
 
     // CPU start address
-    board.z80.PC = 0x0000;
+    board.z80.state.PC = 0x0000;
     
     // trap the casread function
     z80_set_trap(&board.z80, 1, this->casread_trap);
@@ -219,7 +219,7 @@ cpc_t::reset() {
     ay38910_reset(&board.ay38910);
     i8255_reset(&board.i8255);
     z80_reset(&board.z80);
-    board.z80.PC = 0x0000;
+    board.z80.state.PC = 0x0000;
     this->joymask = 0;
     this->tick_count = 0;
     this->upper_rom_select = 0;
@@ -1029,22 +1029,22 @@ cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     }
     // CPU state
     auto& cpu = board.z80;
-    cpu.F = hdr.F; cpu.A = hdr.A;
-    cpu.C = hdr.C; cpu.B = hdr.B;
-    cpu.E = hdr.E; cpu.D = hdr.D;
-    cpu.L = hdr.L; cpu.H = hdr.H;
-    cpu.R = hdr.R; cpu.I = hdr.I;
-    cpu.IFF1 = (hdr.IFF1 & 1) != 0;
-    cpu.IFF2 = (hdr.IFF2 & 1) != 0;
-    cpu.IX = (hdr.IX_h<<8 | hdr.IX_l) & 0xFFFF;
-    cpu.IY = (hdr.IY_h<<8 | hdr.IY_l) & 0xFFFF;
-    cpu.SP = (hdr.SP_h<<8 | hdr.SP_l) & 0xFFFF;
-    cpu.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
-    cpu.IM = hdr.IM;
-    cpu.AF_ = (hdr.A_<<8 | hdr.F_) & 0xFFFF;
-    cpu.BC_ = (hdr.B_<<8 | hdr.C_) & 0xFFFF;
-    cpu.DE_ = (hdr.D_<<8 | hdr.E_) & 0xFFFF;
-    cpu.HL_ = (hdr.H_<<8 | hdr.L_) & 0xFFFF;
+    cpu.state.F = hdr.F; cpu.state.A = hdr.A;
+    cpu.state.C = hdr.C; cpu.state.B = hdr.B;
+    cpu.state.E = hdr.E; cpu.state.D = hdr.D;
+    cpu.state.L = hdr.L; cpu.state.H = hdr.H;
+    cpu.state.R = hdr.R; cpu.state.I = hdr.I;
+    cpu.state.IFF1 = (hdr.IFF1 & 1) != 0;
+    cpu.state.IFF2 = (hdr.IFF2 & 1) != 0;
+    cpu.state.IX = (hdr.IX_h<<8 | hdr.IX_l) & 0xFFFF;
+    cpu.state.IY = (hdr.IY_h<<8 | hdr.IY_l) & 0xFFFF;
+    cpu.state.SP = (hdr.SP_h<<8 | hdr.SP_l) & 0xFFFF;
+    cpu.state.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
+    cpu.state.IM = hdr.IM;
+    cpu.state.AF_ = (hdr.A_<<8 | hdr.F_) & 0xFFFF;
+    cpu.state.BC_ = (hdr.B_<<8 | hdr.C_) & 0xFFFF;
+    cpu.state.DE_ = (hdr.D_<<8 | hdr.E_) & 0xFFFF;
+    cpu.state.HL_ = (hdr.H_<<8 | hdr.L_) & 0xFFFF;
     // gate array state
     for (int i = 0; i < 16; i++) {
         this->ga_palette[i] = this->ga_colors[hdr.pens[i] & 0x1F];
@@ -1104,10 +1104,10 @@ cpc_t::load_bin(filesystem* fs, const char* name, filetype type, bool start) {
             mem_wr(&board.mem, load_addr+i, val);
         }
         auto& cpu = board.z80;
-        cpu.IFF1 = cpu.IFF2 = true;
-        cpu.C = 0;  // hmm "ROM select number"
-        cpu.HL = start_addr;
-        cpu.PC = 0xBD16;        // MC START PROGRAM
+        cpu.state.IFF1 = cpu.state.IFF2 = true;
+        cpu.state.C = 0;  // hmm "ROM select number"
+        cpu.state.HL = start_addr;
+        cpu.state.PC = 0xBD16;        // MC START PROGRAM
     }
     fs->close(fp);
     fs->rm(name);
@@ -1135,17 +1135,17 @@ cpc_t::casread() {
     tape.read(&len, sizeof(len));
     uint8_t sync = 0;
     tape.read(&sync, sizeof(sync));
-    if (sync == board.z80.A) {
+    if (sync == board.z80.state.A) {
         success = true;
         tape.inc_counter(1);
         for (uint16_t i = 0; i < (len-1); i++) {
             uint8_t val;
             tape.read(&val, sizeof(val));
-            mem_wr(&board.mem, board.z80.HL++, val);
+            mem_wr(&board.mem, board.z80.state.HL++, val);
         }
     }
-    board.z80.F = success ? 0x45 : 0x00;
-    board.z80.PC = this->casread_ret;
+    board.z80.state.F = success ? 0x45 : 0x00;
+    board.z80.state.PC = this->casread_ret;
 }
 
 //------------------------------------------------------------------------------

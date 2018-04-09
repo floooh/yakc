@@ -291,7 +291,7 @@ yakc::step() {
     uint32_t ticks = 0;
     if (this->cpu_type() == cpu_model::z80) {
         ticks = z80_exec(&board.z80, 0);
-        board.dbg.add_history_item(board.z80.PC, ticks);
+        board.dbg.add_history_item(board.z80.state.PC, ticks);
     }
     else {
         ticks = m6502_exec(&board.m6502, 0);

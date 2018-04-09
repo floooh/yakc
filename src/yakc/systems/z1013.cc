@@ -86,7 +86,7 @@ z1013_t::poweron(system m) {
     z80pio_init(&board.z80pio_1, pio_in, pio_out);
 
     // execution on power-on starts at 0xF000
-    board.z80.PC = 0xF000;
+    board.z80.state.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ z1013_t::reset() {
     z80pio_reset(&board.z80pio_1);
     this->kbd_request_column = 0;
     // execution after reset starts at 0x0000(??? -> doesn't work)
-    board.z80.PC = 0xF000;
+    board.z80.state.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
@@ -378,13 +378,13 @@ z1013_t::quickload(filesystem* fs, const char* name, filetype type, bool start) 
 
     if (start) {
         auto& cpu = board.z80;
-        cpu.A = 0x00;
-        cpu.F = 0x10;
-        cpu.BC = cpu.BC_ = 0x0000;
-        cpu.DE = cpu.DE_ = 0x0000;
-        cpu.HL = cpu.HL_ = 0x0000;
-        cpu.AF_ = 0x0000;
-        cpu.PC = exec_addr;
+        cpu.state.A = 0x00;
+        cpu.state.F = 0x10;
+        cpu.state.BC = cpu.state.BC_ = 0x0000;
+        cpu.state.DE = cpu.state.DE_ = 0x0000;
+        cpu.state.HL = cpu.state.HL_ = 0x0000;
+        cpu.state.AF_ = 0x0000;
+        cpu.state.PC = exec_addr;
     }
     return true;
 }

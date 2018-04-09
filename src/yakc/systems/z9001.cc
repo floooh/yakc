@@ -141,7 +141,7 @@ z9001_t::poweron(system m, os_rom os) {
     this->ctc_zcto2 = 0;
     
     // execution on power-on starts at 0xF000
-    board.z80.PC = 0xF000;
+    board.z80.state.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ z9001_t::reset() {
     this->init_memorymap();
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
-    board.z80.PC = 0xF000;
+    board.z80.state.PC = 0xF000;
 }
 
 //------------------------------------------------------------------------------
@@ -486,13 +486,13 @@ z9001_t::quickload(filesystem* fs, const char* name, filetype type, bool start) 
     // start loaded image
     if (start && has_exec_addr) {
         auto& cpu = board.z80;
-        cpu.A = 0x00;
-        cpu.F = 0x10;
-        cpu.BC = cpu.BC_ = 0x0000;
-        cpu.DE = cpu.DE_ = 0x0000;
-        cpu.HL = cpu.HL_ = 0x0000;
-        cpu.AF_ = 0x0000;
-        cpu.PC = exec_addr;
+        cpu.state.A = 0x00;
+        cpu.state.F = 0x10;
+        cpu.state.BC = cpu.state.BC_ = 0x0000;
+        cpu.state.DE = cpu.state.DE_ = 0x0000;
+        cpu.state.HL = cpu.state.HL_ = 0x0000;
+        cpu.state.AF_ = 0x0000;
+        cpu.state.PC = exec_addr;
     }
     return true;
 }

@@ -27,7 +27,7 @@ DebugWindow::Draw(yakc& emu) {
         if (emu.cpu_type() == cpu_model::z80) {
             this->drawZ80RegisterTable();
             ImGui::Separator();
-            this->drawMainContent(emu, board.z80.PC, 48);
+            this->drawMainContent(emu, board.z80.state.PC, 48);
             ImGui::Separator();
         }
         else {
@@ -49,29 +49,29 @@ DebugWindow::drawZ80RegisterTable() {
     const ImVec4 green = UI::EnabledColor;
 
     auto& cpu = board.z80;
-    Util::InputHex16("AF", cpu.AF); ImGui::SameLine(1 * 72);
-    Util::InputHex16("BC", cpu.BC); ImGui::SameLine(2 * 72);
-    Util::InputHex16("DE", cpu.DE); ImGui::SameLine(3 * 72);
-    Util::InputHex16("HL", cpu.HL); ImGui::SameLine(4 * 72);
-    Util::InputHex16("WZ", cpu.WZ); ImGui::SameLine(5 * 72);
-    Util::InputHex8("I", cpu.I); ImGui::SameLine(5 * 72 + 48);
-    ImGui::TextColored(board.z80.IFF1 ? green:red, "IFF1");
+    Util::InputHex16("AF", cpu.state.AF); ImGui::SameLine(1 * 72);
+    Util::InputHex16("BC", cpu.state.BC); ImGui::SameLine(2 * 72);
+    Util::InputHex16("DE", cpu.state.DE); ImGui::SameLine(3 * 72);
+    Util::InputHex16("HL", cpu.state.HL); ImGui::SameLine(4 * 72);
+    Util::InputHex16("WZ", cpu.state.WZ); ImGui::SameLine(5 * 72);
+    Util::InputHex8("I", cpu.state.I); ImGui::SameLine(5 * 72 + 48);
+    ImGui::TextColored(board.z80.state.IFF1 ? green:red, "IFF1");
 
-    Util::InputHex16("AF'", cpu.AF_); ImGui::SameLine(1 * 72);
-    Util::InputHex16("BC'", cpu.BC_); ImGui::SameLine(2 * 72);
-    Util::InputHex16("DE'", cpu.DE_); ImGui::SameLine(3 * 72);
-    Util::InputHex16("HL'", cpu.HL_); ImGui::SameLine(4 * 72);
-    Util::InputHex8("IM", cpu.IM); ImGui::SameLine(5 * 72 + 48);
-    ImGui::TextColored(board.z80.IFF2 ? green:red, "IFF2");
+    Util::InputHex16("AF'", cpu.state.AF_); ImGui::SameLine(1 * 72);
+    Util::InputHex16("BC'", cpu.state.BC_); ImGui::SameLine(2 * 72);
+    Util::InputHex16("DE'", cpu.state.DE_); ImGui::SameLine(3 * 72);
+    Util::InputHex16("HL'", cpu.state.HL_); ImGui::SameLine(4 * 72);
+    Util::InputHex8("IM", cpu.state.IM); ImGui::SameLine(5 * 72 + 48);
+    ImGui::TextColored(board.z80.state.IFF2 ? green:red, "IFF2");
 
-    Util::InputHex16("IX", cpu.IX); ImGui::SameLine(1 * 72);
-    Util::InputHex16("IY", cpu.IY); ImGui::SameLine(2 * 72);
-    Util::InputHex16("SP", cpu.SP); ImGui::SameLine(3 * 72);
-    Util::InputHex16("PC", cpu.PC); ImGui::SameLine(4 * 72);
-    Util::InputHex8("R", cpu.R); ImGui::SameLine();
+    Util::InputHex16("IX", cpu.state.IX); ImGui::SameLine(1 * 72);
+    Util::InputHex16("IY", cpu.state.IY); ImGui::SameLine(2 * 72);
+    Util::InputHex16("SP", cpu.state.SP); ImGui::SameLine(3 * 72);
+    Util::InputHex16("PC", cpu.state.PC); ImGui::SameLine(4 * 72);
+    Util::InputHex8("R", cpu.state.R); ImGui::SameLine();
 
     char strFlags[9];
-    const uint8_t f = board.z80.F;
+    const uint8_t f = board.z80.state.F;
     strFlags[0] = (f & Z80_SF) ? 'S':'-';
     strFlags[1] = (f & Z80_ZF) ? 'Z':'-';
     strFlags[2] = (f & Z80_YF) ? 'Y':'-';
@@ -83,7 +83,7 @@ DebugWindow::drawZ80RegisterTable() {
     strFlags[8] = 0;
     ImGui::Text(" %s ", strFlags);
     ImGui::SameLine(5 * 72 + 48);
-    ImGui::TextColored((board.z80.PINS & Z80_HALT) ? green:red, "HALT");
+    ImGui::TextColored((board.z80.pins & Z80_HALT) ? green:red, "HALT");
 }
 
 //------------------------------------------------------------------------------
@@ -143,7 +143,7 @@ DebugWindow::drawControls(yakc& emu) {
         ImGui::SameLine();
         if (ImGui::Button(">Int")) {
             if (emu.cpu_type() == cpu_model::z80) {
-                this->cpu_pins = board.z80.PINS;
+                this->cpu_pins = board.z80.pins;
             }
             else {
                 this->cpu_pins = board.m6502.state.PINS;
@@ -151,7 +151,7 @@ DebugWindow::drawControls(yakc& emu) {
             emu.step_until([this](uint32_t ticks)->bool {
                 bool triggered = false;
                 if (this->emu->cpu_type() == cpu_model::z80) {
-                    uint64_t cur_pins = board.z80.PINS;
+                    uint64_t cur_pins = board.z80.pins;
                     triggered = 0 != (((cur_pins ^ this->cpu_pins) & cur_pins) & Z80_INT);
                     this->cpu_pins = cur_pins;
                 }
