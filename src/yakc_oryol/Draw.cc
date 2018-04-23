@@ -2,7 +2,7 @@
 //  Draw.cc
 //------------------------------------------------------------------------------
 #include "Draw.h"
-#include "yakc_shaders.h"
+#include "yakc_shader.h"
 
 using namespace Oryol;
 
@@ -10,31 +10,30 @@ namespace YAKC {
 
 //------------------------------------------------------------------------------
 void
-Draw::Setup(const GfxSetup& gfxSetup, int frame_x, int frame_y) {
+Draw::Setup(const GfxDesc& gfxDesc, int frame_x, int frame_y) {
     this->crtEffectEnabled = false;
     this->crtColorEnabled = true;
     this->frameSizeX = frame_x;
     this->frameSizeY = frame_y;
-    this->texUpdateAttrs.NumFaces = 1;
-    this->texUpdateAttrs.NumMipMaps = 1;
-    this->texUpdateAttrs.Sizes[0][0] = 0;
+    this->imageContent.Size[0][0] = 0;
 
-    auto fsqSetup = MeshSetup::FullScreenQuad(true);
-    Id fsq = Gfx::CreateResource(fsqSetup);
-    this->crtDrawState.Mesh[0] = fsq;
-    this->nocrtDrawState.Mesh[0] = fsq;
+    const float quadVerts[] = { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f };
+    Id fsq = Gfx::CreateBuffer(BufferDesc().Size(sizeof(quadVerts)).Content(quadVerts));
+    this->crtDrawState.VertexBuffers[0] = fsq;
+    this->nocrtDrawState.VertexBuffers[0] = fsq;
 
-    Id crtShd = Gfx::CreateResource(CRTShader::Setup());
-    Id nocrtShd = Gfx::CreateResource(NoCRTShader::Setup());
-    auto pips = PipelineSetup::FromLayoutAndShader(fsqSetup.Layout, crtShd);
-    pips.DepthStencilState.DepthWriteEnabled = false;
-    pips.DepthStencilState.DepthCmpFunc = CompareFunc::Always;
-    pips.BlendState.ColorFormat = gfxSetup.ColorFormat;
-    pips.BlendState.DepthFormat = gfxSetup.DepthFormat;
-    pips.RasterizerState.SampleCount = gfxSetup.SampleCount;
-    this->crtDrawState.Pipeline = Gfx::CreateResource(pips);
-    pips.Shader = nocrtShd;
-    this->nocrtDrawState.Pipeline = Gfx::CreateResource(pips);
+    Id crtShd = Gfx::CreateShader(CRTShader::Desc());
+    Id nocrtShd = Gfx::CreateShader(NoCRTShader::Desc());
+    auto pipDesc = PipelineDesc()
+        .Layout(0, { { "position", VertexFormat::Float2 } })
+        .PrimitiveType(PrimitiveType::TriangleStrip)
+        .DepthWriteEnabled(false)
+        .DepthCmpFunc(CompareFunc::Always)
+        .ColorFormat(gfxDesc.ColorFormat())
+        .DepthFormat(gfxDesc.DepthFormat())
+        .SampleCount(gfxDesc.SampleCount());
+    this->crtDrawState.Pipeline = Gfx::CreatePipeline(pipDesc.Shader(crtShd));
+    this->nocrtDrawState.Pipeline = Gfx::CreatePipeline(pipDesc.Shader(nocrtShd));
 }
 
 //------------------------------------------------------------------------------
@@ -63,8 +62,9 @@ Draw::Render(const void* pixels, int width, int height) {
     }
     this->crtDrawState.FSTexture[CRTShader::irm] = this->texture;
     this->nocrtDrawState.FSTexture[NoCRTShader::irm] = this->texture;
-    this->texUpdateAttrs.Sizes[0][0] = width*height*4;
-    Gfx::UpdateTexture(this->texture, pixels, this->texUpdateAttrs);
+    this->imageContent.Size[0][0] = width*height*4;
+    this->imageContent.Pointer[0][0] = pixels;
+    Gfx::UpdateTexture(this->texture, this->imageContent);
     this->applyViewport(width, height);
     if (this->crtEffectEnabled) {
         CRTShader::fsParams fsParams;
@@ -80,7 +80,7 @@ Draw::Render(const void* pixels, int width, int height) {
         Gfx::ApplyDrawState(this->nocrtDrawState);
         Gfx::ApplyUniformBlock(fsParams);
     }
-    Gfx::Draw();
+    Gfx::Draw(0, 4);
     this->restoreViewport();
 }
 
@@ -91,8 +91,8 @@ Draw::applyViewport(int width, int height) {
     if (aspect > (5.0f/4.0f)) {
         aspect = (5.0f/4.0f);
     }
-    const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
-    const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
+    const int fbWidth = Gfx::DisplayAttrs().Width;
+    const int fbHeight = Gfx::DisplayAttrs().Height;
     int viewPortY = this->frameSizeY;
     int viewPortH = fbHeight - 2*frameSizeY;
     int viewPortW = (const int) (fbHeight * aspect) - 2*this->frameSizeX;
@@ -103,8 +103,8 @@ Draw::applyViewport(int width, int height) {
 //------------------------------------------------------------------------------
 void
 Draw::restoreViewport() {
-    const int fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
-    const int fbHeight = Gfx::DisplayAttrs().FramebufferHeight;
+    const int fbWidth = Gfx::DisplayAttrs().Width;
+    const int fbHeight = Gfx::DisplayAttrs().Height;
     Gfx::ApplyViewPort(0, 0, fbWidth, fbHeight);
 }
 
@@ -124,13 +124,18 @@ Draw::validateTexture(int width, int height) {
 
         // only create a new texture if width and height > 0
         if ((width > 0) && (height > 0)) {
-            auto texSetup = TextureSetup::Empty2D(width, height, 1, PixelFormat::RGBA8, Usage::Stream);
-            texSetup.Sampler.MinFilter = TextureFilterMode::Linear;
-            texSetup.Sampler.MagFilter = TextureFilterMode::Linear;
-            texSetup.Sampler.WrapU = TextureWrapMode::ClampToEdge;
-            texSetup.Sampler.WrapV = TextureWrapMode::ClampToEdge;
             Gfx::PushResourceLabel('YAKC');
-            this->texture = Gfx::CreateResource(texSetup);
+            this->texture = Gfx::CreateTexture(TextureDesc()
+                .Type(TextureType::Texture2D)
+                .Width(width)
+                .Height(height)
+                .NumMipMaps(1)
+                .Format(PixelFormat::RGBA8)
+                .Usage(Usage::Stream)
+                .MinFilter(TextureFilterMode::Linear)
+                .MagFilter(TextureFilterMode::Linear)
+                .WrapU(TextureWrapMode::ClampToEdge)
+                .WrapV(TextureWrapMode::ClampToEdge));
             Gfx::PopResourceLabel();
         }
     }

@@ -63,29 +63,30 @@ YakcApp::OnInit() {
     #else
     String baseUrl = "http://floooh.github.com/virtualkc/";
     #endif
-    IOSetup ioSetup;
-    ioSetup.FileSystems.Add("http", HTTPFileSystem::Creator());
-    ioSetup.Assigns.Add("kcc:", baseUrl);
-    ioSetup.Assigns.Add("rom:", baseUrl);
-    IO::Setup(ioSetup);
+    IO::Setup(IODesc()
+        .Assign("kcc:", baseUrl)
+        .Assign("rom:", baseUrl)
+        .FileSystem("http", HTTPFileSystem::Creator()));
 
     // we only need few resources, so don't waste memory
     const int frameSizeX = 24;
     const int frameSizeY = 8;
     const int width = 2*frameSizeX + 2*320;
     const int height = 2*frameSizeY + 2*256;
-    auto gfxSetup = GfxSetup::Window(width, height, "YAKC Emulator");
-    gfxSetup.ResourcePoolSize[GfxResourceType::Mesh] = 8;
-    gfxSetup.ResourcePoolSize[GfxResourceType::Texture] = 8;
-    gfxSetup.ResourcePoolSize[GfxResourceType::Pipeline] = 8;
-    gfxSetup.ResourcePoolSize[GfxResourceType::Shader] = 8;
-    gfxSetup.HtmlTrackElementSize = true;
-    gfxSetup.HtmlElement = "canvas";
-    Gfx::Setup(gfxSetup);
+    Gfx::Setup(GfxDesc()
+        .Width(width)
+        .Height(height)
+        .Title("YAKC Emulator")
+        .ResourcePoolSize(GfxResourceType::Buffer, 8)
+        .ResourcePoolSize(GfxResourceType::Texture, 8)
+        .ResourcePoolSize(GfxResourceType::Pipeline, 8)
+        .ResourcePoolSize(GfxResourceType::Shader, 8)
+        .HtmlTrackElementSize(true)
+        .HtmlElement("canvas"));
     Input::Setup();
 
     // initialize Oryol platform wrappers
-    this->draw.Setup(gfxSetup, frameSizeX, frameSizeY);
+    this->draw.Setup(Gfx::Desc(), frameSizeX, frameSizeY);
     this->audio.Setup(&this->emu);
     this->keyboard.Setup(this->emu);
 
@@ -171,7 +172,7 @@ YakcApp::OnRunning() {
     this->audio.Update();
     int width = 0;
     int height = 0;
-    Gfx::BeginPass(PassAction::Clear(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
+    Gfx::BeginPass(PassAction().Clear(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
     const void* fb = this->emu.framebuffer(width, height);
     if (fb) {
         this->draw.Render(fb, width, height);

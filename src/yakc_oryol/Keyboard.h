@@ -6,7 +6,7 @@
 */
 #include "yakc/yakc.h"
 #include "Input/Input.h"
-#include "Core/Containers/Buffer.h"
+#include "Core/Containers/MemoryBuffer.h"
 
 namespace YAKC {
 
@@ -20,7 +20,7 @@ public:
     /// handle keyboard input, call this once per frame
     void HandleInput();
     /// set a text stream for playback
-    void StartPlayback(Oryol::Buffer&& buffer);
+    void StartPlayback(Oryol::MemoryBuffer&& buffer);
 
     /// handle text playback (called from HandleInput)
     void handleTextPlayback();
@@ -35,7 +35,7 @@ public:
     bool playbackFlipFlop = 0;
     int playbackPos = 0;
     uint8_t playbackChar = 0;
-    Oryol::Buffer playbackBuffer;
+    Oryol::MemoryBuffer playbackBuffer;
 };
 
 } // namespace YAKC
