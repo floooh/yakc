@@ -90,15 +90,17 @@ function callAsEventHandler(func_name) {
 // in some browsers, WebAudio starts suspended and must be activated in
 // an user input event handler
 function initWebAudio() {
-    id('canvas').addEventListener('click', resume_webaudio);
-    id('canvas').addEventListener('touchstart', resume_webaudio);
-    document.addEventListener('keydown', resume_webaudio);
+    id('canvas').addEventListener('click', resume_webaudio, { once: true });
+    id('canvas').addEventListener('touchstart', resume_webaudio, { once: true });
+    document.addEventListener('keydown', resume_webaudio, { once: true });
 }
 
 function resume_webaudio() {
+    console.log('resume_webaudio() called');
     if (SDL.audioContext) {
         if (SDL.audioContext.state === 'suspended') {
             SDL.audioContext.resume();
+            console.log('webaudio context resumed')
         }
     }
 }
