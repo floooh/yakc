@@ -17,6 +17,7 @@ FileLoader::Setup(yakc& emu_) {
     o_assert(nullptr == pointer);
     this->emu = &emu_;
     pointer = this;
+    this->Items.Add("Serious! (Moods Plateau)", "serious.kcc", filetype::kcc, system::kc85_4);
     this->Items.Add("Pengo", "pengo.kcc", filetype::kcc, system::kc85_3);
     this->Items.Add("Pengo", "pengo4.kcc", filetype::kcc, system::kc85_4);
     this->Items.Add("Cave", "cave.kcc", filetype::kcc, system::kc85_3);

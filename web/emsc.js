@@ -330,6 +330,7 @@ function ui_open_filepicker() {
 // the software browser classList
 var software = [
     // name, filename, filetype, system
+    [ 'Serious! by Moods Plateau', 'serious.kcc', 'kcc', 'kc85_4'],
     [ 'Pengo', 'pengo.kcc', 'kcc', 'kc85_3'],
     [ 'Pengo', 'pengo4.kcc', 'kcc', 'kc85_4'],
     [ 'Cave', 'cave.kcc', 'kcc', 'kc85_3'],
