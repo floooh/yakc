@@ -104,8 +104,13 @@ kc85_t::poweron(system m, os_rom os) {
 
     // initialize hardware components
     board.freq_hz = (m == system::kc85_4) ? 1770000 : 1750000;
-    z80_init(&board.z80, cpu_tick);
-    z80pio_init(&board.z80pio_1, pio_in, pio_out);
+    z80_desc_t cpu_desc = { };
+    cpu_desc.tick_cb = cpu_tick;
+    z80_init(&board.z80, &cpu_desc);
+    z80pio_desc_t pio_desc = { };
+    pio_desc.in_cb = pio_in;
+    pio_desc.out_cb = pio_out;
+    z80pio_init(&board.z80pio_1, &pio_desc);
     z80ctc_init(&board.z80ctc);
     beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.4f);
     beeper_init(&board.beeper_2, board.freq_hz, SOUND_SAMPLE_RATE, 0.4f);
@@ -158,7 +163,7 @@ kc85_t::reset() {
 
 //------------------------------------------------------------------------------
 uint64_t
-kc85_t::cpu_tick(int num_ticks, uint64_t pins) {
+kc85_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
 
     // video decoding
     kc85.scanline_counter -= num_ticks;
@@ -351,13 +356,13 @@ kc85_t::update_rom_pointers() {
 
 //------------------------------------------------------------------------------
 uint8_t
-kc85_t::pio_in(int port_id) {
+kc85_t::pio_in(int port_id, void* user_data) {
     return 0xFF;
 }
 
 //------------------------------------------------------------------------------
 void
-kc85_t::pio_out(int port_id, uint8_t data) {
+kc85_t::pio_out(int port_id, uint8_t data, void* user_data) {
     if (Z80PIO_PORT_A == port_id) {
         kc85.pio_a = data;
     }
@@ -728,11 +733,11 @@ kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         }
         mem_wr(&board.mem, 0xb7a0, 0);
         if (system::kc85_3 == this->cur_model) {
-            cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0x9f));
+            cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0x9f), 0);
             mem_wr16(&board.mem, cpu.state.SP, 0xf15c);
         }
         else if (system::kc85_4 == this->cur_model) {
-            cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0xff));
+            cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0xff), 0);
             mem_wr16(&board.mem, cpu.state.SP, 0xf17e);
         }
         cpu.state.PC = exec_addr;

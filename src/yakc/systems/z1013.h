@@ -59,11 +59,11 @@ public:
     uint64_t exec(uint64_t start_tick, uint64_t end_tick);
 
     /// the Z80 CPU tick callback
-    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins, void* user_data);
     /// the Z80 PIO out callback
-    static void pio_out(int port_id, uint8_t data);
+    static void pio_out(int port_id, uint8_t data, void* user_data);
     /// the Z80 PIO in callback
-    static uint8_t pio_in(int port_id);
+    static uint8_t pio_in(int port_id, void* user_data);
 
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);

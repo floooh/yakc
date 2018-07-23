@@ -76,16 +76,16 @@ public:
     /// copy to memory and start the previously loaded file
     bool Start();
     /// obtain text buffer (if a text file has been loaded)
-    Oryol::Buffer&& ObtainTextBuffer();
+    Oryol::MemoryBuffer&& ObtainTextBuffer();
 
     /// get file info from loaded file data
-    FileInfo parseHeader(const Oryol::Buffer& data, const Item& item);
+    FileInfo parseHeader(const Oryol::MemoryBuffer& data, const Item& item);
     /// quickload the provided file data
-    static void quickload(yakc* emu, const FileInfo& info, const Oryol::Buffer& data, bool autostart);
+    static void quickload(yakc* emu, const FileInfo& info, const Oryol::MemoryBuffer& data, bool autostart);
     /// start loading, and then call quickload
     void load(const Item& item, bool autostart);
 
-    Oryol::Buffer FileData;
+    Oryol::MemoryBuffer FileData;
 private:
     yakc* emu = nullptr;
 };

@@ -30,22 +30,22 @@ public:
     uint64_t exec(uint64_t start_tick, uint64_t end_tick);
 
     /// the m6502 tick callback
-    static uint64_t cpu_tick(uint64_t pins);
+    static uint64_t cpu_tick(uint64_t pins, void* user_data);
     /// CPU port input callback
-    static uint8_t cpu_port_in();
+    static uint8_t cpu_port_in(void* user_data);
     /// CPU port output callback
-    static void cpu_port_out(uint8_t data);
+    static void cpu_port_out(uint8_t data, void* user_data);
     /// CIA-1 port output callback
-    static void cia1_out(int port_id, uint8_t data);
+    static void cia1_out(int port_id, uint8_t data, void* user_data);
     /// CIA-1 port input callback
-    static uint8_t cia1_in(int port_id);
+    static uint8_t cia1_in(int port_id, void* user_data);
     /// CIA-2 port output callback
-    static void cia2_out(int port_id, uint8_t data);
+    static void cia2_out(int port_id, uint8_t data, void* user_data);
     /// CIA-2 port input callback
-    static uint8_t cia2_in(int port_id);
+    static uint8_t cia2_in(int port_id, void* user_data);
 
     /// VIC-II memory fetch callback (returns a 4+8 bits value)
-    static uint16_t vic_fetch(uint16_t addr);
+    static uint16_t vic_fetch(uint16_t addr, void* user_data);
 
     /// setup the keyboard matrix
     void init_keymap();

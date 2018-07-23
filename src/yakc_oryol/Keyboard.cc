@@ -280,7 +280,7 @@ Keyboard::HandleInput() {
 
 //------------------------------------------------------------------------------
 void
-Keyboard::StartPlayback(Buffer&& buf) {
+Keyboard::StartPlayback(MemoryBuffer&& buf) {
     this->playbackBuffer = std::move(buf);
     this->playbackPos = 0;
 }

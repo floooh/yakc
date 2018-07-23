@@ -17,6 +17,7 @@ FileLoader::Setup(yakc& emu_) {
     o_assert(nullptr == pointer);
     this->emu = &emu_;
     pointer = this;
+    this->Items.Add("Serious! (Moods Plateau)", "serious.kcc", filetype::kcc, system::kc85_4);
     this->Items.Add("Pengo", "pengo.kcc", filetype::kcc, system::kc85_3);
     this->Items.Add("Pengo", "pengo4.kcc", filetype::kcc, system::kc85_4);
     this->Items.Add("Cave", "cave.kcc", filetype::kcc, system::kc85_3);
@@ -199,7 +200,7 @@ FileLoader::Start() {
 }
 
 //------------------------------------------------------------------------------
-Buffer&&
+MemoryBuffer&&
 FileLoader::ObtainTextBuffer() {
     this->State = Waiting;
     return std::move(this->FileData);
@@ -229,7 +230,7 @@ FileLoader::load(const Item& item, bool autostart) {
 
 //------------------------------------------------------------------------------
 FileLoader::FileInfo
-FileLoader::parseHeader(const Buffer& data, const Item& item) {
+FileLoader::parseHeader(const MemoryBuffer& data, const Item& item) {
     FileInfo info;
     info.Filename = item.Filename;
     info.EnableJoystick = item.EnableJoystick;
@@ -331,7 +332,7 @@ FileLoader::parseHeader(const Buffer& data, const Item& item) {
 
 //------------------------------------------------------------------------------
 void
-FileLoader::quickload(yakc* emu, const FileInfo& info, const Buffer& data, bool autostart) {
+FileLoader::quickload(yakc* emu, const FileInfo& info, const MemoryBuffer& data, bool autostart) {
     enum State newState = FileLoader::Waiting;
     if (filetype::text == info.Type) {
         // do nothing for text files, this will be checked
@@ -368,7 +369,7 @@ FileLoader::LoadAuto(const Item& item) {
             // send the right load/run BASIC command to the emulator
             const char* cmd = this->emu->load_tape_cmd();
             if (cmd) {
-                Buffer buf;
+                MemoryBuffer buf;
                 buf.Add((const uint8_t*)cmd, strlen(cmd)+1);
                 Keyboard::self->StartPlayback(std::move(buf));
             }
@@ -399,7 +400,7 @@ FileLoader::LoadAuto(const Item& item, const uint8_t* data, int size) {
             // send the right load/run BASIC command to the emulator
             const char* cmd = this->emu->load_tape_cmd();
             if (cmd) {
-                Buffer buf;
+                MemoryBuffer buf;
                 buf.Add((const uint8_t*)cmd, strlen(cmd)+1);
                 Keyboard::self->StartPlayback(std::move(buf));
             }

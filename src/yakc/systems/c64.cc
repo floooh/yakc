@@ -59,8 +59,13 @@ c64_t::poweron(system m) {
     m6502_init(&board.m6502, &cpu_desc);
 
     // initialize the CIAs
-    m6526_init(&board.m6526_1, cia1_in, cia1_out);
-    m6526_init(&board.m6526_2, cia2_in, cia2_out);
+    m6526_desc_t cia_desc = { };
+    cia_desc.in_cb = cia1_in;
+    cia_desc.out_cb = cia1_out;
+    m6526_init(&board.m6526_1, &cia_desc);
+    cia_desc.in_cb = cia2_in;
+    cia_desc.out_cb = cia2_out;
+    m6526_init(&board.m6526_2, &cia_desc);
     
     // initialize the VIC-II display chip
     m6569_desc_t vic_desc = { };
@@ -125,7 +130,7 @@ c64_t::exec(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 uint64_t
-c64_t::cpu_tick(uint64_t pins) {
+c64_t::cpu_tick(uint64_t pins, void* user_data) {
     const uint16_t addr = M6502_GET_ADDR(pins);
 
     // tick the datasette, when the datasette output pulse
@@ -235,7 +240,7 @@ c64_t::cpu_tick(uint64_t pins) {
 
 //------------------------------------------------------------------------------
 uint8_t
-c64_t::cpu_port_in() {
+c64_t::cpu_port_in(void* user_data) {
     /*
         Input from the integrated M6510 CPU IO port
 
@@ -250,7 +255,7 @@ c64_t::cpu_port_in() {
 
 //------------------------------------------------------------------------------
 void
-c64_t::cpu_port_out(uint8_t data) {
+c64_t::cpu_port_out(uint8_t data, void* user_data) {
     /*
         Output to the integrated M6510 CPU IO port
 
@@ -275,7 +280,7 @@ c64_t::cpu_port_out(uint8_t data) {
 
 //------------------------------------------------------------------------------
 void
-c64_t::cia1_out(int port_id, uint8_t data) {
+c64_t::cia1_out(int port_id, uint8_t data, void* user_data) {
     /*
         Write CIA-1 ports:
 
@@ -294,7 +299,7 @@ c64_t::cia1_out(int port_id, uint8_t data) {
 
 //------------------------------------------------------------------------------
 uint8_t
-c64_t::cia1_in(int port_id) {
+c64_t::cia1_in(int port_id, void* user_data) {
     /*
         Read CIA-1 ports:
 
@@ -315,7 +320,7 @@ c64_t::cia1_in(int port_id) {
 
 //------------------------------------------------------------------------------
 void
-c64_t::cia2_out(int port_id, uint8_t data) {
+c64_t::cia2_out(int port_id, uint8_t data, void* user_data) {
     /*
         Write CIA-2 ports:
 
@@ -341,7 +346,7 @@ c64_t::cia2_out(int port_id, uint8_t data) {
 
 //------------------------------------------------------------------------------
 uint8_t
-c64_t::cia2_in(int port_id) {
+c64_t::cia2_in(int port_id, void* user_data) {
     /*
         Read CIA-2 ports:
 
@@ -356,7 +361,7 @@ c64_t::cia2_in(int port_id) {
 
 //------------------------------------------------------------------------------
 uint16_t
-c64_t::vic_fetch(uint16_t addr) {
+c64_t::vic_fetch(uint16_t addr, void* user_data) {
     /*
         Fetch data into the VIC-II.
 
