@@ -133,9 +133,16 @@ z9001_t::poweron(system m, os_rom os) {
 
     // initialize hardware components, main clock frequency is 2.4576
     board.freq_hz = 2457600;
-    z80_init(&board.z80, cpu_tick);
-    z80pio_init(&board.z80pio_1, pio1_in, pio1_out);
-    z80pio_init(&board.z80pio_2, pio2_in, pio2_out);
+    z80_desc_t cpu_desc = { };
+    cpu_desc.tick_cb = cpu_tick;
+    z80_init(&board.z80, &cpu_desc);
+    z80pio_desc_t pio_desc = { };
+    pio_desc.in_cb = pio1_in;
+    pio_desc.out_cb = pio1_out;
+    z80pio_init(&board.z80pio_1, &pio_desc);
+    pio_desc.in_cb = pio2_in;
+    pio_desc.out_cb = pio2_out;
+    z80pio_init(&board.z80pio_2, &pio_desc);
     z80ctc_init(&board.z80ctc);
     beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     this->ctc_zcto2 = 0;
@@ -179,7 +186,7 @@ z9001_t::exec(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 uint64_t
-z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
+z9001_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
     // FIXME: video memory access wait state!
 
     /* tick the CTC channels, the CTC channel 2 output signal ZCTO2 is connected
@@ -277,12 +284,12 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins) {
 }
 
 //------------------------------------------------------------------------------
-uint8_t z9001_t::pio1_in(int port_id) {
+uint8_t z9001_t::pio1_in(int port_id, void* user_data) {
     return 0xFF;
 }
 
 //------------------------------------------------------------------------------
-void z9001_t::pio1_out(int port_id, uint8_t data) {
+void z9001_t::pio1_out(int port_id, uint8_t data, void* user_data) {
     if (Z80PIO_PORT_A == port_id) {
         /*
             PIO1-A bits:
@@ -300,7 +307,7 @@ void z9001_t::pio1_out(int port_id, uint8_t data) {
 }
 
 //------------------------------------------------------------------------------
-uint8_t z9001_t::pio2_in(int port_id) {
+uint8_t z9001_t::pio2_in(int port_id, void* user_data) {
     if (Z80PIO_PORT_A == port_id) {
         /* return keyboard matrix column bits for requested line bits */
         uint8_t columns = (uint8_t) kbd_scan_columns(&board.kbd);
@@ -314,7 +321,7 @@ uint8_t z9001_t::pio2_in(int port_id) {
 }
 
 //------------------------------------------------------------------------------
-void z9001_t::pio2_out(int port_id, uint8_t data) {
+void z9001_t::pio2_out(int port_id, uint8_t data, void* user_data) {
     if (Z80PIO_PORT_A == port_id) {
         kbd_set_active_columns(&board.kbd, ~data);
     }

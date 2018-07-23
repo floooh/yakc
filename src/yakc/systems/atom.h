@@ -32,17 +32,17 @@ public:
     uint64_t exec(uint64_t start_tick, uint64_t end_tick);
 
     /// the m6502 tick callback
-    static uint64_t cpu_tick(uint64_t pins);
+    static uint64_t cpu_tick(uint64_t pins, void* user_data);
     /// the MC6847 video memory fetch callback
-    static uint64_t vdg_fetch(uint64_t pins);
+    static uint64_t vdg_fetch(uint64_t pins, void* user_data);
     /// i8255 input callback
-    static uint8_t ppi_in(int port_id);
+    static uint8_t ppi_in(int port_id, void* user_data);
     /// i8255 output callback
-    static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data);
+    static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data, void* user_data);
     /// m6522 input callback
-    static uint8_t via_in(int port_id);
+    static uint8_t via_in(int port_id, void* user_data);
     /// m6522 output callback
-    static void via_out(int port_id, uint8_t data);
+    static void via_out(int port_id, uint8_t data, void* user_data);
 
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);

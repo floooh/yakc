@@ -30,17 +30,17 @@ public:
     uint64_t exec(uint64_t start_tick, uint64_t end_tick);
 
     /// the Z80 CPU tick callback
-    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins, void* user_data);
     /// perform a CPU IO request (called from cpu_tick)
     static uint64_t cpu_iorq(uint64_t pins);
     /// i8255 output callback
-    static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data);
+    static uint64_t ppi_out(int port_id, uint64_t pins, uint8_t data, void* user_data);
     /// i8255 input callback
-    static uint8_t ppi_in(int port_id);
+    static uint8_t ppi_in(int port_id, void* user_data);
     /// AY-3-8912 port output callback
-    static void psg_out(int port_id, uint8_t data);
+    static void psg_out(int port_id, uint8_t data, void* user_data);
     /// AY-3-8912 port input callback
-    static uint8_t psg_in(int port_id);
+    static uint8_t psg_in(int port_id, void* user_data);
 
     /// initialize the gate array (called from init and reset)
     void ga_init();

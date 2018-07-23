@@ -30,7 +30,7 @@ public:
     /// process a number of cycles, return final processed tick
     uint64_t exec(uint64_t start_tick, uint64_t end_tick);
     /// the Z80 CPU tick callback
-    static uint64_t cpu_tick(int num_ticks, uint64_t pins);
+    static uint64_t cpu_tick(int num_ticks, uint64_t pins, void* user_data);
 
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);
