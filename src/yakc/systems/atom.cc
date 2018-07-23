@@ -121,8 +121,14 @@ atom_t::poweron() {
     m6502_desc.tick_cb = cpu_tick;
     m6502_init(&board.m6502, &m6502_desc);
     m6502_reset(&board.m6502);
-    i8255_init(&board.i8255, ppi_in, ppi_out);
-    m6522_init(&board.m6522, via_in, via_out);
+    i8255_desc_t ppi_desc = { };
+    ppi_desc.in_cb = ppi_in;
+    ppi_desc.out_cb = ppi_out;
+    i8255_init(&board.i8255, &ppi_desc);
+    m6522_desc_t via_desc = { };
+    via_desc.in_cb = via_in;
+    via_desc.out_cb = via_out;
+    m6522_init(&board.m6522, &via_desc);
     mc6847_desc_t vdg_desc;
     vdg_desc.tick_hz = board.freq_hz;
     vdg_desc.rgba8_buffer = board.rgba8_buffer;
@@ -217,7 +223,7 @@ atom_t::on_joystick(uint8_t mask) {
 
 //------------------------------------------------------------------------------
 uint64_t
-atom_t::cpu_tick(uint64_t pins) {
+atom_t::cpu_tick(uint64_t pins, void* user_data) {
 
     /* tick the video chip */
     mc6847_tick(&board.mc6847);
@@ -303,7 +309,7 @@ atom_t::cpu_tick(uint64_t pins) {
 
 //------------------------------------------------------------------------------
 uint64_t
-atom_t::vdg_fetch(uint64_t pins) {
+atom_t::vdg_fetch(uint64_t pins, void* user_data) {
     const uint16_t addr = MC6847_GET_ADDR(pins);
     uint8_t data = atom.vidmem_base[addr];
     MC6847_SET_DATA(pins, data);
@@ -323,7 +329,7 @@ atom_t::vdg_fetch(uint64_t pins) {
 
 //------------------------------------------------------------------------------
 uint64_t
-atom_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
+atom_t::ppi_out(int port_id, uint64_t pins, uint8_t data, void* user_data) {
     /*
     FROM Atom Theory and Praxis (and MAME)
 
@@ -408,7 +414,7 @@ atom_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
 
 //------------------------------------------------------------------------------
 uint8_t
-atom_t::ppi_in(int port_id) {
+atom_t::ppi_in(int port_id, void* user_data) {
     uint8_t data = 0x00;
     switch (port_id) {
         // PPI port B: keyboard row state
@@ -436,13 +442,13 @@ atom_t::ppi_in(int port_id) {
 
 //------------------------------------------------------------------------------
 void
-atom_t::via_out(int port_id, uint8_t data) {
+atom_t::via_out(int port_id, uint8_t data, void* user_data) {
     // FIXME
 }
 
 //------------------------------------------------------------------------------
 uint8_t
-atom_t::via_in(int port_id) {
+atom_t::via_in(int port_id, void* user_data) {
     return 0x00;
 }
 

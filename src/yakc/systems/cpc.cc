@@ -182,7 +182,9 @@ cpc_t::poweron(system m) {
 
     // initialize hardware components, main clock frequency is 4 MHz
     board.freq_hz = 4000000;
-    z80_init(&board.z80, cpu_tick);
+    z80_desc_t cpu_desc = { };
+    cpu_desc.tick_cb = cpu_tick;
+    z80_init(&board.z80, &cpu_desc);
     ay38910_desc_t ay_desc = { };
     ay_desc.type = AY38910_TYPE_8912;
     ay_desc.in_cb = psg_in;
@@ -191,7 +193,10 @@ cpc_t::poweron(system m) {
     ay_desc.sound_hz = SOUND_SAMPLE_RATE;
     ay_desc.magnitude = 0.5f;
     ay38910_init(&board.ay38910, &ay_desc);
-    i8255_init(&board.i8255, ppi_in, ppi_out);
+    i8255_desc_t ppi_desc = { };
+    ppi_desc.in_cb = ppi_in;
+    ppi_desc.out_cb = ppi_out;
+    i8255_init(&board.i8255, &ppi_desc);
     mc6845_init(&board.mc6845, MC6845_TYPE_UM6845R);
     crt_init(&board.crt, CRT_PAL, 6, 32, max_display_width/16, max_display_height);
     this->tick_count = 0;
@@ -201,7 +206,7 @@ cpc_t::poweron(system m) {
     
     // trap the casread function
     z80_set_trap(&board.z80, 1, this->casread_trap);
-    board.z80.trap_func[1] = []() {
+    board.z80.trap_func[1] = [](void* user_data) {
         // this checks if the lower ROM is currently paged in
         // when the cassette read trap point is hit
         if (cpc.cur_model == system::cpc6128) {
@@ -254,7 +259,7 @@ cpc_t::exec(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 uint64_t
-cpc_t::cpu_tick(int num_ticks, uint64_t pins) {
+cpc_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
     // interrupt acknowledge?
     if ((pins & (Z80_M1|Z80_IORQ)) == (Z80_M1|Z80_IORQ)) {
         cpc.ga_int_ack();
@@ -461,7 +466,7 @@ cpc_t::cpu_iorq(uint64_t pins) {
 
 //------------------------------------------------------------------------------
 uint64_t
-cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
+cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data, void* user_data) {
     /*
         i8255 PPI to AY-3-8912 PSG pin connections:
             PA0..PA7    -> D0..D7
@@ -497,7 +502,7 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data) {
 
 //------------------------------------------------------------------------------
 uint8_t
-cpc_t::ppi_in(int port_id) {
+cpc_t::ppi_in(int port_id, void* user_data) {
     if (I8255_PORT_A == port_id) {
         // AY-3-8912 PSG function (indirectly this may also trigger
         // a read of the keyboard matrix via the AY's IO port
@@ -542,14 +547,14 @@ cpc_t::ppi_in(int port_id) {
 
 //------------------------------------------------------------------------------
 void
-cpc_t::psg_out(int /*port_id*/, uint8_t /*data*/) {
+cpc_t::psg_out(int /*port_id*/, uint8_t /*data*/, void* user_data) {
     // this shouldn't be called
     //printf("AY-3-8912 out: %d => 0x%02X\n", port_id, data);
 }
 
 //------------------------------------------------------------------------------
 uint8_t
-cpc_t::psg_in(int port_id) {
+cpc_t::psg_in(int port_id, void* user_data) {
     // read the keyboard matrix and joystick port
     if (port_id == AY38910_PORT_A) {
         uint8_t data = (uint8_t) kbd_scan_lines(&board.kbd);

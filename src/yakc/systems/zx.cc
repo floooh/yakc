@@ -173,7 +173,9 @@ zx_t::poweron(system m) {
         this->scanline_period = 228;
     }
     this->scanline_counter = this->scanline_period;
-    z80_init(&board.z80, cpu_tick);
+    z80_desc_t cpu_desc = { };
+    cpu_desc.tick_cb = cpu_tick;
+    z80_init(&board.z80, &cpu_desc);
 
     // initialize hardware components
     beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
@@ -235,7 +237,7 @@ zx_t::exec(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 uint64_t
-zx_t::cpu_tick(int num_ticks, uint64_t pins) {
+zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
     // video decoding and vblank interrupt
     zx.scanline_counter -= num_ticks;
     if (zx.scanline_counter <= 0) {
@@ -701,10 +703,10 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
             uint64_t pins = Z80_IORQ|Z80_WR;
             Z80_SET_ADDR(pins, 0xFFFD);
             Z80_SET_DATA(pins, ext_hdr.out_fffd);
-            zx_t::cpu_tick(4, pins);
+            zx_t::cpu_tick(4, pins, nullptr);
             Z80_SET_ADDR(pins, 0x7FFD);
             Z80_SET_DATA(pins, ext_hdr.out_7ffd);
-            zx_t::cpu_tick(4, pins);
+            zx_t::cpu_tick(4, pins, nullptr);
         }
         else {
             cpu.state.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;

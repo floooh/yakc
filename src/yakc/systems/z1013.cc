@@ -82,8 +82,13 @@ z1013_t::poweron(system m) {
     board.freq_hz = (m == system::z1013_01) ? 1000000 : 2000000;
 
     // initialize hardware components
-    z80_init(&board.z80, cpu_tick);
-    z80pio_init(&board.z80pio_1, pio_in, pio_out);
+    z80_desc_t cpu_desc = { };
+    cpu_desc.tick_cb = cpu_tick;
+    z80_init(&board.z80, &cpu_desc);
+    z80pio_desc_t pio_desc = { };
+    pio_desc.in_cb = pio_in;
+    pio_desc.out_cb = pio_out;
+    z80pio_init(&board.z80pio_1, &pio_desc);
 
     // execution on power-on starts at 0xF000
     board.z80.state.PC = 0xF000;
@@ -120,7 +125,7 @@ z1013_t::exec(uint64_t start_tick, uint64_t end_tick) {
 
 //------------------------------------------------------------------------------
 uint64_t
-z1013_t::cpu_tick(int num_ticks, uint64_t pins) {
+z1013_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
     if (pins & Z80_MREQ) {
         // a memory request
         const uint16_t addr = Z80_GET_ADDR(pins);
@@ -187,7 +192,7 @@ z1013_t::cpu_tick(int num_ticks, uint64_t pins) {
 
 //------------------------------------------------------------------------------
 void
-z1013_t::pio_out(int port_id, uint8_t val) {
+z1013_t::pio_out(int port_id, uint8_t val, void* user_data) {
     if (Z80PIO_PORT_B == port_id) {
         // for z1013a2, bit 4 is for monitor A.2 with 8x8 keyboard
         // and selects the upper/lower 4 keyboard matrix lines
@@ -198,7 +203,7 @@ z1013_t::pio_out(int port_id, uint8_t val) {
 
 //------------------------------------------------------------------------------
 uint8_t
-z1013_t::pio_in(int port_id) {
+z1013_t::pio_in(int port_id, void* user_data) {
     if (Z80PIO_PORT_A == port_id) {
         // nothing to return here, PIO-A is for user devices
         return 0xFF;
