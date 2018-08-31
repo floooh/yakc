@@ -12,33 +12,29 @@ static const int editFlags = ImGuiInputTextFlags_CharsHexadecimal|
     ImGuiInputTextFlags_EnterReturnsTrue;
 
 //------------------------------------------------------------------------------
-bool
-Util::InputHex8(const char* label, uint8_t& val) {
-    bool retval = false;
+uint8_t
+Util::InputHex8(const char* label, uint8_t val) {
     static char buf[3];
     UByteToStr(val, buf, sizeof(buf));
     ImGui::PushItemWidth(22);
     if (ImGui::InputText(label, buf, sizeof(buf), editFlags)) {
         val = ParseUByte(buf, val);
-        retval = true;
     }
     ImGui::PopItemWidth();
-    return retval;
+    return val;
 }
 
 //------------------------------------------------------------------------------
-bool
-Util::InputHex16(const char* label, uint16_t& val) {
-    bool retval = false;
+uint16_t
+Util::InputHex16(const char* label, uint16_t val) {
     static char buf[5];
     UWordToStr(val, buf, sizeof(buf));
     ImGui::PushItemWidth(38);
     if (ImGui::InputText(label, buf, sizeof(buf), editFlags)) {
         val = ParseUWord(buf, val);
-        retval = true;
     }
     ImGui::PopItemWidth();
-    return retval;
+    return val;
 }
 
 //------------------------------------------------------------------------------

@@ -130,7 +130,7 @@ kc85_t::poweron(system m, os_rom os) {
     this->update_bank_switching();
 
     // execution on power-on starts at 0xF000
-    board.z80.state.PC = 0xF000;
+    z80_set_pc(&board.z80, 0xF000);
 }
 
 //------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ kc85_t::reset() {
     this->scanline_counter = this->scanline_period;
 
     // execution after reset starts at 0xE000
-    board.z80.state.PC = 0xE000;
+    z80_set_pc(&board.z80, 0xE000);
 }
 
 //------------------------------------------------------------------------------
@@ -415,7 +415,7 @@ kc85_t::handle_keyboard_input() {
 
     // don't do anything if interrupts disabled, IX might point
     // to the wrong base address!
-    if (!board.z80.state.IFF1) {
+    if (!z80_iff1(&board.z80)) {
         return;
     }
 
@@ -436,7 +436,7 @@ kc85_t::handle_keyboard_input() {
     static const uint8_t short_repeat_count = 8;
     static const uint8_t long_repeat_count = 60;
 
-    const uint16_t ix = board.z80.state.IX;
+    const uint16_t ix = z80_ix(&board.z80);
     if (0 == key_code) {
         // if keycode is 0, this basically means the CTC3 timeout was hit
         mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8) | timeout); // set the CTC3 timeout bit
@@ -719,14 +719,14 @@ kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
 
     // start loaded image
     if (start && has_exec_addr) {
-        auto& cpu = board.z80;
-        cpu.state.A = 0x00;
-        cpu.state.F = 0x10;
-        cpu.state.BC = cpu.state.BC_ = 0x0000;
-        cpu.state.DE = cpu.state.DE_ = 0x0000;
-        cpu.state.HL = cpu.state.HL_ = 0x0000;
-        cpu.state.AF_ = 0x0000;
-        cpu.state.SP = 0x01C2;
+        auto* cpu = &board.z80;
+        z80_set_a(cpu, 0x00);
+        z80_set_f(cpu, 0x10);
+        z80_set_bc(cpu, 0x0000); z80_set_bc_(cpu, 0x0000);
+        z80_set_de(cpu, 0x0000); z80_set_de_(cpu, 0x0000);
+        z80_set_hl(cpu, 0x0000); z80_set_hl_(cpu, 0x0000);
+        z80_set_af_(cpu, 0x0000);
+        z80_set_sp(cpu, 0x01C2);
         // delete ASCII buffer
         for (uint16_t addr = 0xb200; addr < 0xb700; addr++) {
             mem_wr(&board.mem, addr, 0);
@@ -734,13 +734,13 @@ kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         mem_wr(&board.mem, 0xb7a0, 0);
         if (system::kc85_3 == this->cur_model) {
             cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0x9f), 0);
-            mem_wr16(&board.mem, cpu.state.SP, 0xf15c);
+            mem_wr16(&board.mem, z80_sp(cpu), 0xf15c);
         }
         else if (system::kc85_4 == this->cur_model) {
             cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0xff), 0);
-            mem_wr16(&board.mem, cpu.state.SP, 0xf17e);
+            mem_wr16(&board.mem, z80_sp(cpu), 0xf17e);
         }
-        cpu.state.PC = exec_addr;
+        z80_set_pc(cpu, exec_addr);
     }
     return true;
 }

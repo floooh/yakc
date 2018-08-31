@@ -189,7 +189,7 @@ zx_t::poweron(system m) {
     }
 
     // cpu start state
-    board.z80.state.PC = 0x0000;
+    z80_set_pc(&board.z80, 0x0000);
 }
 
 //------------------------------------------------------------------------------
@@ -222,7 +222,7 @@ zx_t::reset() {
         this->display_ram_bank = 5;
     }
     this->init_memorymap();
-    board.z80.state.PC = 0x0000;
+    z80_set_pc(&board.z80, 0x0000);
 }
 
 //------------------------------------------------------------------------------
@@ -669,30 +669,30 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
 
     // start loaded image
     if (start && hdr_valid) {
-        z80_t& cpu = board.z80;
-        cpu.state.A = hdr.A; cpu.state.F = hdr.F;
-        cpu.state.B = hdr.B; cpu.state.C = hdr.C;
-        cpu.state.D = hdr.D; cpu.state.E = hdr.E;
-        cpu.state.H = hdr.H; cpu.state.L = hdr.L;
-        cpu.state.IXH = hdr.IX_h; cpu.state.IXL = hdr.IX_l;
-        cpu.state.IYH = hdr.IY_h; cpu.state.IYL = hdr.IY_l;
-        cpu.state.AF_ = (hdr.A_<<8 | hdr.F_) & 0xFFFF;
-        cpu.state.BC_ = (hdr.B_<<8 | hdr.C_) & 0xFFFF;
-        cpu.state.DE_ = (hdr.D_<<8 | hdr.E_) & 0xFFFF;
-        cpu.state.HL_ = (hdr.H_<<8 | hdr.L_) & 0xFFFF;
-        cpu.state.SP = (hdr.SP_h<<8 | hdr.SP_l) & 0xFFFF;
-        cpu.state.I = hdr.I;
-        cpu.state.R = (hdr.R & 0x7F) | ((hdr.flags0 & 1)<<7);
-        cpu.state.IFF2 = hdr.IFF2 != 0;
-        cpu.state.ei_pending = hdr.EI != 0;
+        z80_t* cpu = &board.z80;
+        z80_set_a(cpu, hdr.A); z80_set_f(cpu, hdr.F);
+        z80_set_b(cpu, hdr.B); z80_set_c(cpu, hdr.C);
+        z80_set_d(cpu, hdr.D); z80_set_e(cpu, hdr.E);
+        z80_set_h(cpu, hdr.H); z80_set_l(cpu, hdr.L);
+        z80_set_ix(cpu, hdr.IX_h<<8 | hdr.IX_l);
+        z80_set_iy(cpu, hdr.IY_h<<8 | hdr.IY_l);
+        z80_set_af_(cpu, hdr.A_<<8 | hdr.F_);
+        z80_set_bc_(cpu, hdr.B_<<8 | hdr.C_);
+        z80_set_de_(cpu, hdr.D_<<8 | hdr.E_);
+        z80_set_hl_(cpu, hdr.H_<<8 | hdr.L_);
+        z80_set_sp(cpu, hdr.SP_h<<8 | hdr.SP_l);
+        z80_set_i(cpu, hdr.I);
+        z80_set_r(cpu, (hdr.R & 0x7F) | ((hdr.flags0 & 1)<<7));
+        z80_set_iff2(cpu, hdr.IFF2 != 0);
+        z80_set_ei_pending(cpu, hdr.EI != 0);
         if (hdr.flags1 != 0xFF) {
-            cpu.state.IM = (hdr.flags1 & 3);
+            z80_set_im(cpu, hdr.flags1 & 3);
         }
         else {
-            cpu.state.IM = 1;
+            z80_set_im(cpu, 1);
         }
         if (ext_hdr_valid) {
-            cpu.state.PC = (ext_hdr.PC_h<<8 | ext_hdr.PC_l) & 0xFFFF;
+            z80_set_pc(cpu, ext_hdr.PC_h<<8 | ext_hdr.PC_l);
             for (int i = 0; i < 16; i++) {
                 // latch AY-3-8912 register address
                 ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|(i<<16));
@@ -709,7 +709,7 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
             zx_t::cpu_tick(4, pins, nullptr);
         }
         else {
-            cpu.state.PC = (hdr.PC_h<<8 | hdr.PC_l) & 0xFFFF;
+            z80_set_pc(cpu, hdr.PC_h<<8 | hdr.PC_l);
         }
         this->border_color = zx_t::palette[(hdr.flags0>>1) & 7] & 0xFFD7D7D7;
     }

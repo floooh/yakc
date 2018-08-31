@@ -12,9 +12,9 @@ namespace YAKC {
 class Util {
 public:
     /// draw an 8-bit hex input widget
-    static bool InputHex8(const char* label, uint8_t& val);
+    static uint8_t InputHex8(const char* label, uint8_t val);
     /// draw a 16-bit hex input widget
-    static bool InputHex16(const char* label, uint16_t& val);
+    static uint16_t InputHex16(const char* label, uint16_t val);
     /// convert a single 4-bit nibble to a hex character (0..F)
     static char NibbleToStr(uint8_t n);
     /// convert a byte to a hex string

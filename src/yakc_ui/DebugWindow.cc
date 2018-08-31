@@ -27,7 +27,7 @@ DebugWindow::Draw(yakc& emu) {
         if (emu.cpu_type() == cpu_model::z80) {
             this->drawZ80RegisterTable();
             ImGui::Separator();
-            this->drawMainContent(emu, board.z80.state.PC, 48);
+            this->drawMainContent(emu, z80_pc(&board.z80), 48);
             ImGui::Separator();
         }
         else {
@@ -48,30 +48,30 @@ DebugWindow::drawZ80RegisterTable() {
     const ImVec4 red = UI::DisabledColor;
     const ImVec4 green = UI::EnabledColor;
 
-    auto& cpu = board.z80;
-    Util::InputHex16("AF", cpu.state.AF); ImGui::SameLine(1 * 72);
-    Util::InputHex16("BC", cpu.state.BC); ImGui::SameLine(2 * 72);
-    Util::InputHex16("DE", cpu.state.DE); ImGui::SameLine(3 * 72);
-    Util::InputHex16("HL", cpu.state.HL); ImGui::SameLine(4 * 72);
-    Util::InputHex16("WZ", cpu.state.WZ); ImGui::SameLine(5 * 72);
-    Util::InputHex8("I", cpu.state.I); ImGui::SameLine(5 * 72 + 48);
-    ImGui::TextColored(board.z80.state.IFF1 ? green:red, "IFF1");
+    auto* cpu = &board.z80;
+    z80_set_af(cpu, Util::InputHex16("AF", z80_af(cpu))); ImGui::SameLine(1 * 72);
+    z80_set_bc(cpu, Util::InputHex16("BC", z80_bc(cpu))); ImGui::SameLine(2 * 72);
+    z80_set_de(cpu, Util::InputHex16("DE", z80_de(cpu))); ImGui::SameLine(3 * 72);
+    z80_set_hl(cpu, Util::InputHex16("HL", z80_hl(cpu))); ImGui::SameLine(4 * 72);
+    z80_set_wz(cpu, Util::InputHex16("WZ", z80_wz(cpu))); ImGui::SameLine(5 * 72);
+    z80_set_i(cpu, Util::InputHex8("I", z80_i(cpu))); ImGui::SameLine(5 * 72 + 48);
+    ImGui::TextColored(z80_iff1(cpu) ? green:red, "IFF1");
 
-    Util::InputHex16("AF'", cpu.state.AF_); ImGui::SameLine(1 * 72);
-    Util::InputHex16("BC'", cpu.state.BC_); ImGui::SameLine(2 * 72);
-    Util::InputHex16("DE'", cpu.state.DE_); ImGui::SameLine(3 * 72);
-    Util::InputHex16("HL'", cpu.state.HL_); ImGui::SameLine(4 * 72);
-    Util::InputHex8("IM", cpu.state.IM); ImGui::SameLine(5 * 72 + 48);
-    ImGui::TextColored(board.z80.state.IFF2 ? green:red, "IFF2");
+    z80_set_af_(cpu, Util::InputHex16("AF'", z80_af_(cpu))); ImGui::SameLine(1 * 72);
+    z80_set_bc_(cpu, Util::InputHex16("BC'", z80_bc_(cpu))); ImGui::SameLine(2 * 72);
+    z80_set_de_(cpu, Util::InputHex16("DE'", z80_de_(cpu))); ImGui::SameLine(3 * 72);
+    z80_set_hl_(cpu, Util::InputHex16("HL'", z80_hl_(cpu))); ImGui::SameLine(4 * 72);
+    z80_set_im(cpu, Util::InputHex8("IM", z80_im(cpu))); ImGui::SameLine(5 * 72 + 48);
+    ImGui::TextColored(z80_iff2(cpu) ? green:red, "IFF2");
 
-    Util::InputHex16("IX", cpu.state.IX); ImGui::SameLine(1 * 72);
-    Util::InputHex16("IY", cpu.state.IY); ImGui::SameLine(2 * 72);
-    Util::InputHex16("SP", cpu.state.SP); ImGui::SameLine(3 * 72);
-    Util::InputHex16("PC", cpu.state.PC); ImGui::SameLine(4 * 72);
-    Util::InputHex8("R", cpu.state.R); ImGui::SameLine();
+    z80_set_ix(cpu, Util::InputHex16("IX", z80_ix(cpu))); ImGui::SameLine(1 * 72);
+    z80_set_iy(cpu, Util::InputHex16("IY", z80_iy(cpu))); ImGui::SameLine(2 * 72);
+    z80_set_sp(cpu, Util::InputHex16("SP", z80_sp(cpu))); ImGui::SameLine(3 * 72);
+    z80_set_pc(cpu, Util::InputHex16("PC", z80_pc(cpu))); ImGui::SameLine(4 * 72);
+    z80_set_r(cpu, Util::InputHex8("R", z80_r(cpu))); ImGui::SameLine();
 
     char strFlags[9];
-    const uint8_t f = board.z80.state.F;
+    const uint8_t f = z80_f(cpu);
     strFlags[0] = (f & Z80_SF) ? 'S':'-';
     strFlags[1] = (f & Z80_ZF) ? 'Z':'-';
     strFlags[2] = (f & Z80_YF) ? 'Y':'-';

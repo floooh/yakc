@@ -228,7 +228,7 @@ yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
     if (this->abs_cycle_count == 0) {
         this->abs_cycle_count = min_cycle_count;
     }
-    int64_t num_cycles = this->accel * clk_ticks(board.freq_hz, micro_secs) - this->overflow_cycles;
+    int64_t num_cycles = (this->accel * (((int64_t)board.freq_hz*micro_secs)/1000000)) - this->overflow_cycles;
     if (num_cycles < 0) {
         num_cycles = 0;
     }
@@ -291,7 +291,7 @@ yakc::step() {
     uint32_t ticks = 0;
     if (this->cpu_type() == cpu_model::z80) {
         ticks = z80_exec(&board.z80, 0);
-        board.dbg.add_history_item(board.z80.state.PC, ticks);
+        board.dbg.add_history_item(z80_pc(&board.z80), ticks);
     }
     else {
         ticks = m6502_exec(&board.m6502, 0);
