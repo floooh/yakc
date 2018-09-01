@@ -2,6 +2,7 @@
 //  kc85_exp.cc
 //------------------------------------------------------------------------------
 #include "kc85_exp.h"
+#include "kc85.h"
 #include "yakc/util/breadboard.h"
 
 namespace YAKC {
@@ -187,7 +188,7 @@ kc85_exp::insert_module(uint8_t slot_addr, module_type type) {
 void
 kc85_exp::remove_module(uint8_t slot_addr) {
     YAKC_ASSERT(this->slot_occupied(slot_addr));
-    mem_unmap_layer(&board.mem, this->memory_layer_by_slot_addr(slot_addr));
+    mem_unmap_layer(&kc85.mem, this->memory_layer_by_slot_addr(slot_addr));
     auto& slot = this->slot_by_addr(slot_addr);
     slot.addr = 0x0000;
     if (slot.mod.mem_owned && slot.mod.mem_ptr) {
@@ -222,7 +223,7 @@ kc85_exp::update_memory_mappings() {
     for (auto& slot : this->slots) {
         if (0xFF != slot.mod.id) {
             const int memory_layer = this->memory_layer_by_slot_addr(slot.slot_addr);
-            mem_unmap_layer(&board.mem, memory_layer);
+            mem_unmap_layer(&kc85.mem, memory_layer);
 
             // compute module start address from control-byte
             slot.addr = (slot.control_byte & slot.mod.addr_mask)<<8;
@@ -231,15 +232,15 @@ kc85_exp::update_memory_mappings() {
                     // activate the module
                     bool writable = (slot.control_byte & 0x02) && slot.mod.writable;
                     if (writable) {
-                        mem_map_ram(&board.mem, memory_layer, slot.addr, slot.mod.mem_size, slot.mod.mem_ptr);
+                        mem_map_ram(&kc85.mem, memory_layer, slot.addr, slot.mod.mem_size, slot.mod.mem_ptr);
                     }
                     else {
-                        mem_map_rom(&board.mem, memory_layer, slot.addr, slot.mod.mem_size, slot.mod.mem_ptr);
+                        mem_map_rom(&kc85.mem, memory_layer, slot.addr, slot.mod.mem_size, slot.mod.mem_ptr);
                     }
                 }
                 else {
                     // deactivate the module
-                    mem_unmap_layer(&board.mem, memory_layer);
+                    mem_unmap_layer(&kc85.mem, memory_layer);
                 }
             }
         }

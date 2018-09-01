@@ -28,27 +28,29 @@
 namespace YAKC {
 
 struct breadboard {
+    // clear all pointers
+    void clear();
+
     int freq_hz = 0;
-    mem_t mem;
-    mem_t mem2;
-    z80_t z80;
-    z80pio_t z80pio_1;
-    z80pio_t z80pio_2;
-    z80ctc_t z80ctc;
-    ay38910_t ay38910;
-    m6502_t m6502;
-    m6522_t m6522;
-    m6526_t m6526_1;
-    m6526_t m6526_2;
-    i8255_t i8255;
-    mc6847_t mc6847;
-    mc6845_t mc6845;
-    m6569_t m6569;
-    m6581_t m6581;
-    beeper_t beeper_1;
-    beeper_t beeper_2;
-    kbd_t kbd;
-    crt_t crt;
+    mem_t* mem = nullptr;
+    z80_t* z80 = nullptr;
+    z80pio_t* z80pio_1 = nullptr;
+    z80pio_t* z80pio_2 = nullptr;
+    z80ctc_t* z80ctc = nullptr;
+    ay38910_t* ay38910 = nullptr;
+    m6502_t* m6502 = nullptr;
+    m6522_t* m6522 = nullptr;
+    m6526_t* m6526_1 = nullptr;
+    m6526_t* m6526_2 = nullptr;
+    i8255_t* i8255 = nullptr;
+    mc6847_t* mc6847 = nullptr;
+    mc6845_t* mc6845 = nullptr;
+    m6569_t* m6569 = nullptr;
+    m6581_t*  m6581 = nullptr;
+    beeper_t* beeper_1 = nullptr;
+    beeper_t* beeper_2 = nullptr;
+    kbd_t* kbd = nullptr;
+    crt_t* crt = nullptr;
     class debugger dbg;
     class audiobuffer audiobuffer;
     class audiobuffer audiobuffer2;

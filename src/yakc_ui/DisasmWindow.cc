@@ -22,9 +22,11 @@ bool
 DisasmWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        this->drawMainContent(emu, this->startAddr, this->numLines);
-        ImGui::Separator();
-        this->drawControls();
+        if (board.mem) {
+            this->drawMainContent(emu, this->startAddr, this->numLines);
+            ImGui::Separator();
+            this->drawControls();
+        }
     }
     ImGui::End();
     return this->Visible;
@@ -33,6 +35,8 @@ DisasmWindow::Draw(yakc& emu) {
 //------------------------------------------------------------------------------
 void
 DisasmWindow::drawMainContent(const yakc& emu, uint16_t start_addr, int num_lines) {
+    YAKC_ASSERT(board.mem);
+
     // this is a modified version of ImGuiMemoryEditor.h
     ImGui::BeginChild("##scrolling", ImVec2(0, -(4 + ImGui::GetFrameHeightWithSpacing())));
 
@@ -63,7 +67,7 @@ DisasmWindow::drawMainContent(const yakc& emu, uint16_t start_addr, int num_line
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            uint8_t val = mem_rd(&board.mem, cur_addr++);
+            uint8_t val = mem_rd(board.mem, cur_addr++);
             ImGui::Text("%02X ", val);
         }
 

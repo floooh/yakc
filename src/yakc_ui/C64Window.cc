@@ -20,7 +20,9 @@ bool
 C64Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        ImGui::Text("CPU IO DDR: %02X PORT: %02X", board.m6502.io_ddr, board.m6502.io_port);
+        if (board.m6502) {
+            ImGui::Text("CPU IO DDR: %02X PORT: %02X", board.m6502->io_ddr, board.m6502->io_port);
+        }
     }
     ImGui::End();
     return this->Visible;

@@ -68,8 +68,6 @@ public:
     static bool is_system(system model, system mask);
     /// get the cpu model of the current system
     cpu_model cpu_type() const;
-    /// get a bit mask of chip::id bits in the current system
-    chip::mask chip_types() const;
     /// get human-readable info about current system
     const char* system_info() const;
 

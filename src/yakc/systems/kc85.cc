@@ -85,11 +85,11 @@ kc85_t::poweron(system m, os_rom os) {
     // use keyboard helper only as input buffer to store multiple key pressed,
     // the KC85 doesn't have a typical keyboard matrix but has a serial
     // connection to the keyboard
-    kbd_init(&board.kbd, 1);
+    kbd_init(&kbd, 1);
 
     // fill RAM banks with noise (but not on KC85/4? at least the 4
     // doesn't have the random-color-pattern when switching it on)
-    mem_unmap_all(&board.mem);
+    mem_init(&mem);
     if (system::kc85_4 == m) {
         clear(board.ram, sizeof(board.ram));
     }
@@ -106,14 +106,14 @@ kc85_t::poweron(system m, os_rom os) {
     board.freq_hz = (m == system::kc85_4) ? 1770000 : 1750000;
     z80_desc_t cpu_desc = { };
     cpu_desc.tick_cb = cpu_tick;
-    z80_init(&board.z80, &cpu_desc);
+    z80_init(&z80, &cpu_desc);
     z80pio_desc_t pio_desc = { };
     pio_desc.in_cb = pio_in;
     pio_desc.out_cb = pio_out;
-    z80pio_init(&board.z80pio_1, &pio_desc);
-    z80ctc_init(&board.z80ctc);
-    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.4f);
-    beeper_init(&board.beeper_2, board.freq_hz, SOUND_SAMPLE_RATE, 0.4f);
+    z80pio_init(&z80pio, &pio_desc);
+    z80ctc_init(&z80ctc);
+    beeper_init(&beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.4f);
+    beeper_init(&beeper_2, board.freq_hz, SOUND_SAMPLE_RATE, 0.4f);
     this->exp.poweron();
     this->cur_scanline = 0;
 
@@ -130,26 +130,34 @@ kc85_t::poweron(system m, os_rom os) {
     this->update_bank_switching();
 
     // execution on power-on starts at 0xF000
-    z80_set_pc(&board.z80, 0xF000);
+    z80_set_pc(&z80, 0xF000);
+
+    board.z80 = &z80;
+    board.z80pio_1 = &z80pio;
+    board.z80ctc = &z80ctc;
+    board.beeper_1 = &beeper_1;
+    board.beeper_2 = &beeper_2;
+    board.kbd = &kbd;
+    board.mem = &mem;
 }
 
 //------------------------------------------------------------------------------
 void
 kc85_t::poweroff() {
     YAKC_ASSERT(this->on);
-    mem_unmap_all(&board.mem);
     this->on = false;
+    board.clear();
 }
 
 //------------------------------------------------------------------------------
 void
 kc85_t::reset() {
     this->exp.reset();
-    beeper_reset(&board.beeper_1);
-    beeper_reset(&board.beeper_2);
-    z80_reset(&board.z80);
-    z80ctc_reset(&board.z80ctc);
-    z80pio_reset(&board.z80pio_1);
+    beeper_reset(&beeper_1);
+    beeper_reset(&beeper_2);
+    z80_reset(&z80);
+    z80ctc_reset(&z80ctc);
+    z80pio_reset(&z80pio);
     this->pio_a = 0;
     this->pio_b = 0;
     this->io84 = 0;
@@ -158,7 +166,7 @@ kc85_t::reset() {
     this->scanline_counter = this->scanline_period;
 
     // execution after reset starts at 0xE000
-    z80_set_pc(&board.z80, 0xE000);
+    z80_set_pc(&z80, 0xE000);
 }
 
 //------------------------------------------------------------------------------
@@ -182,24 +190,24 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
 
     // tick the CTC
     for (int i = 0; i < num_ticks; i++) {
-        pins = z80ctc_tick(&board.z80ctc, pins);
+        pins = z80ctc_tick(&kc85.z80ctc, pins);
         // CTC channels 0 and 1 triggers control audio frequencies
         if (pins & Z80CTC_ZCTO0) {
-            beeper_toggle(&board.beeper_1);
+            beeper_toggle(&kc85.beeper_1);
         }
         if (pins & Z80CTC_ZCTO1) {
-            beeper_toggle(&board.beeper_2);
+            beeper_toggle(&kc85.beeper_2);
         }
         // CTC channel 2 trigger controls video blink frequency
         if (pins & Z80CTC_ZCTO2) {
             kc85.ctc_blink_flag = !kc85.ctc_blink_flag;
         }
         pins &= Z80_PIN_MASK;
-        if (beeper_tick(&board.beeper_1)) {
-            board.audiobuffer.write(board.beeper_1.sample);
+        if (beeper_tick(&kc85.beeper_1)) {
+            board.audiobuffer.write(kc85.beeper_1.sample);
         }
-        if (beeper_tick(&board.beeper_2)) {
-            board.audiobuffer2.write(board.beeper_2.sample);
+        if (beeper_tick(&kc85.beeper_2)) {
+            board.audiobuffer2.write(kc85.beeper_2.sample);
         }
     }
 
@@ -208,10 +216,10 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
         // memory request machine cycle
         const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
-            Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
+            Z80_SET_DATA(pins, mem_rd(&kc85.mem, addr));
         }
         else if (pins & Z80_WR) {
-            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
+            mem_wr(&kc85.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if (pins & Z80_IORQ) {
@@ -248,14 +256,14 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
                     pins |= Z80CTC_CE;
                     if (pins & Z80_A0) { pins |= Z80CTC_CS0; }
                     if (pins & Z80_A1) { pins |= Z80CTC_CS1; }
-                    pins = z80ctc_iorq(&board.z80ctc, pins) & Z80_PIN_MASK;
+                    pins = z80ctc_iorq(&kc85.z80ctc, pins) & Z80_PIN_MASK;
                 }
                 else {
                     // a PIO IO request
                     pins |= Z80PIO_CE;
                     if (pins & Z80_A0) { pins |= Z80PIO_BASEL; }
                     if (pins & Z80_A1) { pins |= Z80PIO_CDSEL; }
-                    pins = z80pio_iorq(&board.z80pio_1, pins) & Z80_PIN_MASK;
+                    pins = z80pio_iorq(&kc85.z80pio, pins) & Z80_PIN_MASK;
                 }
             }
             else {
@@ -304,8 +312,8 @@ kc85_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
     // interrupt daisy chain, CTC is higher priority then PIO
     Z80_DAISYCHAIN_BEGIN(pins)
     {
-        pins = z80ctc_int(&board.z80ctc, pins);
-        pins = z80pio_int(&board.z80pio_1, pins);
+        pins = z80ctc_int(&kc85.z80ctc, pins);
+        pins = z80pio_int(&kc85.z80pio, pins);
     }
     Z80_DAISYCHAIN_END(pins);
     
@@ -378,7 +386,7 @@ uint64_t
 kc85_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = uint32_t(end_tick - start_tick);
-    uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
+    uint32_t ticks_executed = z80_exec(&z80, num_ticks);
     this->handle_keyboard_input();
     return start_tick + ticks_executed;
 }
@@ -386,20 +394,20 @@ kc85_t::exec(uint64_t start_tick, uint64_t end_tick) {
 //------------------------------------------------------------------------------
 void
 kc85_t::on_ascii(uint8_t ascii) {
-    kbd_key_down(&board.kbd, ascii);
-    kbd_key_up(&board.kbd, ascii);
+    kbd_key_down(&kbd, ascii);
+    kbd_key_up(&kbd, ascii);
 }
 
 //------------------------------------------------------------------------------
 void
 kc85_t::on_key_down(uint8_t key) {
-    kbd_key_down(&board.kbd, key);
+    kbd_key_down(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
 void
 kc85_t::on_key_up(uint8_t key) {
-    kbd_key_up(&board.kbd, key);
+    kbd_key_up(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
@@ -415,14 +423,14 @@ kc85_t::handle_keyboard_input() {
 
     // don't do anything if interrupts disabled, IX might point
     // to the wrong base address!
-    if (!z80_iff1(&board.z80)) {
+    if (!z80_iff1(&z80)) {
         return;
     }
 
     // get the first valid key code from the key buffer
-    kbd_update(&board.kbd);
+    kbd_update(&kbd);
     uint8_t key_code = 0;
-    for (const auto& item : board.kbd.key_buffer) {
+    for (const auto& item : kbd.key_buffer) {
         if (item.key != 0) {
             key_code = item.key;
             break;
@@ -436,48 +444,48 @@ kc85_t::handle_keyboard_input() {
     static const uint8_t short_repeat_count = 8;
     static const uint8_t long_repeat_count = 60;
 
-    const uint16_t ix = z80_ix(&board.z80);
+    const uint16_t ix = z80_ix(&z80);
     if (0 == key_code) {
         // if keycode is 0, this basically means the CTC3 timeout was hit
-        mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8) | timeout); // set the CTC3 timeout bit
-        mem_wr(&board.mem, ix+0xD, 0); // clear current keycode
+        mem_wr(&mem, ix+0x8, mem_rd(&mem, ix+0x8) | timeout); // set the CTC3 timeout bit
+        mem_wr(&mem, ix+0xD, 0); // clear current keycode
     }
     else {
         // a valid keycode has been received, clear the timeout bit
-        mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8) & ~timeout);
+        mem_wr(&mem, ix+0x8, mem_rd(&mem, ix+0x8) & ~timeout);
 
         // check for key-repeat
-        if (key_code != mem_rd(&board.mem, ix+0xD)) {
+        if (key_code != mem_rd(&mem, ix+0xD)) {
             // no key-repeat
-            mem_wr(&board.mem, ix+0xD, key_code);                               // write new keycode
-            mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8)&~repeat);     // clear the first-key-repeat bit
-            mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8)|keyready);    // set the key-ready bit
-            mem_wr(&board.mem, ix+0xA, 0);                                      // clear the key-repeat counter
+            mem_wr(&mem, ix+0xD, key_code);                               // write new keycode
+            mem_wr(&mem, ix+0x8, mem_rd(&mem, ix+0x8)&~repeat);     // clear the first-key-repeat bit
+            mem_wr(&mem, ix+0x8, mem_rd(&mem, ix+0x8)|keyready);    // set the key-ready bit
+            mem_wr(&mem, ix+0xA, 0);                                      // clear the key-repeat counter
         }
         else {
             // handle key-repeat
-            mem_wr(&board.mem, ix+0xA, mem_rd(&board.mem, ix+0xA)+1);   // increment repeat-pause-counter
-            if (mem_rd(&board.mem, ix+0x8) & repeat) {
+            mem_wr(&mem, ix+0xA, mem_rd(&mem, ix+0xA)+1);   // increment repeat-pause-counter
+            if (mem_rd(&mem, ix+0x8) & repeat) {
                 // this is a followup, short key-repeat
-                if (mem_rd(&board.mem, ix+0xA) < short_repeat_count) {
+                if (mem_rd(&mem, ix+0xA) < short_repeat_count) {
                     // wait some more...
                     return;
                 }
             }
             else {
                 // this is the first, long key-repeat
-                if (mem_rd(&board.mem, ix+0xA) < long_repeat_count) {
+                if (mem_rd(&mem, ix+0xA) < long_repeat_count) {
                     // wait some more...
                     return;
                 }
                 else {
                     // first key-repeat pause over, set first-key-repeat flag
-                    mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8)|repeat);
+                    mem_wr(&mem, ix+0x8, mem_rd(&mem, ix+0x8)|repeat);
                 }
             }
             // key-repeat triggered, just set the key-ready flag and reset repeat-count
-            mem_wr(&board.mem, ix+0x8, mem_rd(&board.mem, ix+0x8)|keyready);
-            mem_wr(&board.mem, ix+0xA, 0);
+            mem_wr(&mem, ix+0x8, mem_rd(&mem, ix+0x8)|keyready);
+            mem_wr(&mem, ix+0xA, 0);
         }
     }
 }
@@ -485,27 +493,27 @@ kc85_t::handle_keyboard_input() {
 //------------------------------------------------------------------------------
 void
 kc85_t::update_bank_switching() {
-    mem_unmap_layer(&board.mem, 0);
+    mem_unmap_layer(&mem, 0);
     if (system::kc85_4 != this->cur_model) {
         // ** KC85/3 or KC85/2 **
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
         if (pio_a & PIO_A_RAM) {
-            mem_map_ram(&board.mem, 0, 0x0000, 0x4000, board.ram[0]);
+            mem_map_ram(&mem, 0, 0x0000, 0x4000, board.ram[0]);
         }
         // 16 KByte video memory at 0x8000
         if (pio_a & PIO_A_IRM) {
-            mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[irm0_page]);
+            mem_map_ram(&mem, 0, 0x8000, 0x4000, board.ram[irm0_page]);
         }
         // 8 KByte BASIC ROM at 0xC000 (only KC85/3)
         if (system::kc85_3 == this->cur_model) {
             if (pio_a & PIO_A_BASIC_ROM) {
-                mem_map_rom(&board.mem, 0, 0xC000, this->basic_size, this->basic_ptr);
+                mem_map_rom(&mem, 0, 0xC000, this->basic_size, this->basic_ptr);
             }
         }
         // 8 KByte CAOS ROM at 0xF000
         if (pio_a & PIO_A_CAOS_ROM) {
-            mem_map_rom(&board.mem, 0, 0xE000, this->caos_e_size, this->caos_e_ptr);
+            mem_map_rom(&mem, 0, 0xE000, this->caos_e_size, this->caos_e_ptr);
         }
     }
     else {
@@ -513,16 +521,16 @@ kc85_t::update_bank_switching() {
 
         // 16 KByte RAM at 0x0000 (write-protection not supported)
         if (pio_a & PIO_A_RAM) {
-            mem_map_ram(&board.mem, 0, 0x0000, 0x4000, board.ram[0]);
+            mem_map_ram(&mem, 0, 0x0000, 0x4000, board.ram[0]);
         }
         // 16 KByte RAM at 0x4000
         if (this->io86 & IO86_RAM4) {
-            mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[1]); // this->io86 & IO86_RAM4_RO);
+            mem_map_ram(&mem, 0, 0x4000, 0x4000, board.ram[1]); // this->io86 & IO86_RAM4_RO);
         }
         // 16 KByte RAM at 0x8000 (2 banks)
         if (pio_b & PIO_B_RAM8) {
             uint8_t* ram8_ptr = (this->io84 & IO84_SEL_RAM8) ? board.ram[3] : board.ram[2];
-            mem_map_ram(&board.mem, 0, 0x8000, 0x4000, ram8_ptr); // pio_b & PIO_B_RAM8_RO);
+            mem_map_ram(&mem, 0, 0x8000, 0x4000, ram8_ptr); // pio_b & PIO_B_RAM8_RO);
         }
         // IRM is 4 banks, 2 for pixels, 2 for color,
         // the area A800 to BFFF is always mapped to IRM0!
@@ -534,22 +542,22 @@ kc85_t::update_bank_switching() {
             // A800, memory access to the remaining 6 KBytes
             // (A800 to BFFF) is always forced to the first IRM bank
             // by the address decoder hardware (see KC85/4 service manual)
-            mem_map_ram(&board.mem, 0, 0x8000, 0x2800, irm_ptr);
+            mem_map_ram(&mem, 0, 0x8000, 0x2800, irm_ptr);
 
             // always force access to A800 and above to the first IRM bank
-            mem_map_ram(&board.mem, 0, 0xA800, 0x1800, board.ram[irm0_page]+0x2800);
+            mem_map_ram(&mem, 0, 0xA800, 0x1800, board.ram[irm0_page]+0x2800);
         }
         // 8 KByte BASIC ROM at 0xC000
         if (pio_a & PIO_A_BASIC_ROM) {
-            mem_map_rom(&board.mem, 0, 0xC000, this->basic_size, this->basic_ptr);
+            mem_map_rom(&mem, 0, 0xC000, this->basic_size, this->basic_ptr);
         }
         // 4 KByte CAOS ROM-C at 0xC000
         if (this->io86 & IO86_CAOS_ROM_C) {
-            mem_map_rom(&board.mem, 0, 0xC000, this->caos_c_size, this->caos_c_ptr);
+            mem_map_rom(&mem, 0, 0xC000, this->caos_c_size, this->caos_c_ptr);
         }
         // 8 KByte CAOS ROM-E at 0xE000
         if (pio_a & PIO_A_CAOS_ROM) {
-            mem_map_rom(&board.mem, 0, 0xE000, this->caos_e_size, this->caos_e_ptr);
+            mem_map_rom(&mem, 0, 0xE000, this->caos_e_size, this->caos_e_ptr);
         }
     }
 
@@ -665,7 +673,7 @@ kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
                 uint8_t block[block_size];
                 fs->read(fp, block, block_size);
                 for (int i = 1; (i < block_size) && (addr < end_addr); i++) {
-                    mem_wr(&board.mem, addr++, block[i]);
+                    mem_wr(&mem, addr++, block[i]);
                 }
             }
         }
@@ -682,7 +690,7 @@ kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
                 uint8_t buf[buf_size];
                 fs->read(fp, buf, buf_size);
                 for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
-                    mem_wr(&board.mem, addr++, buf[i]);
+                    mem_wr(&mem, addr++, buf[i]);
                 }
             }
         }
@@ -701,25 +709,25 @@ kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     image_name[sizeof(image_name)-1] = 0;
     if (strcmp(image_name, "JUNGLE     ") == 0) {
         // patch start level 1 into memory
-        mem_wr(&board.mem, 0x36b7, 1);
-        mem_wr(&board.mem, 0x3697, 1);
+        mem_wr(&mem, 0x36b7, 1);
+        mem_wr(&mem, 0x3697, 1);
         for (int i = 0; i < 5; i++) {
-            mem_wr(&board.mem, 0x1770 + i, mem_rd(&board.mem, 0x36b6 + i));
+            mem_wr(&mem, 0x1770 + i, mem_rd(&mem, 0x36b6 + i));
         }
     }
     // FIXME: patch Digger (see http://lanale.de/kc85_emu/KC85_Emu.html)
     if (strcmp(image_name, "DIGGER  COM\x01") == 0) {
-        mem_wr16(&board.mem, 0x09AA, 0x0160);   // time for delay-loop 0160 instead of 0260
-        mem_wr(&board.mem, 0x3d3a, 0xB5);       // OR L instead of OR (HL)
+        mem_wr16(&mem, 0x09AA, 0x0160);   // time for delay-loop 0160 instead of 0260
+        mem_wr(&mem, 0x3d3a, 0xB5);       // OR L instead of OR (HL)
     }
     if (strcmp(image_name, "DIGGERJ") == 0) {
-        mem_wr16(&board.mem, 0x09AA, 0x0260);
-        mem_wr(&board.mem, 0x3d3a, 0xB5);       // OR L instead of OR (HL)
+        mem_wr16(&mem, 0x09AA, 0x0260);
+        mem_wr(&mem, 0x3d3a, 0xB5);       // OR L instead of OR (HL)
     }
 
     // start loaded image
     if (start && has_exec_addr) {
-        auto* cpu = &board.z80;
+        auto* cpu = &z80;
         z80_set_a(cpu, 0x00);
         z80_set_f(cpu, 0x10);
         z80_set_bc(cpu, 0x0000); z80_set_bc_(cpu, 0x0000);
@@ -729,16 +737,16 @@ kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
         z80_set_sp(cpu, 0x01C2);
         // delete ASCII buffer
         for (uint16_t addr = 0xb200; addr < 0xb700; addr++) {
-            mem_wr(&board.mem, addr, 0);
+            mem_wr(&mem, addr, 0);
         }
-        mem_wr(&board.mem, 0xb7a0, 0);
+        mem_wr(&mem, 0xb7a0, 0);
         if (system::kc85_3 == this->cur_model) {
             cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0x9f), 0);
-            mem_wr16(&board.mem, z80_sp(cpu), 0xf15c);
+            mem_wr16(&mem, z80_sp(cpu), 0xf15c);
         }
         else if (system::kc85_4 == this->cur_model) {
             cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0xff), 0);
-            mem_wr16(&board.mem, z80_sp(cpu), 0xf17e);
+            mem_wr16(&mem, z80_sp(cpu), 0xf17e);
         }
         z80_set_pc(cpu, exec_addr);
     }

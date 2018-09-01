@@ -81,6 +81,15 @@ public:
     /// the trapped casread function for TAP files
     void casread();
 
+    z80_t z80;
+    ay38910_t ay38910;
+    i8255_t i8255;
+    mc6845_t mc6845;
+    crt_t crt;
+
+    kbd_t kbd;
+    mem_t mem;
+
     system cur_model = system::cpc464;
     bool on = false;
     uint32_t tick_count = 0;

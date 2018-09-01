@@ -43,35 +43,36 @@ zx_t::check_roms(system model, os_rom os) {
 //------------------------------------------------------------------------------
 void
 zx_t::init_memorymap() {
-    mem_unmap_all(&board.mem);
+    mem_init(&mem);
     if (system::zxspectrum48k == this->cur_model) {
         // 48k RAM between 0x4000 and 0xFFFF
-        mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[0]);
-        mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[1]);
-        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[2]);
+        mem_map_ram(&mem, 0, 0x4000, 0x4000, board.ram[0]);
+        mem_map_ram(&mem, 0, 0x8000, 0x4000, board.ram[1]);
+        mem_map_ram(&mem, 0, 0xC000, 0x4000, board.ram[2]);
 
         // 16k ROM between 0x0000 and 0x3FFF
         YAKC_ASSERT(roms.has(rom_images::zx48k) && (roms.size(rom_images::zx48k) == 0x4000));
-        mem_map_rom(&board.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx48k));
+        mem_map_rom(&mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx48k));
     }
     else {
         // Spectrum 128k initial memory mapping
-        mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[5]);
-        mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[2]);
-        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[0]);
+        mem_map_ram(&mem, 0, 0x4000, 0x4000, board.ram[5]);
+        mem_map_ram(&mem, 0, 0x8000, 0x4000, board.ram[2]);
+        mem_map_ram(&mem, 0, 0xC000, 0x4000, board.ram[0]);
         YAKC_ASSERT(roms.has(rom_images::zx128k_0) && (roms.size(rom_images::zx128k_0) == 0x4000));
         YAKC_ASSERT(roms.has(rom_images::zx128k_1) && (roms.size(rom_images::zx128k_1) == 0x4000));
-        mem_map_rom(&board.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_0));
+        mem_map_rom(&mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_0));
     }
 }
 
 //------------------------------------------------------------------------------
 void
 zx_t::init_keymap() {
+    kbd_init(&kbd, 1);
     // caps-shift is column 0, line 0
-    kbd_register_modifier(&board.kbd, 0, 0, 0);
+    kbd_register_modifier(&kbd, 0, 0, 0);
     // sym-shift is column 7, line 1
-    kbd_register_modifier(&board.kbd, 1, 7, 1);
+    kbd_register_modifier(&kbd, 1, 7, 1);
     // alpha-numeric keys
     const char* keymap =
         // no shift
@@ -108,22 +109,22 @@ zx_t::init_keymap() {
             for (int line = 0; line < 5; line++) {
                 const uint8_t c = keymap[layer*40 + col*5 + line];
                 if (c != 0x20) {
-                    kbd_register_key(&board.kbd, c, col, line, (layer>0) ? (1<<(layer-1)) : 0);
+                    kbd_register_key(&kbd, c, col, line, (layer>0) ? (1<<(layer-1)) : 0);
                 }
             }
         }
     }
 
     // special keys
-    kbd_register_key(&board.kbd, ' ', 7, 0, 0);  // Space
-    kbd_register_key(&board.kbd, 0x0F, 7, 1, 0); // SymShift
-    kbd_register_key(&board.kbd, 0x08, 3, 4, 1); // Cursor Left (Shift+5)
-    kbd_register_key(&board.kbd, 0x0A, 4, 4, 1); // Cursor Down (Shift+6)
-    kbd_register_key(&board.kbd, 0x0B, 4, 3, 1); // Cursor Up (Shift+7)
-    kbd_register_key(&board.kbd, 0x09, 4, 2, 1); // Cursor Right (Shift+8)
-    kbd_register_key(&board.kbd, 0x07, 3, 0, 1); // Edit (Shift+1)
-    kbd_register_key(&board.kbd, 0x0C, 4, 0, 1); // Delete (Shift+0)
-    kbd_register_key(&board.kbd, 0x0D, 6, 0, 0); // Enter
+    kbd_register_key(&kbd, ' ', 7, 0, 0);  // Space
+    kbd_register_key(&kbd, 0x0F, 7, 1, 0); // SymShift
+    kbd_register_key(&kbd, 0x08, 3, 4, 1); // Cursor Left (Shift+5)
+    kbd_register_key(&kbd, 0x0A, 4, 4, 1); // Cursor Down (Shift+6)
+    kbd_register_key(&kbd, 0x0B, 4, 3, 1); // Cursor Up (Shift+7)
+    kbd_register_key(&kbd, 0x09, 4, 2, 1); // Cursor Right (Shift+8)
+    kbd_register_key(&kbd, 0x07, 3, 0, 1); // Edit (Shift+1)
+    kbd_register_key(&kbd, 0x0C, 4, 0, 1); // Delete (Shift+0)
+    kbd_register_key(&kbd, 0x0D, 6, 0, 0); // Enter
 }
 
 //------------------------------------------------------------------------------
@@ -136,7 +137,6 @@ zx_t::poweron(system m) {
     this->on = true;
 
     // keyboard init
-    kbd_init(&board.kbd, 1);
     this->init_keymap();
 
     this->border_color = 0xFF000000;
@@ -175,38 +175,44 @@ zx_t::poweron(system m) {
     this->scanline_counter = this->scanline_period;
     z80_desc_t cpu_desc = { };
     cpu_desc.tick_cb = cpu_tick;
-    z80_init(&board.z80, &cpu_desc);
+    z80_init(&z80, &cpu_desc);
 
     // initialize hardware components
-    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    beeper_init(&beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     if (system::zxspectrum128k == this->cur_model) {
         ay38910_desc_t ay_desc = { };
         ay_desc.type = AY38910_TYPE_8912;
         ay_desc.tick_hz = board.freq_hz/2;
         ay_desc.sound_hz = SOUND_SAMPLE_RATE;
         ay_desc.magnitude = 0.5f;
-        ay38910_init(&board.ay38910, &ay_desc);
+        ay38910_init(&ay38910, &ay_desc);
     }
 
     // cpu start state
-    z80_set_pc(&board.z80, 0x0000);
+    z80_set_pc(&z80, 0x0000);
+
+    board.z80 = &z80;
+    board.ay38910 = &ay38910;
+    board.beeper_1 = &beeper;
+    board.kbd = &kbd;
+    board.mem = &mem;
 }
 
 //------------------------------------------------------------------------------
 void
 zx_t::poweroff() {
     YAKC_ASSERT(this->on);
-    mem_unmap_all(&board.mem);
     this->on = false;
+    board.clear();
 }
 
 //------------------------------------------------------------------------------
 void
 zx_t::reset() {
-    z80_reset(&board.z80);
-    beeper_reset(&board.beeper_1);
+    z80_reset(&z80);
+    beeper_reset(&beeper);
     if (system::zxspectrum128k == this->cur_model) {
-        ay38910_reset(&board.ay38910);
+        ay38910_reset(&ay38910);
     }
     this->memory_paging_disabled = false;
     this->int_requested = false;
@@ -222,7 +228,7 @@ zx_t::reset() {
         this->display_ram_bank = 5;
     }
     this->init_memorymap();
-    z80_set_pc(&board.z80, 0x0000);
+    z80_set_pc(&z80, 0x0000);
 }
 
 //------------------------------------------------------------------------------
@@ -230,8 +236,8 @@ uint64_t
 zx_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = uint32_t(end_tick - start_tick);
-    uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
-    kbd_update(&board.kbd);
+    uint32_t ticks_executed = z80_exec(&z80, num_ticks);
+    kbd_update(&kbd);
     return start_tick + ticks_executed;
 }
 
@@ -252,14 +258,14 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
     // tick audio systems
     for (int i = 0; i < num_ticks; i++) {
         zx.tick_count++;
-        if (beeper_tick(&board.beeper_1)) {
-            board.audiobuffer.write(board.beeper_1.sample);
+        if (beeper_tick(&zx.beeper)) {
+            board.audiobuffer.write(zx.beeper.sample);
         }
         // the AY-3-8912 chip runs at half CPU frequency
         if (system::zxspectrum128k == zx.cur_model) {
             if (zx.tick_count & 1) {
-                if (ay38910_tick(&board.ay38910)) {
-                    board.audiobuffer2.write(board.ay38910.sample);
+                if (ay38910_tick(&zx.ay38910)) {
+                    board.audiobuffer2.write(zx.ay38910.sample);
                 }
             }
         }
@@ -271,10 +277,10 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
         // FIXME: 'contended memory' accesses should inject wait states
         const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
-            Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
+            Z80_SET_DATA(pins, mem_rd(&zx.mem, addr));
         }
         else if (pins & Z80_WR) {
-            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
+            mem_wr(&zx.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if (pins & Z80_IORQ) {
@@ -293,7 +299,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
                 }
                 // keyboard matrix bits are encoded in the upper 8 bit of the port address
                 uint16_t column_mask = (~(Z80_GET_ADDR(pins)>>8)) & 0x00FF;
-                const uint16_t kbd_lines = kbd_test_lines(&board.kbd, column_mask);
+                const uint16_t kbd_lines = kbd_test_lines(&zx.kbd, column_mask);
                 data |= (~kbd_lines) & 0x1F;
                 Z80_SET_DATA(pins, data);
             }
@@ -320,7 +326,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
             else if (system::zxspectrum128k == zx.cur_model) {
                 // read from AY-3-8912 (11............0.)
                 if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == (Z80_A15|Z80_A14)) {
-                    pins = ay38910_iorq(&board.ay38910, AY38910_BC1|pins) & Z80_PIN_MASK;
+                    pins = ay38910_iorq(&zx.ay38910, AY38910_BC1|pins) & Z80_PIN_MASK;
                 }
             }
         }
@@ -336,7 +342,7 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
                 //      bit 3: MIC output (CAS SAVE, 0=On, 1=Off)
                 //      bit 4: Beep output (ULA sound, 0=Off, 1=On)
                 zx.last_fe_out = data;
-                beeper_set(&board.beeper_1, 0 != (data & (1<<4)));
+                beeper_set(&zx.beeper, 0 != (data & (1<<4)));
             }
             else if (system::zxspectrum128k == zx.cur_model) {
                 // Spectrum 128 memory control (0.............0.)
@@ -346,16 +352,16 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
                         // bit 3 defines the video scanout memory bank (5 or 7)
                         zx.display_ram_bank = (data & (1<<3)) ? 7 : 5;
                         // only last memory bank is mappable
-                        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[data & 0x7]);
+                        mem_map_ram(&zx.mem, 0, 0xC000, 0x4000, board.ram[data & 0x7]);
 
                         // ROM0 or ROM1
                         if (data & (1<<4)) {
                             // bit 4 set: ROM1
-                            mem_map_rom(&board.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_1));
+                            mem_map_rom(&zx.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_1));
                         }
                         else {
                             // bit 4 clear: ROM0
-                            mem_map_rom(&board.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_0));
+                            mem_map_rom(&zx.mem, 0, 0x0000, 0x4000, roms.ptr(rom_images::zx128k_0));
                         }
                     }
                     if (data & (1<<5)) {
@@ -367,11 +373,11 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
                 }
                 else if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == (Z80_A15|Z80_A14)) {
                     // select AY-3-8912 register (11............0.)
-                    ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|pins);
+                    ay38910_iorq(&zx.ay38910, AY38910_BDIR|AY38910_BC1|pins);
                 }
                 else if ((pins & (Z80_A15|Z80_A14|Z80_A1)) == Z80_A15) {
                     // write to AY-3-8912 (10............0.)
-                    ay38910_iorq(&board.ay38910, AY38910_BDIR|pins);
+                    ay38910_iorq(&zx.ay38910, AY38910_BDIR|pins);
                 }
             }
         }
@@ -382,20 +388,20 @@ zx_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
 //------------------------------------------------------------------------------
 void
 zx_t::on_ascii(uint8_t ascii) {
-    kbd_key_down(&board.kbd, ascii);
-    kbd_key_up(&board.kbd, ascii);
+    kbd_key_down(&zx.kbd, ascii);
+    kbd_key_up(&zx.kbd, ascii);
 }
 
 //------------------------------------------------------------------------------
 void
 zx_t::on_key_down(uint8_t key) {
-    kbd_key_down(&board.kbd, key);
+    kbd_key_down(&zx.kbd, key);
 }
 
 //------------------------------------------------------------------------------
 void
 zx_t::on_key_up(uint8_t key) {
-    kbd_key_up(&board.kbd, key);
+    kbd_key_up(&zx.kbd, key);
 }
 
 //------------------------------------------------------------------------------
@@ -669,7 +675,7 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
 
     // start loaded image
     if (start && hdr_valid) {
-        z80_t* cpu = &board.z80;
+        z80_t* cpu = &z80;
         z80_set_a(cpu, hdr.A); z80_set_f(cpu, hdr.F);
         z80_set_b(cpu, hdr.B); z80_set_c(cpu, hdr.C);
         z80_set_d(cpu, hdr.D); z80_set_e(cpu, hdr.E);
@@ -695,9 +701,9 @@ zx_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
             z80_set_pc(cpu, ext_hdr.PC_h<<8 | ext_hdr.PC_l);
             for (int i = 0; i < 16; i++) {
                 // latch AY-3-8912 register address
-                ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|(i<<16));
+                ay38910_iorq(&ay38910, AY38910_BDIR|AY38910_BC1|(i<<16));
                 // write AY-3-8912 register value
-                ay38910_iorq(&board.ay38910, AY38910_BDIR|(ext_hdr.audio[i]<<16));
+                ay38910_iorq(&ay38910, AY38910_BDIR|(ext_hdr.audio[i]<<16));
             }
             // simulate an out of port 0xFFFD and 0x7FFD
             uint64_t pins = Z80_IORQ|Z80_WR;

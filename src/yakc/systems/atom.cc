@@ -16,17 +16,17 @@ atom_t atom;
 //------------------------------------------------------------------------------
 void
 atom_t::init_keymap() {
-    kbd_init(&board.kbd, 1);
+    kbd_init(&kbd, 1);
     /* shift key is entire line 7 */
-    const int shift = (1<<0); kbd_register_modifier_line(&board.kbd, 0, 7);
+    const int shift = (1<<0); kbd_register_modifier_line(&kbd, 0, 7);
     /* ctrl key is entire line 6 */
-    const int ctrl = (1<<1); kbd_register_modifier_line(&board.kbd, 1, 6);
+    const int ctrl = (1<<1); kbd_register_modifier_line(&kbd, 1, 6);
 
     // 10x5 keyboard matrix (10 columns, 7 rows,
     // row 6 is Ctrl, row 7 is Shift,
     // the shift key simply sets bit 7 which
     // inverts the visual character
-    const char* kbd =
+    const char* keymap =
         // no shift
         "     ^]\\[ "   // row 0
         "3210      "    // row 1
@@ -42,13 +42,13 @@ atom_t::init_keymap() {
         "gfedcba ?>"   // row 3
         "qponmlkjih"   // row 4
         " zyxwvutsr";  // row 5
-    YAKC_ASSERT(strlen(kbd) == 120);
+    YAKC_ASSERT(strlen(keymap) == 120);
     for (int layer = 0; layer < 2; layer++) {
         for (int col = 0; col < 10; col++) {
             for (int line = 0; line < 6; line++) {
-                uint8_t c = kbd[layer*60 + line*10 + col];
+                uint8_t c = keymap[layer*60 + line*10 + col];
                 if (c != 0x20) {
-                    kbd_register_key(&board.kbd, c, col, line, layer?shift:0);
+                    kbd_register_key(&kbd, c, col, line, layer?shift:0);
                 }
             }
         }
@@ -57,20 +57,20 @@ atom_t::init_keymap() {
     // special keys
     //init_key_mask(0x00, 4, 0);     // FIXME capslock
     //init_key_mask(0x00, 5, 0);     // FIXME tab
-    kbd_register_key(&board.kbd, 0x20, 9, 0, 0);         // space
-    kbd_register_key(&board.kbd, 0x01, 4, 1, 0);         // backspace
-    kbd_register_key(&board.kbd, 0x07, 0, 3, ctrl);      // Ctrl+G: bleep
-    kbd_register_key(&board.kbd, 0x08, 3, 0, shift);     // key left
-    kbd_register_key(&board.kbd, 0x09, 3, 0, 0);         // key right
-    kbd_register_key(&board.kbd, 0x0A, 2, 0, shift);     // key down
-    kbd_register_key(&board.kbd, 0x0B, 2, 0, 0);         // key up
-    kbd_register_key(&board.kbd, 0x0D, 6, 1, 0);         // return/enter
-    kbd_register_key(&board.kbd, 0x0C, 5, 4, ctrl);      // Ctrl+L clear screen
-    kbd_register_key(&board.kbd, 0x0E, 3, 4, ctrl);      // Ctrl+N page mode on
-    kbd_register_key(&board.kbd, 0x0F, 2, 4, ctrl);      // Ctrl+O page mode off
-    kbd_register_key(&board.kbd, 0x15, 6, 5, ctrl);      // Ctrl+U end screen
-    kbd_register_key(&board.kbd, 0x18, 3, 5, ctrl);      // Ctrl+X cancel
-    kbd_register_key(&board.kbd, 0x1B, 0, 5, 0);         // escape
+    kbd_register_key(&kbd, 0x20, 9, 0, 0);         // space
+    kbd_register_key(&kbd, 0x01, 4, 1, 0);         // backspace
+    kbd_register_key(&kbd, 0x07, 0, 3, ctrl);      // Ctrl+G: bleep
+    kbd_register_key(&kbd, 0x08, 3, 0, shift);     // key left
+    kbd_register_key(&kbd, 0x09, 3, 0, 0);         // key right
+    kbd_register_key(&kbd, 0x0A, 2, 0, shift);     // key down
+    kbd_register_key(&kbd, 0x0B, 2, 0, 0);         // key up
+    kbd_register_key(&kbd, 0x0D, 6, 1, 0);         // return/enter
+    kbd_register_key(&kbd, 0x0C, 5, 4, ctrl);      // Ctrl+L clear screen
+    kbd_register_key(&kbd, 0x0E, 3, 4, ctrl);      // Ctrl+N page mode on
+    kbd_register_key(&kbd, 0x0F, 2, 4, ctrl);      // Ctrl+O page mode off
+    kbd_register_key(&kbd, 0x15, 6, 5, ctrl);      // Ctrl+U end screen
+    kbd_register_key(&kbd, 0x18, 3, 5, ctrl);      // Ctrl+X cancel
+    kbd_register_key(&kbd, 0x1B, 0, 5, 0);         // escape
 }
 
 //------------------------------------------------------------------------------
@@ -103,64 +103,72 @@ atom_t::poweron() {
     memcpy(board.ram[1], board.random, breadboard::ram_bank_size);
     memcpy(board.ram[2], board.random, breadboard::ram_bank_size);
     clear(board.ram[3], sizeof(board.ram[3]));
-    mem_unmap_all(&board.mem);
+    mem_init(&mem);
     // give it the full 32 KByte RAM (0x0000..0x7FFF) + 8 KByte videomem (0x8000..0x9FFF)
-    mem_map_ram(&board.mem, 0, 0x0000, 0xA000, board.ram[0]);
+    mem_map_ram(&mem, 0, 0x0000, 0xA000, board.ram[0]);
     // hole in 0xA000 to 0xAFFF (for utility roms)
     // 0xB000 to 0xBFFF: I/O area, not mapped to host memory
     // ROM area
-    mem_map_rom(&board.mem, 0, 0xC000, 0x1000, roms.ptr(rom_images::atom_basic));
-    mem_map_rom(&board.mem, 0, 0xD000, 0x1000, roms.ptr(rom_images::atom_float));
-    mem_map_rom(&board.mem, 0, 0xE000, 0x1000, roms.ptr(rom_images::atom_dos));
-    mem_map_rom(&board.mem, 0, 0xF000, 0x1000, roms.ptr(rom_images::atom_basic) + 0x1000);
-    vidmem_base = mem_readptr(&board.mem, 0x8000);
+    mem_map_rom(&mem, 0, 0xC000, 0x1000, roms.ptr(rom_images::atom_basic));
+    mem_map_rom(&mem, 0, 0xD000, 0x1000, roms.ptr(rom_images::atom_float));
+    mem_map_rom(&mem, 0, 0xE000, 0x1000, roms.ptr(rom_images::atom_dos));
+    mem_map_rom(&mem, 0, 0xF000, 0x1000, roms.ptr(rom_images::atom_basic) + 0x1000);
+    vidmem_base = mem_readptr(&mem, 0x8000);
 
     // 1 MHz CPU clock frequency
     board.freq_hz = 1000000;
     m6502_desc_t m6502_desc = { };
     m6502_desc.tick_cb = cpu_tick;
-    m6502_init(&board.m6502, &m6502_desc);
-    m6502_reset(&board.m6502);
+    m6502_init(&m6502, &m6502_desc);
+    m6502_reset(&m6502);
     i8255_desc_t ppi_desc = { };
     ppi_desc.in_cb = ppi_in;
     ppi_desc.out_cb = ppi_out;
-    i8255_init(&board.i8255, &ppi_desc);
+    i8255_init(&i8255, &ppi_desc);
     m6522_desc_t via_desc = { };
     via_desc.in_cb = via_in;
     via_desc.out_cb = via_out;
-    m6522_init(&board.m6522, &via_desc);
+    m6522_init(&m6522, &via_desc);
     mc6847_desc_t vdg_desc;
     vdg_desc.tick_hz = board.freq_hz;
     vdg_desc.rgba8_buffer = board.rgba8_buffer;
     vdg_desc.rgba8_buffer_size = sizeof(board.rgba8_buffer);
     vdg_desc.fetch_cb = vdg_fetch;
-    mc6847_init(&board.mc6847, &vdg_desc);
-    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    mc6847_init(&mc6847, &vdg_desc);
+    beeper_init(&beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     period_2_4khz = board.freq_hz / 4800;
     count_2_4khz = 0;
     state_2_4khz = false;
 
     // trap the OSLOAD function
     // http://ladybug.xs4all.nl/arlet/fpga/6502/kernel.dis
-    m6502_set_trap(&board.m6502, 1, 0xF96E);
+    m6502_set_trap(&m6502, 1, 0xF96E);
+
+    board.m6502 = &m6502;
+    board.i8255 = &i8255;
+    board.m6522 = &m6522;
+    board.mc6847 = &mc6847;
+    board.beeper_1 = &beeper;
+    board.kbd = &kbd;
+    board.mem = &mem;
 }
 
 //------------------------------------------------------------------------------
 void
 atom_t::poweroff() {
     YAKC_ASSERT(on);
-    mem_unmap_all(&board.mem);
     on = false;
+    board.clear();
 }
 
 //------------------------------------------------------------------------------
 void
 atom_t::reset() {
-    m6502_reset(&board.m6502);
-    i8255_reset(&board.i8255);
-    m6522_reset(&board.m6522);
-    mc6847_reset(&board.mc6847);
-    beeper_reset(&board.beeper_1);
+    m6502_reset(&m6502);
+    i8255_reset(&i8255);
+    m6522_reset(&m6522);
+    mc6847_reset(&mc6847);
+    beeper_reset(&beeper);
     state_2_4khz = false;
     out_cass0 = false;
     out_cass1 = false;
@@ -171,33 +179,33 @@ uint64_t
 atom_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = uint32_t(end_tick - start_tick);
-    uint32_t ticks_executed = m6502_exec(&board.m6502, num_ticks);
+    uint32_t ticks_executed = m6502_exec(&m6502, num_ticks);
     /* did we hit the osload() trap? */
-    if (board.m6502.trap_id == 1) {
+    if (m6502.trap_id == 1) {
         osload();
         return end_tick;
     }
-    kbd_update(&board.kbd);
+    kbd_update(&kbd);
     return start_tick + ticks_executed;
 }
 
 //------------------------------------------------------------------------------
 void
 atom_t::on_ascii(uint8_t ascii) {
-    kbd_key_down(&board.kbd, ascii);
-    kbd_key_up(&board.kbd, ascii);
+    kbd_key_down(&kbd, ascii);
+    kbd_key_up(&kbd, ascii);
 }
 
 //------------------------------------------------------------------------------
 void
 atom_t::on_key_down(uint8_t key) {
-    kbd_key_down(&board.kbd, key);
+    kbd_key_down(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
 void
 atom_t::on_key_up(uint8_t key) {
-    kbd_key_up(&board.kbd, key);
+    kbd_key_up(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
@@ -226,10 +234,10 @@ uint64_t
 atom_t::cpu_tick(uint64_t pins, void* user_data) {
 
     /* tick the video chip */
-    mc6847_tick(&board.mc6847);
+    mc6847_tick(&atom.mc6847);
 
     /* tick the 6522 VIA chip */
-    m6522_tick(&board.m6522);
+    m6522_tick(&atom.m6522);
 
     /* tick the 2.4khz counter */
     atom.count_2_4khz++;
@@ -241,8 +249,8 @@ atom_t::cpu_tick(uint64_t pins, void* user_data) {
     // update the sound beeper
     // NOTE: don't make the cassette output audible, since it
     // seems to get stuck at a 2.4kHz sound at the end of saving BASIC programs
-    if (beeper_tick(&board.beeper_1)) {
-        board.audiobuffer.write(board.beeper_1.sample);
+    if (beeper_tick(&atom.beeper)) {
+        board.audiobuffer.write(atom.beeper.sample);
     }
 
     // decode address for memory-mapped-io or regular memory access
@@ -256,7 +264,7 @@ atom_t::cpu_tick(uint64_t pins, void* user_data) {
             else { ppi_pins |= I8255_WR; }                  /* PPI write access */
             if (pins & M6502_A0) { ppi_pins |= I8255_A0; }  /* PPI has 4 addresses (port A,B,C or control word */
             if (pins & M6502_A1) { ppi_pins |= I8255_A1; }
-            pins = i8255_iorq(&board.i8255, ppi_pins) & M6502_PIN_MASK;
+            pins = i8255_iorq(&atom.i8255, ppi_pins) & M6502_PIN_MASK;
         }
         else if ((addr >= 0xB400) && (addr < 0xB800)) {
             // extensions (only rudimentary)
@@ -286,7 +294,7 @@ atom_t::cpu_tick(uint64_t pins, void* user_data) {
             // 6522 VIA: http://www.acornatom.nl/sites/fpga/www.howell1964.freeserve.co.uk/acorn/atom/amb/amb_6522.htm
             uint64_t via_pins = (pins & M6502_PIN_MASK)|M6522_CS1;
             // NOTE: M6522_RW pin is identical with M6502_RW)
-            pins = m6522_iorq(&board.m6522, via_pins) & M6502_PIN_MASK;
+            pins = m6522_iorq(&atom.m6522, via_pins) & M6502_PIN_MASK;
         }
         else {
             //printf("UNKNOWN: addr=%04X %s %02X\n", addr, write ? "write":"read", inval);
@@ -297,11 +305,11 @@ atom_t::cpu_tick(uint64_t pins, void* user_data) {
         // regular memory access
         if (pins & M6502_RW) {
             // memory read
-            M6502_SET_DATA(pins, mem_rd(&board.mem, addr));
+            M6502_SET_DATA(pins, mem_rd(&atom.mem, addr));
         }
         else {
             // memory write
-            mem_wr(&board.mem, addr, M6502_GET_DATA(pins));
+            mem_wr(&atom.mem, addr, M6502_GET_DATA(pins));
         }
     }
     return pins;
@@ -372,14 +380,14 @@ atom_t::ppi_out(int port_id, uint64_t pins, uint8_t data, void* user_data) {
         //  7:      MC6847 GM1
         //  8:      MC6847 GM2
         case I8255_PORT_A:
-            kbd_set_active_columns(&board.kbd, 1<<(data & 0x0F));
+            kbd_set_active_columns(&atom.kbd, 1<<(data & 0x0F));
             vdg_pins = 0;
             vdg_mask = MC6847_AG|MC6847_GM0|MC6847_GM1|MC6847_GM2;
             if (data & (1<<4)) { vdg_pins |= MC6847_AG; }
             if (data & (1<<5)) { vdg_pins |= MC6847_GM0; }
             if (data & (1<<6)) { vdg_pins |= MC6847_GM1; }
             if (data & (1<<7)) { vdg_pins |= MC6847_GM2; }
-            mc6847_ctrl(&board.mc6847, vdg_pins, vdg_mask);
+            mc6847_ctrl(&atom.mc6847, vdg_pins, vdg_mask);
             break;
 
         // PPI port C output:
@@ -400,13 +408,13 @@ atom_t::ppi_out(int port_id, uint64_t pins, uint8_t data, void* user_data) {
         case I8255_PORT_C:
             atom.out_cass0 = 0 == (data & (1<<0));
             atom.out_cass1 = 0 == (data & (1<<1));
-            beeper_set(&board.beeper_1, 0 == (data & (1<<2)));
+            beeper_set(&atom.beeper, 0 == (data & (1<<2)));
             vdg_pins = 0;
             vdg_mask = MC6847_CSS;
             if (data & (1<<3)) {
                 vdg_pins |= MC6847_CSS;
             }
-            mc6847_ctrl(&board.mc6847, vdg_pins, vdg_mask);
+            mc6847_ctrl(&atom.mc6847, vdg_pins, vdg_mask);
             break;
     }
     return pins;
@@ -419,7 +427,7 @@ atom_t::ppi_in(int port_id, void* user_data) {
     switch (port_id) {
         // PPI port B: keyboard row state
         case I8255_PORT_B:
-            data = ~kbd_scan_lines(&board.kbd);
+            data = ~kbd_scan_lines(&atom.kbd);
             break;
         // PPI port C input:
         //  4:  input: 2400 Hz
@@ -432,7 +440,7 @@ atom_t::ppi_in(int port_id, void* user_data) {
             }
             // FIXME: always send REPEAT key as 'not pressed'
             data |= (1<<6);
-            if (0 == (board.mc6847.pins & MC6847_FS)) {
+            if (0 == (atom.mc6847.pins & MC6847_FS)) {
                 data |= (1<<7);
             }
             break;
@@ -530,18 +538,18 @@ atom_t::osload() {
     if (tape.read(&hdr, sizeof(hdr)) == sizeof(hdr)) {
         uint16_t addr = hdr.load_addr;
         // use file load address?
-        if (mem_rd(&board.mem, 0xCD) & 0x80) {
-            addr = mem_rd16(&board.mem, 0xCB);
+        if (mem_rd(&mem, 0xCD) & 0x80) {
+            addr = mem_rd16(&mem, 0xCB);
         }
         for (int i = 0; i < hdr.length; i++) {
             uint8_t val;
             tape.read(&val, sizeof(val));
-            mem_wr(&board.mem, addr++, val);
+            mem_wr(&mem, addr++, val);
         }
         success = true;
     }
     // set or clear bit 6 and clear bit 7 of 0xDD
-    uint8_t dd = mem_rd(&board.mem, 0xDD);
+    uint8_t dd = mem_rd(&mem, 0xDD);
     if (success) {
         dd |= (1<<6);
     }
@@ -549,19 +557,18 @@ atom_t::osload() {
         dd &= ~(1<<6);
     }
     dd &= ~(1<<7);
-    mem_wr(&board.mem, 0xDD, dd);
+    mem_wr(&mem, 0xDD, dd);
 
     // execute RTS
-    auto& cpu = board.m6502;
-    cpu.state.S++;
-    uint8_t l = mem_rd(&board.mem, 0x0100|cpu.state.S++);
-    uint8_t h = mem_rd(&board.mem, 0x0100|cpu.state.S);
-    cpu.state.PC = (h<<8)|l;
-    cpu.state.PC++;
+    m6502.state.S++;
+    uint8_t l = mem_rd(&mem, 0x0100|m6502.state.S++);
+    uint8_t h = mem_rd(&mem, 0x0100|m6502.state.S);
+    m6502.state.PC = (h<<8)|l;
+    m6502.state.PC++;
 
     // FIXME: patch PC????
     if (success) {
-        board.m6502.state.PC = hdr.exec_addr;
+        m6502.state.PC = hdr.exec_addr;
     }
 }
 

@@ -104,50 +104,52 @@ bool
 I8255Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 292), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        const i8255_t& ppi = board.i8255;
-        ImGui::Text("Group A (A+Chi):");
-        ImGui::Text("  Port C (hi): %s", (ppi.control & (1<<3))?" IN":"OUT");
-        ImGui::Text("  Port A:      %s", (ppi.control & (1<<4))?" IN":"OUT");
-        const char* mode_a;
-        switch (ppi.control & ((1<<7)|(1<<6))) {
-            case 0:     mode_a = "BASIC"; break;
-            case 0x40:  mode_a = "STROBE"; break;
-            default:    mode_a = "BIDIR"; break;
-        }
-        ImGui::Text("  Mode:     %6s", mode_a);
-        ImGui::Text("Group B (B+Clo):");
-        ImGui::Text("  Port C (lo): %s", (ppi.control & (1<<0))?" IN":"OUT");
-        ImGui::Text("  Port B:      %s", (ppi.control & (1<<1))?" IN":"OUT");
-        ImGui::Text("  Mode:     %6s", (ppi.control & (1<<2))?"STROBE":"BASIC");
+        if (board.i8255) {
+            const i8255_t& ppi = *board.i8255;
+            ImGui::Text("Group A (A+Chi):");
+            ImGui::Text("  Port C (hi): %s", (ppi.control & (1<<3))?" IN":"OUT");
+            ImGui::Text("  Port A:      %s", (ppi.control & (1<<4))?" IN":"OUT");
+            const char* mode_a;
+            switch (ppi.control & ((1<<7)|(1<<6))) {
+                case 0:     mode_a = "BASIC"; break;
+                case 0x40:  mode_a = "STROBE"; break;
+                default:    mode_a = "BIDIR"; break;
+            }
+            ImGui::Text("  Mode:     %6s", mode_a);
+            ImGui::Text("Group B (B+Clo):");
+            ImGui::Text("  Port C (lo): %s", (ppi.control & (1<<0))?" IN":"OUT");
+            ImGui::Text("  Port B:      %s", (ppi.control & (1<<1))?" IN":"OUT");
+            ImGui::Text("  Mode:     %6s", (ppi.control & (1<<2))?"STROBE":"BASIC");
 
-        if (ImGui::CollapsingHeader("Port A", "#ppi_a", true, true)) {
-            if ((ppi.control & I8255_CTRL_A) == I8255_CTRL_A_INPUT) {
-                put_bits(emu, 0, 8, I8255_PORT_A, ppi.dbg_input[I8255_PORT_A], "<=");
+            if (ImGui::CollapsingHeader("Port A", "#ppi_a", true, true)) {
+                if ((ppi.control & I8255_CTRL_A) == I8255_CTRL_A_INPUT) {
+                    put_bits(emu, 0, 8, I8255_PORT_A, ppi.dbg_input[I8255_PORT_A], "<=");
+                }
+                else {
+                    put_bits(emu, 0, 8, I8255_PORT_A, ppi.output[I8255_PORT_A], "=>");
+                }
             }
-            else {
-                put_bits(emu, 0, 8, I8255_PORT_A, ppi.output[I8255_PORT_A], "=>");
+            if (ImGui::CollapsingHeader("Port B", "#ppi_b", true, true)) {
+                if ((ppi.control & I8255_CTRL_B) == I8255_CTRL_B_INPUT) {
+                    put_bits(emu, 0, 8, I8255_PORT_B, ppi.dbg_input[I8255_PORT_B], "<=");
+                }
+                else {
+                    put_bits(emu, 0, 8, I8255_PORT_B, ppi.output[I8255_PORT_B], "=>");
+                }
             }
-        }
-        if (ImGui::CollapsingHeader("Port B", "#ppi_b", true, true)) {
-            if ((ppi.control & I8255_CTRL_B) == I8255_CTRL_B_INPUT) {
-                put_bits(emu, 0, 8, I8255_PORT_B, ppi.dbg_input[I8255_PORT_B], "<=");
-            }
-            else {
-                put_bits(emu, 0, 8, I8255_PORT_B, ppi.output[I8255_PORT_B], "=>");
-            }
-        }
-        if (ImGui::CollapsingHeader("Port C", "#ppi_c", true, true)) {
-            if ((ppi.control & I8255_CTRL_CLO) == I8255_CTRL_CLO_INPUT) {
-                put_bits(emu, 0, 4, I8255_PORT_C, ppi.dbg_input[I8255_PORT_C], "<=");
-            }
-            else {
-                put_bits(emu, 0, 4, I8255_PORT_C, ppi.output[I8255_PORT_C], "=>");
-            }
-            if ((ppi.control & I8255_CTRL_CHI) == I8255_CTRL_CHI_INPUT) {
-                put_bits(emu, 4, 4, I8255_PORT_C, ppi.dbg_input[I8255_PORT_C], "<=");
-            }
-            else {
-                put_bits(emu, 4, 4, I8255_PORT_C, ppi.output[I8255_PORT_C], "=>");
+            if (ImGui::CollapsingHeader("Port C", "#ppi_c", true, true)) {
+                if ((ppi.control & I8255_CTRL_CLO) == I8255_CTRL_CLO_INPUT) {
+                    put_bits(emu, 0, 4, I8255_PORT_C, ppi.dbg_input[I8255_PORT_C], "<=");
+                }
+                else {
+                    put_bits(emu, 0, 4, I8255_PORT_C, ppi.output[I8255_PORT_C], "=>");
+                }
+                if ((ppi.control & I8255_CTRL_CHI) == I8255_CTRL_CHI_INPUT) {
+                    put_bits(emu, 4, 4, I8255_PORT_C, ppi.dbg_input[I8255_PORT_C], "<=");
+                }
+                else {
+                    put_bits(emu, 4, 4, I8255_PORT_C, ppi.output[I8255_PORT_C], "=>");
+                }
             }
         }
     }

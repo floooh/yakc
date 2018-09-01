@@ -41,29 +41,29 @@ z9001_t::check_roms(system model, os_rom os) {
 //------------------------------------------------------------------------------
 void
 z9001_t::init_memorymap() {
-    mem_unmap_all(&board.mem);
+    mem_init(&mem);
     if (system::z9001 == this->cur_model) {
         // emulate a Z9001 with 16 KByte RAM module and BASIC module
-        mem_map_ram(&board.mem, 0, 0x0000, 0x8000, board.ram[0]);
-        mem_map_rom(&board.mem, 1, 0xC000, 0x2800, roms.ptr(rom_images::z9001_basic_507_511));
-        mem_map_rom(&board.mem, 1, 0xF000, 0x0800, roms.ptr(rom_images::z9001_os12_1));
-        mem_map_rom(&board.mem, 1, 0xF800, 0x0800, roms.ptr(rom_images::z9001_os12_2));
+        mem_map_ram(&mem, 0, 0x0000, 0x8000, board.ram[0]);
+        mem_map_rom(&mem, 1, 0xC000, 0x2800, roms.ptr(rom_images::z9001_basic_507_511));
+        mem_map_rom(&mem, 1, 0xF000, 0x0800, roms.ptr(rom_images::z9001_os12_1));
+        mem_map_rom(&mem, 1, 0xF800, 0x0800, roms.ptr(rom_images::z9001_os12_2));
     }
     else if (system::kc87 == this->cur_model) {
         // emulate a KC87 with 48 KByte RAM
-        mem_map_ram(&board.mem, 0, 0x0000, 0xC000, board.ram[0]);
-        mem_map_ram(&board.mem, 0, 0xE800, 0x0400, board.ram[color_ram_page]);
-        mem_map_rom(&board.mem, 1, 0xC000, 0x2000, roms.ptr(rom_images::z9001_basic));
-        mem_map_rom(&board.mem, 1, 0xE000, 0x2000, roms.ptr(rom_images::kc87_os_2));
+        mem_map_ram(&mem, 0, 0x0000, 0xC000, board.ram[0]);
+        mem_map_ram(&mem, 0, 0xE800, 0x0400, board.ram[color_ram_page]);
+        mem_map_rom(&mem, 1, 0xC000, 0x2000, roms.ptr(rom_images::z9001_basic));
+        mem_map_rom(&mem, 1, 0xE000, 0x2000, roms.ptr(rom_images::kc87_os_2));
     }
-    mem_map_ram(&board.mem, 0, 0xEC00, 0x0400, board.ram[video_ram_page]);
+    mem_map_ram(&mem, 0, 0xEC00, 0x0400, board.ram[video_ram_page]);
 }
 
 //------------------------------------------------------------------------------
 void
 z9001_t::init_keymap() {
     /* shift key is column 0, line 7 */
-    kbd_register_modifier(&board.kbd, 0, 0, 7);
+    kbd_register_modifier(&kbd, 0, 0, 7);
     /* register alpha-numeric keys */
     const char* keymap =
         /* unshifted keys */
@@ -89,26 +89,26 @@ z9001_t::init_keymap() {
             for (int col = 0; col < 8; col++) {
                 int c = keymap[shift*64 + line*8 + col];
                 if (c != 0x20) {
-                    kbd_register_key(&board.kbd, c, col, line, shift?(1<<0):0);
+                    kbd_register_key(&kbd, c, col, line, shift?(1<<0):0);
                 }
             }
         }
     }
     /* special keys */
-    kbd_register_key(&board.kbd, 0x03, 6, 6, 0);      /* stop (Esc) */
-    kbd_register_key(&board.kbd, 0x08, 0, 6, 0);      /* cursor left */
-    kbd_register_key(&board.kbd, 0x09, 1, 6, 0);      /* cursor right */
-    kbd_register_key(&board.kbd, 0x0A, 2, 6, 0);      /* cursor up */
-    kbd_register_key(&board.kbd, 0x0B, 3, 6, 0);      /* cursor down */
-    kbd_register_key(&board.kbd, 0x0D, 5, 6, 0);      /* enter */
-    kbd_register_key(&board.kbd, 0x13, 4, 5, 0);      /* pause */
-    kbd_register_key(&board.kbd, 0x14, 1, 7, 0);      /* color */
-    kbd_register_key(&board.kbd, 0x19, 3, 5, 0);      /* home */
-    kbd_register_key(&board.kbd, 0x1A, 5, 5, 0);      /* insert */
-    kbd_register_key(&board.kbd, 0x1B, 4, 6, 0);      /* esc (Shift+Esc) */
-    kbd_register_key(&board.kbd, 0x1C, 4, 7, 0);      /* list */
-    kbd_register_key(&board.kbd, 0x1D, 5, 7, 0);      /* run */
-    kbd_register_key(&board.kbd, 0x20, 7, 6, 0);      /* space */
+    kbd_register_key(&kbd, 0x03, 6, 6, 0);      /* stop (Esc) */
+    kbd_register_key(&kbd, 0x08, 0, 6, 0);      /* cursor left */
+    kbd_register_key(&kbd, 0x09, 1, 6, 0);      /* cursor right */
+    kbd_register_key(&kbd, 0x0A, 2, 6, 0);      /* cursor up */
+    kbd_register_key(&kbd, 0x0B, 3, 6, 0);      /* cursor down */
+    kbd_register_key(&kbd, 0x0D, 5, 6, 0);      /* enter */
+    kbd_register_key(&kbd, 0x13, 4, 5, 0);      /* pause */
+    kbd_register_key(&kbd, 0x14, 1, 7, 0);      /* color */
+    kbd_register_key(&kbd, 0x19, 3, 5, 0);      /* home */
+    kbd_register_key(&kbd, 0x1A, 5, 5, 0);      /* insert */
+    kbd_register_key(&kbd, 0x1B, 4, 6, 0);      /* esc (Shift+Esc) */
+    kbd_register_key(&kbd, 0x1C, 4, 7, 0);      /* list */
+    kbd_register_key(&kbd, 0x1D, 5, 7, 0);      /* run */
+    kbd_register_key(&kbd, 0x20, 7, 6, 0);      /* space */
 }
 
 //------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ z9001_t::poweron(system m, os_rom os) {
     this->on = true;
 
     // keyboard initialization
-    kbd_init(&board.kbd, 5);
+    kbd_init(&kbd, 5);
     this->init_keymap();
 
     // map memory
@@ -135,42 +135,50 @@ z9001_t::poweron(system m, os_rom os) {
     board.freq_hz = 2457600;
     z80_desc_t cpu_desc = { };
     cpu_desc.tick_cb = cpu_tick;
-    z80_init(&board.z80, &cpu_desc);
+    z80_init(&z80, &cpu_desc);
     z80pio_desc_t pio_desc = { };
     pio_desc.in_cb = pio1_in;
     pio_desc.out_cb = pio1_out;
-    z80pio_init(&board.z80pio_1, &pio_desc);
+    z80pio_init(&z80pio_1, &pio_desc);
     pio_desc.in_cb = pio2_in;
     pio_desc.out_cb = pio2_out;
-    z80pio_init(&board.z80pio_2, &pio_desc);
-    z80ctc_init(&board.z80ctc);
-    beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
+    z80pio_init(&z80pio_2, &pio_desc);
+    z80ctc_init(&z80ctc);
+    beeper_init(&beeper, board.freq_hz, SOUND_SAMPLE_RATE, 0.5f);
     this->ctc_zcto2 = 0;
     
     // execution on power-on starts at 0xF000
-    z80_set_pc(&board.z80, 0xF000);
+    z80_set_pc(&z80, 0xF000);
+
+    board.z80 = &z80;
+    board.z80pio_1 = &z80pio_1;
+    board.z80pio_2 = &z80pio_2;
+    board.z80ctc = &z80ctc;
+    board.beeper_1 = &beeper;
+    board.kbd = &kbd;
+    board.mem = &mem;
 }
 
 //------------------------------------------------------------------------------
 void
 z9001_t::poweroff() {
     YAKC_ASSERT(this->on);
-    mem_unmap_all(&board.mem);
     this->on = false;
+    board.clear();
 }
 
 //------------------------------------------------------------------------------
 void
 z9001_t::reset() {
-    z80_reset(&board.z80);
-    z80pio_reset(&board.z80pio_1);
-    z80pio_reset(&board.z80pio_2);
-    z80ctc_reset(&board.z80ctc);
-    beeper_reset(&board.beeper_1);
+    z80_reset(&z80);
+    z80pio_reset(&z80pio_1);
+    z80pio_reset(&z80pio_2);
+    z80ctc_reset(&z80ctc);
+    beeper_reset(&beeper);
     this->init_memorymap();
 
     // execution after reset starts at 0x0000(??? -> doesn't work)
-    z80_set_pc(&board.z80, 0xF000);
+    z80_set_pc(&z80, 0xF000);
 }
 
 //------------------------------------------------------------------------------
@@ -178,8 +186,8 @@ uint64_t
 z9001_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = uint32_t(end_tick - start_tick);
-    uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
-    kbd_update(&board.kbd);
+    uint32_t ticks_executed = z80_exec(&z80, num_ticks);
+    kbd_update(&kbd);
     this->decode_video();
     return start_tick + ticks_executed;
 }
@@ -198,10 +206,10 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
     for (int i = 0; i < num_ticks; i++) {
         if (pins & Z80CTC_ZCTO2) { pins |= Z80CTC_CLKTRG3; }
         else                     { pins &= ~Z80CTC_CLKTRG3; }
-        pins = z80ctc_tick(&board.z80ctc, pins);
+        pins = z80ctc_tick(&z9001.z80ctc, pins);
         if (pins & Z80CTC_ZCTO0) {
             // CTC channel 0 controls the beeper frequency
-            beeper_toggle(&board.beeper_1);
+            beeper_toggle(&z9001.beeper);
         }
         /* the blink flip flop is controlled by a 'bisync' video signal
            (I guess that means it triggers at half PAL frequency: 25Hz),
@@ -213,9 +221,9 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
             z9001.blink_flip_flop = !z9001.blink_flip_flop;
         }
 
-        if (beeper_tick(&board.beeper_1)) {
+        if (beeper_tick(&z9001.beeper)) {
             // new audio sample is ready
-            board.audiobuffer.write(board.beeper_1.sample);
+            board.audiobuffer.write(z9001.beeper.sample);
         }
     }
     z9001.ctc_zcto2 = (pins & Z80CTC_ZCTO2);
@@ -226,10 +234,10 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
         /* a memory request machine cycle */
         const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
-            Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
+            Z80_SET_DATA(pins, mem_rd(&z9001.mem, addr));
         }
         else if (pins & Z80_WR) {
-            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
+            mem_wr(&z9001.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if (pins & Z80_IORQ) {
@@ -249,14 +257,14 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
                     pins |= Z80CTC_CE;
                     if (pins & Z80_A0) { pins |= Z80CTC_CS0; };
                     if (pins & Z80_A1) { pins |= Z80CTC_CS1; };
-                    pins = z80ctc_iorq(&board.z80ctc, pins) & Z80_PIN_MASK;
+                    pins = z80ctc_iorq(&z9001.z80ctc, pins) & Z80_PIN_MASK;
                 /* IO request on PIO1? */
                 case 1:
                     /* PIO1 is mapped to ports 0x88 to 0x8F (each port is mapped twice) */
                     pins |= Z80PIO_CE;
                     if (pins & Z80_A0) { pins |= Z80PIO_BASEL; }
                     if (pins & Z80_A1) { pins |= Z80PIO_CDSEL; }
-                    pins = z80pio_iorq(&board.z80pio_1, pins) & Z80_PIN_MASK;
+                    pins = z80pio_iorq(&z9001.z80pio_1, pins) & Z80_PIN_MASK;
                     break;
                 /* IO request on PIO2? */
                 case 2:
@@ -264,7 +272,7 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
                     pins |= Z80PIO_CE;
                     if (pins & Z80_A0) { pins |= Z80PIO_BASEL; }
                     if (pins & Z80_A1) { pins |= Z80PIO_CDSEL; }
-                    pins = z80pio_iorq(&board.z80pio_2, pins) & Z80_PIN_MASK;
+                    pins = z80pio_iorq(&z9001.z80pio_2, pins) & Z80_PIN_MASK;
             }
         }
     }
@@ -275,9 +283,9 @@ z9001_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
     */
     Z80_DAISYCHAIN_BEGIN(pins)
     {
-        pins = z80pio_int(&board.z80pio_1, pins);
-        pins = z80pio_int(&board.z80pio_2, pins);
-        pins = z80ctc_int(&board.z80ctc, pins);
+        pins = z80pio_int(&z9001.z80pio_1, pins);
+        pins = z80pio_int(&z9001.z80pio_2, pins);
+        pins = z80ctc_int(&z9001.z80ctc, pins);
     }
     Z80_DAISYCHAIN_END(pins);
     return (pins & Z80_PIN_MASK);
@@ -310,12 +318,12 @@ void z9001_t::pio1_out(int port_id, uint8_t data, void* user_data) {
 uint8_t z9001_t::pio2_in(int port_id, void* user_data) {
     if (Z80PIO_PORT_A == port_id) {
         /* return keyboard matrix column bits for requested line bits */
-        uint8_t columns = (uint8_t) kbd_scan_columns(&board.kbd);
+        uint8_t columns = (uint8_t) kbd_scan_columns(&z9001.kbd);
         return ~columns;
     }
     else {
         /* return keyboard matrix line bits for requested column bits */
-        uint8_t lines = (uint8_t) kbd_scan_lines(&board.kbd);
+        uint8_t lines = (uint8_t) kbd_scan_lines(&z9001.kbd);
         return ~lines;
     }
 }
@@ -323,20 +331,20 @@ uint8_t z9001_t::pio2_in(int port_id, void* user_data) {
 //------------------------------------------------------------------------------
 void z9001_t::pio2_out(int port_id, uint8_t data, void* user_data) {
     if (Z80PIO_PORT_A == port_id) {
-        kbd_set_active_columns(&board.kbd, ~data);
+        kbd_set_active_columns(&z9001.kbd, ~data);
     }
     else {
-        kbd_set_active_lines(&board.kbd, ~data);
+        kbd_set_active_lines(&z9001.kbd, ~data);
     }
 }
 
 //------------------------------------------------------------------------------
 void
 z9001_t::on_ascii(uint8_t ascii) {
-    kbd_key_down(&board.kbd, ascii);
-    kbd_key_up(&board.kbd, ascii);
+    kbd_key_down(&kbd, ascii);
+    kbd_key_up(&kbd, ascii);
     /* keyboard matrix lines are directly connected to the PIO2's Port B */
-    z80pio_write_port(&board.z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
+    z80pio_write_port(&z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&kbd));
 }
 
 //------------------------------------------------------------------------------
@@ -346,9 +354,9 @@ z9001_t::on_key_down(uint8_t key) {
     if (key == 0x13) {
         key = 0x3;
     }
-    kbd_key_down(&board.kbd, key);
+    kbd_key_down(&kbd, key);
     /* keyboard matrix lines are directly connected to the PIO2's Port B */
-    z80pio_write_port(&board.z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
+    z80pio_write_port(&z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&kbd));
 }
 
 //------------------------------------------------------------------------------
@@ -358,9 +366,9 @@ z9001_t::on_key_up(uint8_t key) {
     if (key == 0x13) {
         key = 0x3;
     }
-    kbd_key_up(&board.kbd, key);
+    kbd_key_up(&kbd, key);
     /* keyboard matrix lines are directly connected to the PIO2's Port B */
-    z80pio_write_port(&board.z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&board.kbd));
+    z80pio_write_port(&z80pio_2, Z80PIO_PORT_B, ~kbd_scan_lines(&kbd));
 }
 
 
@@ -462,7 +470,7 @@ z9001_t::quickload(filesystem* fs, const char* name, filetype type, bool start) 
                 uint8_t block[block_size];
                 fs->read(fp, block, block_size);
                 for (int i = 1; (i < block_size) && (addr < end_addr); i++) {
-                    mem_wr(&board.mem, addr++, block[i]);
+                    mem_wr(&mem, addr++, block[i]);
                 }
             }
         }
@@ -479,7 +487,7 @@ z9001_t::quickload(filesystem* fs, const char* name, filetype type, bool start) 
                 uint8_t buf[buf_size];
                 fs->read(fp, buf, buf_size);
                 for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
-                    mem_wr(&board.mem, addr++, buf[i]);
+                    mem_wr(&mem, addr++, buf[i]);
                 }
             }
         }
@@ -492,14 +500,13 @@ z9001_t::quickload(filesystem* fs, const char* name, filetype type, bool start) 
 
     // start loaded image
     if (start && has_exec_addr) {
-        auto& cpu = board.z80;
-        z80_set_a(&cpu, 0x00);
-        z80_set_f(&cpu, 0x10);
-        z80_set_bc(&cpu, 0x0000); z80_set_bc_(&cpu, 0x0000);
-        z80_set_de(&cpu, 0x0000); z80_set_de_(&cpu, 0x0000);
-        z80_set_hl(&cpu, 0x0000); z80_set_hl_(&cpu, 0x0000);
-        z80_set_af_(&cpu, 0x0000);
-        z80_set_pc(&cpu, exec_addr);
+        z80_set_a(&z80, 0x00);
+        z80_set_f(&z80, 0x10);
+        z80_set_bc(&z80, 0x0000); z80_set_bc_(&z80, 0x0000);
+        z80_set_de(&z80, 0x0000); z80_set_de_(&z80, 0x0000);
+        z80_set_hl(&z80, 0x0000); z80_set_hl_(&z80, 0x0000);
+        z80_set_af_(&z80, 0x0000);
+        z80_set_pc(&z80, exec_addr);
     }
     return true;
 }

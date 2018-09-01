@@ -58,6 +58,13 @@ public:
 
     static uint32_t palette[8];
 
+    z80_t z80;
+    ay38910_t ay38910;
+    beeper_t beeper;
+
+    kbd_t kbd;
+    mem_t mem;
+
     system cur_model = system::zxspectrum48k;
     bool on = false;
     bool memory_paging_disabled = false;

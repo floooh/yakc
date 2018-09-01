@@ -87,6 +87,11 @@ public:
     /// decode an entire frame into RGBA8Buffer
     void decode_video();
 
+    z80_t z80;
+    z80pio_t z80pio;
+    kbd_t kbd;
+    mem_t mem;
+
     static const int vidmem_page = 4;
     system cur_model = system::z1013_01;
     os_rom cur_os = os_rom::z1013_mon202;

@@ -56,16 +56,16 @@ c64_t::poweron(system m) {
     cpu_desc.out_cb = cpu_port_out;
     cpu_desc.m6510_io_pullup = 0x17;
     cpu_desc.m6510_io_floating = 0xC8;
-    m6502_init(&board.m6502, &cpu_desc);
+    m6502_init(&m6502, &cpu_desc);
 
     // initialize the CIAs
     m6526_desc_t cia_desc = { };
     cia_desc.in_cb = cia1_in;
     cia_desc.out_cb = cia1_out;
-    m6526_init(&board.m6526_1, &cia_desc);
+    m6526_init(&m6526_1, &cia_desc);
     cia_desc.in_cb = cia2_in;
     cia_desc.out_cb = cia2_out;
-    m6526_init(&board.m6526_2, &cia_desc);
+    m6526_init(&m6526_2, &cia_desc);
     
     // initialize the VIC-II display chip
     m6569_desc_t vic_desc = { };
@@ -76,28 +76,36 @@ c64_t::poweron(system m) {
     vic_desc.vis_y = 24;
     vic_desc.vis_w = 392;
     vic_desc.vis_h = 272;
-    m6569_init(&board.m6569, &vic_desc);
+    m6569_init(&m6569, &vic_desc);
 
     // initialize the SID audio chip
     m6581_desc_t sid_desc = { };
     sid_desc.tick_hz = board.freq_hz;
     sid_desc.sound_hz = SOUND_SAMPLE_RATE;
     sid_desc.magnitude = 1.0f;
-    m6581_init(&board.m6581, &sid_desc);
+    m6581_init(&m6581, &sid_desc);
 
     // use a beeper for audible datasette output
-    //beeper_init(&board.beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.1f);
+    //beeper_init(&beeper_1, board.freq_hz, SOUND_SAMPLE_RATE, 0.1f);
 
     // put the CPU into start state
-    m6502_reset(&board.m6502);
+    m6502_reset(&m6502);
+
+    board.m6502 = &m6502;
+    board.m6526_1 = &m6526_1;
+    board.m6526_2 = &m6526_2;
+    board.m6569 = &m6569;
+    board.m6581 = &m6581;
+    board.kbd = &kbd;
+    board.mem = &mem;
 }
 
 //------------------------------------------------------------------------------
 void
 c64_t::poweroff() {
     YAKC_ASSERT(this->on);
-    mem_unmap_all(&board.mem);
     this->on = false;
+    board.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -107,11 +115,11 @@ c64_t::reset() {
     this->cia1_joy_bits = 0;
     this->io_mapped = true;
     this->update_memory_map();
-    m6502_reset(&board.m6502);
-    m6526_reset(&board.m6526_1);
-    m6526_reset(&board.m6526_2);
-    m6569_reset(&board.m6569);
-    m6581_reset(&board.m6581);
+    m6502_reset(&m6502);
+    m6526_reset(&m6526_1);
+    m6526_reset(&m6526_2);
+    m6569_reset(&m6569);
+    m6581_reset(&m6581);
     this->tap_header = c64tap_header();
     this->tape_valid = false;
     this->tape_tick_count = 0;
@@ -123,8 +131,8 @@ uint64_t
 c64_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = uint32_t(end_tick - start_tick);
-    uint32_t ticks_executed = m6502_exec(&board.m6502, num_ticks);
-    kbd_update(&board.kbd);
+    uint32_t ticks_executed = m6502_exec(&m6502, num_ticks);
+    kbd_update(&kbd);
     return start_tick + ticks_executed;
 }
 
@@ -141,18 +149,18 @@ c64_t::cpu_tick(uint64_t pins, void* user_data) {
     }
 
     // tick the SID
-    if (m6581_tick(&board.m6581)) {
-        board.audiobuffer.write(board.m6581.sample);
+    if (m6581_tick(&c64.m6581)) {
+        board.audiobuffer.write(c64.m6581.sample);
     }
 
     // tick the CIAs:
     //  - CIA-1 gets the FLAG pin from the datasette
     //  - the CIA-1 IRQ pin is connected to the CPU IRQ pin
     //  - the CIA-2 IRQ pin is connected to the CPU NMI pin
-    if (m6526_tick(&board.m6526_1, cia1_pins & ~M6502_IRQ) & M6502_IRQ) {
+    if (m6526_tick(&c64.m6526_1, cia1_pins & ~M6502_IRQ) & M6502_IRQ) {
         pins |= M6502_IRQ;
     }
-    if (m6526_tick(&board.m6526_2, pins & ~M6502_IRQ) & M6502_IRQ) {
+    if (m6526_tick(&c64.m6526_2, pins & ~M6502_IRQ) & M6502_IRQ) {
         pins |= M6502_NMI;
     }
 
@@ -163,7 +171,7 @@ c64_t::cpu_tick(uint64_t pins, void* user_data) {
     //    the CPU on the first CPU read access after BA goes active
     //  - the VIC-II AEC pin is connected to the CPU AEC pin, currently
     //    this goes active during a badline, but is not checked
-    pins = m6569_tick(&board.m6569, pins);
+    pins = m6569_tick(&c64.m6569, pins);
 
     // Special handling when the VIC-II asks the CPU to stop during a
     // 'badline' via the BA=>RDY pin. If the RDY pin is active, the
@@ -185,7 +193,7 @@ c64_t::cpu_tick(uint64_t pins, void* user_data) {
     // handle IO requests
     if (M6510_CHECK_IO(pins)) {
         // ...the integrated IO port in the M6510 CPU at addresses 0 and 1
-        pins = m6510_iorq(&board.m6502, pins);
+        pins = m6510_iorq(&c64.m6502, pins);
     }
     else {
         // ...the memory-mapped IO area from 0xD000 to 0xDFFF
@@ -193,12 +201,12 @@ c64_t::cpu_tick(uint64_t pins, void* user_data) {
             if (addr < 0xD400) {
                 // VIC-II (D000..D3FF)
                 uint64_t vic_pins = (pins & M6502_PIN_MASK)|M6569_CS;
-                pins = m6569_iorq(&board.m6569, vic_pins) & M6502_PIN_MASK;
+                pins = m6569_iorq(&c64.m6569, vic_pins) & M6502_PIN_MASK;
             }
             else if (addr < 0xD800) {
                 // SID (D400..D7FF)
                 uint64_t sid_pins = (pins & M6502_PIN_MASK)|M6581_CS;
-                pins = m6581_iorq(&board.m6581, sid_pins) & M6502_PIN_MASK;
+                pins = m6581_iorq(&c64.m6581, sid_pins) & M6502_PIN_MASK;
             }
             else if (addr < 0xDC00) {
                 // the special color Static-RAM bank (D800..DBFF)
@@ -212,12 +220,12 @@ c64_t::cpu_tick(uint64_t pins, void* user_data) {
             else if (addr < 0xDD00) {
                 // CIA-1 (DC00..DCFF)
                 uint64_t cia_pins = (pins & M6502_PIN_MASK)|M6526_CS;
-                pins = m6526_iorq(&board.m6526_1, cia_pins) & M6502_PIN_MASK;
+                pins = m6526_iorq(&c64.m6526_1, cia_pins) & M6502_PIN_MASK;
             }
             else if (addr < 0xDE00) {
                 // CIA-2 (DD00..DDFF)
                 uint64_t cia_pins = (pins & M6502_PIN_MASK)|M6526_CS;
-                pins = m6526_iorq(&board.m6526_2, cia_pins) & M6502_PIN_MASK;
+                pins = m6526_iorq(&c64.m6526_2, cia_pins) & M6502_PIN_MASK;
             }
             else {
                 // expansion system (not implemented)
@@ -227,11 +235,11 @@ c64_t::cpu_tick(uint64_t pins, void* user_data) {
             // a regular memory access
             if (pins & M6502_RW) {
                 // memory read
-                M6502_SET_DATA(pins, mem_rd(&board.mem, addr));
+                M6502_SET_DATA(pins, mem_rd(&c64.mem, addr));
             }
             else {
                 // memory write
-                mem_wr(&board.mem, addr, M6502_GET_DATA(pins));
+                mem_wr(&c64.mem, addr, M6502_GET_DATA(pins));
             }
         }
     }
@@ -290,7 +298,7 @@ c64_t::cia1_out(int port_id, uint8_t data, void* user_data) {
             ---
     */
     if (port_id == M6526_PORT_A) {
-        kbd_set_active_lines(&board.kbd, ~data);
+        kbd_set_active_lines(&c64.kbd, ~data);
     }
     else {
         //printf("CIA-1 out %s: %02X\n", port_id==0?"A":"B", data);
@@ -314,7 +322,7 @@ c64_t::cia1_in(int port_id, void* user_data) {
     }
     else {
         /* read keyboard matrix columns */
-        return ~(kbd_scan_columns(&board.kbd) | c64.cia1_joy_bits);
+        return ~(kbd_scan_columns(&c64.kbd) | c64.cia1_joy_bits);
     }
 }
 
@@ -377,7 +385,7 @@ c64_t::vic_fetch(uint16_t addr, void* user_data) {
               static color RAM
     */
     addr |= c64.vic_bank_select;
-    uint16_t data = (c64.color_ram[addr & 0x03FF]<<8) | mem_rd(&board.mem2, addr);
+    uint16_t data = (c64.color_ram[addr & 0x03FF]<<8) | mem_rd(&c64.mem2, addr);
     return data;
 }
 
@@ -387,6 +395,8 @@ c64_t::init_memory_map() {
     YAKC_ASSERT(roms.size(rom_images::c64_basic) == 0x2000);
     YAKC_ASSERT(roms.size(rom_images::c64_char) == 0x1000);
     YAKC_ASSERT(roms.size(rom_images::c64_kernalv3) == 0x2000);
+    mem_init(&mem);
+    mem_init(&mem2);
 
     // the C64 has a weird RAM init pattern of 64 bytes 00 and 64 bytes FF
     // alternating, probably with some randomness sprinkled in
@@ -399,19 +409,17 @@ c64_t::init_memory_map() {
     }
 
     // setup the initial CPU memory map
-    mem_unmap_all(&board.mem);
     // 0000..9FFF and C000.CFFF is always RAM
-    mem_map_ram(&board.mem, 0, 0x0000, 0xA000, ram);
-    mem_map_ram(&board.mem, 0, 0xC000, 0x1000, ram+0xC000);
+    mem_map_ram(&mem, 0, 0x0000, 0xA000, ram);
+    mem_map_ram(&mem, 0, 0xC000, 0x1000, ram+0xC000);
     // A000..BFFF, D000..DFFF and E000..FFFF are configurable
     this->update_memory_map();
 
     // setup the separate VIC-II memory map (64 KByte RAM) overlayed with
     // character ROMS at 0x1000.0x1FFF and 0x9000..0x9FFF
-    mem_unmap_all(&board.mem2);
-    mem_map_ram(&board.mem2, 1, 0x0000, 0x10000, ram);
-    mem_map_rom(&board.mem2, 0, 0x1000, 0x1000, roms.ptr(rom_images::c64_char));
-    mem_map_rom(&board.mem2, 0, 0x9000, 0x1000, roms.ptr(rom_images::c64_char));
+    mem_map_ram(&mem2, 1, 0x0000, 0x10000, ram);
+    mem_map_rom(&mem2, 0, 0x1000, 0x1000, roms.ptr(rom_images::c64_char));
+    mem_map_rom(&mem2, 0, 0x9000, 0x1000, roms.ptr(rom_images::c64_char));
 }
 
 //------------------------------------------------------------------------------
@@ -425,7 +433,7 @@ c64_t::update_memory_map() {
     const uint8_t loram = (1<<0);
     // shortcut if HIRAM and LORAM is 0, everything is RAM
     if ((this->cpu_port & (hiram|loram)) == 0) {
-        mem_map_ram(&board.mem, 0, 0xA000, 0x6000, ram+0xA000);
+        mem_map_ram(&mem, 0, 0xA000, 0x6000, ram+0xA000);
     }
     else {
         // A000..BFFF is either RAM-behind-BASIC-ROM or RAM
@@ -435,7 +443,7 @@ c64_t::update_memory_map() {
         else {
             read_ptr = ram + 0xA000;
         }
-        mem_map_rw(&board.mem, 0, 0xA000, 0x2000, read_ptr, ram+0xA000);
+        mem_map_rw(&mem, 0, 0xA000, 0x2000, read_ptr, ram+0xA000);
 
         // E000..FFFF is either RAM-behind-KERNAL-ROM or RAM
         if (this->cpu_port & hiram) {
@@ -444,14 +452,14 @@ c64_t::update_memory_map() {
         else {
             read_ptr = ram + 0xE000;
         }
-        mem_map_rw(&board.mem, 0, 0xE000, 0x2000, read_ptr, ram+0xE000);
+        mem_map_rw(&mem, 0, 0xE000, 0x2000, read_ptr, ram+0xE000);
 
         // D000..DFFF can be Char-ROM or I/O
         if  (this->cpu_port & charen) {
             this->io_mapped = true;
         }
         else {
-            mem_map_rw(&board.mem, 0, 0xD000, 0x1000, roms.ptr(rom_images::c64_char), ram+0xD000);
+            mem_map_rw(&mem, 0, 0xD000, 0x1000, roms.ptr(rom_images::c64_char), ram+0xD000);
         }
     }
 }
@@ -463,7 +471,7 @@ c64_t::init_keymap() {
         http://sta.c64.org/cbm64kbdlay.html
         http://sta.c64.org/cbm64petkey.html
     */
-    kbd_init(&board.kbd, 1);
+    kbd_init(&kbd, 1);
     const char* keymap =
         // no shift
         "        "
@@ -486,62 +494,62 @@ c64_t::init_keymap() {
         "!  \"  q ";
     YAKC_ASSERT(strlen(keymap) == 128);
     // shift is column 7, line 1
-    kbd_register_modifier(&board.kbd, 0, 7, 1);
+    kbd_register_modifier(&kbd, 0, 7, 1);
     // ctrl is column 2, line 7
-    kbd_register_modifier(&board.kbd, 1, 2, 7);
+    kbd_register_modifier(&kbd, 1, 2, 7);
     for (int shift = 0; shift < 2; shift++) {
         for (int col = 0; col < 8; col++) {
             for (int line = 0; line < 8; line++) {
                 int c = keymap[shift*64 + line*8 + col];
                 if (c != 0x20) {
-                    kbd_register_key(&board.kbd, c, col, line, shift?(1<<0):0);
+                    kbd_register_key(&kbd, c, col, line, shift?(1<<0):0);
                 }
             }
         }
     }
 
     // special keys
-    kbd_register_key(&board.kbd, 0x20, 4, 7, 0);    // space
-    kbd_register_key(&board.kbd, 0x08, 2, 0, 1);    // cursor left
-    kbd_register_key(&board.kbd, 0x09, 2, 0, 0);    // cursor right
-    kbd_register_key(&board.kbd, 0x0A, 7, 0, 0);    // cursor down
-    kbd_register_key(&board.kbd, 0x0B, 7, 0, 1);    // cursor up
-    kbd_register_key(&board.kbd, 0x01, 0, 0, 0);    // delete
-    kbd_register_key(&board.kbd, 0x0C, 3, 6, 1);    // clear
-    kbd_register_key(&board.kbd, 0x0D, 1, 0, 0);    // return
-    kbd_register_key(&board.kbd, 0x03, 7, 7, 0);    // stop
+    kbd_register_key(&kbd, 0x20, 4, 7, 0);    // space
+    kbd_register_key(&kbd, 0x08, 2, 0, 1);    // cursor left
+    kbd_register_key(&kbd, 0x09, 2, 0, 0);    // cursor right
+    kbd_register_key(&kbd, 0x0A, 7, 0, 0);    // cursor down
+    kbd_register_key(&kbd, 0x0B, 7, 0, 1);    // cursor up
+    kbd_register_key(&kbd, 0x01, 0, 0, 0);    // delete
+    kbd_register_key(&kbd, 0x0C, 3, 6, 1);    // clear
+    kbd_register_key(&kbd, 0x0D, 1, 0, 0);    // return
+    kbd_register_key(&kbd, 0x03, 7, 7, 0);    // stop
 
     // function keys
-    kbd_register_key(&board.kbd, 0xF1, 4, 0, 0);
-    kbd_register_key(&board.kbd, 0xF2, 4, 0, 1);
-    kbd_register_key(&board.kbd, 0xF3, 5, 0, 0);
-    kbd_register_key(&board.kbd, 0xF4, 5, 0, 1);
-    kbd_register_key(&board.kbd, 0xF5, 6, 0, 0);
-    kbd_register_key(&board.kbd, 0xF6, 6, 0, 1);
-    kbd_register_key(&board.kbd, 0xF7, 3, 0, 0);
-    kbd_register_key(&board.kbd, 0xF8, 3, 0, 1);
+    kbd_register_key(&kbd, 0xF1, 4, 0, 0);
+    kbd_register_key(&kbd, 0xF2, 4, 0, 1);
+    kbd_register_key(&kbd, 0xF3, 5, 0, 0);
+    kbd_register_key(&kbd, 0xF4, 5, 0, 1);
+    kbd_register_key(&kbd, 0xF5, 6, 0, 0);
+    kbd_register_key(&kbd, 0xF6, 6, 0, 1);
+    kbd_register_key(&kbd, 0xF7, 3, 0, 0);
+    kbd_register_key(&kbd, 0xF8, 3, 0, 1);
 
 // FIXME!
-//    kbd_register_key(&board.kbd, 0xF1, 5, 7, 1);    // F1 -> Shift + C= key
+//    kbd_register_key(&kbd, 0xF1, 5, 7, 1);    // F1 -> Shift + C= key
 }
 
 //------------------------------------------------------------------------------
 void
 c64_t::on_ascii(uint8_t ascii) {
-    kbd_key_down(&board.kbd, ascii);
-    kbd_key_up(&board.kbd, ascii);
+    kbd_key_down(&kbd, ascii);
+    kbd_key_up(&kbd, ascii);
 }
 
 //------------------------------------------------------------------------------
 void
 c64_t::on_key_down(uint8_t key) {
-    kbd_key_down(&board.kbd, key);
+    kbd_key_down(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
 void
 c64_t::on_key_up(uint8_t key) {
-    kbd_key_up(&board.kbd, key);
+    kbd_key_up(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
@@ -568,7 +576,7 @@ c64_t::on_joystick(uint8_t mask) {
 //------------------------------------------------------------------------------
 const void*
 c64_t::framebuffer(int& out_width, int &out_height) {
-    m6569_display_size(&board.m6569, &out_width, &out_height);
+    m6569_display_size(&m6569, &out_width, &out_height);
     return board.rgba8_buffer;
 }
 
@@ -670,7 +678,7 @@ c64_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
     while (addr < end_addr) {
         uint8_t byte;
         fs->read(fp, &byte, 1);
-        mem_wr(&board.mem, addr++, byte);
+        mem_wr(&mem, addr++, byte);
     }
     fs->close(fp);
     fs->rm(name);

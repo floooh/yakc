@@ -25,18 +25,23 @@ DebugWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(460, 400), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         if (emu.cpu_type() == cpu_model::z80) {
-            this->drawZ80RegisterTable();
-            ImGui::Separator();
-            this->drawMainContent(emu, z80_pc(&board.z80), 48);
-            ImGui::Separator();
+            if (board.z80) {
+                this->drawZ80RegisterTable();
+                ImGui::Separator();
+                this->drawMainContent(emu, z80_pc(board.z80), 48);
+                ImGui::Separator();
+                this->drawControls(emu);
+            }
         }
         else {
-            this->draw6502RegisterTable();
-            ImGui::Separator();
-            this->drawMainContent(emu, board.m6502.state.PC, 48);
-            ImGui::Separator();
+            if (board.m6502) {
+                this->draw6502RegisterTable();
+                ImGui::Separator();
+                this->drawMainContent(emu, board.m6502->state.PC, 48);
+                ImGui::Separator();
+                this->drawControls(emu);
+            }
         }
-        this->drawControls(emu);
     }
     ImGui::End();
     return this->Visible;
@@ -48,7 +53,8 @@ DebugWindow::drawZ80RegisterTable() {
     const ImVec4 red = UI::DisabledColor;
     const ImVec4 green = UI::EnabledColor;
 
-    auto* cpu = &board.z80;
+    YAKC_ASSERT(board.z80);
+    auto* cpu = board.z80;
     z80_set_af(cpu, Util::InputHex16("AF", z80_af(cpu))); ImGui::SameLine(1 * 72);
     z80_set_bc(cpu, Util::InputHex16("BC", z80_bc(cpu))); ImGui::SameLine(2 * 72);
     z80_set_de(cpu, Util::InputHex16("DE", z80_de(cpu))); ImGui::SameLine(3 * 72);
@@ -83,13 +89,14 @@ DebugWindow::drawZ80RegisterTable() {
     strFlags[8] = 0;
     ImGui::Text(" %s ", strFlags);
     ImGui::SameLine(5 * 72 + 48);
-    ImGui::TextColored((board.z80.pins & Z80_HALT) ? green:red, "HALT");
+    ImGui::TextColored((board.z80->pins & Z80_HALT) ? green:red, "HALT");
 }
 
 //------------------------------------------------------------------------------
 void
 DebugWindow::draw6502RegisterTable() {
-    auto& cpu = board.m6502;
+    YAKC_ASSERT(board.m6502);
+    auto& cpu = *board.m6502;
     Util::InputHex8("A", cpu.state.A); ImGui::SameLine(1 * 48 + 4);
     Util::InputHex8("X", cpu.state.X); ImGui::SameLine(2 * 48);
     Util::InputHex8("Y", cpu.state.Y); ImGui::SameLine(3 * 48);
@@ -98,7 +105,7 @@ DebugWindow::draw6502RegisterTable() {
     Util::InputHex16("PC", cpu.state.PC); ImGui::SameLine(6 * 46 + 20);
 
     char strFlags[9];
-    const uint8_t f = board.m6502.state.P;
+    const uint8_t f = cpu.state.P;
     strFlags[0] = (f & M6502_NF) ? 'N':'-';
     strFlags[1] = (f & M6502_VF) ? 'V':'-';
     strFlags[2] = (f & M6502_XF) ? 'x':'-';
@@ -114,6 +121,7 @@ DebugWindow::draw6502RegisterTable() {
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawControls(yakc& emu) {
+    YAKC_ASSERT(board.z80 || board.m6502);
     uint16_t bp_addr = 0xFFFF;
     bool bp_enabled = board.dbg.breakpoint_enabled();
     bp_addr = board.dbg.breakpoint_addr();
@@ -143,20 +151,24 @@ DebugWindow::drawControls(yakc& emu) {
         ImGui::SameLine();
         if (ImGui::Button(">Int")) {
             if (emu.cpu_type() == cpu_model::z80) {
-                this->cpu_pins = board.z80.pins;
+                YAKC_ASSERT(board.z80);
+                this->cpu_pins = board.z80->pins;
             }
             else {
-                this->cpu_pins = board.m6502.state.PINS;
+                YAKC_ASSERT(board.m6502);
+                this->cpu_pins = board.m6502->state.PINS;
             }
             emu.step_until([this](uint32_t ticks)->bool {
                 bool triggered = false;
                 if (this->emu->cpu_type() == cpu_model::z80) {
-                    uint64_t cur_pins = board.z80.pins;
+                    YAKC_ASSERT(board.z80);
+                    uint64_t cur_pins = board.z80->pins;
                     triggered = 0 != (((cur_pins ^ this->cpu_pins) & cur_pins) & Z80_INT);
                     this->cpu_pins = cur_pins;
                 }
                 else {
-                    uint64_t cur_pins = board.m6502.state.PINS;
+                    YAKC_ASSERT(board.m6502);
+                    uint64_t cur_pins = board.m6502->state.PINS;
                     triggered = 0 != (((cur_pins ^ this->cpu_pins) & cur_pins) & (M6502_IRQ|M6502_NMI));
                     this->cpu_pins = cur_pins;
                 }
@@ -196,6 +208,8 @@ DebugWindow::drawControls(yakc& emu) {
 //------------------------------------------------------------------------------
 void
 DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
+    YAKC_ASSERT(board.mem);
+
     ImGui::BeginChild("##scrolling", ImVec2(0, -1 * (ImGui::GetFrameHeightWithSpacing()+4)));
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
@@ -277,7 +291,7 @@ DebugWindow::drawMainContent(yakc& emu, uint16_t start_addr, int num_lines) {
         float line_start_x = ImGui::GetCursorPosX();
         for (int n = 0; n < num_bytes; n++) {
             ImGui::SameLine(line_start_x + cell_width * n);
-            ImGui::Text("%02X ", mem_rd(&board.mem, op_addr++));
+            ImGui::Text("%02X ", mem_rd(board.mem, op_addr++));
         }
 
         // print disassembled instruction

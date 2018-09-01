@@ -20,7 +20,12 @@ Disasm::Disasm() {
 
 //------------------------------------------------------------------------------
 static uint8_t fetch(uint16_t base, int offset, void* /*userdata*/) {
-    return mem_rd(&board.mem, base+offset);
+    if (board.mem) {
+        return mem_rd(board.mem, base+offset);
+    }
+    else {
+        return 0xFF;
+    }
 }
 
 //------------------------------------------------------------------------------

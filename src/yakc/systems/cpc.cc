@@ -101,7 +101,7 @@ cpc_t::init_keymap() {
         BCD decoder, and the lines are read through port A of the
         AY-3-8910 chip.
     */
-    kbd_init(&board.kbd, 1);
+    kbd_init(&kbd, 1);
     const char* keymap =
         // no shift
         "   ^08641 "
@@ -124,31 +124,31 @@ cpc_t::init_keymap() {
         "   >< VXZ ";
     YAKC_ASSERT(strlen(keymap) == 160);
     // shift key is on column 2, line 5
-    kbd_register_modifier(&board.kbd, 0, 2, 5);
+    kbd_register_modifier(&kbd, 0, 2, 5);
     // ctrl key is on column 2, line 7
-    kbd_register_modifier(&board.kbd, 1, 2, 7);
+    kbd_register_modifier(&kbd, 1, 2, 7);
 
     for (int shift = 0; shift < 2; shift++) {
         for (int col = 0; col < 10; col++) {
             for (int line = 0; line < 8; line++) {
                 int c = keymap[shift*80 + line*10 + col];
                 if (c != 0x20) {
-                    kbd_register_key(&board.kbd, c, col, line, shift?(1<<0):0);
+                    kbd_register_key(&kbd, c, col, line, shift?(1<<0):0);
                 }
             }
         }
     }
 
     // special keys
-    kbd_register_key(&board.kbd, 0x20, 5, 7, 0);    // space
-    kbd_register_key(&board.kbd, 0x08, 1, 0, 0);    // cursor left
-    kbd_register_key(&board.kbd, 0x09, 0, 1, 0);    // cursor right
-    kbd_register_key(&board.kbd, 0x0A, 0, 2, 0);    // cursor down
-    kbd_register_key(&board.kbd, 0x0B, 0, 0, 0);    // cursor up
-    kbd_register_key(&board.kbd, 0x01, 9, 7, 0);    // delete
-    kbd_register_key(&board.kbd, 0x0C, 2, 0, 0);    // clr
-    kbd_register_key(&board.kbd, 0x0D, 2, 2, 0);    // return
-    kbd_register_key(&board.kbd, 0x03, 8, 2, 0);    // escape
+    kbd_register_key(&kbd, 0x20, 5, 7, 0);    // space
+    kbd_register_key(&kbd, 0x08, 1, 0, 0);    // cursor left
+    kbd_register_key(&kbd, 0x09, 0, 1, 0);    // cursor right
+    kbd_register_key(&kbd, 0x0A, 0, 2, 0);    // cursor down
+    kbd_register_key(&kbd, 0x0B, 0, 0, 0);    // cursor up
+    kbd_register_key(&kbd, 0x01, 9, 7, 0);    // delete
+    kbd_register_key(&kbd, 0x0C, 2, 0, 0);    // clr
+    kbd_register_key(&kbd, 0x0D, 2, 2, 0);    // return
+    kbd_register_key(&kbd, 0x03, 8, 2, 0);    // escape
 }
 
 //------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ cpc_t::poweron(system m) {
 
     // setup memory system
     clear(board.ram, sizeof(board.ram));
-    mem_unmap_all(&board.mem);
+    mem_init(&mem);
     this->update_memory_mapping();
 
     // http://www.cpcwiki.eu/index.php/Format:TAP_tape_image_file_format
@@ -184,7 +184,7 @@ cpc_t::poweron(system m) {
     board.freq_hz = 4000000;
     z80_desc_t cpu_desc = { };
     cpu_desc.tick_cb = cpu_tick;
-    z80_init(&board.z80, &cpu_desc);
+    z80_init(&z80, &cpu_desc);
     ay38910_desc_t ay_desc = { };
     ay_desc.type = AY38910_TYPE_8912;
     ay_desc.in_cb = psg_in;
@@ -192,44 +192,52 @@ cpc_t::poweron(system m) {
     ay_desc.tick_hz = 1000000;
     ay_desc.sound_hz = SOUND_SAMPLE_RATE;
     ay_desc.magnitude = 0.5f;
-    ay38910_init(&board.ay38910, &ay_desc);
+    ay38910_init(&ay38910, &ay_desc);
     i8255_desc_t ppi_desc = { };
     ppi_desc.in_cb = ppi_in;
     ppi_desc.out_cb = ppi_out;
-    i8255_init(&board.i8255, &ppi_desc);
-    mc6845_init(&board.mc6845, MC6845_TYPE_UM6845R);
-    crt_init(&board.crt, CRT_PAL, 6, 32, max_display_width/16, max_display_height);
+    i8255_init(&i8255, &ppi_desc);
+    mc6845_init(&mc6845, MC6845_TYPE_UM6845R);
+    crt_init(&crt, CRT_PAL, 6, 32, max_display_width/16, max_display_height);
     this->tick_count = 0;
 
     // CPU start address
-    z80_set_pc(&board.z80, 0x0000);
+    z80_set_pc(&z80, 0x0000);
     
     // trap the casread function
-    z80_set_trap(&board.z80, 1, this->casread_trap);
+    z80_set_trap(&z80, 1, this->casread_trap);
+
+    board.z80 = &z80;
+    board.ay38910 = &ay38910;
+    board.i8255 = &i8255;
+    board.mc6845 = &mc6845;
+    board.crt = &crt;
+    board.kbd = &kbd;
+    board.mem = &mem;
 }
 
 //------------------------------------------------------------------------------
 void
 cpc_t::poweroff() {
     YAKC_ASSERT(this->on);
-    mem_unmap_all(&board.mem);
     this->on = false;
+    board.clear();
 }
 
 //------------------------------------------------------------------------------
 void
 cpc_t::reset() {
-    mc6845_reset(&board.mc6845);
-    crt_reset(&board.crt);
-    ay38910_reset(&board.ay38910);
-    i8255_reset(&board.i8255);
-    z80_reset(&board.z80);
-    z80_set_pc(&board.z80, 0x0000);
+    mc6845_reset(&mc6845);
+    crt_reset(&crt);
+    ay38910_reset(&ay38910);
+    i8255_reset(&i8255);
+    z80_reset(&z80);
+    z80_set_pc(&z80, 0x0000);
     this->joymask = 0;
     this->tick_count = 0;
     this->upper_rom_select = 0;
     this->ga_init();
-    mem_unmap_all(&board.mem);
+    mem_unmap_all(&mem);
     this->update_memory_mapping();
 }
 
@@ -238,10 +246,10 @@ uint64_t
 cpc_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = uint32_t(end_tick - start_tick);
-    uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
-    kbd_update(&board.kbd);
+    uint32_t ticks_executed = z80_exec(&z80, num_ticks);
+    kbd_update(&kbd);
     // check if casread trap has been hit
-    if (board.z80.trap_id == 1) {
+    if (z80.trap_id == 1) {
         // this checks if the lower ROM is currently paged in
         // when the cassette read trap point is hit
         if ((cpc.cur_model == system::cpc6128) && (0 == (cpc.ga_config & (1<<2)))) {
@@ -267,10 +275,10 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
         // CPU MEMORY REQUEST
         const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
-            Z80_SET_DATA(pins, mem_rd(&board.mem, addr));
+            Z80_SET_DATA(pins, mem_rd(&cpc.mem, addr));
         }
         else if (pins & Z80_WR) {
-            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
+            mem_wr(&cpc.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if ((pins & Z80_IORQ) && (pins & (Z80_RD|Z80_WR))) {
@@ -320,8 +328,8 @@ cpc_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
             }
             // on every 4th clock cycle, tick the system
             if (!wait_pin) {
-                if (ay38910_tick(&board.ay38910)) {
-                    board.audiobuffer.write(board.ay38910.sample);
+                if (ay38910_tick(&cpc.ay38910)) {
+                    board.audiobuffer.write(cpc.ay38910.sample);
                 }
                 pins = cpc.ga_tick(pins);
             }
@@ -358,7 +366,7 @@ cpc_t::cpu_iorq(uint64_t pins) {
         if (pins & Z80_A8) { ppi_pins |= I8255_A0; }
         if (pins & Z80_RD) { ppi_pins |= I8255_RD; }
         if (pins & Z80_WR) { ppi_pins |= I8255_WR; }
-        pins = i8255_iorq(&board.i8255, ppi_pins) & Z80_PIN_MASK;
+        pins = i8255_iorq(&cpc.i8255, ppi_pins) & Z80_PIN_MASK;
     }
     /*
         Z80 to MC6845 pin connections:
@@ -373,7 +381,7 @@ cpc_t::cpu_iorq(uint64_t pins) {
         uint64_t vdu_pins = (pins & Z80_PIN_MASK)|MC6845_CS;
         if (pins & Z80_A9) { vdu_pins |= MC6845_RW; }
         if (pins & Z80_A8) { vdu_pins |= MC6845_RS; }
-        pins = mc6845_iorq(&board.mc6845, vdu_pins) & Z80_PIN_MASK;
+        pins = mc6845_iorq(&cpc.mc6845, vdu_pins) & Z80_PIN_MASK;
     }
     /*
         Gate Array Function (only writing to the gate array
@@ -471,19 +479,19 @@ cpc_t::ppi_out(int port_id, uint64_t pins, uint8_t data, void* user_data) {
                  PC6    -> BC1
     */
     if ((I8255_PORT_A == port_id) || (I8255_PORT_C == port_id)) {
-        const uint8_t ay_ctrl = board.i8255.output[I8255_PORT_C] & ((1<<7)|(1<<6));
+        const uint8_t ay_ctrl = cpc.i8255.output[I8255_PORT_C] & ((1<<7)|(1<<6));
         if (ay_ctrl) {
             uint64_t ay_pins = 0;
             if (ay_ctrl & (1<<7)) { ay_pins |= AY38910_BDIR; }
             if (ay_ctrl & (1<<6)) { ay_pins |= AY38910_BC1; }
-            const uint8_t ay_data = board.i8255.output[I8255_PORT_A];
+            const uint8_t ay_data = cpc.i8255.output[I8255_PORT_A];
             AY38910_SET_DATA(ay_pins, ay_data);
-            ay38910_iorq(&board.ay38910, ay_pins);
+            ay38910_iorq(&cpc.ay38910, ay_pins);
         }
     }
     if (I8255_PORT_C == port_id) {
         // bits 0..3: select keyboard matrix line
-        kbd_set_active_columns(&board.kbd, 1<<(data & 0x0F));
+        kbd_set_active_columns(&cpc.kbd, 1<<(data & 0x0F));
 
         // FIXME: cassette write data
         // cassette deck motor control
@@ -504,12 +512,12 @@ cpc_t::ppi_in(int port_id, void* user_data) {
         // AY-3-8912 PSG function (indirectly this may also trigger
         // a read of the keyboard matrix via the AY's IO port
         uint64_t ay_pins = 0;
-        uint8_t ay_ctrl = board.i8255.output[I8255_PORT_C];
+        uint8_t ay_ctrl = cpc.i8255.output[I8255_PORT_C];
         if (ay_ctrl & (1<<7)) ay_pins |= AY38910_BDIR;
         if (ay_ctrl & (1<<6)) ay_pins |= AY38910_BC1;
-        uint8_t ay_data = board.i8255.output[I8255_PORT_A];
+        uint8_t ay_data = cpc.i8255.output[I8255_PORT_A];
         AY38910_SET_DATA(ay_pins, ay_data);
-        ay_pins = ay38910_iorq(&board.ay38910, ay_pins);
+        ay_pins = ay38910_iorq(&cpc.ay38910, ay_pins);
         return AY38910_GET_DATA(ay_pins);
     }
     else if (I8255_PORT_B == port_id) {
@@ -530,7 +538,7 @@ cpc_t::ppi_in(int port_id, void* user_data) {
         //
         uint8_t val = (1<<4) | (7<<1);    // 50Hz refresh rate, Amstrad
         // PPI Port B Bit 0 is directly wired to the 6845 VSYNC pin (see schematics)
-        if (board.mc6845.vs) {
+        if (cpc.mc6845.vs) {
             val |= (1<<0);
         }
         return val;
@@ -554,8 +562,8 @@ uint8_t
 cpc_t::psg_in(int port_id, void* user_data) {
     // read the keyboard matrix and joystick port
     if (port_id == AY38910_PORT_A) {
-        uint8_t data = (uint8_t) kbd_scan_lines(&board.kbd);
-        if (board.kbd.active_columns & (1<<9)) {
+        uint8_t data = (uint8_t) kbd_scan_lines(&cpc.kbd);
+        if (cpc.kbd.active_columns & (1<<9)) {
             /*
                 joystick input is implemented like this:
                 - the keyboard column 9 is routed to the joystick
@@ -658,7 +666,7 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
     // http://www.cpcwiki.eu/forum/programming/frame-flyback-and-interrupts/msg25106/#msg25106
     // https://web.archive.org/web/20170612081209/http://www.grimware.org/doku.php/documentations/devices/gatearray
 
-    uint64_t crtc_pins = mc6845_tick(&board.mc6845);
+    uint64_t crtc_pins = mc6845_tick(&mc6845);
 
     /*
         INTERRUPT GENERATION:
@@ -746,7 +754,7 @@ cpc_t::ga_tick(uint64_t cpu_pins) {
     // FIXME delayed VSYNC to monitor
 
     const bool vsync = 0 != (crtc_pins & MC6845_VS);
-    crt_tick(&board.crt, this->ga_sync, vsync);
+    crt_tick(&crt, this->ga_sync, vsync);
     this->ga_decode_video(crtc_pins);
 
     this->ga_crtc_pins = crtc_pins;
@@ -825,9 +833,9 @@ cpc_t::ga_decode_pixels(uint32_t* dst, uint64_t crtc_pins) {
 void
 cpc_t::ga_decode_video(uint64_t crtc_pins) {
     if (!this->debug_video) {
-        if (board.crt.visible) {
-            int dst_x = board.crt.pos_x * 16;
-            int dst_y = board.crt.pos_y;
+        if (crt.visible) {
+            int dst_x = crt.pos_x * 16;
+            int dst_y = crt.pos_y;
             YAKC_ASSERT((dst_x <= (max_display_width-16)) && (dst_y < max_display_height));
             uint32_t* dst = &(board.rgba8_buffer[dst_x + dst_y * max_display_width]);
             if (crtc_pins & MC6845_DE) {
@@ -850,8 +858,8 @@ cpc_t::ga_decode_video(uint64_t crtc_pins) {
     }
     else {
         // debug mode
-        int dst_x = board.crt.h_pos * 16;
-        int dst_y = board.crt.v_pos;
+        int dst_x = crt.h_pos * 16;
+        int dst_y = crt.v_pos;
         if ((dst_x <= (dbg_max_display_width-16)) && (dst_y < dbg_max_display_height)) {
             uint32_t* dst = &(board.rgba8_buffer[dst_x + dst_y * dbg_max_display_width]);
             if (!(crtc_pins & MC6845_DE)) {
@@ -870,7 +878,7 @@ cpc_t::ga_decode_video(uint64_t crtc_pins) {
                 if (this->ga_int) {
                     b = 0xFF;
                 }
-                else if (0 == board.mc6845.scanline_ctr) {
+                else if (0 == mc6845.scanline_ctr) {
                     r = g = b = 0x00;
                 }
                 for (int i = 0; i < 16; i++) {
@@ -934,44 +942,44 @@ cpc_t::update_memory_mapping() {
     // 0x0000..0x3FFF
     if (this->ga_config & (1<<2)) {
         // read/write from and to RAM bank
-        mem_map_ram(&board.mem, 0, 0x0000, 0x4000, board.ram[i0]);
+        mem_map_ram(&mem, 0, 0x0000, 0x4000, board.ram[i0]);
     }
     else {
         // read from ROM, write to RAM
-        mem_map_rw(&board.mem, 0, 0x0000, 0x4000, rom0_ptr, board.ram[i0]);
+        mem_map_rw(&mem, 0, 0x0000, 0x4000, rom0_ptr, board.ram[i0]);
     }
     // 0x4000..0x7FFF
-    mem_map_ram(&board.mem, 0, 0x4000, 0x4000, board.ram[i1]);
+    mem_map_ram(&mem, 0, 0x4000, 0x4000, board.ram[i1]);
     // 0x8000..0xBFFF
-    mem_map_ram(&board.mem, 0, 0x8000, 0x4000, board.ram[i2]);
+    mem_map_ram(&mem, 0, 0x8000, 0x4000, board.ram[i2]);
     // 0xC000..0xFFFF
     if (this->ga_config & (1<<3)) {
         // read/write from and to RAM bank
-        mem_map_ram(&board.mem, 0, 0xC000, 0x4000, board.ram[i3]);
+        mem_map_ram(&mem, 0, 0xC000, 0x4000, board.ram[i3]);
     }
     else {
         // read from ROM, write to RAM
-        mem_map_rw(&board.mem, 0, 0xC000, 0x4000, rom1_ptr, board.ram[i3]);
+        mem_map_rw(&mem, 0, 0xC000, 0x4000, rom1_ptr, board.ram[i3]);
     }
 }
 
 //------------------------------------------------------------------------------
 void
 cpc_t::on_ascii(uint8_t ascii) {
-    kbd_key_down(&board.kbd, ascii);
-    kbd_key_up(&board.kbd, ascii);
+    kbd_key_down(&kbd, ascii);
+    kbd_key_up(&kbd, ascii);
 }
 
 //------------------------------------------------------------------------------
 void
 cpc_t::on_key_down(uint8_t key) {
-    kbd_key_down(&board.kbd, key);
+    kbd_key_down(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
 void
 cpc_t::on_key_up(uint8_t key) {
-    kbd_key_up(&board.kbd, key);
+    kbd_key_up(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
@@ -1040,7 +1048,7 @@ cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
         }
     }
     // CPU state
-    auto* cpu = &board.z80;
+    auto* cpu = &z80;
     z80_set_f(cpu, hdr.F); z80_set_a(cpu, hdr.A);
     z80_set_c(cpu, hdr.C); z80_set_b(cpu, hdr.B);
     z80_set_e(cpu, hdr.E); z80_set_d(cpu, hdr.D);
@@ -1067,25 +1075,23 @@ cpc_t::load_sna(filesystem* fs, const char* name, filetype type, bool start) {
     this->ga_next_video_mode = hdr.gate_array_config & 3;
     this->ga_ram_config = hdr.ram_config & 0x3F;
     this->update_memory_mapping();
-    auto& vdg = board.mc6845;
     for (int i = 0; i < 18; i++) {
-        vdg.reg[i] = hdr.crtc_regs[i];
+        mc6845.reg[i] = hdr.crtc_regs[i];
     }
-    vdg.sel = hdr.crtc_selected;
+    mc6845.sel = hdr.crtc_selected;
     this->upper_rom_select = hdr.rom_config;
-    auto& ppi = board.i8255;
-    ppi.output[I8255_PORT_A] = hdr.ppi_a;
-    ppi.output[I8255_PORT_B] = hdr.ppi_b;
-    ppi.output[I8255_PORT_C] = hdr.ppi_c;
-    ppi.control = hdr.ppi_control;
+    i8255.output[I8255_PORT_A] = hdr.ppi_a;
+    i8255.output[I8255_PORT_B] = hdr.ppi_b;
+    i8255.output[I8255_PORT_C] = hdr.ppi_c;
+    i8255.control = hdr.ppi_control;
     for (int i = 0; i < 16; i++) {
         // latch AY-3-8912 register address
-        ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|(i<<16));
+        ay38910_iorq(&ay38910, AY38910_BDIR|AY38910_BC1|(i<<16));
         // write AY-3-8912 register value
-        ay38910_iorq(&board.ay38910, AY38910_BDIR|(hdr.psg_regs[i]<<16));
+        ay38910_iorq(&ay38910, AY38910_BDIR|(hdr.psg_regs[i]<<16));
     }
     // latch AY-3-8912 selected address
-    ay38910_iorq(&board.ay38910, AY38910_BDIR|AY38910_BC1|(hdr.psg_selected<<16));
+    ay38910_iorq(&ay38910, AY38910_BDIR|AY38910_BC1|(hdr.psg_selected<<16));
     fs->close(fp);
     fs->rm(name);
     if (!hdr_valid) {
@@ -1113,9 +1119,9 @@ cpc_t::load_bin(filesystem* fs, const char* name, filetype type, bool start) {
         uint8_t val;
         for (uint16_t i=0; i < len; i++) {
             fs->read(fp, &val, sizeof(val));
-            mem_wr(&board.mem, load_addr+i, val);
+            mem_wr(&mem, load_addr+i, val);
         }
-        auto* cpu = &board.z80;
+        auto* cpu = &z80;
         z80_set_iff1(cpu, true);
         z80_set_iff2(cpu, true);
         z80_set_c(cpu, 0);          // hmm "ROM select number"
@@ -1148,19 +1154,19 @@ cpc_t::casread() {
     tape.read(&len, sizeof(len));
     uint8_t sync = 0;
     tape.read(&sync, sizeof(sync));
-    if (sync == z80_a(&board.z80)) {
+    if (sync == z80_a(&z80)) {
         success = true;
         tape.inc_counter(1);
         for (uint16_t i = 0; i < (len-1); i++) {
             uint8_t val;
             tape.read(&val, sizeof(val));
-            uint16_t hl = z80_hl(&board.z80);
-            mem_wr(&board.mem, hl, val);
-            z80_set_hl(&board.z80, hl+1);
+            uint16_t hl = z80_hl(&z80);
+            mem_wr(&mem, hl, val);
+            z80_set_hl(&z80, hl+1);
         }
     }
-    z80_set_f(&board.z80, success ? 0x45 : 0x00);
-    z80_set_pc(&board.z80, this->casread_ret);
+    z80_set_f(&z80, success ? 0x45 : 0x00);
+    z80_set_pc(&z80, this->casread_ret);
 }
 
 //------------------------------------------------------------------------------

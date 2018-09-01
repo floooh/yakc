@@ -97,6 +97,15 @@ public:
     /// update the rom pointers
     void update_rom_pointers();
 
+    z80_t z80;
+    z80pio_t z80pio;
+    z80ctc_t z80ctc;
+    beeper_t beeper_1;
+    beeper_t beeper_2;
+
+    kbd_t kbd;
+    mem_t mem;
+
     system cur_model = system::kc85_3;
     os_rom cur_caos = os_rom::caos_3_1;
     bool on = false;

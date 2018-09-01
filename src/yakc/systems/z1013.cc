@@ -24,29 +24,30 @@ z1013_t::check_roms(system model, os_rom os) {
 //------------------------------------------------------------------------------
 void
 z1013_t::init_memorymap() {
-    mem_unmap_all(&board.mem);
+    mem_init(&mem);
     if (system::z1013_64 == this->cur_model) {
         // 64 kByte RAM
-        mem_map_ram(&board.mem, 1, 0x0000, 0x10000, board.ram[0]);
+        mem_map_ram(&mem, 1, 0x0000, 0x10000, board.ram[0]);
     }
     else {
         // 16 kByte RAM
-        mem_map_ram(&board.mem, 1, 0x0000, 0x4000, board.ram[0]);
+        mem_map_ram(&mem, 1, 0x0000, 0x4000, board.ram[0]);
     }
     // 1 kByte video memory
-    mem_map_ram(&board.mem, 0, 0xEC00, 0x0400, board.ram[vidmem_page]);
+    mem_map_ram(&mem, 0, 0xEC00, 0x0400, board.ram[vidmem_page]);
     // 2 kByte system rom
     if (os_rom::z1013_mon202 == this->cur_os) {
-        mem_map_rom(&board.mem, 0, 0xF000, roms.size(rom_images::z1013_mon202), roms.ptr(rom_images::z1013_mon202));
+        mem_map_rom(&mem, 0, 0xF000, roms.size(rom_images::z1013_mon202), roms.ptr(rom_images::z1013_mon202));
     }
     else {
-        mem_map_rom(&board.mem, 0, 0xF000, roms.size(rom_images::z1013_mon_a2), roms.ptr(rom_images::z1013_mon_a2));
+        mem_map_rom(&mem, 0, 0xF000, roms.size(rom_images::z1013_mon_a2), roms.ptr(rom_images::z1013_mon_a2));
     }
 }
 
 //------------------------------------------------------------------------------
 void
 z1013_t::init_keymaps() {
+    kbd_init(&kbd, 2);
     if (this->cur_model == system::z1013_01) {
         this->init_keymap_8x4();
     }
@@ -69,7 +70,6 @@ z1013_t::poweron(system m) {
         this->cur_os = os_rom::z1013_mon_a2;
     }
     this->on = true;
-    kbd_init(&board.kbd, 2);
     this->init_keymaps();
     this->kbd_request_column = 0;
     this->kbd_request_line_hilo = false;
@@ -84,32 +84,37 @@ z1013_t::poweron(system m) {
     // initialize hardware components
     z80_desc_t cpu_desc = { };
     cpu_desc.tick_cb = cpu_tick;
-    z80_init(&board.z80, &cpu_desc);
+    z80_init(&z80, &cpu_desc);
     z80pio_desc_t pio_desc = { };
     pio_desc.in_cb = pio_in;
     pio_desc.out_cb = pio_out;
-    z80pio_init(&board.z80pio_1, &pio_desc);
+    z80pio_init(&z80pio, &pio_desc);
 
     // execution on power-on starts at 0xF000
-    z80_set_pc(&board.z80, 0xF000);
+    z80_set_pc(&z80, 0xF000);
+
+    board.z80 = &z80;
+    board.z80pio_1 = &z80pio;
+    board.kbd = &kbd;
+    board.mem = &mem;
 }
 
 //------------------------------------------------------------------------------
 void
 z1013_t::poweroff() {
     YAKC_ASSERT(this->on);
-    mem_unmap_all(&board.mem);
     this->on = false;
+    board.clear();
 }
 
 //------------------------------------------------------------------------------
 void
 z1013_t::reset() {
-    z80_reset(&board.z80);
-    z80pio_reset(&board.z80pio_1);
+    z80_reset(&z80);
+    z80pio_reset(&z80pio);
     this->kbd_request_column = 0;
     // execution after reset starts at 0x0000(??? -> doesn't work)
-    z80_set_pc(&board.z80, 0xF000);
+    z80_set_pc(&z80, 0xF000);
 }
 
 //------------------------------------------------------------------------------
@@ -117,8 +122,8 @@ uint64_t
 z1013_t::exec(uint64_t start_tick, uint64_t end_tick) {
     YAKC_ASSERT(start_tick <= end_tick);
     uint32_t num_ticks = uint32_t(end_tick - start_tick);
-    uint32_t ticks_executed = z80_exec(&board.z80, num_ticks);
-    kbd_update(&board.kbd);
+    uint32_t ticks_executed = z80_exec(&z80, num_ticks);
+    kbd_update(&kbd);
     this->decode_video();
     return start_tick + ticks_executed;
 }
@@ -131,12 +136,12 @@ z1013_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
         const uint16_t addr = Z80_GET_ADDR(pins);
         if (pins & Z80_RD) {
             // a memory read
-            const uint8_t data = mem_rd(&board.mem, addr);
+            const uint8_t data = mem_rd(&z1013.mem, addr);
             Z80_SET_DATA(pins, data);
         }
         else if (pins & Z80_WR) {
             // a memory write
-            mem_wr(&board.mem, addr, Z80_GET_DATA(pins));
+            mem_wr(&z1013.mem, addr, Z80_GET_DATA(pins));
         }
     }
     else if (pins & Z80_IORQ) {
@@ -175,7 +180,7 @@ z1013_t::cpu_tick(int num_ticks, uint64_t pins, void* user_data) {
             if (pio_pins & (1<<0)) pio_pins |= Z80PIO_CDSEL;
             /* address bit 1 selects port A/B */
             if (pio_pins & (1<<1)) pio_pins |= Z80PIO_BASEL;
-            pins = z80pio_iorq(&board.z80pio_1, pio_pins) & Z80_PIN_MASK;
+            pins = z80pio_iorq(&z1013.z80pio, pio_pins) & Z80_PIN_MASK;
         }
         else if ((pins & (Z80_A3|Z80_WR)) == (Z80_A3|Z80_WR)) {
             /* port 8 is connected to a hardware latch to store the
@@ -214,12 +219,12 @@ z1013_t::pio_in(int port_id, void* user_data) {
         uint8_t data = 0;
         if (system::z1013_01 == z1013.cur_model) {
             uint16_t column_mask = (1<<(z1013.kbd_request_column & 7));
-            uint16_t line_mask = kbd_test_lines(&board.kbd, column_mask);
+            uint16_t line_mask = kbd_test_lines(&z1013.kbd, column_mask);
             data = 0xF & ~(line_mask & 0xF);
         }
         else {
             uint16_t column_mask = (1<<z1013.kbd_request_column);
-            uint16_t line_mask = kbd_test_lines(&board.kbd, column_mask);
+            uint16_t line_mask = kbd_test_lines(&z1013.kbd, column_mask);
             if (z1013.kbd_request_line_hilo) {
                 line_mask >>= 4;
             }
@@ -232,20 +237,20 @@ z1013_t::pio_in(int port_id, void* user_data) {
 //------------------------------------------------------------------------------
 void
 z1013_t::on_ascii(uint8_t ascii) {
-    kbd_key_down(&board.kbd, ascii);
-    kbd_key_up(&board.kbd, ascii);
+    kbd_key_down(&kbd, ascii);
+    kbd_key_up(&kbd, ascii);
 }
 
 //------------------------------------------------------------------------------
 void
 z1013_t::on_key_down(uint8_t key) {
-    kbd_key_down(&board.kbd, key);
+    kbd_key_down(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
 void
 z1013_t::on_key_up(uint8_t key) {
-    kbd_key_up(&board.kbd, key);
+    kbd_key_up(&kbd, key);
 }
 
 //------------------------------------------------------------------------------
@@ -265,27 +270,27 @@ z1013_t::init_keymap_8x4() {
         "xyz     "  "        "  "        "  "        ";
 
     // 4 shift keys are on column 0/1/2/3, line 3
-    kbd_register_modifier(&board.kbd, 0, 0, 3);
-    kbd_register_modifier(&board.kbd, 1, 1, 3);
-    kbd_register_modifier(&board.kbd, 2, 2, 3);
-    kbd_register_modifier(&board.kbd, 3, 3, 3);
+    kbd_register_modifier(&kbd, 0, 0, 3);
+    kbd_register_modifier(&kbd, 1, 1, 3);
+    kbd_register_modifier(&kbd, 2, 2, 3);
+    kbd_register_modifier(&kbd, 3, 3, 3);
     for (int layer = 0; layer < 5; layer++) {
         for (int line = 0; line < 4; line++) {
             for (int col = 0; col < 8; col++) {
                 uint8_t c = layers_8x4[layer*32 + line*8 + col];
                 if (c != 0x20) {
-                    kbd_register_key(&board.kbd, c, col, line, (layer>0) ? (1<<(layer-1)) : 0);
+                    kbd_register_key(&kbd, c, col, line, (layer>0) ? (1<<(layer-1)) : 0);
                 }
             }
         }
     }
 
     // special keys
-    kbd_register_key(&board.kbd, ' ', 5, 3, 0);   // Space
-    kbd_register_key(&board.kbd, 0x08, 4, 3, 0);  // Cursor Left
-    kbd_register_key(&board.kbd, 0x09, 6, 3, 0);  // Cursor Right
-    kbd_register_key(&board.kbd, 0x0D, 7, 3, 0);  // Enter
-    kbd_register_key(&board.kbd, 0x03, 3, 1, 4);  // Break/Escape
+    kbd_register_key(&kbd, ' ', 5, 3, 0);   // Space
+    kbd_register_key(&kbd, 0x08, 4, 3, 0);  // Cursor Left
+    kbd_register_key(&kbd, 0x09, 6, 3, 0);  // Cursor Right
+    kbd_register_key(&kbd, 0x0D, 7, 3, 0);  // Enter
+    kbd_register_key(&kbd, 0x03, 3, 1, 4);  // Break/Escape
 }
 
 //------------------------------------------------------------------------------
@@ -294,10 +299,10 @@ z1013_t::init_keymap_8x8() {
     // see: http://www.z1013.de/images/21.gif
     /* shift key is column 7, line 6 */
     const int shift = 0, shift_mask = (1<<shift);
-    kbd_register_modifier(&board.kbd, shift, 7, 6);
+    kbd_register_modifier(&kbd, shift, 7, 6);
     /* ctrl key is column 6, line 5 */
     const int ctrl = 1, ctrl_mask = (1<<ctrl);
-    kbd_register_modifier(&board.kbd, ctrl, 6, 5);
+    kbd_register_modifier(&kbd, ctrl, 6, 5);
     /* alpha-numeric keys */
     const char* keymap =
         /* unshifted keys */
@@ -309,19 +314,19 @@ z1013_t::init_keymap_8x8() {
             for (int col = 0; col < 8; col++) {
                 int c = keymap[layer*64 + line*8 + col];
                 if (c != 0x20) {
-                    kbd_register_key(&board.kbd, c, col, line, layer?shift_mask:0);
+                    kbd_register_key(&kbd, c, col, line, layer?shift_mask:0);
                 }
             }
         }
     }
     /* special keys */
-    kbd_register_key(&board.kbd, ' ',  6, 4, 0);  /* space */
-    kbd_register_key(&board.kbd, 0x08, 6, 2, 0);  /* cursor left */
-    kbd_register_key(&board.kbd, 0x09, 6, 3, 0);  /* cursor right */
-    kbd_register_key(&board.kbd, 0x0A, 6, 7, 0);  /* cursor down */
-    kbd_register_key(&board.kbd, 0x0B, 6, 6, 0);  /* cursor up */
-    kbd_register_key(&board.kbd, 0x0D, 6, 1, 0);  /* enter */
-    kbd_register_key(&board.kbd, 0x03, 1, 3, ctrl_mask); /* map Esc to Ctrl+C (STOP/BREAK) */
+    kbd_register_key(&kbd, ' ',  6, 4, 0);  /* space */
+    kbd_register_key(&kbd, 0x08, 6, 2, 0);  /* cursor left */
+    kbd_register_key(&kbd, 0x09, 6, 3, 0);  /* cursor right */
+    kbd_register_key(&kbd, 0x0A, 6, 7, 0);  /* cursor down */
+    kbd_register_key(&kbd, 0x0B, 6, 6, 0);  /* cursor up */
+    kbd_register_key(&kbd, 0x0D, 6, 1, 0);  /* enter */
+    kbd_register_key(&kbd, 0x03, 1, 3, ctrl_mask); /* map Esc to Ctrl+C (STOP/BREAK) */
 }
 
 //------------------------------------------------------------------------------
@@ -371,7 +376,7 @@ z1013_t::quickload(filesystem* fs, const char* name, filetype type, bool start) 
             uint8_t buf[buf_size];
             fs->read(fp, buf, buf_size);
             for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
-                mem_wr(&board.mem, addr++, buf[i]);
+                mem_wr(&mem, addr++, buf[i]);
             }
         }
     }
@@ -382,7 +387,7 @@ z1013_t::quickload(filesystem* fs, const char* name, filetype type, bool start) 
     }
 
     if (start) {
-        auto* cpu = &board.z80;
+        auto* cpu = &z80;
         z80_set_a(cpu, 0x00);
         z80_set_f(cpu, 0x10);
         z80_set_bc(cpu, 0x0000); z80_set_bc_(cpu, 0x0000);

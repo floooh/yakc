@@ -74,6 +74,15 @@ public:
     static const int video_ram_page = 4;
     static const int color_ram_page = 5;
 
+    z80_t z80;
+    z80pio_t z80pio_1;
+    z80pio_t z80pio_2;
+    z80ctc_t z80ctc;
+    beeper_t beeper;
+
+    kbd_t kbd;
+    mem_t mem;
+
     system cur_model = system::kc87;
     os_rom cur_os = os_rom::kc87_os_2;
     bool on = false;

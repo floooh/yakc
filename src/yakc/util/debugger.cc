@@ -46,10 +46,10 @@ debugger::get_history_item(int index) {
 void
 debugger::set_cpu_trap() {
     if (this->cpu == cpu_model::z80) {
-        z80_set_trap(&board.z80, 0, this->bp_addr);
+        z80_set_trap(board.z80, 0, this->bp_addr);
     }
     else {
-        m6502_set_trap(&board.m6502, 0, this->bp_addr);
+        m6502_set_trap(board.m6502, 0, this->bp_addr);
     }
 }
 
@@ -57,10 +57,10 @@ debugger::set_cpu_trap() {
 void
 debugger::clear_cpu_trap() {
     if (this->cpu == cpu_model::z80) {
-        z80_clear_trap(&board.z80, 0);
+        z80_clear_trap(board.z80, 0);
     }
     else {
-        m6502_clear_trap(&board.m6502, 0);
+        m6502_clear_trap(board.m6502, 0);
     }
 }
 
@@ -125,12 +125,12 @@ debugger::break_stop() {
 void
 debugger::break_check() {
     if (this->cpu == cpu_model::z80) {
-        if (board.z80.trap_id == 0) {
+        if (board.z80->trap_id == 0) {
             this->break_stop();
         }
     }
     else {
-        if (board.m6502.trap_id == 0) {
+        if (board.m6502->trap_id == 0) {
             this->break_stop();
         }
     }

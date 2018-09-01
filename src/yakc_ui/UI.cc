@@ -350,65 +350,64 @@ UI::OnFrame(yakc& emu) {
                         this->OpenWindow(emu, CPCGateArrayWindow::Create());
                     }
                 }
-                chip::mask chips = emu.chip_types();
-                if (chips & chip::z80pio) {
+                if (board.z80pio_1) {
                     if (ImGui::MenuItem("Z80 PIO")) {
-                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO", &board.z80pio_1));
+                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO", board.z80pio_1));
                     }
                 }
-                if (chips & chip::z80pio_2) {
+                if (board.z80pio_2) {
                     if (ImGui::MenuItem("Z80 PIO 2")) {
-                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO 2", &board.z80pio_2));
+                        this->OpenWindow(emu, PIOWindow::Create("Z80 PIO 2", board.z80pio_2));
                     }
                 }
-                if (chips & chip::z80ctc) {
+                if (board.z80ctc) {
                     if (ImGui::MenuItem("Z80 CTC")) {
                         this->OpenWindow(emu, CTCWindow::Create());
                     }
                 }
-                if (chips & chip::ay38910) {
+                if (board.ay38910) {
                     if (ImGui::MenuItem("AY-3-8910")) {
                         this->OpenWindow(emu, AY38910Window::Create());
                     }
                 }
-                if (chips & chip::mc6845) {
+                if (board.mc6845) {
                     if (ImGui::MenuItem("MC6845")) {
                         this->OpenWindow(emu, MC6845Window::Create());
                     }
                 }
-                if (chips & chip::mc6847) {
+                if (board.mc6847) {
                     if (ImGui::MenuItem("MC6847")) {
                         this->OpenWindow(emu, MC6847Window::Create());
                     }
                 }
-                if (chips & chip::i8255) {
+                if (board.i8255) {
                     if (ImGui::MenuItem("i8255")) {
                         this->OpenWindow(emu, I8255Window::Create());
                     }
                 }
-                if (chips & chip::m6522) {
+                if (board.m6522) {
                     if (ImGui::MenuItem("M6522")) {
                         this->OpenWindow(emu, M6522Window::Create());
                     }
                 }
-                if (chips & chip::m6569) {
+                if (board.m6569) {
                     if (ImGui::MenuItem("M6569 (VIC-II)")) {
                         this->OpenWindow(emu, M6569Window::Create());
                     }
                 }
-                if (chips & chip::m6581) {
+                if (board.m6581) {
                     if (ImGui::MenuItem("M6581 (SID)")) {
                         this->OpenWindow(emu, M6581Window::Create());
                     }
                 }
-                if (chips & chip::m6526) {
+                if (board.m6526_1) {
                     if (ImGui::MenuItem("M6526 (CIA-1)")) {
-                        this->OpenWindow(emu, M6526Window::Create("M6526 (CIA-1)", &board.m6526_1));
+                        this->OpenWindow(emu, M6526Window::Create("M6526 (CIA-1)", board.m6526_1));
                     }
                 }
-                if (chips & chip::m6526_2) {
+                if (board.m6526_2) {
                     if (ImGui::MenuItem("M6526 (CIA-2)")) {
-                        this->OpenWindow(emu, M6526Window::Create("M6526 (CIA-2)", &board.m6526_2));
+                        this->OpenWindow(emu, M6526Window::Create("M6526 (CIA-2)", board.m6526_2));
                     }
                 }
                 if (emu.is_system(system::any_c64)) {

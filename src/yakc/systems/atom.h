@@ -65,6 +65,15 @@ public:
     /// initialize a single entry in the key-map table
     void init_key_mask(uint8_t ascii, int column, int line, bool shift=false, bool ctrl=false);
 
+    m6502_t m6502;
+    i8255_t i8255;
+    m6522_t m6522;
+    mc6847_t mc6847;
+    beeper_t beeper;
+
+    kbd_t kbd;
+    mem_t mem;
+
     bool on = false;
     const uint8_t* vidmem_base = nullptr;
     int count_2_4khz;

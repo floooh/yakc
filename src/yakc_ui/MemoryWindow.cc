@@ -20,14 +20,21 @@ MemoryWindow::Setup(yakc& emu) {
 static uint8_t
 read_func(uint8_t* base, size_t off) {
     uint16_t addr = uint16_t(uintptr_t(base)) + uint16_t(off);
-    return mem_rd(&board.mem, addr);
+    if (board.mem) {
+        return mem_rd(board.mem, addr);
+    }
+    else {
+        return 0xFF;
+    }
 }
 
 //------------------------------------------------------------------------------
 static void
 write_func(uint8_t* base, size_t off, uint8_t value) {
     uint16_t addr = uint16_t(uintptr_t(base)) + uint16_t(off);
-    mem_wr(&board.mem, addr, value);
+    if (board.mem) {
+        mem_wr(board.mem, addr, value);
+    }
 }
 
 //------------------------------------------------------------------------------

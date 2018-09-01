@@ -73,6 +73,15 @@ public:
     /// file quickloading (only bin/raw files)
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
 
+    m6502_t m6502;
+    m6526_t m6526_1;
+    m6526_t m6526_2;
+    m6569_t m6569;
+    m6581_t m6581;
+    kbd_t kbd;
+    mem_t mem;
+    mem_t mem2;
+
     bool on = false;
     system model = system::c64_pal;
     uint8_t cpu_port = 0;

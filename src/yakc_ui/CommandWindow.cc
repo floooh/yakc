@@ -57,23 +57,25 @@ CommandWindow::scan(uint8_t prologByte) {
     StringBuilder strBuilder;
 
     this->commands.Clear();
-    uint8_t prevByte = mem_rd(&board.mem, 0x0000);
-    for (unsigned int addr = 0x0001; addr < 0x10000; addr++) {
-        const uint8_t curByte = mem_rd(&board.mem, addr);
-        if ((curByte == prologByte) && (prevByte == prologByte)) {
-            // found a header, scan for 00 or 01 byte
-            addr++;
-            uint8_t c;
-            while (isalnum(c = mem_rd(&board.mem, addr++))) {
-                strBuilder.Append(c);
+    if (board.mem) {
+        uint8_t prevByte = mem_rd(board.mem, 0x0000);
+        for (unsigned int addr = 0x0001; addr < 0x10000; addr++) {
+            const uint8_t curByte = mem_rd(board.mem, addr);
+            if ((curByte == prologByte) && (prevByte == prologByte)) {
+                // found a header, scan for 00 or 01 byte
+                addr++;
+                uint8_t c;
+                while (isalnum(c = mem_rd(board.mem, addr++))) {
+                    strBuilder.Append(c);
+                }
+                // if it was a valid command, add it to commands array
+                if ((c == 0) || (c == 1)) {
+                    this->commands.Add(strBuilder.GetString(), addr);
+                }
+                strBuilder.Clear();
             }
-            // if it was a valid command, add it to commands array
-            if ((c == 0) || (c == 1)) {
-                this->commands.Add(strBuilder.GetString(), addr);
-            }
-            strBuilder.Clear();
+            prevByte = curByte;
         }
-        prevByte = curByte;
     }
 }
 

@@ -17,8 +17,6 @@ namespace YAKC {
 void
 yakc::init(const ext_funcs& sys_funcs) {
     func = sys_funcs;
-    mem_init(&board.mem);
-    mem_init(&board.mem2);
     fill_random(board.random, sizeof(board.random));
     this->cpu_ahead = false;
     this->cpu_behind = false;
@@ -178,39 +176,6 @@ yakc::cpu_type() const {
 }
 
 //------------------------------------------------------------------------------
-chip::mask
-yakc::chip_types() const {
-    switch (this->model) {
-        case system::kc85_2:
-        case system::kc85_3:
-        case system::kc85_4:
-            return chip::z80|chip::z80ctc|chip::z80pio;
-        case system::z1013_01:
-        case system::z1013_16:
-        case system::z1013_64:
-            return chip::z80|chip::z80pio;
-        case system::z9001:
-        case system::kc87:
-            return chip::z80|chip::z80pio|chip::z80pio_2|chip::z80ctc;
-        case system::zxspectrum48k:
-            return chip::z80;
-        case system::zxspectrum128k:
-            return chip::z80|chip::ay38910;
-        case system::cpc464:
-        case system::cpc6128:
-        case system::kccompact:
-            return chip::z80|chip::ay38910|chip::i8255|chip::mc6845;
-        case system::acorn_atom:
-            return chip::m6502|chip::i8255|chip::m6522|chip::mc6847;
-        case system::c64_pal:
-        case system::c64_ntsc:
-            return chip::m6502|chip::m6526|chip::m6526_2|chip::m6569|chip::m6581;
-        default:
-            return 0;
-    }
-}
-
-//------------------------------------------------------------------------------
 void
 yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
     YAKC_ASSERT(this->accel > 0);
@@ -289,13 +254,16 @@ yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
 uint32_t
 yakc::step() {
     uint32_t ticks = 0;
-    if (this->cpu_type() == cpu_model::z80) {
-        ticks = z80_exec(&board.z80, 0);
-        board.dbg.add_history_item(z80_pc(&board.z80), ticks);
+    if (board.z80) {
+        ticks = z80_exec(board.z80, 0);
+        if (!z80_opdone(board.z80)) {
+            ticks += z80_exec(board.z80, 0);
+        }
+        board.dbg.add_history_item(z80_pc(board.z80), ticks);
     }
-    else {
-        ticks = m6502_exec(&board.m6502, 0);
-        board.dbg.add_history_item(board.m6502.state.PC, ticks);
+    else if (board.m6502) {
+        ticks = m6502_exec(board.m6502, 0);
+        board.dbg.add_history_item(board.m6502->state.PC, ticks);
     }
     return ticks;
 }
