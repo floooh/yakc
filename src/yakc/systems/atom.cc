@@ -9,13 +9,13 @@
 #include "atom.h"
 #include "yakc/util/filetypes.h"
 
-YAKC::atom_t atom;
+YAKC::atom_t YAKC::atom;
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
 bool
-atom_t::check_roms(system model, os_rom os) {
+atom_t::check_roms(system model) {
     if (system::acorn_atom == model) {
         return roms.has(rom_images::atom_basic) &&
                roms.has(rom_images::atom_float) &&

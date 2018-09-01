@@ -9,14 +9,14 @@
 #include "c64.h"
 #include "yakc/util/tapedeck.h"
 
-YAKC::c64_t c64;
+YAKC::c64_t YAKC::c64;
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
 bool
-c64_t::check_roms(system model, os_rom os) {
-    if ((system::c64_pal == model) || (system::c64_ntsc == model)) {
+c64_t::check_roms(system model) {
+    if (system::c64_pal == model) {
         return roms.has(rom_images::c64_basic) &&
                roms.has(rom_images::c64_char) &&
                roms.has(rom_images::c64_kernalv3);

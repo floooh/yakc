@@ -30,25 +30,25 @@ yakc::add_rom(rom_images::rom type, const uint8_t* ptr, int size) {
 bool
 yakc::check_roms(system m, os_rom os) {
     if (is_system(m, system::any_z1013)) {
-        return z1013_t::check_roms(m, os);
+        return z1013_t::check_roms(m);
     }
     else if (is_system(m, system::any_z9001)) {
-        return z9001_t::check_roms(m, os);
+        return z9001_t::check_roms(m);
     }
     else if (is_system(m, system::any_zx)) {
-        return zx_t::check_roms(m, os);
+        return zx_t::check_roms(m);
     }
     else if (is_system(m, system::any_kc85)) {
         return kc85_t::check_roms(m, os);
     }
     else if (is_system(m, system::acorn_atom)) {
-        return atom_t::check_roms(m, os);
+        return atom_t::check_roms(m);
     }
     else if (is_system(m, system::any_cpc)) {
         return cpc_t::check_roms(m, os);
     }
     else if (is_system(m, system::any_c64)) {
-        return c64_t::check_roms(m, os);
+        return c64_t::check_roms(m);
     }
     else {
         return false;
@@ -67,7 +67,7 @@ yakc::poweron(system m, os_rom rom) {
         z1013.poweron(m);
     }
     else if (this->is_system(system::any_z9001)) {
-        z9001.poweron(m, rom);
+        z9001.poweron(m);
     }
     else if (this->is_system(system::any_zx)) {
         zx.poweron(m);
@@ -177,10 +177,10 @@ yakc::exec(int micro_secs) {
             z1013.exec(micro_secs);
         }
         else if (z9001.on) {
-            //this->abs_cycle_count = z9001.exec(this->abs_cycle_count, abs_end_cycles);
+            z9001.exec(micro_secs);
         }
         else if (zx.on) {
-            //this->abs_cycle_count = zx.exec(this->abs_cycle_count, abs_end_cycles);
+            zx.exec(micro_secs);
         }
         else if (kc85.on) {
             //this->abs_cycle_count = kc85.exec(this->abs_cycle_count, abs_end_cycles);

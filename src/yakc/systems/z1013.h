@@ -44,7 +44,7 @@ namespace YAKC {
 class z1013_t {
 public:
     /// check if required roms are loaded
-    static bool check_roms(system model, os_rom os);
+    static bool check_roms(system model);
 
     /// power-on the device
     void poweron(system m);
@@ -75,6 +75,6 @@ public:
     system cur_model = system::none;
     bool on = false;
 };
+extern YAKC::z1013_t z1013;
 
 } // namespace YAKC
-extern YAKC::z1013_t z1013;

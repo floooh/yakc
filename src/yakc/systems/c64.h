@@ -15,7 +15,7 @@ namespace YAKC {
 class c64_t {
 public:
     /// check if required roms are loaded
-    static bool check_roms(system model, os_rom os);
+    static bool check_roms(system model);
 
     /// power-on the device
     void poweron(system model);
@@ -51,9 +51,7 @@ public:
     ::c64_t sys;
     bool on = false;
 };
-
-} // namespace YAKC
-
 extern YAKC::c64_t c64;
 
+} // namespace YAKC
 

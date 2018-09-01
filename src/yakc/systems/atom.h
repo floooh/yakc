@@ -17,7 +17,7 @@ namespace YAKC {
 class atom_t {
 public:
     /// check if required roms are loaded
-    static bool check_roms(system model, os_rom os);
+    static bool check_roms(system model);
 
     /// power-on the device
     void poweron();
@@ -52,7 +52,7 @@ public:
     ::atom_t sys;
     bool on = false;
 };
+extern YAKC::atom_t atom;
 
 } // namespace YAKC
 
-extern YAKC::atom_t atom;

@@ -5,13 +5,13 @@
 //------------------------------------------------------------------------------
 #include "z1013.h"
 
-YAKC::z1013_t z1013;
+YAKC::z1013_t YAKC::z1013;
 
 namespace YAKC {
 
 //------------------------------------------------------------------------------
 bool
-z1013_t::check_roms(system model, os_rom os) {
+z1013_t::check_roms(system model) {
     if (system::z1013_01 == model) {
         return roms.has(rom_images::z1013_mon202) && roms.has(rom_images::z1013_font);
     }
