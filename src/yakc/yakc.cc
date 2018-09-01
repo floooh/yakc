@@ -18,10 +18,6 @@ void
 yakc::init(const ext_funcs& sys_funcs) {
     func = sys_funcs;
     fill_random(board.random, sizeof(board.random));
-    this->cpu_ahead = false;
-    this->cpu_behind = false;
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -64,8 +60,6 @@ void
 yakc::poweron(system m, os_rom rom) {
     this->model = m;
     this->os = rom;
-    this->abs_cycle_count = 0;
-    this->overflow_cycles = 0;
     this->enable_joystick(false);
     this->accel = 1;
     board.dbg.init(this->cpu_type());
@@ -128,7 +122,6 @@ yakc::switchedon() const {
 void
 yakc::reset() {
     this->enable_joystick(false);
-    this->overflow_cycles = 0;
     if (z1013.on) {
         z1013.reset();
     }
@@ -177,76 +170,36 @@ yakc::cpu_type() const {
 
 //------------------------------------------------------------------------------
 void
-yakc::exec(int micro_secs, uint64_t audio_cycle_count) {
+yakc::exec(int micro_secs) {
     YAKC_ASSERT(this->accel > 0);
-    uint64_t min_cycle_count = 0;
-    uint64_t max_cycle_count = 0;
-    if ((audio_cycle_count > 0) && (this->accel == 1)) {
-        const uint64_t cpu_min_ahead_cycles = board.freq_hz/100;
-        const uint64_t cpu_max_ahead_cycles = board.freq_hz/25;
-        min_cycle_count = audio_cycle_count + cpu_min_ahead_cycles;
-        max_cycle_count = audio_cycle_count + cpu_max_ahead_cycles;
-    }
-    this->cpu_ahead = false;
-    this->cpu_behind = false;
-    // compute the end-cycle-count for the current frame
-    if (this->abs_cycle_count == 0) {
-        this->abs_cycle_count = min_cycle_count;
-    }
-    int64_t num_cycles = (this->accel * (((int64_t)board.freq_hz*micro_secs)/1000000)) - this->overflow_cycles;
-    if (num_cycles < 0) {
-        num_cycles = 0;
-    }
-    uint64_t abs_end_cycles = this->abs_cycle_count + num_cycles;
-    if ((max_cycle_count != 0) && (abs_end_cycles > max_cycle_count)) {
-        abs_end_cycles = max_cycle_count;
-        this->cpu_ahead = true;
-    }
-    else if ((min_cycle_count != 0) && (abs_end_cycles < min_cycle_count)) {
-        abs_end_cycles = min_cycle_count;
-        this->cpu_behind = true;
-    }
-    if (this->abs_cycle_count > abs_end_cycles) {
-        this->abs_cycle_count = abs_end_cycles;
-    }
     if (!board.dbg.break_stopped()) {
         if (z1013.on) {
-            this->abs_cycle_count = z1013.exec(this->abs_cycle_count, abs_end_cycles);
+            z1013.exec(micro_secs);
         }
         else if (z9001.on) {
-            this->abs_cycle_count = z9001.exec(this->abs_cycle_count, abs_end_cycles);
+            //this->abs_cycle_count = z9001.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (zx.on) {
-            this->abs_cycle_count = zx.exec(this->abs_cycle_count, abs_end_cycles);
+            //this->abs_cycle_count = zx.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (kc85.on) {
-            this->abs_cycle_count = kc85.exec(this->abs_cycle_count, abs_end_cycles);
+            //this->abs_cycle_count = kc85.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (atom.on) {
-            this->abs_cycle_count = atom.exec(this->abs_cycle_count, abs_end_cycles);
+            atom.exec(micro_secs);
         }
         else if (cpc.on) {
-            this->abs_cycle_count = cpc.exec(this->abs_cycle_count, abs_end_cycles);
+            //this->abs_cycle_count = cpc.exec(this->abs_cycle_count, abs_end_cycles);
         }
         else if (c64.on) {
-            this->abs_cycle_count = c64.exec(this->abs_cycle_count, abs_end_cycles);
+            c64.exec(micro_secs);
         }
         else {
-            this->abs_cycle_count = abs_end_cycles;
-        }
-        if (this->abs_cycle_count > abs_end_cycles) {
-            this->overflow_cycles = uint32_t(this->abs_cycle_count - abs_end_cycles);
-        }
-        else {
-            this->overflow_cycles = 0;
+            //this->abs_cycle_count = abs_end_cycles;
         }
 
         // check if breakpoint has been hit
         board.dbg.break_check();
-    }
-    else {
-        this->abs_cycle_count = abs_end_cycles;
-        this->overflow_cycles = 0;
     }
 }
 

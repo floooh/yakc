@@ -2,8 +2,6 @@
 //  breadboard.cc
 //------------------------------------------------------------------------------
 #include "yakc/util/core.h"
-#define CHIPS_IMPL
-#define CHIPS_ASSERT YAKC_ASSERT
 #include "breadboard.h"
 
 namespace YAKC {

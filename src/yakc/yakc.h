@@ -26,8 +26,8 @@ public:
     void poweroff();
     /// reset the emu
     void reset();
-    /// process one frame, up to absolute number of cycles
-    void exec(int micro_secs, uint64_t audio_cycle_count);
+    /// process one frame
+    void exec(int micro_secs);
     /// step over one instruction and return number of cycles (called by debuggers)
     uint32_t step();
     /// step until function returns true
@@ -75,10 +75,6 @@ public:
     os_rom os = os_rom::none;
     class filesystem filesystem;
     int accel = 1;      // current acceleration factor (must be > 0)
-    bool cpu_ahead = false;                 // cpu would have been ahead of max_cycle_count
-    bool cpu_behind = false;                // cpu would have been behind of min_cycle_count
-    uint64_t abs_cycle_count = 0;           // total CPU cycle count
-    uint32_t overflow_cycles = 0;           // cycles that have overflowed from last frame
 private:
     bool joystick_enabled = false;
 };

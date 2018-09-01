@@ -8,6 +8,7 @@
 #include "yakc/util/rom_images.h"
 #include "yakc/util/filetypes.h"
 #include "yakc/util/filesystem.h"
+#include "systems/c64.h"
 
 namespace YAKC {
 
@@ -26,29 +27,8 @@ public:
     const char* system_info() const;
     /// return number of supported joysticks
     int num_joysticks() const { return 1; };
-    /// process a number of cycles, return final processed tick
-    uint64_t exec(uint64_t start_tick, uint64_t end_tick);
-
-    /// the m6502 tick callback
-    static uint64_t cpu_tick(uint64_t pins, void* user_data);
-    /// CPU port input callback
-    static uint8_t cpu_port_in(void* user_data);
-    /// CPU port output callback
-    static void cpu_port_out(uint8_t data, void* user_data);
-    /// CIA-1 port output callback
-    static void cia1_out(int port_id, uint8_t data, void* user_data);
-    /// CIA-1 port input callback
-    static uint8_t cia1_in(int port_id, void* user_data);
-    /// CIA-2 port output callback
-    static void cia2_out(int port_id, uint8_t data, void* user_data);
-    /// CIA-2 port input callback
-    static uint8_t cia2_in(int port_id, void* user_data);
-
-    /// VIC-II memory fetch callback (returns a 4+8 bits value)
-    static uint16_t vic_fetch(uint16_t addr, void* user_data);
-
-    /// setup the keyboard matrix
-    void init_keymap();
+    /// run the emulation
+    void exec(uint32_t micro_seconds);
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);
     /// called when non-alnum key has been pressed down
@@ -57,47 +37,23 @@ public:
     void on_key_up(uint8_t key);
     /// called for joystick input
     void on_joystick(uint8_t mask);
-    /// setup the initial memory configuration
-    void init_memory_map();
-    /// update the current memory configuration
-    void update_memory_map();
     /// get framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
-
     /// called when a tape has been inserted into the tape deck
     void on_tape_inserted();
-    /// tick the datasette, return true if CIA-1 FLAG must be triggered
-    bool tape_tick();
     /// file quickloading (only bin/raw files)
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
+    /// audio callback
+    static void audio_cb(const float* samples, int num_samples, void* user_data);
 
-    m6502_t m6502;
-    m6526_t m6526_1;
-    m6526_t m6526_2;
-    m6569_t m6569;
-    m6581_t m6581;
-    kbd_t kbd;
-    mem_t mem;
-    mem_t mem2;
-
+    ::c64_t sys;
     bool on = false;
-    system model = system::c64_pal;
-    uint8_t cpu_port = 0;
-    uint8_t cia1_joy_bits = 0;
-    uint16_t vic_bank_select = 0;   // upper 4 address bits from CIA-2 port A
-    bool io_mapped = false;
-    uint8_t color_ram[1024];    // special static color ram
-
-    // tape emulation
-    c64tap_header tap_header;
-    bool tape_valid = false;
-    uint32_t tape_tick_count = 0;
-    int32_t tape_byte_count = 0;
 };
-extern c64_t c64;
 
 } // namespace YAKC
+
+extern YAKC::c64_t c64;
 
 

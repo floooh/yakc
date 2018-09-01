@@ -15,6 +15,7 @@ fips_begin_module(yakc)
     )
     fips_dir(systems)
     fips_files(
+        systems.cc
         kc85.h kc85.cc
         kc85_exp.h kc85_exp.cc
         z1013.h z1013.cc

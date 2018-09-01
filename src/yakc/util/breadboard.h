@@ -52,6 +52,7 @@ struct breadboard {
     kbd_t* kbd = nullptr;
     crt_t* crt = nullptr;
     class debugger dbg;
+    int audio_sample_rate = 44100;
     class audiobuffer audiobuffer;
     class audiobuffer audiobuffer2;
     static const int num_ram_banks = 8;

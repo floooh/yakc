@@ -14,9 +14,7 @@ namespace YAKC {
 //------------------------------------------------------------------------------
 AudioWindow::AudioWindow(Audio* audio_) :
 audio(audio_),
-paused(false),
-cpuAhead(false),
-cpuBehind(false) {
+paused(false) {
     Memory::Clear(&this->wavBuffer, sizeof(this->wavBuffer));
 }
 
@@ -36,21 +34,10 @@ AudioWindow::Draw(yakc& emu) {
         ImGui::Checkbox("Pause", &this->paused);
         if (!this->paused) {
             Memory::Copy(Audio::soloud->getWave(), this->wavBuffer, 256*sizeof(float));
-            this->cpuAhead = emu.cpu_ahead;
-            this->cpuBehind = emu.cpu_behind;
         }
         ImGui::Text("Backend: %s", Audio::soloud->getBackendString());
         ImGui::Text("Backend Samplerate: %d", Audio::soloud->getBackendSamplerate());
         ImGui::Text("Backend sample buffer size: %d\n", Audio::soloud->getBackendBufferSize());
-        if (this->cpuAhead) {
-            ImGui::TextColored(UI::WarnColor, "*** CPU AHEAD ***");
-        }
-        else if (this->cpuBehind) {
-            ImGui::TextColored(UI::WarnColor, "*** CPU BEHIND ***");
-        }
-        else {
-            ImGui::TextColored(UI::OkColor, "CPU SYNCED");
-        }
         ImGui::PlotLines("Wave", this->wavBuffer, 256, 0, nullptr, -1, 1, ImVec2(512, 60));
     }
     else {

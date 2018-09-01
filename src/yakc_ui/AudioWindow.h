@@ -22,8 +22,6 @@ public:
 
     Audio* audio;
     bool paused;
-    bool cpuAhead;
-    bool cpuBehind;
     float wavBuffer[256];
 };
 

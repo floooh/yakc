@@ -37,6 +37,7 @@
 #include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/filetypes.h"
+#include "systems/z1013.h"
 
 namespace YAKC {
 
@@ -55,16 +56,8 @@ public:
     const char* system_info() const;
     /// return number of supported joysticks
     int num_joysticks() const { return 0; };
-    /// process a number of cycles, return final processed tick
-    uint64_t exec(uint64_t start_tick, uint64_t end_tick);
-
-    /// the Z80 CPU tick callback
-    static uint64_t cpu_tick(int num_ticks, uint64_t pins, void* user_data);
-    /// the Z80 PIO out callback
-    static void pio_out(int port_id, uint8_t data, void* user_data);
-    /// the Z80 PIO in callback
-    static uint8_t pio_in(int port_id, void* user_data);
-
+    /// run the emulation
+    void exec(uint32_t micro_seconds);
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);
     /// called when non-alnum key has been pressed down
@@ -75,35 +68,13 @@ public:
     const void* framebuffer(int& out_width, int& out_height);
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
+    /// audio callback
+    static void audio_cb(const float* samples, int num_samples, void* user_data);
 
-    /// initialize the key translation table for the basic 8x4 keyboard (z1013.01)
-    void init_keymap_8x4();
-    /// initialize the key translation table for the 8x8 keyboard (z1013.16/64)
-    void init_keymap_8x8();
-    /// initialize memory mapping (called from poweron)
-    void init_memorymap();
-    /// initialize keymap tables (called from poweron)
-    void init_keymaps();
-    /// decode an entire frame into RGBA8Buffer
-    void decode_video();
-
-    z80_t z80;
-    z80pio_t z80pio;
-    kbd_t kbd;
-    mem_t mem;
-
-    static const int vidmem_page = 4;
-    system cur_model = system::z1013_01;
-    os_rom cur_os = os_rom::z1013_mon202;
+    ::z1013_t sys;
+    system cur_model = system::none;
     bool on = false;
-    uint8_t kbd_request_column = 0;             // requested keyboard matrix column number (0..7)
-    bool kbd_request_line_hilo = false;         // bit 4 in PIO-B written
-
-    static const int display_width = 256;
-    static const int display_height = 256;
-    static_assert(display_width <= global_max_fb_width, "z1013 fb size");
-    static_assert(display_height <= global_max_fb_height, "z1013 fb size");
 };
-extern class z1013_t z1013;
 
 } // namespace YAKC
+extern YAKC::z1013_t z1013;
