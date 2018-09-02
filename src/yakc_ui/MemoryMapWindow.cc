@@ -185,31 +185,28 @@ MemoryMapWindow::Draw(yakc& emu) {
         this->drawRect(0, 0xE000, 0x2000, "CAOS ROM E", (pio_a & KC85_PIO_A_CAOS_ROM) ? type::mapped : type::off);
 
         // modules
-        /*
-        FIXME
         for (int mem_layer = 1; mem_layer < 3; mem_layer++) {
             const uint8_t slot_addr = mem_layer == 1 ? 0x08 : 0x0C;
-            if (kc85.slot_occupied(slot_addr)) {
+            if (kc85_slot_occupied(&kc85.sys, slot_addr)) {
+                const kc85_slot_t* slot = kc85_slot_by_addr(&kc85.sys, slot_addr);
                 const int draw_layer = (is_kc85_4 ? 5 : 0) + mem_layer;
-                const auto& mod = kc85.mod_by_slot_addr(slot_addr);
-                YAKC_ASSERT(mod.mem_size > 0);
 
                 // split modules > 16 KByte into multiple banks
-                unsigned int addr = slot_addr;
-                unsigned int len  = mod.mem_size;
-                unsigned int end  = addr + len;
+                uint32_t addr = kc85_slot_cpu_addr(&kc85.sys, slot_addr);
+                uint32_t len  = slot->mod.size;
+                uint32_t end  = addr + len;
                 while (addr < end) {
                     type t = type::off;
-                    if (mod.control_byte & 1) {
-                        t = kc85.sys.module_in_slot_owns_pointer(slot_addr, mem_readptr(&kc85.mem, addr)) ? type::mapped : type::hidden;
+                    if (slot->ctrl & 1) {
+                        t = kc85_slot_cpu_visible(&kc85.sys, slot_addr) ? type::mapped : type::hidden;
                     }
-                    this->drawRect(draw_layer, addr, len >= 0x4000 ? 0x4000:(len&0x3FFF), slot.mod.name, t);
+                    const kc85_t::module mod = kc85.mod_by_slot_addr(slot_addr);
+                    this->drawRect(draw_layer, addr, len >= 0x4000 ? 0x4000:(len&0x3FFF), mod.name, t);
                     addr += 0x4000;
                     len  -= 0x4000;
                 }
             }
         }
-        */
     }
     ImGui::End();
     return this->Visible;

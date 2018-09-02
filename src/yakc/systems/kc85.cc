@@ -293,47 +293,47 @@ kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
 
 //------------------------------------------------------------------------------
 const char*
-kc85_t::module_name(module_type type) {
+kc85_t::module_name(kc85_module_type_t type) {
     switch (type) {
-        case none_module:       return "NONE";
-        case m006_basic:        return "M006 BASIC";
-        case m011_64kbyte:      return "M011 64 KBYTE RAM";
-        case m012_texor:        return "M012 TEXOR";
-        case m022_16kbyte:      return "M022 EXPANDER RAM";
-        case m026_forth:        return "M026 FORTH";
-        case m027_development:  return "M027 DEVELOPMENT";
-        default:                return "UNKNOWN";
+        case KC85_MODULE_NONE:              return "NONE";
+        case KC85_MODULE_M006_BASIC:        return "M006 BASIC";
+        case KC85_MODULE_M011_64KBYE:       return "M011 64 KBYTE RAM";
+        case KC85_MODULE_M012_TEXOR:        return "M012 TEXOR";
+        case KC85_MODULE_M022_16KBYTE:      return "M022 EXPANDER RAM";
+        case KC85_MODULE_M026_FORTH:        return "M026 FORTH";
+        case KC85_MODULE_M027_DEVELOPMENT:  return "M027 DEVELOPMENT";
+        default:                            return "UNKNOWN";
     }
 }
 
 //------------------------------------------------------------------------------
 uint8_t
-kc85_t::module_id(module_type type) {
+kc85_t::module_id(kc85_module_type_t type) {
     switch (type) {
-        case none_module:       return 0xFF;
-        case m006_basic:        return 0xFC;
-        case m011_64kbyte:      return 0xF6;
-        case m012_texor:        return 0xFB;
-        case m022_16kbyte:      return 0xF4;
-        case m026_forth:        return 0xFB;
-        case m027_development:  return 0xFB;
-        default:                return 0xFF;
+        case KC85_MODULE_NONE:              return 0xFF;
+        case KC85_MODULE_M006_BASIC:        return 0xFC;
+        case KC85_MODULE_M011_64KBYE:       return 0xF6;
+        case KC85_MODULE_M012_TEXOR:        return 0xFB;
+        case KC85_MODULE_M022_16KBYTE:      return 0xF4;
+        case KC85_MODULE_M026_FORTH:        return 0xFB;
+        case KC85_MODULE_M027_DEVELOPMENT:  return 0xFB;
+        default:                            return 0xFF;
     }
 }
 
 //------------------------------------------------------------------------------
 void
 kc85_t::register_none_module(const char* name, const char* desc) {
-    module& mod = this->mod_registry[none_module];
+    module& mod = this->mod_registry[KC85_MODULE_NONE];
     mod.registered = true;
-    mod.type = none_module;
+    mod.type = KC85_MODULE_NONE;
     mod.name = name;
     mod.desc = desc;
 }
 
 //------------------------------------------------------------------------------
 void
-kc85_t::register_ram_module(module_type type, const char* desc) {
+kc85_t::register_ram_module(kc85_module_type_t type, const char* desc) {
     YAKC_ASSERT(!this->is_module_registered(type));
     module& mod = this->mod_registry[type];
     mod.registered = true;
@@ -347,7 +347,7 @@ kc85_t::register_ram_module(module_type type, const char* desc) {
 
 //------------------------------------------------------------------------------
 void
-kc85_t::register_rom_module(module_type type, const uint8_t* ptr, unsigned int size, const char* desc) {
+kc85_t::register_rom_module(kc85_module_type_t type, const uint8_t* ptr, unsigned int size, const char* desc) {
     YAKC_ASSERT(!this->is_module_registered(type));
     YAKC_ASSERT(ptr && size > 0 && desc);
     module& mod = this->mod_registry[type];
@@ -362,14 +362,14 @@ kc85_t::register_rom_module(module_type type, const uint8_t* ptr, unsigned int s
 
 //------------------------------------------------------------------------------
 bool
-kc85_t::is_module_registered(module_type type) const {
-    YAKC_ASSERT((type >= 0) && (type < num_module_types));
+kc85_t::is_module_registered(kc85_module_type_t type) const {
+    YAKC_ASSERT((type >= 0) && (type < KC85_MODULE_NUM));
     return this->mod_registry[type].registered;
 }
 
 //------------------------------------------------------------------------------
 const kc85_t::module&
-kc85_t::module_template(module_type type) const {
+kc85_t::module_template(kc85_module_type_t type) const {
     YAKC_ASSERT(is_module_registered(type));
     return this->mod_registry[type];
 }
@@ -377,11 +377,11 @@ kc85_t::module_template(module_type type) const {
 //------------------------------------------------------------------------------
 const kc85_t::module&
 kc85_t::mod_by_slot_addr(uint8_t slot_addr) const {
-    module_type mod_type = none_module;
+    kc85_module_type_t mod_type = KC85_MODULE_NONE;
     for (int i = 0; i < KC85_NUM_SLOTS; i++) {
         const auto& slot = sys.exp.slot[i];
         if (slot.addr == slot_addr) {
-            mod_type = (module_type) slot.mod.type;
+            mod_type = slot.mod.type;
             break;
         }
     }
@@ -390,24 +390,19 @@ kc85_t::mod_by_slot_addr(uint8_t slot_addr) const {
 
 //------------------------------------------------------------------------------
 bool
-kc85_t::slot_occupied(uint8_t slot_addr) const {
-    for (int i = 0; i < KC85_NUM_SLOTS; i++) {
-        if (sys.exp.slot[i].mod.type != KC85_MODULE_NONE) {
-            return true;
-        }
-    }
-    return false;
+kc85_t::slot_occupied(uint8_t slot_addr) {
+    return kc85_slot_occupied(&sys, slot_addr);
 }
 
 //------------------------------------------------------------------------------
 void
-kc85_t::insert_module(uint8_t slot_addr, module_type type) {
+kc85_t::insert_module(uint8_t slot_addr, kc85_module_type_t type) {
     const auto& mod = mod_registry[type];
     if (mod.mem_ptr) {
-        kc85_insert_rom_module(&sys, slot_addr, (kc85_module_type_t) type, mod.mem_ptr, mod.mem_size);
+        kc85_insert_rom_module(&sys, slot_addr, type, mod.mem_ptr, mod.mem_size);
     }
     else {
-        kc85_insert_ram_module(&sys, slot_addr, (kc85_module_type_t) type);
+        kc85_insert_ram_module(&sys, slot_addr, type);
     }
 }
 

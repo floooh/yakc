@@ -31,8 +31,8 @@ ModuleWindow::drawModuleSlot(uint8_t slot_addr) {
     ImGui::SameLine();
     ImGui::Text("type:%02X", mod.id);
     if (ImGui::BeginPopup("select")) {
-        for (int i = 0; i < kc85_t::num_module_types; i++) {
-            kc85_t::module_type type = (kc85_t::module_type)i;
+        for (int i = 0; i < KC85_MODULE_NUM; i++) {
+            kc85_module_type_t type = (kc85_module_type_t) i;
             if (kc85.is_module_registered(type)) {
                 const auto& mod = kc85.module_template(type);
                 if (ImGui::Selectable(mod.name)) {

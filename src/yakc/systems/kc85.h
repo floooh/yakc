@@ -50,50 +50,37 @@ public:
     bool on = false;
     ::kc85_t sys;
 
-    /// module system
-    enum module_type {
-        none_module = KC85_MODULE_NONE,
-        m006_basic = KC85_MODULE_M006_BASIC,
-        m011_64kbyte = KC85_MODULE_M011_64KBYE,
-        m012_texor = KC85_MODULE_M012_TEXOR,
-        m022_16kbyte = KC85_MODULE_M022_16KBYTE,
-        m026_forth = KC85_MODULE_M026_FORTH,
-        m027_development = KC85_MODULE_M027_DEVELOPMENT,
-        num_module_types = 7
-    };
     struct module {
         bool registered  = false;
-        module_type type = none_module;
+        kc85_module_type_t type = KC85_MODULE_NONE;
         uint8_t id       = 0xFF;
         const char* name = nullptr;
         const char* desc = nullptr;
         uint8_t* mem_ptr = nullptr;
         unsigned int mem_size = 0;
     };
-    module mod_registry[num_module_types];
+    module mod_registry[KC85_MODULE_NUM];
 
     /// register the special 'none' module
     void register_none_module(const char* name, const char* desc);
     /// register a RAM module type
-    void register_ram_module(module_type type, const char* desc);
+    void register_ram_module(kc85_module_type_t type, const char* desc);
     /// register a ROM module type
-    void register_rom_module(module_type type, const uint8_t* ptr, unsigned int size, const char* desc);
+    void register_rom_module(kc85_module_type_t type, const uint8_t* ptr, unsigned int size, const char* desc);
     /// test if a module type is registered
-    bool is_module_registered(module_type type) const;
+    bool is_module_registered(kc85_module_type_t type) const;
     /// get module template by type
-    const module& module_template(module_type type) const;
+    const module& module_template(kc85_module_type_t type) const;
     /// get module name by type
-    static const char* module_name(module_type type);
+    static const char* module_name(kc85_module_type_t type);
     /// get module id byte by type
-    static uint8_t module_id(module_type type);
-    /// test if module in slot 'owns' a host memory address
-    bool module_in_slot_owns_pointer(uint8_t slot_addr, const uint8_t* ptr) const;
-    /// test if a slot is occupied
-    bool slot_occupied(uint8_t slot_addr) const;
+    static uint8_t module_id(kc85_module_type_t type);
+    /// check if a slot contains a module
+    bool slot_occupied(uint8_t slot_addr);
     /// get module by slot address
     const module& mod_by_slot_addr(uint8_t slot_addr) const;
     /// insert module into slot, slot must be free!
-    void insert_module(uint8_t slot_addr, module_type type);
+    void insert_module(uint8_t slot_addr, kc85_module_type_t type);
     /// remove an expansion module
     void remove_module(uint8_t slot_addr);
 };
