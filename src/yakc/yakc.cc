@@ -45,7 +45,7 @@ yakc::check_roms(system m, os_rom os) {
         return atom_t::check_roms(m);
     }
     else if (is_system(m, system::any_cpc)) {
-        return cpc_t::check_roms(m, os);
+        return cpc_t::check_roms(m);
     }
     else if (is_system(m, system::any_c64)) {
         return c64_t::check_roms(m);
@@ -183,13 +183,13 @@ yakc::exec(int micro_secs) {
             zx.exec(micro_secs);
         }
         else if (kc85.on) {
-            //this->abs_cycle_count = kc85.exec(this->abs_cycle_count, abs_end_cycles);
+            kc85.exec(micro_secs);
         }
         else if (atom.on) {
             atom.exec(micro_secs);
         }
         else if (cpc.on) {
-            //this->abs_cycle_count = cpc.exec(this->abs_cycle_count, abs_end_cycles);
+            cpc.exec(micro_secs);
         }
         else if (c64.on) {
             c64.exec(micro_secs);

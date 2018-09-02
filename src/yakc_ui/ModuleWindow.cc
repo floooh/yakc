@@ -21,25 +21,25 @@ ModuleWindow::drawModuleSlot(uint8_t slot_addr) {
     ImGui::PushID(slot_addr);
     ImGui::AlignFirstTextHeightToWidgets();
     ImGui::Text("SLOT %02X:", slot_addr); ImGui::SameLine();
-    const auto& slot = kc85.exp.slot_by_addr(slot_addr);
-    if (ImGui::Button(slot.mod.name, ImVec2(192, 0))) {
+    const auto& mod = kc85.mod_by_slot_addr(slot_addr);
+    if (ImGui::Button(mod.name, ImVec2(192, 0))) {
         ImGui::OpenPopup("select");
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", slot.mod.desc);
+        ImGui::SetTooltip("%s", mod.desc);
     }
     ImGui::SameLine();
-    ImGui::Text("type:%02X ctrl:%02X", slot.mod.id, slot.control_byte);
+    ImGui::Text("type:%02X", mod.id);
     if (ImGui::BeginPopup("select")) {
-        for (int i = 0; i < kc85_exp::num_module_types; i++) {
-            kc85_exp::module_type type = (kc85_exp::module_type)i;
-            if (kc85.exp.is_module_registered(type)) {
-                const auto& mod = kc85.exp.module_template(type);
+        for (int i = 0; i < kc85_t::num_module_types; i++) {
+            kc85_t::module_type type = (kc85_t::module_type)i;
+            if (kc85.is_module_registered(type)) {
+                const auto& mod = kc85.module_template(type);
                 if (ImGui::Selectable(mod.name)) {
-                    if (kc85.exp.slot_occupied(slot_addr)) {
-                        kc85.exp.remove_module(slot_addr);
+                    if (kc85.slot_occupied(slot_addr)) {
+                        kc85.remove_module(slot_addr);
                     }
-                    kc85.exp.insert_module(slot_addr, type);
+                    kc85.insert_module(slot_addr, type);
                 }
             }
         }

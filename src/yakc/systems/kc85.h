@@ -8,47 +8,12 @@
 #include "yakc/util/rom_images.h"
 #include "yakc/util/filesystem.h"
 #include "yakc/util/filetypes.h"
-#include "yakc/systems/kc85_exp.h"
+#include "systems/kc85.h"
 
 namespace YAKC {
 
 class kc85_t {
 public:
-    /// IO bits
-    enum {
-        PIO_A_CAOS_ROM    = (1<<0),
-        PIO_A_RAM         = (1<<1),
-        PIO_A_IRM         = (1<<2),
-        PIO_A_RAM_RO      = (1<<3),
-        PIO_A_UNUSED      = (1<<4),
-        PIO_A_TAPE_LED    = (1<<5),
-        PIO_A_TAPE_MOTOR  = (1<<6),
-        PIO_A_BASIC_ROM   = (1<<7),
-
-        PIO_B_VOLUME_MASK = (1<<5)-1,
-        PIO_B_RAM8 = (1<<5),            // KC85/4 only
-        PIO_B_RAM8_RO = (1<<6),         // KC85/4 only
-        PIO_B_BLINK_ENABLED = (1<<7),
-
-        // KC85/4 only
-        IO84_SEL_VIEW_IMG   = (1<<0),  // 0: display img0, 1: display img1
-        IO84_SEL_CPU_COLOR  = (1<<1),  // 0: access pixels, 1: access colors
-        IO84_SEL_CPU_IMG    = (1<<2),  // 0: access img0, 1: access img1
-        IO84_HICOLOR        = (1<<3),  // 0: hicolor mode off, 1: hicolor mode on
-        IO84_SEL_RAM8       = (1<<4),  // select RAM8 block 0 or 1
-        IO84_BLOCKSEL_RAM8  = (1<<5),  // no idea what that does...?
-
-        IO86_RAM4   = (1<<0),
-        IO86_RAM4_RO = (1<<1),
-        IO86_CAOS_ROM_C = (1<<7)
-    };
-
-    kc85_exp exp;
-    uint8_t pio_a = 0;          // current pio_a content, used by bankswitching
-    uint8_t pio_b = 0;          // current pio_b content, used by bankswitching
-    uint8_t io84 = 0;           // special KC85/4 io register
-    uint8_t io86 = 0;           // special KC85/4 io register
-
     /// check if required roms are loaded
     static bool check_roms(system model, os_rom os);
 
@@ -62,74 +27,77 @@ public:
     const char* system_info() const;
     /// return number of supported joysticks
     int num_joysticks() const { return 0; };
-
     /// process a number of cycles, return final processed tick
-    uint64_t exec(uint64_t start_tick, uint64_t end_tick);
-    /// the CPU tick callback
-    static uint64_t cpu_tick(int num_ticks, uint64_t pins, void* user_data);
-    /// the PIO out callback
-    static void pio_out(int port_id, uint8_t data, void* user_data);
-    /// the PIO in callback
-    static uint8_t pio_in(int port_id, void* user_data);
-
+    void exec(uint32_t micro_seconds);
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
-    /// decode 8 pixels
-    void decode_8pixels(uint32_t* ptr, uint8_t pixels, uint8_t colors, bool blink_off) const;
-    /// decode current video scanline
-    void decode_scanline();
     /// get pointer to framebuffer, width and height
     const void* framebuffer(int& out_width, int& out_height);
-
     /// called when alpha-numeric key has been pressed
     void on_ascii(uint8_t ascii);
     /// called when non-alnum key has been pressed down
     void on_key_down(uint8_t key);
     /// called when non-alnum key has been released
     void on_key_up(uint8_t key);
-    /// handle keyboard input
-    void handle_keyboard_input();
     /// file quickloading
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
-
-    /// update module/memory mapping
-    void update_bank_switching();
-    /// update the rom pointers
-    void update_rom_pointers();
-
-    z80_t z80;
-    z80pio_t z80pio;
-    z80ctc_t z80ctc;
-    beeper_t beeper_1;
-    beeper_t beeper_2;
-
-    kbd_t kbd;
-    mem_t mem;
+    /// audio callback
+    static void audio_cb(const float* samples, int num_samples, void* user_data);
+    /// callback to apply patches after a snapshot is loaded
+    static void patch_cb(const char* snapshot_name, void* user_data);
 
     system cur_model = system::kc85_3;
-    os_rom cur_caos = os_rom::caos_3_1;
     bool on = false;
-    uint8_t key_code = 0;
-    uint8_t* caos_c_ptr = nullptr;
-    int caos_c_size = 0;
-    uint8_t* caos_e_ptr = nullptr;
-    int caos_e_size = 0;
-    uint8_t* basic_ptr = nullptr;
-    int basic_size = 0;
+    ::kc85_t sys;
 
-    // video hardware
-    static const int display_width = 320;
-    static const int display_height = 256;
-    static_assert(display_width <= global_max_fb_width, "kc85 fb size");
-    static_assert(display_height <= global_max_fb_height, "kc85 fb size");
-    static const int irm0_page = 4;
-    static const int num_scanlines = 312;
-    int scanline_period = 0;
-    int scanline_counter = 0;
-    int cur_scanline = 0;
-    bool ctc_blink_flag = true;
+    /// module system
+    enum module_type {
+        none_module = KC85_MODULE_NONE,
+        m006_basic = KC85_MODULE_M006_BASIC,
+        m011_64kbyte = KC85_MODULE_M011_64KBYE,
+        m012_texor = KC85_MODULE_M012_TEXOR,
+        m022_16kbyte = KC85_MODULE_M022_16KBYTE,
+        m026_forth = KC85_MODULE_M026_FORTH,
+        m027_development = KC85_MODULE_M027_DEVELOPMENT,
+        num_module_types = 7
+    };
+    struct module {
+        bool registered  = false;
+        module_type type = none_module;
+        uint8_t id       = 0xFF;
+        const char* name = nullptr;
+        const char* desc = nullptr;
+        uint8_t* mem_ptr = nullptr;
+        unsigned int mem_size = 0;
+    };
+    module mod_registry[num_module_types];
+
+    /// register the special 'none' module
+    void register_none_module(const char* name, const char* desc);
+    /// register a RAM module type
+    void register_ram_module(module_type type, const char* desc);
+    /// register a ROM module type
+    void register_rom_module(module_type type, const uint8_t* ptr, unsigned int size, const char* desc);
+    /// test if a module type is registered
+    bool is_module_registered(module_type type) const;
+    /// get module template by type
+    const module& module_template(module_type type) const;
+    /// get module name by type
+    static const char* module_name(module_type type);
+    /// get module id byte by type
+    static uint8_t module_id(module_type type);
+    /// test if module in slot 'owns' a host memory address
+    bool module_in_slot_owns_pointer(uint8_t slot_addr, const uint8_t* ptr) const;
+    /// test if a slot is occupied
+    bool slot_occupied(uint8_t slot_addr) const;
+    /// get module by slot address
+    const module& mod_by_slot_addr(uint8_t slot_addr) const;
+    /// insert module into slot, slot must be free!
+    void insert_module(uint8_t slot_addr, module_type type);
+    /// remove an expansion module
+    void remove_module(uint8_t slot_addr);
 };
-extern kc85_t kc85;
+extern YAKC::kc85_t kc85;
 
 } // namespace YAKC
 

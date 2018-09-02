@@ -110,7 +110,7 @@ YakcApp::OnInit() {
     // this automatically on startup
     this->initModules();
     if (kc85.on) {
-        kc85.exp.insert_module(0x08, kc85_exp::m022_16kbyte);
+        kc85.insert_module(0x08, YAKC::kc85_t::m022_16kbyte);
     }
 
     this->lapTimePoint = Clock::Now();
@@ -302,16 +302,10 @@ YakcApp::initRoms() {
 //------------------------------------------------------------------------------
 void
 YakcApp::initModules() {
-    kc85.exp.register_none_module("NO MODULE", "Click to insert module!");
-    if (!kc85.exp.slot_occupied(0x08)) {
-        kc85.exp.insert_module(0x08, kc85_exp::none);
-    }
-    if (!kc85.exp.slot_occupied(0x0C)) {
-        kc85.exp.insert_module(0x0C, kc85_exp::none);
-    }
+    kc85.register_none_module("NO MODULE", "Click to insert module!");
 
     // M022 EXPANDER RAM
-    kc85.exp.register_ram_module(kc85_exp::m022_16kbyte, 0xC0, 0x4000,
+    kc85.register_ram_module(YAKC::kc85_t::m022_16kbyte,
         "16 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 43: map to address 0x4000\n"
         "SWITCH [SLOT] 83: map to address 0x8000\n"
@@ -319,7 +313,7 @@ YakcApp::initModules() {
         "...where [SLOT] is 08 or 0C");
 
     // M011 64 K RAM
-    kc85.exp.register_ram_module(kc85_exp::m011_64kbyte, 0xC0, 0x10000,
+    kc85.register_ram_module(YAKC::kc85_t::m011_64kbyte,
         "64 KByte RAM expansion module.\n\n"
         "SWITCH [SLOT] 03: map 1st block to 0x0000\n"
         "SWITCH [SLOT] 43: map 1st block to 0x4000\n"
@@ -330,7 +324,7 @@ YakcApp::initModules() {
     // M026 FORTH
     IO::Load("rom:forth.853", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::forth, ioRes.Data.Data(), ioRes.Data.Size());
-        kc85.exp.register_rom_module(kc85_exp::m026_forth, 0xE0,
+        kc85.register_rom_module(YAKC::kc85_t::m026_forth,
             roms.ptr(rom_images::forth), roms.size(rom_images::forth),
             "FORTH language expansion module.\n\n"
             "First deactivate the BASIC ROM with:\n"
@@ -343,7 +337,7 @@ YakcApp::initModules() {
     // M027 DEVELOPMENT
     IO::Load("rom:develop.853", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::develop, ioRes.Data.Data(), ioRes.Data.Size());
-        kc85.exp.register_rom_module(kc85_exp::m027_development, 0xE0,
+        kc85.register_rom_module(YAKC::kc85_t::m027_development,
             roms.ptr(rom_images::develop), roms.size(rom_images::develop),
             "Assembler/disassembler expansion module.\n\n"
             "First deactivate the BASIC ROM with:\n"
@@ -356,7 +350,7 @@ YakcApp::initModules() {
     // M006 BASIC (+ HC-CAOS 901)
     IO::Load("rom:m006.rom", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::kc85_basic_mod, ioRes.Data.Data(), ioRes.Data.Size());
-        kc85.exp.register_rom_module(kc85_exp::m006_basic, 0xC0,
+        kc85.register_rom_module(YAKC::kc85_t::m006_basic,
             roms.ptr(rom_images::kc85_basic_mod), roms.size(rom_images::kc85_basic_mod),
             "BASIC + HC-901 CAOS for KC85/2.\n\n"
             "Activate with:\n"
@@ -367,7 +361,7 @@ YakcApp::initModules() {
     // M012 TEXOR
     IO::Load("rom:texor.rom", [this](IO::LoadResult ioRes) {
         this->emu.add_rom(rom_images::texor, ioRes.Data.Data(), ioRes.Data.Size());
-        kc85.exp.register_rom_module(kc85_exp::m012_texor, 0xE0,
+        kc85.register_rom_module(YAKC::kc85_t::m012_texor,
             roms.ptr(rom_images::texor), roms.size(rom_images::texor),
             "TEXOR text processing software.\n\n"
             "First deactivate the BASIC ROM with:\n"
