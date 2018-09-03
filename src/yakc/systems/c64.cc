@@ -120,7 +120,8 @@ c64_t::on_joystick(uint8_t mask) {
     if (mask & joystick::btn0) {
         m |= C64_JOYSTICK_BTN;
     }
-    c64_joystick(&sys, m);
+    // FIXME: joystick 1 vs 2
+    c64_joystick(&sys, m, m);
 }
 
 //------------------------------------------------------------------------------
