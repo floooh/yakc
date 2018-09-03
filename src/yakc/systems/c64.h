@@ -41,8 +41,6 @@ public:
     const void* framebuffer(int& out_width, int& out_height);
     /// decode audio data
     void decode_audio(float* buffer, int num_samples);
-    /// called when a tape has been inserted into the tape deck
-    void on_tape_inserted();
     /// file quickloading (only bin/raw files)
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
     /// audio callback

@@ -477,14 +477,6 @@ yakc::load_tape_cmd() {
 }
 
 //------------------------------------------------------------------------------
-void
-yakc::on_tape_inserted() {
-    if (c64.on) {
-        c64.on_tape_inserted();
-    }
-}
-
-//------------------------------------------------------------------------------
 bool
 yakc::quickload(const char* name, filetype type, bool start) {
     bool retval = false;
@@ -505,6 +497,9 @@ yakc::quickload(const char* name, filetype type, bool start) {
     }
     else if (c64.on) {
         retval = c64.quickload(&this->filesystem, name, type, start);
+    }
+    else if (atom.on) {
+        retval = atom.quickload(&this->filesystem, name, type, start);
     }
     else {
         retval = false;

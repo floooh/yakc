@@ -24,7 +24,6 @@
 #include "M6526Window.h"
 #include "M6569Window.h"
 #include "M6581Window.h"
-#include "TapeDeckWindow.h"
 #include "CPCGateArrayWindow.h"
 #include "C64Window.h"
 #include "Core/Time/Clock.h"
@@ -309,9 +308,6 @@ UI::OnFrame(yakc& emu) {
                     this->loadWindow = LoadWindow::Create(&this->FileLoader);
                     this->OpenWindow(emu, loadWindow);
                 }
-                if (ImGui::MenuItem("Tape Deck...")) {
-                    this->OpenWindow(emu, TapeDeckWindow::Create(&FileLoader));
-                }
                 if (ImGui::MenuItem("Power Cycle")) {
                     emu.poweroff();
                     emu.poweron(emu.model, emu.os);
@@ -324,10 +320,8 @@ UI::OnFrame(yakc& emu) {
             if (ImGui::BeginMenu("Quickload")) {
                 for (const auto& item : this->FileLoader.Items) {
                     if (int(item.Compat) & int(emu.model)) {
-                        if (filetype_quickloadable(item.Type)) {
-                            if (ImGui::MenuItem(item.Name.AsCStr())) {
-                                this->FileLoader.LoadAndStart(item);
-                            }
+                        if (ImGui::MenuItem(item.Name.AsCStr())) {
+                            this->FileLoader.LoadAuto(item);
                         }
                     }
                 }

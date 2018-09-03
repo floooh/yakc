@@ -7,7 +7,6 @@
 //    to tell the player that joystick 2 controls the jet)
 //------------------------------------------------------------------------------
 #include "c64.h"
-#include "yakc/util/tapedeck.h"
 
 YAKC::c64_t YAKC::c64;
 
@@ -146,46 +145,23 @@ c64_t::decode_audio(float* buffer, int num_samples) {
 }
 
 //------------------------------------------------------------------------------
-void
-c64_t::on_tape_inserted() {
-    /* FIXME
-    // read the .TAP header
-    tape.read(&this->tap_header, sizeof(this->tap_header));
-    const char* sig = "C64-TAPE-RAW";
-    if (0 != memcmp(&this->tap_header.signature, sig, 12)) {
-        // FIXME: unknown file type
-        return;
-    }
-    YAKC_ASSERT(1 == this->tap_header.version);
-    // tape is valid, rewind counters
-    this->tape_valid = true;
-    this->tape_tick_count = 0;
-    this->tape_byte_count = this->tap_header.size;
-    */
-}
-
-//------------------------------------------------------------------------------
 bool
 c64_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
-    /* FIXME
-    auto fp = fs->open(name, filesystem::mode::read);
-    if (!fp) {
-        return false;
+    YAKC_ASSERT(on);
+    bool success = false;
+    int num_bytes = 0;
+    const uint8_t* ptr = (const uint8_t*) fs->get(name, num_bytes);
+    if (ptr && (num_bytes > 0)) {
+        if (type == filetype::c64_tap) {
+            success = c64_insert_tape(&sys, ptr, num_bytes);
+            c64_start_tape(&sys);
+        }
+        else {
+            success = c64_quickload(&sys, ptr, num_bytes);
+        }
     }
-    uint16_t start_addr;
-    // start address
-    fs->read(fp, &start_addr, sizeof(start_addr));
-    uint16_t end_addr = start_addr + (fs->size(fp) - 2);
-    uint16_t addr = start_addr;
-    while (addr < end_addr) {
-        uint8_t byte;
-        fs->read(fp, &byte, 1);
-        mem_wr(&mem, addr++, byte);
-    }
-    fs->close(fp);
     fs->rm(name);
-    */
-    return true;
+    return success;
 }
 
 //------------------------------------------------------------------------------

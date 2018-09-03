@@ -164,8 +164,7 @@ FileLoader::LoadTape(const Item& item) {
             this->FileData = std::move(ioResult.Data);
             this->Info = parseHeader(this->FileData, item);
             this->State = Ready;
-            tape.insert_tape(item.Name.AsCStr(), item.Type, this->FileData.Data(), this->FileData.Size());
-            this->emu->on_tape_inserted();
+            quickload(this->emu, this->Info, this->FileData, false);
         },
         // load failed
         [this](const URL& url, IOStatus::Code ioStatus) {
@@ -340,10 +339,7 @@ FileLoader::quickload(yakc* emu, const FileInfo& info, const Buffer& data, bool 
     }
     else {
         o_assert(info.Filename.IsValid());
-        auto fp = emu->filesystem.open(info.Filename.AsCStr(), filesystem::mode::write);
-        if (fp) {
-            emu->filesystem.write(fp, data.Data(), data.Size());
-            emu->filesystem.close(fp);
+        if (emu->filesystem.add(info.Filename.AsCStr(), data.Data(), data.Size())) {
             emu->quickload(info.Filename.AsCStr(), info.Type, autostart);
             emu->enable_joystick(true);
             if (!autostart) {
@@ -382,6 +378,7 @@ FileLoader::LoadAuto(const Item& item) {
 //------------------------------------------------------------------------------
 bool
 FileLoader::LoadAuto(const Item& item, const uint8_t* data, int size) {
+/* FIXME!
     this->FileData.Clear();
     this->FileData.Add(data, size);
     this->Info = this->parseHeader(this->FileData, item);
@@ -413,6 +410,7 @@ FileLoader::LoadAuto(const Item& item, const uint8_t* data, int size) {
     else {
         Log::Warn("filetype not compatible with current system\n");
     }
+*/
     return false;
 }
 

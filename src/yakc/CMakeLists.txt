@@ -9,7 +9,6 @@ fips_begin_module(yakc)
         filesystem.h filesystem.cc
         audiobuffer.h audiobuffer.cc
         filetypes.h
-        tapedeck.cc tapedeck.h
         breadboard.cc breadboard.h
         rom_images.cc rom_images.h
     )

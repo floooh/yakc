@@ -29,7 +29,6 @@ fips_begin_module(yakc_ui)
         M6522Window.cc M6522Window.h
         M6526Window.cc M6526Window.h
         M6581Window.cc M6581Window.h
-        TapeDeckWindow.cc TapeDeckWindow.h
         CPCGateArrayWindow.cc CPCGateArrayWindow.h
         C64Window.cc C64Window.h
     )

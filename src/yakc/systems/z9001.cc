@@ -141,70 +141,15 @@ z9001_t::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 bool
 z9001_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
-    /* FIXME!
-    auto fp = fs->open(name, filesystem::mode::read);
-    if (!fp) {
-        return false;
+    YAKC_ASSERT(on);
+    bool success = false;
+    int num_bytes = 0;
+    const uint8_t* ptr = (const uint8_t*) fs->get(name, num_bytes);
+    if (ptr && (num_bytes > 0)) {
+        success = z9001_quickload(&sys, ptr, num_bytes);
     }
-
-    // same fileformats as KC85/2..4
-    kctap_header hdr;
-    uint16_t exec_addr = 0;
-    bool has_exec_addr = false;
-    bool hdr_valid = false;
-    if (filetype::kc_tap == type) {
-        if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
-            hdr_valid = true;
-            uint16_t addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
-            uint16_t end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
-            exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
-            has_exec_addr = hdr.kcc.num_addr > 2;
-            while (addr < end_addr) {
-                // each block is 1 lead byte + 128 bytes data
-                static const int block_size = 129;
-                uint8_t block[block_size];
-                fs->read(fp, block, block_size);
-                for (int i = 1; (i < block_size) && (addr < end_addr); i++) {
-                    mem_wr(&mem, addr++, block[i]);
-                }
-            }
-        }
-    }
-    else if (filetype::kcc == type) {
-        if (fs->read(fp, &hdr.kcc, sizeof(hdr.kcc)) == sizeof(hdr.kcc)) {
-            hdr_valid = true;
-            uint16_t addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
-            uint16_t end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
-            exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
-            has_exec_addr = hdr.kcc.num_addr > 2;
-            while (addr < end_addr) {
-                static const int buf_size = 1024;
-                uint8_t buf[buf_size];
-                fs->read(fp, buf, buf_size);
-                for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
-                    mem_wr(&mem, addr++, buf[i]);
-                }
-            }
-        }
-    }
-    fs->close(fp);
     fs->rm(name);
-    if (!hdr_valid) {
-        return false;
-    }
-
-    // start loaded image
-    if (start && has_exec_addr) {
-        z80_set_a(&z80, 0x00);
-        z80_set_f(&z80, 0x10);
-        z80_set_bc(&z80, 0x0000); z80_set_bc_(&z80, 0x0000);
-        z80_set_de(&z80, 0x0000); z80_set_de_(&z80, 0x0000);
-        z80_set_hl(&z80, 0x0000); z80_set_hl_(&z80, 0x0000);
-        z80_set_af_(&z80, 0x0000);
-        z80_set_pc(&z80, exec_addr);
-    }
-    */
-    return true;
+    return success;
 }
 
 //------------------------------------------------------------------------------

@@ -177,27 +177,26 @@ cpc_t::on_key_up(uint8_t key) {
 //------------------------------------------------------------------------------
 void
 cpc_t::on_joystick(uint8_t mask) {
-    /* FIXME
-    this->joymask = 0;
+    uint8_t m = 0;
     if (mask & joystick::up) {
-        this->joymask |= (1<<0);
+        m |= CPC_JOYSTICK_UP;
     }
     if (mask & joystick::down) {
-        this->joymask |= (1<<1);
+        m |= CPC_JOYSTICK_DOWN;
     }
     if (mask & joystick::left) {
-        this->joymask |= (1<<2);
+        m |= CPC_JOYSTICK_LEFT;
     }
     if (mask & joystick::right) {
-        this->joymask |= (1<<3);
+        m |= CPC_JOYSTICK_RIGHT;
     }
     if (mask & joystick::btn0) {
-        this->joymask |= (1<<4);
+        m |= CPC_JOYSTICK_BTN0;
     }
     if (mask & joystick::btn1) {
-        this->joymask |= (1<<5);
+        m |= CPC_JOYSTICK_BTN1;
     }
-    */
+    cpc_joystick(&sys, m);
 }
 
 //------------------------------------------------------------------------------
@@ -231,15 +230,20 @@ cpc_t::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 bool
 cpc_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
-    /* FIXME
-    if (filetype::cpc_sna == type) {
-        return this->load_sna(fs, name, type, start);
+    YAKC_ASSERT(on);
+    bool success = false;
+    int num_bytes = 0;
+    const uint8_t* ptr = (const uint8_t*) fs->get(name, num_bytes);
+    if (ptr && (num_bytes > 0)) {
+        if (type == filetype::cpc_tap) {
+            success = cpc_insert_tape(&sys, ptr, num_bytes);
+        }
+        else {
+            success = cpc_quickload(&sys, ptr, num_bytes);
+        }
     }
-    else if (filetype::cpc_bin == type) {
-        return this->load_bin(fs, name, type, start);
-    }
-    */
-    return false;
+    fs->rm(name);
+    return success;
 }
 
 //------------------------------------------------------------------------------

@@ -114,46 +114,15 @@ z1013_t::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 bool
 z1013_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
-    /* FIXME
-    auto fp = fs->open(name, filesystem::mode::read);
-    if (!fp) {
-        return false;
+    YAKC_ASSERT(on);
+    bool success = false;
+    int num_bytes = 0;
+    const uint8_t* ptr = (const uint8_t*) fs->get(name, num_bytes);
+    if (ptr && (num_bytes > 0)) {
+        success = z1013_quickload(&sys, ptr, num_bytes);
     }
-    kcz80_header hdr;
-    uint16_t exec_addr = 0;
-    bool hdr_valid = false;
-    if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
-        hdr_valid = true;
-        uint16_t addr = (hdr.load_addr_h<<8 | hdr.load_addr_l) & 0xFFFF;
-        uint16_t end_addr = (hdr.end_addr_h<<8 | hdr.end_addr_l) & 0xFFFF;
-        exec_addr = (hdr.exec_addr_h<<8 | hdr.exec_addr_l) & 0xFFFF;
-        while (addr < end_addr) {
-            static const int buf_size = 1024;
-            uint8_t buf[buf_size];
-            fs->read(fp, buf, buf_size);
-            for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
-                mem_wr(&mem, addr++, buf[i]);
-            }
-        }
-    }
-    fs->close(fp);
     fs->rm(name);
-    if (!hdr_valid) {
-        return false;
-    }
-
-    if (start) {
-        auto* cpu = &z80;
-        z80_set_a(cpu, 0x00);
-        z80_set_f(cpu, 0x10);
-        z80_set_bc(cpu, 0x0000); z80_set_bc_(cpu, 0x0000);
-        z80_set_de(cpu, 0x0000); z80_set_de_(cpu, 0x0000);
-        z80_set_hl(cpu, 0x0000); z80_set_hl_(cpu, 0x0000);
-        z80_set_af_(cpu, 0x0000);
-        z80_set_pc(cpu, exec_addr);
-    }
-    */
-    return true;
+    return success;
 }
 
 //------------------------------------------------------------------------------

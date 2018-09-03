@@ -7,7 +7,7 @@
 #include "yakc/util/rom_images.h"
 #include "yakc/util/core.h"
 #include "yakc/util/filesystem.h"
-#include "yakc/util/tapedeck.h"
+#include "yakc/util/filetypes.h"
 #include <functional>
 
 namespace YAKC {
@@ -50,8 +50,6 @@ public:
 
     /// get the command text for starting a tape load
     const char* load_tape_cmd();
-    /// called when a new tape has been inserted in the tape deck
-    void on_tape_inserted();
     /// start a quickload (may not be finished when function returns)
     bool quickload(const char* name, filetype type, bool start);
 

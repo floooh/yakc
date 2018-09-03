@@ -144,9 +144,15 @@ atom_t::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 bool
 atom_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
-    // FIXME
+    YAKC_ASSERT(on);
+    bool success = false;
+    int num_bytes = 0;
+    const uint8_t* ptr = (const uint8_t*) fs->get(name, num_bytes);
+    if (ptr && (num_bytes > 0)) {
+        success = atom_insert_tape(&sys, ptr, num_bytes);
+    }
     fs->rm(name);
-    return false;
+    return success;
 }
 
 //------------------------------------------------------------------------------

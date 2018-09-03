@@ -159,6 +159,7 @@ kc85_t::audio_cb(const float* samples, int num_samples, void* /*user_data*/) {
 //------------------------------------------------------------------------------
 const void*
 kc85_t::framebuffer(int& out_width, int& out_height) {
+    YAKC_ASSERT(on);
     out_width = KC85_DISPLAY_WIDTH;
     out_height = KC85_DISPLAY_HEIGHT;
     return board.rgba8_buffer;
@@ -167,6 +168,7 @@ kc85_t::framebuffer(int& out_width, int& out_height) {
 //------------------------------------------------------------------------------
 void
 kc85_t::patch_cb(const char* snapshot_name, void* user_data) {
+    YAKC_ASSERT(kc85.on);
     if (strcmp(snapshot_name, "JUNGLE     ") == 0) {
         /* patch start level 1 into memory */
         mem_wr(&kc85.sys.mem, 0x36b7, 1);
@@ -188,107 +190,15 @@ kc85_t::patch_cb(const char* snapshot_name, void* user_data) {
 //------------------------------------------------------------------------------
 bool
 kc85_t::quickload(filesystem* fs, const char* name, filetype type, bool start) {
-    /* FIXME
-    auto fp = fs->open(name, filesystem::mode::read);
-    if (!fp) {
-        return false;
+    YAKC_ASSERT(on);
+    bool success = false;
+    int num_bytes = 0;
+    const uint8_t* ptr = (const uint8_t*) fs->get(name, num_bytes);
+    if (ptr && (num_bytes > 0)) {
+        success = kc85_quickload(&sys, ptr, num_bytes);
     }
-    kctap_header hdr;
-    uint16_t exec_addr = 0;
-    bool has_exec_addr = false;
-    bool hdr_valid = false;
-    if (filetype::kc_tap == type) {
-        if (fs->read(fp, &hdr, sizeof(hdr)) == sizeof(hdr)) {
-            hdr_valid = true;
-            uint16_t addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
-            uint16_t end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
-            exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
-            has_exec_addr = hdr.kcc.num_addr > 2;
-            while (addr < end_addr) {
-                // each block is 1 lead byte + 128 bytes data
-                static const int block_size = 129;
-                uint8_t block[block_size];
-                fs->read(fp, block, block_size);
-                for (int i = 1; (i < block_size) && (addr < end_addr); i++) {
-                    mem_wr(&mem, addr++, block[i]);
-                }
-            }
-        }
-    }
-    else if (filetype::kcc == type) {
-        if (fs->read(fp, &hdr.kcc, sizeof(hdr.kcc)) == sizeof(hdr.kcc)) {
-            hdr_valid = true;
-            uint16_t addr = (hdr.kcc.load_addr_h<<8 | hdr.kcc.load_addr_l) & 0xFFFF;
-            uint16_t end_addr = (hdr.kcc.end_addr_h<<8 | hdr.kcc.end_addr_l) & 0xFFFF;
-            exec_addr = (hdr.kcc.exec_addr_h<<8 | hdr.kcc.exec_addr_l) & 0xFFFF;
-            has_exec_addr = hdr.kcc.num_addr > 2;
-            while (addr < end_addr) {
-                static const int buf_size = 1024;
-                uint8_t buf[buf_size];
-                fs->read(fp, buf, buf_size);
-                for (int i = 0; (i < buf_size) && (addr < end_addr); i++) {
-                    mem_wr(&mem, addr++, buf[i]);
-                }
-            }
-        }
-    }
-    fs->close(fp);
     fs->rm(name);
-    if (!hdr_valid) {
-        return false;
-    }
-
-    // FIXME: patch JUNGLE until I have time to do a proper
-    // 'restoration', see Alexander Lang's KC emu here:
-    // http://lanale.de/kc85_emu/KC85_Emu.html
-    char image_name[sizeof(hdr.kcc.name) + 1];
-    memcpy(image_name, hdr.kcc.name, sizeof(hdr.kcc.name));
-    image_name[sizeof(image_name)-1] = 0;
-    if (strcmp(image_name, "JUNGLE     ") == 0) {
-        // patch start level 1 into memory
-        mem_wr(&mem, 0x36b7, 1);
-        mem_wr(&mem, 0x3697, 1);
-        for (int i = 0; i < 5; i++) {
-            mem_wr(&mem, 0x1770 + i, mem_rd(&mem, 0x36b6 + i));
-        }
-    }
-    // FIXME: patch Digger (see http://lanale.de/kc85_emu/KC85_Emu.html)
-    if (strcmp(image_name, "DIGGER  COM\x01") == 0) {
-        mem_wr16(&mem, 0x09AA, 0x0160);   // time for delay-loop 0160 instead of 0260
-        mem_wr(&mem, 0x3d3a, 0xB5);       // OR L instead of OR (HL)
-    }
-    if (strcmp(image_name, "DIGGERJ") == 0) {
-        mem_wr16(&mem, 0x09AA, 0x0260);
-        mem_wr(&mem, 0x3d3a, 0xB5);       // OR L instead of OR (HL)
-    }
-
-    // start loaded image
-    if (start && has_exec_addr) {
-        auto* cpu = &z80;
-        z80_set_a(cpu, 0x00);
-        z80_set_f(cpu, 0x10);
-        z80_set_bc(cpu, 0x0000); z80_set_bc_(cpu, 0x0000);
-        z80_set_de(cpu, 0x0000); z80_set_de_(cpu, 0x0000);
-        z80_set_hl(cpu, 0x0000); z80_set_hl_(cpu, 0x0000);
-        z80_set_af_(cpu, 0x0000);
-        z80_set_sp(cpu, 0x01C2);
-        // delete ASCII buffer
-        for (uint16_t addr = 0xb200; addr < 0xb700; addr++) {
-            mem_wr(&mem, addr, 0);
-        }
-        mem_wr(&mem, 0xb7a0, 0);
-        if (system::kc85_3 == this->cur_model) {
-            cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0x9f), 0);
-            mem_wr16(&mem, z80_sp(cpu), 0xf15c);
-        }
-        else if (system::kc85_4 == this->cur_model) {
-            cpu_tick(1, Z80_MAKE_PINS(Z80_IORQ|Z80_WR, 0x89, 0xff), 0);
-            mem_wr16(&mem, z80_sp(cpu), 0xf17e);
-        }
-        z80_set_pc(cpu, exec_addr);
-    }
-    */
-    return true;
+    return success;
 }
 
 //------------------------------------------------------------------------------
