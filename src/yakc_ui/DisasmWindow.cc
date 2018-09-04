@@ -83,9 +83,9 @@ DisasmWindow::drawMainContent(const yakc& emu, uint16_t start_addr, int num_line
 //------------------------------------------------------------------------------
 void
 DisasmWindow::drawControls() {
-    Util::InputHex16("Start", this->startAddr);
+    this->startAddr = Util::InputHex16("Start", this->startAddr);
     ImGui::SameLine();
-    Util::InputHex16("Lines", this->numLines);
+    this->numLines = Util::InputHex16("Lines", this->numLines);
 }
 
 } // namespace YAKC

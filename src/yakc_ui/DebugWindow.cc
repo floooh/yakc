@@ -97,12 +97,12 @@ void
 DebugWindow::draw6502RegisterTable() {
     YAKC_ASSERT(board.m6502);
     auto& cpu = *board.m6502;
-    Util::InputHex8("A", cpu.state.A); ImGui::SameLine(1 * 48 + 4);
-    Util::InputHex8("X", cpu.state.X); ImGui::SameLine(2 * 48);
-    Util::InputHex8("Y", cpu.state.Y); ImGui::SameLine(3 * 48);
-    Util::InputHex8("S", cpu.state.S); ImGui::SameLine(4 * 48);
-    Util::InputHex8("P", cpu.state.P); ImGui::SameLine(5 * 48);
-    Util::InputHex16("PC", cpu.state.PC); ImGui::SameLine(6 * 46 + 20);
+    cpu.state.A = Util::InputHex8("A", cpu.state.A); ImGui::SameLine(1 * 48 + 4);
+    cpu.state.X = Util::InputHex8("X", cpu.state.X); ImGui::SameLine(2 * 48);
+    cpu.state.Y = Util::InputHex8("Y", cpu.state.Y); ImGui::SameLine(3 * 48);
+    cpu.state.S = Util::InputHex8("S", cpu.state.S); ImGui::SameLine(4 * 48);
+    cpu.state.P = Util::InputHex8("P", cpu.state.P); ImGui::SameLine(5 * 48);
+    cpu.state.PC = Util::InputHex16("PC", cpu.state.PC); ImGui::SameLine(6 * 46 + 20);
 
     char strFlags[9];
     const uint8_t f = cpu.state.P;

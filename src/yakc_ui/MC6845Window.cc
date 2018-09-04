@@ -24,32 +24,32 @@ MC6845Window::Draw(yakc& emu) {
         if (board.mc6845) {
             mc6845_t& mc = *board.mc6845;
 
-            Util::InputHex8("H TOTAL", mc.h_total); ImGui::SameLine(128);
-            Util::InputHex8("H DISPLAYED", mc.h_displayed);
+            mc.h_total      = Util::InputHex8("H TOTAL", mc.h_total); ImGui::SameLine(128);
+            mc.h_displayed  = Util::InputHex8("H DISPLAYED", mc.h_displayed);
 
-            Util::InputHex8("H SYNC POS", mc.h_sync_pos); ImGui::SameLine(128);
-            Util::InputHex8("SYNC WIDTHS", mc.sync_widths);
+            mc.h_sync_pos   = Util::InputHex8("H SYNC POS", mc.h_sync_pos); ImGui::SameLine(128);
+            mc.sync_widths  = Util::InputHex8("SYNC WIDTHS", mc.sync_widths);
 
-            Util::InputHex8("V TOTAL", mc.v_total); ImGui::SameLine(128);
-            Util::InputHex8("V TOTAL ADJUST", mc.v_total_adjust);
+            mc.v_total          = Util::InputHex8("V TOTAL", mc.v_total); ImGui::SameLine(128);
+            mc.v_total_adjust   = Util::InputHex8("V TOTAL ADJUST", mc.v_total_adjust);
 
-            Util::InputHex8("V DISPLAYED", mc.v_displayed); ImGui::SameLine(128);
-            Util::InputHex8("V SYNC POS", mc.v_sync_pos);
+            mc.v_displayed  = Util::InputHex8("V DISPLAYED", mc.v_displayed); ImGui::SameLine(128);
+            mc.v_sync_pos   = Util::InputHex8("V SYNC POS", mc.v_sync_pos);
 
-            Util::InputHex8("INTERLACE", mc.interlace_mode); ImGui::SameLine(128);
-            Util::InputHex8("MAX SCANLINE", mc.max_scanline_addr);
+            mc.interlace_mode       = Util::InputHex8("INTERLACE", mc.interlace_mode); ImGui::SameLine(128);
+            mc.max_scanline_addr    = Util::InputHex8("MAX SCANLINE", mc.max_scanline_addr);
 
-            Util::InputHex8("CURSOR START", mc.cursor_start); ImGui::SameLine(128);
-            Util::InputHex8("CURSOR END", mc.cursor_end);
+            mc.cursor_start = Util::InputHex8("CURSOR START", mc.cursor_start); ImGui::SameLine(128);
+            mc.cursor_end   = Util::InputHex8("CURSOR END", mc.cursor_end);
 
-            Util::InputHex8("START ADDR HI", mc.start_addr_hi); ImGui::SameLine(128);
-            Util::InputHex8("START ADDR LO", mc.start_addr_lo);
+            mc.start_addr_hi = Util::InputHex8("START ADDR HI", mc.start_addr_hi); ImGui::SameLine(128);
+            mc.start_addr_lo = Util::InputHex8("START ADDR LO", mc.start_addr_lo);
 
-            Util::InputHex8("CURSOR HI", mc.cursor_hi); ImGui::SameLine(128);
-            Util::InputHex8("CURSOR LO", mc.cursor_lo);
+            mc.cursor_hi = Util::InputHex8("CURSOR HI", mc.cursor_hi); ImGui::SameLine(128);
+            mc.cursor_lo = Util::InputHex8("CURSOR LO", mc.cursor_lo);
 
-            Util::InputHex8("LIGHTPEN HI", mc.lightpen_hi); ImGui::SameLine(128);
-            Util::InputHex8("LIGHTPEN LO", mc.lightpen_lo);
+            mc.lightpen_hi = Util::InputHex8("LIGHTPEN HI", mc.lightpen_hi); ImGui::SameLine(128);
+            mc.lightpen_lo = Util::InputHex8("LIGHTPEN LO", mc.lightpen_lo);
 
             ImGui::Separator();
             ImGui::Text("Hori Counter: %02X", mc.h_ctr); ImGui::SameLine(144);

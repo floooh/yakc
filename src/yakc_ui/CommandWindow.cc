@@ -24,7 +24,7 @@ bool
 CommandWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(200, 250), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        Util::InputHex8("Prolog Byte", this->prologByte);
+        this->prologByte = Util::InputHex8("Prolog Byte", this->prologByte);
         ImGui::SameLine();
         if (ImGui::Button("Scan...")) {
             this->scan(this->prologByte);
