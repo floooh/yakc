@@ -12,9 +12,9 @@ fips_begin_module(yakc)
         breadboard.cc breadboard.h
         rom_images.cc rom_images.h
     )
-    fips_dir(systems)
+    fips_dir(emus)
     fips_files(
-        systems.cc
+        emus.cc
         kc85.h kc85.cc
         z1013.h z1013.cc
         z9001.h z9001.cc

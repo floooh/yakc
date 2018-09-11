@@ -2,13 +2,13 @@
 //  yakc.cc
 //------------------------------------------------------------------------------
 #include "yakc.h"
-#include "yakc/systems/z1013.h"
-#include "yakc/systems/z9001.h"
-#include "yakc/systems/zx.h"
-#include "yakc/systems/kc85.h"
-#include "yakc/systems/atom.h"
-#include "yakc/systems/cpc.h"
-#include "yakc/systems/c64.h"
+#include "emus/z1013.h"
+#include "emus/z9001.h"
+#include "emus/zx.h"
+#include "emus/kc85.h"
+#include "emus/atom.h"
+#include "emus/cpc.h"
+#include "emus/c64.h"
 #include <stdio.h>
 
 namespace YAKC {

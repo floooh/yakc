@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "ModuleWindow.h"
 #include "IMUI/IMUI.h"
-#include "yakc/systems/kc85.h"
+#include "yakc/emus/kc85.h"
 
 using namespace Oryol;
 

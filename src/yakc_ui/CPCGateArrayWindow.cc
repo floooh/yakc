@@ -4,7 +4,7 @@
 #include "CPCGateArrayWindow.h"
 #include "yakc_ui/UI.h"
 #include "yakc_ui/Util.h"
-#include "yakc/systems/cpc.h"
+#include "yakc/emus/cpc.h"
 
 using namespace Oryol;
 

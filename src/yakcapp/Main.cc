@@ -11,7 +11,7 @@
 #include "IO/IO.h"
 #include "HttpFS/HTTPFileSystem.h"
 #include "yakc/yakc.h"
-#include "yakc/systems/kc85.h"
+#include "yakc/emus/kc85.h"
 #include "yakc_oryol/Draw.h"
 #include "yakc_oryol/Audio.h"
 #include "yakc_oryol/Keyboard.h"
