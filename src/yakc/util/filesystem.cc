@@ -106,14 +106,14 @@ filesystem::add(const char* name, const void* ptr, int num_bytes) {
     }
     // no free file handle found?
     if (!h) {
-        return invalid_file;
+        return false;
     }
 
     // allocate and copy data
     int pos = alloc_store(ptr, num_bytes);
     if (pos < 0) {
         // not enough space in storage left
-        return invalid_file;
+        return false;
     }
 
     // initialize new file item
@@ -124,7 +124,7 @@ filesystem::add(const char* name, const void* ptr, int num_bytes) {
     item.pos = pos;
     item.size = num_bytes;
 
-    return h;
+    return h != invalid_file;
 }
 
 //------------------------------------------------------------------------------
