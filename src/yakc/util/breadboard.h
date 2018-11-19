@@ -24,6 +24,9 @@
 #include "chips/m6569.h"
 #include "chips/m6526.h"
 #include "chips/m6581.h"
+#include "chips/fdd.h"
+#include "chips/fdd_cpc.h"
+#include "chips/upd765.h"
 
 namespace YAKC {
 
