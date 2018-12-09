@@ -106,8 +106,8 @@ z1013_t::on_key_up(uint8_t key) {
 //------------------------------------------------------------------------------
 const void*
 z1013_t::framebuffer(int& out_width, int& out_height) {
-    out_width = Z1013_DISPLAY_WIDTH;
-    out_height = Z1013_DISPLAY_HEIGHT;
+    out_width = z1013_display_width(&sys);
+    out_height = z1013_display_height(&sys);
     return board.rgba8_buffer;
 }
 

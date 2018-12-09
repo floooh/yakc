@@ -160,8 +160,8 @@ kc85_t::audio_cb(const float* samples, int num_samples, void* /*user_data*/) {
 const void*
 kc85_t::framebuffer(int& out_width, int& out_height) {
     YAKC_ASSERT(on);
-    out_width = KC85_DISPLAY_WIDTH;
-    out_height = KC85_DISPLAY_HEIGHT;
+    out_width = kc85_display_width(&sys);
+    out_height = kc85_display_height(&sys);
     return board.rgba8_buffer;
 }
 

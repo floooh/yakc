@@ -148,8 +148,8 @@ zx_t::audio_cb(const float* samples, int num_samples, void* /*user_data*/) {
 //------------------------------------------------------------------------------
 const void*
 zx_t::framebuffer(int& out_width, int& out_height) {
-    out_width = ZX_DISPLAY_WIDTH;
-    out_height = ZX_DISPLAY_HEIGHT;
+    out_width = zx_display_width(&sys);
+    out_height = zx_display_height(&sys);
     return board.rgba8_buffer;
 }
 

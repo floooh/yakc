@@ -133,8 +133,8 @@ z9001_t::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 z9001_t::framebuffer(int& out_width, int& out_height) {
-    out_width = Z9001_DISPLAY_WIDTH;
-    out_height = Z9001_DISPLAY_HEIGHT;
+    out_width = z9001_display_width(&sys);
+    out_height = z9001_display_height(&sys);
     return board.rgba8_buffer;
 }
 

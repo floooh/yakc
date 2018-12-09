@@ -216,14 +216,8 @@ cpc_t::decode_audio(float* buffer, int num_samples) {
 //------------------------------------------------------------------------------
 const void*
 cpc_t::framebuffer(int& out_width, int& out_height) {
-    if (cpc.sys.video_debug_enabled) {
-        out_width = dbg_width;
-        out_height = dbg_height;
-    }
-    else {
-        out_width = CPC_DISPLAY_WIDTH;
-        out_height = CPC_DISPLAY_HEIGHT;
-    }
+    out_width = cpc_display_width(&sys);
+    out_height = cpc_display_height(&sys);
     return board.rgba8_buffer;
 }
 

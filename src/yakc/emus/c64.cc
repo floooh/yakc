@@ -127,7 +127,8 @@ c64_t::on_joystick(uint8_t mask) {
 //------------------------------------------------------------------------------
 const void*
 c64_t::framebuffer(int& out_width, int &out_height) {
-    m6569_display_size(&sys.vic, &out_width, &out_height);
+    out_width = m6569_display_width(&sys.vic);
+    out_height = m6569_display_height(&sys.vic);
     return board.rgba8_buffer;
 }
 
