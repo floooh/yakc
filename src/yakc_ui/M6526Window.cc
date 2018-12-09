@@ -99,17 +99,17 @@ bool
 M6526Window::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(320, 240), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        if (ImGui::CollapsingHeader("Ports", "#port_a", true, true)) {
+        if (ImGui::CollapsingHeader("Ports")) {
             drawPortState("A:", &this->CIA->pa);
             drawPortState("B:", &this->CIA->pb);
         }
-        if (ImGui::CollapsingHeader("Interrupt", "#int", true, true)) {
+        if (ImGui::CollapsingHeader("Interrupt")) {
             drawInterrupt(&this->CIA->intr);
         }
-        if (ImGui::CollapsingHeader("Timer A", "#timer_a", true, true)) {
+        if (ImGui::CollapsingHeader("Timer A")) {
             drawTimerState(0, &this->CIA->ta);
         }
-        if (ImGui::CollapsingHeader("Timer B", "#timer_b", true, true)) {
+        if (ImGui::CollapsingHeader("Timer B")) {
             drawTimerState(1, &this->CIA->tb);
         }
     }

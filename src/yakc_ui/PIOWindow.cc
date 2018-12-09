@@ -71,10 +71,10 @@ PIOWindow::Draw(yakc& emu) {
     o_assert(this->PIO);
     ImGui::SetNextWindowSize(ImVec2(220, 420), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        if (ImGui::CollapsingHeader("PIO A", "#pio_a", true, true)) {
+        if (ImGui::CollapsingHeader("PIO A")) {
             pioStatus(this->PIO, Z80PIO_PORT_A);
         }
-        if (ImGui::CollapsingHeader("PIO B", "#pio_b", true, true)) {
+        if (ImGui::CollapsingHeader("PIO B")) {
             pioStatus(this->PIO, Z80PIO_PORT_B);
         }
     }

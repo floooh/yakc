@@ -32,7 +32,7 @@ bool
 KC85IOWindow::Draw(yakc& emu) {
     ImGui::SetNextWindowSize(ImVec2(240, 384), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
-        if (ImGui::CollapsingHeader("PIO A (0x88)", "#kc85_io_a", true, true)) {
+        if (ImGui::CollapsingHeader("PIO A (0x88)")) {
             const uint8_t a = kc85.sys.pio.port[Z80PIO_PORT_A].output;
             onOffLine("Bit 0: CAOS ROM E", 0 != (a&KC85_PIO_A_CAOS_ROM));
             onOffLine("Bit 1: RAM", 0 != (a&KC85_PIO_A_RAM));
@@ -43,7 +43,7 @@ KC85IOWindow::Draw(yakc& emu) {
             onOffLine("Bit 6: tape motor", 0 != (a&KC85_PIO_A_TAPE_MOTOR));
             onOffLine("Bit 7: BASIC ROM", 0 != (a&KC85_PIO_A_BASIC_ROM));
         }
-        if (ImGui::CollapsingHeader("PIO B (0x89)", "#kc85_io_b", true, true)) {
+        if (ImGui::CollapsingHeader("PIO B (0x89)")) {
             const uint8_t b = kc85.sys.pio.port[Z80PIO_PORT_B].output;
             ImGui::Text("Bit 0..5: Volume"); ImGui::SameLine(float(offset)); ImGui::Text("%02X", b & KC85_PIO_B_VOLUME_MASK);
             if (emu.is_system(system::kc85_4)) {
@@ -57,7 +57,7 @@ KC85IOWindow::Draw(yakc& emu) {
             onOffLine("Bit 7: blinking", 0 != (b&KC85_PIO_B_BLINK_ENABLED));
         }
         if (emu.is_system(system::kc85_4)) {
-            if (ImGui::CollapsingHeader("Port 0x84", "#kc85_io_84", true, true)) {
+            if (ImGui::CollapsingHeader("Port 0x84")) {
                 const uint8_t v = kc85.sys.io84;
                 onOffLine("Bit 0: view image 0/1", 0 != (v&KC85_IO84_SEL_VIEW_IMG));
                 onOffLine("Bit 1: access pixel/color", 0 != (v&KC85_IO84_SEL_CPU_COLOR));
@@ -68,7 +68,7 @@ KC85IOWindow::Draw(yakc& emu) {
                 onOffLine("Bit 6: unused", 0 != (v&(1<<6)));
                 onOffLine("Bit 7: unused", 0 != (v&(1<<7)));
             }
-            if (ImGui::CollapsingHeader("Port 0x86", "#kc85_io_86", true, true)) {
+            if (ImGui::CollapsingHeader("Port 0x86")) {
                 const uint8_t v = kc85.sys.io86;
                 onOffLine("Bit 0: RAM4", 0 != (v&KC85_IO86_RAM4));
                 onOffLine("Bit 1: RAM4 R/O", 0 != (v&KC85_IO86_RAM4_RO));

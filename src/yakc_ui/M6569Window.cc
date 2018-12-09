@@ -46,7 +46,7 @@ M6569Window::Draw(yakc& emu) {
         if (board.m6569) {
             m6569_t& vic = *board.m6569;
             ImGui::Checkbox("Debug Visualization", &vic.debug_vis);
-            if (ImGui::CollapsingHeader("Registers", "#vicreg", true, true)) {
+            if (ImGui::CollapsingHeader("Registers")) {
                 const auto& r = vic.reg;
                 ImGui::Text("M0XY: %02X %02X M1XY: %02X %02X M2XY: %02X %02X M3XY: %02X %02X",
                     r.mxy[0][0], r.mxy[0][1], r.mxy[1][0], r.mxy[1][1],
@@ -105,14 +105,14 @@ M6569Window::Draw(yakc& emu) {
                 this->drawColor("M6C: ", r.mc[6]); ImGui::SameLine();
                 this->drawColor("M7C: ", r.mc[7]);
             }
-            if (ImGui::CollapsingHeader("Sprite Units", "#sprite", true, false)) {
+            if (ImGui::CollapsingHeader("Sprite Units")) {
                 for (int i = 0; i < 8; i++) {
                     ImGui::PushID(i);
                     static const char* labels[8] = {
                         "Sprite Unit 0", "Sprite Unit 1", "Sprite Unit 2", "Sprite Unit 3",
                         "Sprite Unit 4", "Sprite Unit 5", "Sprite Unit 6", "Sprite Unit 7",
                     };
-                    if (ImGui::CollapsingHeader(labels[i], "#sprite", true, false)) {
+                    if (ImGui::CollapsingHeader(labels[i])) {
                         const auto& su = vic.sunit[i];
                         ImGui::Text("h_first/last/offset:  %2d <=> %2d, %d", su.h_first, su.h_last, su.h_offset);
                         ImGui::Text("p_data: %02X", su.p_data); ImGui::SameLine();
@@ -126,7 +126,7 @@ M6569Window::Draw(yakc& emu) {
                     ImGui::PopID();
                 }
             }
-            if (ImGui::CollapsingHeader("Internal State", "#vicstate", true, true)) {
+            if (ImGui::CollapsingHeader("Internal State")) {
                 ImGui::Text("g_mode: %d   v_irq_line: %3d\n", vic.gunit.mode, vic.rs.v_irqline);
                 ImGui::Text("h_count:   %2d  v_count: %3d", vic.rs.h_count, vic.rs.v_count);
                 ImGui::Text("vc: %04X: vcbase: %04X rc: %d vmli: %2d", vic.rs.vc, vic.rs.vc_base, vic.rs.rc, vic.vm.vmli);

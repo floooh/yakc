@@ -121,7 +121,7 @@ I8255Window::Draw(yakc& emu) {
             ImGui::Text("  Port B:      %s", (ppi.control & (1<<1))?" IN":"OUT");
             ImGui::Text("  Mode:     %6s", (ppi.control & (1<<2))?"STROBE":"BASIC");
 
-            if (ImGui::CollapsingHeader("Port A", "#ppi_a", true, true)) {
+            if (ImGui::CollapsingHeader("Port A")) {
                 if ((ppi.control & I8255_CTRL_A) == I8255_CTRL_A_INPUT) {
                     put_bits(emu, 0, 8, I8255_PORT_A, ppi.port[I8255_PORT_A], "<=");
                 }
@@ -129,7 +129,7 @@ I8255Window::Draw(yakc& emu) {
                     put_bits(emu, 0, 8, I8255_PORT_A, ppi.output[I8255_PORT_A], "=>");
                 }
             }
-            if (ImGui::CollapsingHeader("Port B", "#ppi_b", true, true)) {
+            if (ImGui::CollapsingHeader("Port B")) {
                 if ((ppi.control & I8255_CTRL_B) == I8255_CTRL_B_INPUT) {
                     put_bits(emu, 0, 8, I8255_PORT_B, ppi.port[I8255_PORT_B], "<=");
                 }
@@ -137,7 +137,7 @@ I8255Window::Draw(yakc& emu) {
                     put_bits(emu, 0, 8, I8255_PORT_B, ppi.output[I8255_PORT_B], "=>");
                 }
             }
-            if (ImGui::CollapsingHeader("Port C", "#ppi_c", true, true)) {
+            if (ImGui::CollapsingHeader("Port C")) {
                 if ((ppi.control & I8255_CTRL_CLO) == I8255_CTRL_CLO_INPUT) {
                     put_bits(emu, 0, 4, I8255_PORT_C, ppi.port[I8255_PORT_C], "<=");
                 }

@@ -27,7 +27,7 @@ M6581Window::Draw(yakc& emu) {
                 static const char* labels[3] = {
                     "Voice 1", "Voice 2", "Voice 3"
                 };
-                if (ImGui::CollapsingHeader(labels[i], "#voice", true, true)) {
+                if (ImGui::CollapsingHeader(labels[i])) {
                     const auto& v = sid.voice[i];
                     ImGui::Text("FREQ: %04X", v.freq);
                     ImGui::Text("PULSE WIDTH: %04X", v.pulse_width);
@@ -51,7 +51,7 @@ M6581Window::Draw(yakc& emu) {
                 }
                 ImGui::PopID();
             }
-            if (ImGui::CollapsingHeader("Filter", "#filter", true, true)) {
+            if (ImGui::CollapsingHeader("Filter")) {
                 const  m6581_filter_t& f = sid.filter;
                 ImGui::Text("CUTOFF: %04X", f.cutoff);
                 ImGui::Text("RESONANCE: %04X", f.resonance);
