@@ -56,7 +56,6 @@ cpc_t::poweron(system m) {
     desc.pixel_buffer_size = sizeof(board.rgba8_buffer);
     desc.audio_cb = cpc_t::audio_cb;
     desc.audio_sample_rate = board.audio_sample_rate;
-    desc.video_debug_cb = cpc_t::video_debug_cb;
     if (m == system::cpc464) {
         desc.rom_464_os = roms.ptr(rom_images::cpc464_os);
         desc.rom_464_os_size = roms.size(rom_images::cpc464_os);
@@ -82,8 +81,7 @@ cpc_t::poweron(system m) {
     board.z80 = &sys.cpu;
     board.ay38910 = &sys.psg;
     board.i8255 = &sys.ppi;
-    board.mc6845 = &sys.vdg;
-    board.crt = &sys.crt;
+    board.mc6845 = &sys.crtc;
     board.kbd = &sys.kbd;
     board.mem = &sys.mem;
 }
@@ -109,47 +107,6 @@ void
 cpc_t::exec(uint32_t micro_seconds) {
     YAKC_ASSERT(this->on);
     cpc_exec(&sys, micro_seconds);
-}
-
-//------------------------------------------------------------------------------
-void
-cpc_t::video_debug_cb(uint64_t crtc_pins, void* user_data) {
-    int dst_x = cpc.sys.crt.h_pos * 16;
-    int dst_y = cpc.sys.crt.v_pos;
-    if ((dst_x <= (dbg_width-16)) && (dst_y < dbg_height)) {
-        uint32_t* dst = &(board.rgba8_buffer[dst_x + dst_y * dbg_width]);
-        if (!(crtc_pins & MC6845_DE)) {
-            uint8_t r = 0x3F;
-            uint8_t g = 0x3F;
-            uint8_t b = 0x3F;
-            if (crtc_pins & MC6845_HS) {
-                r = 0x7F; g = 0; b = 0;
-            }
-            if (cpc.sys.ga.sync) {
-                r = 0xFF; g = 0; b = 0;
-            }
-            if (crtc_pins & MC6845_VS) {
-                g = 0x7F;
-            }
-            if (cpc.sys.ga.intr) {
-                b = 0xFF;
-            }
-            else if (0 == cpc.sys.vdg.scanline_ctr) {
-                r = g = b = 0x00;
-            }
-            for (int i = 0; i < 16; i++) {
-                if (i == 0) {
-                    *dst++ = 0xFF000000;
-                }
-                else {
-                    *dst++ = 0xFF<<24 | b<<16 | g<<8 | r;
-                }
-            }
-        }
-        else {
-            cpc_ga_decode_pixels(&cpc.sys, dst, crtc_pins);
-        }
-    }
 }
 
 //------------------------------------------------------------------------------

@@ -31,7 +31,6 @@ void breadboard::clear() {
     this->beeper_1 = nullptr;
     this->beeper_2 = nullptr;
     this->kbd = nullptr;
-    this->crt = nullptr;
 }
 
 } // namespace YAKC

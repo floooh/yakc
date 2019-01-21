@@ -44,39 +44,15 @@ debugger::get_history_item(int index) {
 
 //------------------------------------------------------------------------------
 void
-debugger::set_cpu_trap() {
-    if (this->cpu == cpu_model::z80) {
-        z80_set_trap(board.z80, 0, this->bp_addr);
-    }
-    else {
-        m6502_set_trap(board.m6502, 0, this->bp_addr);
-    }
-}
-
-//------------------------------------------------------------------------------
-void
-debugger::clear_cpu_trap() {
-    if (this->cpu == cpu_model::z80) {
-        z80_clear_trap(board.z80, 0);
-    }
-    else {
-        m6502_clear_trap(board.m6502, 0);
-    }
-}
-
-//------------------------------------------------------------------------------
-void
 debugger::enable_breakpoint(uint16_t addr) {
     this->bp_addr = addr;
     this->bp_enabled = true;
-    this->set_cpu_trap();
 }
 
 //------------------------------------------------------------------------------
 void
 debugger::disable_breakpoint() {
     this->bp_enabled = false;
-    this->clear_cpu_trap();
 }
 
 //------------------------------------------------------------------------------

@@ -19,6 +19,7 @@ CPCGateArrayWindow::Setup(yakc& emu) {
 //------------------------------------------------------------------------------
 void
 CPCGateArrayWindow::drawColors() {
+/*
     const ImVec2 size(12, 12);
     ImGui::Text("Palette Colors:");
     for (int i = 0; i < 16; i++) {
@@ -33,18 +34,22 @@ CPCGateArrayWindow::drawColors() {
     ImGui::Text("Border Color: ");
     this->borderColor = Util::RGBA8toImVec4(cpc.sys.ga.border_color);
     ImGui::ColorButton("##border_color", this->borderColor, ImGuiColorEditFlags_NoAlpha, size);
+*/
 }
 
 //------------------------------------------------------------------------------
+/*
 static const char* video_mode_names[4] = {
     "160 x 200 @ 16 colors",
     "320 x 200 @ 4 colors",
     "620 x 200 @ 2 colors",
     "160 x 200 @ 4 colors"
 };
+*/
 
 bool
 CPCGateArrayWindow::Draw(yakc& emu) {
+/*
     ImGui::SetNextWindowSize(ImVec2(336, 240), ImGuiSetCond_Once);
     if (ImGui::Begin(this->title.AsCStr(), &this->Visible)) {
         ImGui::Checkbox("Debug Visualization", &cpc.sys.video_debug_enabled);
@@ -58,6 +63,7 @@ CPCGateArrayWindow::Draw(yakc& emu) {
         ImGui::Text("GA INT: %s", cpc.sys.ga.intr?"ON ":"OFF");
     }
     ImGui::End();
+*/
     return this->Visible;
 }
 

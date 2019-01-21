@@ -45,8 +45,6 @@ public:
     bool quickload(filesystem* fs, const char* name, filetype type, bool start);
     /// audio callback
     static void audio_cb(const float* samples, int num_samples, void* user_data);
-    /// video debugging callback
-    static void video_debug_cb(uint64_t crtc_pins, void* user_data);
 
     system cur_model = system::cpc464;
     bool on = false;

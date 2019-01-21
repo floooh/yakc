@@ -1,5 +1,7 @@
 # YAKC (Yet Another KC Emulator)
 
+NOTE: this project is abandoned. This is the followup project: https://floooh.github.io/tiny8bit/
+
 [![Build Status](https://travis-ci.org/floooh/yakc.svg)](https://travis-ci.org/floooh/yakc)
 
 Despite the name this is a multi-system emulator for 8-bit home computers.

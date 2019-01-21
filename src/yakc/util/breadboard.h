@@ -10,7 +10,6 @@
 #include "chips/clk.h"
 #include "chips/mem.h"
 #include "chips/kbd.h"
-#include "chips/crt.h"
 #include "chips/beeper.h"
 #include "chips/z80.h"
 #include "chips/z80pio.h"
@@ -27,6 +26,7 @@
 #include "chips/fdd.h"
 #include "chips/fdd_cpc.h"
 #include "chips/upd765.h"
+#include "chips/am40010.h"
 
 namespace YAKC {
 
@@ -53,7 +53,6 @@ struct breadboard {
     beeper_t* beeper_1 = nullptr;
     beeper_t* beeper_2 = nullptr;
     kbd_t* kbd = nullptr;
-    crt_t* crt = nullptr;
     class debugger dbg;
     int audio_sample_rate = 44100;
     class audiobuffer audiobuffer;

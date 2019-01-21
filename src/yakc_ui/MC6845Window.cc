@@ -54,9 +54,9 @@ MC6845Window::Draw(yakc& emu) {
             ImGui::Separator();
             ImGui::Text("Hori Counter: %02X", mc.h_ctr); ImGui::SameLine(144);
             ImGui::Text("HSync: %s", mc.hs ? "ON":"OFF");
-            ImGui::Text("Scanline Ctr: %02X", mc.scanline_ctr); ImGui::SameLine(144);
+            ImGui::Text("Scanline Ctr: %02X", mc.r_ctr); ImGui::SameLine(144);
             ImGui::Text("VSync: %s", mc.vs ? "ON":"OFF");
-            ImGui::Text("Row Counter:  %02X", mc.row_ctr); ImGui::SameLine(144);
+            ImGui::Text("Row Counter:  %02X", mc.v_ctr); ImGui::SameLine(144);
             ImGui::Text("Disp Enable: %s", (mc.h_de&&mc.v_de) ? "ON":"OFF");
             ImGui::Text("Mem Address:  %04X", mc.ma);
 
