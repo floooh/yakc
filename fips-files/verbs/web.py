@@ -9,7 +9,7 @@ import subprocess
 import glob
 from distutils.dir_util import copy_tree 
 
-from mod import log, util, project, emscripten, android, nacl
+from mod import log, util, project, emscripten, android
 
 #-------------------------------------------------------------------------------
 def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
